@@ -1,0 +1,70 @@
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  output: "standalone",
+
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+    ],
+  },
+
+  // Mapbox GL JS bundles its own worker — exclude from webpack bundling
+  webpack: (config) => {
+    config.resolve = config.resolve ?? {};
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "mapbox-gl": "mapbox-gl/dist/mapbox-gl.js",
+    };
+    return config;
+  },
+
+  // Sentry wraps the config at build time via withSentryConfig;
+  // keep sentry-specific keys here for the wrapper to pick up.
+  serverExternalPackages: ["@sentry/nextjs"],
+
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' https://api.mapbox.com https://events.mapbox.com",
+              "style-src 'self' 'unsafe-inline' https://api.mapbox.com",
+              "img-src 'self' data: blob: https://*.supabase.co https://api.mapbox.com https://*.mapbox.com",
+              "font-src 'self'",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.mapbox.com https://events.mapbox.com https://*.sentry.io https://generativelanguage.googleapis.com",
+              "worker-src 'self' blob:",
+              "frame-ancestors 'none'",
+            ].join("; "),
+          },
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(self), geolocation=(self), microphone=()",
+          },
+        ],
+      },
+    ];
+  },
+};
+
+export default nextConfig;

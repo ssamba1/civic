@@ -1,0 +1,22 @@
+{
+  "name": "Civic — Report Infrastructure Issues",
+  "short_name": "Civic",
+  "description": "AI-powered infrastructure repair reporting for your city",
+  "start_url": "/report",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0f172a",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "share_target": {
+    "action": "/report",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [{ "name": "photo", "accept": ["image/*"] }]
+    }
+  }
+}
