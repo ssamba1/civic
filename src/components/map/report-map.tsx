@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import Supercluster from "supercluster";
@@ -34,11 +34,17 @@ export function ReportMap({
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const clusterRef = useRef<Supercluster | null>(null);
 
-  const features: ReportFeature[] = reports.map((r) => ({
-    type: "Feature",
-    geometry: { type: "Point", coordinates: [r.location.lng, r.location.lat] },
-    properties: r,
-  }));
+  // Memoized so the reference only changes when reports data actually changes,
+  // preventing the marker-update effect from re-running on unrelated parent renders.
+  const features = useMemo<ReportFeature[]>(
+    () =>
+      reports.map((r) => ({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [r.location.lng, r.location.lat] },
+        properties: r,
+      })),
+    [reports],
+  );
 
   const updateMarkers = useCallback(() => {
     const map = mapRef.current;
@@ -161,6 +167,9 @@ export function ReportMap({
     }
   }, [focusId]);
 
+  // Effect 1 — Map initialization only. Runs once per token/center/zoom change.
+  // map.remove() lives here so it only fires when the map itself needs to be rebuilt,
+  // not on every reports/focusId change.
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
@@ -182,31 +191,47 @@ export function ReportMap({
 
     mapRef.current = map;
 
-    // init supercluster
-    const cluster = new Supercluster({
-      radius: 60,
-      maxZoom: 16,
-    });
-    cluster.load(features);
-    clusterRef.current = cluster;
-
-    map.on("load", updateMarkers);
+    // Register move listener — markers are refreshed by Effect 2 via updateMarkers,
+    // but moveend also needs to re-cluster at the new viewport.
     map.on("moveend", updateMarkers);
-
-    // fit bounds to reports if we have some and no focus
-    if (features.length > 0 && !focusId) {
-      const bounds = new mapboxgl.LngLatBounds();
-      for (const f of features) {
-        bounds.extend(f.geometry.coordinates as [number, number]);
-      }
-      map.fitBounds(bounds, { padding: 60, maxZoom: 14 });
-    }
 
     return () => {
       map.remove();
       mapRef.current = null;
+      clusterRef.current = null;
     };
-  }, [mapboxToken, center, zoom, features, focusId, updateMarkers]);
+  }, [mapboxToken, center, zoom, updateMarkers]);
+
+  // Effect 2 — Marker / cluster updates. Runs whenever reports data or focusId changes.
+  // Never calls map.remove(), so the map instance survives parent re-renders.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Rebuild supercluster index with latest features
+    const cluster = new Supercluster({ radius: 60, maxZoom: 16 });
+    cluster.load(features);
+    clusterRef.current = cluster;
+
+    const applyMarkers = () => {
+      updateMarkers();
+
+      // Fit bounds to reports on initial data load (no focus active)
+      if (features.length > 0 && !focusId) {
+        const bounds = new mapboxgl.LngLatBounds();
+        for (const f of features) {
+          bounds.extend(f.geometry.coordinates as [number, number]);
+        }
+        map.fitBounds(bounds, { padding: 60, maxZoom: 14 });
+      }
+    };
+
+    if (map.loaded()) {
+      applyMarkers();
+    } else {
+      map.once("load", applyMarkers);
+    }
+  }, [features, focusId, updateMarkers]);
 
   return (
     <div

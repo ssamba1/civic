@@ -1,0 +1,19 @@
+-- =============================================================================
+-- Migration: 20260527_004_fix_dept_enum.sql
+-- Fix C4 — Department enum SQL vs TypeScript mismatch
+-- =============================================================================
+-- NO-OP: work_order_department enum in 001_initial_schema.sql already contains
+-- the correct values:
+--   'public_works', 'utilities', 'parks', 'code_enforcement', 'sanitation', 'other'
+-- These match the TypeScript WorkOrderDepartment type exactly.
+-- No alteration needed.
+
+-- Verified against supabase/migrations/20260527_001_initial_schema.sql lines 48-55:
+-- CREATE TYPE work_order_department AS ENUM (
+--   'public_works',
+--   'utilities',
+--   'parks',
+--   'code_enforcement',
+--   'sanitation',
+--   'other'
+-- );

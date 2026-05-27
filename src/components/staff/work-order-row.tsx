@@ -96,8 +96,8 @@ export function WorkOrderRow({
     SEVERITY_COLORS[classification.severity] ?? SEVERITY_COLORS[3];
   const statusStyle = STATUS_STYLES[report.status] ?? STATUS_STYLES.open;
 
-  const materialsDisplay = workOrder.materials.slice(0, 3).join(", ");
-  const materialsOverflow = workOrder.materials.length > 3;
+  const materialsDisplay = (workOrder.materials ?? []).slice(0, 3).join(", ");
+  const materialsOverflow = (workOrder.materials?.length ?? 0) > 3;
 
   return (
     <>
@@ -174,8 +174,8 @@ export function WorkOrderRow({
         <td className="hidden px-4 py-3 xl:table-cell">
           <p className="max-w-[180px] truncate text-xs text-zinc-500">
             {materialsDisplay}
-            {materialsOverflow && ` +${workOrder.materials.length - 3}`}
-            {workOrder.materials.length === 0 && "---"}
+            {materialsOverflow && ` +${(workOrder.materials?.length ?? 0) - 3}`}
+            {(workOrder.materials?.length ?? 0) === 0 && "---"}
           </p>
         </td>
 
@@ -247,8 +247,8 @@ export function WorkOrderRowControlled({
     SEVERITY_COLORS[classification.severity] ?? SEVERITY_COLORS[3];
   const statusStyle = STATUS_STYLES[report.status] ?? STATUS_STYLES.open;
 
-  const materialsDisplay = workOrder.materials.slice(0, 3).join(", ");
-  const materialsOverflow = workOrder.materials.length > 3;
+  const materialsDisplay = (workOrder.materials ?? []).slice(0, 3).join(", ");
+  const materialsOverflow = (workOrder.materials?.length ?? 0) > 3;
 
   return (
     <>
@@ -325,8 +325,8 @@ export function WorkOrderRowControlled({
         <td className="hidden px-4 py-3 xl:table-cell">
           <p className="max-w-[180px] truncate text-xs text-zinc-500">
             {materialsDisplay}
-            {materialsOverflow && ` +${workOrder.materials.length - 3}`}
-            {workOrder.materials.length === 0 && "---"}
+            {materialsOverflow && ` +${(workOrder.materials?.length ?? 0) - 3}`}
+            {(workOrder.materials?.length ?? 0) === 0 && "---"}
           </p>
         </td>
 

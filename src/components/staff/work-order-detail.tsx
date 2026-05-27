@@ -137,7 +137,7 @@ export function WorkOrderDetail({
     });
   }
 
-  function handleOverride(newCategory: string) {
+  function handleOverride(newCategory: ReportCategory) {
     setActionError(null);
     startTransition(async () => {
       const result = await overrideClassification(report.id, newCategory);
@@ -219,8 +219,8 @@ export function WorkOrderDetail({
                   {report.address ?? "Unknown address"}
                 </p>
                 <p className="text-xs text-zinc-500">
-                  {report.location.lat.toFixed(6)},{" "}
-                  {report.location.lng.toFixed(6)}
+                  {report.location?.lat?.toFixed(6) ?? "—"},{" "}
+                  {report.location?.lng?.toFixed(6) ?? "—"}
                 </p>
               </div>
             </div>
@@ -340,8 +340,8 @@ export function WorkOrderDetail({
                 <div className="col-span-2">
                   <p className="text-xs text-zinc-500">Materials</p>
                   <div className="mt-1 flex flex-wrap gap-1.5">
-                    {workOrder.materials.length > 0 ? (
-                      workOrder.materials.map((m) => (
+                    {(workOrder.materials?.length ?? 0) > 0 ? (
+                      workOrder.materials?.map((m) => (
                         <span
                           key={m}
                           className="inline-flex rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"

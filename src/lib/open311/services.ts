@@ -122,30 +122,29 @@ const SERVICE_DEFINITIONS: Record<ReportCategory, Open311Service> = {
   },
 };
 
-/** Map Civic categories → responsible department label for Open311 agency_responsible */
+/** Map Civic categories → responsible department for Open311 agency_responsible */
 const CATEGORY_DEPARTMENT: Record<ReportCategory, Department> = {
   pothole: "public_works",
-  streetlight: "electrical",
-  downed_sign: "signs",
+  streetlight: "utilities",
+  downed_sign: "code_enforcement",
   graffiti: "sanitation",
   illegal_dump: "sanitation",
-  water_leak: "water",
+  water_leak: "utilities",
   sidewalk_damage: "public_works",
   tree_down: "parks",
   debris: "public_works",
-  drainage: "water",
-  faded_signage: "signs",
-  other: "review_queue",
+  drainage: "utilities",
+  faded_signage: "code_enforcement",
+  other: "other",
 };
 
 const DEPARTMENT_LABELS: Record<Department, string> = {
   public_works: "Public Works",
-  electrical: "Electrical Department",
-  signs: "Signs & Signals",
+  utilities: "Utilities Department",
+  code_enforcement: "Code Enforcement",
   parks: "Parks & Recreation",
   sanitation: "Sanitation Department",
-  water: "Water & Sewer",
-  review_queue: "General Services",
+  other: "General Services",
 };
 
 /** All Open311 services */

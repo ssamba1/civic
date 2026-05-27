@@ -72,11 +72,17 @@ export const CATEGORY_META: Record<
    TODO: Replace with real Supabase queries once the civic schema is migrated
    ------------------------------------------------------------------ */
 
+// TODO: Replace with real Supabase query: `select * from cities where slug = $slug limit 1`
+// The UUID below is a deterministic placeholder — real rows will have actual Postgres UUIDs.
+const CITY_SLUG_TO_UUID: Record<string, string> = {
+  cumming: "00000000-0000-0000-0000-000000000001",
+};
+
 export async function fetchCity(slug: string): Promise<City | null> {
   const known = KNOWN_CITIES[slug];
   if (!known) return null;
   return {
-    id: slug,
+    id: CITY_SLUG_TO_UUID[slug] ?? "00000000-0000-0000-0000-000000000000",
     slug,
     name: known.name,
     state: known.state,
@@ -173,10 +179,11 @@ export async function fetchRecentReports(
     status: statuses[i % statuses.length],
     address: streets[i],
     location: {
-      lng: center[0] + (Math.random() - 0.5) * 0.06,
-      lat: center[1] + (Math.random() - 0.5) * 0.04,
+      // Deterministic fixed offsets — no Math.random() so map markers are stable across renders
+      lng: center[0] + (i % 10) * 0.003 - 0.015,
+      lat: center[1] + Math.floor(i / 10) * 0.003 - 0.003,
     },
     photo_public_url: `/placeholder-report-${(i % 4) + 1}.jpg`,
-    created_at: new Date(now - i * 3_600_000 * (2 + Math.random() * 10)).toISOString(),
+    created_at: new Date(now - i * 3_600_000 * 4).toISOString(),
   }));
 }

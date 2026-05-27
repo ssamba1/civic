@@ -49,7 +49,8 @@ begin
     select id, name
     from storage.objects
     where bucket_id = 'photos-raw'
-      and created_at < now() - interval '${RAW_PHOTO_TTL_DAYS} days'
+      -- SQL uses literal 30 (= RAW_PHOTO_TTL_DAYS). Update both together if TTL changes.
+      and created_at < now() - interval '30 days'
   loop
     delete from storage.objects where id = obj.id;
     deleted_count := deleted_count + 1;
@@ -62,7 +63,8 @@ $$;
 -- Schedule the cron job (daily at 03:00 UTC)
 select cron.schedule(
   'cleanup-expired-raw-photos',
-  '${RETENTION_CRON_SCHEDULE}',
+  -- Cron schedule literal (= RETENTION_CRON_SCHEDULE). Update both together if schedule changes.
+  '0 3 * * *',
   $$ select public.cleanup_expired_raw_photos(); $$
 );
 `;

@@ -1,9 +1,10 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/db/client";
 import { reportToOpen311, expandStatus } from "@/lib/open311/transform";
 import { toOpen311Xml, toErrorXml } from "@/lib/open311/xml";
 import { getService } from "@/lib/open311/services";
-import type { Report, Classification, City, ReportCategory } from "@/lib/types";
+import { normalizeLocation, type Report, type Classification, type City, type ReportCategory, type ReportStatus } from "@/lib/types";
 
 /**
  * GET /api/open311/v2/requests
@@ -54,6 +55,9 @@ export async function GET(request: NextRequest) {
       query = query.lte("created_at", endDate);
     }
 
+    // Exclude rejected (and merged) reports from the public feed — H13
+    query = query.not("status", "in", '("rejected","merged")');
+
     // Limit to 200 results (Open311 convention for pagination default)
     query = query.order("created_at", { ascending: false }).limit(200);
 
@@ -65,11 +69,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform rows to Open311 format
-    const open311Requests = (data ?? []).map((row: any) => {
-      const report = rowToReport(row);
+    const open311Requests = (data ?? []).map((row) => {
+      const report = rowToReport(row as ReportRow);
       const classification: Classification | null =
-        row.classifications?.[0] ?? row.classifications ?? null;
-      const city: City = row.cities;
+        (row as Record<string, unknown>).classifications != null
+          ? ((row as Record<string, unknown[]>).classifications?.[0] ?? null) as Classification | null
+          : null;
+      const city: City = (row as Record<string, City>).cities;
       return reportToOpen311(report, classification, city);
     });
 
@@ -114,11 +120,11 @@ export async function POST(request: NextRequest) {
       body = Object.fromEntries(formData.entries()) as Record<string, string>;
     }
 
-    // Validate API key
+    // Validate API key — constant-time comparison to prevent timing attacks (H10)
     const apiKey =
       body.api_key ?? request.nextUrl.searchParams.get("api_key");
     const expectedKey = process.env.OPEN311_API_KEY;
-    if (!expectedKey || apiKey !== expectedKey) {
+    if (!expectedKey || !apiKey || !safeCompare(apiKey, expectedKey)) {
       return errorResponse(401, "API key is required and must be valid", wantsXml);
     }
 
@@ -183,14 +189,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate media_url — must be https if provided (prevent XSS/tracking-pixel injection)
+    const mediaUrl = body.media_url ?? "";
+    if (mediaUrl) {
+      try {
+        const parsed = new URL(mediaUrl);
+        if (parsed.protocol !== "https:") {
+          return errorResponse(400, "media_url must use https://", wantsXml);
+        }
+      } catch {
+        return errorResponse(400, "media_url must be a valid URL", wantsXml);
+      }
+    }
+
     // Insert the report
     const { data: report, error: insertError } = await db
       .from("reports")
       .insert({
         city_id: city.id,
         reporter_id: reporterId,
-        location: `POINT(${lng} ${lat})`,
-        photo_public_url: body.media_url ?? "",
+        location: `SRID=4326;POINT(${lng} ${lat})`,
+        photo_public_url: mediaUrl,
         photo_raw_url: null,
         status: "open" as const,
         address: body.address_string ?? null,
@@ -203,6 +222,18 @@ export async function POST(request: NextRequest) {
       console.error("Open311 POST insert error:", insertError);
       return errorResponse(500, "Failed to create service request", wantsXml);
     }
+
+    // Trigger AI classification async — fire-and-forget (H2)
+    // x-internal-key allows classify route to accept calls without a user session
+    const classifyHeaders: Record<string, string> = { "Content-Type": "application/json" };
+    if (process.env.INTERNAL_CLASSIFY_SECRET) {
+      classifyHeaders["x-internal-key"] = process.env.INTERNAL_CLASSIFY_SECRET;
+    }
+    fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/api/ai/classify`, {
+      method: "POST",
+      headers: classifyHeaders,
+      body: JSON.stringify({ report_id: report.id }),
+    });
 
     // Return Open311 POST response — token = service_request_id for simplicity
     const responseBody = [
@@ -242,6 +273,12 @@ export async function POST(request: NextRequest) {
 // Helpers
 // ---------------------------------------------------------------------------
 
+/** Constant-time string comparison — prevents timing oracle on API key check. */
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
+
 function requestWantsXml(request: NextRequest): boolean {
   const format = request.nextUrl.searchParams.get("format");
   if (format === "xml") return true;
@@ -267,32 +304,29 @@ function escXml(value: string): string {
     .replace(/>/g, "&gt;");
 }
 
-/**
- * Extract the Report fields from a Supabase joined row.
- * The DB stores location as PostGIS geometry; we normalize to {lat, lng}.
- */
-function rowToReport(row: any): Report {
-  // Handle PostGIS point → {lat, lng}. Supabase may return as
-  // { type: "Point", coordinates: [lng, lat] } or as raw columns.
-  let location = row.location;
-  if (typeof location === "object" && location?.coordinates) {
-    location = { lng: location.coordinates[0], lat: location.coordinates[1] };
-  } else if (typeof location === "string") {
-    // POINT(lng lat)
-    const match = location.match(/POINT\(([^ ]+) ([^ ]+)\)/);
-    if (match) {
-      location = { lng: parseFloat(match[1]), lat: parseFloat(match[2]) };
-    }
-  }
+type ReportRow = {
+  id: string;
+  city_id: string;
+  reporter_id: string;
+  location: unknown;
+  photo_public_url: string;
+  photo_raw_url: string | null;
+  status: string;
+  address: string | null;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
+function rowToReport(row: ReportRow): Report {
   return {
     id: row.id,
     city_id: row.city_id,
     reporter_id: row.reporter_id,
-    location,
+    location: normalizeLocation(row.location) ?? { lat: 0, lng: 0 },
     photo_public_url: row.photo_public_url,
     photo_raw_url: row.photo_raw_url,
-    status: row.status,
+    status: row.status as ReportStatus,
     address: row.address,
     description: row.description,
     created_at: row.created_at,

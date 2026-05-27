@@ -24,12 +24,9 @@ function isPublicRoute(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow public routes through
-  if (isPublicRoute(pathname)) {
-    return NextResponse.next();
-  }
-
-  // Create Supabase client for SSR session checking
+  // Always create the Supabase client and call getUser() so that the auth
+  // session cookies are refreshed on every request — including public routes.
+  // Skipping this for public routes would let sessions expire silently.
   let response = NextResponse.next({
     request: { headers: request.headers },
   });
@@ -55,9 +52,17 @@ export async function middleware(request: NextRequest) {
     }
   );
 
+  // M1 fix: getUser() refreshes the session cookie as a side effect.
+  // Must run before any early return so public-route visitors keep their sessions alive.
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Allow public routes through — but return `response` (not NextResponse.next())
+  // so any refreshed cookies set above are forwarded to the browser.
+  if (isPublicRoute(pathname)) {
+    return response;
+  }
 
   // Protected: /staff/* — require authenticated user
   if (pathname.startsWith("/staff/") && !user) {
@@ -74,8 +79,10 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Check admin role in user metadata
-    const role = user.user_metadata?.role ?? user.app_metadata?.role;
+    // C7 fix: read role ONLY from app_metadata (server-writable via Supabase Admin API).
+    // Never trust user_metadata — any authenticated user can write it via
+    // supabase.auth.updateUser() and self-promote to admin.
+    const role = user.app_metadata?.role;
     if (role !== "admin") {
       return NextResponse.redirect(new URL("/staff/dashboard", request.url));
     }

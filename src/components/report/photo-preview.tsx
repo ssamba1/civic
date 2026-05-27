@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 type GpsStatus = "acquiring" | "found" | "manual";
 
@@ -23,6 +23,12 @@ export default function PhotoPreview({
   const [description, setDescription] = useState("");
 
   const previewUrl = useMemo(() => URL.createObjectURL(photo), [photo]);
+
+  useEffect(() => {
+    return () => {
+      URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const gpsIndicator: Record<GpsStatus, { label: string; color: string }> = {
     acquiring: { label: "Getting location...", color: "bg-yellow-400" },

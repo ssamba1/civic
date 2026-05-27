@@ -10,6 +10,7 @@
  * Requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars.
  */
 
+import { randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.SUPABASE_URL!;
@@ -26,6 +27,23 @@ if (!supabaseUrl || !supabaseServiceKey) {
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
+
+// ---------------------------------------------------------------------------
+// Generate random passwords at runtime — never embed as string literals
+// ---------------------------------------------------------------------------
+
+function generatePassword(): string {
+  return randomBytes(16).toString("hex"); // 32-char hex password
+}
+
+const passwords = {
+  resident: generatePassword(),
+  staff_dispatcher: generatePassword(),
+  admin: generatePassword(),
+};
+
+console.log("Generated seed passwords (save these):");
+console.log(JSON.stringify(passwords, null, 2));
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -97,19 +115,19 @@ interface TestUser {
 const TEST_USERS: TestUser[] = [
   {
     email: "resident@civic-test.local",
-    password: "CivicTest123!",
+    password: passwords.resident,
     role: "resident",
     displayName: "Jane Doe",
   },
   {
     email: "dispatcher@civic-test.local",
-    password: "CivicTest123!",
+    password: passwords.staff_dispatcher,
     role: "staff_dispatcher",
     displayName: "Marcus Chen",
   },
   {
     email: "admin@civic-test.local",
-    password: "CivicTest123!",
+    password: passwords.admin,
     role: "admin",
     displayName: "Sarah Park",
   },

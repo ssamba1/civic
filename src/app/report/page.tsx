@@ -14,7 +14,7 @@ type Step =
   | { name: "camera" }
   | { name: "preview"; photo: File }
   | { name: "submitting"; photo: File }
-  | { name: "emergency"; photo: File; classification: Classification; description: string | null }
+  | { name: "emergency"; photo: File; classification: Classification; description: string | null; reportId: string }
   | { name: "done"; reportId: string; classification: Classification };
 
 export default function ReportPage() {
@@ -97,6 +97,7 @@ export default function ReportPage() {
             photo,
             classification,
             description,
+            reportId: id,
           });
           return;
         }
@@ -112,11 +113,10 @@ export default function ReportPage() {
 
   const handleEmergencyOverride = useCallback(() => {
     if (step.name !== "emergency") return;
-    // Already submitted — just proceed to confirmation
-    // The report is already in the DB, so show success
+    // Already submitted — just proceed to confirmation with the real report ID
     setStep({
       name: "done",
-      reportId: "submitted",
+      reportId: step.reportId,
       classification: step.classification,
     });
   }, [step]);

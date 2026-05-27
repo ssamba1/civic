@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/db/client";
 import { reportToOpen311 } from "@/lib/open311/transform";
 import { toOpen311SingleXml, toErrorXml } from "@/lib/open311/xml";
-import type { Report, Classification, City } from "@/lib/types";
+import { normalizeLocation, type Report, type Classification, type City, type ReportStatus } from "@/lib/types";
 
 /**
  * GET /api/open311/v2/requests/[id]
@@ -30,10 +30,10 @@ export async function GET(
       return errorResponse(404, `Service request ${id} not found`, wantsXml);
     }
 
-    const report = rowToReport(row);
+    const report = rowToReport(row as ReportRow);
     const classification: Classification | null =
-      row.classifications?.[0] ?? row.classifications ?? null;
-    const city: City = row.cities;
+      (row as Record<string, unknown[]>).classifications?.[0] as Classification | null ?? null;
+    const city: City = (row as Record<string, City>).cities;
 
     const open311Request = reportToOpen311(report, classification, city);
 
@@ -73,29 +73,29 @@ function errorResponse(code: number, description: string, xml: boolean) {
   return NextResponse.json([{ code, description }], { status: code });
 }
 
-/**
- * Extract the Report fields from a Supabase joined row.
- * Handles PostGIS geometry → {lat, lng} normalization.
- */
-function rowToReport(row: any): Report {
-  let location = row.location;
-  if (typeof location === "object" && location?.coordinates) {
-    location = { lng: location.coordinates[0], lat: location.coordinates[1] };
-  } else if (typeof location === "string") {
-    const match = location.match(/POINT\(([^ ]+) ([^ ]+)\)/);
-    if (match) {
-      location = { lng: parseFloat(match[1]), lat: parseFloat(match[2]) };
-    }
-  }
+type ReportRow = {
+  id: string;
+  city_id: string;
+  reporter_id: string;
+  location: unknown;
+  photo_public_url: string;
+  photo_raw_url: string | null;
+  status: string;
+  address: string | null;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
+function rowToReport(row: ReportRow): Report {
   return {
     id: row.id,
     city_id: row.city_id,
     reporter_id: row.reporter_id,
-    location,
+    location: normalizeLocation(row.location) ?? { lat: 0, lng: 0 },
     photo_public_url: row.photo_public_url,
     photo_raw_url: row.photo_raw_url,
-    status: row.status,
+    status: row.status as ReportStatus,
     address: row.address,
     description: row.description,
     created_at: row.created_at,

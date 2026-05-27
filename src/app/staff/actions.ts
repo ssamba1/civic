@@ -1,25 +1,36 @@
 "use server";
 
+import { z } from "zod";
 import { createServerClient } from "@/lib/db/client";
+import { getAuthUser } from "@/lib/db/ssr-client";
 import type { Result, ReportCategory } from "@/lib/types";
 
+const STAFF_ROLES = ["staff_dispatcher", "staff_supervisor", "admin"] as const;
+
+const ReportCategorySchema = z.enum([
+  "pothole",
+  "streetlight",
+  "downed_sign",
+  "graffiti",
+  "illegal_dump",
+  "water_leak",
+  "sidewalk_damage",
+  "tree_down",
+]);
+
 async function getStaffUser() {
-  const supabase = createServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // C5 fix: use cookie-aware SSR client for auth, service-role client only for DB queries
+  const user = await getAuthUser();
   if (!user) return null;
 
-  const { data: profile } = await supabase
+  const db = createServerClient();
+  const { data: profile } = await db
     .from("users")
     .select("id, role, city_id")
     .eq("id", user.id)
     .single();
 
-  if (
-    !profile ||
-    !["staff_dispatcher", "staff_supervisor", "admin"].includes(profile.role)
-  ) {
+  if (!profile || !STAFF_ROLES.includes(profile.role)) {
     return null;
   }
   return profile;
@@ -54,10 +65,12 @@ export async function dispatchWorkOrder(
     .single();
 
   if (wo) {
-    await supabase
+    // M9 fix: check error on report status update
+    const { error: reportError } = await supabase
       .from("reports")
       .update({ status: "dispatched", updated_at: new Date().toISOString() })
       .eq("id", wo.report_id);
+    if (reportError) return { ok: false, error: "status_update_failed" };
   }
 
   return { ok: true, data: undefined };
@@ -91,10 +104,12 @@ export async function closeWorkOrder(
     .single();
 
   if (wo) {
-    await supabase
+    // M9 fix: check error on report status update
+    const { error: reportError } = await supabase
       .from("reports")
       .update({ status: "closed", updated_at: new Date().toISOString() })
       .eq("id", wo.report_id);
+    if (reportError) return { ok: false, error: "status_update_failed" };
   }
 
   return { ok: true, data: undefined };
@@ -126,16 +141,20 @@ export async function rejectReport(
 
 export async function overrideClassification(
   reportId: string,
-  newCategory: string
+  newCategory: ReportCategory
 ): Promise<Result<void>> {
   const staff = await getStaffUser();
   if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
+
+  // H9 fix: validate category against known enum values before DB write
+  const parsed = ReportCategorySchema.safeParse(newCategory);
+  if (!parsed.success) return { ok: false, error: "invalid_category" };
 
   const supabase = createServerClient();
 
   const { error } = await supabase
     .from("classifications")
-    .update({ category: newCategory })
+    .update({ category: parsed.data })
     .eq("report_id", reportId);
 
   if (error) return { ok: false, error: error.message };

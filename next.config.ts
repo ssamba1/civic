@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**.supabase.co",
+        hostname: "*.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
     ],
@@ -37,6 +37,7 @@ const nextConfig: NextConfig = {
             value: [
               "default-src 'self'",
               "script-src 'self' https://api.mapbox.com https://events.mapbox.com",
+              // unsafe-inline required by Mapbox GL JS — accepted risk, mitigated by HTML escaping in popup rendering
               "style-src 'self' 'unsafe-inline' https://api.mapbox.com",
               "img-src 'self' data: blob: https://*.supabase.co https://api.mapbox.com https://*.mapbox.com",
               "font-src 'self'",
@@ -60,6 +61,11 @@ const nextConfig: NextConfig = {
           {
             key: "Permissions-Policy",
             value: "camera=(self), geolocation=(self), microphone=()",
+          },
+          {
+            // 2 years — minimum for HSTS preload list submission
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
           },
         ],
       },

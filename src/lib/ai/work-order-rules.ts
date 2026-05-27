@@ -20,13 +20,13 @@ const RULES: Record<ReportCategory, WorkOrderRule> = {
     materials: ["cold patch", "tamper"],
   },
   streetlight: {
-    department: "electrical",
+    department: "utilities",
     crew_type: "line_crew",
     est_minutes: 60,
     materials: ["bulb", "fuse", "lift truck"],
   },
   downed_sign: {
-    department: "signs",
+    department: "public_works",
     crew_type: "sign_crew",
     est_minutes: 20,
     materials: ["post", "bolts"],
@@ -44,7 +44,7 @@ const RULES: Record<ReportCategory, WorkOrderRule> = {
     materials: ["truck", "gloves"],
   },
   water_leak: {
-    department: "water",
+    department: "utilities",
     crew_type: "line_crew",
     est_minutes: 120,
     materials: ["varies by severity"],
@@ -74,13 +74,13 @@ const RULES: Record<ReportCategory, WorkOrderRule> = {
     materials: ["jet truck"],
   },
   faded_signage: {
-    department: "signs",
+    department: "public_works",
     crew_type: "sign_crew",
     est_minutes: 25,
     materials: ["replacement sign"],
   },
   other: {
-    department: "review_queue",
+    department: "other",
     crew_type: null,
     est_minutes: 0,
     materials: [],

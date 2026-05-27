@@ -13,8 +13,27 @@ const clientEnvSchema = z.object({
   NEXT_PUBLIC_MAPBOX_TOKEN: z.string().min(1),
 });
 
+function parseServerEnv() {
+  try {
+    return serverEnvSchema.parse({
+      SUPABASE_URL: process.env.SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+      SENTRY_DSN: process.env.SENTRY_DSN,
+    });
+  } catch (err) {
+    const issues =
+      err instanceof z.ZodError
+        ? err.issues.map((i) => i.path.join(".") || String(i)).join(", ")
+        : String(err);
+    throw new Error(`Missing or invalid server environment variables: ${issues}`);
+  }
+}
+
+export const serverEnv = parseServerEnv();
+
 export function getServerEnv() {
-  return serverEnvSchema.parse(process.env);
+  return serverEnv;
 }
 
 export function getClientEnv() {

@@ -32,12 +32,11 @@ export type ReportCategory =
 
 export type Department =
   | "public_works"
-  | "electrical"
-  | "signs"
+  | "utilities"
   | "parks"
+  | "code_enforcement"
   | "sanitation"
-  | "water"
-  | "review_queue";
+  | "other";
 
 export type CrewType =
   | "paving"
@@ -59,11 +58,46 @@ export interface Classification {
   reasoning: string;
 }
 
+export type GeoPoint = { lng: number; lat: number };
+
+export function normalizeLocation(raw: unknown): GeoPoint | null {
+  if (raw == null) return null;
+  // PostGIS GeoJSON: { type: "Point", coordinates: [lng, lat] }
+  if (
+    typeof raw === "object" &&
+    (raw as Record<string, unknown>)["type"] === "Point" &&
+    Array.isArray((raw as Record<string, unknown>)["coordinates"])
+  ) {
+    const coords = (raw as Record<string, unknown>)["coordinates"] as unknown[];
+    const lng = Number(coords[0]);
+    const lat = Number(coords[1]);
+    if (!isNaN(lng) && !isNaN(lat)) return { lng, lat };
+    return null;
+  }
+  // Plain {lng, lat} object
+  if (typeof raw === "object") {
+    const obj = raw as Record<string, unknown>;
+    const lng = Number(obj["lng"]);
+    const lat = Number(obj["lat"]);
+    if (!isNaN(lng) && !isNaN(lat)) return { lng, lat };
+  }
+  // WKT string: "POINT(lng lat)"
+  if (typeof raw === "string") {
+    const m = raw.match(/^POINT\(\s*([-\d.]+)\s+([-\d.]+)\s*\)$/i);
+    if (m) {
+      const lng = Number(m[1]);
+      const lat = Number(m[2]);
+      if (!isNaN(lng) && !isNaN(lat)) return { lng, lat };
+    }
+  }
+  return null;
+}
+
 export interface Report {
   id: string;
   city_id: string;
   reporter_id: string;
-  location: { lng: number; lat: number };
+  location: GeoPoint;
   photo_public_url: string;
   photo_raw_url: string | null;
   status: ReportStatus;
@@ -79,8 +113,8 @@ export interface WorkOrder {
   department: Department;
   crew_type: CrewType | null;
   priority_score: number;
-  est_minutes: number;
-  materials: string[];
+  est_minutes: number | null;
+  materials: string[] | null;
   assigned_crew_id: string | null;
   dispatched_at: string | null;
   completed_at: string | null;

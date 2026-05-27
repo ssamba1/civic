@@ -2,6 +2,10 @@
 
 import { z } from "zod/v4";
 import { createServerClient } from "@/lib/db/client";
+import { createSSRClient } from "@/lib/db/ssr-client";
+import { blurFacesAndPlates } from "@/lib/privacy/blur";
+import { uploadReportPhotos } from "@/lib/privacy/upload";
+import { runClassifyPipeline } from "@/lib/ai/classify-pipeline";
 import type { Result, Classification } from "@/lib/types";
 
 const submitReportSchema = z.object({
@@ -33,36 +37,83 @@ export async function submitReport(
     return { ok: false, error: "Either GPS location or address is required." };
   }
 
-  const supabase = createServerClient();
+  // C2 — Auth check: get authenticated user via SSR client (cookie-based session)
+  const ssrClient = await createSSRClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await ssrClient.auth.getUser();
 
-  // Decode base64 and upload photo to Supabase storage
-  const photoBuffer = Buffer.from(photo, "base64");
-  const fileName = `reports/${crypto.randomUUID()}.jpg`;
-
-  const { error: uploadError } = await supabase.storage
-    .from("photos")
-    .upload(fileName, photoBuffer, {
-      contentType: "image/jpeg",
-      upsert: false,
-    });
-
-  if (uploadError) {
-    return { ok: false, error: `Photo upload failed: ${uploadError.message}` };
+  if (authError || !user) {
+    return { ok: false, error: "unauthenticated" };
   }
 
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("photos").getPublicUrl(fileName);
+  // C2 — Look up city_id from user profile
+  const { data: profile, error: profileError } = await ssrClient
+    .from("users")
+    .select("city_id")
+    .eq("id", user.id)
+    .single();
 
-  // Create report row
+  if (profileError || !profile?.city_id) {
+    return { ok: false, error: "User profile not found or missing city." };
+  }
+
+  const cityId: string = profile.city_id;
+
+  // Service-role client for privileged operations (rate limit check, insert)
+  const supabase = createServerClient();
+
+  // M6 — Rate limiting: max 10 reports per user per hour
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const { count, error: countError } = await supabase
+    .from("reports")
+    .select("id", { count: "exact", head: true })
+    .eq("reporter_id", user.id)
+    .gte("created_at", oneHourAgo);
+
+  if (countError) {
+    return { ok: false, error: `Rate limit check failed: ${countError.message}` };
+  }
+
+  if ((count ?? 0) >= 10) {
+    return { ok: false, error: "rate_limited" };
+  }
+
+  // C1 — Decode base64 photo to Blob, apply privacy blur
+  const photoBlob = await fetch(`data:image/jpeg;base64,${photo}`).then((r) =>
+    r.blob()
+  );
+
+  const blurResult = await blurFacesAndPlates(photoBlob);
+
+  // Generate report ID before upload so paths use it
   const reportId = crypto.randomUUID();
+
+  // C1 + C3 — Upload blurred + original via privacy upload (handles bucket/path correctly)
+  const uploadResult = await uploadReportPhotos(
+    blurResult.blurred,
+    blurResult.original,
+    reportId,
+    cityId
+  );
+
+  if (!uploadResult.ok) {
+    return { ok: false, error: `Photo upload failed: ${uploadResult.error}` };
+  }
+
+  const { publicUrl } = uploadResult.data;
+
+  // C2 — Create report row with city_id and reporter_id
   const { error: insertError } = await supabase.from("reports").insert({
     id: reportId,
-    location: location ? `POINT(${location.lng} ${location.lat})` : null,
+    location: location ? `SRID=4326;POINT(${location.lng} ${location.lat})` : null,
     photo_public_url: publicUrl,
     address,
     description,
     status: "open",
+    city_id: cityId,
+    reporter_id: user.id,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   });
@@ -74,54 +125,30 @@ export async function submitReport(
     };
   }
 
-  // Call AI classify endpoint
-  let classification: Classification;
+  // Call AI classify pipeline directly — no HTTP round-trip, no cookie forwarding issue
+  const fallbackClassification: Classification = {
+    category: "other",
+    subcategory: "unclassified",
+    severity: 3,
+    hazard_radius_m: 0,
+    visible_size_estimate: "unknown",
+    is_emergency: false,
+    confidence: 0,
+    reasoning: "Classification service unavailable",
+  };
+
+  let finalClassification: Classification = fallbackClassification;
   try {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ??
-      process.env.VERCEL_URL ??
-      "http://localhost:3000";
-    const origin = baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`;
-
-    const classifyRes = await fetch(`${origin}/api/ai/classify`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ photo_url: publicUrl, report_id: reportId }),
-    });
-
-    if (!classifyRes.ok) {
-      // Classification failed but report is saved — return with default
-      classification = {
-        category: "other",
-        subcategory: "unclassified",
-        severity: 3,
-        hazard_radius_m: 0,
-        visible_size_estimate: "unknown",
-        is_emergency: false,
-        confidence: 0,
-        reasoning: "Classification service unavailable",
+    const pipelineResult = await runClassifyPipeline(reportId);
+    if (pipelineResult.ok) {
+      finalClassification = {
+        ...pipelineResult.data.classification,
+        is_emergency: pipelineResult.data.emergency,
       };
-    } else {
-      classification = await classifyRes.json();
     }
   } catch {
-    classification = {
-      category: "other",
-      subcategory: "unclassified",
-      severity: 3,
-      hazard_radius_m: 0,
-      visible_size_estimate: "unknown",
-      is_emergency: false,
-      confidence: 0,
-      reasoning: "Classification service unavailable",
-    };
+    // Classification failed — report already saved, caller receives fallback
   }
 
-  // Update report with classification data
-  await supabase
-    .from("reports")
-    .update({ updated_at: new Date().toISOString() })
-    .eq("id", reportId);
-
-  return { ok: true, data: { id: reportId, classification } };
+  return { ok: true, data: { id: reportId, classification: finalClassification } };
 }

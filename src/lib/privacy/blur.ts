@@ -124,7 +124,7 @@ function canvasToBlob(
  *          `original` — untouched copy (goes to `photos-raw`, 30-day TTL)
  */
 export async function blurFacesAndPlates(
-  imageFile: File
+  imageFile: File | Blob
 ): Promise<{ blurred: Blob; original: Blob }> {
   const bitmap = await createImageBitmap(imageFile);
   const { width, height } = bitmap;
@@ -141,7 +141,7 @@ export async function blurFacesAndPlates(
 
   // Detect faces (or fall back)
   const faces = await detectFaces(bitmap);
-  const faceRegions = faces ?? [fallbackRegions(width, height)[0]];
+  const faceRegions = (faces && faces.length > 0) ? faces : [fallbackRegions(width, height)[0]];
 
   // Plate regions (always heuristic in v1)
   const plates = plateRegions(width, height);

@@ -2,13 +2,12 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { Classification, Result } from "@/lib/types";
 import { classificationSchema } from "./classification-schema";
 import { CLASSIFICATION_PROMPT } from "./prompt";
+import { serverEnv } from "@/lib/env";
 
 const MODEL = "gemini-2.5-flash";
 
 function getClient() {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) throw new Error("GEMINI_API_KEY is not set");
-  return new GoogleGenerativeAI(key);
+  return new GoogleGenerativeAI(serverEnv.GEMINI_API_KEY);
 }
 
 /**

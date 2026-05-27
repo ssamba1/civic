@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { getAuthUser } from "@/lib/db/ssr-client";
 import { createServerClient } from "@/lib/db/client";
 import { StaffInbox } from "@/components/staff/staff-inbox";
 
@@ -42,18 +44,18 @@ export interface WorkOrderWithDetails {
     is_emergency: boolean;
     confidence: number;
     reasoning: string;
-  };
+  } | null;
 }
 
-async function getWorkOrders() {
-  const supabase = createServerClient();
+async function getWorkOrders(cityId: string): Promise<WorkOrderWithDetails[]> {
+  const db = createServerClient();
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("work_orders")
     .select(
       `
       *,
-      report:reports!report_id (
+      reports!report_id (
         id,
         city_id,
         reporter_id,
@@ -64,20 +66,21 @@ async function getWorkOrders() {
         address,
         description,
         created_at,
-        updated_at
-      ),
-      classification:classifications!report_id (
-        category,
-        subcategory,
-        severity,
-        hazard_radius_m,
-        visible_size_estimate,
-        is_emergency,
-        confidence,
-        reasoning
+        updated_at,
+        classifications (
+          category,
+          subcategory,
+          severity,
+          hazard_radius_m,
+          visible_size_estimate,
+          is_emergency,
+          confidence,
+          reasoning
+        )
       )
     `
     )
+    .eq("reports.city_id", cityId)
     .order("priority_score", { ascending: false });
 
   if (error) {
@@ -85,18 +88,65 @@ async function getWorkOrders() {
     return [];
   }
 
-  // Supabase returns nested relations; flatten single-object relations
-  return (data ?? []).map((row: Record<string, unknown>) => ({
-    ...row,
-    report: Array.isArray(row.report) ? row.report[0] : row.report,
-    classification: Array.isArray(row.classification)
-      ? row.classification[0]
-      : row.classification,
-  })) as WorkOrderWithDetails[];
+  // Flatten nested relations: reports is a single object, classifications is an array
+  return (data ?? [])
+    .map((row: Record<string, unknown>) => {
+      const report = Array.isArray(row.reports)
+        ? row.reports[0]
+        : (row.reports as Record<string, unknown> | null);
+
+      if (!report) return null;
+
+      const classificationsRaw = report.classifications;
+      const classification = Array.isArray(classificationsRaw)
+        ? (classificationsRaw[0] ?? null)
+        : (classificationsRaw ?? null);
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { reports: _reports, ...rest } = row as Record<string, unknown> & {
+        reports: unknown;
+      };
+
+      return {
+        ...rest,
+        report: {
+          id: report.id,
+          city_id: report.city_id,
+          reporter_id: report.reporter_id,
+          location: report.location,
+          photo_public_url: report.photo_public_url,
+          photo_raw_url: report.photo_raw_url ?? null,
+          status: report.status,
+          address: report.address ?? null,
+          description: report.description ?? null,
+          created_at: report.created_at,
+          updated_at: report.updated_at,
+        },
+        classification,
+      };
+    })
+    .filter(Boolean) as WorkOrderWithDetails[];
 }
 
 export default async function StaffPage() {
-  const workOrders = await getWorkOrders();
+  // C5: Auth check — use cookie-based client, not service-role
+  const user = await getAuthUser();
+  if (!user) redirect("/login");
+
+  // C5: Look up the staff member's city_id from the users table
+  const db = createServerClient();
+  const { data: userRow, error: userError } = await db
+    .from("users")
+    .select("city_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (userError || !userRow) redirect("/login");
+  if (userRow.role !== "staff") redirect("/login");
+
+  const cityId: string = userRow.city_id;
+
+  const workOrders = await getWorkOrders(cityId);
 
   return (
     <div className="flex h-full flex-col">

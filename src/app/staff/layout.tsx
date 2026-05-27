@@ -1,4 +1,5 @@
 import { createServerClient } from "@/lib/db/client";
+import { getAuthUser } from "@/lib/db/ssr-client";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
@@ -22,13 +23,12 @@ export default async function StaffLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = createServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) redirect("/login");
 
+  // Use service-role client to read users table (RLS may block anon key)
+  const supabase = createServerClient();
   const { data: profile } = await supabase
     .from("users")
     .select("id, role, display_name, email")
@@ -72,7 +72,7 @@ export default async function StaffLayout({
         <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-              {profile.display_name.charAt(0).toUpperCase()}
+              {(profile.display_name?.charAt(0) ?? '?').toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
