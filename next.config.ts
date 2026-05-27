@@ -13,7 +13,12 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Mapbox GL JS bundles its own worker — exclude from webpack bundling
+  // Mapbox GL JS — alias for both Turbopack (default in Next 16) and webpack
+  turbopack: {
+    resolveAlias: {
+      "mapbox-gl": "mapbox-gl/dist/mapbox-gl.js",
+    },
+  },
   webpack: (config) => {
     config.resolve = config.resolve ?? {};
     config.resolve.alias = {
