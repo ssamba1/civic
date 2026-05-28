@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import {
   AlertCircle,
   CheckCircle2,
@@ -13,6 +16,9 @@ import type { ReportStatus } from "@/lib/types";
 
 interface RecentReportsProps {
   reports: DashboardReport[];
+  focusedId?: string | null;
+  onHoverReport?: (id: string | null) => void;
+  onClickReport?: (id: string) => void;
 }
 
 const STATUS_CONFIG: Record<
@@ -51,36 +57,89 @@ const STATUS_CONFIG: Record<
   },
 };
 
-export function RecentReports({ reports }: RecentReportsProps) {
+export function RecentReports({
+  reports,
+  focusedId = null,
+  onHoverReport,
+  onClickReport,
+}: RecentReportsProps) {
+  const listContainerRef = useRef<HTMLUListElement>(null);
+  const itemsRef = useRef<Record<string, HTMLLIElement | null>>({});
+
+  // Auto-scroll the active item into view when focused from map
+  useEffect(() => {
+    if (!focusedId) return;
+
+    const targetEl = itemsRef.current[focusedId];
+    if (targetEl) {
+      targetEl.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  }, [focusedId]);
+
   if (reports.length === 0) {
     return (
       <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-zinc-900">Recent Reports</h2>
         <p className="mt-4 text-sm text-zinc-500">
-          No reports have been submitted yet.
+          No matching reports found with the current filters.
         </p>
       </section>
     );
   }
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-zinc-900">Recent Reports</h2>
-      <ul className="mt-4 divide-y divide-zinc-100" role="list">
+    <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm flex flex-col h-full max-h-[550px] overflow-hidden">
+      <div>
+        <h2 className="text-lg font-semibold text-zinc-900">Recent Reports</h2>
+        <p className="text-xs text-zinc-400 mt-1 mb-3">
+          Showing {reports.length} matching incidents &middot; Hover/click to interact
+        </p>
+      </div>
+
+      <ul
+        ref={listContainerRef}
+        className="divide-y divide-zinc-100 overflow-y-auto pr-1 flex-1 scroll-smooth"
+        role="list"
+      >
         {reports.map((report) => {
           const meta = CATEGORY_META[report.category];
           const statusCfg = STATUS_CONFIG[report.status];
+          const isFocused = focusedId === report.id;
 
           return (
-            <li key={report.id}>
-              <a
-                href={`?focus=${report.id}`}
-                className="flex items-center gap-4 py-3 transition-colors hover:bg-zinc-50 -mx-2 px-2 rounded-lg"
+            <li
+              key={report.id}
+              ref={(el) => {
+                itemsRef.current[report.id] = el;
+              }}
+              onMouseEnter={() => onHoverReport && onHoverReport(report.id)}
+              onMouseLeave={() => onHoverReport && onHoverReport(null)}
+              className="py-1"
+            >
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (onClickReport) onClickReport(report.id);
+                }}
+                className={cn(
+                  "w-full text-left flex items-center gap-4 py-3 px-3 rounded-lg border border-transparent transition-all duration-200 outline-none select-none",
+                  isFocused
+                    ? "bg-zinc-50 border-zinc-200/60 shadow-sm"
+                    : "hover:bg-zinc-50/50"
+                )}
+                style={
+                  isFocused
+                    ? { borderLeft: `4px solid ${meta.color}`, paddingLeft: "8px" }
+                    : undefined
+                }
               >
                 {/* severity dot + category color */}
                 <span className="relative flex-shrink-0">
                   <span
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-white text-sm font-bold"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-white text-sm font-bold shadow-inner"
                     style={{ backgroundColor: meta.color }}
                     aria-hidden="true"
                   >
@@ -88,7 +147,7 @@ export function RecentReports({ reports }: RecentReportsProps) {
                   </span>
                   <span
                     className={cn(
-                      "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white",
+                      "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white shadow",
                       severityColor(report.severity),
                     )}
                     title={`Severity ${report.severity}/5`}
@@ -97,13 +156,13 @@ export function RecentReports({ reports }: RecentReportsProps) {
 
                 {/* details */}
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-medium text-zinc-900">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="truncate text-sm font-semibold text-zinc-900 group-hover:text-blue-600">
                       {meta.label}
                     </p>
                     <span
                       className={cn(
-                        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium leading-none",
+                        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium leading-none flex-shrink-0",
                         statusCfg.className,
                       )}
                     >
@@ -111,18 +170,18 @@ export function RecentReports({ reports }: RecentReportsProps) {
                       {statusCfg.label}
                     </span>
                   </div>
-                  <div className="mt-0.5 flex items-center gap-3 text-xs text-zinc-500">
-                    <span className="inline-flex items-center gap-1 truncate">
+                  <div className="mt-1 flex items-center justify-between gap-3 text-xs text-zinc-500">
+                    <span className="inline-flex items-center gap-1 truncate text-zinc-400">
                       <MapPin className="h-3 w-3 flex-shrink-0" />
                       {report.address}
                     </span>
-                    <span className="inline-flex items-center gap-1 flex-shrink-0">
+                    <span className="inline-flex items-center gap-1 flex-shrink-0 text-zinc-400 font-mono">
                       <Clock className="h-3 w-3" />
                       {timeAgo(report.created_at)}
                     </span>
                   </div>
                 </div>
-              </a>
+              </button>
             </li>
           );
         })}
@@ -144,7 +203,7 @@ function timeAgo(iso: string): string {
   const mins = Math.floor(diff / 60_000);
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
+  if (hrs < 24) return `${hrs}h`;
   const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
+  return `${days}d`;
 }

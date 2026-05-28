@@ -83,3 +83,137 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--color-primary-light);
   color: var(--foreground);
 }
+
+/* ── 3D Holographic Map System ── */
+
+/* Viewport Perspective Setup */
+.map-3d-active {
+  perspective: 1400px !important;
+  perspective-origin: 50% 85% !important;
+  transform-style: preserve-3d !important;
+}
+
+/* The Leaflet Container is resized, offset, and tilted to load extra tiles and prevent voids */
+.map-3d-active .leaflet-container {
+  width: 155% !important;
+  height: 180% !important;
+  top: -45% !important;
+  left: -27.5% !important;
+  transform: rotateX(52deg) rotateZ(-12deg) !important;
+  transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), 
+              width 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), 
+              height 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), 
+              top 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), 
+              left 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  transform-style: preserve-3d !important;
+}
+
+.map-2d-active .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  top: 0 !important;
+  left: 0 !important;
+  transform: rotateX(0deg) rotateZ(0deg) !important;
+  transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), 
+              width 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), 
+              height 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), 
+              top 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), 
+              left 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+/* Upright 3D Billboards to stand perpendicular on the tilted plane */
+.map-3d-active .marker-3d-billboard {
+  transform: rotateZ(12deg) rotateX(-52deg) translateZ(28px) !important;
+  transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  transform-origin: bottom center !important;
+  transform-style: preserve-3d !important;
+}
+
+.map-2d-active .marker-3d-billboard {
+  transform: rotateZ(0deg) rotateX(0deg) translateZ(0px) !important;
+  transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  transform-origin: bottom center !important;
+}
+
+/* Laser Tether Connector (from map plane up to floating billboard) */
+.marker-3d-tether {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 0px;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.2), currentColor 80%, white);
+  transition: height 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s ease;
+  opacity: 0;
+  box-shadow: 0 0 10px currentColor;
+  transform-origin: bottom center;
+  pointer-events: none;
+}
+
+.map-3d-active .marker-3d-tether {
+  height: 28px;
+  opacity: 0.85;
+}
+
+/* Ground shadow mapping */
+.marker-3d-shadow {
+  width: 14px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.85);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) translateZ(-28px) scale(0);
+  transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 1.2s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.map-3d-active .marker-3d-shadow {
+  transform: translate(-50%, -50%) translateZ(-28px) scale(1);
+  opacity: 1;
+}
+
+/* Ground glow pulse ring */
+.marker-3d-glow {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px dashed currentColor;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) translateZ(-28px) scale(0);
+  transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease;
+  opacity: 0;
+  pointer-events: none;
+  animation: spin-glow 12s linear infinite;
+}
+
+.map-3d-active .marker-3d-glow {
+  transform: translate(-50%, -50%) translateZ(-28px) scale(1);
+  opacity: 0.65;
+}
+
+@keyframes spin-glow {
+  from {
+    transform: translate(-50%, -50%) translateZ(-28px) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) translateZ(-28px) rotate(360deg);
+  }
+}
+
+/* 3D OSM Vector Buildings Canvas Styling */
+.leaflet-overlay-pane canvas {
+  opacity: 0;
+  transition: opacity 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+
+.map-3d-active .leaflet-overlay-pane canvas {
+  opacity: 0.95;
+}

@@ -13,43 +13,33 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Mapbox GL JS — alias for both Turbopack (default in Next 16) and webpack
-  turbopack: {
-    resolveAlias: {
-      "mapbox-gl": "mapbox-gl/dist/mapbox-gl.js",
-    },
-  },
-  webpack: (config) => {
-    config.resolve = config.resolve ?? {};
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      "mapbox-gl": "mapbox-gl/dist/mapbox-gl.js",
-    };
-    return config;
-  },
-
   // Sentry wraps the config at build time via withSentryConfig;
   // keep sentry-specific keys here for the wrapper to pick up.
   serverExternalPackages: ["@sentry/nextjs"],
 
   async headers() {
+    const isDev = process.env.NODE_ENV === "development";
+
+    const cspDirectives = [
+      "default-src 'self'",
+      isDev
+        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+        : "script-src 'self'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https://*.supabase.co https://*.openstreetmap.org https://*.basemaps.cartocdn.com https://*.arcgisonline.com",
+      "font-src 'self'",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.openstreetmap.org https://*.basemaps.cartocdn.com https://*.arcgisonline.com https://*.sentry.io https://generativelanguage.googleapis.com",
+      "worker-src 'self' blob:",
+      "frame-ancestors 'none'",
+    ];
+
     return [
       {
         source: "/(.*)",
         headers: [
           {
             key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              "script-src 'self' https://api.mapbox.com https://events.mapbox.com",
-              // unsafe-inline required by Mapbox GL JS — accepted risk, mitigated by HTML escaping in popup rendering
-              "style-src 'self' 'unsafe-inline' https://api.mapbox.com",
-              "img-src 'self' data: blob: https://*.supabase.co https://api.mapbox.com https://*.mapbox.com",
-              "font-src 'self'",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.mapbox.com https://events.mapbox.com https://*.sentry.io https://generativelanguage.googleapis.com",
-              "worker-src 'self' blob:",
-              "frame-ancestors 'none'",
-            ].join("; "),
+            value: cspDirectives.join("; "),
           },
           {
             key: "X-Frame-Options",
