@@ -1,6 +1,6 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
-  "organizeImports": { "enabled": true },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
@@ -16,6 +16,6 @@
     "indentWidth": 2
   },
   "files": {
-    "ignore": ["node_modules", ".next", "public"]
+    "includes": ["**", "!**/node_modules", "!**/.next", "!public", "!scripts"]
   }
 }

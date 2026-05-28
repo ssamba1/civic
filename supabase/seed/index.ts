@@ -173,7 +173,7 @@ async function seedUsers(cityId: string): Promise<Record<string, string>> {
           display_name: u.displayName,
         },
         { onConflict: "id" }
-      ),
+      ).select("id"),
       `users.upsert(${u.email})`
     );
 
@@ -394,7 +394,7 @@ async function seedReports(
         reasoning: sr.classification.reasoning,
         model_version: "gemini-2.5-flash-v1",
         raw_response: sr.classification,
-      }),
+      }).select("id"),
       `classifications.insert(${sr.classification.category})`
     );
 
@@ -407,7 +407,7 @@ async function seedReports(
         priority_score: sr.workOrder.priorityScore,
         est_minutes: sr.workOrder.estMinutes,
         materials: sr.workOrder.materials,
-      }),
+      }).select("id"),
       `work_orders.insert(${sr.workOrder.department})`
     );
 

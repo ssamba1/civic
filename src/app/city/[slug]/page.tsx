@@ -3,13 +3,13 @@ import { notFound } from "next/navigation";
 import { Camera, MapPin, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
+import { KNOWN_CITIES } from "@/lib/dashboard-data";
 import {
-  KNOWN_CITIES,
   fetchCity,
   fetchCityStats,
   fetchCategoryBreakdown,
   fetchRecentReports,
-} from "@/lib/dashboard-data";
+} from "@/lib/dashboard-queries";
 import { DashboardInteractive } from "@/components/dashboard/dashboard-interactive";
 
 /* ------------------------------------------------------------------

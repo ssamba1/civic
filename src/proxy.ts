@@ -84,7 +84,7 @@ export async function proxy(request: NextRequest) {
     // supabase.auth.updateUser() and self-promote to admin.
     const role = user.app_metadata?.role;
     if (role !== "admin") {
-      return NextResponse.redirect(new URL("/staff/dashboard", request.url));
+      return NextResponse.redirect(new URL("/staff", request.url));
     }
   }
 

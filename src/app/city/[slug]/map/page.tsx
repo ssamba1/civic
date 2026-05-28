@@ -1,9 +1,6 @@
 import { notFound } from "next/navigation";
-import { 
-  KNOWN_CITIES, 
-  fetchCity, 
-  fetchRecentReports 
-} from "@/lib/dashboard-data";
+import { KNOWN_CITIES } from "@/lib/dashboard-data";
+import { fetchCity, fetchRecentReports } from "@/lib/dashboard-queries";
 import { FullscreenMapOrchestrator } from "@/components/map/fullscreen-map";
 
 interface PageProps {

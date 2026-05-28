@@ -6,7 +6,18 @@ import PhotoPreview from "@/components/report/photo-preview";
 import EmergencyInterstitial from "@/components/report/emergency-interstitial";
 import SubmissionConfirmation from "@/components/report/submission-confirmation";
 import { submitReport } from "./actions";
+import { blurFacesAndPlates } from "@/lib/privacy/blur";
 import type { Classification } from "@/lib/types";
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
 
 type GpsStatus = "acquiring" | "found" | "manual";
 
@@ -66,17 +77,17 @@ export default function ReportPage() {
       setError(null);
 
       try {
-        // Convert photo to base64
-        const arrayBuffer = await photo.arrayBuffer();
-        const bytes = new Uint8Array(arrayBuffer);
-        let binary = "";
-        for (let i = 0; i < bytes.length; i++) {
-          binary += String.fromCharCode(bytes[i]);
-        }
-        const base64 = btoa(binary);
+        // Blur faces/plates on-device, then send both versions:
+        // blurred → public bucket, original → raw bucket (staff-only).
+        const { blurred, original } = await blurFacesAndPlates(photo);
+        const [photoBlurred, photoOriginal] = await Promise.all([
+          blobToBase64(blurred),
+          blobToBase64(original),
+        ]);
 
         const result = await submitReport({
-          photo: base64,
+          photoBlurred,
+          photoOriginal,
           location,
           address,
           description,

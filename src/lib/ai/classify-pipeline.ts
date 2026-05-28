@@ -31,9 +31,11 @@ export async function runClassifyPipeline(
     return { ok: false, error: `Report not found: ${reportErr?.message ?? "no rows"}` };
   }
 
-  const storagePath = `${report.city_id}/${report.id}.webp`;
+  // Classify the RAW (unblurred) image for accuracy — the public copy has
+  // faces/plates blurred which degrades classification.
+  const storagePath = `${report.city_id}/${report.id}.jpg`;
   const { data: photoBlob, error: downloadErr } = await supabase.storage
-    .from("photos-public")
+    .from("photos-raw")
     .download(storagePath);
 
   if (downloadErr || !photoBlob) {
@@ -44,7 +46,7 @@ export async function runClassifyPipeline(
   }
 
   const imageBase64 = Buffer.from(await photoBlob.arrayBuffer()).toString("base64");
-  const classificationResult = await classifyPhoto(imageBase64, "image/webp");
+  const classificationResult = await classifyPhoto(imageBase64, "image/jpeg");
   if (!classificationResult.ok) {
     return { ok: false, error: classificationResult.error };
   }
@@ -52,7 +54,15 @@ export async function runClassifyPipeline(
 
   const { error: classErr } = await supabase
     .from("classifications")
-    .upsert({ report_id: reportId, ...classification }, { onConflict: "report_id" });
+    .upsert(
+      {
+        report_id: reportId,
+        ...classification,
+        model_version: "gemini-2.5-flash",
+        raw_response: classification,
+      },
+      { onConflict: "report_id" }
+    );
 
   if (classErr) {
     return { ok: false, error: `Classification insert failed: ${classErr.message}` };

@@ -142,7 +142,11 @@ export default async function StaffPage() {
     .single();
 
   if (userError || !userRow) redirect("/login");
-  if (userRow.role !== "staff") redirect("/login");
+  if (
+    !["staff_dispatcher", "staff_supervisor", "admin"].includes(userRow.role)
+  ) {
+    redirect("/login");
+  }
 
   const cityId: string = userRow.city_id;
 
