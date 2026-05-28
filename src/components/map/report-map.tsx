@@ -401,7 +401,6 @@ function ReportMapInner({
           <Popup
             longitude={popupReport.location.lng}
             latitude={popupReport.location.lat}
-            anchor="bottom"
             offset={20}
             closeOnClick={false}
             onClose={() => setPopupReport(null)}

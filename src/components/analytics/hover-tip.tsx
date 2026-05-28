@@ -80,6 +80,9 @@ export function useHoverTip(): UseHoverTipReturn {
   });
   const tipRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
+  // Portal mount gate: SSR and the first client render must agree (both null),
+  // otherwise hydration mismatches. The tooltip mounts after hydration.
+  const [mounted, setMounted] = useState(false);
 
   const positionFor = useCallback(
     (
@@ -197,13 +200,14 @@ export function useHoverTip(): UseHoverTipReturn {
   );
 
   useEffect(() => {
+    setMounted(true);
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
   }, []);
 
   const Portal = useCallback(() => {
-    if (typeof document === "undefined") return null;
+    if (!mounted || typeof document === "undefined") return null;
     const noMotion = reducedMotion();
     return createPortal(
       <div
@@ -265,7 +269,7 @@ export function useHoverTip(): UseHoverTipReturn {
       </div>,
       document.body,
     );
-  }, [state]);
+  }, [state, mounted]);
 
   return { show, move, hide, bindTarget, Portal };
 }

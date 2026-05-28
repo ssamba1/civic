@@ -2,28 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { KNOWN_CITIES, fetchCity } from "@/lib/dashboard-data";
-import {
-  fetchAnalyticsKpis,
-  fetchReportsTrend,
-  fetchResolutionDistribution,
-  fetchStatusFunnel,
-  fetchSeverityDistribution,
-  fetchHourlyHeatmap,
-  fetchTopNeighborhoods,
-  fetchCategoryResolution,
-  fetchReporterVelocity,
-} from "@/lib/analytics-data";
-import {
-  KpiCards,
-  ReportsTrend,
-  SeverityDonut,
-  StatusFunnel,
-  ResolutionHistogram,
-  PeakHoursHeatmap,
-  TopNeighborhoods,
-  CategoryResolutionTable,
-  ReporterVelocityCard,
-} from "@/components/analytics/analytics-bento";
+import { AnalyticsInteractive } from "@/components/analytics/analytics-interactive";
 
 export function generateStaticParams() {
   return Object.keys(KNOWN_CITIES).map((slug) => ({ slug }));
@@ -52,38 +31,19 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
   const city = await fetchCity(slug);
   if (!city) notFound();
 
-  const [
-    kpis,
-    trend,
-    distribution,
-    funnel,
-    severity,
-    heatmap,
-    neighborhoods,
-    categoryRes,
-    velocity,
-  ] = await Promise.all([
-    fetchAnalyticsKpis(city.id),
-    fetchReportsTrend(city.id, 14),
-    fetchResolutionDistribution(city.id),
-    fetchStatusFunnel(city.id),
-    fetchSeverityDistribution(city.id),
-    fetchHourlyHeatmap(city.id),
-    fetchTopNeighborhoods(city.id),
-    fetchCategoryResolution(city.id),
-    fetchReporterVelocity(city.id),
-  ]);
-
   return (
-    <div className="relative flex flex-col min-h-screen bg-[radial-gradient(ellipse_120%_80%_at_50%_-10%,#161618_0%,#0c0c0e_35%,#050506_75%,#000_100%)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_15%,rgba(10,132,255,0.04),transparent_55%)]" />
+    <div className="relative flex flex-col min-h-screen bg-black">
       <div className="relative flex-grow mx-auto w-full max-w-7xl px-4 pt-20 pb-10 sm:px-6 lg:px-8">
         {/* Hero */}
         <section className="mb-8">
-          <p className="text-[13px] text-zinc-500">
+          <p className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.08em] text-zinc-500">
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-[#0a84ff] shadow-[0_0_6px_rgba(10,132,255,0.6)]"
+              aria-hidden="true"
+            />
             {city.name}, {city.state}
           </p>
-          <h1 className="mt-1 text-[34px] sm:text-[40px] font-semibold tracking-tight text-white leading-[1.1]">
+          <h1 className="mt-2 text-[34px] sm:text-[40px] font-semibold tracking-tight text-white leading-[1.1]">
             Analytics
           </h1>
           <p className="mt-3 text-sm text-zinc-400">
@@ -91,22 +51,7 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
           </p>
         </section>
 
-        <div className="space-y-4 animate-in fade-in duration-500">
-          {/* KPI strip */}
-          <KpiCards kpis={kpis} />
-
-          {/* Bento grid */}
-          <div className="grid gap-4 lg:grid-cols-12 lg:auto-rows-[minmax(190px,auto)]">
-            <ReportsTrend data={trend} />
-            <SeverityDonut data={severity} />
-            <ReporterVelocityCard data={velocity} />
-            <StatusFunnel data={funnel} />
-            <ResolutionHistogram data={distribution} />
-            <PeakHoursHeatmap data={heatmap} />
-            <TopNeighborhoods data={neighborhoods} />
-            <CategoryResolutionTable data={categoryRes} />
-          </div>
-        </div>
+        <AnalyticsInteractive />
       </div>
 
       <footer className="border-t border-white/[0.06] mt-10">

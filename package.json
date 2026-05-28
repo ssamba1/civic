@@ -17,6 +17,7 @@
     "health": "curl http://localhost:3000/api/health"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.99.0",
     "@deck.gl/aggregation-layers": "^9.3.2",
     "@deck.gl/core": "^9.3.2",
     "@deck.gl/layers": "^9.3.2",

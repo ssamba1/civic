@@ -18,7 +18,7 @@ interface CardDef {
   label: string;
   value: string;
   icon: React.ReactNode;
-  trend?: { direction: "up" | "down"; label: string };
+  trend?: { direction: "up" | "down"; label: string; tone: "good" | "bad" };
 }
 
 function StatsCardsInner({ stats }: StatsCardsProps) {
@@ -28,18 +28,26 @@ function StatsCardsInner({ stats }: StatsCardsProps) {
       ? Math.round((Math.abs(weekDelta) / stats.prev_week) * 100)
       : 0;
 
+  // Per-metric trend semantics: an "up" arrow is not universally bad. For
+  // intake volume more reports rising just signals activity (neutral-bad at
+  // worst), for backlog up=bad, for throughput up=good, for time-to-resolve
+  // up=bad. Color encodes good/bad, the arrow encodes direction.
+  const weekTrend: CardDef["trend"] =
+    stats.prev_week > 0 && weekDelta !== 0
+      ? {
+          direction: weekDelta > 0 ? "up" : "down",
+          label: `${weekPct}%`,
+          // Rising intake means more unresolved demand on the city: bad.
+          tone: weekDelta > 0 ? "bad" : "good",
+        }
+      : undefined;
+
   const cards: CardDef[] = [
     {
       label: "Total reports",
       value: stats.total.toLocaleString(),
       icon: <FileText className="h-4 w-4" strokeWidth={1.75} />,
-      trend:
-        weekDelta !== 0
-          ? {
-              direction: weekDelta > 0 ? "up" : "down",
-              label: `${weekPct}%`,
-            }
-          : undefined,
+      trend: weekTrend,
     },
     {
       label: "Open",
@@ -72,16 +80,17 @@ function StatsCardsInner({ stats }: StatsCardsProps) {
             {card.trend && (
               <span
                 className={cn(
-                  "inline-flex items-center gap-0.5 text-[12px]",
-                  card.trend.direction === "up"
+                  "inline-flex items-center gap-0.5 text-[12px] font-medium tabular-nums",
+                  card.trend.tone === "bad"
                     ? "text-[#ff453a]"
                     : "text-[#30d158]",
                 )}
+                aria-label={`${card.trend.direction === "up" ? "Up" : "Down"} ${card.trend.label} versus last week`}
               >
                 {card.trend.direction === "up" ? (
-                  <TrendingUp className="h-3 w-3" strokeWidth={2} />
+                  <TrendingUp className="h-3 w-3" strokeWidth={2} aria-hidden />
                 ) : (
-                  <TrendingDown className="h-3 w-3" strokeWidth={2} />
+                  <TrendingDown className="h-3 w-3" strokeWidth={2} aria-hidden />
                 )}
                 {card.trend.label}
               </span>

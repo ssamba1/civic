@@ -13,6 +13,7 @@ export interface DashboardReport {
   location: { lng: number; lat: number };
   photo_public_url: string;
   created_at: string;
+  reporter_id: string;
 }
 
 export interface CityStats {
@@ -65,6 +66,27 @@ export const CATEGORY_META: Record<
   drainage: { label: "Drainage", color: "#3b82f6", icon: "waves" },
   faded_signage: { label: "Faded Signage", color: "#d4d4d4", icon: "sign-post" },
   other: { label: "Other", color: "#737373", icon: "help-circle" },
+};
+
+/* ------------------------------------------------------------------
+   Per-category SLA targets (hours to resolution). Used by analytics
+   to compute breach % per category. Values reflect operational urgency:
+   safety hazards (water leak, tree down) are tighter than cosmetic ones.
+   ------------------------------------------------------------------ */
+
+export const CATEGORY_SLA_TARGETS: Record<ReportCategory, number> = {
+  water_leak: 24,
+  tree_down: 24,
+  downed_sign: 36,
+  pothole: 72,
+  drainage: 72,
+  sidewalk_damage: 96,
+  streetlight: 96,
+  illegal_dump: 96,
+  debris: 120,
+  graffiti: 168,
+  faded_signage: 240,
+  other: 168,
 };
 
 /* ------------------------------------------------------------------
@@ -219,6 +241,11 @@ function buildCorpus(): CorpusReport[] {
     const streetName = STREET_NAMES[Math.floor(seeded(i, 4) * STREET_NAMES.length)];
     const houseNum = 100 + Math.floor(seeded(i, 5) * 900);
 
+    // Power-law reporter distribution: squaring the uniform draw biases toward
+    // low ids, so a handful of "power reporters" file disproportionately many.
+    const reporterPool = 40;
+    const reporterIdx = Math.floor(seeded(i, 8) ** 2 * reporterPool);
+
     return {
       id: `report-${i + 1}`,
       category,
@@ -232,6 +259,7 @@ function buildCorpus(): CorpusReport[] {
       photo_public_url: `https://picsum.photos/seed/${category}-${i}/640/360`,
       created_at: new Date(now - ageDays * DAY_MS).toISOString(),
       age_days: ageDays,
+      reporter_id: `reporter-${reporterIdx + 1}`,
     };
   });
 
@@ -245,6 +273,17 @@ function stripCorpus(r: CorpusReport): DashboardReport {
   const { age_days: _ignored, ...rest } = r;
   void _ignored;
   return rest;
+}
+
+/* ------------------------------------------------------------------
+   Full corpus accessor — the single source of truth that the shared
+   filter context loads once and every dashboard/analytics widget
+   derives from. age_days is stripped; derive functions recompute age
+   from created_at so they stay pure and corpus-shape stays clean.
+   ------------------------------------------------------------------ */
+
+export function getReportCorpus(): DashboardReport[] {
+  return REPORT_CORPUS.map(stripCorpus);
 }
 
 export async function fetchCityStats(cityId: string): Promise<CityStats> {

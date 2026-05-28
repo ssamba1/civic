@@ -7,10 +7,9 @@ import {
   KNOWN_CITIES,
   fetchCity,
   fetchCityStats,
-  fetchCategoryBreakdown,
-  fetchRecentReports,
 } from "@/lib/dashboard-data";
 import { DashboardInteractive } from "@/components/dashboard/dashboard-interactive";
+import { FilterBar } from "@/components/filters/filter-bar";
 
 export function generateStaticParams() {
   return Object.keys(KNOWN_CITIES).map((slug) => ({ slug }));
@@ -58,11 +57,7 @@ export default async function CityDashboardPage({
 
   const known = KNOWN_CITIES[slug];
 
-  const [stats, categories, reports] = await Promise.all([
-    fetchCityStats(city.id),
-    fetchCategoryBreakdown(city.id),
-    fetchRecentReports(city.id, 20),
-  ]);
+  const stats = await fetchCityStats(city.id);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -71,23 +66,39 @@ export default async function CityDashboardPage({
         <section className="mb-10">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-[13px] text-zinc-500">
+              <p className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.08em] text-zinc-500">
+                <span
+                  className="h-1.5 w-1.5 rounded-full bg-[#0a84ff] shadow-[0_0_6px_rgba(10,132,255,0.6)]"
+                  aria-hidden="true"
+                />
                 {city.name}, {city.state}
               </p>
-              <h1 className="mt-1 text-[34px] sm:text-[40px] font-semibold tracking-tight text-white leading-[1.1]">
+              <h1 className="mt-2 text-[34px] sm:text-[40px] font-semibold tracking-tight text-white leading-[1.1]">
                 Public infrastructure
               </h1>
-              <p className="mt-3 text-sm text-zinc-400">
-                {stats.total.toLocaleString()} tracked
-                <span className="mx-2 text-zinc-700">·</span>
-                {stats.open} open
-                <span className="mx-2 text-zinc-700">·</span>
-                {stats.this_week} this week
-              </p>
+              <div className="mt-4 flex items-center gap-3 text-sm text-zinc-400">
+                <span>
+                  <span className="font-medium text-zinc-200">
+                    {stats.total.toLocaleString()}
+                  </span>{" "}
+                  tracked
+                </span>
+                <span className="h-3 w-px bg-white/[0.08]" aria-hidden="true" />
+                <span>
+                  <span className="font-medium text-zinc-200">{stats.open}</span> open
+                </span>
+                <span className="h-3 w-px bg-white/[0.08]" aria-hidden="true" />
+                <span>
+                  <span className="font-medium text-zinc-200">
+                    {stats.this_week}
+                  </span>{" "}
+                  this week
+                </span>
+              </div>
             </div>
             <Link
               href="/report"
-              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[#0a84ff] px-5 text-[14px] font-medium text-white transition-colors hover:bg-[#0070e0]"
+              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[#0a84ff] px-5 text-[14px] font-medium text-white outline-none transition-colors hover:bg-[#0070e0] focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
             >
               <Camera className="h-4 w-4" />
               Report an issue
@@ -95,10 +106,12 @@ export default async function CityDashboardPage({
           </div>
         </section>
 
+        <div className="mb-6">
+          <FilterBar />
+        </div>
+
         <DashboardInteractive
           initialStats={stats}
-          initialCategories={categories}
-          initialReports={reports}
           center={known?.center ?? [-84.14, 34.21]}
           zoom={known?.zoom ?? 12}
         />

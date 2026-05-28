@@ -22,13 +22,15 @@ const STATUS_LABEL: Record<ReportStatus, string> = {
   rejected: "Rejected",
 };
 
+// Pill tone: text color paired with a low-alpha wash of the same hue so the
+// status reads as a chip, not loose colored text on the card.
 const STATUS_TONE: Record<ReportStatus, string> = {
-  open: "text-[#ff9f0a]",
-  dispatched: "text-[#0a84ff]",
-  in_progress: "text-[#5ac8fa]",
-  closed: "text-[#30d158]",
-  merged: "text-zinc-500",
-  rejected: "text-[#ff453a]",
+  open: "text-[#ff9f0a] bg-[#ff9f0a]/10",
+  dispatched: "text-[#0a84ff] bg-[#0a84ff]/10",
+  in_progress: "text-[#5ac8fa] bg-[#5ac8fa]/10",
+  closed: "text-[#30d158] bg-[#30d158]/10",
+  merged: "text-zinc-400 bg-white/[0.06]",
+  rejected: "text-[#ff453a] bg-[#ff453a]/10",
 };
 
 function RecentReportsInner({
@@ -93,20 +95,25 @@ function RecentReportsInner({
                   e.preventDefault();
                   onClickReport?.(report.id);
                 }}
+                aria-current={isFocused ? "true" : undefined}
                 className={cn(
-                  "w-full text-left flex flex-col gap-1 py-2.5 px-2 rounded-md transition-colors outline-none",
-                  isFocused
-                    ? "bg-white/[0.06]"
-                    : "hover:bg-white/[0.03]",
+                  "w-full text-left flex flex-col gap-1 py-2.5 px-2 rounded-md transition-colors",
+                  "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1c1c1e]",
+                  isFocused ? "bg-white/[0.06]" : "hover:bg-white/[0.03]",
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <p className="truncate text-[13px] font-medium text-white leading-tight">
-                    {meta.label}
+                  <p className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-white leading-tight">
+                    <span
+                      className="h-2 w-2 flex-shrink-0 rounded-full"
+                      style={{ backgroundColor: meta.color }}
+                      aria-hidden
+                    />
+                    <span className="truncate">{meta.label}</span>
                   </p>
                   <span
                     className={cn(
-                      "text-[12px] flex-shrink-0",
+                      "flex-shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-medium",
                       STATUS_TONE[report.status],
                     )}
                   >
@@ -132,8 +139,11 @@ function RecentReportsInner({
 export const RecentReports = memo(RecentReportsInner);
 
 function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
+  // Clamp to 0 so clock skew (a created_at slightly in the future) never
+  // renders a negative or nonsensical "-1m".
+  const diff = Math.max(0, Date.now() - new Date(iso).getTime());
   const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "now";
   if (mins < 60) return `${mins}m`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h`;
