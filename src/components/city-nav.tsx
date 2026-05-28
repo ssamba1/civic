@@ -12,6 +12,7 @@ export function CityNav({ slug }: CityNavProps) {
   
   const isDashboardActive = pathname === `/city/${slug}`;
   const isMapActive = pathname === `/city/${slug}/map`;
+  const isBrowseActive = pathname === `/city/${slug}/browse`;
 
   return (
     <nav className="flex items-center gap-2">
@@ -24,6 +25,16 @@ export function CityNav({ slug }: CityNavProps) {
         }`}
       >
         Dashboard
+      </Link>
+      <Link
+        href={`/city/${slug}/browse`}
+        className={`px-3 py-1.5 text-xs font-semibold rounded-full tracking-wide transition-all duration-300 ${
+          isBrowseActive
+            ? "bg-blue-50 text-blue-600 border border-blue-200/50 shadow-sm"
+            : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+        }`}
+      >
+        Browse
       </Link>
       <Link
         href={`/city/${slug}/map`}

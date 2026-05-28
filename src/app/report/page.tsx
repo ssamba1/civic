@@ -69,7 +69,7 @@ export default function ReportPage() {
   }, []);
 
   const handleSubmit = useCallback(
-    async (description: string | null) => {
+    async (description: string | null, tags: string[]) => {
       if (step.name !== "preview") return;
 
       const photo = step.photo;
@@ -91,6 +91,7 @@ export default function ReportPage() {
           location,
           address,
           description,
+          tags,
         });
 
         if (!result.ok) {

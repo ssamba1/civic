@@ -14,6 +14,7 @@ interface DashboardInteractiveProps {
   initialReports: DashboardReport[];
   center: [number, number];
   zoom: number;
+  upvotedIds?: string[];
 }
 
 export function DashboardInteractive({
@@ -22,6 +23,7 @@ export function DashboardInteractive({
   initialReports,
   center,
   zoom,
+  upvotedIds = [],
 }: DashboardInteractiveProps) {
   // --- Active Filters State ---
   const [selectedCategory, setSelectedCategory] = useState<ReportCategory | null>(null);
@@ -128,6 +130,7 @@ export function DashboardInteractive({
             focusedId={focusedReportId}
             onHoverReport={handleHoverReport}
             onClickReport={handleSelectReport}
+            upvotedIds={upvotedIds}
           />
         </div>
       </div>

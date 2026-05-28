@@ -9,6 +9,7 @@ import {
   fetchCityStats,
   fetchCategoryBreakdown,
   fetchRecentReports,
+  fetchUserUpvotes,
 } from "@/lib/dashboard-queries";
 import { DashboardInteractive } from "@/components/dashboard/dashboard-interactive";
 
@@ -73,10 +74,11 @@ export default async function CityDashboardPage({
   const known = KNOWN_CITIES[slug];
 
   // parallel data fetching
-  const [stats, categories, reports] = await Promise.all([
+  const [stats, categories, reports, upvotedIds] = await Promise.all([
     fetchCityStats(city.id),
     fetchCategoryBreakdown(city.id),
     fetchRecentReports(city.id, 20),
+    fetchUserUpvotes(),
   ]);
 
   return (
@@ -116,6 +118,7 @@ export default async function CityDashboardPage({
           initialReports={reports}
           center={known?.center ?? [-84.14, 34.21]}
           zoom={known?.zoom ?? 12}
+          upvotedIds={upvotedIds}
         />
       </div>
 

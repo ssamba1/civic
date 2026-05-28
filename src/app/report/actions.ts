@@ -19,6 +19,7 @@ const submitReportSchema = z.object({
     .nullable(),
   address: z.string().nullable(),
   description: z.string().max(500).nullable(),
+  tags: z.array(z.string().max(40)).max(8).default([]),
 });
 
 type SubmitReportInput = z.infer<typeof submitReportSchema>;
@@ -46,7 +47,7 @@ export async function submitReport(
   if (!parsed.success) {
     return { ok: false, error: z.prettifyError(parsed.error) };
   }
-  const { photoBlurred, photoOriginal, location, address, description } = parsed.data;
+  const { photoBlurred, photoOriginal, location, address, description, tags } = parsed.data;
 
   // reports.location is NOT NULL geography(POINT,4326) — GPS required.
   if (!location) {
@@ -117,6 +118,7 @@ export async function submitReport(
     photo_raw_url: `${RAW_BUCKET}/${rawPath}`,
     address,
     description,
+    tags,
     status: "open",
   });
   if (insertErr) {

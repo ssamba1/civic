@@ -13,12 +13,14 @@ import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import { cn } from "@/lib/utils/cn";
 import type { ReportStatus } from "@/lib/types";
+import { UpvoteButton } from "@/components/dashboard/upvote-button";
 
 interface RecentReportsProps {
   reports: DashboardReport[];
   focusedId?: string | null;
   onHoverReport?: (id: string | null) => void;
   onClickReport?: (id: string) => void;
+  upvotedIds?: string[];
 }
 
 const STATUS_CONFIG: Record<
@@ -62,7 +64,9 @@ export function RecentReports({
   focusedId = null,
   onHoverReport,
   onClickReport,
+  upvotedIds = [],
 }: RecentReportsProps) {
+  const upvotedSet = new Set(upvotedIds);
   const listContainerRef = useRef<HTMLUListElement>(null);
   const itemsRef = useRef<Record<string, HTMLLIElement | null>>({});
 
@@ -119,13 +123,14 @@ export function RecentReports({
               onMouseLeave={() => onHoverReport && onHoverReport(null)}
               className="py-1"
             >
+             <div className="flex items-center gap-2">
               <button
                 onClick={(e) => {
                   e.preventDefault();
                   if (onClickReport) onClickReport(report.id);
                 }}
                 className={cn(
-                  "w-full text-left flex items-center gap-4 py-3 px-3 rounded-lg border border-transparent transition-all duration-200 outline-none select-none",
+                  "flex-1 min-w-0 text-left flex items-center gap-4 py-3 px-3 rounded-lg border border-transparent transition-all duration-200 outline-none select-none",
                   isFocused
                     ? "bg-zinc-50 border-zinc-200/60 shadow-sm"
                     : "hover:bg-zinc-50/50"
@@ -182,6 +187,12 @@ export function RecentReports({
                   </div>
                 </div>
               </button>
+              <UpvoteButton
+                reportId={report.id}
+                count={report.upvote_count}
+                upvoted={upvotedSet.has(report.id)}
+              />
+             </div>
             </li>
           );
         })}

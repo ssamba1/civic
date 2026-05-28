@@ -13,6 +13,8 @@ export interface DashboardReport {
   location: { lng: number; lat: number };
   photo_public_url: string;
   created_at: string;
+  upvote_count: number;
+  tags: string[];
 }
 
 export interface CityStats {

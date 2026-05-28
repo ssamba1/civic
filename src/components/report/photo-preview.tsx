@@ -8,9 +8,11 @@ interface PhotoPreviewProps {
   photo: File;
   gpsStatus: GpsStatus;
   onRetake: () => void;
-  onSubmit: (description: string | null) => void;
+  onSubmit: (description: string | null, tags: string[]) => void;
   submitting: boolean;
 }
+
+const PRESET_TAGS = ["School zone", "Blocking road", "Recurring", "Safety hazard"];
 
 export default function PhotoPreview({
   photo,
@@ -21,6 +23,10 @@ export default function PhotoPreview({
 }: PhotoPreviewProps) {
   const [showDescription, setShowDescription] = useState(false);
   const [description, setDescription] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+
+  const toggleTag = (t: string) =>
+    setTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
 
   const previewUrl = useMemo(() => URL.createObjectURL(photo), [photo]);
 
@@ -58,6 +64,27 @@ export default function PhotoPreview({
 
       {/* Bottom controls */}
       <div className="shrink-0 bg-zinc-950 px-4 pt-4 pb-8 space-y-3">
+        {/* Quick tags */}
+        <div className="flex flex-wrap gap-2">
+          {PRESET_TAGS.map((t) => {
+            const active = tags.includes(t);
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => toggleTag(t)}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  active
+                    ? "bg-blue-600 text-white"
+                    : "border border-zinc-700 text-zinc-300 active:bg-zinc-800"
+                }`}
+              >
+                {t}
+              </button>
+            );
+          })}
+        </div>
+
         {/* Optional description */}
         {!showDescription ? (
           <button
@@ -91,7 +118,7 @@ export default function PhotoPreview({
           </button>
           <button
             type="button"
-            onClick={() => onSubmit(description.trim() || null)}
+            onClick={() => onSubmit(description.trim() || null, tags)}
             disabled={submitting}
             className="flex-1 rounded-full bg-blue-600 py-3.5 text-sm font-semibold text-white active:bg-blue-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
           >
