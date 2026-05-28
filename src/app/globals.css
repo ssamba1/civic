@@ -1,53 +1,78 @@
 @import "tailwindcss";
 
-/* ── Civic color palette ── */
+/* ── Palette: Apple-inspired neutrals + single accent ── */
 :root {
   --background: #ffffff;
-  --foreground: #0f172a;
+  --foreground: #1d1d1f;
 
-  /* Primary — civic blue */
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-primary-light: #dbeafe;
+  --color-primary: #0a84ff;
+  --color-primary-hover: #0066cc;
+  --color-primary-light: #e5f1ff;
 
-  /* Status colors */
-  --color-success: #16a34a;
-  --color-warning: #ca8a04;
-  --color-danger: #dc2626;
+  --color-success: #30d158;
+  --color-warning: #ff9f0a;
+  --color-danger: #ff453a;
 
-  /* Neutral scale */
-  --color-muted: #64748b;
-  --color-border: #e2e8f0;
-  --color-surface: #f8fafc;
+  --color-muted: #86868b;
+  --color-border: #d2d2d7;
+  --color-surface: #f5f5f7;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
 
-  /* Radius */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
+  /* Status/category tokens kept under former names so existing class refs still resolve.
+     Re-tuned to Apple system colors — desaturated, sparing use. */
+  --fg-deep-void: #000000;
+  --fg-electric-indigo: #0a84ff;
+  --fg-neon-coral: #ff453a;
+  --fg-emerald-glow: #30d158;
+  --fg-amber-pulse: #ff9f0a;
+  --fg-cyan-burst: #5ac8fa;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --color-deep-void: var(--fg-deep-void);
+  --color-electric-indigo: var(--fg-electric-indigo);
+  --color-neon-coral: var(--fg-neon-coral);
+  --color-emerald-glow: var(--fg-emerald-glow);
+  --color-amber-pulse: var(--fg-amber-pulse);
+  --color-cyan-burst: var(--fg-cyan-burst);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --color-primary-light: #1e3a5f;
-    --color-border: #1e293b;
-    --color-surface: #111827;
-    --color-muted: #94a3b8;
+    --background: #000000;
+    --foreground: #f5f5f7;
+    --color-primary-light: rgba(10, 132, 255, 0.18);
+    --color-border: rgba(255, 255, 255, 0.1);
+    --color-surface: #1d1d1f;
+    --color-muted: #86868b;
   }
 }
 
-/* ── Base styles ── */
+/* ── Accordion (radix) ── */
+@keyframes accordion-down {
+  from { height: 0; opacity: 0; }
+  to { height: var(--radix-accordion-content-height); opacity: 1; }
+}
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); opacity: 1; }
+  to { height: 0; opacity: 0; }
+}
+.data-\[state\=closed\]\:animate-accordion-up[data-state="closed"] {
+  animation: accordion-up 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.data-\[state\=open\]\:animate-accordion-down[data-state="open"] {
+  animation: accordion-down 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Base ── */
 html {
   scroll-behavior: smooth;
 }
@@ -55,165 +80,78 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "SF Pro Display", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv11", "ss01", "ss02";
 }
 
-/* ── Typography ── */
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: -0.022em;
 }
 
-/* ── Focus accessibility ── */
 *:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
-/* Remove default focus ring for mouse users */
 :focus:not(:focus-visible) {
   outline: none;
 }
 
-/* ── Selection ── */
 ::selection {
   background: var(--color-primary-light);
   color: var(--foreground);
 }
 
-/* ── 3D Holographic Map System ── */
-
-/* Viewport Perspective Setup */
-.map-3d-active {
-  perspective: 1400px !important;
-  perspective-origin: 50% 85% !important;
-  transform-style: preserve-3d !important;
+/* ── Quiet glass surface — replaces the old neon glass-panel ── */
+.glass-panel {
+  background-color: rgba(28, 28, 30, 0.6);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* The Leaflet Container is resized, offset, and tilted to load extra tiles and prevent voids */
-.map-3d-active .leaflet-container {
-  width: 155% !important;
-  height: 180% !important;
-  top: -45% !important;
-  left: -27.5% !important;
-  transform: rotateX(52deg) rotateZ(-12deg) !important;
-  transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), 
-              width 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), 
-              height 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), 
-              top 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), 
-              left 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
-  transform-style: preserve-3d !important;
-}
-
-.map-2d-active .leaflet-container {
-  width: 100% !important;
-  height: 100% !important;
-  top: 0 !important;
-  left: 0 !important;
-  transform: rotateX(0deg) rotateZ(0deg) !important;
-  transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), 
-              width 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), 
-              height 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), 
-              top 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), 
-              left 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
-}
-
-/* Upright 3D Billboards to stand perpendicular on the tilted plane */
-.map-3d-active .marker-3d-billboard {
-  transform: rotateZ(12deg) rotateX(-52deg) translateZ(28px) !important;
-  transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
-  transform-origin: bottom center !important;
-  transform-style: preserve-3d !important;
-}
-
-.map-2d-active .marker-3d-billboard {
-  transform: rotateZ(0deg) rotateX(0deg) translateZ(0px) !important;
-  transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
-  transform-origin: bottom center !important;
-}
-
-/* Laser Tether Connector (from map plane up to floating billboard) */
-.marker-3d-tether {
-  position: absolute;
-  left: 50%;
-  bottom: 50%;
-  transform: translateX(-50%);
-  width: 2px;
-  height: 0px;
-  background: linear-gradient(to top, rgba(255, 255, 255, 0.2), currentColor 80%, white);
-  transition: height 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s ease;
-  opacity: 0;
-  box-shadow: 0 0 10px currentColor;
-  transform-origin: bottom center;
-  pointer-events: none;
-}
-
-.map-3d-active .marker-3d-tether {
-  height: 28px;
-  opacity: 0.85;
-}
-
-/* Ground shadow mapping */
-.marker-3d-shadow {
-  width: 14px;
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
   height: 6px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.65);
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.85);
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) translateZ(-28px) scale(0);
-  transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 1.2s ease;
-  opacity: 0;
-  pointer-events: none;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
 }
 
-.map-3d-active .marker-3d-shadow {
-  transform: translate(-50%, -50%) translateZ(-28px) scale(1);
-  opacity: 1;
+/* Maplibre popup — quiet dark skin */
+.maplibregl-popup-content {
+  background: rgba(28, 28, 30, 0.92) !important;
+  color: #f5f5f7 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 12px !important;
+  padding: 0 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(20px) saturate(160%);
 }
-
-/* Ground glow pulse ring */
-.marker-3d-glow {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 1.5px dashed currentColor;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) translateZ(-28px) scale(0);
-  transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease;
-  opacity: 0;
-  pointer-events: none;
-  animation: spin-glow 12s linear infinite;
+.maplibregl-popup-tip {
+  border-top-color: rgba(28, 28, 30, 0.92) !important;
+  border-bottom-color: rgba(28, 28, 30, 0.92) !important;
 }
-
-.map-3d-active .marker-3d-glow {
-  transform: translate(-50%, -50%) translateZ(-28px) scale(1);
-  opacity: 0.65;
+.maplibregl-popup-close-button {
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 18px !important;
+  padding: 4px 8px !important;
+  right: 4px !important;
+  top: 2px !important;
 }
-
-@keyframes spin-glow {
-  from {
-    transform: translate(-50%, -50%) translateZ(-28px) rotate(0deg);
-  }
-  to {
-    transform: translate(-50%, -50%) translateZ(-28px) rotate(360deg);
-  }
-}
-
-/* 3D OSM Vector Buildings Canvas Styling */
-.leaflet-overlay-pane canvas {
-  opacity: 0;
-  transition: opacity 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-  pointer-events: none;
-}
-
-.map-3d-active .leaflet-overlay-pane canvas {
-  opacity: 0.95;
+.maplibregl-popup-close-button:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: white !important;
 }

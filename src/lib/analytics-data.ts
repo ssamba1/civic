@@ -1,0 +1,226 @@
+import type { ReportCategory, ReportStatus } from "@/lib/types";
+import { CATEGORY_META } from "@/lib/dashboard-data";
+
+/* ------------------------------------------------------------------
+   Analytics types
+   ------------------------------------------------------------------ */
+
+export interface AnalyticsKpis {
+  resolution_rate_pct: number;
+  resolution_rate_delta_pct: number;
+  mttr_hours: number;
+  mttr_delta_pct: number;
+  sla_compliance_pct: number;
+  sla_target_pct: number;
+  active_backlog: number;
+  backlog_delta_pct: number;
+}
+
+export interface TrendPoint {
+  date: string; // ISO date (day)
+  created: number;
+  closed: number;
+}
+
+export interface ResolutionBucket {
+  label: string; // e.g. "0-24h"
+  hours_max: number;
+  count: number;
+}
+
+export interface StatusFunnelStep {
+  status: ReportStatus;
+  label: string;
+  count: number;
+}
+
+export interface SeveritySlice {
+  severity: 1 | 2 | 3 | 4 | 5;
+  count: number;
+}
+
+export interface HeatCell {
+  day: number; // 0=Sun..6=Sat
+  hour: number; // 0..23
+  count: number;
+}
+
+export interface NeighborhoodVolume {
+  name: string;
+  count: number;
+  open: number;
+}
+
+export interface CategoryResolution {
+  category: ReportCategory;
+  label: string;
+  color: string;
+  avg_hours: number;
+  target_hours: number;
+  count: number;
+}
+
+export interface ReporterVelocity {
+  unique_reporters: number;
+  reports_per_reporter: number;
+  spark: number[]; // last 14 days
+}
+
+/* ------------------------------------------------------------------
+   Deterministic mock generators
+   ------------------------------------------------------------------ */
+
+const seed = (i: number, salt: number) => {
+  const x = Math.sin(i * 127.1 + salt * 311.7) * 43758.5453;
+  return x - Math.floor(x);
+};
+
+export async function fetchAnalyticsKpis(
+  cityId: string,
+): Promise<AnalyticsKpis> {
+  void cityId;
+  return {
+    resolution_rate_pct: 76.5,
+    resolution_rate_delta_pct: 4.2,
+    mttr_hours: 64,
+    mttr_delta_pct: -8.1, // negative = faster (good)
+    sla_compliance_pct: 88.4,
+    sla_target_pct: 90,
+    active_backlog: 43,
+    backlog_delta_pct: 12.5,
+  };
+}
+
+export async function fetchReportsTrend(
+  cityId: string,
+  days = 14,
+): Promise<TrendPoint[]> {
+  void cityId;
+  const now = Date.now();
+  return Array.from({ length: days }, (_, i) => {
+    const idx = days - 1 - i;
+    const date = new Date(now - idx * 86_400_000);
+    const base = 8 + Math.round(seed(idx, 7) * 10);
+    const created = base + (idx % 4 === 0 ? 4 : 0);
+    const closed = Math.max(
+      1,
+      Math.round(base * 0.78 + seed(idx, 13) * 4 - 2),
+    );
+    return {
+      date: date.toISOString().slice(0, 10),
+      created,
+      closed,
+    };
+  });
+}
+
+export async function fetchResolutionDistribution(
+  cityId: string,
+): Promise<ResolutionBucket[]> {
+  void cityId;
+  return [
+    { label: "<24h", hours_max: 24, count: 62 },
+    { label: "1-3d", hours_max: 72, count: 71 },
+    { label: "3-7d", hours_max: 168, count: 38 },
+    { label: "1-2w", hours_max: 336, count: 14 },
+    { label: ">2w", hours_max: 9999, count: 4 },
+  ];
+}
+
+export async function fetchStatusFunnel(
+  cityId: string,
+): Promise<StatusFunnelStep[]> {
+  void cityId;
+  return [
+    { status: "open", label: "Open", count: 43 },
+    { status: "dispatched", label: "Dispatched", count: 31 },
+    { status: "in_progress", label: "In progress", count: 22 },
+    { status: "closed", label: "Resolved", count: 189 },
+  ];
+}
+
+export async function fetchSeverityDistribution(
+  cityId: string,
+): Promise<SeveritySlice[]> {
+  void cityId;
+  return [
+    { severity: 1, count: 58 },
+    { severity: 2, count: 71 },
+    { severity: 3, count: 64 },
+    { severity: 4, count: 38 },
+    { severity: 5, count: 16 },
+  ];
+}
+
+export async function fetchHourlyHeatmap(
+  cityId: string,
+): Promise<HeatCell[]> {
+  void cityId;
+  const cells: HeatCell[] = [];
+  for (let d = 0; d < 7; d++) {
+    for (let h = 0; h < 24; h++) {
+      // Higher during commute (7-9, 16-19) and on weekdays
+      const commute =
+        (h >= 7 && h <= 9) || (h >= 16 && h <= 19) ? 1.6 : 1;
+      const weekday = d >= 1 && d <= 5 ? 1.25 : 0.6;
+      const noise = 0.5 + seed(d * 24 + h, 23);
+      const v = Math.round(commute * weekday * noise * 4);
+      cells.push({ day: d, hour: h, count: v });
+    }
+  }
+  return cells;
+}
+
+export async function fetchTopNeighborhoods(
+  cityId: string,
+): Promise<NeighborhoodVolume[]> {
+  void cityId;
+  return [
+    { name: "Downtown", count: 64, open: 12 },
+    { name: "Vickery Village", count: 47, open: 9 },
+    { name: "Sawnee Mountain", count: 38, open: 7 },
+    { name: "Lake Lanier S.", count: 31, open: 5 },
+    { name: "Bethelview", count: 24, open: 4 },
+    { name: "Castleberry", count: 19, open: 3 },
+  ];
+}
+
+export async function fetchCategoryResolution(
+  cityId: string,
+): Promise<CategoryResolution[]> {
+  void cityId;
+  const rows: Array<{
+    category: ReportCategory;
+    avg_hours: number;
+    target_hours: number;
+    count: number;
+  }> = [
+    { category: "pothole", avg_hours: 58, target_hours: 72, count: 68 },
+    { category: "streetlight", avg_hours: 96, target_hours: 120, count: 41 },
+    { category: "water_leak", avg_hours: 14, target_hours: 24, count: 29 },
+    { category: "sidewalk_damage", avg_hours: 184, target_hours: 168, count: 24 },
+    { category: "downed_sign", avg_hours: 28, target_hours: 48, count: 22 },
+    { category: "graffiti", avg_hours: 122, target_hours: 96, count: 18 },
+    { category: "tree_down", avg_hours: 18, target_hours: 24, count: 14 },
+    { category: "drainage", avg_hours: 76, target_hours: 96, count: 12 },
+  ];
+  return rows.map((r) => ({
+    ...r,
+    label: CATEGORY_META[r.category].label,
+    color: CATEGORY_META[r.category].color,
+  }));
+}
+
+export async function fetchReporterVelocity(
+  cityId: string,
+): Promise<ReporterVelocity> {
+  void cityId;
+  const spark = Array.from({ length: 14 }, (_, i) =>
+    Math.round(6 + seed(i, 91) * 10),
+  );
+  return {
+    unique_reporters: 134,
+    reports_per_reporter: 1.84,
+    spark,
+  };
+}

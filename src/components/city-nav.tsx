@@ -9,48 +9,47 @@ interface CityNavProps {
 
 export function CityNav({ slug }: CityNavProps) {
   const pathname = usePathname();
-  
+
   const isDashboardActive = pathname === `/city/${slug}`;
-  const isMapActive = pathname === `/city/${slug}/map`;
   const isBrowseActive = pathname === `/city/${slug}/browse`;
+  const isMapActive = pathname === `/city/${slug}/map`;
+  const isAnalyticsActive = pathname === `/city/${slug}/analytics`;
+
+  const linkBase = "px-3 py-1.5 text-[13px] rounded-md transition-colors";
+  const linkActive = "text-white bg-white/[0.08]";
+  const linkInactive = "text-zinc-400 hover:text-white hover:bg-white/[0.04]";
 
   return (
-    <nav className="flex items-center gap-2">
+    <nav className="flex items-center gap-1">
       <Link
         href={`/city/${slug}`}
-        className={`px-3 py-1.5 text-xs font-semibold rounded-full tracking-wide transition-all duration-300 ${
-          isDashboardActive
-            ? "bg-blue-50 text-blue-600 border border-blue-200/50 shadow-sm"
-            : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
-        }`}
+        className={`${linkBase} ${isDashboardActive ? linkActive : linkInactive}`}
       >
         Dashboard
       </Link>
       <Link
         href={`/city/${slug}/browse`}
-        className={`px-3 py-1.5 text-xs font-semibold rounded-full tracking-wide transition-all duration-300 ${
-          isBrowseActive
-            ? "bg-blue-50 text-blue-600 border border-blue-200/50 shadow-sm"
-            : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
-        }`}
+        className={`${linkBase} ${isBrowseActive ? linkActive : linkInactive}`}
       >
         Browse
       </Link>
       <Link
         href={`/city/${slug}/map`}
-        className={`px-3 py-1.5 text-xs font-semibold rounded-full tracking-wide transition-all duration-300 ${
-          isMapActive
-            ? "bg-blue-50 text-blue-600 border border-blue-200/50 shadow-sm"
-            : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
-        }`}
+        className={`${linkBase} ${isMapActive ? linkActive : linkInactive}`}
       >
-        Map View
+        Map
+      </Link>
+      <Link
+        href={`/city/${slug}/analytics`}
+        className={`${linkBase} ${isAnalyticsActive ? linkActive : linkInactive}`}
+      >
+        Analytics
       </Link>
       <Link
         href="/report"
-        className="ml-2 inline-flex h-8 items-center rounded-full bg-zinc-900 px-4 text-xs font-bold text-white transition-all duration-300 hover:bg-zinc-800 shadow-md hover:shadow-lg"
+        className="ml-2 inline-flex h-8 items-center rounded-md bg-[#0a84ff] px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-[#0070e0]"
       >
-        Report Issue
+        Report
       </Link>
     </nav>
   );

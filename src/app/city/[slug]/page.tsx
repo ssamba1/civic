@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Camera, MapPin, ArrowRight } from "lucide-react";
+import { Camera } from "lucide-react";
 import Link from "next/link";
 
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
@@ -13,17 +13,9 @@ import {
 } from "@/lib/dashboard-queries";
 import { DashboardInteractive } from "@/components/dashboard/dashboard-interactive";
 
-/* ------------------------------------------------------------------
-   Static generation
-   ------------------------------------------------------------------ */
-
 export function generateStaticParams() {
   return Object.keys(KNOWN_CITIES).map((slug) => ({ slug }));
 }
-
-/* ------------------------------------------------------------------
-   SEO metadata
-   ------------------------------------------------------------------ */
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -37,8 +29,8 @@ export async function generateMetadata({
   const city = await fetchCity(slug);
   if (!city) return { title: "City not found | Civic" };
 
-  const title = `Civic | ${city.name}, ${city.state} — Infrastructure Report Dashboard`;
-  const description = `Real-time infrastructure report dashboard for ${city.name}, ${city.state}. View open issues, resolution times, and report new problems.`;
+  const title = `Civic | ${city.name}, ${city.state} — Infrastructure Telemetry`;
+  const description = `Real-time infrastructure telemetry for ${city.name}, ${city.state}. Live 3D pillar map, incident feed, resolution metrics.`;
 
   return {
     title,
@@ -57,16 +49,10 @@ export async function generateMetadata({
   };
 }
 
-/* ------------------------------------------------------------------
-   Page component
-   ------------------------------------------------------------------ */
-
 export default async function CityDashboardPage({
   params,
-  searchParams,
 }: PageProps) {
   const { slug } = await params;
-  const { focus } = await searchParams;
 
   const city = await fetchCity(slug);
   if (!city) notFound();
@@ -83,35 +69,35 @@ export default async function CityDashboardPage({
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="flex-grow mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* hero header */}
-        <section className="mb-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex-grow mx-auto w-full max-w-7xl px-4 pt-20 pb-10 sm:px-6 lg:px-8">
+        {/* Hero */}
+        <section className="mb-10">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <div className="flex items-center gap-2 text-sm font-medium text-blue-600">
-                <MapPin className="h-4 w-4" />
-                Public Dashboard
-              </div>
-              <h1 className="mt-1 text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
+              <p className="text-[13px] text-zinc-500">
                 {city.name}, {city.state}
+              </p>
+              <h1 className="mt-1 text-[34px] sm:text-[40px] font-semibold tracking-tight text-white leading-[1.1]">
+                Public infrastructure
               </h1>
-              <p className="mt-2 text-zinc-500">
-                {stats.total} reports tracked &middot; {stats.open} open issues
-                &middot; {stats.this_week} new this week
+              <p className="mt-3 text-sm text-zinc-400">
+                {stats.total.toLocaleString()} tracked
+                <span className="mx-2 text-zinc-700">·</span>
+                {stats.open} open
+                <span className="mx-2 text-zinc-700">·</span>
+                {stats.this_week} this week
               </p>
             </div>
             <Link
               href="/report"
-              className="inline-flex h-11 items-center gap-2 rounded-full bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[#0a84ff] px-5 text-[14px] font-medium text-white transition-colors hover:bg-[#0070e0]"
             >
               <Camera className="h-4 w-4" />
-              Report an Issue
-              <ArrowRight className="h-4 w-4" />
+              Report an issue
             </Link>
           </div>
         </section>
 
-        {/* interactive client-side dashboard system */}
         <DashboardInteractive
           initialStats={stats}
           initialCategories={categories}
@@ -122,21 +108,10 @@ export default async function CityDashboardPage({
         />
       </div>
 
-      {/* footer */}
-      <footer className="border-t border-zinc-200 bg-white shrink-0">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-6 text-sm text-zinc-500 sm:flex-row sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-blue-600 text-[10px] font-bold text-white">
-              C
-            </span>
-            <span>Powered by Civic</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="inline-flex items-center gap-1 rounded-full border border-zinc-200 px-2.5 py-0.5 text-xs font-medium text-zinc-600">
-              Open311 Compatible
-            </span>
-            <span>&copy; {new Date().getFullYear()} Civic</span>
-          </div>
+      <footer className="border-t border-white/[0.06] mt-10">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-6 text-[13px] text-zinc-500 sm:flex-row sm:px-6 lg:px-8">
+          <span>Civic</span>
+          <span>&copy; {new Date().getFullYear()} · Open311 compatible</span>
         </div>
       </footer>
     </div>
