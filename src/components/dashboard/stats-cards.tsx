@@ -1,3 +1,4 @@
+import { memo } from "react";
 import {
   AlertCircle,
   CheckCircle2,
@@ -17,11 +18,10 @@ interface CardDef {
   label: string;
   value: string;
   icon: React.ReactNode;
-  color: string;
   trend?: { direction: "up" | "down"; label: string };
 }
 
-export function StatsCards({ stats }: StatsCardsProps) {
+function StatsCardsInner({ stats }: StatsCardsProps) {
   const weekDelta = stats.this_week - stats.prev_week;
   const weekPct =
     stats.prev_week > 0
@@ -30,81 +30,75 @@ export function StatsCards({ stats }: StatsCardsProps) {
 
   const cards: CardDef[] = [
     {
-      label: "Total Reports",
+      label: "Total reports",
       value: stats.total.toLocaleString(),
-      icon: <FileText className="h-5 w-5" />,
-      color: "text-blue-600 bg-blue-50",
+      icon: <FileText className="h-4 w-4" strokeWidth={1.75} />,
       trend:
         weekDelta !== 0
           ? {
               direction: weekDelta > 0 ? "up" : "down",
-              label: `${weekPct}% this week`,
+              label: `${weekPct}%`,
             }
           : undefined,
     },
     {
       label: "Open",
       value: stats.open.toLocaleString(),
-      icon: <AlertCircle className="h-5 w-5" />,
-      color: "text-amber-600 bg-amber-50",
+      icon: <AlertCircle className="h-4 w-4" strokeWidth={1.75} />,
     },
     {
       label: "Resolved",
       value: stats.resolved.toLocaleString(),
-      icon: <CheckCircle2 className="h-5 w-5" />,
-      color: "text-green-600 bg-green-50",
+      icon: <CheckCircle2 className="h-4 w-4" strokeWidth={1.75} />,
     },
     {
-      label: "Avg Resolution",
+      label: "Avg resolution",
       value: formatHours(stats.avg_resolution_hours),
-      icon: <Clock className="h-5 w-5" />,
-      color: "text-purple-600 bg-purple-50",
+      icon: <Clock className="h-4 w-4" strokeWidth={1.75} />,
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {cards.map((card) => (
         <article
           key={card.label}
-          className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm"
+          className="rounded-xl bg-[#1c1c1e] border border-white/[0.06] p-5 transition-colors hover:border-white/[0.12]"
         >
           <div className="flex items-center justify-between">
-            <span
-              className={cn(
-                "inline-flex items-center justify-center rounded-lg p-2",
-                card.color,
-              )}
-            >
+            <span className="inline-flex items-center justify-center text-zinc-500">
               {card.icon}
             </span>
             {card.trend && (
               <span
                 className={cn(
-                  "inline-flex items-center gap-1 text-xs font-medium",
+                  "inline-flex items-center gap-0.5 text-[12px]",
                   card.trend.direction === "up"
-                    ? "text-rose-600"
-                    : "text-green-600",
+                    ? "text-[#ff453a]"
+                    : "text-[#30d158]",
                 )}
               >
                 {card.trend.direction === "up" ? (
-                  <TrendingUp className="h-3 w-3" />
+                  <TrendingUp className="h-3 w-3" strokeWidth={2} />
                 ) : (
-                  <TrendingDown className="h-3 w-3" />
+                  <TrendingDown className="h-3 w-3" strokeWidth={2} />
                 )}
                 {card.trend.label}
               </span>
             )}
           </div>
-          <p className="mt-3 text-2xl font-bold tracking-tight text-zinc-900">
+
+          <p className="mt-4 text-[28px] font-semibold tracking-tight text-white leading-none">
             {card.value}
           </p>
-          <p className="text-sm text-zinc-500">{card.label}</p>
+          <p className="text-[13px] text-zinc-500 mt-2">{card.label}</p>
         </article>
       ))}
     </div>
   );
 }
+
+export const StatsCards = memo(StatsCardsInner);
 
 function formatHours(h: number): string {
   if (h < 24) return `${h}h`;

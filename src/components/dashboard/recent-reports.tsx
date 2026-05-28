@@ -1,14 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import {
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  MapPin,
-  Truck,
-  Wrench,
-} from "lucide-react";
+import { memo, useEffect, useRef } from "react";
+import { Clock } from "lucide-react";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import { cn } from "@/lib/utils/cn";
@@ -17,96 +10,75 @@ import type { ReportStatus } from "@/lib/types";
 interface RecentReportsProps {
   reports: DashboardReport[];
   focusedId?: string | null;
-  onHoverReport?: (id: string | null) => void;
   onClickReport?: (id: string) => void;
 }
 
-const STATUS_CONFIG: Record<
-  ReportStatus,
-  { label: string; className: string; icon: React.ReactNode }
-> = {
-  open: {
-    label: "Open",
-    className: "bg-amber-50 text-amber-700 border-amber-200",
-    icon: <AlertCircle className="h-3 w-3" />,
-  },
-  dispatched: {
-    label: "Dispatched",
-    className: "bg-blue-50 text-blue-700 border-blue-200",
-    icon: <Truck className="h-3 w-3" />,
-  },
-  in_progress: {
-    label: "In Progress",
-    className: "bg-purple-50 text-purple-700 border-purple-200",
-    icon: <Wrench className="h-3 w-3" />,
-  },
-  closed: {
-    label: "Resolved",
-    className: "bg-green-50 text-green-700 border-green-200",
-    icon: <CheckCircle2 className="h-3 w-3" />,
-  },
-  merged: {
-    label: "Merged",
-    className: "bg-zinc-50 text-zinc-600 border-zinc-200",
-    icon: <CheckCircle2 className="h-3 w-3" />,
-  },
-  rejected: {
-    label: "Rejected",
-    className: "bg-red-50 text-red-600 border-red-200",
-    icon: <AlertCircle className="h-3 w-3" />,
-  },
+const STATUS_LABEL: Record<ReportStatus, string> = {
+  open: "Open",
+  dispatched: "Dispatched",
+  in_progress: "In progress",
+  closed: "Resolved",
+  merged: "Merged",
+  rejected: "Rejected",
 };
 
-export function RecentReports({
+const STATUS_TONE: Record<ReportStatus, string> = {
+  open: "text-[#ff9f0a]",
+  dispatched: "text-[#0a84ff]",
+  in_progress: "text-[#5ac8fa]",
+  closed: "text-[#30d158]",
+  merged: "text-zinc-500",
+  rejected: "text-[#ff453a]",
+};
+
+function RecentReportsInner({
   reports,
   focusedId = null,
-  onHoverReport,
   onClickReport,
 }: RecentReportsProps) {
   const listContainerRef = useRef<HTMLUListElement>(null);
   const itemsRef = useRef<Record<string, HTMLLIElement | null>>({});
 
-  // Auto-scroll the active item into view when focused from map
   useEffect(() => {
     if (!focusedId) return;
-
     const targetEl = itemsRef.current[focusedId];
     if (targetEl) {
-      targetEl.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-      });
+      targetEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   }, [focusedId]);
 
+  const panelClass = "rounded-xl bg-[#1c1c1e] border border-white/[0.06]";
+
   if (reports.length === 0) {
     return (
-      <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-zinc-900">Recent Reports</h2>
-        <p className="mt-4 text-sm text-zinc-500">
-          No matching reports found with the current filters.
-        </p>
+      <section className={`${panelClass} p-5`}>
+        <div className="flex items-center justify-between">
+          <h2 className="text-[15px] font-semibold text-white">Reports</h2>
+          <span className="text-[13px] text-zinc-500">0</span>
+        </div>
+        <p className="mt-3 text-sm text-zinc-400">No matching reports.</p>
       </section>
     );
   }
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm flex flex-col h-full max-h-[550px] overflow-hidden">
-      <div>
-        <h2 className="text-lg font-semibold text-zinc-900">Recent Reports</h2>
-        <p className="text-xs text-zinc-400 mt-1 mb-3">
-          Showing {reports.length} matching incidents &middot; Hover/click to interact
-        </p>
+    <section
+      className={`${panelClass} p-4 flex flex-col h-full max-h-[480px] overflow-hidden`}
+    >
+      <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+        <h2 className="text-[15px] font-semibold text-white">Reports</h2>
+        <span className="text-[13px] text-zinc-500 tabular-nums">
+          {reports.length}
+        </span>
       </div>
 
       <ul
         ref={listContainerRef}
-        className="divide-y divide-zinc-100 overflow-y-auto pr-1 flex-1 scroll-smooth"
+        className="overflow-y-auto custom-scrollbar -mx-1 px-1 flex-1 scroll-smooth flex flex-col mt-2"
         role="list"
       >
         {reports.map((report) => {
           const meta = CATEGORY_META[report.category];
-          const statusCfg = STATUS_CONFIG[report.status];
           const isFocused = focusedId === report.id;
 
           return (
@@ -115,71 +87,38 @@ export function RecentReports({
               ref={(el) => {
                 itemsRef.current[report.id] = el;
               }}
-              onMouseEnter={() => onHoverReport && onHoverReport(report.id)}
-              onMouseLeave={() => onHoverReport && onHoverReport(null)}
-              className="py-1"
             >
               <button
                 onClick={(e) => {
                   e.preventDefault();
-                  if (onClickReport) onClickReport(report.id);
+                  onClickReport?.(report.id);
                 }}
                 className={cn(
-                  "w-full text-left flex items-center gap-4 py-3 px-3 rounded-lg border border-transparent transition-all duration-200 outline-none select-none",
+                  "w-full text-left flex flex-col gap-1 py-2.5 px-2 rounded-md transition-colors outline-none",
                   isFocused
-                    ? "bg-zinc-50 border-zinc-200/60 shadow-sm"
-                    : "hover:bg-zinc-50/50"
+                    ? "bg-white/[0.06]"
+                    : "hover:bg-white/[0.03]",
                 )}
-                style={
-                  isFocused
-                    ? { borderLeft: `4px solid ${meta.color}`, paddingLeft: "8px" }
-                    : undefined
-                }
               >
-                {/* severity dot + category color */}
-                <span className="relative flex-shrink-0">
-                  <span
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-white text-sm font-bold shadow-inner"
-                    style={{ backgroundColor: meta.color }}
-                    aria-hidden="true"
-                  >
-                    {meta.label.charAt(0)}
-                  </span>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate text-[13px] font-medium text-white leading-tight">
+                    {meta.label}
+                  </p>
                   <span
                     className={cn(
-                      "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white shadow",
-                      severityColor(report.severity),
+                      "text-[12px] flex-shrink-0",
+                      STATUS_TONE[report.status],
                     )}
-                    title={`Severity ${report.severity}/5`}
-                  />
-                </span>
-
-                {/* details */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-semibold text-zinc-900 group-hover:text-blue-600">
-                      {meta.label}
-                    </p>
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium leading-none flex-shrink-0",
-                        statusCfg.className,
-                      )}
-                    >
-                      {statusCfg.icon}
-                      {statusCfg.label}
-                    </span>
-                  </div>
-                  <div className="mt-1 flex items-center justify-between gap-3 text-xs text-zinc-500">
-                    <span className="inline-flex items-center gap-1 truncate text-zinc-400">
-                      <MapPin className="h-3 w-3 flex-shrink-0" />
-                      {report.address}
-                    </span>
-                    <span className="inline-flex items-center gap-1 flex-shrink-0 text-zinc-400 font-mono">
-                      <Clock className="h-3 w-3" />
-                      {timeAgo(report.created_at)}
-                    </span>
-                  </div>
+                  >
+                    {STATUS_LABEL[report.status]}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3 text-[12px] text-zinc-500 leading-tight">
+                  <span className="truncate">{report.address}</span>
+                  <span className="inline-flex items-center gap-1 flex-shrink-0">
+                    <Clock className="h-3 w-3" strokeWidth={1.75} />
+                    {timeAgo(report.created_at)}
+                  </span>
                 </div>
               </button>
             </li>
@@ -190,18 +129,12 @@ export function RecentReports({
   );
 }
 
-function severityColor(s: number): string {
-  if (s >= 5) return "bg-red-500";
-  if (s >= 4) return "bg-orange-500";
-  if (s >= 3) return "bg-amber-400";
-  if (s >= 2) return "bg-yellow-300";
-  return "bg-green-400";
-}
+export const RecentReports = memo(RecentReportsInner);
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60_000);
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return `${mins}m`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h`;
   const days = Math.floor(hrs / 24);

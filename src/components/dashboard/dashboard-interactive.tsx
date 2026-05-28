@@ -8,6 +8,11 @@ import { CategoryChart } from "@/components/dashboard/category-chart";
 import { RecentReports } from "@/components/dashboard/recent-reports";
 import { ReportMapLazy as ReportMap } from "@/components/map/report-map-lazy";
 
+// Hover state intentionally lives nowhere — was previously lifted into this
+// component as `hoveredReportId`, but no consumer ever read it. Hovering a
+// feed item triggered a parent re-render → cascade re-renders of the map.
+// Removed. Add back only if/when a consumer actually needs it.
+
 interface DashboardInteractiveProps {
   initialStats: CityStats;
   initialCategories: CategoryCount[];
@@ -35,7 +40,6 @@ export function DashboardInteractive({
 
   // --- Interaction & Focus State ---
   const [focusedReportId, setFocusedReportId] = useState<string | null>(null); // Clicks (centers map + opens popup)
-  const [hoveredReportId, setHoveredReportId] = useState<string | null>(null); // Hovers (scales up marker only)
 
   // --- Filter Logic ---
   const filteredReports = useMemo(() => {
@@ -77,13 +81,7 @@ export function DashboardInteractive({
     setSelectedCategory((prev) => (prev === category ? null : category));
   }, []);
 
-  // --- Callbacks for Sidebar List ---
-  const handleHoverReport = useCallback((id: string | null) => {
-    setHoveredReportId(id);
-  }, []);
-
   const handleSelectReport = useCallback((id: string) => {
-    // Click selected report
     setFocusedReportId((prev) => (prev === id ? null : id));
   }, []);
 
@@ -101,9 +99,7 @@ export function DashboardInteractive({
           center={center}
           zoom={zoom}
           focusId={focusedReportId}
-          hoverId={hoveredReportId}
           onSelectMarker={handleSelectReport}
-          // Dynamic filter controls bound directly to master state
           minSeverity={minSeverity}
           setMinSeverity={setMinSeverity}
           activeStatuses={activeStatuses}
@@ -113,20 +109,19 @@ export function DashboardInteractive({
         />
       </section>
 
-      {/* 3. Two-Column Dashboard Details: Category chart + Recent Reports */}
-      <div className="grid gap-8 lg:grid-cols-5">
-        <div className="lg:col-span-2">
+      {/* 3. Two-Column Dashboard Details: Category chart (wider) + Incident Feed sidebar (narrower) */}
+      <div className="grid gap-6 lg:grid-cols-5">
+        <div className="lg:col-span-3">
           <CategoryChart
             data={initialCategories}
             selectedCategory={selectedCategory}
             onSelectCategory={handleSelectCategory}
           />
         </div>
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-2">
           <RecentReports
             reports={filteredReports}
             focusedId={focusedReportId}
-            onHoverReport={handleHoverReport}
             onClickReport={handleSelectReport}
           />
         </div>

@@ -7,7 +7,11 @@ export const ReportMapLazy = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-[400px] w-full animate-pulse rounded-xl border border-zinc-200 bg-zinc-50 lg:h-[500px]" />
+      <div className="h-[450px] w-full rounded-xl border border-white/[0.06] bg-[#0a0a0b] relative overflow-hidden lg:h-[550px]">
+        <div className="absolute inset-0 flex items-center justify-center text-[13px] text-zinc-500">
+          Loading map…
+        </div>
+      </div>
     ),
   },
 );

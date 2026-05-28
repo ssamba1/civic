@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import type { CategoryCount } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import type { ReportCategory } from "@/lib/types";
@@ -12,50 +13,47 @@ interface CategoryChartProps {
   onSelectCategory?: (category: ReportCategory | null) => void;
 }
 
-export function CategoryChart({
+function CategoryChartInner({
   data,
   selectedCategory = null,
   onSelectCategory,
 }: CategoryChartProps) {
   const maxCount = data.length > 0 ? data[0].count : 1;
 
+  const panelClass =
+    "rounded-xl bg-[#1c1c1e] border border-white/[0.06]";
+
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-zinc-900">
-          Reports by Category
-        </h2>
-        <p className="mt-4 text-sm text-zinc-500">No data yet.</p>
+      <div className={`${panelClass} p-5`}>
+        <h2 className="text-[15px] font-semibold text-white">Categories</h2>
+        <p className="mt-3 text-sm text-zinc-400">No data yet.</p>
       </div>
     );
   }
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm flex flex-col h-full">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-zinc-900">
-          Reports by Category
-        </h2>
-        {/* Clear Filter Badge */}
+    <section
+      className={`${panelClass} p-5 flex flex-col h-full max-h-[480px]`}
+    >
+      <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
+        <h2 className="text-[15px] font-semibold text-white">Categories</h2>
         {selectedCategory && onSelectCategory && (
           <button
             onClick={() => onSelectCategory(null)}
-            className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[13px] text-zinc-400 hover:text-white transition-colors"
           >
-            <X className="h-3 w-3" />
-            Clear Filter
+            <X className="h-3 w-3" strokeWidth={2} />
+            Clear
           </button>
         )}
       </div>
-      <p className="text-xs text-zinc-400 mt-1 mb-4">
-        {selectedCategory ? "Filtered view active" : "Click any row to filter map & list"}
-      </p>
 
-      <div className="space-y-3 overflow-y-auto pr-1 flex-1">
+      <div className="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1 mt-3">
         {data.map(({ category, count }) => {
           const meta = CATEGORY_META[category];
           const pct = Math.round((count / maxCount) * 100);
-          
+
           const isSelected = selectedCategory === category;
           const isAnySelected = selectedCategory !== null;
           const isDimmed = isAnySelected && !isSelected;
@@ -63,38 +61,29 @@ export function CategoryChart({
           return (
             <button
               key={category}
-              onClick={() => onSelectCategory && onSelectCategory(category)}
+              onClick={() => onSelectCategory?.(category)}
               className={cn(
-                "w-full text-left group -mx-2 px-2 py-2 rounded-lg transition-all duration-200 border border-transparent outline-none select-none cursor-pointer",
-                isSelected 
-                  ? "bg-zinc-50 border-zinc-200/60 shadow-inner" 
-                  : "hover:bg-zinc-50/50",
-                isDimmed ? "opacity-40" : "opacity-100"
+                "w-full text-left px-2 py-2 rounded-md transition-colors outline-none cursor-pointer",
+                isSelected ? "bg-white/[0.06]" : "hover:bg-white/[0.03]",
+                isDimmed ? "opacity-40" : "opacity-100",
               )}
             >
-              <div className="flex items-center justify-between text-sm">
-                <span className={cn(
-                  "font-medium transition-colors",
-                  isSelected ? "text-zinc-950 font-bold" : "text-zinc-700 group-hover:text-zinc-950"
-                )}>
+              <div className="flex items-center justify-between text-[13px]">
+                <span
+                  className={cn(
+                    isSelected ? "text-white" : "text-zinc-300",
+                  )}
+                >
                   {meta.label}
                 </span>
-                <span className={cn(
-                  "tabular-nums text-xs transition-colors",
-                  isSelected ? "text-zinc-950 font-bold font-mono" : "text-zinc-500"
-                )}>
-                  {count} reports
-                </span>
+                <span className="tabular-nums text-zinc-500">{count}</span>
               </div>
-              <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-zinc-100/80 border border-zinc-100/10">
+              <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/[0.04]">
                 <div
-                  className={cn(
-                    "h-full rounded-full transition-all duration-500",
-                    isSelected ? "animate-pulse shadow-md" : ""
-                  )}
+                  className="h-full rounded-full bg-white transition-all duration-500"
                   style={{
                     width: `${pct}%`,
-                    backgroundColor: meta.color,
+                    opacity: isSelected ? 0.95 : 0.35,
                   }}
                   role="meter"
                   aria-valuenow={count}
@@ -110,3 +99,5 @@ export function CategoryChart({
     </section>
   );
 }
+
+export const CategoryChart = memo(CategoryChartInner);

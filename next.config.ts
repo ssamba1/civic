@@ -26,9 +26,9 @@ const nextConfig: NextConfig = {
         ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
         : "script-src 'self'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://*.supabase.co https://*.openstreetmap.org https://*.basemaps.cartocdn.com https://*.arcgisonline.com",
+      "img-src 'self' data: blob: https://*.supabase.co https://*.openstreetmap.org https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.arcgisonline.com",
       "font-src 'self'",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.openstreetmap.org https://*.basemaps.cartocdn.com https://*.arcgisonline.com https://*.sentry.io https://generativelanguage.googleapis.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.openstreetmap.org https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.arcgisonline.com https://*.sentry.io https://generativelanguage.googleapis.com",
       "worker-src 'self' blob:",
       "frame-ancestors 'none'",
     ];

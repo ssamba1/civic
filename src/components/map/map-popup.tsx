@@ -15,34 +15,13 @@ function esc(str: string | null | undefined): string {
     .replace(/'/g, "&#39;");
 }
 
-const STATUS_STYLES: Record<
-  string,
-  { label: string; style: string }
-> = {
-  open: {
-    label: "Open",
-    style: "background:#fef3c7;color:#92400e;",
-  },
-  dispatched: {
-    label: "Dispatched",
-    style: "background:#dbeafe;color:#1e40af;",
-  },
-  in_progress: {
-    label: "In Progress",
-    style: "background:#ede9fe;color:#6b21a8;",
-  },
-  closed: {
-    label: "Resolved",
-    style: "background:#dcfce7;color:#166534;",
-  },
-  merged: {
-    label: "Merged",
-    style: "background:#f4f4f5;color:#3f3f46;",
-  },
-  rejected: {
-    label: "Rejected",
-    style: "background:#fee2e2;color:#b91c1c;",
-  },
+const STATUS_TONE: Record<string, { label: string; color: string }> = {
+  open: { label: "Open", color: "#ff9f0a" },
+  dispatched: { label: "Dispatched", color: "#0a84ff" },
+  in_progress: { label: "In progress", color: "#5ac8fa" },
+  closed: { label: "Resolved", color: "#30d158" },
+  merged: { label: "Merged", color: "#86868b" },
+  rejected: { label: "Rejected", color: "#ff453a" },
 };
 
 function formatExactDate(iso: string): string {
@@ -50,137 +29,117 @@ function formatExactDate(iso: string): string {
   return d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
+    hour: "numeric",
+    minute: "2-digit",
   });
 }
 
-function estimateRepairCost(reportId: string, category: string, severity: number): string {
-  // Deterministic stable hash based on ID characters to ensure cost is persistent across clicks
+function estimateRepairCost(
+  reportId: string,
+  category: string,
+  severity: number,
+): string {
   let hash = 0;
   for (let i = 0; i < reportId.length; i++) {
     hash = reportId.charCodeAt(i) + ((hash << 5) - hash);
   }
-  const variance = (Math.abs(hash) % 40) - 20; // -$20 to +$20
-  
+  const variance = (Math.abs(hash) % 40) - 20;
+
   let baseCost = 100;
   switch (category) {
-    case "water_leak": baseCost = 450; break;
-    case "drainage": baseCost = 350; break;
-    case "sidewalk_damage": baseCost = 280; break;
-    case "pothole": baseCost = 180; break;
-    case "streetlight": baseCost = 120; break;
-    case "tree_down": baseCost = 150; break;
-    case "illegal_dump": baseCost = 220; break;
-    case "graffiti": baseCost = 65; break;
-    case "debris": baseCost = 80; break;
+    case "water_leak":
+      baseCost = 450;
+      break;
+    case "drainage":
+      baseCost = 350;
+      break;
+    case "sidewalk_damage":
+      baseCost = 280;
+      break;
+    case "pothole":
+      baseCost = 180;
+      break;
+    case "streetlight":
+      baseCost = 120;
+      break;
+    case "tree_down":
+      baseCost = 150;
+      break;
+    case "illegal_dump":
+      baseCost = 220;
+      break;
+    case "graffiti":
+      baseCost = 65;
+      break;
+    case "debris":
+      baseCost = 80;
+      break;
   }
-  
+
   const total = baseCost * severity + variance;
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(total);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(total);
 }
 
-function getUrgencyMeta(severity: number): { label: string; bg: string; text: string; sla: string } {
-  if (severity >= 5) {
-    return { label: "CRITICAL (P1)", bg: "#fee2e2", text: "#ef4444", sla: "< 2 Hrs" };
-  }
-  if (severity >= 4) {
-    return { label: "HIGH (P2)", bg: "#ffedd5", text: "#f97316", sla: "< 12 Hrs" };
-  }
-  if (severity >= 3) {
-    return { label: "MEDIUM (P3)", bg: "#e0e7ff", text: "#6366f1", sla: "< 48 Hrs" };
-  }
-  if (severity >= 2) {
-    return { label: "LOW (P4)", bg: "#f3f4f6", text: "#4b5563", sla: "< 5 Days" };
-  }
-  return { label: "ROUTINE (P5)", bg: "#f3f4f6", text: "#9ca3af", sla: "< 14 Days" };
+function slaWindow(severity: number): string {
+  if (severity >= 5) return "< 2 hours";
+  if (severity >= 4) return "< 12 hours";
+  if (severity >= 3) return "< 48 hours";
+  if (severity >= 2) return "< 5 days";
+  return "< 14 days";
 }
 
 export function renderPopupHTML(report: DashboardReport): string {
   const meta = CATEGORY_META[report.category];
-  const statusEntry = STATUS_STYLES[report.status] ?? {
-    label: report.status,
-    style: "background:#f4f4f5;color:#3f3f46;",
-  };
-  const urgency = getUrgencyMeta(report.severity);
+  const status =
+    STATUS_TONE[report.status] ?? {
+      label: report.status,
+      color: "#86868b",
+    };
+  const cost = estimateRepairCost(report.id, report.category, report.severity);
+  const sla = slaWindow(report.severity);
 
   return `
-    <div style="min-width:210px;max-width:280px;font-family:system-ui,-apple-system,sans-serif;">
-      <div style="width:100%;height:120px;border-radius:8px 8px 0 0;overflow:hidden;background:#f4f4f5;position:relative;">
+    <div style="min-width:240px;max-width:300px;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',Inter,system-ui,sans-serif;color:#f5f5f7;">
+      <div style="width:100%;height:140px;border-radius:12px 12px 0 0;overflow:hidden;background:#1c1c1e;">
         <img
           src="${esc(report.photo_public_url)}"
           alt="${esc(meta.label)} report"
           style="width:100%;height:100%;object-fit:cover;"
           onerror="this.style.display='none'"
         />
-        <div style="position:absolute;bottom:8px;right:8px;background:rgba(24,24,27,0.75);backdrop-filter:blur(4px);color:white;font-size:9px;font-family:monospace;padding:2px 6px;border-radius:4px;font-weight:700;">
-          ID: ${esc(report.id)}
-        </div>
       </div>
-      <div style="padding:10px 12px 12px;">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${esc(meta.color)};flex-shrink:0;"></span>
-          <strong style="font-size:14px;color:#18181b;">${esc(meta.label)}</strong>
-          <span style="font-size:10px;padding:2px 8px;border-radius:9999px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;${statusEntry.style}">
-            ${esc(statusEntry.label)}
-          </span>
+      <div style="padding:14px 16px 16px;">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;">
+          <strong style="font-size:15px;color:#ffffff;letter-spacing:-0.01em;font-weight:600;">${esc(meta.label)}</strong>
+          <span style="font-size:12px;color:${esc(status.color)};">${esc(status.label)}</span>
         </div>
-        <div style="display:flex;align-items:center;gap:4px;font-size:12px;color:#71717a;font-weight:500;">
-          <span>Severity ${esc(String(report.severity))}/5</span>
-          <span style="color:#d4d4d8;">|</span>
-          <span>${esc(severityLabel(report.severity))}</span>
-        </div>
-        
-        <p style="margin:6px 0 0;font-size:12px;color:#3f3f46;font-weight:600;line-height:1.3;">${esc(report.address)}</p>
-        <p style="margin:2px 0 0;font-size:11px;color:#71717a;">Received ${esc(timeAgoCompact(report.created_at))}</p>
+        <p style="margin:4px 0 0;font-size:13px;color:#a1a1aa;line-height:1.35;">${esc(report.address)}</p>
 
-        <!-- Elegant Divider -->
-        <div style="margin:10px 0; border-top:1px dashed #e4e4e7;"></div>
-
-        <!-- Metrics Grid -->
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px 8px; font-size:11px; margin-top:2px; line-height:1.2;">
-          <div>
-            <span style="display:block; color:#a1a1aa; font-weight:700; font-size:8px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:2px;">Date Reported</span>
-            <span style="color:#27272a; font-weight:600;">${esc(formatExactDate(report.created_at))}</span>
+        <div style="margin:14px 0 0;display:flex;flex-direction:column;gap:7px;font-size:13px;">
+          <div style="display:flex;justify-content:space-between;color:#86868b;">
+            <span>Severity</span>
+            <span style="color:#f5f5f7;">${esc(String(report.severity))}/5</span>
           </div>
-          <div>
-            <span style="display:block; color:#a1a1aa; font-weight:700; font-size:8px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:2px;">Est. Repair Cost</span>
-            <span style="color:#0f766e; font-weight:700;">${esc(estimateRepairCost(report.id, report.category, report.severity))}</span>
+          <div style="display:flex;justify-content:space-between;color:#86868b;">
+            <span>Reported</span>
+            <span style="color:#f5f5f7;">${esc(formatExactDate(report.created_at))}</span>
           </div>
-          
-          <div style="grid-column: span 2; display:flex; justify-content:space-between; align-items:center; background:#f4f4f5; padding:6px 8px; border-radius:6px; margin-top:2px; border:1px solid #e4e4e7;">
-            <div>
-              <span style="display:block; color:#71717a; font-weight:700; font-size:8px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:2px;">Priority SLA</span>
-              <span style="color:${esc(urgency.text)}; font-weight:800; font-size:10px; letter-spacing:0.01em;">${esc(urgency.label)}</span>
-            </div>
-            <div style="text-align:right;">
-              <span style="display:block; color:#71717a; font-weight:700; font-size:8px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:2px;">SLA Deadline</span>
-              <span style="color:#4f46e5; font-weight:700; font-size:10px;">${esc(urgency.sla)}</span>
-            </div>
+          <div style="display:flex;justify-content:space-between;color:#86868b;">
+            <span>Est. cost</span>
+            <span style="color:#f5f5f7;">${esc(cost)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;color:#86868b;">
+            <span>SLA</span>
+            <span style="color:#f5f5f7;">${esc(sla)}</span>
           </div>
         </div>
-
       </div>
     </div>
   `;
-}
-
-function severityLabel(s: number): string {
-  if (s >= 5) return "Critical";
-  if (s >= 4) return "High";
-  if (s >= 3) return "Medium";
-  if (s >= 2) return "Low";
-  return "Minor";
-}
-
-function timeAgoCompact(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
 }
 
 export type { MapPopupProps };

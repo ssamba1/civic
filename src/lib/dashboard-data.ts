@@ -92,98 +92,200 @@ export async function fetchCity(slug: string): Promise<City | null> {
   };
 }
 
+/* ------------------------------------------------------------------
+   Mock corpus — 120 historical reports spanning the last ~6 months.
+   Distributed ~20/month with realistic age-correlated status:
+   fresh reports skew open/dispatched, old reports skew closed.
+   ------------------------------------------------------------------ */
+
+const STREET_NAMES = [
+  "Main St", "Elm Ave", "Oak Dr", "Peachtree Rd", "Maple Ln",
+  "Walnut Ct", "Cedar Blvd", "Pine Way", "Birch St", "Willow Ave",
+  "Spruce Dr", "Hickory Rd", "Poplar Ln", "Magnolia Ct", "Dogwood Blvd",
+  "Chestnut Way", "Sycamore St", "Aspen Ave", "Redwood Dr", "Juniper Rd",
+];
+
+const CATEGORY_WEIGHTS: ReadonlyArray<readonly [ReportCategory, number]> = [
+  ["pothole", 68],
+  ["streetlight", 41],
+  ["water_leak", 29],
+  ["sidewalk_damage", 24],
+  ["downed_sign", 22],
+  ["graffiti", 18],
+  ["tree_down", 14],
+  ["drainage", 12],
+  ["illegal_dump", 8],
+  ["debris", 6],
+  ["faded_signage", 3],
+  ["other", 2],
+];
+
+const SEVERITY_WEIGHTS: ReadonlyArray<readonly [1 | 2 | 3 | 4 | 5, number]> = [
+  [1, 5],
+  [2, 20],
+  [3, 40],
+  [4, 25],
+  [5, 10],
+];
+
+// Deterministic pseudo-random in [0,1) seeded by (i, salt). Stable across SSR + CSR.
+function seeded(i: number, salt: number): number {
+  const x = Math.sin(i * 127.1 + salt * 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function pickWeighted<T>(
+  items: ReadonlyArray<readonly [T, number]>,
+  r: number,
+): T {
+  const total = items.reduce((s, [, w]) => s + w, 0);
+  const target = r * total;
+  let acc = 0;
+  for (const [val, w] of items) {
+    acc += w;
+    if (target < acc) return val;
+  }
+  return items[items.length - 1][0];
+}
+
+function statusForAge(ageDays: number, r: number): ReportStatus {
+  if (ageDays > 60) {
+    return pickWeighted<ReportStatus>(
+      [
+        ["closed", 88],
+        ["merged", 6],
+        ["rejected", 6],
+      ],
+      r,
+    );
+  }
+  if (ageDays > 14) {
+    return pickWeighted<ReportStatus>(
+      [
+        ["closed", 58],
+        ["in_progress", 22],
+        ["dispatched", 10],
+        ["open", 5],
+        ["rejected", 5],
+      ],
+      r,
+    );
+  }
+  if (ageDays > 3) {
+    return pickWeighted<ReportStatus>(
+      [
+        ["closed", 28],
+        ["in_progress", 32],
+        ["dispatched", 25],
+        ["open", 15],
+      ],
+      r,
+    );
+  }
+  return pickWeighted<ReportStatus>(
+    [
+      ["open", 50],
+      ["dispatched", 25],
+      ["in_progress", 22],
+      ["closed", 3],
+    ],
+    r,
+  );
+}
+
+interface CorpusReport extends DashboardReport {
+  age_days: number;
+}
+
+function buildCorpus(): CorpusReport[] {
+  const N = 120;
+  const SPAN_DAYS = 180; // ~6 months
+  const DAY_MS = 86_400_000;
+  const now = Date.now();
+  const center = KNOWN_CITIES.cumming.center;
+  const lngSpread = 0.048;
+  const latSpread = 0.048;
+
+  const reports: CorpusReport[] = Array.from({ length: N }, (_, i) => {
+    // Spread linearly across SPAN_DAYS with small jitter so the timeline isn't a perfect grid.
+    const baseAge = ((i + 0.5) / N) * SPAN_DAYS;
+    const jitter = (seeded(i, 10) - 0.5) * 1.5;
+    const ageDays = Math.max(0.1, baseAge + jitter);
+
+    const category = pickWeighted(CATEGORY_WEIGHTS, seeded(i, 1));
+    const severity = pickWeighted(SEVERITY_WEIGHTS, seeded(i, 2));
+    const status = statusForAge(ageDays, seeded(i, 3));
+
+    const streetName = STREET_NAMES[Math.floor(seeded(i, 4) * STREET_NAMES.length)];
+    const houseNum = 100 + Math.floor(seeded(i, 5) * 900);
+
+    return {
+      id: `report-${i + 1}`,
+      category,
+      severity,
+      status,
+      address: `${houseNum} ${streetName}`,
+      location: {
+        lng: center[0] + (seeded(i, 6) - 0.5) * lngSpread,
+        lat: center[1] + (seeded(i, 7) - 0.5) * latSpread,
+      },
+      photo_public_url: `https://picsum.photos/seed/${category}-${i}/640/360`,
+      created_at: new Date(now - ageDays * DAY_MS).toISOString(),
+      age_days: ageDays,
+    };
+  });
+
+  // Most-recent first so slicing returns the freshest reports.
+  return reports.sort((a, b) => a.age_days - b.age_days);
+}
+
+const REPORT_CORPUS: CorpusReport[] = buildCorpus();
+
+function stripCorpus(r: CorpusReport): DashboardReport {
+  const { age_days: _ignored, ...rest } = r;
+  void _ignored;
+  return rest;
+}
+
 export async function fetchCityStats(cityId: string): Promise<CityStats> {
-  // TODO: Replace with Supabase aggregate query
   void cityId;
-  return {
-    total: 247,
-    open: 43,
-    resolved: 189,
-    avg_resolution_hours: 72,
-    this_week: 18,
-    prev_week: 12,
-  };
+
+  const total = REPORT_CORPUS.length;
+  const open = REPORT_CORPUS.filter((r) => r.status === "open").length;
+  const resolved = REPORT_CORPUS.filter((r) => r.status === "closed").length;
+  const this_week = REPORT_CORPUS.filter((r) => r.age_days <= 7).length;
+  const prev_week = REPORT_CORPUS.filter(
+    (r) => r.age_days > 7 && r.age_days <= 14,
+  ).length;
+
+  // Synthetic avg resolution: severity-weighted hours (sev 1 ~30h, sev 5 ~102h).
+  const closed = REPORT_CORPUS.filter((r) => r.status === "closed");
+  const avg_resolution_hours = closed.length === 0
+    ? 0
+    : Math.round(
+        closed.reduce((s, r) => s + 12 + r.severity * 18, 0) / closed.length,
+      );
+
+  return { total, open, resolved, avg_resolution_hours, this_week, prev_week };
 }
 
 export async function fetchCategoryBreakdown(
   cityId: string,
 ): Promise<CategoryCount[]> {
-  // TODO: Replace with Supabase group-by query
   void cityId;
-  const mock: CategoryCount[] = [
-    { category: "pothole", count: 68 },
-    { category: "streetlight", count: 41 },
-    { category: "water_leak", count: 29 },
-    { category: "sidewalk_damage", count: 24 },
-    { category: "downed_sign", count: 22 },
-    { category: "graffiti", count: 18 },
-    { category: "tree_down", count: 14 },
-    { category: "drainage", count: 12 },
-    { category: "illegal_dump", count: 8 },
-    { category: "debris", count: 6 },
-    { category: "faded_signage", count: 3 },
-    { category: "other", count: 2 },
-  ];
-  return mock.sort((a, b) => b.count - a.count);
+  const counts = new Map<ReportCategory, number>();
+  for (const r of REPORT_CORPUS) {
+    counts.set(r.category, (counts.get(r.category) ?? 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .map(([category, count]) => ({ category, count }))
+    .sort((a, b) => b.count - a.count);
 }
 
 export async function fetchRecentReports(
   cityId: string,
   limit = 20,
 ): Promise<DashboardReport[]> {
-  // TODO: Replace with Supabase query (join reports + classifications, strip PII)
   void cityId;
-  void limit;
-
-  const categories: ReportCategory[] = [
-    "pothole",
-    "streetlight",
-    "water_leak",
-    "sidewalk_damage",
-    "downed_sign",
-    "graffiti",
-    "tree_down",
-    "drainage",
-  ];
-  const statuses: ReportStatus[] = ["open", "dispatched", "in_progress", "closed"];
-  const streets = [
-    "201 Main St",
-    "445 Elm Ave",
-    "312 Oak Dr",
-    "100 Peachtree Rd",
-    "889 Maple Ln",
-    "550 Walnut Ct",
-    "77 Cedar Blvd",
-    "623 Pine Way",
-    "410 Birch St",
-    "901 Willow Ave",
-    "156 Spruce Dr",
-    "234 Hickory Rd",
-    "678 Poplar Ln",
-    "345 Magnolia Ct",
-    "512 Dogwood Blvd",
-    "789 Chestnut Way",
-    "111 Sycamore St",
-    "432 Aspen Ave",
-    "867 Redwood Dr",
-    "290 Juniper Rd",
-  ];
-
-  const center = KNOWN_CITIES.cumming.center;
-  const now = Date.now();
-
-  return Array.from({ length: 20 }, (_, i) => ({
-    id: `report-${i + 1}`,
-    category: categories[i % categories.length],
-    severity: ((i % 5) + 1) as 1 | 2 | 3 | 4 | 5,
-    status: statuses[i % statuses.length],
-    address: streets[i],
-    location: {
-      // Deterministic fixed offsets — no Math.random() so map markers are stable across renders
-      lng: center[0] + (i % 10) * 0.003 - 0.015,
-      lat: center[1] + Math.floor(i / 10) * 0.003 - 0.003,
-    },
-    photo_public_url: `/placeholder-report-${(i % 4) + 1}.jpg`,
-    created_at: new Date(now - i * 3_600_000 * 4).toISOString(),
-  }));
+  return REPORT_CORPUS.slice(0, limit).map(stripCorpus);
 }
