@@ -29,6 +29,8 @@ import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { renderPopupHTML } from "@/components/map/map-popup";
 import { LiquidGlassCard } from "@/components/ui/liquid-glass";
 
+export type MapTheme = "dark" | "light" | "satellite";
+
 interface ReportMapProps {
   reports: DashboardReport[];
   center: [number, number]; // [lng, lat]
@@ -42,6 +44,10 @@ interface ReportMapProps {
   selectedCategory?: ReportCategory | null;
   setSelectedCategory?: (c: ReportCategory | null) => void;
   isFullscreen?: boolean;
+  // Optional controlled mapTheme — pass these to lift theme state to a parent
+  // so other UI (e.g. Dispatch panel) can react. Falls back to local state.
+  mapTheme?: MapTheme;
+  onMapThemeChange?: (t: MapTheme) => void;
 }
 
 /* ------------------------------------------------------------------
@@ -126,11 +132,16 @@ function ReportMapInner({
   selectedCategory = null,
   setSelectedCategory,
   isFullscreen = false,
+  mapTheme: mapThemeProp,
+  onMapThemeChange,
 }: ReportMapProps) {
   const mapRef = useRef<MapRef | null>(null);
-  const [mapTheme, setMapTheme] = useState<"dark" | "light" | "satellite">(
-    "dark",
-  );
+  const [mapThemeLocal, setMapThemeLocal] = useState<MapTheme>("dark");
+  const mapTheme = mapThemeProp ?? mapThemeLocal;
+  const setMapTheme = (t: MapTheme) => {
+    if (onMapThemeChange) onMapThemeChange(t);
+    else setMapThemeLocal(t);
+  };
   const [is3D, setIs3D] = useState(true);
   const [viewMode, setViewMode] = useState<"markers" | "hex" | "heatmap">(
     "markers",
@@ -275,6 +286,13 @@ function ReportMapInner({
     const glow = new ScatterplotLayer<DashboardReport>({
       id: "report-glow",
       data: reports,
+      // Flat ground-plane overlay. In interleaved mode deck shares maplibre's
+      // depth buffer, so markers at z=0 z-fight the basemap and flicker against
+      // it during zoom ("color twitches with the background"). depthCompare:
+      // 'always' draws them unconditionally on top; depthWriteEnabled:false keeps
+      // them out of the shared depth buffer so the 3 stacked translucent marker
+      // layers don't z-fight each other either.
+      parameters: { depthCompare: "always", depthWriteEnabled: false },
       pickable: false,
       stroked: false,
       filled: true,
@@ -294,6 +312,8 @@ function ReportMapInner({
     const dots = new ScatterplotLayer<DashboardReport>({
       id: "report-dots",
       data: reports,
+      // Same depth-overlay treatment as the glow — see report-glow above.
+      parameters: { depthCompare: "always", depthWriteEnabled: false },
       pickable: true,
       stroked: true,
       filled: true,
@@ -334,6 +354,8 @@ function ReportMapInner({
       ? new ScatterplotLayer<DashboardReport>({
           id: "report-halo",
           data: [highlighted],
+          // Same depth-overlay treatment as the glow — see report-glow above.
+          parameters: { depthCompare: "always", depthWriteEnabled: false },
           pickable: false,
           stroked: true,
           filled: false,
@@ -625,10 +647,12 @@ function ReportMapInner({
       {/* Legend — content depends on view mode */}
       <LiquidGlassCard
         className="absolute bottom-4 right-4 z-20 pointer-events-none"
-        contentClassName="bg-black/45 px-3 py-2.5 text-[12px] text-zinc-200 flex flex-col gap-1.5"
+        contentClassName={`${
+          mapTheme === "light" ? "bg-black/45" : "bg-black/5"
+        } px-3 py-2.5 text-[12px] text-zinc-200 flex flex-col gap-1.5 rounded-[14px]`}
         borderRadius="14px"
         blurIntensity="xl"
-        shadowIntensity="xs"
+        shadowIntensity="none"
         glowIntensity="xs"
       >
         {viewMode === "markers" ? (

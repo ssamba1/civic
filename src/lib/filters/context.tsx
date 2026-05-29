@@ -14,6 +14,8 @@ import type { DashboardReport } from "@/lib/dashboard-data";
 import { filterPreviousWindow, filterReports } from "@/lib/filters/filter-reports";
 import { type ReportFilter, DEFAULT_FILTER } from "@/lib/filters/types";
 import { filterToParams, parseFilterFromParams } from "@/lib/filters/url-sync";
+import { useTeamOverrides } from "@/lib/teams-overrides";
+import { useCategoryOverrides } from "@/lib/category-overrides";
 
 interface FilterContextValue {
   filter: ReportFilter;
@@ -83,13 +85,21 @@ export function FilterProvider({ corpus, now: serverNow, children }: FilterProvi
 
   const reset = useCallback(() => setFilter(DEFAULT_FILTER), [setFilter]);
 
+  // Reassignment overrides feed back into team filtering so toggling a report
+  // to another team immediately re-narrows every consumer of useFilteredReports.
+  const { overrides } = useTeamOverrides();
+  // Subscribe to category-level routing overrides too. The memo doesn't pass
+  // them in (filter-reports reads the module-level snapshot via
+  // categoryToTeam) but the dep keeps memos invalidated on routing changes.
+  const { overrides: categoryOverrides } = useCategoryOverrides();
+
   const filtered = useMemo(
-    () => filterReports(corpus, filter, now),
-    [corpus, filter, now],
+    () => filterReports(corpus, filter, now, overrides),
+    [corpus, filter, now, overrides, categoryOverrides],
   );
   const previousWindow = useMemo(
-    () => filterPreviousWindow(corpus, filter, now),
-    [corpus, filter, now],
+    () => filterPreviousWindow(corpus, filter, now, overrides),
+    [corpus, filter, now, overrides, categoryOverrides],
   );
 
   const isDefault = useMemo(

@@ -1,4 +1,5 @@
 import type { City, Report, ReportCategory, ReportStatus } from "@/lib/types";
+import type { TeamId } from "@/lib/teams";
 
 /* ------------------------------------------------------------------
    Dashboard-specific types (flattened from Report + Classification)
@@ -16,6 +17,10 @@ export interface DashboardReport {
   reporter_id: string;
   upvote_count?: number;
   tags?: string[];
+  // Optional persisted team assignment. When unset, routing falls back to
+  // categoryToTeam(category). Per-report runtime overrides live in
+  // src/lib/teams-overrides.ts and shadow this field client-side.
+  assigned_team?: TeamId;
 }
 
 export interface CityStats {

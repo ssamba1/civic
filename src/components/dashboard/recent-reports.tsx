@@ -1,10 +1,11 @@
 "use client";
 
 import { memo, useEffect, useRef } from "react";
-import { Clock } from "lucide-react";
+import { Clock, Maximize2 } from "lucide-react";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import { cn } from "@/lib/utils/cn";
+import { timeAgo } from "@/lib/utils/time-ago";
 import type { ReportStatus } from "@/lib/types";
 import { UpvoteButton } from "@/components/dashboard/upvote-button";
 
@@ -13,6 +14,19 @@ interface RecentReportsProps {
   focusedId?: string | null;
   onClickReport?: (id: string) => void;
   upvotedIds?: string[];
+  /** Tailwind max-height class for the panel. Defaults to a 480px cap. */
+  maxHeightClass?: string;
+  /** Optional expand handler. When provided, an expand button renders in the
+     header so the full reports list can open in an overlay. */
+  onExpand?: () => void;
+  /** Optional hover binding per row (analytics reasoning hover card). When
+     omitted (e.g. on the dashboard) rows have no hover behavior. */
+  bindReportHover?: (report: { id: string; label: string }) => {
+    onPointerEnter: (e: React.PointerEvent) => void;
+    onPointerLeave: () => void;
+    onFocus: (e: React.FocusEvent) => void;
+    onBlur: () => void;
+  };
 }
 
 const STATUS_LABEL: Record<ReportStatus, string> = {
@@ -40,6 +54,9 @@ function RecentReportsInner({
   focusedId = null,
   onClickReport,
   upvotedIds = [],
+  maxHeightClass = "max-h-[480px]",
+  onExpand,
+  bindReportHover,
 }: RecentReportsProps) {
   const upvotedSet = new Set(upvotedIds);
   const listContainerRef = useRef<HTMLUListElement>(null);
@@ -60,7 +77,19 @@ function RecentReportsInner({
       <section className={`${panelClass} p-5`}>
         <div className="flex items-center justify-between">
           <h2 className="text-[15px] font-semibold text-white">Reports</h2>
-          <span className="text-[13px] text-zinc-500">0</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[13px] text-zinc-500">0</span>
+            {onExpand && (
+              <button
+                type="button"
+                onClick={onExpand}
+                aria-label="Expand reports"
+                className="flex-shrink-0 p-1 -m-1 text-zinc-500 hover:text-white rounded transition-colors"
+              >
+                <Maximize2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+              </button>
+            )}
+          </div>
         </div>
         <p className="mt-3 text-sm text-zinc-400">No matching reports.</p>
       </section>
@@ -69,13 +98,29 @@ function RecentReportsInner({
 
   return (
     <section
-      className={`${panelClass} p-4 flex flex-col h-full max-h-[480px] overflow-hidden`}
+      className={cn(
+        panelClass,
+        "p-4 flex flex-col h-full overflow-hidden",
+        maxHeightClass,
+      )}
     >
       <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
         <h2 className="text-[15px] font-semibold text-white">Reports</h2>
-        <span className="text-[13px] text-zinc-500 tabular-nums">
-          {reports.length}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[13px] text-zinc-500 tabular-nums">
+            {reports.length}
+          </span>
+          {onExpand && (
+            <button
+              type="button"
+              onClick={onExpand}
+              aria-label="Expand reports"
+              className="flex-shrink-0 p-1 -m-1 text-zinc-500 hover:text-white rounded transition-colors"
+            >
+              <Maximize2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+            </button>
+          )}
+        </div>
       </div>
 
       <ul
@@ -100,6 +145,8 @@ function RecentReportsInner({
                   e.preventDefault();
                   onClickReport?.(report.id);
                 }}
+                {...(bindReportHover?.({ id: report.id, label: meta.label }) ??
+                  {})}
                 aria-current={isFocused ? "true" : undefined}
                 className={cn(
                   "flex-1 min-w-0 text-left flex flex-col gap-1 py-2.5 px-2 rounded-md transition-colors",
@@ -148,16 +195,3 @@ function RecentReportsInner({
 }
 
 export const RecentReports = memo(RecentReportsInner);
-
-function timeAgo(iso: string): string {
-  // Clamp to 0 so clock skew (a created_at slightly in the future) never
-  // renders a negative or nonsensical "-1m".
-  const diff = Math.max(0, Date.now() - new Date(iso).getTime());
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "now";
-  if (mins < 60) return `${mins}m`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d`;
-}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ThumbsUp, Map, BarChart3, Camera } from "lucide-react";
+import { UsersRound, ThumbsUp, Map, BarChart3, Camera } from "lucide-react";
 
 interface CityNavProps {
   slug: string;
@@ -13,9 +13,9 @@ export function CityNav({ slug }: CityNavProps) {
 
   const items = [
     {
-      label: "Dashboard",
+      label: "Teams",
       href: `/city/${slug}`,
-      icon: LayoutDashboard,
+      icon: UsersRound,
       active: pathname === `/city/${slug}`,
     },
     {

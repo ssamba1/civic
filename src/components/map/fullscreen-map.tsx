@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from "react";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
-import { ReportMap } from "@/components/map/report-map";
+import { ReportMap, type MapTheme } from "@/components/map/report-map";
 import { LiquidGlassCard } from "@/components/ui/liquid-glass";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 import {
@@ -12,6 +12,7 @@ import {
   categoryToTeam,
   type TeamId,
 } from "@/lib/teams";
+import { useCategoryOverrides } from "@/lib/category-overrides";
 import {
   Sliders,
   Clock,
@@ -64,6 +65,16 @@ export function FullscreenMapOrchestrator({
   // Local mutable reports state (to allow dynamic routing/updating status!)
   const [reports, setReports] = useState<DashboardReport[]>(initialReports);
 
+  // Subscribe to category-level routing overrides. `categoryToTeam` reads
+  // the module-level snapshot, but the memo'd filter below needs a dep
+  // that ticks when a dispatcher re-aims a category from the routing
+  // matrix — that's what `categoryOverrides` provides here.
+  const { overrides: categoryOverrides } = useCategoryOverrides();
+
+  // --- Map theme (lifted from ReportMap so Dispatch panel can react) ---
+  const [mapTheme, setMapTheme] = useState<MapTheme>("dark");
+  const isLightBasemap = mapTheme === "light";
+
   // --- Active Filters State ---
   const [selectedTeam, setSelectedTeam] = useState<TeamId>("all");
   const [selectedCategory, setSelectedCategory] = useState<ReportCategory | null>(null);
@@ -105,7 +116,7 @@ export function FullscreenMapOrchestrator({
       if (!activeStatuses.includes(report.status)) return false;
       return true;
     });
-  }, [reports, selectedTeam, selectedCategory, minSeverity, activeStatuses]);
+  }, [reports, selectedTeam, selectedCategory, minSeverity, activeStatuses, categoryOverrides]);
 
   // Toggle status filter helper
   const handleToggleStatus = (status: ReportStatus) => {
@@ -177,16 +188,20 @@ export function FullscreenMapOrchestrator({
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
           isFullscreen={true}
+          mapTheme={mapTheme}
+          onMapThemeChange={setMapTheme}
         />
       </div>
 
       {/* Side panel — Dispatch */}
       <LiquidGlassCard
-        className="absolute top-16 left-4 bottom-4 w-[340px] pointer-events-auto z-10 overflow-hidden animate-in slide-in-from-left-2 duration-300"
-        contentClassName="bg-black/55 p-4 text-white flex flex-col overflow-hidden"
+        className="absolute top-16 left-4 bottom-4 w-[280px] pointer-events-auto z-10 overflow-hidden animate-in slide-in-from-left-2 duration-300"
+        contentClassName={`${
+          isLightBasemap ? "bg-black/55" : "bg-black/10"
+        } p-4 text-white flex flex-col overflow-hidden`}
         borderRadius="20px"
         blurIntensity="xl"
-        shadowIntensity="xs"
+        shadowIntensity="none"
         glowIntensity="xs"
       >
 

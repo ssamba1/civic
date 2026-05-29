@@ -72,6 +72,31 @@
   animation: accordion-down 280ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* ── Delegation row expand ── */
+@keyframes row-expand-down {
+  from { max-height: 0; opacity: 0; }
+  to   { max-height: 720px; opacity: 1; }
+}
+@keyframes row-expand-up {
+  from { max-height: 720px; opacity: 1; }
+  to   { max-height: 0; opacity: 0; }
+}
+.data-\[state\=closed\]\:animate-row-up[data-state="closed"] {
+  animation: row-expand-up 240ms cubic-bezier(0.16,1,0.3,1) forwards;
+  overflow: hidden;
+}
+.data-\[state\=open\]\:animate-row-down[data-state="open"] {
+  animation: row-expand-down 280ms cubic-bezier(0.16,1,0.3,1) forwards;
+  overflow: hidden;
+}
+@media (prefers-reduced-motion: reduce) {
+  .data-\[state\=closed\]\:animate-row-up[data-state="closed"],
+  .data-\[state\=open\]\:animate-row-down[data-state="open"] {
+    animation: none;
+    transition: opacity 120ms linear;
+  }
+}
+
 /* ── Base ── */
 html {
   scroll-behavior: smooth;
