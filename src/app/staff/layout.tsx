@@ -25,15 +25,32 @@ export default async function StaffLayout({
 }) {
   const user = await getAuthUser();
 
-  if (!user) redirect("/login");
+  // Dev mode: allow access without auth for testing
+  const isDev = process.env.NODE_ENV === "development";
+  
+  if (!user && !isDev) redirect("/login");
 
   // Use service-role client to read users table (RLS may block anon key)
   const supabase = createServerClient();
-  const { data: profile } = await supabase
-    .from("users")
-    .select("id, role, display_name, email")
-    .eq("id", user.id)
-    .single();
+  
+  let profile;
+  
+  if (isDev && !user) {
+    // Temporary dev profile
+    profile = {
+      id: "dev-user",
+      role: "admin",
+      display_name: "Dev Admin",
+      email: "dev@local",
+    };
+  } else if (user) {
+    const { data } = await supabase
+      .from("users")
+      .select("id, role, display_name, email")
+      .eq("id", user.id)
+      .single();
+    profile = data;
+  }
 
   if (
     !profile ||

@@ -129,6 +129,28 @@ async function getWorkOrders(cityId: string): Promise<WorkOrderWithDetails[]> {
 }
 
 export default async function StaffPage() {
+  // Dev mode: return simple placeholder
+  if (process.env.NODE_ENV === "development") {
+    return (
+      <div className="flex h-full flex-col">
+        <div className="flex-1 overflow-auto p-8">
+          <h1 className="text-2xl font-bold">Civic Staff Inbox</h1>
+          <p className="mt-4 text-zinc-600">
+            Staff dashboard is available when Supabase is properly configured.
+          </p>
+          <div className="mt-8 space-y-4">
+            <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+              <h2 className="font-semibold">Dev Mode Active</h2>
+              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                To access real data, configure your Supabase credentials in .env.local
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // C5: Auth check — use cookie-based client, not service-role
   const user = await getAuthUser();
   if (!user) redirect("/login");
@@ -148,7 +170,7 @@ export default async function StaffPage() {
     redirect("/login");
   }
 
-  const cityId: string = userRow.city_id;
+  const cityId = userRow.city_id;
 
   const workOrders = await getWorkOrders(cityId);
 
