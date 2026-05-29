@@ -10,8 +10,29 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const libraryInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      // Live stream may still be running if user picked from viewfinder.
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      onCapture(file);
+    },
+    [onCapture]
+  );
+
+  // capture="environment" → native camera; no capture attr → photo library.
+  const openCameraPicker = useCallback(() => {
+    cameraInputRef.current?.click();
+  }, []);
+  const openLibraryPicker = useCallback(() => {
+    libraryInputRef.current?.click();
+  }, []);
 
   const startCamera = useCallback(async () => {
     try {
@@ -72,9 +93,30 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
     );
   }, [onCapture]);
 
+  const hiddenFileInputs = (
+    <>
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      <input
+        ref={libraryInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+    </>
+  );
+
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-black px-6 text-center gap-4">
+        {hiddenFileInputs}
         <svg
           className="w-16 h-16 text-zinc-500"
           fill="none"
@@ -96,11 +138,23 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
         </svg>
         <p className="text-white text-lg font-medium">{error}</p>
         <button
+          onClick={openCameraPicker}
+          className="mt-2 rounded-full bg-blue-600 px-6 py-3 min-h-[44px] text-sm font-semibold text-white active:scale-95 transition-transform"
+        >
+          Take a photo instead
+        </button>
+        <button
+          onClick={openLibraryPicker}
+          className="rounded-full border border-zinc-600 px-6 py-3 min-h-[44px] text-sm font-semibold text-white active:scale-95 transition-transform"
+        >
+          Upload from library
+        </button>
+        <button
           onClick={() => {
             setError(null);
             startCamera();
           }}
-          className="mt-2 rounded-full bg-white px-6 py-3 min-h-[44px] text-sm font-semibold text-black active:scale-95 transition-transform"
+          className="rounded-full border border-zinc-600 px-6 py-3 min-h-[44px] text-sm font-semibold text-white active:scale-95 transition-transform"
         >
           Try Again
         </button>
@@ -110,6 +164,8 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
 
   return (
     <div className="relative flex flex-col items-center justify-end h-full bg-black">
+      {hiddenFileInputs}
+
       {/* Live viewfinder */}
       <video
         ref={videoRef}
@@ -131,7 +187,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
 
       {/* Capture button — pb-safe wrapper clears home indicator */}
       <div className="relative z-10 pb-safe">
-        <div className="pb-10 pt-6 flex justify-center">
+        <div className="pb-10 pt-6 flex flex-col items-center gap-4">
           <button
             onClick={capture}
             disabled={!ready}
@@ -139,6 +195,13 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
             className="w-20 h-20 rounded-full border-4 border-white bg-white/20 backdrop-blur-sm active:scale-90 transition-transform disabled:opacity-40"
           >
             <span className="block w-14 h-14 mx-auto rounded-full bg-white" />
+          </button>
+          <button
+            type="button"
+            onClick={openLibraryPicker}
+            className="text-sm font-medium text-white/80 underline-offset-4 underline min-h-[44px] px-4 active:text-white transition-colors"
+          >
+            Upload from library
           </button>
         </div>
       </div>

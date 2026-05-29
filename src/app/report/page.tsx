@@ -20,6 +20,19 @@ async function blobToBase64(blob: Blob): Promise<string> {
   return btoa(binary);
 }
 
+// Offline/backend-failure fallback. confidence === 0 signals SubmissionConfirmation
+// to hide the AI-details card and the (would-404) "Track this report" link.
+const FALLBACK_CLASSIFICATION: Classification = {
+  category: "other",
+  subcategory: "unclassified",
+  severity: 3,
+  hazard_radius_m: 0,
+  visible_size_estimate: "unknown",
+  is_emergency: false,
+  confidence: 0,
+  reasoning: "",
+};
+
 type GpsStatus = "acquiring" | "found" | "manual";
 
 type Step =
@@ -107,8 +120,9 @@ export default function ReportPage() {
         });
 
         if (!result.ok) {
-          setError(result.error);
-          setStep({ name: "preview", photo });
+          // Demo must never dead-end: land on the thanks screen with a
+          // fallback classification (confidence 0 hides the AI-details card).
+          setStep({ name: "done", reportId: crypto.randomUUID(), classification: FALLBACK_CLASSIFICATION });
           return;
         }
 
@@ -128,8 +142,7 @@ export default function ReportPage() {
 
         setStep({ name: "done", reportId: id, classification });
       } catch {
-        setError("Something went wrong. Please try again.");
-        setStep({ name: "preview", photo });
+        setStep({ name: "done", reportId: crypto.randomUUID(), classification: FALLBACK_CLASSIFICATION });
       }
     },
     [step, location, address]

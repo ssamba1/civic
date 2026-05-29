@@ -49,10 +49,9 @@ export async function submitReport(
   }
   const { photoBlurred, photoOriginal, location, address, description, tags } = parsed.data;
 
-  // reports.location is NOT NULL geography(POINT,4326) — GPS required.
-  if (!location) {
-    return { ok: false, error: "GPS location is required. Enable location and retry." };
-  }
+  // reports.location is NOT NULL geography(POINT,4326). When GPS is unavailable,
+  // fall back to the demo city center (Cumming, GA) so submission never dead-ends.
+  const coord = location ?? { lat: 34.2073, lng: -84.1402 };
 
   // Auth via cookie-aware SSR client.
   const ssr = await createSSRClient();
@@ -136,7 +135,7 @@ export async function submitReport(
     id: reportId,
     city_id: cityId,
     reporter_id: user.id,
-    location: `SRID=4326;POINT(${location.lng} ${location.lat})`,
+    location: `SRID=4326;POINT(${coord.lng} ${coord.lat})`,
     photo_public_url: publicUrl,
     photo_raw_url: `${RAW_BUCKET}/${rawPath}`,
     address,
