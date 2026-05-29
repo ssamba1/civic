@@ -74,12 +74,12 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
       icon: UsersRound,
       active: pathname === `/city/${slug}`,
     },
-    {
-      label: "Browse",
-      href: `/city/${slug}/browse`,
-      icon: ThumbsUp,
-      active: pathname === `/city/${slug}/browse`,
-    },
+    // {
+    //   label: "Browse",
+    //   href: `/city/${slug}/browse`,
+    //   icon: ThumbsUp,
+    //   active: pathname === `/city/${slug}/browse`,
+    // },
     {
       label: "Map",
       href: `/city/${slug}/map`,
