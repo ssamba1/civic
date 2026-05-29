@@ -1,6 +1,7 @@
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { type ReportFilter, PRESET_DAYS } from "@/lib/filters/types";
-import { categoryToTeam } from "@/lib/teams";
+import type { TeamId } from "@/lib/teams";
+import { getReportTeam, getOverridesSnapshot } from "@/lib/teams-overrides";
 
 const DAY_MS = 86_400_000;
 
@@ -25,20 +26,24 @@ export function resolveWindow(
   return { lower: now - PRESET_DAYS[filter.preset] * DAY_MS, upper: null };
 }
 
-// Pure filter: applies date window, category set, min severity, and status set.
-// Empty category/status arrays mean "no constraint". Single source of truth so
-// the map, stat cards, and analytics all narrow the corpus identically.
+// Pure filter: applies date window, category set, min severity, status set, and
+// team scope. Empty category/status arrays mean "no constraint". Single source
+// of truth so the map, stat cards, and analytics all narrow the corpus
+// identically. Team resolution honors per-report overrides — pass them in from
+// useTeamOverrides() in client code; server code can omit to use the empty
+// snapshot.
 export function filterReports(
   reports: DashboardReport[],
   filter: ReportFilter,
   now = Date.now(),
+  overrides: Record<string, TeamId> = getOverridesSnapshot(),
 ): DashboardReport[] {
   const { lower, upper } = resolveWindow(filter, now);
   const catSet = filter.categories.length ? new Set(filter.categories) : null;
   const statusSet = filter.statuses.length ? new Set(filter.statuses) : null;
 
   return reports.filter((r) => {
-    if (filter.team !== "all" && categoryToTeam(r.category) !== filter.team) {
+    if (filter.team !== "all" && getReportTeam(r, overrides) !== filter.team) {
       return false;
     }
     if (catSet && !catSet.has(r.category)) return false;
@@ -61,6 +66,7 @@ export function filterPreviousWindow(
   reports: DashboardReport[],
   filter: ReportFilter,
   now = Date.now(),
+  overrides: Record<string, TeamId> = getOverridesSnapshot(),
 ): DashboardReport[] {
   const { lower, upper } = resolveWindow(filter, now);
   if (lower === null) return []; // "all" or unbounded — no comparable prior window
@@ -73,7 +79,7 @@ export function filterPreviousWindow(
   const statusSet = filter.statuses.length ? new Set(filter.statuses) : null;
 
   return reports.filter((r) => {
-    if (filter.team !== "all" && categoryToTeam(r.category) !== filter.team) {
+    if (filter.team !== "all" && getReportTeam(r, overrides) !== filter.team) {
       return false;
     }
     if (catSet && !catSet.has(r.category)) return false;

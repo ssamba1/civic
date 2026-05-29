@@ -4,12 +4,8 @@ import { Camera } from "lucide-react";
 import Link from "next/link";
 
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
-import {
-  fetchCity,
-  fetchCityStats,
-  fetchUserUpvotes,
-} from "@/lib/dashboard-queries";
-import { DashboardInteractive } from "@/components/dashboard/dashboard-interactive";
+import { fetchCity, fetchCityStats } from "@/lib/dashboard-queries";
+import { TeamsInteractive } from "@/components/teams/teams-interactive";
 import { FilterBar } from "@/components/filters/filter-bar";
 
 export function generateStaticParams() {
@@ -28,8 +24,8 @@ export async function generateMetadata({
   const city = await fetchCity(slug);
   if (!city) return { title: "City not found | Civic" };
 
-  const title = `Civic | ${city.name}, ${city.state} — Infrastructure Telemetry`;
-  const description = `Real-time infrastructure telemetry for ${city.name}, ${city.state}. Live 3D pillar map, incident feed, resolution metrics.`;
+  const title = `Civic | ${city.name}, ${city.state} — Teams & Delegation`;
+  const description = `Per-team workload and delegation for ${city.name}, ${city.state}. Backlog by division, default routing rules, per-report reassignment.`;
 
   return {
     title,
@@ -56,12 +52,7 @@ export default async function CityDashboardPage({
   const city = await fetchCity(slug);
   if (!city) notFound();
 
-  const known = KNOWN_CITIES[slug];
-
-  const [stats, upvotedIds] = await Promise.all([
-    fetchCityStats(city.id),
-    fetchUserUpvotes(),
-  ]);
+  const stats = await fetchCityStats(city.id);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -78,8 +69,11 @@ export default async function CityDashboardPage({
                 {city.name}, {city.state}
               </p>
               <h1 className="mt-2 text-[34px] sm:text-[40px] font-semibold tracking-tight text-white leading-[1.1]">
-                Public infrastructure
+                Teams
               </h1>
+              <p className="mt-2 max-w-xl text-sm text-zinc-400">
+                Workload, delegation, and queue depth across municipal divisions.
+              </p>
               <div className="mt-4 flex items-center gap-3 text-sm text-zinc-400">
                 <span>
                   <span className="font-medium text-zinc-200">
@@ -114,12 +108,7 @@ export default async function CityDashboardPage({
           <FilterBar />
         </div>
 
-        <DashboardInteractive
-          initialStats={stats}
-          center={known?.center ?? [-84.14, 34.21]}
-          zoom={known?.zoom ?? 12}
-          upvotedIds={upvotedIds}
-        />
+        <TeamsInteractive initialStats={stats} />
       </div>
 
       <footer className="border-t border-white/[0.06] mt-10">

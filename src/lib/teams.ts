@@ -1,4 +1,5 @@
 import type { ReportCategory } from "@/lib/types";
+import { getCategoryOverridesSnapshot } from "@/lib/category-overrides";
 
 /* ------------------------------------------------------------------
    Civil teams — based on US municipal department research.
@@ -163,7 +164,20 @@ const CATEGORY_TO_TEAM: Record<ReportCategory, TeamId> = (() => {
   return map;
 })();
 
+// Raw category → team mapping, ignoring runtime overrides. Used by the
+// routing-matrix UI to detect "is this row currently overridden?" and by
+// any future audit log that needs the un-overridden baseline.
+export function categoryToTeamDefault(category: ReportCategory): TeamId {
+  return CATEGORY_TO_TEAM[category] ?? "general_admin";
+}
+
+// Override-aware resolver. Reads the per-category override snapshot first
+// (mutated by the routing-matrix dropdown), falling back to the static
+// baseline. Stays synchronous so non-React callers (filter-reports,
+// aggregateByTeam, server-rendered code) can keep their existing shape.
 export function categoryToTeam(category: ReportCategory): TeamId {
+  const override = getCategoryOverridesSnapshot()[category];
+  if (override) return override;
   return CATEGORY_TO_TEAM[category] ?? "general_admin";
 }
 

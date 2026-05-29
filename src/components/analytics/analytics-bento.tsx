@@ -1,7 +1,6 @@
 "use client";
 
-import { memo, useState, useEffect, useMemo, useRef } from "react";
-import { createPortal } from "react-dom";
+import { memo, useState, useMemo, useRef, useEffect } from "react";
 import {
   CheckCircle2,
   Timer,
@@ -10,8 +9,6 @@ import {
   TrendingUp,
   TrendingDown,
   Users,
-  Maximize2,
-  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import {
@@ -20,6 +17,16 @@ import {
   TipBar,
   TipChip,
 } from "@/components/analytics/hover-tip";
+import {
+  Tile,
+  ExpandModal,
+  PillGroup,
+  Toggle,
+  Stat,
+  StatGrid,
+  Prose,
+  EmptyState,
+} from "@/components/analytics/bento-primitives";
 import type {
   AnalyticsKpis,
   TrendPoint,
@@ -31,351 +38,6 @@ import type {
   CategoryResolution,
   ReporterVelocity,
 } from "@/lib/analytics-data";
-
-/* ==================================================================
-   Shared shell + modal + motion
-
-   Glassmorphism (LiquidGlassCard: backdrop-blur, frosted fills, inner
-   white highlights, SVG displacement) has been removed. Tiles are now
-   flat, solid Apple-dark panels matching the rest of the dashboard:
-   #1c1c1e fill, white/[0.06] hairline border, --radius-lg corners.
-
-   Motion: gsap is not installed in this project, so reveal / grow-in
-   motion is implemented with CSS transitions. All motion is gated
-   behind a single `prefers-reduced-motion` media query so the static
-   layout is the reduced-motion baseline.
-   ================================================================== */
-
-const BENTO_MOTION_CSS = `
-@media (prefers-reduced-motion: no-preference) {
-  [data-bento-reveal] {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  [data-bento-reveal][data-shown="1"] {
-    opacity: 1;
-    transform: none;
-    transition: opacity 520ms cubic-bezier(0.22, 1, 0.36, 1),
-      transform 560ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-}
-`;
-
-let bentoMotionInjected = false;
-
-/** Inject the shared motion stylesheet once (client only). */
-function useBentoMotionStyles() {
-  useEffect(() => {
-    if (bentoMotionInjected || typeof document === "undefined") return;
-    const el = document.createElement("style");
-    el.dataset.bentoMotion = "1";
-    el.textContent = BENTO_MOTION_CSS;
-    document.head.appendChild(el);
-    bentoMotionInjected = true;
-  }, []);
-}
-
-/**
- * Reveal-on-mount. Returns a ref + the data attributes that drive the
- * CSS transition above. No-ops under reduced motion (the CSS rules are
- * scoped to `prefers-reduced-motion: no-preference`).
- */
-function useReveal<T extends HTMLElement>() {
-  useBentoMotionStyles();
-  const ref = useRef<T>(null);
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    const id = requestAnimationFrame(() => {
-      node.setAttribute("data-shown", "1");
-    });
-    return () => cancelAnimationFrame(id);
-  }, []);
-  return ref;
-}
-
-interface TileProps {
-  title?: string;
-  subtitle?: string;
-  className?: string;
-  children: React.ReactNode;
-  onExpand?: () => void;
-}
-
-function Tile({ title, subtitle, className, children, onExpand }: TileProps) {
-  const ref = useReveal<HTMLDivElement>();
-  return (
-    <div
-      ref={ref}
-      data-bento-reveal
-      className={cn(
-        "flex flex-col rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] p-5 text-zinc-100",
-        "shadow-[0_1px_2px_rgba(0,0,0,0.4)]",
-        className,
-      )}
-    >
-      {(title || onExpand) && (
-        <header className="flex items-center justify-between gap-3 mb-4 min-h-[20px]">
-          <div className="flex items-baseline gap-3 min-w-0">
-            {title && (
-              <h2 className="text-[15px] font-semibold text-white truncate">
-                {title}
-              </h2>
-            )}
-            {subtitle && (
-              <span className="text-[12px] text-zinc-400 truncate">
-                {subtitle}
-              </span>
-            )}
-          </div>
-          {onExpand && (
-            <button
-              type="button"
-              onClick={onExpand}
-              aria-label="Expand chart"
-              className="flex-shrink-0 p-1 -m-1 text-zinc-500 hover:text-white rounded transition-colors"
-            >
-              <Maximize2 className="h-3.5 w-3.5" strokeWidth={2} />
-            </button>
-          )}
-        </header>
-      )}
-      <div className="flex-1 min-h-0">{children}</div>
-    </div>
-  );
-}
-
-interface ExpandModalProps {
-  open: boolean;
-  onClose: () => void;
-  title: string;
-  subtitle?: string;
-  chart: React.ReactNode;
-  controls?: React.ReactNode;
-  info?: React.ReactNode;
-}
-
-function ExpandModal({
-  open,
-  onClose,
-  title,
-  subtitle,
-  chart,
-  controls,
-  info,
-}: ExpandModalProps) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
-  if (typeof document === "undefined") return null;
-
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label="Close expanded chart"
-        className="absolute inset-0 bg-black/75 backdrop-blur-md"
-      />
-      <div
-        className={cn(
-          "relative w-full max-w-[1400px] max-h-[92vh] flex flex-col text-zinc-100 overflow-hidden",
-          "rounded-[18px] border border-white/[0.06] bg-[#1c1c1e]",
-          "shadow-[0_24px_64px_-12px_rgba(0,0,0,0.7)]",
-          "animate-in zoom-in-95 duration-200",
-        )}
-      >
-        <header className="flex items-baseline justify-between gap-3 px-6 pt-5 pb-4 border-b border-white/[0.06]">
-          <div className="flex items-baseline gap-3 min-w-0 flex-wrap">
-            <h2 className="text-[22px] font-semibold text-white tracking-tight">
-              {title}
-            </h2>
-            {subtitle && (
-              <span className="text-[13px] text-zinc-400">{subtitle}</span>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="flex-shrink-0 p-1.5 -m-1.5 text-zinc-400 hover:text-white rounded-md transition-colors"
-          >
-            <X className="h-5 w-5" strokeWidth={1.75} />
-          </button>
-        </header>
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_280px] gap-6 p-6">
-            <div className="min-w-0">{chart}</div>
-            {controls && (
-              <aside className="flex flex-col gap-4 lg:border-l lg:border-white/[0.06] lg:pl-6">
-                <p className="text-[11px] uppercase tracking-wider text-zinc-500">
-                  Controls
-                </p>
-                {controls}
-              </aside>
-            )}
-          </div>
-          {info && (
-            <div className="border-t border-white/[0.06] px-6 py-5">
-              <p className="text-[11px] uppercase tracking-wider text-zinc-500 mb-3">
-                About this chart
-              </p>
-              {info}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>,
-    document.body,
-  );
-}
-
-/* ==================================================================
-   Control primitives
-   ================================================================== */
-
-function PillGroup<T extends string | number>({
-  options,
-  value,
-  onChange,
-  label,
-}: {
-  options: { value: T; label: string }[];
-  value: T;
-  onChange: (v: T) => void;
-  label?: string;
-}) {
-  return (
-    <div>
-      {label && (
-        <p className="text-[12px] text-zinc-400 mb-1.5">{label}</p>
-      )}
-      <div className="inline-flex rounded-lg bg-white/[0.04] p-0.5">
-        {options.map((opt) => (
-          <button
-            key={String(opt.value)}
-            type="button"
-            onClick={() => onChange(opt.value)}
-            className={cn(
-              "px-2.5 py-1 text-[12px] rounded-md transition-colors",
-              value === opt.value
-                ? "bg-white/[0.1] text-white"
-                : "text-zinc-400 hover:text-zinc-200",
-            )}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Toggle({
-  label,
-  value,
-  onChange,
-  dotColor,
-}: {
-  label: string;
-  value: boolean;
-  onChange: (v: boolean) => void;
-  dotColor?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!value)}
-      className="flex items-center justify-between gap-3 text-[13px] text-zinc-300 hover:text-white transition-colors w-full"
-    >
-      <span className="inline-flex items-center gap-2">
-        {dotColor && (
-          <span
-            className="h-2 w-2 rounded-full"
-            style={{ background: dotColor }}
-          />
-        )}
-        {label}
-      </span>
-      <span
-        className={cn(
-          "h-4 w-7 rounded-full transition-colors flex items-center px-0.5",
-          value ? "bg-[#0a84ff]" : "bg-white/[0.1]",
-        )}
-      >
-        <span
-          className={cn(
-            "block h-3 w-3 rounded-full bg-white transition-transform",
-            value ? "translate-x-3" : "translate-x-0",
-          )}
-        />
-      </span>
-    </button>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}) {
-  return (
-    <div>
-      <p className="text-[11px] text-zinc-500 uppercase tracking-wider">
-        {label}
-      </p>
-      <p className="text-[22px] font-semibold tracking-tight text-white tabular-nums mt-1 leading-none">
-        {value}
-      </p>
-      {hint && (
-        <p className="text-[12px] text-zinc-500 mt-1.5">{hint}</p>
-      )}
-    </div>
-  );
-}
-
-function StatGrid({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">{children}</div>
-  );
-}
-
-function Prose({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[13px] leading-relaxed text-zinc-400 max-w-prose">
-      {children}
-    </p>
-  );
-}
-
-/**
- * Empty state shown when a tile's filtered data is empty or all-zero.
- * Keeps the tile from collapsing and avoids any NaN / divide-by-zero
- * math downstream.
- */
-function EmptyState({ message = "No data in range" }: { message?: string }) {
-  return (
-    <div className="flex h-full min-h-[120px] flex-1 items-center justify-center">
-      <p className="text-[13px] text-zinc-500">{message}</p>
-    </div>
-  );
-}
 
 /* ==================================================================
    1. KPI cards (no expand — quick-glance numbers only)
@@ -720,7 +382,8 @@ interface ReportsTrendProps {
 
 function renderTrendChart(
   data: TrendPoint[],
-  heightClass: string,
+  w: number,
+  h: number,
   showCreated: boolean,
   showClosed: boolean,
   smooth: boolean,
@@ -735,8 +398,6 @@ function renderTrendChart(
     };
   },
 ) {
-  const w = 720;
-  const h = 220;
   const pad = { l: 32, r: 12, t: 16, b: 24 };
   const innerW = w - pad.l - pad.r;
   const innerH = h - pad.t - pad.b;
@@ -745,7 +406,10 @@ function renderTrendChart(
   // Guard: empty series would crash on pts[0] / data[peakIdx] below.
   if (data.length === 0) {
     return (
-      <div className={cn("flex items-center justify-center", heightClass)}>
+      <div
+        className="flex items-center justify-center"
+        style={{ height: h }}
+      >
         <span className="text-[13px] text-zinc-500">No data in range</span>
       </div>
     );
@@ -763,6 +427,10 @@ function renderTrendChart(
       ),
     );
   const xStep = innerW / Math.max(data.length - 1, 1);
+  // Cap axis labels to ~one per 70px so dense ranges (e.g. 90d) don't render an
+  // unreadable wall of overlapping dates.
+  const maxLabels = Math.max(2, Math.floor(innerW / 70));
+  const labelStep = Math.max(1, Math.ceil((data.length - 1) / maxLabels));
   const xy = (i: number, v: number) => ({
     x: pad.l + i * xStep,
     y: pad.t + innerH - (v / max) * innerH,
@@ -777,19 +445,53 @@ function renderTrendChart(
         })
         .join(" ");
     }
-    // Catmull-Rom-ish smoothing
+    // Monotone cubic (Fritsch–Carlson). Passes through every point — so the
+    // hover dots stay exactly on the line — but constrains tangents so the curve
+    // never overshoots its data envelope. Plain Catmull-Rom overshoots on spiky
+    // daily counts, bulging past peaks and dipping the area fill below the
+    // baseline wherever a value hits 0.
     const pts = data.map((d, i) => xy(i, d[key]));
+    const n = pts.length;
+    if (n < 2) return `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+
+    const dx: number[] = [];
+    const slope: number[] = [];
+    for (let i = 0; i < n - 1; i++) {
+      const gap = pts[i + 1].x - pts[i].x;
+      dx.push(gap);
+      slope.push((pts[i + 1].y - pts[i].y) / gap);
+    }
+
+    const tan: number[] = new Array(n);
+    tan[0] = slope[0];
+    tan[n - 1] = slope[n - 2];
+    for (let i = 1; i < n - 1; i++) {
+      // Flatten the tangent at local extrema (sign change) to kill overshoot.
+      tan[i] = slope[i - 1] * slope[i] <= 0 ? 0 : (slope[i - 1] + slope[i]) / 2;
+    }
+    for (let i = 0; i < n - 1; i++) {
+      if (slope[i] === 0) {
+        tan[i] = 0;
+        tan[i + 1] = 0;
+        continue;
+      }
+      const a = tan[i] / slope[i];
+      const b = tan[i + 1] / slope[i];
+      const s = a * a + b * b;
+      if (s > 9) {
+        const t = 3 / Math.sqrt(s);
+        tan[i] = t * a * slope[i];
+        tan[i + 1] = t * b * slope[i];
+      }
+    }
+
     let p = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p0 = pts[i - 1] ?? pts[i];
-      const p1 = pts[i];
-      const p2 = pts[i + 1];
-      const p3 = pts[i + 2] ?? p2;
-      const cp1x = p1.x + (p2.x - p0.x) / 6;
-      const cp1y = p1.y + (p2.y - p0.y) / 6;
-      const cp2x = p2.x - (p3.x - p1.x) / 6;
-      const cp2y = p2.y - (p3.y - p1.y) / 6;
-      p += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+    for (let i = 0; i < n - 1; i++) {
+      const cp1x = pts[i].x + dx[i] / 3;
+      const cp1y = pts[i].y + (tan[i] * dx[i]) / 3;
+      const cp2x = pts[i + 1].x - dx[i] / 3;
+      const cp2y = pts[i + 1].y - (tan[i + 1] * dx[i]) / 3;
+      p += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${pts[i + 1].x.toFixed(1)} ${pts[i + 1].y.toFixed(1)}`;
     }
     return p;
   };
@@ -809,8 +511,7 @@ function renderTrendChart(
   return (
     <svg
       viewBox={`0 0 ${w} ${h}`}
-      className={cn("w-full", heightClass)}
-      preserveAspectRatio="none"
+      className="block h-full w-full"
       role="img"
       aria-label="Reports created vs resolved over time"
     >
@@ -875,7 +576,11 @@ function renderTrendChart(
         </>
       )}
       {data.map((d, i) => {
-        const showLabel = i === 0 || i === data.length - 1 || i % 3 === 0;
+        const isEdge = i === 0 || i === data.length - 1;
+        // Skip a regular tick if it would crowd the always-shown last label.
+        const showLabel =
+          isEdge ||
+          (i % labelStep === 0 && i < data.length - 1 - labelStep / 2);
         if (!showLabel) return null;
         const x = pad.l + i * xStep;
         return (
@@ -993,12 +698,67 @@ function renderTrendChart(
   );
 }
 
+// Measures the container's real pixel box (ResizeObserver) so the SVG viewBox
+// can be 1:1 with the rendered size. That removes preserveAspectRatio="none",
+// which scaled X and Y unequally and distorted strokes, dot markers, and axis
+// text — worst on wide layouts and long ranges.
+function useElementSize(fallback: { w: number; h: number }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [size, setSize] = useState(fallback);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      if (width > 0 && height > 0) {
+        setSize({ w: Math.round(width), h: Math.round(height) });
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return { ref, size };
+}
+
+interface TrendChartProps {
+  data: TrendPoint[];
+  heightClass: string;
+  showCreated: boolean;
+  showClosed: boolean;
+  smooth: boolean;
+  opts?: Parameters<typeof renderTrendChart>[6];
+}
+
+function TrendChart({
+  data,
+  heightClass,
+  showCreated,
+  showClosed,
+  smooth,
+  opts,
+}: TrendChartProps) {
+  const { ref, size } = useElementSize({ w: 720, h: 260 });
+  return (
+    <div ref={ref} className={cn("w-full", heightClass)}>
+      {renderTrendChart(
+        data,
+        size.w,
+        size.h,
+        showCreated,
+        showClosed,
+        smooth,
+        opts,
+      )}
+    </div>
+  );
+}
+
 function ReportsTrendInner({ data }: ReportsTrendProps) {
   const [open, setOpen] = useState(false);
   const [days, setDays] = useState<number>(data.length);
   const [showCreated, setShowCreated] = useState(true);
   const [showClosed, setShowClosed] = useState(true);
-  const [smooth, setSmooth] = useState(false);
+  const [smooth, setSmooth] = useState(true);
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
   const tip = useHoverTip();
 
@@ -1159,10 +919,14 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
             <Legend color="#30d158" label={`Resolved · ${totalClosed}`} />
           </span>
         </div>
-        {renderTrendChart(data, "h-[260px]", true, true, false, {
-          hovered: hoveredDay,
-          bindHover: bindDay,
-        })}
+        <TrendChart
+          data={data}
+          heightClass="h-[260px]"
+          showCreated
+          showClosed
+          smooth
+          opts={{ hovered: hoveredDay, bindHover: bindDay }}
+        />
         <tip.Portal />
       </Tile>
       <ExpandModal
@@ -1176,13 +940,13 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
               <Legend color="#0a84ff" label={`Created · ${sliceCreated}`} />
               <Legend color="#30d158" label={`Resolved · ${sliceClosed}`} />
             </div>
-            {renderTrendChart(
-              slice,
-              "h-[55vh] min-h-[380px]",
-              showCreated,
-              showClosed,
-              smooth,
-            )}
+            <TrendChart
+              data={slice}
+              heightClass="h-[55vh] min-h-[380px]"
+              showCreated={showCreated}
+              showClosed={showClosed}
+              smooth={smooth}
+            />
           </div>
         }
         controls={
@@ -1463,14 +1227,18 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
         {!hasData ? (
           <EmptyState message="No classified reports in range" />
         ) : (
-        <div className="flex items-center gap-5">
+        <div className="flex h-full flex-col items-center justify-center gap-5">
           <div className="flex-shrink-0">
             {renderDonut(data, 150, {
               hovered,
               bindHover: bindSlice,
             })}
           </div>
-          <ul className="flex-1 space-y-1.5 text-[13px]">
+          {/* Legend sits below the donut as 5 equal columns. A side-by-side
+             legend clips at this col-span-4 width once the viewport hits the
+             lg breakpoint; stacking is width-robust and uses the tile's slack
+             vertical space. */}
+          <ul className="grid w-full grid-cols-5 gap-1 text-[12px]">
             {data.map((s) => {
               const pct = (s.count / total) * 100;
               const isActive = hovered === s.severity;
@@ -1478,7 +1246,7 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
                 <li
                   key={s.severity}
                   className={cn(
-                    "flex items-center justify-between gap-3 rounded-md px-1.5 py-0.5 -mx-1.5 transition-colors cursor-default",
+                    "flex flex-col items-center gap-1 rounded-md py-1.5 transition-colors cursor-default",
                     isActive
                       ? "bg-white/[0.05]"
                       : hovered !== null
@@ -1487,16 +1255,14 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
                   )}
                   {...bindSlice(s)}
                 >
-                  <span className="inline-flex items-center gap-2 text-zinc-300">
-                    <span
-                      className={cn(
-                        "h-2 w-2 rounded-full transition-transform",
-                        isActive && "scale-150",
-                      )}
-                      style={{ background: SEVERITY_COLORS[s.severity] }}
-                    />
-                    Sev {s.severity}
-                  </span>
+                  <span
+                    className={cn(
+                      "h-2 w-2 rounded-full transition-transform",
+                      isActive && "scale-150",
+                    )}
+                    style={{ background: SEVERITY_COLORS[s.severity] }}
+                  />
+                  <span className="text-zinc-300">Sev {s.severity}</span>
                   <span className="tabular-nums text-zinc-500">
                     {pct.toFixed(0)}%
                   </span>

@@ -95,7 +95,7 @@ export const LiquidGlassCard = React.forwardRef<HTMLDivElement, LiquidGlassCardP
         <LiquidGlassFilter />
         <div
           ref={ref}
-          className={cn("relative", className)}
+          className={cn("relative overflow-hidden", className)}
           style={{ borderRadius, ...style }}
           {...props}
         >
