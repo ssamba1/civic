@@ -52,7 +52,8 @@ interface UseHoverTipReturn {
 interface HoverHandlers {
   onPointerEnter: (e: React.PointerEvent) => void;
   onPointerMove: (e: React.PointerEvent) => void;
-  onPointerLeave: () => void;
+  onPointerLeave: (e: React.PointerEvent) => void;
+  onClick: (e: React.MouseEvent) => void;
   onFocus: (e: React.FocusEvent) => void;
   onBlur: () => void;
 }
@@ -83,6 +84,8 @@ export function useHoverTip(): UseHoverTipReturn {
   // Portal mount gate: SSR and the first client render must agree (both null),
   // otherwise hydration mismatches. The tooltip mounts after hydration.
   const [mounted, setMounted] = useState(false);
+  // Track last pointer type so click handler knows whether to toggle (touch) or no-op (mouse).
+  const lastPointerType = useRef<string>("mouse");
 
   const positionFor = useCallback(
     (
@@ -185,9 +188,29 @@ export function useHoverTip(): UseHoverTipReturn {
         return contentOrFactory;
       };
       return {
-        onPointerEnter: (e) => show(resolve(e), e, placement),
-        onPointerMove: (e) => move(e),
-        onPointerLeave: () => hide(),
+        onPointerEnter: (e) => {
+          lastPointerType.current = e.pointerType;
+          // On touch: do not show on enter (wait for click/tap instead)
+          if (e.pointerType === "touch") return;
+          show(resolve(e), e, placement);
+        },
+        onPointerMove: (e) => {
+          if (e.pointerType === "touch") return;
+          move(e);
+        },
+        onPointerLeave: (e: React.PointerEvent) => {
+          if (e.pointerType === "touch") return;
+          hide();
+        },
+        onClick: (e) => {
+          // Only toggle on touch; mouse is handled by hover
+          if (lastPointerType.current !== "touch") return;
+          if (state.visible) {
+            hide();
+          } else {
+            show(resolve(e as unknown as React.MouseEvent), e, placement);
+          }
+        },
         onFocus: (e) => {
           const target = e.currentTarget as HTMLElement;
           const r = target.getBoundingClientRect();
@@ -196,7 +219,7 @@ export function useHoverTip(): UseHoverTipReturn {
         onBlur: () => hide(),
       };
     },
-    [show, move, hide],
+    [show, move, hide, state.visible],
   );
 
   useEffect(() => {
@@ -229,7 +252,7 @@ export function useHoverTip(): UseHoverTipReturn {
           left: state.x,
           top: state.y,
           minWidth: TIP_MIN_WIDTH,
-          maxWidth: TIP_MAX_WIDTH,
+          maxWidth: `min(calc(100vw - 1.5rem), ${TIP_MAX_WIDTH}px)`,
         }}
       >
         {state.accent && (

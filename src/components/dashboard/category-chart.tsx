@@ -36,14 +36,15 @@ function CategoryChartInner({
 
   return (
     <section
-      className={`${panelClass} p-5 flex flex-col h-full max-h-[480px]`}
+      className={`${panelClass} p-4 sm:p-5 flex flex-col h-full max-h-[60vh] sm:max-h-[480px]`}
     >
       <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
         <h2 className="text-[15px] font-semibold text-white">Categories</h2>
         {selectedCategory && onSelectCategory && (
           <button
+            type="button"
             onClick={() => onSelectCategory(null)}
-            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[13px] text-zinc-400 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 min-h-11 text-[13px] text-zinc-400 hover:text-white transition-colors"
           >
             <X className="h-3 w-3" strokeWidth={2} />
             Clear
@@ -63,10 +64,11 @@ function CategoryChartInner({
           return (
             <button
               key={category}
+              type="button"
               onClick={() => onSelectCategory?.(category)}
               aria-pressed={isSelected}
               className={cn(
-                "w-full text-left px-2 py-2 rounded-md transition-[background-color,opacity] cursor-pointer",
+                "w-full text-left px-2 py-2.5 sm:py-2 min-h-11 rounded-md transition-[background-color,opacity] cursor-pointer",
                 "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1c1c1e]",
                 isSelected ? "bg-white/[0.06]" : "hover:bg-white/[0.03]",
                 isDimmed ? "opacity-40" : "opacity-100",

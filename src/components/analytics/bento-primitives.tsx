@@ -74,31 +74,32 @@ export function Tile({ title, subtitle, className, children, onExpand }: TilePro
       ref={ref}
       data-bento-reveal
       className={cn(
-        "flex flex-col rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] p-5 text-zinc-100",
+        "flex flex-col rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] p-4 sm:p-5 text-zinc-100",
         "shadow-[0_1px_2px_rgba(0,0,0,0.4)]",
         className,
       )}
     >
       {(title || onExpand) && (
-        <header className="flex items-center justify-between gap-3 mb-4 min-h-[20px]">
-          <div className="flex items-baseline gap-3 min-w-0">
+        <header className="flex items-center justify-between gap-3 mb-3 sm:mb-4 min-h-[20px]">
+          <div className="flex items-baseline gap-2 sm:gap-3 min-w-0">
             {title && (
-              <h2 className="text-[15px] font-semibold text-white truncate">
+              <h2 className="text-[14px] sm:text-[15px] font-semibold text-white truncate">
                 {title}
               </h2>
             )}
             {subtitle && (
-              <span className="text-[12px] text-zinc-400 truncate">
+              <span className="text-[11px] sm:text-[12px] text-zinc-400 truncate">
                 {subtitle}
               </span>
             )}
           </div>
           {onExpand && (
+            /* 44×44 tap target on mobile via negative margin + inline-flex centering */
             <button
               type="button"
               onClick={onExpand}
               aria-label="Expand chart"
-              className="flex-shrink-0 p-1 -m-1 text-zinc-500 hover:text-white rounded transition-colors"
+              className="flex-shrink-0 -m-2 inline-flex h-11 w-11 items-center justify-center text-zinc-500 hover:text-white rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-[#0a84ff]"
             >
               <Maximize2 className="h-3.5 w-3.5" strokeWidth={2} />
             </button>
@@ -147,7 +148,7 @@ export function ExpandModal({
   if (typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 animate-in fade-in duration-200">
       <button
         type="button"
         onClick={onClose}
@@ -156,32 +157,35 @@ export function ExpandModal({
       />
       <div
         className={cn(
-          "relative w-full max-w-[1400px] max-h-[92vh] flex flex-col text-zinc-100 overflow-hidden",
-          "rounded-[18px] border border-white/[0.06] bg-[#1c1c1e]",
+          /* Mobile: full-width bottom sheet, max 90dvh */
+          "relative w-full sm:max-w-[min(92vw,1400px)] flex flex-col text-zinc-100 overflow-hidden",
+          "max-h-[90dvh] sm:max-h-[92vh]",
+          "rounded-t-[18px] sm:rounded-[18px] border border-white/[0.06] bg-[#1c1c1e]",
           "shadow-[0_24px_64px_-12px_rgba(0,0,0,0.7)]",
           "animate-in zoom-in-95 duration-200",
         )}
       >
-        <header className="flex items-baseline justify-between gap-3 px-6 pt-5 pb-4 border-b border-white/[0.06]">
-          <div className="flex items-baseline gap-3 min-w-0 flex-wrap">
-            <h2 className="text-[22px] font-semibold text-white tracking-tight">
+        <header className="flex items-center justify-between gap-3 px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 border-b border-white/[0.06]">
+          <div className="flex items-baseline gap-2 sm:gap-3 min-w-0 flex-wrap">
+            <h2 className="text-[18px] sm:text-[22px] font-semibold text-white tracking-tight">
               {title}
             </h2>
             {subtitle && (
-              <span className="text-[13px] text-zinc-400">{subtitle}</span>
+              <span className="text-[12px] sm:text-[13px] text-zinc-400">{subtitle}</span>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex-shrink-0 p-1.5 -m-1.5 text-zinc-400 hover:text-white rounded-md transition-colors"
+            className="flex-shrink-0 -m-1.5 inline-flex h-11 w-11 items-center justify-center text-zinc-400 hover:text-white rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-[#0a84ff]"
           >
             <X className="h-5 w-5" strokeWidth={1.75} />
           </button>
         </header>
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_280px] gap-6 p-6">
+        <div className="flex-1 overflow-y-auto custom-scrollbar pb-safe">
+          {/* Mobile: chart + controls stack vertically; lg+: side-by-side */}
+          <div className="grid lg:grid-cols-[minmax(0,1fr)_280px] gap-4 sm:gap-6 p-4 sm:p-6">
             <div className="min-w-0">{chart}</div>
             {controls && (
               <aside className="flex flex-col gap-4 lg:border-l lg:border-white/[0.06] lg:pl-6">
@@ -193,7 +197,7 @@ export function ExpandModal({
             )}
           </div>
           {info && (
-            <div className="border-t border-white/[0.06] px-6 py-5">
+            <div className="border-t border-white/[0.06] px-4 sm:px-6 py-4 sm:py-5">
               <p className="text-[11px] uppercase tracking-wider text-zinc-500 mb-3">
                 About this chart
               </p>
@@ -234,7 +238,8 @@ export function PillGroup<T extends string | number>({
             type="button"
             onClick={() => onChange(opt.value)}
             className={cn(
-              "px-2.5 py-1 text-[12px] rounded-md transition-colors",
+              /* min 44px tap target on mobile */
+              "min-h-[44px] sm:min-h-0 px-3 sm:px-2.5 py-1.5 sm:py-1 text-[13px] sm:text-[12px] rounded-md transition-colors",
               value === opt.value
                 ? "bg-white/[0.1] text-white"
                 : "text-zinc-400 hover:text-zinc-200",
@@ -263,7 +268,7 @@ export function Toggle({
     <button
       type="button"
       onClick={() => onChange(!value)}
-      className="flex items-center justify-between gap-3 text-[13px] text-zinc-300 hover:text-white transition-colors w-full"
+      className="flex min-h-[44px] sm:min-h-0 items-center justify-between gap-3 text-[13px] text-zinc-300 hover:text-white transition-colors w-full"
     >
       <span className="inline-flex items-center gap-2">
         {dotColor && (

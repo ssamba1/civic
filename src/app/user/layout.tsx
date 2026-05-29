@@ -1,0 +1,28 @@
+import { UserNav } from "@/components/resident/user-nav";
+
+export default async function UserLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-h-dvh flex-col bg-black text-zinc-100">
+      <UserNav />
+
+      {/*
+       * pt-4:  on mobile the UserNav is hidden so we just need a small top
+       *        breathing room.
+       * md:pt-20: on md+ the fixed UserNav (h-14) is visible; restore the
+       *           header offset.
+       * pb-[calc(5.5rem+env(safe-area-inset-bottom))]: keep content clear of
+       *   the BottomTabBar (~h-16) AND add the home-bar safe-area. Merged into
+       *   one calc() so only a single padding-bottom declaration exists — using
+       *   separate pb-[5.5rem] + pb-safe would let the cascade pick only one.
+       * md:pb-0: no bottom bar on desktop.
+       */}
+      <main className="flex-1 flex flex-col pt-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pt-20 md:pb-0">
+        {children}
+      </main>
+    </div>
+  );
+}

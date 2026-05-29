@@ -7,13 +7,11 @@ import { CATEGORY_META } from "@/lib/dashboard-data";
 import { cn } from "@/lib/utils/cn";
 import { timeAgo } from "@/lib/utils/time-ago";
 import type { ReportStatus } from "@/lib/types";
-import { UpvoteButton } from "@/components/dashboard/upvote-button";
 
 interface RecentReportsProps {
   reports: DashboardReport[];
   focusedId?: string | null;
   onClickReport?: (id: string) => void;
-  upvotedIds?: string[];
   /** Tailwind max-height class for the panel. Defaults to a 480px cap. */
   maxHeightClass?: string;
   /** Optional expand handler. When provided, an expand button renders in the
@@ -53,12 +51,10 @@ function RecentReportsInner({
   reports,
   focusedId = null,
   onClickReport,
-  upvotedIds = [],
-  maxHeightClass = "max-h-[480px]",
+  maxHeightClass = "max-h-[60vh] sm:max-h-[480px]",
   onExpand,
   bindReportHover,
 }: RecentReportsProps) {
-  const upvotedSet = new Set(upvotedIds);
   const listContainerRef = useRef<HTMLUListElement>(null);
   const itemsRef = useRef<Record<string, HTMLLIElement | null>>({});
 
@@ -84,7 +80,7 @@ function RecentReportsInner({
                 type="button"
                 onClick={onExpand}
                 aria-label="Expand reports"
-                className="flex-shrink-0 p-1 -m-1 text-zinc-500 hover:text-white rounded transition-colors"
+                className="flex-shrink-0 inline-flex items-center justify-center h-11 w-11 -mr-2 text-zinc-500 hover:text-white rounded-md transition-colors"
               >
                 <Maximize2 className="h-3.5 w-3.5" strokeWidth={1.75} />
               </button>
@@ -100,7 +96,7 @@ function RecentReportsInner({
     <section
       className={cn(
         panelClass,
-        "p-4 flex flex-col h-full overflow-hidden",
+        "p-3 sm:p-4 flex flex-col h-full overflow-hidden",
         maxHeightClass,
       )}
     >
@@ -115,7 +111,7 @@ function RecentReportsInner({
               type="button"
               onClick={onExpand}
               aria-label="Expand reports"
-              className="flex-shrink-0 p-1 -m-1 text-zinc-500 hover:text-white rounded transition-colors"
+              className="flex-shrink-0 inline-flex items-center justify-center h-11 w-11 -mr-2 text-zinc-500 hover:text-white rounded-md transition-colors"
             >
               <Maximize2 className="h-3.5 w-3.5" strokeWidth={1.75} />
             </button>
@@ -139,8 +135,8 @@ function RecentReportsInner({
                 itemsRef.current[report.id] = el;
               }}
             >
-             <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={(e) => {
                   e.preventDefault();
                   onClickReport?.(report.id);
@@ -149,7 +145,7 @@ function RecentReportsInner({
                   {})}
                 aria-current={isFocused ? "true" : undefined}
                 className={cn(
-                  "flex-1 min-w-0 text-left flex flex-col gap-1 py-2.5 px-2 rounded-md transition-colors",
+                  "w-full text-left flex flex-col gap-1 py-3 sm:py-2.5 px-2 min-h-11 rounded-md transition-colors",
                   "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1c1c1e]",
                   isFocused ? "bg-white/[0.06]" : "hover:bg-white/[0.03]",
                 )}
@@ -180,12 +176,6 @@ function RecentReportsInner({
                   </span>
                 </div>
               </button>
-              <UpvoteButton
-                reportId={report.id}
-                count={report.upvote_count ?? 0}
-                upvoted={upvotedSet.has(report.id)}
-              />
-             </div>
             </li>
           );
         })}

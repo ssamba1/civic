@@ -103,7 +103,7 @@ export function renderPopupHTML(report: DashboardReport): string {
   const sla = slaWindow(report.severity);
 
   return `
-    <div style="min-width:240px;max-width:300px;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',Inter,system-ui,sans-serif;color:#f5f5f7;">
+    <div style="width:100%;max-width:min(300px,90vw);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',Inter,system-ui,sans-serif;color:#f5f5f7;">
       <div style="width:100%;height:140px;border-radius:12px 12px 0 0;overflow:hidden;background:#1c1c1e;">
         <img
           src="${esc(report.photo_public_url)}"

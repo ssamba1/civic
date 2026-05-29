@@ -380,7 +380,7 @@ function ReportMapInner({
 
   const containerClass = isFullscreen
     ? "h-full w-full relative overflow-hidden bg-[#050505]"
-    : "h-[450px] w-full lg:h-[550px] relative rounded-xl overflow-hidden border border-white/[0.08] bg-[#050505]";
+    : "h-[300px] w-full sm:h-[450px] lg:h-[550px] relative rounded-xl overflow-hidden border border-white/[0.08] bg-[#050505]";
 
   return (
     <div
@@ -426,7 +426,7 @@ function ReportMapInner({
             offset={20}
             closeOnClick={false}
             onClose={() => setPopupReport(null)}
-            maxWidth="320px"
+            maxWidth="min(300px, 90vw)"
           >
             {/* renderPopupHTML escapes all user-controlled fields via esc(); CATEGORY_META is a static constant. Do NOT pass un-sanitized strings here. */}
             <div
@@ -442,7 +442,7 @@ function ReportMapInner({
       <div className="absolute top-16 right-4 z-20 flex flex-col items-end gap-2">
         <button
           onClick={() => setIsPanelOpen(!isPanelOpen)}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1c1c1e] border border-white/[0.08] text-white hover:border-white/[0.2] transition-colors pointer-events-auto"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-[#1c1c1e] border border-white/[0.08] text-white hover:border-white/[0.2] transition-colors pointer-events-auto"
           title="Map Controls"
           aria-label="Toggle map controls"
         >
@@ -456,7 +456,7 @@ function ReportMapInner({
 
         {isPanelOpen && (
           <LiquidGlassCard
-            className="w-[280px] animate-in fade-in slide-in-from-top-2 duration-200 pointer-events-auto"
+            className="w-[min(280px,calc(100vw-2rem))] animate-in fade-in slide-in-from-top-2 duration-200 pointer-events-auto"
             contentClassName="bg-black/45 p-4 text-white flex flex-col gap-4 max-h-[420px] overflow-y-auto custom-scrollbar"
             borderRadius="16px"
             blurIntensity="xl"
@@ -480,7 +480,7 @@ function ReportMapInner({
                   <button
                     key={key}
                     onClick={() => setViewMode(key)}
-                    className={`rounded-md py-1.5 text-[11px] flex items-center justify-center gap-1 transition-all ${
+                    className={`rounded-md py-3 text-[11px] flex items-center justify-center gap-1 transition-all min-h-[44px] lg:py-1.5 lg:min-h-0 ${
                       viewMode === key
                         ? "bg-electric-indigo/20 text-white"
                         : "text-zinc-300 hover:text-white hover:bg-white/5"
@@ -511,7 +511,7 @@ function ReportMapInner({
                   <button
                     key={t}
                     onClick={() => setMapTheme(t)}
-                    className={`rounded-md py-1.5 text-xs capitalize transition-all ${
+                    className={`rounded-md py-3 text-xs capitalize transition-all min-h-[44px] lg:py-1.5 lg:min-h-0 ${
                       mapTheme === t
                         ? "bg-electric-indigo/20 text-white"
                         : "text-zinc-300 hover:text-white hover:bg-white/5"
@@ -525,25 +525,29 @@ function ReportMapInner({
 
             {/* 3D toggle */}
             <div className="border-t border-white/5 pt-3">
-              <div className="flex items-center justify-between text-xs text-zinc-300">
+              <div className="flex items-center justify-between text-xs text-zinc-300 min-h-[44px] lg:min-h-0">
                 <span className="flex items-center gap-1.5">
                   <Mountain className="h-3.5 w-3.5 text-zinc-300" strokeWidth={1.75} />
                   3D tilt
                 </span>
-                <button
-                  onClick={() => setIs3D(!is3D)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors ${
-                    is3D ? "bg-electric-indigo" : "bg-white/10"
-                  }`}
-                  aria-label="Toggle 3D tilt"
-                  aria-pressed={is3D}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
-                      is3D ? "translate-x-4" : "translate-x-1"
-                    } translate-y-[3px]`}
-                  />
-                </button>
+                {/* Outer wrapper provides the 44px tap target on mobile; the visual
+                    switch itself stays h-5 w-9. lg: removes the extra hit area. */}
+                <span className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] -mr-1 lg:min-h-0 lg:min-w-0 lg:mr-0">
+                  <button
+                    onClick={() => setIs3D(!is3D)}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors ${
+                      is3D ? "bg-electric-indigo" : "bg-white/10"
+                    }`}
+                    aria-label="Toggle 3D tilt"
+                    aria-pressed={is3D}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
+                        is3D ? "translate-x-4" : "translate-x-1"
+                      } translate-y-[3px]`}
+                    />
+                  </button>
+                </span>
               </div>
             </div>
 
@@ -569,7 +573,7 @@ function ReportMapInner({
                         ]);
                         setSelectedCategory?.(null);
                       }}
-                      className="text-xs text-zinc-300 hover:text-white flex items-center gap-1"
+                      className="text-xs text-zinc-300 hover:text-white flex items-center gap-1 min-h-[44px] px-2 lg:min-h-0 lg:px-0"
                     >
                       <RotateCcw className="h-3 w-3" />
                       Reset
@@ -612,7 +616,7 @@ function ReportMapInner({
                           <button
                             key={s}
                             onClick={() => handleToggleStatus(s)}
-                            className={`rounded px-2 py-1 text-xs text-left border flex items-center gap-1.5 transition-all ${
+                            className={`rounded px-2 py-3 text-xs text-left border flex items-center gap-1.5 transition-all min-h-[44px] lg:py-1 lg:min-h-0 ${
                               isChecked
                                 ? "bg-white/10 border-white/15 text-white"
                                 : "bg-transparent border-white/5 text-zinc-500 hover:text-zinc-300 hover:border-white/10"
@@ -637,7 +641,7 @@ function ReportMapInner({
       </div>
 
       {/* HUD: report count */}
-      <div className="absolute bottom-4 left-4 z-20 rounded-full bg-[#1c1c1e] border border-white/[0.08] px-3 py-1.5 text-[13px] text-zinc-300 flex items-center gap-1.5 select-none pointer-events-none">
+      <div className="absolute bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] left-4 z-20 rounded-full bg-[#1c1c1e] border border-white/[0.08] px-3 py-1.5 text-[13px] text-zinc-300 flex items-center gap-1.5 select-none pointer-events-none">
         <span className="text-white tabular-nums font-medium">
           {reports.length}
         </span>
@@ -646,7 +650,7 @@ function ReportMapInner({
 
       {/* Legend — content depends on view mode */}
       <LiquidGlassCard
-        className="absolute bottom-4 right-4 z-20 pointer-events-none"
+        className="absolute bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] right-4 z-20 pointer-events-none"
         contentClassName={`${
           mapTheme === "light" ? "bg-black/45" : "bg-black/5"
         } px-3 py-2.5 text-[12px] text-zinc-200 flex flex-col gap-1.5 rounded-[14px]`}

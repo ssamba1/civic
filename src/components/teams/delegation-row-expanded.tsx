@@ -251,7 +251,8 @@ function DelegationRowExpandedInner({
   return (
     <div className="px-4 pb-4 pt-3 bg-white/[0.015] border-t border-white/[0.04]">
       {/* Section A: photo + reasoning */}
-      <div className="grid grid-cols-[160px_minmax(0,1fr)] gap-4">
+      {/* Mobile: photo full-width then reasoning below. sm+: side-by-side */}
+      <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-4">
         {report.photo_public_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -259,10 +260,10 @@ function DelegationRowExpandedInner({
             alt={report.address}
             loading="lazy"
             decoding="async"
-            className="h-[120px] w-[160px] rounded-lg object-cover border border-white/[0.06]"
+            className="h-[180px] w-full rounded-lg object-cover border border-white/[0.06] sm:h-[120px] sm:w-[160px]"
           />
         ) : (
-          <div className="h-[120px] w-[160px] rounded-lg border border-white/[0.06] bg-white/[0.02] flex items-center justify-center">
+          <div className="h-[100px] w-full rounded-lg border border-white/[0.06] bg-white/[0.02] flex items-center justify-center sm:h-[120px] sm:w-[160px]">
             <ImageOff className="h-5 w-5 text-zinc-600" />
           </div>
         )}

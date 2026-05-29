@@ -1,30 +1,73 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { MapPin } from "lucide-react";
+import { MapPin, Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
 import { createBrowserSupabase } from "@/lib/db/browser-client";
+
+type Mode = "signin" | "signup";
 
 export default function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const redirectTo = params.get("redirect") || "/";
+  const initialError = params.get("error");
 
+  const [mode, setMode] = useState<Mode>("signin");
+  const [showEmail, setShowEmail] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(initialError);
+  const [busy, setBusy] = useState<"google" | "email" | "guest" | null>(null);
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
+  useEffect(() => {
+    if (initialError) setError(initialError);
+  }, [initialError]);
+
+  async function handleGoogle() {
+    setBusy("google");
     setError(null);
     const supabase = createBrowserSupabase();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const next = encodeURIComponent(redirectTo);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=${next}`,
+        queryParams: { prompt: "select_account" },
+      },
+    });
     if (error) {
       setError(error.message);
-      setBusy(false);
+      setBusy(null);
+    }
+  }
+
+  async function handleEmail(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy("email");
+    setError(null);
+    const supabase = createBrowserSupabase();
+    if (mode === "signin") {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setError(error.message);
+        setBusy(null);
+        return;
+      }
+    } else {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (error) {
+        setError(error.message);
+        setBusy(null);
+        return;
+      }
+      setError("Check your email for a confirmation link.");
+      setBusy(null);
       return;
     }
     router.push(redirectTo);
@@ -32,87 +75,211 @@ export default function LoginForm() {
   }
 
   async function handleGuest() {
-    setBusy(true);
+    setBusy("guest");
     setError(null);
     const supabase = createBrowserSupabase();
     const { error } = await supabase.auth.signInAnonymously();
     if (error) {
-      setError(`Guest sign-in unavailable (enable Anonymous in Supabase Auth): ${error.message}`);
-      setBusy(false);
+      setError(`Guest sign-in unavailable: ${error.message}`);
+      setBusy(null);
       return;
     }
     router.push(redirectTo);
     router.refresh();
   }
 
+  const anyBusy = busy !== null;
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white px-4">
+    <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-[var(--background)] px-4 pt-[max(3rem,env(safe-area-inset-top,0px))] pb-[max(3rem,env(safe-area-inset-bottom,0px))] text-[var(--foreground)]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.35]"
+        style={{
+          background:
+            "radial-gradient(800px 500px at 50% -10%, rgba(10,132,255,0.25), transparent 60%), radial-gradient(600px 400px at 10% 110%, rgba(90,200,250,0.18), transparent 60%)",
+        }}
+      />
+
       <Link
         href="/"
-        className="mb-8 flex items-center gap-2 text-2xl font-bold tracking-tight text-zinc-900"
+        className="relative z-10 mb-6 sm:mb-10 flex items-center gap-2 text-2xl font-semibold tracking-tight"
       >
-        <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white">
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-primary)] text-white shadow-[0_8px_24px_-8px_rgba(10,132,255,0.6)]">
           <MapPin className="h-5 w-5" />
         </span>
         Civic
       </Link>
 
-      <form
-        onSubmit={handleLogin}
-        className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
-      >
-        <h1 className="text-lg font-semibold text-zinc-900">Sign in</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Residents and city staff sign in here.
+      <div className="relative z-10 w-full max-w-[400px]">
+        <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)]/60 p-5 sm:p-7 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-[22px] font-semibold tracking-tight">
+                {mode === "signin" ? "Welcome back" : "Create account"}
+              </h1>
+              <p className="mt-1 text-[13px] text-[var(--color-muted)]">
+                {mode === "signin"
+                  ? "Sign in to report and follow civic issues."
+                  : "Join Civic to report and follow issues in your city."}
+              </p>
+            </div>
+          </div>
+
+          {error && (
+            <div className="mt-5 flex items-start gap-2 rounded-xl border border-[var(--color-danger)]/30 bg-[var(--color-danger)]/8 px-3 py-2.5 text-[13px] text-[var(--color-danger)]">
+              <AlertCircle className="mt-[2px] h-4 w-4 flex-shrink-0" />
+              <span className="leading-snug">{error}</span>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleGoogle}
+            disabled={anyBusy}
+            className="mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-full border border-[var(--color-border)] bg-white px-4 text-[14px] font-medium text-zinc-900 shadow-sm transition-all hover:shadow-md hover:-translate-y-[1px] active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0 dark:bg-white dark:text-zinc-900"
+          >
+            <GoogleGlyph className="h-5 w-5" />
+            {busy === "google"
+              ? "Redirecting…"
+              : mode === "signin"
+                ? "Continue with Google"
+                : "Sign up with Google"}
+          </button>
+
+          <div className="my-6 flex items-center gap-3 text-[11px] uppercase tracking-[0.12em] text-[var(--color-muted)]">
+            <span className="h-px flex-1 bg-[var(--color-border)]" />
+            or
+            <span className="h-px flex-1 bg-[var(--color-border)]" />
+          </div>
+
+          {!showEmail ? (
+            <button
+              type="button"
+              onClick={() => setShowEmail(true)}
+              disabled={anyBusy}
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-[var(--color-border)] bg-transparent text-[13.5px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--color-primary-light)] disabled:opacity-50"
+            >
+              <Mail className="h-4 w-4" />
+              Continue with email
+            </button>
+          ) : (
+            <form onSubmit={handleEmail} className="space-y-3">
+              <FieldIcon icon={<Mail className="h-4 w-4" />}>
+                <input
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="h-12 w-full bg-transparent pl-10 pr-3 text-base sm:text-[14px] outline-none placeholder:text-[var(--color-muted)]"
+                />
+              </FieldIcon>
+              <FieldIcon icon={<Lock className="h-4 w-4" />}>
+                <input
+                  type="password"
+                  required
+                  minLength={mode === "signup" ? 8 : undefined}
+                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={mode === "signup" ? "At least 8 characters" : "Password"}
+                  className="h-12 w-full bg-transparent pl-10 pr-3 text-base sm:text-[14px] outline-none placeholder:text-[var(--color-muted)]"
+                />
+              </FieldIcon>
+
+              <button
+                type="submit"
+                disabled={anyBusy}
+                className="group mt-1 flex h-12 w-full items-center justify-center gap-1.5 rounded-full bg-[var(--color-primary)] text-[14px] font-semibold text-white shadow-[0_10px_30px_-10px_rgba(10,132,255,0.7)] transition-all hover:bg-[var(--color-primary-hover)] hover:-translate-y-[1px] active:translate-y-0 disabled:opacity-60 disabled:hover:translate-y-0"
+              >
+                {busy === "email"
+                  ? mode === "signin" ? "Signing in…" : "Creating account…"
+                  : (
+                    <>
+                      {mode === "signin" ? "Sign in" : "Create account"}
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </>
+                  )}
+              </button>
+            </form>
+          )}
+
+          <button
+            type="button"
+            onClick={handleGuest}
+            disabled={anyBusy}
+            className="mt-3 h-11 w-full rounded-full text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--foreground)] disabled:opacity-50"
+          >
+            {busy === "guest" ? "Signing in…" : "Continue as guest"}
+          </button>
+        </div>
+
+        <p className="mt-6 text-center text-[13px] text-[var(--color-muted)]">
+          {mode === "signin" ? (
+            <>
+              New to Civic?{" "}
+              <button
+                type="button"
+                onClick={() => { setMode("signup"); setError(null); setShowEmail(false); }}
+                className="inline-flex sm:inline items-center min-h-[44px] sm:min-h-0 font-medium text-[var(--color-primary)] hover:underline"
+              >
+                Create an account
+              </button>
+            </>
+          ) : (
+            <>
+              Already have an account?{" "}
+              <button
+                type="button"
+                onClick={() => { setMode("signin"); setError(null); setShowEmail(false); }}
+                className="inline-flex sm:inline items-center min-h-[44px] sm:min-h-0 font-medium text-[var(--color-primary)] hover:underline"
+              >
+                Sign in
+              </button>
+            </>
+          )}
         </p>
 
-        {error && (
-          <div className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </div>
-        )}
-
-        <label className="mt-4 block text-sm font-medium text-zinc-700">
-          Email
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 h-11 w-full rounded-lg border border-zinc-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            placeholder="you@example.com"
-          />
-        </label>
-
-        <label className="mt-4 block text-sm font-medium text-zinc-700">
-          Password
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 h-11 w-full rounded-lg border border-zinc-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            placeholder="••••••••"
-          />
-        </label>
-
-        <button
-          type="submit"
-          disabled={busy}
-          className="mt-6 h-11 w-full rounded-full bg-blue-600 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
-        >
-          {busy ? "Signing in…" : "Sign in"}
-        </button>
-
-        <button
-          type="button"
-          onClick={handleGuest}
-          disabled={busy}
-          className="mt-3 h-11 w-full rounded-full border border-zinc-300 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50"
-        >
-          Continue as guest
-        </button>
-      </form>
+        <p className="mt-3 text-center text-[11px] leading-relaxed text-[var(--color-muted)]">
+          By continuing you agree to Civic's Terms and acknowledge the Privacy Policy.
+        </p>
+      </div>
     </div>
+  );
+}
+
+function FieldIcon({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="relative rounded-xl border border-[var(--color-border)] bg-[var(--background)] transition-colors focus-within:border-[var(--color-primary)] focus-within:ring-2 focus-within:ring-[var(--color-primary)]/20">
+      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)]">
+        {icon}
+      </span>
+      {children}
+    </div>
+  );
+}
+
+function GoogleGlyph({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.99.66-2.25 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.11A6.6 6.6 0 0 1 5.48 12c0-.73.13-1.44.36-2.11V7.05H2.18a11 11 0 0 0 0 9.9l3.66-2.84z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.07.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.05l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"
+      />
+    </svg>
   );
 }

@@ -10,7 +10,9 @@ import type {
   WorkOrder,
   ReportStatus,
 } from "@/lib/types";
-import { WorkOrderRowControlled } from "./work-order-row";
+import { WorkOrderRowControlled, WorkOrderCard } from "./work-order-row";
+import { WorkOrderDetail } from "./work-order-detail";
+import { Drawer } from "@/components/ui/drawer";
 import { KeyboardNav } from "./keyboard-nav";
 import {
   dispatchWorkOrder,
@@ -42,6 +44,8 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
   const [search, setSearch] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [detailOpenIndex, setDetailOpenIndex] = useState<number | null>(null);
+  // Mobile drawer state — tracks which work order is open in the Drawer
+  const [mobileDrawerIndex, setMobileDrawerIndex] = useState<number | null>(null);
 
   // --- Queue state ---
   const [displayedOrders, setDisplayedOrders] = useState<WorkOrderWithDetails[]>(workOrders);
@@ -159,7 +163,7 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
   return (
     <div className="flex h-full flex-col">
       {/* Top bar */}
-      <div className="border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="border-b border-zinc-200 bg-white px-4 py-3 md:px-6 md:py-4 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
@@ -201,7 +205,7 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
         {/* Tabs + search */}
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* Filter tabs */}
-          <div className="flex gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800">
+          <div className="flex gap-1 overflow-x-auto rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800 scrollbar-none">
             {TABS.map((tab) => (
               <button
                 key={tab.value}
@@ -210,7 +214,7 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
                   setSelectedIndex(0);
                 }}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  "flex min-h-11 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors md:min-h-0 md:px-3",
                   activeTab === tab.value
                     ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
                     : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
@@ -242,14 +246,71 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
                 setSelectedIndex(0);
               }}
               placeholder="Search address or category..."
-              className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-10 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 sm:w-72"
+              className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-10 pr-4 text-base text-zinc-900 placeholder:text-zinc-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 sm:w-72 sm:text-sm"
             />
           </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="flex-1 overflow-auto">
+      {/* Mobile card list (<md) */}
+      <div className="flex-1 overflow-auto md:hidden">
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <SlidersHorizontal className="mb-4 h-12 w-12 text-zinc-300 dark:text-zinc-600" />
+            <p className="text-lg font-medium text-zinc-600 dark:text-zinc-400">
+              No work orders found
+            </p>
+            <p className="mt-1 text-sm text-zinc-400">
+              {search
+                ? "Try a different search term"
+                : "No work orders match the selected filter"}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2 p-3">
+            {filtered.map((wo, idx) => {
+              if (!wo.report || !wo.classification) return null;
+              return (
+                <WorkOrderCard
+                  key={wo.id}
+                  report={wo.report as unknown as Report}
+                  classification={wo.classification as unknown as Classification}
+                  workOrder={wo as unknown as WorkOrder}
+                  isSelected={selectedIndex === idx}
+                  onSelect={() => setSelectedIndex(idx)}
+                  onDetailOpen={() => setMobileDrawerIndex(idx)}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Mobile drawer — work order detail */}
+      {(() => {
+        if (mobileDrawerIndex === null) return null;
+        const wo = filtered[mobileDrawerIndex];
+        if (!wo?.report || !wo?.classification) return null;
+        return (
+          <Drawer
+            open={true}
+            onClose={() => setMobileDrawerIndex(null)}
+            title={wo.report.address ?? "Work Order"}
+            side="right"
+          >
+            <WorkOrderDetail
+              report={wo.report as unknown as Report}
+              classification={wo.classification as unknown as Classification}
+              workOrder={wo as unknown as WorkOrder}
+              onClose={() => setMobileDrawerIndex(null)}
+              standalone={false}
+            />
+          </Drawer>
+        );
+      })()}
+
+      {/* Desktop table (md+) */}
+      <div className="hidden flex-1 overflow-auto md:block">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <SlidersHorizontal className="mb-4 h-12 w-12 text-zinc-300 dark:text-zinc-600" />
@@ -301,7 +362,7 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
         )}
       </div>
 
-      {/* Keyboard nav footer */}
+      {/* Keyboard nav footer — desktop only */}
       <KeyboardNav
         totalItems={filtered.length}
         selectedIndex={selectedIndex}

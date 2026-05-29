@@ -179,7 +179,7 @@ function DelegationRow({
             setExpanded((v) => !v);
           }
         }}
-        className="-mx-2 grid cursor-pointer grid-cols-1 items-center gap-3 rounded-md px-2 py-3 transition-colors hover:bg-white/[0.015] sm:grid-cols-[minmax(0,1fr)_auto_auto_auto]"
+        className="-mx-2 grid cursor-pointer grid-cols-1 items-center gap-2 rounded-md px-2 py-3 transition-colors hover:bg-white/[0.015] sm:grid-cols-[minmax(0,1fr)_auto_auto_auto] sm:gap-3 min-h-[44px]"
       >
         <div className="flex min-w-0 items-center gap-3">
           <span
@@ -212,7 +212,57 @@ function DelegationRow({
           </div>
         </div>
 
-        <div onClick={stopRowToggle} onKeyDown={stopRowToggle}>
+        {/* Mobile: controls grouped in one flex row (col-span-1); chevron sits
+            outside the stopRowToggle wrapper so tapping it still toggles the row.
+            sm+: each child is its own grid column (auto). */}
+        <div className="flex items-center justify-between sm:hidden">
+          <div
+            className="flex items-center gap-1"
+            onClick={stopRowToggle}
+            onKeyDown={stopRowToggle}
+          >
+            <TeamPicker
+              currentTeam={effectiveTeam}
+              defaultTeam={defaultTeam}
+              onChange={onReassign}
+              align="left"
+            />
+            <button
+              type="button"
+              onClick={onClear}
+              disabled={!isOverridden}
+              title={
+                isOverridden ? "Revert to default routing" : "Default routing"
+              }
+              aria-label="Reset team assignment to default"
+              className={cn(
+                "inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md transition-colors",
+                isOverridden
+                  ? "text-zinc-400 hover:bg-white/[0.06] hover:text-white"
+                  : "text-zinc-700",
+              )}
+            >
+              <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} />
+            </button>
+          </div>
+          {/* Chevron outside stopRowToggle so tapping it reliably toggles expansion */}
+          <span
+            aria-hidden
+            className={cn(
+              "inline-flex h-11 w-11 items-center justify-center text-zinc-500 transition-transform duration-300",
+              expanded && "rotate-180",
+            )}
+          >
+            <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} />
+          </span>
+        </div>
+
+        {/* sm+: individual grid columns */}
+        <div
+          className="hidden sm:block"
+          onClick={stopRowToggle}
+          onKeyDown={stopRowToggle}
+        >
           <TeamPicker
             currentTeam={effectiveTeam}
             defaultTeam={defaultTeam}
@@ -221,7 +271,11 @@ function DelegationRow({
           />
         </div>
 
-        <div onClick={stopRowToggle} onKeyDown={stopRowToggle}>
+        <div
+          className="hidden sm:block"
+          onClick={stopRowToggle}
+          onKeyDown={stopRowToggle}
+        >
           <button
             type="button"
             onClick={onClear}
@@ -244,7 +298,7 @@ function DelegationRow({
         <span
           aria-hidden
           className={cn(
-            "inline-flex h-6 w-6 items-center justify-center text-zinc-500 transition-transform duration-300",
+            "hidden sm:inline-flex h-6 w-6 items-center justify-center text-zinc-500 transition-transform duration-300",
             expanded && "rotate-180",
           )}
         >

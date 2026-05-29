@@ -136,10 +136,11 @@ function TeamCard({
       ? formatDays(workload.oldestOpenAgeDays)
       : "—";
 
+  const { onClick: tipOnClick, ...tipRest } = tipBindings;
   return (
     <button
       type="button"
-      onClick={onSelect}
+      onClick={(e) => { tipOnClick?.(e); onSelect(); }}
       aria-pressed={isSelected}
       aria-label={`Scope view to ${team.label}`}
       className={cn(
@@ -156,7 +157,7 @@ function TeamCard({
           ? { boxShadow: `0 0 0 1px ${team.color}66, 0 8px 24px ${team.color}22` }
           : undefined
       }
-      {...tipBindings}
+      {...tipRest}
     >
       <header className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">

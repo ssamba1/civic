@@ -88,7 +88,7 @@ export function KeyboardNav({
   }, [handleKeyDown]);
 
   return (
-    <div className="flex items-center gap-4 border-t border-zinc-200 bg-zinc-50 px-4 py-2 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="hidden md:flex items-center gap-4 border-t border-zinc-200 bg-zinc-50 px-4 py-2 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">
       <Keyboard className="h-3.5 w-3.5" />
       <span className="font-medium">Shortcuts:</span>
       <div className="flex flex-wrap gap-3">

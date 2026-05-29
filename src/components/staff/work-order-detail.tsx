@@ -35,6 +35,9 @@ interface WorkOrderDetailProps {
   classification: Classification;
   workOrder: WorkOrder;
   onClose: () => void;
+  /** When false, renders only the panel content without the fixed overlay wrapper.
+   *  Use this when embedding inside a Drawer (which provides its own overlay). */
+  standalone?: boolean;
 }
 
 const SEVERITY_CONFIG: Record<
@@ -88,6 +91,7 @@ export function WorkOrderDetail({
   classification,
   workOrder,
   onClose,
+  standalone = true,
 }: WorkOrderDetailProps) {
   const [isPending, startTransition] = useTransition();
   const [showRejectInput, setShowRejectInput] = useState(false);
@@ -149,17 +153,11 @@ export function WorkOrderDetail({
     });
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-end">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Panel */}
-      <div className="relative z-10 flex h-full w-full max-w-2xl flex-col overflow-hidden bg-white shadow-2xl dark:bg-zinc-900">
-        {/* Header */}
+  // ── Inner content (shared between standalone and drawer modes) ──────────
+  const panelContent = (
+    <>
+      {/* Header — only shown in standalone mode (drawer provides its own title bar) */}
+      {standalone && (
         <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
           <div>
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
@@ -171,14 +169,16 @@ export function WorkOrderDetail({
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+            aria-label="Close"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
+      )}
 
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto">
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
           {/* Photo */}
           <div className="relative aspect-video w-full bg-zinc-100 dark:bg-zinc-800">
             {report.photo_public_url ? (
@@ -370,7 +370,7 @@ export function WorkOrderDetail({
                       key={cat}
                       onClick={() => handleOverride(cat)}
                       disabled={isPending}
-                      className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-medium capitalize text-zinc-700 transition-colors hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-blue-600"
+                      className="flex min-h-11 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-medium capitalize text-zinc-700 transition-colors hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-blue-600 md:min-h-0"
                     >
                       {cat.replace("_", " ")}
                     </button>
@@ -389,20 +389,20 @@ export function WorkOrderDetail({
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
                   placeholder="Why is this report being rejected?"
-                  className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400 dark:border-red-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-base text-zinc-900 placeholder:text-zinc-400 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400 dark:border-red-700 dark:bg-zinc-800 dark:text-zinc-100 sm:text-sm"
                   rows={3}
                 />
                 <div className="mt-2 flex gap-2">
                   <button
                     onClick={handleReject}
                     disabled={isPending || !rejectReason.trim()}
-                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                    className="flex min-h-11 items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50 md:min-h-0"
                   >
                     Confirm Reject
                   </button>
                   <button
                     onClick={() => setShowRejectInput(false)}
-                    className="rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-400"
+                    className="flex min-h-11 items-center justify-center rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-400 md:min-h-0"
                   >
                     Cancel
                   </button>
@@ -441,11 +441,11 @@ export function WorkOrderDetail({
         </div>
 
         {/* Action bar */}
-        <div className="flex items-center gap-2 border-t border-zinc-200 bg-white px-6 py-4 dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="pb-safe flex flex-wrap items-center gap-2 border-t border-zinc-200 bg-white px-4 py-3 md:px-6 md:py-4 dark:border-zinc-700 dark:bg-zinc-900">
           <button
             onClick={handleDispatch}
             disabled={isPending}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50 sm:flex-none"
           >
             <Send className="h-4 w-4" />
             Dispatch
@@ -453,7 +453,7 @@ export function WorkOrderDetail({
           <button
             onClick={handleClose}
             disabled={isPending}
-            className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50 sm:flex-none"
           >
             <CheckCircle2 className="h-4 w-4" />
             Close
@@ -461,7 +461,7 @@ export function WorkOrderDetail({
           <button
             onClick={() => setShowRejectInput(!showRejectInput)}
             disabled={isPending}
-            className="flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 sm:flex-none"
           >
             <XCircle className="h-4 w-4" />
             Reject
@@ -469,12 +469,35 @@ export function WorkOrderDetail({
           <button
             onClick={() => setShowOverride(!showOverride)}
             disabled={isPending}
-            className="flex items-center gap-2 rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800 sm:flex-none"
           >
             <Edit3 className="h-4 w-4" />
             Override
           </button>
         </div>
+    </>
+  );
+
+  // ── Drawer mode: render content directly (Drawer provides the overlay) ──
+  if (!standalone) {
+    return (
+      <div className="flex h-full flex-col overflow-hidden">
+        {panelContent}
+      </div>
+    );
+  }
+
+  // ── Standalone mode: fixed overlay + slide-in panel ──────────────────────
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-end">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      {/* Panel */}
+      <div className="relative z-10 flex h-full w-full max-w-2xl flex-col overflow-hidden bg-white shadow-2xl dark:bg-zinc-900">
+        {panelContent}
       </div>
     </div>
   );

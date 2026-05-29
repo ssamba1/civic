@@ -34,6 +34,81 @@ interface GlobeProps {
   theta?: number
   diffuse?: number
   mapSamples?: number
+  /** When > 0, scatter this many ambient markers that pop in, hold, fade, and respawn —
+   *  making the globe look like it is being populated by incoming reports. */
+  populate?: number
+}
+
+type Ambient = { location: [number, number]; birth: number; life: number; scale: number }
+
+// Curated land coordinates (real cities) so ambient markers never land in the ocean.
+// Weighted toward North America / Georgia, where Civic launches.
+const LAND_POINTS: [number, number][] = [
+  // Georgia cluster (Civic's launch region) — extra dense
+  [34.21, -84.14], [34.07, -84.29], [34.02, -84.36], [33.95, -84.55], [33.92, -84.38],
+  [34.0, -84.14], [34.05, -84.07], [33.75, -84.39], [33.96, -83.38], [34.3, -83.82],
+  // United States
+  [40.71, -74.0], [34.05, -118.24], [41.88, -87.63], [29.76, -95.37], [33.45, -112.07],
+  [39.95, -75.16], [29.42, -98.49], [32.78, -96.8], [32.72, -117.16], [37.34, -121.89],
+  [30.27, -97.74], [30.33, -81.66], [39.96, -83.0], [35.23, -80.84], [39.77, -86.16],
+  [47.61, -122.33], [39.74, -104.99], [42.36, -71.06], [36.16, -86.78], [25.76, -80.19],
+  [44.98, -93.27], [27.95, -82.46], [29.95, -90.07], [45.51, -122.68], [39.1, -94.58],
+  [40.76, -111.89], [42.33, -83.05], [38.91, -77.04], [38.63, -90.2], [36.17, -115.14],
+  // Canada / Mexico
+  [43.65, -79.38], [45.5, -73.57], [49.28, -123.12], [51.05, -114.07], [19.43, -99.13],
+  [20.67, -103.35], [25.69, -100.32],
+  // Europe
+  [51.51, -0.13], [48.86, 2.35], [52.52, 13.4], [40.42, -3.7], [41.9, 12.5],
+  [52.37, 4.9], [48.21, 16.37], [52.23, 21.01], [59.33, 18.07], [38.72, -9.14],
+  [53.35, -6.26], [50.45, 30.52], [41.01, 28.98], [37.98, 23.73], [48.14, 11.58],
+  // Asia / Middle East
+  [35.68, 139.69], [39.9, 116.4], [31.23, 121.47], [28.61, 77.21], [19.08, 72.88],
+  [13.76, 100.5], [1.35, 103.82], [37.57, 126.98], [-6.21, 106.85], [14.6, 120.98],
+  [25.2, 55.27], [22.32, 114.17], [24.86, 67.0], [21.03, 105.85], [24.71, 46.68],
+  // South America
+  [-23.55, -46.63], [-22.91, -43.17], [-34.6, -58.38], [-12.05, -77.04], [4.71, -74.07],
+  [-33.45, -70.67], [10.48, -66.9], [-0.18, -78.47],
+  // Africa
+  [6.52, 3.38], [30.04, 31.24], [-26.2, 28.05], [-1.29, 36.82], [33.57, -7.59],
+  [5.6, -0.19], [9.03, 38.74], [-33.92, 18.42],
+  // Oceania
+  [-33.87, 151.21], [-37.81, 144.96], [-36.85, 174.76],
+]
+
+function spawnLocation(): [number, number] {
+  const p = LAND_POINTS[(Math.random() * LAND_POINTS.length) | 0]
+  // small jitter (~16km) keeps it on land near the city but avoids exact repeats
+  return [p[0] + (Math.random() - 0.5) * 0.3, p[1] + (Math.random() - 0.5) * 0.3]
+}
+
+function genAmbient(n: number, now: number): Ambient[] {
+  const out: Ambient[] = []
+  for (let i = 0; i < n; i++) {
+    const life = 5000 + Math.random() * 6000
+    // stagger births so specks keep popping in; many are already mid-life on load
+    out.push({
+      location: spawnLocation(),
+      birth: now - Math.random() * life,
+      life,
+      scale: 0.7 + Math.random() * 0.6,
+    })
+  }
+  return out
+}
+
+// 0..1 size factor across a marker's life: quick ease-out pop-in, hold, fade out. -1 = expired.
+function popFactor(t: number, a: Ambient): number {
+  const p = (t - a.birth) / a.life
+  if (p < 0) return 0
+  if (p > 1) return -1
+  const grow = 0.14
+  const fade = 0.16
+  if (p < grow) {
+    const k = p / grow
+    return 1 - Math.pow(1 - k, 3)
+  }
+  if (p > 1 - fade) return (1 - p) / fade
+  return 1
 }
 
 export function Globe({
@@ -54,6 +129,7 @@ export function Globe({
   theta = 0.2,
   diffuse = 1.5,
   mapSamples = 16000,
+  populate = 0,
 }: GlobeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const pointerInteracting = useRef<{ x: number; y: number } | null>(null)
@@ -124,10 +200,16 @@ export function Globe({
     let globe: ReturnType<typeof createGlobe> | null = null
     let animationId: number
     let phi = 0
+    const prefersReduced =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    let ambient: Ambient[] = []
 
     function init() {
       const width = canvas.offsetWidth
       if (width === 0 || globe) return
+
+      ambient = populate > 0 ? genAmbient(populate, performance.now()) : []
 
       const dpr = Math.min(window.devicePixelRatio || 1, 2)
       globe = createGlobe(canvas, {
@@ -160,6 +242,29 @@ export function Globe({
         opacity: 0.7,
       })
 
+      const ambientMax = markerSize * 0.85
+      function buildAmbientMarkers(): { location: [number, number]; size: number }[] {
+        if (ambient.length === 0) return []
+        if (prefersReduced) {
+          return ambient.map((a) => ({ location: a.location, size: ambientMax * a.scale }))
+        }
+        const t = performance.now()
+        const out: { location: [number, number]; size: number }[] = []
+        for (const a of ambient) {
+          let f = popFactor(t, a)
+          if (f < 0) {
+            // expired → respawn elsewhere so new specks keep populating the globe
+            a.location = spawnLocation()
+            a.birth = t
+            a.life = 5000 + Math.random() * 6000
+            a.scale = 0.7 + Math.random() * 0.6
+            f = 0
+          }
+          if (f > 0.001) out.push({ location: a.location, size: ambientMax * a.scale * f })
+        }
+        return out
+      }
+
       function animate() {
         if (!isPausedRef.current) {
           phi += speed
@@ -189,11 +294,14 @@ export function Globe({
           baseColor,
           arcColor,
           markerElevation,
-          markers: markers.map((m) => ({
-            location: m.location,
-            size: markerSize,
-            id: m.id,
-          })),
+          markers: [
+            ...markers.map((m) => ({
+              location: m.location,
+              size: markerSize,
+              id: m.id,
+            })),
+            ...buildAmbientMarkers(),
+          ],
           arcs: arcs.map((a) => ({
             from: a.from,
             to: a.to,
@@ -223,10 +331,10 @@ export function Globe({
       if (globe) globe.destroy()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [markers, arcs, markerColor, baseColor, arcColor, glowColor, dark, mapBrightness, markerSize, markerElevation, arcWidth, arcHeight, speed, theta, diffuse, mapSamples])
+  }, [markers, arcs, markerColor, baseColor, arcColor, glowColor, dark, mapBrightness, markerSize, markerElevation, arcWidth, arcHeight, speed, theta, diffuse, mapSamples, populate])
 
   return (
-    <div className={`relative aspect-square select-none ${className}`}>
+    <div className={`relative aspect-square select-none overflow-hidden ${className}`}>
       <canvas
         ref={canvasRef}
         onPointerDown={handlePointerDown}
@@ -238,6 +346,7 @@ export function Globe({
           transition: "opacity 1.2s ease",
           borderRadius: "50%",
           touchAction: "none",
+          WebkitTouchCallout: "none",
         }}
       />
       {markers.map((m) => (
@@ -245,7 +354,6 @@ export function Globe({
           key={m.id}
           style={{
             position: "absolute",
-            // @ts-expect-error CSS Anchor Positioning API — not yet in TS DOM types
             positionAnchor: `--cobe-${m.id}`,
             bottom: "anchor(top)",
             left: "anchor(center)",
@@ -285,8 +393,7 @@ export function Globe({
             key={a.id}
             style={{
               position: "absolute",
-              // @ts-expect-error CSS Anchor Positioning API — not yet in TS DOM types
-              positionAnchor: `--cobe-arc-${a.id}`,
+                positionAnchor: `--cobe-arc-${a.id}`,
               bottom: "anchor(top)",
               left: "anchor(center)",
               translate: "-50% 0",

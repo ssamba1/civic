@@ -227,6 +227,107 @@ export function WorkOrderRow({
   );
 }
 
+// ── Mobile card (used below md breakpoint) ──────────────────────────────────
+export interface WorkOrderCardProps {
+  report: Report;
+  classification: Classification;
+  workOrder: WorkOrder;
+  isSelected: boolean;
+  onSelect: () => void;
+  onDetailOpen: () => void;
+}
+
+export function WorkOrderCard({
+  report,
+  classification,
+  workOrder,
+  isSelected,
+  onSelect,
+  onDetailOpen,
+}: WorkOrderCardProps) {
+  const Icon = CATEGORY_ICONS[classification.category] ?? HelpCircle;
+  const sevColor =
+    SEVERITY_COLORS[classification.severity] ?? SEVERITY_COLORS[3];
+  const statusStyle = STATUS_STYLES[report.status] ?? STATUS_STYLES.open;
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        onSelect();
+        onDetailOpen();
+      }}
+      className={cn(
+        "w-full text-left flex items-start gap-3 rounded-[10px] border px-4 py-3 transition-colors active:scale-[0.99]",
+        "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900",
+        isSelected
+          ? "border-blue-300 bg-blue-50/60 dark:border-blue-700 dark:bg-blue-900/20"
+          : "hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+      )}
+    >
+      {/* Thumbnail */}
+      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[8px] bg-zinc-100 dark:bg-zinc-800">
+        {report.photo_public_url ? (
+          <Image
+            src={report.photo_public_url}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="56px"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <Icon className="h-5 w-5 text-zinc-400" />
+          </div>
+        )}
+      </div>
+
+      {/* Body */}
+      <div className="min-w-0 flex-1">
+        {/* Row 1: category + badges */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-sm font-semibold capitalize text-zinc-900 dark:text-zinc-100">
+            {classification.category.replace(/_/g, " ")}
+          </span>
+          <span
+            className={cn(
+              "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+              sevColor
+            )}
+          >
+            S{classification.severity}
+          </span>
+          <span
+            className={cn(
+              "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium capitalize",
+              statusStyle
+            )}
+          >
+            {report.status.replace(/_/g, " ")}
+          </span>
+        </div>
+
+        {/* Row 2: address */}
+        <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">
+          {report.address ?? "Unknown location"}
+        </p>
+
+        {/* Row 3: meta */}
+        <div className="mt-1 flex items-center gap-3 text-[11px] text-zinc-400">
+          <span className="flex items-center gap-0.5">
+            <Clock className="h-3 w-3" />
+            {timeAgo(report.created_at)}
+          </span>
+          <span>{workOrder.est_minutes}m est.</span>
+        </div>
+      </div>
+
+      {/* Arrow */}
+      <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-zinc-300 dark:text-zinc-600" />
+    </button>
+  );
+}
+
 // Allow parent to control detail open state via keyboard
 export function WorkOrderRowControlled({
   report,
