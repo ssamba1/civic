@@ -94,6 +94,47 @@ export async function fetchRecentReports(
   }));
 }
 
+/**
+ * Fetch all report lat/lng pairs across all cities, cluster nearby points by
+ * a ~25 km grid (0.25° rounding), and return one marker per cluster.
+ * Falls back to an empty array — callers should handle gracefully.
+ */
+export async function fetchReportMarkers(): Promise<
+  Array<{ id: string; location: [number, number]; label: string }>
+> {
+  const db = createServerClient();
+  const { data } = await db
+    .from("dashboard_reports_view")
+    .select("id, lat, lng, address")
+    .not("lat", "is", null)
+    .not("lng", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(500);
+
+  if (!data) return [];
+
+  // Grid-based deduplication: round to nearest 0.25° (≈25 km)
+  const GRID = 0.25;
+  const seen = new Map<string, { lat: number; lng: number; label: string }>();
+
+  for (const row of data as Array<{ id: string; lat: number | null; lng: number | null; address: string | null }>) {
+    if (row.lat == null || row.lng == null) continue;
+    const key = `${Math.round(row.lat / GRID)},${Math.round(row.lng / GRID)}`;
+    if (!seen.has(key)) {
+      // Use the last two address parts (e.g. "Cumming, GA") as label
+      const parts = (row.address ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+      const label = parts.length >= 2 ? parts.slice(-2).join(", ") : parts[0] ?? "Report";
+      seen.set(key, { lat: row.lat, lng: row.lng, label });
+    }
+  }
+
+  return Array.from(seen.entries()).map(([key, val]) => ({
+    id: `report-${key}`,
+    location: [val.lat, val.lng] as [number, number],
+    label: val.label,
+  }));
+}
+
 // Report IDs the current (logged-in) user has upvoted — for initial button state.
 export async function fetchUserUpvotes(): Promise<string[]> {
   const ssr = await createSSRClient();

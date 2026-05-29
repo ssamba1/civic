@@ -1,11 +1,13 @@
 import { ArrowRight, Camera, ChevronRight, Eye, MapPin, Radio } from "lucide-react";
 import Link from "next/link";
-import { CivicGlobe } from "@/components/landing/civic-globe";
+import { Globe } from "@/components/ui/cobe-globe";
 import { FAQ } from "@/components/landing/faq";
 import { OrbitalSteps } from "@/components/landing/orbital-steps";
 import { Button } from "@/components/ui/button";
+import { fetchReportMarkers } from "@/lib/dashboard-queries";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const reportMarkers = await fetchReportMarkers();
   return (
     <div className="flex min-h-[100dvh] flex-col bg-[var(--color-background)]">
       {/* nav */}
@@ -44,7 +46,7 @@ export default function HomePage() {
       </header>
 
       {/* hero — asymmetric split */}
-      <section className="relative overflow-hidden border-b border-[var(--color-border)]">
+      <section className="relative overflow-x-clip border-b border-[var(--color-border)] min-h-[calc(100dvh-3.5rem)]">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10"
@@ -53,7 +55,7 @@ export default function HomePage() {
               "radial-gradient(900px 600px at 80% 30%, rgba(10,132,255,0.06), transparent 60%)",
           }}
         />
-        <div className="mx-auto grid max-w-7xl gap-12 px-6 py-20 lg:grid-cols-[5fr_6fr] lg:py-28">
+        <div className="mx-auto grid max-w-7xl gap-8 px-6 py-16 lg:grid-cols-[5fr_6fr] lg:py-0 lg:min-h-[calc(100dvh-3.5rem)] lg:items-center">
           <div className="relative z-10 flex flex-col justify-center">
             <span className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--color-muted)]">
               <span className="relative flex h-1.5 w-1.5">
@@ -108,7 +110,20 @@ export default function HomePage() {
                   "radial-gradient(closest-side, rgba(10,132,255,0.08), transparent 70%)",
               }}
             />
-            <CivicGlobe className="lg:scale-110" />
+            <Globe
+              className="w-full"
+              markers={reportMarkers}
+              markerColor={[0.04, 0.518, 1]}
+              baseColor={[0.95, 0.96, 0.98]}
+              glowColor={[0.92, 0.94, 0.98]}
+              arcColor={[0.04, 0.518, 1]}
+              dark={0}
+              mapBrightness={5.5}
+              diffuse={1.1}
+              theta={0.28}
+              speed={0.0028}
+              markerSize={0.06}
+            />
           </div>
         </div>
       </section>
