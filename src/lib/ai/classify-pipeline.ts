@@ -50,6 +50,9 @@ export async function runClassifyPipeline(
     .from("photos-raw")
     .download(storagePath);
 
+  // Resilience: a missing/failed raw download must not abort the pipeline —
+  // skip Gemini and fall back so a work order is still created.
+  let classificationResult: Result<Classification>;
   if (downloadErr || !photoBlob) {
     const msg = `Photo download failed: ${downloadErr?.message ?? "empty blob"}`;
     log.error(msg, undefined, { reportId, storagePath });
@@ -59,15 +62,20 @@ export async function runClassifyPipeline(
       message: msg,
       metadata: { reportId, storagePath },
     });
-    return { ok: false, error: msg };
+    classificationResult = { ok: false, error: msg };
+  } else {
+    log.info("photo_downloaded", { reportId, storagePath });
+    const imageBase64 = Buffer.from(await photoBlob.arrayBuffer()).toString("base64");
+    classificationResult = await classifyPhoto(imageBase64, "image/jpeg");
   }
 
-  log.info("photo_downloaded", { reportId, storagePath });
-
-  const imageBase64 = Buffer.from(await photoBlob.arrayBuffer()).toString("base64");
-  const classificationResult = await classifyPhoto(imageBase64, "image/jpeg");
+  // Resilience: if Gemini fails (network/rate/latency), DON'T abort the
+  // pipeline — fall back to a neutral classification so a work order is still
+  // created and the report reaches the staff inbox. The demo thread never breaks.
+  let classification: Classification;
+  let modelVersion = "gemini-2.5-flash";
   if (!classificationResult.ok) {
-    log.error("gemini_classify_failed", undefined, {
+    log.error("gemini_classify_failed_using_fallback", undefined, {
       reportId,
       error: classificationResult.error,
     });
@@ -77,14 +85,25 @@ export async function runClassifyPipeline(
       message: classificationResult.error,
       metadata: { reportId, stage: "gemini" },
     });
-    return { ok: false, error: classificationResult.error };
+    classification = {
+      category: "other",
+      subcategory: "needs review",
+      severity: 3,
+      hazard_radius_m: 0,
+      visible_size_estimate: "unknown",
+      is_emergency: false,
+      confidence: 0,
+      reasoning: "Automatic classification unavailable — queued for manual triage.",
+    };
+    modelVersion = "fallback";
+  } else {
+    classification = classificationResult.data;
+    log.info("gemini_ok", {
+      reportId,
+      category: classification.category,
+      confidence: classification.confidence,
+    });
   }
-  const classification = classificationResult.data;
-  log.info("gemini_ok", {
-    reportId,
-    category: classification.category,
-    confidence: classification.confidence,
-  });
 
   const { error: classErr } = await supabase
     .from("classifications")
@@ -92,7 +111,7 @@ export async function runClassifyPipeline(
       {
         report_id: reportId,
         ...classification,
-        model_version: "gemini-2.5-flash",
+        model_version: modelVersion,
         raw_response: classification,
       },
       { onConflict: "report_id" }

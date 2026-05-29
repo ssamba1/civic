@@ -7,6 +7,7 @@ import EmergencyInterstitial from "@/components/report/emergency-interstitial";
 import SubmissionConfirmation from "@/components/report/submission-confirmation";
 import { submitReport } from "./actions";
 import { blurFacesAndPlates } from "@/lib/privacy/blur";
+import { createBrowserSupabase } from "@/lib/db/browser-client";
 import type { Classification } from "@/lib/types";
 
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -37,6 +38,17 @@ export default function ReportPage() {
 
   // Ref to avoid re-requesting GPS on re-renders
   const gpsRequested = useRef(false);
+
+  // Ensure a session exists so submit isn't rejected as unauthenticated.
+  // New visitors get a silent anonymous session (guest) — keeps the 2-tap goal.
+  useEffect(() => {
+    const supabase = createBrowserSupabase();
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        supabase.auth.signInAnonymously();
+      }
+    });
+  }, []);
 
   // Auto-acquire GPS on mount
   useEffect(() => {

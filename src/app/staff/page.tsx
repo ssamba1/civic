@@ -93,51 +93,46 @@ async function getWorkOrders(cityId: string): Promise<WorkOrderWithDetails[]> {
 }
 
 export default async function StaffPage() {
-  // Dev mode: return simple placeholder
-  if (process.env.NODE_ENV === "development") {
-    return (
-      <div className="flex h-full flex-col">
-        <div className="flex-1 overflow-auto p-8">
-          <h1 className="text-2xl font-bold">Civic Staff Inbox</h1>
-          <p className="mt-4 text-zinc-600">
-            Staff dashboard is available when Supabase is properly configured.
-          </p>
-          <div className="mt-8 space-y-4">
-            <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-              <h2 className="font-semibold">Dev Mode Active</h2>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                To access real data, configure your Supabase credentials in .env.local
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const isDev = process.env.NODE_ENV === "development";
+  const db = createServerClient();
 
   // C5: Auth check — use cookie-based client, not service-role
   const user = await getAuthUser();
-  if (!user) redirect("/login");
 
-  // C5: Look up the staff member's city_id from the users table
-  const db = createServerClient();
-  const { data: userRow, error: userError } = await db
-    .from("users")
-    .select("city_id, role")
-    .eq("id", user.id)
-    .single();
+  let cityId: string | null = null;
 
-  if (userError || !userRow) redirect("/login");
-  if (
-    !["staff_dispatcher", "staff_supervisor", "admin"].includes(userRow.role)
-  ) {
+  if (user) {
+    const { data: userRow } = await db
+      .from("users")
+      .select("city_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (
+      userRow &&
+      ["staff_dispatcher", "staff_supervisor", "admin"].includes(userRow.role)
+    ) {
+      cityId = userRow.city_id;
+    } else if (!isDev) {
+      redirect("/login");
+    }
+  } else if (!isDev) {
     redirect("/login");
   }
 
-  const cityId = userRow.city_id;
+  // Dev convenience (and staff without a resolved city): default to Cumming so
+  // the inbox renders the real seeded data without forcing a login locally.
+  if (!cityId) {
+    const { data: city } = await db
+      .from("cities")
+      .select("id")
+      .eq("slug", "cumming")
+      .single();
+    cityId = city?.id ?? null;
+  }
 
   const fetchedAt = new Date().toISOString();
-  const workOrders = await getWorkOrders(cityId);
+  const workOrders = cityId ? await getWorkOrders(cityId) : [];
 
   return (
     <div className="flex h-full flex-col">

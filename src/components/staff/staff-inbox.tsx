@@ -21,8 +21,9 @@ import {
   fetchQueuedWorkOrders,
 } from "@/app/staff/actions";
 
-/** How often (ms) the inbox polls for queued items in the background. */
-const POLL_INTERVAL_MS = 30_000;
+/** How often (ms) the inbox polls for new work orders. Short interval so new
+ *  reports auto-populate the inbox near-instantly (live demo). */
+const POLL_INTERVAL_MS = 3_000;
 
 type FilterTab = "all" | "open" | "dispatched" | "in_progress";
 
@@ -53,21 +54,20 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const lastFetchedAtRef = useRef<string>(initialFetchedAt ?? new Date().toISOString());
 
-  // Background poll: every POLL_INTERVAL_MS, check for new work orders
+  // Background poll: every POLL_INTERVAL_MS, fetch new work orders and merge
+  // them straight into the list (auto-populate — no manual refresh needed).
   useEffect(() => {
     const poll = async () => {
       const result = await fetchQueuedWorkOrders(lastFetchedAtRef.current);
       if (!result.ok || result.data.length === 0) return;
-      // Deduplicate against already-displayed and already-queued items
-      const existingIds = new Set([
-        ...displayedOrders.map((o) => o.id),
-        ...pendingQueue.map((o) => o.id),
-      ]);
-      const fresh = result.data.filter((o) => !existingIds.has(o.id));
-      if (fresh.length > 0) {
-        setPendingQueue((prev) => [...fresh, ...prev]);
+      setDisplayedOrders((prev) => {
+        const existingIds = new Set(prev.map((o) => o.id));
+        const fresh = result.data.filter((o) => !existingIds.has(o.id));
+        if (fresh.length === 0) return prev;
         lastFetchedAtRef.current = new Date().toISOString();
-      }
+        return [...fresh, ...prev];
+      });
+      setSelectedIndex(0);
     };
 
     const timer = setInterval(poll, POLL_INTERVAL_MS);

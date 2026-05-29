@@ -21,9 +21,23 @@ const ReportCategorySchema = z.enum([
 async function getStaffUser() {
   // C5 fix: use cookie-aware SSR client for auth, service-role client only for DB queries
   const user = await getAuthUser();
-  if (!user) return null;
-
   const db = createServerClient();
+
+  if (!user) {
+    // Dev convenience: fall back to a seeded staff/admin so the inbox's live
+    // poll and dispatch actions work locally without a login. Prod stays strict.
+    if (process.env.NODE_ENV === "development") {
+      const { data: devStaff } = await db
+        .from("users")
+        .select("id, role, city_id")
+        .in("role", STAFF_ROLES as unknown as string[])
+        .limit(1)
+        .single();
+      return devStaff && STAFF_ROLES.includes(devStaff.role) ? devStaff : null;
+    }
+    return null;
+  }
+
   const { data: profile } = await db
     .from("users")
     .select("id, role, city_id")

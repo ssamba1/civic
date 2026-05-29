@@ -64,6 +64,12 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
+  // Dev convenience: don't gate /staff or /admin locally so the full gov UI is
+  // reachable without a login during development/demo. Prod stays gated below.
+  if (process.env.NODE_ENV === "development") {
+    return response;
+  }
+
   // Protected: /staff/* — require authenticated user
   if (pathname.startsWith("/staff/") && !user) {
     const loginUrl = new URL("/login", request.url);

@@ -8,6 +8,12 @@ import { createBrowserSupabase } from "@/lib/db/browser-client";
 
 type Mode = "signin" | "signup";
 
+// DEMO ONLY: in dev, prefill a known admin so clicking "Sign in" just works.
+// Never active in production builds.
+const DEV_PREFILL = process.env.NODE_ENV !== "production";
+const DEV_EMAIL = "admin@civicdemo.com";
+const DEV_PASSWORD = "civic-admin-2026";
+
 export default function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
@@ -15,9 +21,9 @@ export default function LoginForm() {
   const initialError = params.get("error");
 
   const [mode, setMode] = useState<Mode>("signin");
-  const [showEmail, setShowEmail] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [showEmail, setShowEmail] = useState(DEV_PREFILL);
+  const [email, setEmail] = useState(DEV_PREFILL ? DEV_EMAIL : "");
+  const [password, setPassword] = useState(DEV_PREFILL ? DEV_PASSWORD : "");
   const [error, setError] = useState<string | null>(initialError);
   const [busy, setBusy] = useState<"google" | "email" | "guest" | null>(null);
 

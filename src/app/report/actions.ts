@@ -63,15 +63,40 @@ export async function submitReport(
     return { ok: false, error: "unauthenticated" };
   }
 
-  const { data: profile, error: profileErr } = await ssr
+  const service = createServerClient();
+
+  // Resolve the reporter's city. New anon/guest/OAuth users have no public.users
+  // row (no signup trigger), so self-heal: create one defaulted to Cumming.
+  let cityId: string | null = null;
+  const { data: profile } = await ssr
     .from("users")
     .select("city_id")
     .eq("id", user.id)
     .single<{ city_id: string }>();
-  if (profileErr || !profile?.city_id) {
-    return { ok: false, error: "No city on your profile. Contact support." };
+  if (profile?.city_id) {
+    cityId = profile.city_id;
+  } else {
+    const { data: city } = await service
+      .from("cities")
+      .select("id")
+      .eq("slug", "cumming")
+      .single<{ id: string }>();
+    if (city?.id) {
+      await service.from("users").upsert(
+        {
+          id: user.id,
+          city_id: city.id,
+          role: "resident",
+          email: user.email ?? null,
+        },
+        { onConflict: "id" }
+      );
+      cityId = city.id;
+    }
   }
-  const cityId = profile.city_id;
+  if (!cityId) {
+    return { ok: false, error: "No city configured. Contact support." };
+  }
 
   const reportId = crypto.randomUUID();
   const publicPath = `${cityId}/${reportId}.webp`;
@@ -80,8 +105,6 @@ export async function submitReport(
   // Upload via service role: storage RLS has no INSERT policy (folder-scoping
   // can't be set via the pooler), so the service role performs the writes.
   // Privacy is preserved because the blur already ran client-side.
-  const service = createServerClient();
-
   const { error: pubErr } = await service.storage
     .from(PUBLIC_BUCKET)
     .upload(publicPath, Buffer.from(photoBlurred, "base64"), {
