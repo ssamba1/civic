@@ -111,8 +111,13 @@ export function OrbitalSteps() {
   const [autoRotate, setAutoRotate] = useState(true);
   const [pulseEffect, setPulseEffect] = useState<Record<number, boolean>>({});
   const [activeNodeId, setActiveNodeId] = useState<number | null>(null);
+  const [hydrated, setHydrated] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const orbitRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === containerRef.current || e.target === orbitRef.current) {
@@ -233,7 +238,7 @@ export function OrbitalSteps() {
           style={{ width: RADIUS * 2, height: RADIUS * 2 }}
         />
 
-        {CIVIC_STEPS.map((item, index) => {
+        {hydrated && CIVIC_STEPS.map((item, index) => {
           const pos = calculatePosition(index, CIVIC_STEPS.length);
           const isExpanded = expandedItems[item.id];
           const related = isRelated(item.id);
