@@ -177,13 +177,43 @@ type ReasoningState =
   | { phase: "error" }
   | { phase: "ready"; data: ReasoningResponse };
 
-function useReasoning(reportId: string | null): ReasoningState {
+// Baked cost + scoring sections for the demo tree report. Mirrors the
+// structure /api/ai/reasoning returns so both columns render fully.
+function buildDemoReasoningResponse(report: DashboardReport): ReasoningResponse {
+  return {
+    reportId: report.id,
+    reasoning: report.ai_reasoning ?? "",
+    costBreakdown: [
+      { title: "Chainsaw crew (2 workers, 1 hr)", value: "$220" },
+      { title: "Wood chipper rental", value: "$80" },
+      { title: "Hazard cones + safety tape", value: "$15" },
+      { title: "Debris hauling / dump fee", value: "$45" },
+      { title: "Estimated total", value: "$360" },
+    ] satisfies ReasoningSection[],
+    scoringExplanation: [
+      { title: "Severity", value: "3 / 5 — property access blocked, no injury risk" },
+      { title: "Category", value: "tree_down (confidence 93%)" },
+      { title: "Priority score", value: "72 / 100" },
+      { title: "SLA target", value: "< 48 hours" },
+      { title: "Routing", value: "Parks & Recreation / Urban Forestry" },
+    ] satisfies ReasoningSection[],
+  };
+}
+
+function useReasoning(report: DashboardReport | null): ReasoningState {
   const cache = useRef<Map<string, ReasoningResponse>>(new Map());
   const [state, setState] = useState<ReasoningState>({ phase: "loading" });
+  const reportId = report?.id ?? null;
 
   useEffect(() => {
-    if (!reportId) {
+    if (!reportId || !report) {
       setState({ phase: "loading" });
+      return;
+    }
+
+    // Demo report: return baked reasoning instantly, no network call.
+    if (report.demo && report.ai_reasoning) {
+      setState({ phase: "ready", data: buildDemoReasoningResponse(report) });
       return;
     }
 
@@ -213,6 +243,7 @@ function useReasoning(reportId: string | null): ReasoningState {
     return () => {
       cancelled = true;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportId]);
 
   return state;
@@ -251,7 +282,7 @@ function ReportImage({ src, alt }: { src: string; alt: string }) {
 }
 
 export function ReportDetail({ report }: { report: DashboardReport | null }) {
-  const reasoning = useReasoning(report?.id ?? null);
+  const reasoning = useReasoning(report);
 
   if (!report) {
     return (
