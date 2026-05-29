@@ -77,6 +77,7 @@ const nextConfig: NextConfig = {
 export default withSentryConfig(nextConfig, {
   silent: !process.env.CI,
   widenClientFileUpload: true,
-  hideSourceMaps: true,
+  // hideSourceMaps was renamed in newer @sentry/nextjs; source maps are hidden
+  // from the client bundle by default, so the explicit flag is no longer needed.
   disableLogger: true,
 });

@@ -340,14 +340,22 @@ export function WorkOrderDetail({
                   <p className="text-xs text-zinc-500">Materials</p>
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {(workOrder.materials?.length ?? 0) > 0 ? (
-                      workOrder.materials?.map((m) => (
-                        <span
-                          key={m}
-                          className="inline-flex rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                        >
-                          {m}
-                        </span>
-                      ))
+                      (workOrder.materials ?? []).map((m, i) => {
+                        const o = m as { item?: string; name?: string; qty?: number };
+                        const label =
+                          typeof m === "string"
+                            ? m
+                            : (o.item ?? o.name ?? JSON.stringify(m)) +
+                              (o.qty && o.qty > 1 ? ` ×${o.qty}` : "");
+                        return (
+                          <span
+                            key={i}
+                            className="inline-flex rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                          >
+                            {label}
+                          </span>
+                        );
+                      })
                     ) : (
                       <span className="text-sm text-zinc-400">None listed</span>
                     )}

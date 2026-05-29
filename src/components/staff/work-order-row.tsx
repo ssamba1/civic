@@ -28,6 +28,23 @@ import type {
 } from "@/lib/types";
 import { WorkOrderDetail } from "./work-order-detail";
 
+/**
+ * Materials come in two shapes: plain strings (rule table / classify pipeline)
+ * and objects (`{ item, qty }`) from the seed. Normalize both to a label.
+ */
+function formatMaterials(materials: unknown): string[] {
+  if (!Array.isArray(materials)) return [];
+  return materials.map((m) => {
+    if (typeof m === "string") return m;
+    if (m && typeof m === "object") {
+      const o = m as { item?: string; name?: string; qty?: number };
+      const label = o.item ?? o.name ?? JSON.stringify(m);
+      return o.qty && o.qty > 1 ? `${label} ×${o.qty}` : label;
+    }
+    return String(m);
+  });
+}
+
 interface WorkOrderRowProps {
   report: Report;
   classification: Classification;
@@ -96,8 +113,9 @@ export function WorkOrderRow({
     SEVERITY_COLORS[classification.severity] ?? SEVERITY_COLORS[3];
   const statusStyle = STATUS_STYLES[report.status] ?? STATUS_STYLES.open;
 
-  const materialsDisplay = (workOrder.materials ?? []).slice(0, 3).join(", ");
-  const materialsOverflow = (workOrder.materials?.length ?? 0) > 3;
+  const materialsList = formatMaterials(workOrder.materials);
+  const materialsDisplay = materialsList.slice(0, 3).join(", ");
+  const materialsOverflow = materialsList.length > 3;
 
   return (
     <>
@@ -174,8 +192,8 @@ export function WorkOrderRow({
         <td className="hidden px-4 py-3 xl:table-cell">
           <p className="max-w-[180px] truncate text-xs text-zinc-500">
             {materialsDisplay}
-            {materialsOverflow && ` +${(workOrder.materials?.length ?? 0) - 3}`}
-            {(workOrder.materials?.length ?? 0) === 0 && "---"}
+            {materialsOverflow && ` +${materialsList.length - 3}`}
+            {materialsList.length === 0 && "---"}
           </p>
         </td>
 
@@ -348,8 +366,9 @@ export function WorkOrderRowControlled({
     SEVERITY_COLORS[classification.severity] ?? SEVERITY_COLORS[3];
   const statusStyle = STATUS_STYLES[report.status] ?? STATUS_STYLES.open;
 
-  const materialsDisplay = (workOrder.materials ?? []).slice(0, 3).join(", ");
-  const materialsOverflow = (workOrder.materials?.length ?? 0) > 3;
+  const materialsList = formatMaterials(workOrder.materials);
+  const materialsDisplay = materialsList.slice(0, 3).join(", ");
+  const materialsOverflow = materialsList.length > 3;
 
   return (
     <>
@@ -426,8 +445,8 @@ export function WorkOrderRowControlled({
         <td className="hidden px-4 py-3 xl:table-cell">
           <p className="max-w-[180px] truncate text-xs text-zinc-500">
             {materialsDisplay}
-            {materialsOverflow && ` +${(workOrder.materials?.length ?? 0) - 3}`}
-            {(workOrder.materials?.length ?? 0) === 0 && "---"}
+            {materialsOverflow && ` +${materialsList.length - 3}`}
+            {materialsList.length === 0 && "---"}
           </p>
         </td>
 
