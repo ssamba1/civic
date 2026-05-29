@@ -23,7 +23,7 @@ export function ViewSwitch({
   const onUser = pathname.startsWith("/user");
 
   const segments = [
-    { key: "user", label: "User", href: "/user", icon: Users, active: onUser },
+    { key: "user", label: "User", href: "/user/pulse", icon: Users, active: onUser },
     {
       key: "city",
       label: "City",
