@@ -152,6 +152,24 @@ export async function overrideClassification(
 
   const supabase = createServerClient();
 
+  // Fetch the current classification so we can record what was overridden
+  const { data: existing } = await supabase
+    .from("classifications")
+    .select("category, confidence")
+    .eq("report_id", reportId)
+    .single();
+
+  // Persist feedback whenever the staff member picks a different category
+  if (existing && existing.category !== parsed.data) {
+    await supabase.from("classification_feedback").insert({
+      report_id: reportId,
+      staff_id: staff.id,
+      original_category: existing.category,
+      corrected_category: parsed.data,
+      original_confidence: existing.confidence,
+    });
+  }
+
   const { error } = await supabase
     .from("classifications")
     .update({ category: parsed.data })
@@ -160,4 +178,31 @@ export async function overrideClassification(
   if (error) return { ok: false, error: error.message };
 
   return { ok: true, data: undefined };
+}
+
+export async function addWorkOrderComment(
+  workOrderId: string,
+  body: string
+): Promise<Result<{ id: string }>> {
+  const staff = await getStaffUser();
+  if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
+
+  const trimmed = body.trim();
+  if (trimmed.length === 0 || trimmed.length > 2000)
+    return { ok: false, error: "invalid_body" };
+
+  const supabase = createServerClient();
+
+  const { data, error } = await supabase
+    .from("work_order_comments")
+    .insert({
+      work_order_id: workOrderId,
+      author_id: staff.id,
+      body: trimmed,
+    })
+    .select("id")
+    .single();
+
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data: { id: data.id } };
 }

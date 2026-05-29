@@ -13,7 +13,6 @@ import {
   Wrench,
   Brain,
   Upload,
-  MessageSquare,
   AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
@@ -29,6 +28,7 @@ import {
   rejectReport,
   overrideClassification,
 } from "@/app/staff/actions";
+import { WorkOrderComments } from "./work-order-comments";
 
 interface WorkOrderDetailProps {
   report: Report;
@@ -93,7 +93,6 @@ export function WorkOrderDetail({
   const [showRejectInput, setShowRejectInput] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [showOverride, setShowOverride] = useState(false);
-  const [notes, setNotes] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
@@ -411,22 +410,8 @@ export function WorkOrderDetail({
               </div>
             )}
 
-            {/* Staff notes */}
-            <div>
-              <div className="mb-2 flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-zinc-400" />
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                  Staff Notes
-                </p>
-              </div>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add internal notes..."
-                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                rows={3}
-              />
-            </div>
+            {/* Staff comments (Realtime) */}
+            <WorkOrderComments workOrderId={workOrder.id} />
 
             {/* Resolution photo upload placeholder */}
             <div>

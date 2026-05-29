@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/db/client";
 import { classifyPhoto } from "@/lib/ai/gemini";
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
+import { createLogger } from "@/lib/logger";
 import type { Classification, WorkOrder, Result } from "@/lib/types";
 
 export interface ClassifyPipelineResult {
@@ -19,7 +20,10 @@ export interface ClassifyPipelineResult {
 export async function runClassifyPipeline(
   reportId: string
 ): Promise<Result<ClassifyPipelineResult>> {
+  const log = createLogger("classify-pipeline");
   const supabase = createServerClient();
+
+  log.info("pipeline_start", { reportId });
 
   const { data: report, error: reportErr } = await supabase
     .from("reports")
@@ -28,7 +32,15 @@ export async function runClassifyPipeline(
     .single();
 
   if (reportErr || !report) {
-    return { ok: false, error: `Report not found: ${reportErr?.message ?? "no rows"}` };
+    const msg = `Report not found: ${reportErr?.message ?? "no rows"}`;
+    log.error(msg, undefined, { reportId });
+    await supabase.from("error_log").insert({
+      correlation_id: log.correlationId,
+      context: "classify-pipeline",
+      message: msg,
+      metadata: { reportId },
+    });
+    return { ok: false, error: msg };
   }
 
   // Classify the RAW (unblurred) image for accuracy — the public copy has
@@ -39,18 +51,40 @@ export async function runClassifyPipeline(
     .download(storagePath);
 
   if (downloadErr || !photoBlob) {
-    return {
-      ok: false,
-      error: `Photo download failed: ${downloadErr?.message ?? "empty blob"}`,
-    };
+    const msg = `Photo download failed: ${downloadErr?.message ?? "empty blob"}`;
+    log.error(msg, undefined, { reportId, storagePath });
+    await supabase.from("error_log").insert({
+      correlation_id: log.correlationId,
+      context: "classify-pipeline",
+      message: msg,
+      metadata: { reportId, storagePath },
+    });
+    return { ok: false, error: msg };
   }
+
+  log.info("photo_downloaded", { reportId, storagePath });
 
   const imageBase64 = Buffer.from(await photoBlob.arrayBuffer()).toString("base64");
   const classificationResult = await classifyPhoto(imageBase64, "image/jpeg");
   if (!classificationResult.ok) {
+    log.error("gemini_classify_failed", undefined, {
+      reportId,
+      error: classificationResult.error,
+    });
+    await supabase.from("error_log").insert({
+      correlation_id: log.correlationId,
+      context: "classify-pipeline",
+      message: classificationResult.error,
+      metadata: { reportId, stage: "gemini" },
+    });
     return { ok: false, error: classificationResult.error };
   }
   const classification = classificationResult.data;
+  log.info("gemini_ok", {
+    reportId,
+    category: classification.category,
+    confidence: classification.confidence,
+  });
 
   const { error: classErr } = await supabase
     .from("classifications")
@@ -65,8 +99,18 @@ export async function runClassifyPipeline(
     );
 
   if (classErr) {
-    return { ok: false, error: `Classification insert failed: ${classErr.message}` };
+    const msg = `Classification insert failed: ${classErr.message}`;
+    log.error(msg, undefined, { reportId });
+    await supabase.from("error_log").insert({
+      correlation_id: log.correlationId,
+      context: "classify-pipeline",
+      message: msg,
+      metadata: { reportId, stage: "upsert_classification" },
+    });
+    return { ok: false, error: msg };
   }
+
+  log.info("classification_persisted", { reportId });
 
   if (classification.is_emergency) {
     const { error: statusErr } = await supabase
@@ -75,9 +119,13 @@ export async function runClassifyPipeline(
       .eq("id", reportId);
 
     if (statusErr) {
-      console.error(`[classify] status update failed for ${reportId}: ${statusErr.message}`);
+      log.error(`status update failed for ${reportId}`, undefined, {
+        reportId,
+        error: statusErr.message,
+      });
     }
 
+    log.info("pipeline_done_emergency", { reportId });
     return { ok: true, data: { emergency: true, classification, work_order: null } };
   }
 
@@ -101,7 +149,15 @@ export async function runClassifyPipeline(
     .single<WorkOrder>();
 
   if (woErr || !insertedWorkOrder) {
-    return { ok: false, error: `Work order insert failed: ${woErr?.message ?? "no data"}` };
+    const msg = `Work order insert failed: ${woErr?.message ?? "no data"}`;
+    log.error(msg, undefined, { reportId });
+    await supabase.from("error_log").insert({
+      correlation_id: log.correlationId,
+      context: "classify-pipeline",
+      message: msg,
+      metadata: { reportId, stage: "work_order_insert" },
+    });
+    return { ok: false, error: msg };
   }
 
   const { error: statusErr } = await supabase
@@ -110,8 +166,16 @@ export async function runClassifyPipeline(
     .eq("id", reportId);
 
   if (statusErr) {
-    console.error(`[classify] status update failed for ${reportId}: ${statusErr.message}`);
+    log.error(`status update failed for ${reportId}`, undefined, {
+      reportId,
+      error: statusErr.message,
+    });
   }
 
+  log.info("pipeline_done", {
+    reportId,
+    workOrderId: insertedWorkOrder.id,
+    priority: insertedWorkOrder.priority_score,
+  });
   return { ok: true, data: { emergency: false, classification, work_order: insertedWorkOrder } };
 }
