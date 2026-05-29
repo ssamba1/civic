@@ -60,7 +60,7 @@ export interface ReasoningHoverHandlers {
 }
 
 interface UseReasoningHoverReturn {
-  bindReport: (report: { id: string; label: string }) => ReasoningHoverHandlers;
+  bindReport: (report: { id: string; label: string; demo?: boolean; ai_reasoning?: string }) => ReasoningHoverHandlers;
   Portal: () => ReactNode;
 }
 
@@ -125,7 +125,29 @@ export function useReasoningHover(): UseReasoningHoverReturn {
     };
   }, []);
 
-  const ensureData = useCallback((id: string) => {
+  const ensureData = useCallback((id: string, demo?: boolean, ai_reasoning?: string) => {
+    // Demo report: skip the network call, return baked data instantly.
+    if (demo && ai_reasoning) {
+      const baked: ReasoningResponse = {
+        reportId: id,
+        reasoning: ai_reasoning,
+        costBreakdown: [
+          { title: "Chainsaw crew (2 workers, 1 hr)", value: "$220" },
+          { title: "Wood chipper + debris hauling", value: "$125" },
+          { title: "Hazard cones + safety tape", value: "$15" },
+          { title: "Estimated total", value: "$360" },
+        ],
+        scoringExplanation: [
+          { title: "Severity", value: "3 / 5 — property access blocked, no injury risk" },
+          { title: "Confidence", value: "93%" },
+          { title: "Priority score", value: "72 / 100" },
+          { title: "SLA target", value: "< 48 hours" },
+        ],
+      };
+      cache.current.set(id, baked);
+      setData(baked);
+      return;
+    }
     const cached = cache.current.get(id);
     if (cached) {
       setData(cached);
@@ -148,14 +170,14 @@ export function useReasoningHover(): UseReasoningHoverReturn {
   }, []);
 
   const open = useCallback(
-    (report: { id: string; label: string }, rect: DOMRect) => {
+    (report: { id: string; label: string; demo?: boolean; ai_reasoning?: string }, rect: DOMRect) => {
       activeId.current = report.id;
       setTarget({
         id: report.id,
         label: report.label,
         anchor: { left: rect.left, top: rect.top, bottom: rect.bottom },
       });
-      ensureData(report.id);
+      ensureData(report.id, report.demo, report.ai_reasoning);
     },
     [ensureData],
   );
