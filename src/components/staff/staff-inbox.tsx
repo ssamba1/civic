@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { Search, SlidersHorizontal, AlertTriangle } from "lucide-react";
+import { Search, SlidersHorizontal, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import type { WorkOrderWithDetails } from "@/app/staff/page";
+import type { WorkOrderWithDetails } from "@/lib/types";
 import type {
   Report,
   Classification,
@@ -16,7 +16,11 @@ import {
   dispatchWorkOrder,
   closeWorkOrder,
   rejectReport,
+  fetchQueuedWorkOrders,
 } from "@/app/staff/actions";
+
+/** How often (ms) the inbox polls for queued items in the background. */
+const POLL_INTERVAL_MS = 30_000;
 
 type FilterTab = "all" | "open" | "dispatched" | "in_progress";
 
@@ -29,16 +33,57 @@ const TABS: { value: FilterTab; label: string }[] = [
 
 interface StaffInboxProps {
   workOrders: WorkOrderWithDetails[];
+  /** ISO timestamp of when the page was server-rendered – used as the queue start point. */
+  initialFetchedAt?: string;
 }
 
-export function StaffInbox({ workOrders }: StaffInboxProps) {
+export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [detailOpenIndex, setDetailOpenIndex] = useState<number | null>(null);
 
+  // --- Queue state ---
+  const [displayedOrders, setDisplayedOrders] = useState<WorkOrderWithDetails[]>(workOrders);
+  const [pendingQueue, setPendingQueue] = useState<WorkOrderWithDetails[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const lastFetchedAtRef = useRef<string>(initialFetchedAt ?? new Date().toISOString());
+
+  // Background poll: every POLL_INTERVAL_MS, check for new work orders
+  useEffect(() => {
+    const poll = async () => {
+      const result = await fetchQueuedWorkOrders(lastFetchedAtRef.current);
+      if (!result.ok || result.data.length === 0) return;
+      // Deduplicate against already-displayed and already-queued items
+      const existingIds = new Set([
+        ...displayedOrders.map((o) => o.id),
+        ...pendingQueue.map((o) => o.id),
+      ]);
+      const fresh = result.data.filter((o) => !existingIds.has(o.id));
+      if (fresh.length > 0) {
+        setPendingQueue((prev) => [...fresh, ...prev]);
+        lastFetchedAtRef.current = new Date().toISOString();
+      }
+    };
+
+    const timer = setInterval(poll, POLL_INTERVAL_MS);
+    return () => clearInterval(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Merge queued items into the displayed list
+  const handleRefresh = useCallback(() => {
+    if (pendingQueue.length === 0) return;
+    setIsRefreshing(true);
+    setDisplayedOrders((prev) => [...pendingQueue, ...prev]);
+    setPendingQueue([]);
+    setSelectedIndex(0);
+    // Brief spinner flash
+    setTimeout(() => setIsRefreshing(false), 600);
+  }, [pendingQueue]);
+
   const filtered = useMemo(() => {
-    let result = workOrders;
+    let result = displayedOrders;
 
     // Filter by status tab
     if (activeTab !== "all") {
@@ -57,19 +102,19 @@ export function StaffInbox({ workOrders }: StaffInboxProps) {
     }
 
     return result;
-  }, [workOrders, activeTab, search]);
+  }, [displayedOrders, activeTab, search]);
 
   // Counts for tab badges
   const counts = useMemo(() => {
-    const c = { all: workOrders.length, open: 0, dispatched: 0, in_progress: 0 };
-    for (const wo of workOrders) {
+    const c = { all: displayedOrders.length, open: 0, dispatched: 0, in_progress: 0 };
+    for (const wo of displayedOrders) {
       const st = wo.report?.status;
       if (st === "open") c.open++;
       else if (st === "dispatched") c.dispatched++;
       else if (st === "in_progress") c.in_progress++;
     }
     return c;
-  }, [workOrders]);
+  }, [displayedOrders]);
 
   // Keep selectedIndex in bounds
   useEffect(() => {
@@ -125,6 +170,32 @@ export function StaffInbox({ workOrders }: StaffInboxProps) {
               {activeTab !== "all" && ` (${activeTab.replace("_", " ")})`}
             </p>
           </div>
+
+          {/* Refresh button – flushes queued incoming reports into the list */}
+          <button
+            onClick={handleRefresh}
+            disabled={pendingQueue.length === 0 && !isRefreshing}
+            className={cn(
+              "relative flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-all",
+              pendingQueue.length > 0
+                ? "border-blue-400 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                : "border-zinc-200 bg-white text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800"
+            )}
+            title={pendingQueue.length > 0 ? `Load ${pendingQueue.length} new report${pendingQueue.length !== 1 ? "s" : ""}` : "No new reports"}
+          >
+            <RefreshCw
+              className={cn(
+                "h-4 w-4",
+                isRefreshing && "animate-spin"
+              )}
+            />
+            <span>Refresh</span>
+            {pendingQueue.length > 0 && (
+              <span className="absolute -right-2 -top-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-600 px-1.5 text-[11px] font-bold text-white shadow">
+                {pendingQueue.length}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Tabs + search */}

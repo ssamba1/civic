@@ -2,50 +2,14 @@ import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { createServerClient } from "@/lib/db/client";
 import { StaffInbox } from "@/components/staff/staff-inbox";
+import type { WorkOrderWithDetails } from "@/lib/types";
+
+export { type WorkOrderWithDetails };
 
 export const metadata = {
   title: "Staff Inbox | Civic",
   description: "Work order dispatch and management",
 };
-
-// Joined row shape returned from Supabase query
-export interface WorkOrderWithDetails {
-  id: string;
-  report_id: string;
-  department: string;
-  crew_type: string | null;
-  priority_score: number;
-  est_minutes: number;
-  materials: string[];
-  assigned_crew_id: string | null;
-  dispatched_at: string | null;
-  completed_at: string | null;
-  resolution_photo_url: string | null;
-  resolution_ai_score: number | null;
-  report: {
-    id: string;
-    city_id: string;
-    reporter_id: string;
-    location: { lng: number; lat: number };
-    photo_public_url: string;
-    photo_raw_url: string | null;
-    status: string;
-    address: string | null;
-    description: string | null;
-    created_at: string;
-    updated_at: string;
-  };
-  classification: {
-    category: string;
-    subcategory: string;
-    severity: number;
-    hazard_radius_m: number;
-    visible_size_estimate: string;
-    is_emergency: boolean;
-    confidence: number;
-    reasoning: string;
-  } | null;
-}
 
 async function getWorkOrders(cityId: string): Promise<WorkOrderWithDetails[]> {
   const db = createServerClient();
@@ -172,11 +136,12 @@ export default async function StaffPage() {
 
   const cityId = userRow.city_id;
 
+  const fetchedAt = new Date().toISOString();
   const workOrders = await getWorkOrders(cityId);
 
   return (
     <div className="flex h-full flex-col">
-      <StaffInbox workOrders={workOrders} />
+      <StaffInbox workOrders={workOrders} initialFetchedAt={fetchedAt} />
     </div>
   );
 }

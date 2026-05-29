@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
-import type { Result, ReportCategory } from "@/lib/types";
+import type { Result, ReportCategory, WorkOrderWithDetails } from "@/lib/types";
 
 const STAFF_ROLES = ["staff_dispatcher", "staff_supervisor", "admin"] as const;
 
@@ -205,4 +205,93 @@ export async function addWorkOrderComment(
 
   if (error) return { ok: false, error: error.message };
   return { ok: true, data: { id: data.id } };
+}
+
+/**
+ * Fetches work orders created after `afterTimestamp` (ISO string).
+ * Used by the staff inbox refresh queue – new reports accumulate here
+ * and are only shown when the admin clicks Refresh.
+ */
+export async function fetchQueuedWorkOrders(
+  afterTimestamp: string
+): Promise<Result<WorkOrderWithDetails[]>> {
+  const staff = await getStaffUser();
+  if (!staff) return { ok: false, error: "Unauthorized" };
+
+  const db = createServerClient();
+
+  const { data, error } = await db
+    .from("work_orders")
+    .select(
+      `
+      *,
+      reports!report_id (
+        id,
+        city_id,
+        reporter_id,
+        location,
+        photo_public_url,
+        photo_raw_url,
+        status,
+        address,
+        description,
+        created_at,
+        updated_at,
+        classifications (
+          category,
+          subcategory,
+          severity,
+          hazard_radius_m,
+          visible_size_estimate,
+          is_emergency,
+          confidence,
+          reasoning
+        )
+      )
+    `
+    )
+    .eq("reports.city_id", staff.city_id)
+    .gt("created_at", afterTimestamp)
+    .order("priority_score", { ascending: false });
+
+  if (error) return { ok: false, error: error.message };
+
+  const result = (data ?? [])
+    .map((row: Record<string, unknown>) => {
+      const report = Array.isArray(row.reports)
+        ? row.reports[0]
+        : (row.reports as Record<string, unknown> | null);
+      if (!report) return null;
+
+      const classificationsRaw = report.classifications;
+      const classification = Array.isArray(classificationsRaw)
+        ? (classificationsRaw[0] ?? null)
+        : (classificationsRaw ?? null);
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { reports: _reports, ...rest } = row as Record<string, unknown> & {
+        reports: unknown;
+      };
+
+      return {
+        ...rest,
+        report: {
+          id: report.id,
+          city_id: report.city_id,
+          reporter_id: report.reporter_id,
+          location: report.location,
+          photo_public_url: report.photo_public_url,
+          photo_raw_url: report.photo_raw_url ?? null,
+          status: report.status,
+          address: report.address ?? null,
+          description: report.description ?? null,
+          created_at: report.created_at,
+          updated_at: report.updated_at,
+        },
+        classification,
+      };
+    })
+    .filter(Boolean) as WorkOrderWithDetails[];
+
+  return { ok: true, data: result };
 }

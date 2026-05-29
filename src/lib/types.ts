@@ -140,3 +140,41 @@ export interface User {
   display_name: string;
   created_at: string;
 }
+
+export interface WorkOrderWithDetails {
+  id: string;
+  report_id: string;
+  department: string;
+  crew_type: string | null;
+  priority_score: number;
+  est_minutes: number;
+  materials: string[];
+  assigned_crew_id: string | null;
+  dispatched_at: string | null;
+  completed_at: string | null;
+  resolution_photo_url: string | null;
+  resolution_ai_score: number | null;
+  report: {
+    id: string;
+    city_id: string;
+    reporter_id: string;
+    location: { lng: number; lat: number };
+    photo_public_url: string;
+    photo_raw_url: string | null;
+    status: string;
+    address: string | null;
+    description: string | null;
+    created_at: string;
+    updated_at: string;
+  };
+  classification: {
+    category: string;
+    subcategory: string;
+    severity: number;
+    hazard_radius_m: number;
+    visible_size_estimate: string;
+    is_emergency: boolean;
+    confidence: number;
+    reasoning: string;
+  } | null;
+}
