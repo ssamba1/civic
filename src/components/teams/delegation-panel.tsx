@@ -1,6 +1,8 @@
 "use client";
 
 import { memo, useCallback, useRef, useState } from "react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import { ChevronDown, Clock, RotateCcw } from "lucide-react";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
@@ -17,6 +19,8 @@ import {
 import { Tile } from "@/components/analytics/bento-primitives";
 import { cn } from "@/lib/utils/cn";
 import { timeAgo } from "@/lib/utils/time-ago";
+
+gsap.registerPlugin(useGSAP);
 
 /* ==================================================================
    Delegation panel — list of reports with a team-reassign control on
@@ -154,10 +158,39 @@ function DelegationRow({
   onClear,
 }: DelegationRowProps) {
   const [expanded, setExpanded] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const firstRun = useRef(true);
   const meta = CATEGORY_META[report.category];
   const defaultTeam = categoryToTeam(report.category);
   const effectiveTeam = override ?? defaultTeam;
   const isOverridden = override !== undefined && override !== defaultTeam;
+
+  // GSAP height collapse/expand. Animates 0 ↔ auto (CSS can't tween to auto).
+  // Runs in a layout effect (pre-paint) so the mount set never flashes.
+  // Animates regardless of prefers-reduced-motion — this is an explicitly
+  // requested, low-amplitude height tween, and the project owner runs the OS
+  // with reduce-motion on but wants the motion here (see the hero wave).
+  useGSAP(
+    () => {
+      const el = contentRef.current;
+      if (!el) return;
+
+      if (firstRun.current) {
+        firstRun.current = false;
+        gsap.set(el, expanded ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 });
+        return;
+      }
+
+      gsap.to(el, {
+        height: expanded ? "auto" : 0,
+        opacity: expanded ? 1 : 0,
+        duration: expanded ? 0.34 : 0.26,
+        ease: expanded ? "power3.out" : "power2.inOut",
+        overwrite: true,
+      });
+    },
+    { dependencies: [expanded] },
+  );
 
   // Swallow click + key events on interactive sub-controls so they
   // don't toggle the row.
@@ -307,10 +340,10 @@ function DelegationRow({
       </div>
 
       <div
+        ref={contentRef}
         id={`delegation-row-${report.id}`}
         role="region"
-        data-state={expanded ? "open" : "closed"}
-        className="overflow-hidden data-[state=closed]:animate-row-up data-[state=open]:animate-row-down"
+        className="row-collapsible"
       >
         <DelegationRowExpanded
           report={report}

@@ -37,6 +37,7 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-display: var(--font-display);
+  --font-hero: var(--font-hero);
 
   --color-deep-void: var(--fg-deep-void);
   --color-electric-indigo: var(--fg-electric-indigo);
@@ -73,29 +74,16 @@
   animation: accordion-down 280ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ── Delegation row expand ── */
-@keyframes row-expand-down {
-  from { max-height: 0; opacity: 0; }
-  to   { max-height: 720px; opacity: 1; }
-}
-@keyframes row-expand-up {
-  from { max-height: 720px; opacity: 1; }
-  to   { max-height: 0; opacity: 0; }
-}
-.data-\[state\=closed\]\:animate-row-up[data-state="closed"] {
-  animation: row-expand-up 240ms cubic-bezier(0.16,1,0.3,1) forwards;
+/* ── Delegation row expand ──
+   GSAP drives height/opacity imperatively (0 ↔ auto) via inline styles — see
+   delegation-panel.tsx useGSAP. This class is just the collapsed-by-default
+   resting state so server HTML doesn't flash open before hydration; GSAP's
+   inline values override it. Height is NOT in the JSX style prop, so React
+   re-renders never clobber GSAP's inline height. */
+.row-collapsible {
+  height: 0;
+  opacity: 0;
   overflow: hidden;
-}
-.data-\[state\=open\]\:animate-row-down[data-state="open"] {
-  animation: row-expand-down 280ms cubic-bezier(0.16,1,0.3,1) forwards;
-  overflow: hidden;
-}
-@media (prefers-reduced-motion: reduce) {
-  .data-\[state\=closed\]\:animate-row-up[data-state="closed"],
-  .data-\[state\=open\]\:animate-row-down[data-state="open"] {
-    animation: none;
-    transition: opacity 120ms linear;
-  }
 }
 
 /* ── Mobile sheet / drawer motion (consumed by ui/bottom-sheet + ui/drawer) ── */
@@ -198,6 +186,18 @@ body {
 .font-display {
   font-family: var(--font-display), Georgia, "Times New Roman", serif;
   letter-spacing: -0.012em;
+}
+
+/* Hero face — slim high-contrast Garamond. Tall, thin strokes carry their own
+   width, so it wants near-neutral tracking rather than the grotesk's tightening.
+   Weight + leading live here (not as utilities) so they win over the unlayered
+   `h1..h6 { font-weight: 600 }` base rule below — Tailwind utilities are layered
+   and would otherwise lose the cascade. */
+.font-hero {
+  font-family: var(--font-hero), Georgia, "Times New Roman", serif;
+  font-weight: 300;
+  line-height: 1.02;
+  letter-spacing: -0.005em;
 }
 
 /* ── iOS: prevent zoom-on-focus for form fields on touch devices ── */

@@ -225,6 +225,13 @@ interface CorpusReport extends DashboardReport {
   age_days: number;
 }
 
+// Real, category-appropriate report photos. Sourced + visually verified from
+// Wikimedia Commons (CC-licensed) and uploaded to the public storage bucket at
+// seed/<category>.jpg — one image per issue type so every report shows a photo
+// that actually matches the issue (replaces the old random picsum placeholders).
+const PHOTO_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""}/storage/v1/object/public/photos-public/seed`;
+const categoryPhoto = (category: ReportCategory): string => `${PHOTO_BASE}/${category}.jpg`;
+
 function buildCorpus(): CorpusReport[] {
   const N = 120;
   const SPAN_DAYS = 180; // ~6 months
@@ -262,7 +269,7 @@ function buildCorpus(): CorpusReport[] {
         lng: center[0] + (seeded(i, 6) - 0.5) * lngSpread,
         lat: center[1] + (seeded(i, 7) - 0.5) * latSpread,
       },
-      photo_public_url: `https://picsum.photos/seed/${category}-${i}/640/360`,
+      photo_public_url: categoryPhoto(category),
       created_at: new Date(now - ageDays * DAY_MS).toISOString(),
       age_days: ageDays,
       reporter_id: `reporter-${reporterIdx + 1}`,

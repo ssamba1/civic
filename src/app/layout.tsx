@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Hanken_Grotesk, JetBrains_Mono, Newsreader } from "next/font/google";
+import { Cormorant_Garamond, Hanken_Grotesk, JetBrains_Mono, Newsreader } from "next/font/google";
 import "./globals.css";
 import { BottomTabBar } from "@/components/resident/bottom-tab-bar";
 
@@ -18,6 +18,17 @@ const display = Newsreader({
   variable: "--font-display",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+// Hero face — high-contrast slim Garamond. Thin strokes + light weight give the
+// headline a refined, slender voice distinct from the body display serif; real
+// italic carries the accent line.
+const hero = Cormorant_Garamond({
+  variable: "--font-hero",
+  subsets: ["latin"],
+  weight: ["300", "400", "500"],
   style: ["normal", "italic"],
   display: "swap",
 });
@@ -71,7 +82,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${sans.variable} ${display.variable} ${mono.variable} h-full antialiased`}
+      className={`${sans.variable} ${display.variable} ${hero.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
         {children}

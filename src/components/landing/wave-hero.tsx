@@ -5,18 +5,44 @@ import { useEffect, useRef } from "react";
 /**
  * Hero wave background — ported from peregryne.vercel.app's live hero canvas.
  * It is a domain-warped plasma: an iterative sin/cos warp evaluated per pixel
- * at 1/3 resolution, then nearest-neighbour upscaled for a soft silky field.
- * Deep-navy base → light-blue highlight (Civic blue). Faithful to the live
- * params (speed 1.2, intensity 1, tint 0). Canvas2D, pointer-events none,
- * behind the hero content; renders a single static frame under reduced-motion.
+ * at reduced resolution (1/`scale`, default 1/3), then nearest-neighbour
+ * upscaled for a soft silky field. Deep-navy base → light-blue highlight
+ * (Civic blue). Canvas2D, pointer-events none, behind the hero content;
+ * animates continuously (pauses only when scrolled offscreen via
+ * IntersectionObserver, capped at 30fps).
+ *
+ * All visual params are live: speed/intensity/tint/contrast/paused are read
+ * from a ref each frame, so the WaveTweaks panel can change them without
+ * tearing down the canvas. Only `scale` (which resizes the pixel buffer)
+ * re-initialises the effect.
  */
 
-const SCALE = 3; // render at 1/3 res, upscale (perf); definition comes from the contrast LUT
 const FRAME = 1000 / 30; // 30fps cap
 const LUT = 1024;
 
 // Base (deep navy) — close to the hero section bg so it blends seamlessly.
 const BASE = [4, 8, 20] as const;
+
+export interface WaveParams {
+  speed: number;
+  intensity: number;
+  /** 0 = brightest light-blue highlight → 1 = deep blue. */
+  tint: number;
+  /** Wave definition. <1 washes out, >1.45 sharpens crests. */
+  contrast: number;
+  /** Pixel scale: render at 1/scale res then upscale. Lower = sharper + heavier. */
+  scale: number;
+  paused: boolean;
+}
+
+export const DEFAULT_WAVE: WaveParams = {
+  speed: 0.9,
+  intensity: 1,
+  tint: 0,
+  contrast: 1.45,
+  scale: 3,
+  paused: false,
+};
 
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
 // Highlight colour ramp by `tint` (0 = brightest light-blue → 1 = deep blue).
@@ -30,17 +56,19 @@ function ramp(t: number): [number, number, number] {
 }
 
 export function WaveHero({
-  speed = 0.9,
-  intensity = 1,
-  tint = 0,
+  speed = DEFAULT_WAVE.speed,
+  intensity = DEFAULT_WAVE.intensity,
+  tint = DEFAULT_WAVE.tint,
+  contrast = DEFAULT_WAVE.contrast,
+  scale = DEFAULT_WAVE.scale,
+  paused = DEFAULT_WAVE.paused,
   className = "",
-}: {
-  speed?: number;
-  intensity?: number;
-  tint?: number;
-  className?: string;
-}) {
+}: Partial<WaveParams> & { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Live params the render loop reads each frame (avoids canvas re-init on tweak).
+  const live = useRef<Omit<WaveParams, "scale">>({ speed, intensity, tint, contrast, paused });
+  live.current = { speed, intensity, tint, contrast, paused };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -56,8 +84,8 @@ export function WaveHero({
     const resize = () => {
       canvas.width = canvas.clientWidth || window.innerWidth;
       canvas.height = canvas.clientHeight || window.innerHeight;
-      bw = Math.max(1, Math.floor(canvas.width / SCALE));
-      bh = Math.max(1, Math.floor(canvas.height / SCALE));
+      bw = Math.max(1, Math.floor(canvas.width / scale));
+      bh = Math.max(1, Math.floor(canvas.height / scale));
       img = ctx.createImageData(bw, bh);
       data = img.data;
     };
@@ -76,22 +104,31 @@ export function WaveHero({
     const fsin = (x: number) => SIN[((x * K) | 0) & (LUT - 1)];
     const fcos = (x: number) => COS[((x * K) | 0) & (LUT - 1)];
 
-    // Faithful peregryne colour mapping baked into a 256-entry LUT (linear ce→colour),
-    // so the hot per-pixel loop does zero lerp — just three array reads.
-    const [hr, hg, hb] = ramp(tint);
+    // Colour mapping baked into a 256-entry LUT (linear ce→colour) so the hot
+    // per-pixel loop does zero lerp — just three array reads. Rebuilt only when
+    // tint or contrast actually change (cheap 2-value guard per frame).
     const LR = new Uint8ClampedArray(256);
     const LG = new Uint8ClampedArray(256);
     const LB = new Uint8ClampedArray(256);
-    for (let i = 0; i < 256; i++) {
-      let v = i / 255;
-      v = (v - 0.5) * 1.45 + 0.5; // contrast → more defined waves, less grey midtone
-      v = v < 0 ? 0 : v > 1 ? 1 : v;
-      LR[i] = BASE[0] + (hr - BASE[0]) * v;
-      LG[i] = BASE[1] + (hg - BASE[1]) * v;
-      LB[i] = BASE[2] + (hb - BASE[2]) * v;
-    }
+    let lutTint = NaN;
+    let lutContrast = NaN;
+    const buildLUT = () => {
+      const { tint: ti, contrast: co } = live.current;
+      if (ti === lutTint && co === lutContrast) return;
+      lutTint = ti;
+      lutContrast = co;
+      const [hr, hg, hb] = ramp(ti);
+      for (let i = 0; i < 256; i++) {
+        let v = i / 255;
+        v = (v - 0.5) * co + 0.5; // contrast → more defined waves, less grey midtone
+        v = v < 0 ? 0 : v > 1 ? 1 : v;
+        LR[i] = BASE[0] + (hr - BASE[0]) * v;
+        LG[i] = BASE[1] + (hg - BASE[1]) * v;
+        LB[i] = BASE[2] + (hb - BASE[2]) * v;
+      }
+    };
+    buildLUT();
 
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let raf = 0;
     let t = 0;
     let last = performance.now();
@@ -100,8 +137,9 @@ export function WaveHero({
 
     const renderFrame = (time: number) => {
       if (!data || !img) return;
+      buildLUT();
       const Lt = time;
-      const Ie = intensity;
+      const Ie = live.current.intensity;
       for (let y = 0; y < bh; y++) {
         for (let x = 0; x < bw; x++) {
           const nx = (2 * x - bw) / bh;
@@ -133,7 +171,9 @@ export function WaveHero({
       const now = performance.now();
       const dt = (now - last) * 0.001;
       last = now;
-      t += dt * speed;
+      // Pause freezes time, but we keep rendering so tint/intensity/contrast
+      // tweaks still reflect on the frozen frame.
+      if (!live.current.paused) t += dt * live.current.speed;
       if (visible && now - lastFrame >= FRAME) {
         lastFrame = now;
         renderFrame(t);
@@ -148,18 +188,14 @@ export function WaveHero({
     const onResize = () => resize();
     window.addEventListener("resize", onResize);
 
-    if (reduce) {
-      renderFrame(2);
-    } else {
-      raf = requestAnimationFrame(loop);
-    }
+    raf = requestAnimationFrame(loop);
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
       io.disconnect();
     };
-  }, [speed, intensity, tint]);
+  }, [scale]);
 
   return (
     <div

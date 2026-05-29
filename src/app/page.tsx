@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Globe } from "@/components/ui/cobe-globe";
-import { WaveHero } from "@/components/landing/wave-hero";
+import { WaveStage } from "@/components/landing/wave-stage";
 import { FAQ } from "@/components/landing/faq";
 import { OrbitalSteps } from "@/components/landing/orbital-steps";
 import { Reveal } from "@/components/landing/reveal";
@@ -54,7 +54,7 @@ export default async function HomePage() {
           } as React.CSSProperties
         }
       >
-        <WaveHero />
+        <WaveStage />
         <div className="mx-auto grid max-w-7xl gap-8 px-8 pb-10 pt-24 sm:px-12 lg:px-20 sm:pb-14 sm:pt-28 lg:grid-cols-[5fr_6fr] lg:min-h-[calc(100dvh-3.5rem)] lg:items-center">
           <div className="relative z-10 flex flex-col justify-center">
             <Reveal>
@@ -68,7 +68,7 @@ export default async function HomePage() {
             </Reveal>
 
             <Reveal delay={80}>
-              <h1 className="font-display mt-7 text-[44px] font-normal leading-[1.06] text-[var(--color-foreground)] sm:text-[56px] lg:text-[66px]">
+              <h1 className="font-hero mt-7 text-[52px] text-[var(--color-foreground)] sm:text-[68px] lg:text-[80px]">
                 See it. Snap it.
                 <br />
                 <span className="italic text-[var(--color-primary)]">Your city fixes it.</span>
@@ -86,7 +86,7 @@ export default async function HomePage() {
             <Reveal delay={240}>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                 <Button asChild size="lg" variant="accent" className="min-h-[44px] w-full sm:w-auto">
-                  <Link href="/report">Report an issue</Link>
+                  <Link href="/login?redirect=/user">Report an issue</Link>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="min-h-[44px] w-full sm:w-auto">
                   <Link href="/city/cumming">View Cumming dashboard</Link>
