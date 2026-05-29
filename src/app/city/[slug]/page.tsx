@@ -7,6 +7,7 @@ import { KNOWN_CITIES } from "@/lib/dashboard-data";
 import { fetchCity, fetchCityStats } from "@/lib/dashboard-queries";
 import { TeamsInteractive } from "@/components/teams/teams-interactive";
 import { FilterBar } from "@/components/filters/filter-bar";
+import { CitySwitcher } from "@/components/city/city-switcher";
 
 export function generateStaticParams() {
   return Object.keys(KNOWN_CITIES).map((slug) => ({ slug }));
@@ -59,6 +60,10 @@ export default async function CityDashboardPage({
       <div className="flex-grow mx-auto w-full max-w-7xl px-4 pt-20 pb-10 sm:px-6 lg:px-8">
         {/* Hero */}
         <section className="mb-10">
+          {/* Municipality switcher — search + toggle between cities */}
+          <div className="mb-5">
+            <CitySwitcher currentSlug={slug} />
+          </div>
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.08em] text-zinc-500">

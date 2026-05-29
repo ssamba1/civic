@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ClipboardList, Camera, HeartPulse, Bell } from "lucide-react";
+import { Home, Camera, HeartPulse, Bell } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils/cn";
@@ -27,13 +27,6 @@ const TABS: TabItem[] = [
     isActive: (p) => p === "/",
   },
   {
-    label: "My Reports",
-    href: "/user/my-reports",
-    icon: ClipboardList,
-    // Prefix keeps it active on the /user/my-reports/[reportId] detail page too.
-    isActive: (p) => p.startsWith("/user/my-reports"),
-  },
-  {
     label: "Pulse",
     href: "/user/pulse",
     icon: HeartPulse,
@@ -56,9 +49,9 @@ export function BottomTabBar() {
     return null;
   }
 
-  // Split tabs around the center FAB: Home + My Reports | [Report] | Pulse + Updates.
-  const left = TABS.slice(0, 2);
-  const right = TABS.slice(2);
+  // Split tabs around the center FAB: Home | [Report] | Pulse + Updates.
+  const left = TABS.slice(0, 1);
+  const right = TABS.slice(1);
 
   const fabActive = pathname.startsWith("/report"); // bar never renders on /report, kept defensive.
 

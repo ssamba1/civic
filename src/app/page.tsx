@@ -97,8 +97,8 @@ export default async function HomePage() {
             <Reveal delay={320}>
               <dl className="mt-12 flex flex-wrap items-baseline gap-x-8 gap-y-4 border-t border-[var(--color-border)] pt-7">
                 <Stat value="1.4s" label="avg AI classification" />
-                <Stat value="$0.0001" label="cost per photo" />
-                <Stat value="42M" label="311 calls / yr, NYC" />
+                <Stat value="$0.0007" label="cost per photo" />
+                <Stat value="3.1M" label="311 requests / yr, NYC" />
               </dl>
             </Reveal>
           </div>

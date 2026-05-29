@@ -58,6 +58,35 @@ export const KNOWN_CITIES: Record<
 };
 
 /* ------------------------------------------------------------------
+   Municipality directory — powers the city switcher in the dashboard
+   header. `live` cities have a working dashboard; the rest are
+   expansion targets in the same Forsyth County footprint, shown as
+   "Soon" so the rollout story (Cumming -> Forsyth -> every neighbor)
+   is visible without linking to empty dashboards.
+   ------------------------------------------------------------------ */
+
+export interface Municipality {
+  slug: string;
+  name: string;
+  state: string;
+  county: string;
+  live: boolean;
+}
+
+export const MUNICIPALITIES: Municipality[] = [
+  { slug: "cumming", name: "Cumming", state: "GA", county: "Forsyth County", live: true },
+  { slug: "south-forsyth", name: "South Forsyth", state: "GA", county: "Forsyth County", live: false },
+  { slug: "coal-mountain", name: "Coal Mountain", state: "GA", county: "Forsyth County", live: false },
+  { slug: "sawnee", name: "Sawnee", state: "GA", county: "Forsyth County", live: false },
+  { slug: "alpharetta", name: "Alpharetta", state: "GA", county: "Fulton County", live: false },
+  { slug: "milton", name: "Milton", state: "GA", county: "Fulton County", live: false },
+  { slug: "gainesville", name: "Gainesville", state: "GA", county: "Hall County", live: false },
+  { slug: "buford", name: "Buford", state: "GA", county: "Gwinnett County", live: false },
+  { slug: "suwanee", name: "Suwanee", state: "GA", county: "Gwinnett County", live: false },
+  { slug: "dawsonville", name: "Dawsonville", state: "GA", county: "Dawson County", live: false },
+];
+
+/* ------------------------------------------------------------------
    Category metadata — labels, colors, icons
    ------------------------------------------------------------------ */
 

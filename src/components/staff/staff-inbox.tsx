@@ -32,13 +32,25 @@ import {
  *  reports auto-populate the inbox near-instantly (live demo). */
 const POLL_INTERVAL_MS = 3_000;
 
-type FilterTab = "all" | "open" | "dispatched" | "in_progress";
+// Active = still moving through the pipeline; resolved = closed.
+const ACTIVE_STATUSES = new Set<string>(["open", "dispatched", "in_progress"]);
+
+type FilterTab =
+  | "all"
+  | "active"
+  | "open"
+  | "dispatched"
+  | "in_progress"
+  | "resolved";
 
 const TABS: { value: FilterTab; label: string }[] = [
   { value: "all", label: "All" },
+  // Grouped pills carried over from the resident "my reports" view.
+  { value: "active", label: "Active" },
   { value: "open", label: "Open" },
   { value: "dispatched", label: "Dispatched" },
   { value: "in_progress", label: "In Progress" },
+  { value: "resolved", label: "Resolved" },
 ];
 
 interface StaffInboxProps {
@@ -106,8 +118,15 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
   const filtered = useMemo(() => {
     let result = displayedOrders;
 
-    // Filter by status tab
-    if (activeTab !== "all") {
+    // Filter by status tab. "active" / "resolved" are the grouped pills from
+    // the resident view; the rest match an exact report status.
+    if (activeTab === "active") {
+      result = result.filter((wo) =>
+        ACTIVE_STATUSES.has(wo.report?.status ?? ""),
+      );
+    } else if (activeTab === "resolved") {
+      result = result.filter((wo) => wo.report?.status === "closed");
+    } else if (activeTab !== "all") {
       result = result.filter((wo) => wo.report?.status === activeTab);
     }
 
@@ -127,14 +146,39 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
 
   // Counts for tab badges
   const counts = useMemo(() => {
-    const c = { all: displayedOrders.length, open: 0, dispatched: 0, in_progress: 0 };
+    const c = {
+      all: displayedOrders.length,
+      active: 0,
+      open: 0,
+      dispatched: 0,
+      in_progress: 0,
+      resolved: 0,
+    };
     for (const wo of displayedOrders) {
       const st = wo.report?.status;
       if (st === "open") c.open++;
       else if (st === "dispatched") c.dispatched++;
       else if (st === "in_progress") c.in_progress++;
+      else if (st === "closed") c.resolved++;
+      if (ACTIVE_STATUSES.has(st ?? "")) c.active++;
     }
     return c;
+  }, [displayedOrders]);
+
+  // Summary tiles (folded in from the resident "my reports" surface):
+  // total work orders, how many are still moving, how many are resolved,
+  // and the resolution rate. Computed over the full displayed set so the
+  // numbers stay stable regardless of the active tab/search.
+  const summary = useMemo(() => {
+    const total = displayedOrders.length;
+    const resolved = displayedOrders.filter(
+      (wo) => wo.report?.status === "closed",
+    ).length;
+    const active = displayedOrders.filter((wo) =>
+      ACTIVE_STATUSES.has(wo.report?.status ?? ""),
+    ).length;
+    const pctResolved = total === 0 ? 0 : Math.round((resolved / total) * 100);
+    return { total, active, resolved, pctResolved };
   }, [displayedOrders]);
 
   // Keep selectedIndex in bounds
@@ -215,6 +259,30 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
               </span>
             )}
           </button>
+        </div>
+
+        {/* Summary tiles — folded in from the resident "my reports" view */}
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <StatTile
+            label="Total"
+            value={String(summary.total)}
+            hint="Work orders on the board"
+          />
+          <StatTile
+            label="Being worked on"
+            value={String(summary.active)}
+            hint={summary.active === 0 ? "Queue is clear" : "Crews are on it"}
+          />
+          <StatTile
+            label="Resolved"
+            value={String(summary.resolved)}
+            hint={summary.resolved === 0 ? "None closed yet" : "Closed out"}
+          />
+          <StatTile
+            label="% resolved"
+            value={`${summary.pctResolved}%`}
+            hint={summary.pctResolved >= 50 ? "Strong throughput" : "Momentum building"}
+          />
         </div>
 
         {/* Tabs + search */}
@@ -389,6 +457,29 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
         onClose={handleCloseOrder}
         onReject={handleReject}
       />
+    </div>
+  );
+}
+
+/** Compact summary tile for the inbox header (staff zinc theme, light/dark). */
+function StatTile({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+}) {
+  return (
+    <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-800/40">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+        {label}
+      </p>
+      <p className="mt-0.5 text-2xl font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
+        {value}
+      </p>
+      <p className="mt-0.5 truncate text-[11px] text-zinc-400">{hint}</p>
     </div>
   );
 }

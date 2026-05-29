@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UsersRound, ThumbsUp, Map, BarChart3, Camera, User, RefreshCw } from "lucide-react";
+import { UsersRound, ThumbsUp, Map, BarChart3, Camera, RefreshCw } from "lucide-react";
 import { useDemoReports } from "@/lib/demo-reports";
 
 /**
@@ -151,25 +151,6 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
           <Camera className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
           <span className="sr-only">Report</span>
         </Link>
-
-        <Link
-          href="/user/my-reports"
-          aria-label="My View"
-          title="My View"
-          className={[
-            "group inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-[10px] border border-white/[0.06] bg-white/[0.03] px-3 text-[13px] font-medium text-zinc-400",
-            "transition-colors duration-150 outline-none",
-            "hover:bg-white/[0.06] hover:text-zinc-100",
-            "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
-          ].join(" ")}
-        >
-          <User
-            className="h-4 w-4 shrink-0 text-zinc-500 transition-colors duration-150 group-hover:text-zinc-300"
-            strokeWidth={2}
-            aria-hidden="true"
-          />
-          <span className="sr-only">My View</span>
-        </Link>
       </div>
     );
   }
@@ -224,25 +205,6 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
       >
         <Camera className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />
         <span className="hidden sm:inline">Report</span>
-      </Link>
-
-      <Link
-        href="/user/my-reports"
-        aria-label="My View"
-        title="My View"
-        className={[
-          "group inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] border border-white/[0.06] bg-white/[0.03] px-2.5 sm:px-3 text-[13px] font-medium text-zinc-400",
-          "transition-colors duration-150 outline-none",
-          "hover:bg-white/[0.06] hover:text-zinc-100",
-          "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
-        ].join(" ")}
-      >
-        <User
-          className="h-3.5 w-3.5 shrink-0 text-zinc-500 transition-colors duration-150 group-hover:text-zinc-300"
-          strokeWidth={2}
-          aria-hidden="true"
-        />
-        <span className="hidden sm:inline">My View</span>
       </Link>
     </nav>
   );

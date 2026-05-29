@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, HeartPulse, Camera } from "lucide-react";
+import { HeartPulse, Camera } from "lucide-react";
 
 import { UpdatesPopover } from "@/components/resident/updates-popover";
 
@@ -10,11 +10,6 @@ export function UserNav() {
   const pathname = usePathname();
 
   const items = [
-    {
-      label: "My Reports",
-      href: "/user/my-reports",
-      icon: ClipboardList,
-    },
     {
       label: "Pulse",
       href: "/user/pulse",
@@ -32,7 +27,7 @@ export function UserNav() {
     <header className="hidden md:block fixed top-0 inset-x-0 z-40 border-b border-white/[0.06] bg-black/60 backdrop-blur-xl supports-[backdrop-filter]:bg-black/50">
       <div className="flex h-14 w-full items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link
-          href="/user/my-reports"
+          href="/user/pulse"
           className="group inline-flex items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-white outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
         >
           <span
