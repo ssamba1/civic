@@ -183,7 +183,18 @@ function DelegationRowExpandedInner({
 }: DelegationRowExpandedProps) {
   void _defaultTeam;
 
-  const cached = reasoningCache.get(report.id);
+  // Demo report: skip the network fetch and render baked AI reasoning instantly.
+  const demoReasoning =
+    report.demo && report.ai_reasoning
+      ? ({
+          reportId: report.id,
+          reasoning: report.ai_reasoning,
+          costBreakdown: [],
+          scoringExplanation: [],
+        } satisfies ReasoningData)
+      : null;
+
+  const cached = demoReasoning ?? reasoningCache.get(report.id);
   const [data, setData] = useState<ReasoningData | null>(cached ?? null);
   const [loading, setLoading] = useState<boolean>(!cached);
   const [error, setError] = useState<boolean>(false);

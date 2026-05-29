@@ -20,6 +20,11 @@ export interface DashboardReport {
   // categoryToTeam(category). Per-report runtime overrides live in
   // src/lib/teams-overrides.ts and shadow this field client-side.
   assigned_team?: TeamId;
+  // Demo overlay (src/lib/demo-reports.ts): true for the presenter-injected
+  // "live" data point. Surfaces render it with a blue glow.
+  demo?: boolean;
+  // Baked AI classification text shown in expanded views for demo reports.
+  ai_reasoning?: string;
 }
 
 export interface CityStats {

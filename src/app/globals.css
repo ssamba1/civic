@@ -200,6 +200,29 @@ body {
   letter-spacing: -0.005em;
 }
 
+/* Demo data highlight — the presenter-injected report glows blue everywhere it
+   renders (see src/lib/demo-reports.ts). Reduced motion keeps the glow but
+   drops the pulse, so the highlight still functions. */
+@keyframes demo-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 1.5px rgba(10, 132, 255, 0.85), 0 0 18px -2px rgba(10, 132, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 1.5px rgba(10, 132, 255, 1), 0 0 30px 0 rgba(10, 132, 255, 0.85);
+  }
+}
+.demo-glow {
+  position: relative;
+  border-radius: inherit;
+  animation: demo-glow-pulse 2.3s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .demo-glow {
+    animation: none;
+    box-shadow: 0 0 0 1.5px rgba(10, 132, 255, 0.9), 0 0 20px -2px rgba(10, 132, 255, 0.6);
+  }
+}
+
 /* ── iOS: prevent zoom-on-focus for form fields on touch devices ── */
 @media (pointer: coarse) {
   input,

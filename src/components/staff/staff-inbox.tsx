@@ -20,6 +20,13 @@ import {
   rejectReport,
   fetchQueuedWorkOrders,
 } from "@/app/staff/actions";
+import {
+  addDemoReport,
+  demoWorkOrderFromReport,
+  resetDemoReports,
+  getDemoReportsSnapshot,
+  isDemoId,
+} from "@/lib/demo-reports";
 
 /** How often (ms) the inbox polls for new work orders. Short interval so new
  *  reports auto-populate the inbox near-instantly (live demo). */
@@ -75,13 +82,23 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Merge queued items into the displayed list
+  // Refresh toggles the live demo data point (the fallen tree). First click
+  // injects it — into the inbox here, and via the shared overlay store into
+  // every other surface (map, delegation, analytics, dashboard) at once, also
+  // flushing any queued items. A second click removes it everywhere. Same
+  // button is the on/off switch — there is no separate reset control.
   const handleRefresh = useCallback(() => {
-    if (pendingQueue.length === 0) return;
     setIsRefreshing(true);
-    setDisplayedOrders((prev) => [...pendingQueue, ...prev]);
-    setPendingQueue([]);
-    setSelectedIndex(0);
+    if (getDemoReportsSnapshot().length > 0) {
+      resetDemoReports();
+      setDisplayedOrders((prev) => prev.filter((o) => !isDemoId(o.report_id)));
+    } else {
+      const demoReport = addDemoReport();
+      const demoOrder = demoWorkOrderFromReport(demoReport);
+      setDisplayedOrders((prev) => [demoOrder, ...pendingQueue, ...prev]);
+      setPendingQueue([]);
+      setSelectedIndex(0);
+    }
     // Brief spinner flash
     setTimeout(() => setIsRefreshing(false), 600);
   }, [pendingQueue]);
@@ -175,17 +192,15 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
             </p>
           </div>
 
-          {/* Refresh button – flushes queued incoming reports into the list */}
+          {/* Refresh button – injects the live demo report (and flushes any
+              queued incoming reports) into the inbox + every other surface. */}
           <button
             onClick={handleRefresh}
-            disabled={pendingQueue.length === 0 && !isRefreshing}
             className={cn(
               "relative flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-all",
-              pendingQueue.length > 0
-                ? "border-blue-400 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
-                : "border-zinc-200 bg-white text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800"
+              "border-blue-400 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
             )}
-            title={pendingQueue.length > 0 ? `Load ${pendingQueue.length} new report${pendingQueue.length !== 1 ? "s" : ""}` : "No new reports"}
+            title="Add a live report (demo)"
           >
             <RefreshCw
               className={cn(

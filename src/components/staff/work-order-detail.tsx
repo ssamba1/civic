@@ -28,6 +28,7 @@ import {
   rejectReport,
   overrideClassification,
 } from "@/app/staff/actions";
+import { DEMO_REPORTER_ID, isDemoId } from "@/lib/demo-reports";
 import { WorkOrderComments } from "./work-order-comments";
 
 interface WorkOrderDetailProps {
@@ -101,6 +102,8 @@ export function WorkOrderDetail({
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
   const sevConfig = SEVERITY_CONFIG[classification.severity] ?? SEVERITY_CONFIG[3];
+  const isDemo =
+    report.reporter_id === DEMO_REPORTER_ID || isDemoId(report.id);
 
   function handleDispatch() {
     setActionError(null);
@@ -179,20 +182,27 @@ export function WorkOrderDetail({
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
-          {/* Photo */}
-          <div className="relative aspect-video w-full bg-zinc-100 dark:bg-zinc-800">
-            {report.photo_public_url ? (
-              <Image
-                src={report.photo_public_url}
-                alt="Report photo"
-                fill
-                className="object-cover"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center text-zinc-400">
-                No photo available
-              </div>
-            )}
+          {/* Photo — glows blue when this is the injected live demo point */}
+          <div className={cn(isDemo && "p-4")}>
+            <div
+              className={cn(
+                "relative aspect-video w-full bg-zinc-100 dark:bg-zinc-800",
+                isDemo && "demo-glow overflow-hidden rounded-xl"
+              )}
+            >
+              {report.photo_public_url ? (
+                <Image
+                  src={report.photo_public_url}
+                  alt="Report photo"
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-zinc-400">
+                  No photo available
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-6 p-6">

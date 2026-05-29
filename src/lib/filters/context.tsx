@@ -16,6 +16,7 @@ import { type ReportFilter, DEFAULT_FILTER } from "@/lib/filters/types";
 import { filterToParams, parseFilterFromParams } from "@/lib/filters/url-sync";
 import { useTeamOverrides } from "@/lib/teams-overrides";
 import { useCategoryOverrides } from "@/lib/category-overrides";
+import { useDemoReports } from "@/lib/demo-reports";
 
 interface FilterContextValue {
   filter: ReportFilter;
@@ -40,10 +41,19 @@ interface FilterProviderProps {
   children: React.ReactNode;
 }
 
-export function FilterProvider({ corpus, now: serverNow, children }: FilterProviderProps) {
+export function FilterProvider({ corpus: baseCorpus, now: serverNow, children }: FilterProviderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  // Presenter-injected demo reports (refresh button) are merged into the corpus
+  // here — a single point that flows to every map/chart/list consuming this
+  // provider. Newest first so they surface at the top of recency-sorted views.
+  const { demoReports } = useDemoReports();
+  const corpus = useMemo(
+    () => (demoReports.length ? [...demoReports, ...baseCorpus] : baseCorpus),
+    [demoReports, baseCorpus],
+  );
 
   // Initialize once from the URL; subsequent state is owned locally and pushed
   // back to the URL so it stays shareable without re-deriving from params.

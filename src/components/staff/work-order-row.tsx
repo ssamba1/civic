@@ -19,6 +19,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { DEMO_REPORTER_ID, isDemoId } from "@/lib/demo-reports";
 import type {
   Report,
   Classification,
@@ -92,6 +93,7 @@ const STATUS_STYLES: Record<ReportStatus, string> = {
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours}h ago`;
@@ -117,6 +119,9 @@ export function WorkOrderRow({
   const materialsDisplay = materialsList.slice(0, 3).join(", ");
   const materialsOverflow = materialsList.length > 3;
 
+  const isDemo =
+    report.reporter_id === DEMO_REPORTER_ID || isDemoId(workOrder.id);
+
   return (
     <>
       <tr
@@ -128,7 +133,8 @@ export function WorkOrderRow({
         role="button"
         className={cn(
           "cursor-pointer border-b border-zinc-100 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50",
-          isSelected && "bg-blue-50/70 dark:bg-blue-900/10"
+          isSelected && "bg-blue-50/70 dark:bg-blue-900/10",
+          isDemo && "demo-glow"
         )}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
@@ -268,6 +274,9 @@ export function WorkOrderCard({
     SEVERITY_COLORS[classification.severity] ?? SEVERITY_COLORS[3];
   const statusStyle = STATUS_STYLES[report.status] ?? STATUS_STYLES.open;
 
+  const isDemo =
+    report.reporter_id === DEMO_REPORTER_ID || isDemoId(workOrder.id);
+
   return (
     <button
       type="button"
@@ -280,7 +289,8 @@ export function WorkOrderCard({
         "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900",
         isSelected
           ? "border-blue-300 bg-blue-50/60 dark:border-blue-700 dark:bg-blue-900/20"
-          : "hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+          : "hover:bg-zinc-50 dark:hover:bg-zinc-800/60",
+        isDemo && "demo-glow"
       )}
     >
       {/* Thumbnail */}
@@ -370,6 +380,9 @@ export function WorkOrderRowControlled({
   const materialsDisplay = materialsList.slice(0, 3).join(", ");
   const materialsOverflow = materialsList.length > 3;
 
+  const isDemo =
+    report.reporter_id === DEMO_REPORTER_ID || isDemoId(workOrder.id);
+
   return (
     <>
       <tr
@@ -381,7 +394,8 @@ export function WorkOrderRowControlled({
         role="button"
         className={cn(
           "cursor-pointer border-b border-zinc-100 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50",
-          isSelected && "bg-blue-50/70 dark:bg-blue-900/10"
+          isSelected && "bg-blue-50/70 dark:bg-blue-900/10",
+          isDemo && "demo-glow"
         )}
         onKeyDown={(e) => {
           if (e.key === "Enter") {

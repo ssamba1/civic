@@ -300,8 +300,10 @@ function ReportMapInner({
       radiusMinPixels: 10,
       radiusMaxPixels: 42,
       getPosition: (r) => [r.location.lng, r.location.lat],
-      getRadius: (r) => 90 + r.severity * 40,
+      // Demo report gets a fatter glow so the blue halo reads from across the map.
+      getRadius: (r) => (r.demo ? 220 + r.severity * 60 : 90 + r.severity * 40),
       getFillColor: (r) => {
+        if (r.demo) return [10, 132, 255, r.id === focusId ? 120 : 90];
         const [cr, cg, cb] = statusColor(r.status, r.severity);
         return [cr, cg, cb, r.id === focusId ? 70 : 38];
       },
@@ -323,16 +325,20 @@ function ReportMapInner({
       lineWidthMinPixels: 1.5,
       lineWidthUnits: "pixels",
       getPosition: (r) => [r.location.lng, r.location.lat],
-      getRadius: (r) => 28 + r.severity * 14,
+      // Demo report gets a noticeably larger core dot to draw the eye.
+      getRadius: (r) => (r.demo ? 70 + r.severity * 22 : 28 + r.severity * 14),
       getFillColor: (r) => {
+        if (r.demo) return [10, 132, 255, 255];
         const [cr, cg, cb] = statusColor(r.status, r.severity);
         return [cr, cg, cb, r.id === focusId ? 255 : 230];
       },
       getLineColor: (r) => {
+        // Bright blue halo outline marks the demo report regardless of focus.
+        if (r.demo) return [10, 132, 255, 255];
         const [cr, cg, cb] = statusColor(r.status, r.severity);
         return r.id === focusId ? [255, 255, 255, 255] : [cr, cg, cb, 255];
       },
-      getLineWidth: (r) => (r.id === focusId ? 3 : 1.5),
+      getLineWidth: (r) => (r.demo ? 4 : r.id === focusId ? 3 : 1.5),
       // autoHighlight OFF — per-frame ReadPixels caused GPU stalls on lower-end GPUs.
       updateTriggers: {
         getFillColor: [focusId],

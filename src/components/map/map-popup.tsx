@@ -1,5 +1,6 @@
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
+import { DEMO_REPORTER_ID } from "@/lib/demo-reports";
 
 interface MapPopupProps {
   report: DashboardReport;
@@ -32,6 +33,15 @@ function formatExactDate(iso: string): string {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+// "Reported" label: a just-injected point (the live demo, or any sub-minute
+// report) reads "just now" to match the list rows + the "Live" pill; older
+// reports fall back to the absolute date.
+function formatReported(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  if (diff < 60_000) return "just now";
+  return formatExactDate(iso);
 }
 
 function estimateRepairCost(
@@ -101,16 +111,25 @@ export function renderPopupHTML(report: DashboardReport): string {
     };
   const cost = estimateRepairCost(report.id, report.category, report.severity);
   const sla = slaWindow(report.severity);
+  // Presenter-injected demo point: blue glow on the popup container + a "Live"
+  // pill so it reads as the freshly-added marker. (cn() N/A — this surface is an
+  // HTML string, not JSX, so the class is written into the root's class attr.)
+  const isDemo = report.demo === true || report.reporter_id === DEMO_REPORTER_ID;
 
   return `
-    <div style="width:100%;max-width:min(300px,90vw);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',Inter,system-ui,sans-serif;color:#f5f5f7;">
-      <div style="width:100%;height:140px;border-radius:12px 12px 0 0;overflow:hidden;background:#1c1c1e;">
+    <div class="${isDemo ? "demo-glow" : ""}" style="width:100%;max-width:min(300px,90vw);border-radius:12px;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',Inter,system-ui,sans-serif;color:#f5f5f7;">
+      <div style="position:relative;width:100%;height:140px;border-radius:12px 12px 0 0;overflow:hidden;background:#1c1c1e;">
         <img
           src="${esc(report.photo_public_url)}"
           alt="${esc(meta.label)} report"
           style="width:100%;height:100%;object-fit:cover;"
           onerror="this.style.display='none'"
         />
+        ${
+          isDemo
+            ? `<span style="position:absolute;top:10px;left:10px;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;background:rgba(10,132,255,0.95);color:#ffffff;font-size:11px;font-weight:600;letter-spacing:0.02em;box-shadow:0 1px 6px rgba(10,132,255,0.5);"><span style="width:6px;height:6px;border-radius:999px;background:#ffffff;"></span>Live</span>`
+            : ""
+        }
       </div>
       <div style="padding:14px 16px 16px;">
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;">
@@ -126,7 +145,7 @@ export function renderPopupHTML(report: DashboardReport): string {
           </div>
           <div style="display:flex;justify-content:space-between;color:#86868b;">
             <span>Reported</span>
-            <span style="color:#f5f5f7;">${esc(formatExactDate(report.created_at))}</span>
+            <span style="color:#f5f5f7;">${esc(formatReported(report.created_at))}</span>
           </div>
           <div style="display:flex;justify-content:space-between;color:#86868b;">
             <span>Est. cost</span>

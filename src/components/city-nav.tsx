@@ -1,8 +1,57 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UsersRound, ThumbsUp, Map, BarChart3, Camera, User } from "lucide-react";
+import { UsersRound, ThumbsUp, Map, BarChart3, Camera, User, RefreshCw } from "lucide-react";
+import { useDemoReports } from "@/lib/demo-reports";
+
+/**
+ * Demo Refresh — toggles the live fallen-tree report in the shared overlay
+ * store (src/lib/demo-reports.ts). First click injects the data point (lighting
+ * up every city surface: teams, map, analytics, browse) and the button goes
+ * solid; a second click removes it. Sits left of the segmented nav track. No
+ * separate reset control — the same button is the on/off switch.
+ */
+function NavRefreshButton() {
+  const { demoReports, add, reset } = useDemoReports();
+  const active = demoReports.length > 0;
+  const [spinning, setSpinning] = useState(false);
+
+  const onClick = useCallback(() => {
+    if (active) reset();
+    else add();
+    setSpinning(true);
+    window.setTimeout(() => setSpinning(false), 600);
+  }, [active, add, reset]);
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      aria-label={active ? "Remove live demo report" : "Add live demo report"}
+      title={active ? "Remove the live report (demo)" : "Add a live report (demo)"}
+      className={[
+        "group inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2 sm:px-2.5 text-[13px] font-medium",
+        "transition-colors duration-150 outline-none",
+        "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
+        active
+          ? "border-[#0a84ff] bg-[#0a84ff] text-white hover:bg-[#0070e0]"
+          : "border-[#0a84ff]/40 bg-[#0a84ff]/10 text-[#5ac8fa] hover:bg-[#0a84ff]/20 hover:text-white",
+      ].join(" ")}
+    >
+      <RefreshCw
+        className={["h-3.5 w-3.5 shrink-0", spinning && "animate-spin"]
+          .filter(Boolean)
+          .join(" ")}
+        strokeWidth={2}
+        aria-hidden="true"
+      />
+      <span className="hidden md:inline">Refresh</span>
+    </button>
+  );
+}
 
 interface CityNavProps {
   slug: string;
@@ -128,6 +177,9 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
   // ── Desktop inline row (md+ default, no mobileSlot) ───────────────────
   return (
     <nav className="flex min-w-0 shrink items-center gap-2" aria-label="City views">
+      {/* Demo Refresh — left of the Teams tab */}
+      <NavRefreshButton />
+
       {/* Segmented control track */}
       <div className="flex min-w-0 items-center gap-0.5 rounded-[10px] border border-white/[0.06] bg-white/[0.03] p-0.5">
         {items.map(({ label, href, icon: Icon, active }) => (

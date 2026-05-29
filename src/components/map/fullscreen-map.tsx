@@ -14,6 +14,7 @@ import {
   type TeamId,
 } from "@/lib/teams";
 import { useCategoryOverrides } from "@/lib/category-overrides";
+import { useDemoReports } from "@/lib/demo-reports";
 import {
   Sliders,
   Clock,
@@ -51,6 +52,7 @@ const STATUS_TONE: Record<string, string> = {
 function formatTimeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
@@ -72,6 +74,17 @@ export function FullscreenMapOrchestrator({
   // that ticks when a dispatcher re-aims a category from the routing
   // matrix — that's what `categoryOverrides` provides here.
   const { overrides: categoryOverrides } = useCategoryOverrides();
+
+  // Live demo overlay — the presenter-injected report(s). Prepended (newest
+  // first) so a freshly injected point lands at the very top of the Dispatch
+  // list and renders on the map. This map route is server-rendered and sits
+  // outside FilterProvider, so we merge the overlay here rather than relying
+  // on the shared corpus that powers the Teams/analytics surfaces.
+  const { demoReports } = useDemoReports();
+  const allReports = useMemo(
+    () => (demoReports.length ? [...demoReports, ...reports] : reports),
+    [demoReports, reports],
+  );
 
   // --- Map theme (lifted from ReportMap so Dispatch panel can react) ---
   const [mapTheme, setMapTheme] = useState<MapTheme>("dark");
@@ -109,7 +122,7 @@ export function FullscreenMapOrchestrator({
 
   // --- Filter Logic ---
   const filteredReports = useMemo(() => {
-    return reports.filter((report) => {
+    return allReports.filter((report) => {
       if (selectedTeam !== "all" && categoryToTeam(report.category) !== selectedTeam) {
         return false;
       }
@@ -118,7 +131,7 @@ export function FullscreenMapOrchestrator({
       if (!activeStatuses.includes(report.status)) return false;
       return true;
     });
-  }, [reports, selectedTeam, selectedCategory, minSeverity, activeStatuses, categoryOverrides]);
+  }, [allReports, selectedTeam, selectedCategory, minSeverity, activeStatuses, categoryOverrides]);
 
   // Toggle status filter helper
   const handleToggleStatus = (status: ReportStatus) => {
@@ -166,14 +179,14 @@ export function FullscreenMapOrchestrator({
   // Human-readable category list for dropdowns
   const categoriesList = useMemo(() => {
     const list: { key: ReportCategory; label: string }[] = [];
-    reports.forEach((r) => {
+    allReports.forEach((r) => {
       const meta = CATEGORY_META[r.category];
       if (meta && !list.find((item) => item.key === r.category)) {
         list.push({ key: r.category, label: meta.label });
       }
     });
     return list;
-  }, [reports]);
+  }, [allReports]);
 
   // Shared dispatch panel content — rendered both in desktop sidebar and mobile bottom-sheet
   const dispatchPanelContent = (

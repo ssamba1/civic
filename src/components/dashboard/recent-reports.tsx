@@ -127,6 +127,7 @@ function RecentReportsInner({
         {reports.map((report) => {
           const meta = CATEGORY_META[report.category];
           const isFocused = focusedId === report.id;
+          const isDemo = report.demo === true;
 
           return (
             <li
@@ -148,6 +149,7 @@ function RecentReportsInner({
                   "w-full text-left flex flex-col gap-1 py-3 sm:py-2.5 px-2 min-h-11 rounded-md transition-colors",
                   "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1c1c1e]",
                   isFocused ? "bg-white/[0.06]" : "hover:bg-white/[0.03]",
+                  isDemo && "demo-glow",
                 )}
               >
                 <div className="flex items-center justify-between gap-2">

@@ -198,8 +198,10 @@ function DelegationRow({
     e.stopPropagation();
   };
 
+  const isDemo = report.demo === true;
+
   return (
-    <li className="flex flex-col">
+    <li className={cn("flex flex-col", isDemo && "rounded-md demo-glow")}>
       <div
         role="button"
         tabIndex={0}
