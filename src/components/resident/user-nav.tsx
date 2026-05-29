@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { HeartPulse, Camera } from "lucide-react";
 
 import { UpdatesPopover } from "@/components/resident/updates-popover";
+import { ViewSwitch } from "@/components/view-switch";
 
 export function UserNav() {
   const pathname = usePathname();
@@ -88,12 +89,7 @@ export function UserNav() {
             <span className="hidden sm:inline">Report an issue</span>
           </Link>
 
-          <Link
-            href="/city/cumming"
-            className="hidden shrink-0 text-[13px] font-medium text-zinc-500 outline-none transition-colors hover:text-zinc-300 focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0 sm:inline"
-          >
-            Public view
-          </Link>
+          <ViewSwitch />
         </nav>
       </div>
     </header>

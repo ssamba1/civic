@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CityNav } from "@/components/city-nav";
+import { ViewSwitch } from "@/components/view-switch";
 import { cn } from "@/lib/utils/cn";
 
 interface CityHeaderProps {
@@ -38,7 +39,10 @@ export function CityHeader({ slug }: CityHeaderProps) {
             Civic
           </Link>
           {/* Action buttons — mobile only slot */}
-          <CityNav slug={slug} mobileSlot="actions" />
+          <div className="flex items-center gap-2">
+            <ViewSwitch citySlug={slug} />
+            <CityNav slug={slug} mobileSlot="actions" />
+          </div>
         </div>
         {/* Row 2: Full-width segmented nav */}
         <div className="px-2 pb-2">
@@ -58,7 +62,10 @@ export function CityHeader({ slug }: CityHeaderProps) {
           />
           Civic
         </Link>
-        <CityNav slug={slug} />
+        <div className="flex min-w-0 items-center gap-2">
+          <CityNav slug={slug} />
+          <ViewSwitch citySlug={slug} />
+        </div>
       </div>
     </header>
   );

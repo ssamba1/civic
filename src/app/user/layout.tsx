@@ -1,4 +1,5 @@
 import { UserNav } from "@/components/resident/user-nav";
+import { ViewSwitch } from "@/components/view-switch";
 
 export default async function UserLayout({
   children,
@@ -8,6 +9,15 @@ export default async function UserLayout({
   return (
     <div className="flex min-h-dvh flex-col bg-black text-zinc-100">
       <UserNav />
+
+      {/* Mobile has no top header (BottomTabBar covers nav) — float the
+          view switch top-right so User⇄City stays reachable on phones. */}
+      <div
+        className="md:hidden fixed right-3 top-0 z-50"
+        style={{ marginTop: "max(0.5rem, env(safe-area-inset-top))" }}
+      >
+        <ViewSwitch />
+      </div>
 
       {/*
        * pt-4:  on mobile the UserNav is hidden so we just need a small top
