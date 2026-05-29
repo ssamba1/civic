@@ -29,11 +29,22 @@ function parseServerEnv() {
   }
 }
 
-export const serverEnv = parseServerEnv();
+let cachedServerEnv: z.infer<typeof serverEnvSchema> | null = null;
 
 export function getServerEnv() {
-  return serverEnv;
+  if (cachedServerEnv === null) {
+    cachedServerEnv = parseServerEnv();
+  }
+  return cachedServerEnv;
 }
+
+// Lazy proxy: defers env validation to first property access (request time),
+// so build-time route collection doesn't require secrets to be present.
+export const serverEnv = new Proxy({} as z.infer<typeof serverEnvSchema>, {
+  get(_target, prop) {
+    return getServerEnv()[prop as keyof z.infer<typeof serverEnvSchema>];
+  },
+});
 
 export function getClientEnv() {
   return clientEnvSchema.parse({
