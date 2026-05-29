@@ -15,11 +15,14 @@ export function WaveStage({ className = "" }: { className?: string }) {
   return (
     <>
       <WaveHero {...params} className={className} />
-      <WaveTweaks
-        params={params}
-        set={(patch) => setParams((p) => ({ ...p, ...patch }))}
-        reset={() => setParams(DEFAULT_WAVE)}
-      />
+      {/* Developer-only tweak panel — never ships in the production demo. */}
+      {process.env.NODE_ENV !== "production" && (
+        <WaveTweaks
+          params={params}
+          set={(patch) => setParams((p) => ({ ...p, ...patch }))}
+          reset={() => setParams(DEFAULT_WAVE)}
+        />
+      )}
     </>
   );
 }

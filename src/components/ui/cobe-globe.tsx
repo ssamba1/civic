@@ -203,15 +203,28 @@ export function Globe({
     const prefersReduced =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    const isMobile =
+      window.matchMedia("(max-width: 768px)").matches ||
+      window.matchMedia("(pointer: coarse)").matches
     let ambient: Ambient[] = []
+    let visible = true
+
+    // Pause expensive GPU work + marker rebuilds when the globe is scrolled offscreen.
+    const io = new IntersectionObserver(([e]) => (visible = e.isIntersecting), {
+      rootMargin: "200px",
+    })
+    io.observe(canvas)
 
     function init() {
       const width = canvas.offsetWidth
       if (width === 0 || globe) return
 
-      ambient = populate > 0 ? genAmbient(populate, performance.now()) : []
+      ambient =
+        populate > 0
+          ? genAmbient(isMobile ? Math.min(populate, 28) : populate, performance.now())
+          : []
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2)
       globe = createGlobe(canvas, {
         devicePixelRatio: dpr,
         width,
@@ -220,7 +233,7 @@ export function Globe({
         theta,
         dark,
         diffuse,
-        mapSamples,
+        mapSamples: isMobile ? Math.min(mapSamples, 9000) : mapSamples,
         mapBrightness,
         baseColor,
         markerColor,
@@ -266,8 +279,13 @@ export function Globe({
       }
 
       function animate() {
+        if (!visible) {
+          // Offscreen: skip GPU work + marker rebuild, but keep the loop alive to resume.
+          animationId = requestAnimationFrame(animate)
+          return
+        }
         if (!isPausedRef.current) {
-          phi += speed
+          phi += prefersReduced ? 0 : speed
           if (
             Math.abs(velocity.current.phi) > 0.0001 ||
             Math.abs(velocity.current.theta) > 0.0001
@@ -327,6 +345,7 @@ export function Globe({
     }
 
     return () => {
+      io.disconnect()
       if (animationId) cancelAnimationFrame(animationId)
       if (globe) globe.destroy()
     }

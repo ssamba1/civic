@@ -282,10 +282,50 @@ export function OrbitalSteps() {
 
   useEffect(() => {
     if (!autoRotate) return;
-    const id = setInterval(() => {
+    if (typeof window === "undefined") return;
+
+    const desktopMq = window.matchMedia("(min-width: 768px)");
+    const reduceMq = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    const tick = () => {
       setRotationAngle((prev) => Number(((prev + 0.25) % 360).toFixed(3)));
-    }, 50);
-    return () => clearInterval(id);
+    };
+
+    const shouldRun = () =>
+      desktopMq.matches && !reduceMq.matches && !document.hidden;
+
+    const startInterval = () => {
+      if (intervalId === null && shouldRun()) {
+        intervalId = setInterval(tick, 50);
+      }
+    };
+
+    const stopInterval = () => {
+      if (intervalId !== null) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
+
+    const sync = () => {
+      if (shouldRun()) startInterval();
+      else stopInterval();
+    };
+
+    sync();
+
+    desktopMq.addEventListener("change", sync);
+    reduceMq.addEventListener("change", sync);
+    document.addEventListener("visibilitychange", sync);
+
+    return () => {
+      desktopMq.removeEventListener("change", sync);
+      reduceMq.removeEventListener("change", sync);
+      document.removeEventListener("visibilitychange", sync);
+      stopInterval();
+    };
   }, [autoRotate]);
 
   const calculatePosition = (index: number, total: number) => {
