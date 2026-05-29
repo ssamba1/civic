@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useMemo, useRef, useEffect } from "react";
+import { memo, useState, useMemo, useRef, useEffect, useCallback } from "react";
 import {
   CheckCircle2,
   Timer,
@@ -39,6 +39,64 @@ import type {
   ReporterVelocity,
 } from "@/lib/analytics-data";
 
+/* ------------------------------------------------------------------
+   Touch-tip helper — builds pointer-enter/leave + onClick handlers
+   that work for both mouse hover and touch tap-to-toggle.
+   ------------------------------------------------------------------ */
+function useTouchTipBinder(tip: ReturnType<typeof useHoverTip>) {
+  const lastPointerType = useRef<string>("mouse");
+  const activeKey = useRef<string | null>(null);
+
+  const bind = useCallback(
+    <K extends string>(
+      key: K,
+      tipContent: () => Parameters<typeof tip.show>[0],
+      setActive: (k: K | null) => void,
+    ) => ({
+      onPointerEnter: (e: React.PointerEvent) => {
+        lastPointerType.current = e.pointerType;
+        if (e.pointerType === "touch") return; // handled by onClick
+        setActive(key);
+        tip.show(tipContent(), e);
+      },
+      onPointerMove: (e: React.PointerEvent) => {
+        if (e.pointerType === "touch") return;
+        tip.move(e);
+      },
+      onPointerLeave: () => {
+        if (lastPointerType.current === "touch") return;
+        setActive(null);
+        tip.hide();
+      },
+      onClick: (e: React.MouseEvent) => {
+        if (lastPointerType.current !== "touch") return;
+        if (activeKey.current === key) {
+          activeKey.current = null;
+          setActive(null);
+          tip.hide();
+        } else {
+          activeKey.current = key;
+          setActive(key);
+          tip.show(tipContent(), e);
+        }
+      },
+      onFocus: (e: React.FocusEvent) => {
+        const r = (e.currentTarget as Element).getBoundingClientRect();
+        setActive(key);
+        tip.show(tipContent(), { clientX: r.left + r.width / 2, clientY: r.top });
+      },
+      onBlur: () => {
+        if (activeKey.current === key) activeKey.current = null;
+        setActive(null);
+        tip.hide();
+      },
+    }),
+    [tip],
+  );
+
+  return bind;
+}
+
 /* ==================================================================
    1. KPI cards (no expand — quick-glance numbers only)
    ================================================================== */
@@ -50,6 +108,7 @@ interface KpiCardsProps {
 function KpiCardsInner({ kpis }: KpiCardsProps) {
   const [hoveredKpi, setHoveredKpi] = useState<string | null>(null);
   const tip = useHoverTip();
+  const bindTip = useTouchTipBinder(tip);
 
   // Sensible MTTR target — not in AnalyticsKpis, so we use a civic-ops literal.
   const MTTR_TARGET_HOURS = 48;
@@ -263,30 +322,8 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
     },
   ];
 
-  const bindCard = (c: KpiCard) => ({
-    onPointerEnter: (e: React.PointerEvent) => {
-      setHoveredKpi(c.key);
-      tip.show(c.tip(), e);
-    },
-    onPointerMove: (e: React.PointerEvent) => tip.move(e),
-    onPointerLeave: () => {
-      setHoveredKpi(null);
-      tip.hide();
-    },
-    onFocus: (e: React.FocusEvent) => {
-      const target = e.currentTarget as Element;
-      const r = target.getBoundingClientRect();
-      setHoveredKpi(c.key);
-      tip.show(c.tip(), {
-        clientX: r.left + r.width / 2,
-        clientY: r.top,
-      });
-    },
-    onBlur: () => {
-      setHoveredKpi(null);
-      tip.hide();
-    },
-  });
+  const bindCard = (c: KpiCard) =>
+    bindTip(c.key, c.tip, (k) => setHoveredKpi(k as string | null));
 
   return (
     <>
@@ -307,10 +344,12 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
               role="group"
               aria-label={`${c.label}: ${c.value}`}
               className={cn(
-                "rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] p-5 text-zinc-100 outline-none cursor-default",
+                "rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] p-4 sm:p-5 text-zinc-100 outline-none cursor-default",
                 "shadow-[0_1px_2px_rgba(0,0,0,0.4)]",
                 "transition-[transform,opacity,box-shadow] duration-200 ease-out",
                 "motion-reduce:transition-none",
+                /* min-tap so the whole card is a 44px+ target on mobile */
+                "min-h-[80px]",
                 isActive
                   ? "scale-[1.015] opacity-100"
                   : isDim
@@ -839,15 +878,27 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
     };
   };
 
+  const lastPtrType = useRef<string>("mouse");
   const bindDay = (i: number) => ({
     onPointerEnter: (e: React.PointerEvent) => {
+      lastPtrType.current = e.pointerType;
+      if (e.pointerType === "touch") return;
       setHoveredDay(i);
       tip.show(tipForDay(i), e);
     },
-    onPointerMove: (e: React.PointerEvent) => tip.move(e),
+    onPointerMove: (e: React.PointerEvent) => {
+      if (e.pointerType === "touch") return;
+      tip.move(e);
+    },
     onPointerLeave: () => {
+      if (lastPtrType.current === "touch") return;
       setHoveredDay(null);
       tip.hide();
+    },
+    onClick: (e: React.MouseEvent) => {
+      if (lastPtrType.current !== "touch") return;
+      if (hoveredDay === i) { setHoveredDay(null); tip.hide(); }
+      else { setHoveredDay(i); tip.show(tipForDay(i), e); }
     },
     onFocus: (e: React.FocusEvent) => {
       const target = e.currentTarget as Element;
@@ -921,7 +972,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
         </div>
         <TrendChart
           data={data}
-          heightClass="h-[260px]"
+          heightClass="h-[180px] sm:h-[220px] lg:h-[260px]"
           showCreated
           showClosed
           smooth
@@ -1191,15 +1242,27 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
     };
   };
 
+  const slicePtrType = useRef<string>("mouse");
   const bindSlice = (s: SeveritySlice) => ({
     onPointerEnter: (e: React.PointerEvent) => {
+      slicePtrType.current = e.pointerType;
+      if (e.pointerType === "touch") return;
       setHovered(s.severity);
       tip.show(tipFor(s), e);
     },
-    onPointerMove: (e: React.PointerEvent) => tip.move(e),
+    onPointerMove: (e: React.PointerEvent) => {
+      if (e.pointerType === "touch") return;
+      tip.move(e);
+    },
     onPointerLeave: () => {
+      if (slicePtrType.current === "touch") return;
       setHovered(null);
       tip.hide();
+    },
+    onClick: (e: React.MouseEvent) => {
+      if (slicePtrType.current !== "touch") return;
+      if (hovered === s.severity) { setHovered(null); tip.hide(); }
+      else { setHovered(s.severity); tip.show(tipFor(s), e); }
     },
     onFocus: (e: React.FocusEvent) => {
       const target = e.currentTarget as Element;
@@ -1246,7 +1309,7 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
                 <li
                   key={s.severity}
                   className={cn(
-                    "flex flex-col items-center gap-1 rounded-md py-1.5 transition-colors cursor-default",
+                    "flex flex-col items-center gap-1 rounded-md py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 justify-center transition-colors cursor-default",
                     isActive
                       ? "bg-white/[0.05]"
                       : hovered !== null
@@ -1509,15 +1572,27 @@ function StatusFunnelInner({ data }: StatusFunnelProps) {
     };
   };
 
+  const stepPtrType = useRef<string>("mouse");
   const bindStep = (step: StatusFunnelStep) => ({
     onPointerEnter: (e: React.PointerEvent) => {
+      stepPtrType.current = e.pointerType;
+      if (e.pointerType === "touch") return;
       setHovered(step.status);
       tip.show(tipFor(step), e);
     },
-    onPointerMove: (e: React.PointerEvent) => tip.move(e),
+    onPointerMove: (e: React.PointerEvent) => {
+      if (e.pointerType === "touch") return;
+      tip.move(e);
+    },
     onPointerLeave: () => {
+      if (stepPtrType.current === "touch") return;
       setHovered(null);
       tip.hide();
+    },
+    onClick: (e: React.MouseEvent) => {
+      if (stepPtrType.current !== "touch") return;
+      if (hovered === step.status) { setHovered(null); tip.hide(); }
+      else { setHovered(step.status); tip.show(tipFor(step), e); }
     },
     onFocus: (e: React.FocusEvent) => {
       const target = e.currentTarget as Element;
@@ -1808,15 +1883,27 @@ function ResolutionHistogramInner({ data }: ResolutionHistogramProps) {
     };
   };
 
+  const barPtrType = useRef<string>("mouse");
   const bindBar = (i: number) => ({
     onPointerEnter: (e: React.PointerEvent) => {
+      barPtrType.current = e.pointerType;
+      if (e.pointerType === "touch") return;
       setHoveredBar(i);
       tip.show(tipForBar(i), e);
     },
-    onPointerMove: (e: React.PointerEvent) => tip.move(e),
+    onPointerMove: (e: React.PointerEvent) => {
+      if (e.pointerType === "touch") return;
+      tip.move(e);
+    },
     onPointerLeave: () => {
+      if (barPtrType.current === "touch") return;
       setHoveredBar(null);
       tip.hide();
+    },
+    onClick: (e: React.MouseEvent) => {
+      if (barPtrType.current !== "touch") return;
+      if (hoveredBar === i) { setHoveredBar(null); tip.hide(); }
+      else { setHoveredBar(i); tip.show(tipForBar(i), e); }
     },
     onFocus: (e: React.FocusEvent) => {
       const target = e.currentTarget as Element;
@@ -1920,6 +2007,7 @@ interface HeatmapHoverHandlers {
   onPointerEnter: (e: React.PointerEvent) => void;
   onPointerMove: (e: React.PointerEvent) => void;
   onPointerLeave: () => void;
+  onClick?: (e: React.MouseEvent) => void;
   onFocus: (e: React.FocusEvent) => void;
   onBlur: () => void;
 }
@@ -2239,16 +2327,29 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
     };
   };
 
+  const heatPtrType = useRef<string>("mouse");
   const bindCell = (cell: HeatCell): HeatmapHoverHandlers => ({
     onPointerEnter: (e) => {
+      heatPtrType.current = e.pointerType;
+      if (e.pointerType === "touch") return;
       setHoveredCell({ day: cell.day, hour: cell.hour });
       setHoveredDay(null);
       tip.show(tipForCell(cell), e);
     },
-    onPointerMove: (e) => tip.move(e),
+    onPointerMove: (e) => {
+      if (e.pointerType === "touch") return;
+      tip.move(e);
+    },
     onPointerLeave: () => {
+      if (heatPtrType.current === "touch") return;
       setHoveredCell(null);
       tip.hide();
+    },
+    onClick: (e) => {
+      if (heatPtrType.current !== "touch") return;
+      const isActive = hoveredCell?.day === cell.day && hoveredCell?.hour === cell.hour;
+      if (isActive) { setHoveredCell(null); tip.hide(); }
+      else { setHoveredCell({ day: cell.day, hour: cell.hour }); setHoveredDay(null); tip.show(tipForCell(cell), e); }
     },
     onFocus: (e) => {
       const target = e.currentTarget as Element;
@@ -2268,14 +2369,25 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
 
   const bindDay = (day: number): HeatmapHoverHandlers => ({
     onPointerEnter: (e) => {
+      heatPtrType.current = e.pointerType;
+      if (e.pointerType === "touch") return;
       setHoveredDay(day);
       setHoveredCell(null);
       tip.show(tipForDay(day), e);
     },
-    onPointerMove: (e) => tip.move(e),
+    onPointerMove: (e) => {
+      if (e.pointerType === "touch") return;
+      tip.move(e);
+    },
     onPointerLeave: () => {
+      if (heatPtrType.current === "touch") return;
       setHoveredDay(null);
       tip.hide();
+    },
+    onClick: (e) => {
+      if (heatPtrType.current !== "touch") return;
+      if (hoveredDay === day) { setHoveredDay(null); tip.hide(); }
+      else { setHoveredDay(day); setHoveredCell(null); tip.show(tipForDay(day), e); }
     },
     onFocus: (e) => {
       const target = e.currentTarget as Element;
@@ -2295,13 +2407,24 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
 
   const bindLegend = (idx: number): HeatmapHoverHandlers => ({
     onPointerEnter: (e) => {
+      heatPtrType.current = e.pointerType;
+      if (e.pointerType === "touch") return;
       setHoveredLegend(idx);
       tip.show(tipForLegend(idx), e);
     },
-    onPointerMove: (e) => tip.move(e),
+    onPointerMove: (e) => {
+      if (e.pointerType === "touch") return;
+      tip.move(e);
+    },
     onPointerLeave: () => {
+      if (heatPtrType.current === "touch") return;
       setHoveredLegend(null);
       tip.hide();
+    },
+    onClick: (e) => {
+      if (heatPtrType.current !== "touch") return;
+      if (hoveredLegend === idx) { setHoveredLegend(null); tip.hide(); }
+      else { setHoveredLegend(idx); tip.show(tipForLegend(idx), e); }
     },
     onFocus: (e) => {
       const target = e.currentTarget as Element;
@@ -2579,15 +2702,27 @@ function TopNeighborhoodsInner({ data }: TopNeighborhoodsProps) {
     };
   };
 
+  const nbPtrType = useRef<string>("mouse");
   const bindNeighborhood = (n: NeighborhoodVolume, rank: number) => ({
     onPointerEnter: (e: React.PointerEvent) => {
+      nbPtrType.current = e.pointerType;
+      if (e.pointerType === "touch") return;
       setHovered(n.name);
       tip.show(tipFor(n, rank), e);
     },
-    onPointerMove: (e: React.PointerEvent) => tip.move(e),
+    onPointerMove: (e: React.PointerEvent) => {
+      if (e.pointerType === "touch") return;
+      tip.move(e);
+    },
     onPointerLeave: () => {
+      if (nbPtrType.current === "touch") return;
       setHovered(null);
       tip.hide();
+    },
+    onClick: (e: React.MouseEvent) => {
+      if (nbPtrType.current !== "touch") return;
+      if (hovered === n.name) { setHovered(null); tip.hide(); }
+      else { setHovered(n.name); tip.show(tipFor(n, rank), e); }
     },
     onFocus: (e: React.FocusEvent) => {
       const target = e.currentTarget as Element;
@@ -2881,15 +3016,27 @@ function CategoryResolutionTableInner({ data }: CategoryResolutionTableProps) {
     };
   };
 
+  const rowPtrType = useRef<string>("mouse");
   const bindRow = (row: CategoryResolution) => ({
     onPointerEnter: (e: React.PointerEvent) => {
+      rowPtrType.current = e.pointerType;
+      if (e.pointerType === "touch") return;
       setHovered(row.category);
       tip.show(tipFor(row), e);
     },
-    onPointerMove: (e: React.PointerEvent) => tip.move(e),
+    onPointerMove: (e: React.PointerEvent) => {
+      if (e.pointerType === "touch") return;
+      tip.move(e);
+    },
     onPointerLeave: () => {
+      if (rowPtrType.current === "touch") return;
       setHovered(null);
       tip.hide();
+    },
+    onClick: (e: React.MouseEvent) => {
+      if (rowPtrType.current !== "touch") return;
+      if (hovered === row.category) { setHovered(null); tip.hide(); }
+      else { setHovered(row.category); tip.show(tipFor(row), e); }
     },
     onFocus: (e: React.FocusEvent) => {
       const target = e.currentTarget as Element;
@@ -3168,10 +3315,27 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
     ),
   });
 
+  const bigNumPtrType = useRef<string>("mouse");
+  const [bigNumTipOpen, setBigNumTipOpen] = useState(false);
   const bindBigNumber = {
-    onPointerEnter: (e: React.PointerEvent) => tip.show(bigNumberTip(), e),
-    onPointerMove: (e: React.PointerEvent) => tip.move(e),
-    onPointerLeave: () => tip.hide(),
+    onPointerEnter: (e: React.PointerEvent) => {
+      bigNumPtrType.current = e.pointerType;
+      if (e.pointerType === "touch") return;
+      tip.show(bigNumberTip(), e);
+    },
+    onPointerMove: (e: React.PointerEvent) => {
+      if (e.pointerType === "touch") return;
+      tip.move(e);
+    },
+    onPointerLeave: (e: React.PointerEvent) => {
+      if (e.pointerType === "touch") return;
+      tip.hide();
+    },
+    onClick: (e: React.MouseEvent) => {
+      if (bigNumPtrType.current !== "touch") return;
+      if (bigNumTipOpen) { setBigNumTipOpen(false); tip.hide(); }
+      else { setBigNumTipOpen(true); tip.show(bigNumberTip(), e); }
+    },
     onFocus: (e: React.FocusEvent) => {
       const r = (e.currentTarget as Element).getBoundingClientRect();
       tip.show(bigNumberTip(), {
@@ -3179,7 +3343,7 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
         clientY: r.top,
       });
     },
-    onBlur: () => tip.hide(),
+    onBlur: () => { setBigNumTipOpen(false); tip.hide(); },
   };
 
   const sparkTipFor = (i: number, v: number): Parameters<typeof tip.show>[0] => {
@@ -3233,15 +3397,27 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
     };
   };
 
+  const sparkPtrType = useRef<string>("mouse");
   const bindSparkPoint = (i: number, v: number) => ({
     onPointerEnter: (e: React.PointerEvent) => {
+      sparkPtrType.current = e.pointerType;
+      if (e.pointerType === "touch") return;
       setActivePoint(i);
       tip.show(sparkTipFor(i, v), e);
     },
-    onPointerMove: (e: React.PointerEvent) => tip.move(e),
+    onPointerMove: (e: React.PointerEvent) => {
+      if (e.pointerType === "touch") return;
+      tip.move(e);
+    },
     onPointerLeave: () => {
+      if (sparkPtrType.current === "touch") return;
       setActivePoint(null);
       tip.hide();
+    },
+    onClick: (e: React.MouseEvent) => {
+      if (sparkPtrType.current !== "touch") return;
+      if (activePoint === i) { setActivePoint(null); tip.hide(); }
+      else { setActivePoint(i); tip.show(sparkTipFor(i, v), e); }
     },
     onFocus: (e: React.FocusEvent) => {
       const r = (e.currentTarget as Element).getBoundingClientRect();

@@ -122,7 +122,7 @@ export function WorkOrderComments({ workOrderId }: WorkOrderCommentsProps) {
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="Add a comment… (⌘Enter / Ctrl+Enter to post)"
-        className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+        className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-base text-zinc-900 placeholder:text-zinc-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 sm:text-sm"
         rows={3}
         maxLength={2000}
       />
@@ -130,7 +130,7 @@ export function WorkOrderComments({ workOrderId }: WorkOrderCommentsProps) {
       <button
         onClick={handleSubmit}
         disabled={isPending || !draft.trim()}
-        className="mt-2 flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+        className="mt-2 flex min-h-11 items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 md:min-h-0"
       >
         <Send className="h-3 w-3" />
         Post

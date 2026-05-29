@@ -24,14 +24,12 @@ interface DashboardInteractiveProps {
   initialStats: CityStats;
   center: [number, number];
   zoom: number;
-  upvotedIds?: string[];
 }
 
 export function DashboardInteractive({
   initialStats,
   center,
   zoom,
-  upvotedIds = [],
 }: DashboardInteractiveProps) {
   const { filter, patch } = useFilters();
   const filteredReports = useFilteredReports();
@@ -127,7 +125,7 @@ export function DashboardInteractive({
         />
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5">
         <div className="lg:col-span-3">
           <CategoryChart
             data={categories}
@@ -140,7 +138,6 @@ export function DashboardInteractive({
             reports={filteredReports}
             focusedId={focusedReportId}
             onClickReport={handleSelectReport}
-            upvotedIds={upvotedIds}
           />
         </div>
       </div>

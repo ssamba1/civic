@@ -33,10 +33,10 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
   if (!city) notFound();
 
   return (
-    <div className="relative flex flex-col min-h-screen bg-black">
-      <div className="relative flex-grow mx-auto w-full max-w-7xl px-4 pt-20 pb-10 sm:px-6 lg:px-8">
+    <div className="relative flex flex-col min-h-dvh bg-black">
+      <div className="relative flex-grow mx-auto w-full max-w-7xl px-4 pt-16 pb-10 sm:pt-20 sm:px-6 lg:px-8">
         {/* Hero */}
-        <section className="mb-8">
+        <section className="mb-6 sm:mb-8">
           <p className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.08em] text-zinc-500">
             <span
               className="h-1.5 w-1.5 rounded-full bg-[#0a84ff] shadow-[0_0_6px_rgba(10,132,255,0.6)]"
@@ -44,10 +44,10 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
             />
             {city.name}, {city.state}
           </p>
-          <h1 className="mt-2 text-[34px] sm:text-[40px] font-semibold tracking-tight text-white leading-[1.1]">
+          <h1 className="mt-2 text-[28px] sm:text-[34px] lg:text-[40px] font-semibold tracking-tight text-white leading-[1.1]">
             Analytics
           </h1>
-          <p className="mt-3 text-sm text-zinc-400">
+          <p className="mt-2 sm:mt-3 text-sm text-zinc-400">
             Operational signal — what&apos;s shipping, what&apos;s stuck, where it&apos;s happening.
           </p>
         </section>
@@ -55,7 +55,7 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
         <AnalyticsInteractive />
       </div>
 
-      <footer className="border-t border-white/[0.06] mt-10">
+      <footer className="border-t border-white/[0.06] mt-10 pb-safe">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-6 text-[13px] text-zinc-500 sm:flex-row sm:px-6 lg:px-8">
           <span>Civic</span>
           <span>&copy; {new Date().getFullYear()} · Open311 compatible</span>

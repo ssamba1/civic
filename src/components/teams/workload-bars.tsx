@@ -62,23 +62,26 @@ function WorkloadBarsInner({
           const widthPct = (w.total / maxTotal) * 100;
           const isSelected = selectedTeam === w.teamId;
           const isDimmed = selectedTeam !== "all" && !isSelected;
+          const { onClick: tipOnClick, ...tipRest } = tip.bindTarget(() => buildTip(w));
           return (
             <li key={w.teamId}>
               <button
                 type="button"
-                onClick={() => onSelectTeam(w.teamId)}
+                onClick={(e) => { tipOnClick?.(e); onSelectTeam(w.teamId); }}
                 aria-pressed={isSelected}
                 aria-label={`Scope view to ${team.label}`}
                 className={cn(
-                  "grid w-full grid-cols-[140px_minmax(0,1fr)_56px] items-center gap-3",
-                  "rounded-md px-2 py-1.5 -mx-2 text-left transition-colors",
+                  "grid w-full grid-cols-[minmax(0,1fr)_56px] items-center gap-2",
+                  "sm:grid-cols-[140px_minmax(0,1fr)_56px] sm:gap-3",
+                  "rounded-md px-2 py-2.5 -mx-2 text-left transition-colors min-h-[44px]",
                   "outline-none focus-visible:bg-white/[0.04] focus-visible:ring-1 focus-visible:ring-white/20",
                   isSelected ? "bg-white/[0.05]" : "hover:bg-white/[0.03]",
                   isDimmed && "opacity-50",
                 )}
-                {...tip.bindTarget(() => buildTip(w))}
+                {...tipRest}
               >
-                <span className="flex min-w-0 items-center gap-2 text-[12px] text-zinc-300">
+                {/* Label: hidden on mobile (bar+count only); shown sm+ */}
+                <span className="hidden sm:flex min-w-0 items-center gap-2 text-[12px] text-zinc-300">
                   <span
                     className="h-2 w-2 flex-shrink-0 rounded-full"
                     style={{ background: team.color }}
@@ -86,7 +89,27 @@ function WorkloadBarsInner({
                   />
                   <span className="truncate">{team.shortLabel}</span>
                 </span>
-                <div className="relative h-3 w-full overflow-hidden rounded-full bg-white/[0.04]">
+                {/* Mobile-only label + bar stacked */}
+                <div className="flex flex-col gap-1 sm:hidden col-span-1">
+                  <span className="flex min-w-0 items-center gap-2 text-[12px] text-zinc-300">
+                    <span
+                      className="h-2 w-2 flex-shrink-0 rounded-full"
+                      style={{ background: team.color }}
+                      aria-hidden
+                    />
+                    <span className="truncate">{team.shortLabel}</span>
+                  </span>
+                  <div className="relative h-3 w-full overflow-hidden rounded-full bg-white/[0.04]">
+                    <div
+                      className="flex h-full overflow-hidden rounded-full"
+                      style={{ width: `${widthPct}%` }}
+                    >
+                      <StackedSegments byStatus={w.byStatus} total={w.total} />
+                    </div>
+                  </div>
+                </div>
+                {/* sm+ bar (middle column) */}
+                <div className="relative hidden sm:block h-3 w-full overflow-hidden rounded-full bg-white/[0.04]">
                   <div
                     className="flex h-full overflow-hidden rounded-full"
                     style={{ width: `${widthPct}%` }}

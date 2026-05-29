@@ -55,7 +55,7 @@ export default async function CityDashboardPage({
   const stats = await fetchCityStats(city.id);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-dvh">
       <div className="flex-grow mx-auto w-full max-w-7xl px-4 pt-20 pb-10 sm:px-6 lg:px-8">
         {/* Hero */}
         <section className="mb-10">
@@ -68,24 +68,24 @@ export default async function CityDashboardPage({
                 />
                 {city.name}, {city.state}
               </p>
-              <h1 className="mt-2 text-[34px] sm:text-[40px] font-semibold tracking-tight text-white leading-[1.1]">
+              <h1 className="mt-2 text-[28px] sm:text-[34px] lg:text-[40px] font-semibold tracking-tight text-white leading-[1.1]">
                 Teams
               </h1>
               <p className="mt-2 max-w-xl text-sm text-zinc-400">
                 Workload, delegation, and queue depth across municipal divisions.
               </p>
-              <div className="mt-4 flex items-center gap-3 text-sm text-zinc-400">
+              <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-zinc-400">
                 <span>
                   <span className="font-medium text-zinc-200">
                     {stats.total.toLocaleString()}
                   </span>{" "}
                   tracked
                 </span>
-                <span className="h-3 w-px bg-white/[0.08]" aria-hidden="true" />
+                <span className="h-3 w-px bg-white/[0.08] hidden sm:block" aria-hidden="true" />
                 <span>
                   <span className="font-medium text-zinc-200">{stats.open}</span> open
                 </span>
-                <span className="h-3 w-px bg-white/[0.08]" aria-hidden="true" />
+                <span className="h-3 w-px bg-white/[0.08] hidden sm:block" aria-hidden="true" />
                 <span>
                   <span className="font-medium text-zinc-200">
                     {stats.this_week}
@@ -96,7 +96,7 @@ export default async function CityDashboardPage({
             </div>
             <Link
               href="/report"
-              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[#0a84ff] px-5 text-[14px] font-medium text-white outline-none transition-colors hover:bg-[#0070e0] focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              className="inline-flex h-11 min-w-[44px] self-start sm:self-auto items-center gap-1.5 rounded-full bg-[#0a84ff] px-5 text-[14px] font-medium text-white outline-none transition-colors hover:bg-[#0070e0] focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
             >
               <Camera className="h-4 w-4" />
               Report an issue

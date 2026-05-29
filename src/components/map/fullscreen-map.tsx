@@ -5,6 +5,7 @@ import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import { ReportMap, type MapTheme } from "@/components/map/report-map";
 import { LiquidGlassCard } from "@/components/ui/liquid-glass";
+import BottomSheet from "@/components/ui/bottom-sheet";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 import {
   TEAM_LIST,
@@ -22,6 +23,7 @@ import {
   Shield,
   ChevronDown,
   X,
+  ListFilter,
 } from "lucide-react";
 
 interface FullscreenMapOrchestratorProps {
@@ -129,6 +131,9 @@ export function FullscreenMapOrchestrator({
     }
   };
 
+  // Mobile: bottom-sheet open state for dispatch panel
+  const [isDispatchSheetOpen, setIsDispatchSheetOpen] = useState(false);
+
   // Route/Assign to team action
   const handleRouteToTeam = (reportId: string, teamId: TeamId) => {
     setReports((prevReports) =>
@@ -170,8 +175,300 @@ export function FullscreenMapOrchestrator({
     return list;
   }, [reports]);
 
+  // Shared dispatch panel content — rendered both in desktop sidebar and mobile bottom-sheet
+  const dispatchPanelContent = (
+    <div className="flex flex-col gap-3 h-full overflow-y-auto custom-scrollbar pr-1 select-none">
+      {/* Active team banner */}
+      {selectedTeam !== "all" && (
+        <div
+          className="flex items-center gap-2 rounded-md border px-2.5 py-1.5 shrink-0"
+          style={{
+            borderColor: `${activeTeamMeta.color}55`,
+            backgroundColor: `${activeTeamMeta.color}15`,
+          }}
+        >
+          <Shield
+            className="h-3.5 w-3.5 shrink-0"
+            style={{ color: activeTeamMeta.color }}
+            strokeWidth={1.75}
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] uppercase tracking-wide text-zinc-400">
+              Viewing as
+            </p>
+            <p className="text-[12px] font-medium text-white leading-tight truncate">
+              {activeTeamMeta.shortLabel}
+            </p>
+          </div>
+          <button
+            onClick={() => setSelectedTeam("all")}
+            className="text-zinc-400 hover:text-white p-0.5 rounded min-h-[44px] min-w-[44px] flex items-center justify-center lg:min-h-0 lg:min-w-0"
+            title="Switch back to All Teams"
+            aria-label="Switch back to All Teams"
+          >
+            <X className="h-3.5 w-3.5" strokeWidth={1.75} />
+          </button>
+        </div>
+      )}
+
+      {/* Route confirmation toast */}
+      {routeNotification && (
+        <div className="bg-[#30d158]/10 border border-[#30d158]/20 rounded-lg p-3 flex items-center gap-2 shrink-0 animate-in fade-in slide-in-from-top-1 duration-150">
+          <CheckCircle2 className="w-4 h-4 text-[#30d158] shrink-0" strokeWidth={1.75} />
+          <p className="text-[13px] text-white/90 leading-tight">{routeNotification.message}</p>
+        </div>
+      )}
+
+      {/* Quick filters */}
+      <div className="rounded-lg bg-white/[0.025] border border-white/[0.05] p-3 flex flex-col gap-3">
+        {/* Team — primary scoping */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[12px] text-zinc-300 flex items-center gap-1.5">
+            <Shield className="w-3 h-3" strokeWidth={1.75} />
+            Team view
+          </label>
+          <div className="relative">
+            <select
+              value={selectedTeam}
+              onChange={(e) => setSelectedTeam(e.target.value as TeamId)}
+              className="w-full bg-black/40 border border-white/[0.08] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:border-white/20 cursor-pointer appearance-none pr-8 transition-colors lg:py-1.5 lg:text-[13px]"
+            >
+              {TEAM_LIST.map((team) => (
+                <option key={team.id} value={team.id}>
+                  {team.shortLabel}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" strokeWidth={1.75} />
+          </div>
+          <p className="text-[11px] text-zinc-500 leading-snug">
+            {activeTeamMeta.duties}
+          </p>
+        </div>
+
+        {/* Category */}
+        <div className="flex flex-col gap-1.5 border-t border-white/[0.06] pt-3">
+          <label className="text-[12px] text-zinc-300">Category</label>
+          <div className="relative">
+            <select
+              value={selectedCategory || ""}
+              onChange={(e) => setSelectedCategory((e.target.value as ReportCategory) || null)}
+              className="w-full bg-black/40 border border-white/[0.08] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:border-white/20 cursor-pointer appearance-none pr-8 transition-colors lg:py-1.5 lg:text-[13px]"
+            >
+              <option value="">All categories</option>
+              {categoriesList.map((c) => (
+                <option key={c.key} value={c.key}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" strokeWidth={1.75} />
+          </div>
+        </div>
+
+        {/* Severity */}
+        <div className="flex flex-col gap-1.5">
+          <div className="flex justify-between text-[12px] text-zinc-300">
+            <span>Min severity</span>
+            <span className="text-white tabular-nums">
+              {minSeverity}+
+            </span>
+          </div>
+          <input
+            type="range"
+            min="1"
+            max="5"
+            step="1"
+            value={minSeverity}
+            onChange={(e) => setMinSeverity(parseInt(e.target.value))}
+            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
+          />
+        </div>
+
+        {/* Status */}
+        <div className="flex flex-col gap-1.5 border-t border-white/[0.06] pt-3">
+          <span className="text-[12px] text-zinc-300">Status</span>
+          <div className="grid grid-cols-2 gap-1">
+            {(["open", "dispatched", "in_progress", "closed"] as const).map((s) => {
+              const isChecked = activeStatuses.includes(s);
+              const displayNames: Record<string, string> = {
+                open: "Open",
+                dispatched: "Dispatched",
+                in_progress: "In progress",
+                closed: "Resolved",
+              };
+              return (
+                <button
+                  key={s}
+                  onClick={() => handleToggleStatus(s)}
+                  className={`rounded px-2 py-2 text-[12px] text-left transition-colors min-h-[44px] flex items-center lg:py-1 lg:min-h-0 ${
+                    isChecked
+                      ? "bg-white/[0.08] text-white"
+                      : "bg-transparent text-zinc-400 hover:text-white hover:bg-white/[0.03]"
+                  }`}
+                >
+                  {displayNames[s]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="border-t border-white/10" />
+
+      {/* Incident Feed list */}
+      <div className="space-y-2">
+        {filteredReports.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-center p-6 text-zinc-500">
+            <Sliders className="w-7 h-7 opacity-25 mb-3" />
+            <p className="text-sm text-zinc-300">No matching reports</p>
+            <p className="text-xs text-zinc-500 mt-1">Adjust filters to see more.</p>
+          </div>
+        ) : (
+          filteredReports.map((report) => {
+            const meta = CATEGORY_META[report.category];
+            const isSelected = focusedReportId === report.id;
+            const isMenuOpen = activeRouteMenuId === report.id;
+            const ownerTeamId = categoryToTeam(report.category);
+            const ownerTeam = TEAM_META[ownerTeamId];
+
+            return (
+              <div
+                key={report.id}
+                onClick={() => setFocusedReportId(isSelected ? null : report.id)}
+                className={`p-3 rounded-lg transition-colors cursor-pointer flex flex-col gap-1.5 min-h-[44px] lg:min-h-0 ${
+                  isSelected
+                    ? "bg-white/[0.08]"
+                    : "bg-transparent hover:bg-white/[0.03]"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[13px] font-medium text-white leading-tight">
+                    {meta.label}
+                  </span>
+                  <span
+                    className={`text-[12px] ${STATUS_TONE[report.status] ?? "text-zinc-400"}`}
+                  >
+                    {STATUS_LABEL[report.status] ?? report.status}
+                  </span>
+                </div>
+
+                <p className="text-[12px] text-zinc-300 leading-tight line-clamp-1">
+                  {report.address}
+                </p>
+
+                {/* Auto-assigned team chip */}
+                <div
+                  className="inline-flex self-start items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium"
+                  style={{
+                    borderColor: `${ownerTeam.color}66`,
+                    backgroundColor: `${ownerTeam.color}1f`,
+                    color: ownerTeam.color,
+                  }}
+                >
+                  {ownerTeam.shortLabel}
+                </div>
+
+                <div className="flex items-center justify-between text-[12px] text-zinc-400">
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="w-3 h-3" strokeWidth={1.75} />
+                    {formatTimeAgo(report.created_at)}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Star className="w-3 h-3" strokeWidth={1.75} />
+                    {report.severity}/5
+                  </span>
+                </div>
+
+                {/* Route action */}
+                {isSelected && (
+                  <div className="mt-2 pt-2.5 border-t border-white/[0.06] flex flex-col gap-2 relative z-20 animate-in fade-in duration-150">
+                    {!isMenuOpen ? (
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRouteToTeam(report.id, ownerTeamId);
+                          }}
+                          disabled={report.status === "closed"}
+                          className="flex-1 py-2.5 bg-[#0a84ff] hover:bg-[#0070e0] text-white rounded-md text-[12px] flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] lg:py-1.5 lg:min-h-0"
+                        >
+                          <Send className="w-3 h-3" strokeWidth={1.75} />
+                          Auto-dispatch
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveRouteMenuId(report.id);
+                          }}
+                          disabled={report.status === "closed"}
+                          className="px-3 py-2.5 bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 rounded-md text-[12px] flex items-center justify-center gap-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] lg:py-1.5 lg:px-2 lg:min-h-0"
+                          aria-label="Override target team"
+                        >
+                          Override
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-1 bg-black/40 border border-white/[0.08] rounded-md p-2 animate-in fade-in duration-100 pointer-events-auto">
+                        <div className="flex justify-between items-center pb-1 mb-1 text-[12px] text-zinc-400">
+                          <span>Override target team</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveRouteMenuId(null);
+                            }}
+                            className="p-2 hover:bg-white/[0.06] rounded text-zinc-400 hover:text-white min-h-[44px] min-w-[44px] flex items-center justify-center lg:p-0.5 lg:min-h-0 lg:min-w-0"
+                            aria-label="Close override menu"
+                          >
+                            <X className="w-3 h-3" strokeWidth={1.75} />
+                          </button>
+                        </div>
+                        <div className="flex flex-col gap-0.5 max-h-[18rem] overflow-y-auto custom-scrollbar">
+                          {TEAM_LIST.filter((t) => t.id !== "all").map(
+                            (team) => {
+                              const isOwner = team.id === ownerTeamId;
+                              return (
+                                <button
+                                  key={team.id}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRouteToTeam(report.id, team.id);
+                                  }}
+                                  className="flex items-center gap-2 px-2 py-3 text-left text-[12px] text-zinc-300 hover:bg-white/[0.06] hover:text-white rounded transition-colors min-h-[44px] lg:py-1.5 lg:min-h-0"
+                                >
+                                  <span
+                                    className="h-2 w-2 shrink-0 rounded-full"
+                                    style={{ backgroundColor: team.color }}
+                                  />
+                                  <span className="flex-1 truncate">
+                                    {team.shortLabel}
+                                  </span>
+                                  {isOwner && (
+                                    <span className="text-[10px] text-[#0a84ff] uppercase tracking-wide">
+                                      Default
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            },
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="h-screen w-full relative overflow-hidden flex bg-black select-none">
+    <div className="h-dvh w-full relative overflow-hidden flex bg-black select-none">
 
       {/* Full-viewport map */}
       <div className="absolute inset-0 z-0 h-full w-full pointer-events-auto">
@@ -193,9 +490,35 @@ export function FullscreenMapOrchestrator({
         />
       </div>
 
-      {/* Side panel — Dispatch */}
+      {/* Mobile dispatch FAB — bottom-left, above safe area, hidden on desktop.
+          Offset is +3.5rem above the HUD pill (same corner, same base offset) to
+          prevent the two elements from stacking on top of each other. */}
+      <button
+        onClick={() => setIsDispatchSheetOpen(true)}
+        className="lg:hidden absolute bottom-[calc(env(safe-area-inset-bottom,0px)+3.5rem)] left-4 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-[#1c1c1e] border border-white/[0.12] text-white shadow-lg active:scale-95 transition-transform pointer-events-auto"
+        aria-label="Open dispatch panel"
+      >
+        <ListFilter className="h-5 w-5" strokeWidth={1.75} />
+        {filteredReports.length > 0 && (
+          <span className="absolute -top-1 -right-1 h-4 min-w-[1rem] rounded-full bg-[#0a84ff] text-white text-[9px] font-bold flex items-center justify-center px-0.5 tabular-nums">
+            {filteredReports.length > 99 ? "99+" : filteredReports.length}
+          </span>
+        )}
+      </button>
+
+      {/* Mobile bottom-sheet for dispatch panel */}
+      <BottomSheet
+        open={isDispatchSheetOpen}
+        onClose={() => setIsDispatchSheetOpen(false)}
+        title={`Dispatch · ${filteredReports.length} reports`}
+        className="bg-[#0a0a0b] text-white border-t border-white/[0.08]"
+      >
+        {dispatchPanelContent}
+      </BottomSheet>
+
+      {/* Desktop side panel — Dispatch (hidden on mobile) */}
       <LiquidGlassCard
-        className="absolute top-16 left-4 bottom-4 w-[280px] pointer-events-auto z-10 overflow-hidden animate-in slide-in-from-left-2 duration-300"
+        className="hidden lg:flex absolute top-16 left-4 bottom-4 w-[280px] pointer-events-auto z-10 overflow-hidden animate-in slide-in-from-left-2 duration-300"
         contentClassName={`${
           isLightBasemap ? "bg-black/55" : "bg-black/10"
         } p-4 text-white flex flex-col overflow-hidden`}
@@ -213,292 +536,9 @@ export function FullscreenMapOrchestrator({
           </span>
         </div>
 
-        {/* Active team banner */}
-        {selectedTeam !== "all" && (
-          <div
-            className="mb-3 flex items-center gap-2 rounded-md border px-2.5 py-1.5 shrink-0"
-            style={{
-              borderColor: `${activeTeamMeta.color}55`,
-              backgroundColor: `${activeTeamMeta.color}15`,
-            }}
-          >
-            <Shield
-              className="h-3.5 w-3.5 shrink-0"
-              style={{ color: activeTeamMeta.color }}
-              strokeWidth={1.75}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] uppercase tracking-wide text-zinc-400">
-                Viewing as
-              </p>
-              <p className="text-[12px] font-medium text-white leading-tight truncate">
-                {activeTeamMeta.shortLabel}
-              </p>
-            </div>
-            <button
-              onClick={() => setSelectedTeam("all")}
-              className="text-zinc-400 hover:text-white p-0.5 rounded"
-              title="Switch back to All Teams"
-            >
-              <X className="h-3.5 w-3.5" strokeWidth={1.75} />
-            </button>
-          </div>
-        )}
-
-        {/* Route confirmation toast */}
-        {routeNotification && (
-          <div className="mb-3 bg-[#30d158]/10 border border-[#30d158]/20 rounded-lg p-3 flex items-center gap-2 shrink-0 animate-in fade-in slide-in-from-top-1 duration-150">
-            <CheckCircle2 className="w-4 h-4 text-[#30d158] shrink-0" strokeWidth={1.75} />
-            <p className="text-[13px] text-white/90 leading-tight">{routeNotification.message}</p>
-          </div>
-        )}
-
-        {/* Scrollable column — filters scroll WITH the feed (not pinned) */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 select-none flex flex-col gap-3">
-          {/* Quick filters */}
-          <div className="rounded-lg bg-white/[0.025] border border-white/[0.05] p-3 flex flex-col gap-3">
-            {/* Team — primary scoping */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[12px] text-zinc-300 flex items-center gap-1.5">
-                <Shield className="w-3 h-3" strokeWidth={1.75} />
-                Team view
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedTeam}
-                  onChange={(e) => setSelectedTeam(e.target.value as TeamId)}
-                  className="w-full bg-black/40 border border-white/[0.08] rounded-md px-3 py-1.5 text-[13px] text-white focus:outline-none focus:border-white/20 cursor-pointer appearance-none pr-8 transition-colors"
-                >
-                  {TEAM_LIST.map((team) => (
-                    <option key={team.id} value={team.id}>
-                      {team.shortLabel}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" strokeWidth={1.75} />
-              </div>
-              <p className="text-[11px] text-zinc-500 leading-snug">
-                {activeTeamMeta.duties}
-              </p>
-            </div>
-
-            {/* Category */}
-            <div className="flex flex-col gap-1.5 border-t border-white/[0.06] pt-3">
-              <label className="text-[12px] text-zinc-300">Category</label>
-              <div className="relative">
-                <select
-                  value={selectedCategory || ""}
-                  onChange={(e) => setSelectedCategory((e.target.value as ReportCategory) || null)}
-                  className="w-full bg-black/40 border border-white/[0.08] rounded-md px-3 py-1.5 text-[13px] text-white focus:outline-none focus:border-white/20 cursor-pointer appearance-none pr-8 transition-colors"
-                >
-                  <option value="">All categories</option>
-                  {categoriesList.map((c) => (
-                    <option key={c.key} value={c.key}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" strokeWidth={1.75} />
-              </div>
-            </div>
-
-            {/* Severity */}
-            <div className="flex flex-col gap-1.5">
-              <div className="flex justify-between text-[12px] text-zinc-300">
-                <span>Min severity</span>
-                <span className="text-white tabular-nums">
-                  {minSeverity}+
-                </span>
-              </div>
-              <input
-                type="range"
-                min="1"
-                max="5"
-                step="1"
-                value={minSeverity}
-                onChange={(e) => setMinSeverity(parseInt(e.target.value))}
-                className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
-              />
-            </div>
-
-            {/* Status */}
-            <div className="flex flex-col gap-1.5 border-t border-white/[0.06] pt-3">
-              <span className="text-[12px] text-zinc-300">Status</span>
-              <div className="grid grid-cols-2 gap-1">
-                {(["open", "dispatched", "in_progress", "closed"] as const).map((s) => {
-                  const isChecked = activeStatuses.includes(s);
-                  const displayNames: Record<string, string> = {
-                    open: "Open",
-                    dispatched: "Dispatched",
-                    in_progress: "In progress",
-                    closed: "Resolved",
-                  };
-                  return (
-                    <button
-                      key={s}
-                      onClick={() => handleToggleStatus(s)}
-                      className={`rounded px-2 py-1 text-[12px] text-left transition-colors ${
-                        isChecked
-                          ? "bg-white/[0.08] text-white"
-                          : "bg-transparent text-zinc-400 hover:text-white hover:bg-white/[0.03]"
-                      }`}
-                    >
-                      {displayNames[s]}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Divider — flows inside scroll too */}
-          <div className="border-t border-white/10" />
-
-          {/* Incident Feed list */}
-          <div className="space-y-2">
-          {filteredReports.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-500">
-              <Sliders className="w-7 h-7 opacity-25 mb-3" />
-              <p className="text-sm text-zinc-300">No matching reports</p>
-              <p className="text-xs text-zinc-500 mt-1">Adjust filters to see more.</p>
-            </div>
-          ) : (
-            filteredReports.map((report) => {
-              const meta = CATEGORY_META[report.category];
-              const isSelected = focusedReportId === report.id;
-              const isMenuOpen = activeRouteMenuId === report.id;
-              const ownerTeamId = categoryToTeam(report.category);
-              const ownerTeam = TEAM_META[ownerTeamId];
-
-              return (
-                <div
-                  key={report.id}
-                  onClick={() => setFocusedReportId(isSelected ? null : report.id)}
-                  className={`p-3 rounded-lg transition-colors cursor-pointer flex flex-col gap-1.5 ${
-                    isSelected
-                      ? "bg-white/[0.08]"
-                      : "bg-transparent hover:bg-white/[0.03]"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[13px] font-medium text-white leading-tight">
-                      {meta.label}
-                    </span>
-                    <span
-                      className={`text-[12px] ${STATUS_TONE[report.status] ?? "text-zinc-400"}`}
-                    >
-                      {STATUS_LABEL[report.status] ?? report.status}
-                    </span>
-                  </div>
-
-                  <p className="text-[12px] text-zinc-300 leading-tight line-clamp-1">
-                    {report.address}
-                  </p>
-
-                  {/* Auto-assigned team chip */}
-                  <div
-                    className="inline-flex self-start items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium"
-                    style={{
-                      borderColor: `${ownerTeam.color}66`,
-                      backgroundColor: `${ownerTeam.color}1f`,
-                      color: ownerTeam.color,
-                    }}
-                  >
-                    {ownerTeam.shortLabel}
-                  </div>
-
-                  <div className="flex items-center justify-between text-[12px] text-zinc-400">
-                    <span className="inline-flex items-center gap-1">
-                      <Clock className="w-3 h-3" strokeWidth={1.75} />
-                      {formatTimeAgo(report.created_at)}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <Star className="w-3 h-3" strokeWidth={1.75} />
-                      {report.severity}/5
-                    </span>
-                  </div>
-
-                  {/* Route action */}
-                  {isSelected && (
-                    <div className="mt-2 pt-2.5 border-t border-white/[0.06] flex flex-col gap-2 relative z-20 animate-in fade-in duration-150">
-                      {!isMenuOpen ? (
-                        <div className="flex gap-1.5">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRouteToTeam(report.id, ownerTeamId);
-                            }}
-                            disabled={report.status === "closed"}
-                            className="flex-1 py-1.5 bg-[#0a84ff] hover:bg-[#0070e0] text-white rounded-md text-[12px] flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            <Send className="w-3 h-3" strokeWidth={1.75} />
-                            Auto-dispatch
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveRouteMenuId(report.id);
-                            }}
-                            disabled={report.status === "closed"}
-                            className="px-2 py-1.5 bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 rounded-md text-[12px] flex items-center justify-center gap-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                            title="Override target team"
-                          >
-                            Override
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col gap-1 bg-black/40 border border-white/[0.08] rounded-md p-2 animate-in fade-in duration-100 pointer-events-auto">
-                          <div className="flex justify-between items-center pb-1 mb-1 text-[12px] text-zinc-400">
-                            <span>Override target team</span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveRouteMenuId(null);
-                              }}
-                              className="p-0.5 hover:bg-white/[0.06] rounded text-zinc-400 hover:text-white"
-                            >
-                              <X className="w-3 h-3" strokeWidth={1.75} />
-                            </button>
-                          </div>
-                          <div className="flex flex-col gap-0.5 max-h-[18rem] overflow-y-auto custom-scrollbar">
-                            {TEAM_LIST.filter((t) => t.id !== "all").map(
-                              (team) => {
-                                const isOwner = team.id === ownerTeamId;
-                                return (
-                                  <button
-                                    key={team.id}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleRouteToTeam(report.id, team.id);
-                                    }}
-                                    className="flex items-center gap-2 px-2 py-1.5 text-left text-[12px] text-zinc-300 hover:bg-white/[0.06] hover:text-white rounded transition-colors"
-                                  >
-                                    <span
-                                      className="h-2 w-2 shrink-0 rounded-full"
-                                      style={{ backgroundColor: team.color }}
-                                    />
-                                    <span className="flex-1 truncate">
-                                      {team.shortLabel}
-                                    </span>
-                                    {isOwner && (
-                                      <span className="text-[10px] text-[#0a84ff] uppercase tracking-wide">
-                                        Default
-                                      </span>
-                                    )}
-                                  </button>
-                                );
-                              },
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
-          </div>
+        {/* Shared dispatch content — same content as mobile bottom-sheet */}
+        <div className="flex-1 overflow-hidden">
+          {dispatchPanelContent}
         </div>
 
       </LiquidGlassCard>

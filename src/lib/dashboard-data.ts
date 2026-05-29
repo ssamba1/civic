@@ -15,7 +15,6 @@ export interface DashboardReport {
   photo_public_url: string;
   created_at: string;
   reporter_id: string;
-  upvote_count?: number;
   tags?: string[];
   // Optional persisted team assignment. When unset, routing falls back to
   // categoryToTeam(category). Per-report runtime overrides live in

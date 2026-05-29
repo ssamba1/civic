@@ -67,7 +67,7 @@ export function TeamPicker({
         aria-haspopup="listbox"
         aria-expanded={open}
         className={cn(
-          "inline-flex h-7 items-center gap-1.5 rounded-md border px-2 text-[12px] transition-colors",
+          "inline-flex h-11 sm:h-7 items-center gap-1.5 rounded-md border px-2 text-[12px] transition-colors",
           "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60",
           isOverridden
             ? "border-white/[0.16] bg-white/[0.06] text-white"
@@ -96,6 +96,7 @@ export function TeamPicker({
           className={cn(
             "absolute z-30 mt-1.5 overflow-hidden rounded-lg border border-white/[0.08]",
             "bg-[#1c1c1e] shadow-[0_12px_32px_-12px_rgba(0,0,0,0.7)]",
+            "max-w-[min(92vw,240px)]",
             align === "right" ? "right-0" : "left-0",
           )}
         >
@@ -115,7 +116,7 @@ export function TeamPicker({
                       setOpen(false);
                     }}
                     className={cn(
-                      "flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] transition-colors",
+                      "flex w-full items-center gap-2 px-3 py-3 sm:py-1.5 min-h-[44px] sm:min-h-0 text-left text-[12px] transition-colors",
                       "outline-none focus-visible:bg-white/[0.06]",
                       isCurrent
                         ? "bg-white/[0.06] text-white"

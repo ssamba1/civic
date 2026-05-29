@@ -100,7 +100,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
             setError(null);
             startCamera();
           }}
-          className="mt-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-black active:scale-95 transition-transform"
+          className="mt-2 rounded-full bg-white px-6 py-3 min-h-[44px] text-sm font-semibold text-black active:scale-95 transition-transform"
         >
           Try Again
         </button>
@@ -129,16 +129,18 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
         </div>
       )}
 
-      {/* Capture button */}
-      <div className="relative z-10 pb-10 pt-6">
-        <button
-          onClick={capture}
-          disabled={!ready}
-          aria-label="Take photo"
-          className="w-20 h-20 rounded-full border-4 border-white bg-white/20 backdrop-blur-sm active:scale-90 transition-transform disabled:opacity-40"
-        >
-          <span className="block w-14 h-14 mx-auto rounded-full bg-white" />
-        </button>
+      {/* Capture button — pb-safe wrapper clears home indicator */}
+      <div className="relative z-10 pb-safe">
+        <div className="pb-10 pt-6 flex justify-center">
+          <button
+            onClick={capture}
+            disabled={!ready}
+            aria-label="Take photo"
+            className="w-20 h-20 rounded-full border-4 border-white bg-white/20 backdrop-blur-sm active:scale-90 transition-transform disabled:opacity-40"
+          >
+            <span className="block w-14 h-14 mx-auto rounded-full bg-white" />
+          </button>
+        </div>
       </div>
 
       {/* Loading state */}

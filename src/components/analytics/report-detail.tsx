@@ -268,7 +268,7 @@ export function ReportDetail({ report }: { report: DashboardReport | null }) {
   const { lat, lng } = report.location;
 
   return (
-    <div className="flex flex-col gap-7 p-6">
+    <div className="flex flex-col gap-5 sm:gap-7">
       {/* 1. Image with overlaid severity chip + status pill */}
       <div className="relative overflow-hidden rounded-xl border border-white/[0.06] bg-[#1c1c1e]">
         <ReportImage

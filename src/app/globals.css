@@ -36,6 +36,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
 
   --color-deep-void: var(--fg-deep-void);
   --color-electric-indigo: var(--fg-electric-indigo);
@@ -97,6 +98,84 @@
   }
 }
 
+/* ── Mobile sheet / drawer motion (consumed by ui/bottom-sheet + ui/drawer) ── */
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+@keyframes sheet-down {
+  from { transform: translateY(0); }
+  to   { transform: translateY(100%); }
+}
+@keyframes drawer-in-right {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+@keyframes drawer-out-right {
+  from { transform: translateX(0); }
+  to   { transform: translateX(100%); }
+}
+@keyframes drawer-in-left {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+@keyframes drawer-out-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+
+.animate-sheet-up {
+  animation: sheet-up 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.animate-sheet-down {
+  animation: sheet-down 240ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+.animate-drawer-in-right {
+  animation: drawer-in-right 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.animate-drawer-out-right {
+  animation: drawer-out-right 240ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+.animate-drawer-in-left {
+  animation: drawer-in-left 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.animate-drawer-out-left {
+  animation: drawer-out-left 240ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-sheet-up,
+  .animate-sheet-down,
+  .animate-drawer-in-right,
+  .animate-drawer-out-right,
+  .animate-drawer-in-left,
+  .animate-drawer-out-left {
+    animation: none;
+    transition: opacity 120ms linear;
+  }
+}
+
+/* ── Safe-area utilities (notch / home-indicator insets) ── */
+.pt-safe { padding-top: env(safe-area-inset-top); }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+.pl-safe { padding-left: env(safe-area-inset-left); }
+.pr-safe { padding-right: env(safe-area-inset-right); }
+
+/* ── Minimum touch target (44×44 per Apple HIG) ── */
+.min-tap {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ── Hide scrollbar but keep scrollability (carousels / snap rows) ── */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* ── Base ── */
 html {
   scroll-behavior: smooth;
@@ -109,13 +188,55 @@ body {
     "SF Pro Display", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: "cv11", "ss01", "ss02";
+  font-feature-settings: "kern", "liga", "calt";
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: contain;
+}
+
+/* Display face — newspaper serif for marketing headlines. Serifs carry their
+   own width, so they want lighter optical tracking than the grotesk default. */
+.font-display {
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  letter-spacing: -0.012em;
+}
+
+/* ── iOS: prevent zoom-on-focus for form fields on touch devices ── */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   line-height: 1.18;
   letter-spacing: -0.022em;
+}
+
+/* ── Scroll reveal — consumed by landing/reveal.tsx ──
+   Elements mount hidden, then the client wrapper toggles .is-visible when the
+   element scrolls into view. Compositor-only props (opacity + translate); no
+   layout animation. Honors prefers-reduced-motion by rendering instantly. */
+@keyframes reveal-rise {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.reveal {
+  opacity: 0;
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  animation: reveal-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) var(--reveal-delay, 0ms) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
 }
 
 *:focus-visible {

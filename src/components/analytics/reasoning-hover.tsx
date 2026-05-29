@@ -54,6 +54,7 @@ interface ActiveTarget {
 export interface ReasoningHoverHandlers {
   onPointerEnter: (e: React.PointerEvent) => void;
   onPointerLeave: () => void;
+  onClick?: (e: React.MouseEvent) => void;
   onFocus: (e: React.FocusEvent) => void;
   onBlur: () => void;
 }
@@ -168,15 +169,36 @@ export function useReasoningHover(): UseReasoningHoverReturn {
     setTarget(null);
   }, []);
 
+  const lastReportPtrType = useRef<string>("mouse");
+
   const bindReport: UseReasoningHoverReturn["bindReport"] = useCallback(
     (report) => ({
       onPointerEnter: (e) => {
+        lastReportPtrType.current = e.pointerType;
+        // Touch: don't show on hover-enter — wait for explicit tap (onClick)
+        if (e.pointerType === "touch") return;
         const el = e.currentTarget as HTMLElement;
         const rect = el.getBoundingClientRect();
         if (intentTimer.current) clearTimeout(intentTimer.current);
         intentTimer.current = setTimeout(() => open(report, rect), HOVER_INTENT_MS);
       },
-      onPointerLeave: close,
+      onPointerLeave: () => {
+        // Touch: don't dismiss on pointer-leave
+        if (lastReportPtrType.current === "touch") return;
+        close();
+      },
+      onClick: (e: React.MouseEvent) => {
+        // Touch tap: toggle the card
+        if (lastReportPtrType.current !== "touch") return;
+        const el = e.currentTarget as HTMLElement;
+        const rect = el.getBoundingClientRect();
+        if (activeId.current === report.id) {
+          close();
+        } else {
+          if (intentTimer.current) clearTimeout(intentTimer.current);
+          open(report, rect);
+        }
+      },
       onFocus: (e) => {
         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
         open(report, rect);
@@ -232,8 +254,9 @@ export function useReasoningHover(): UseReasoningHoverReturn {
           left: pos.x,
           top: pos.y,
           width: CARD_WIDTH,
-          maxWidth: "calc(100vw - 2rem)",
-          maxHeight: "calc(100vh - 1.5rem)",
+          maxWidth: "min(calc(100vw - 1.5rem), 340px)",
+          maxHeight: "calc(100dvh - 1.5rem)",
+          overflowY: "auto",
         }}
       >
         {target && (

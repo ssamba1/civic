@@ -40,8 +40,8 @@ const FAQ_ITEMS = [
 
 export function FAQ() {
   return (
-    <section className="border-t border-[var(--color-border)] bg-[var(--color-background)] px-6 py-24 sm:py-32">
-      <div className="mx-auto grid max-w-6xl gap-16 lg:grid-cols-[1fr_2fr]">
+    <section className="border-t border-[var(--color-border)] bg-[var(--color-background)] px-4 py-16 sm:px-6 sm:py-24 lg:py-32">
+      <div className="mx-auto grid max-w-6xl gap-10 sm:gap-16 lg:grid-cols-[1fr_2fr]">
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--color-primary)]">
             FAQ

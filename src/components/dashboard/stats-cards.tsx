@@ -67,11 +67,11 @@ function StatsCardsInner({ stats }: StatsCardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {cards.map((card) => (
         <article
           key={card.label}
-          className="rounded-xl bg-[#1c1c1e] border border-white/[0.06] p-5 transition-colors hover:border-white/[0.12]"
+          className="rounded-xl bg-[#1c1c1e] border border-white/[0.06] p-4 sm:p-5 transition-colors hover:border-white/[0.12]"
         >
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center justify-center text-zinc-500">
@@ -97,7 +97,7 @@ function StatsCardsInner({ stats }: StatsCardsProps) {
             )}
           </div>
 
-          <p className="mt-4 text-[28px] font-semibold tracking-tight text-white leading-none">
+          <p className="mt-3 sm:mt-4 text-[24px] sm:text-[28px] font-semibold tracking-tight text-white leading-none">
             {card.value}
           </p>
           <p className="text-[13px] text-zinc-500 mt-2">{card.label}</p>

@@ -56,7 +56,7 @@ function RoutingMatrixInner() {
           ({ category, meta, defaultTeam, effectiveTeam, isOverridden }) => (
             <li
               key={category}
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-[12px] hover:bg-white/[0.03] transition-colors"
+              className="flex items-center gap-2 rounded-md px-2 py-2 sm:py-1.5 text-[12px] hover:bg-white/[0.03] transition-colors min-h-[44px] sm:min-h-0"
             >
               <span className="inline-flex flex-1 min-w-0 items-center gap-2 text-zinc-300">
                 <span
@@ -91,7 +91,7 @@ function RoutingMatrixInner() {
                   }
                   aria-label="Reset category to default routing"
                   className={cn(
-                    "inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded transition-colors",
+                    "inline-flex h-11 w-11 sm:h-6 sm:w-6 flex-shrink-0 items-center justify-center rounded transition-colors",
                     isOverridden
                       ? "text-zinc-400 hover:bg-white/[0.06] hover:text-white"
                       : "text-zinc-800 cursor-default",

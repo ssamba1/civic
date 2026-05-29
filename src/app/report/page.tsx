@@ -134,32 +134,34 @@ export default function ReportPage() {
   }, [step]);
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-black">
-      {/* Error toast */}
+    <div className="fixed inset-0 h-dvh flex flex-col bg-black">
+      {/* Error toast — clears notch via pt-safe */}
       {error && (
-        <div className="absolute top-4 left-4 right-4 z-40 rounded-xl bg-red-500/90 backdrop-blur-sm px-4 py-3 text-sm text-white font-medium shadow-lg">
-          {error}
-          <button
-            onClick={() => setError(null)}
-            className="absolute top-2 right-3 text-white/70 text-lg"
-            aria-label="Dismiss error"
-          >
-            &times;
-          </button>
+        <div className="absolute top-0 left-0 right-0 z-40 pt-safe px-4">
+          <div className="mt-3 rounded-xl bg-red-500/90 backdrop-blur-sm px-4 py-3 text-sm text-white font-medium shadow-lg relative">
+            {error}
+            <button
+              onClick={() => setError(null)}
+              className="absolute top-2 right-3 text-white/70 text-lg min-tap flex items-center justify-center"
+              aria-label="Dismiss error"
+            >
+              &times;
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Address fallback input */}
+      {/* Address fallback input — clears notch via pt-safe */}
       {gpsStatus === "manual" &&
         step.name !== "done" &&
         step.name !== "emergency" && (
-          <div className="absolute top-4 left-4 right-4 z-30">
+          <div className="absolute top-0 left-0 right-0 z-30 pt-safe px-4">
             <input
               type="text"
               value={address ?? ""}
               onChange={(e) => setAddress(e.target.value || null)}
               placeholder="Enter address or intersection..."
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-900/90 backdrop-blur-sm px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full mt-3 rounded-xl border border-zinc-700 bg-zinc-900/90 backdrop-blur-sm px-4 py-3 text-base text-white placeholder:text-zinc-500 focus:outline-none focus:border-blue-500"
             />
           </div>
         )}

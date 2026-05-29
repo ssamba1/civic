@@ -1,6 +1,5 @@
 import "server-only";
 import { createServerClient } from "@/lib/db/client";
-import { createSSRClient } from "@/lib/db/ssr-client";
 import type { City, ReportCategory, ReportStatus } from "@/lib/types";
 import type {
   CityStats,
@@ -60,7 +59,6 @@ interface ViewRow {
   lat: number | null;
   photo_public_url: string;
   created_at: string;
-  upvote_count: number | null;
   tags: string[] | null;
 }
 
@@ -72,7 +70,7 @@ export async function fetchRecentReports(
   const { data, error } = await db
     .from("dashboard_reports_view")
     .select(
-      "id, category, severity, status, address, lng, lat, photo_public_url, created_at, upvote_count, tags"
+      "id, category, severity, status, address, lng, lat, photo_public_url, created_at, tags"
     )
     .eq("city_id", cityId)
     .order("created_at", { ascending: false })
@@ -89,7 +87,6 @@ export async function fetchRecentReports(
     created_at: r.created_at,
     // reporter_id is PII — stripped from the public view; placeholder satisfies the type.
     reporter_id: "",
-    upvote_count: r.upvote_count ?? 0,
     tags: r.tags ?? [],
   }));
 }
@@ -133,18 +130,4 @@ export async function fetchReportMarkers(): Promise<
     location: [val.lat, val.lng] as [number, number],
     label: val.label,
   }));
-}
-
-// Report IDs the current (logged-in) user has upvoted — for initial button state.
-export async function fetchUserUpvotes(): Promise<string[]> {
-  const ssr = await createSSRClient();
-  const {
-    data: { user },
-  } = await ssr.auth.getUser();
-  if (!user) return [];
-  const { data } = await ssr
-    .from("report_upvotes")
-    .select("report_id")
-    .eq("user_id", user.id);
-  return (data ?? []).map((r: { report_id: string }) => r.report_id);
 }
