@@ -18,7 +18,9 @@ function CategoryChartInner({
   selectedCategory = null,
   onSelectCategory,
 }: CategoryChartProps) {
-  const maxCount = data.length > 0 ? data[0].count : 1;
+  // Don't assume `data` is sorted, and never let an all-zero dataset divide by
+  // zero in the bar-width math below.
+  const maxCount = Math.max(1, ...data.map((d) => d.count));
 
   const panelClass =
     "rounded-xl bg-[#1c1c1e] border border-white/[0.06]";
@@ -62,8 +64,10 @@ function CategoryChartInner({
             <button
               key={category}
               onClick={() => onSelectCategory?.(category)}
+              aria-pressed={isSelected}
               className={cn(
-                "w-full text-left px-2 py-2 rounded-md transition-colors outline-none cursor-pointer",
+                "w-full text-left px-2 py-2 rounded-md transition-[background-color,opacity] cursor-pointer",
+                "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1c1c1e]",
                 isSelected ? "bg-white/[0.06]" : "hover:bg-white/[0.03]",
                 isDimmed ? "opacity-40" : "opacity-100",
               )}
@@ -71,19 +75,30 @@ function CategoryChartInner({
               <div className="flex items-center justify-between text-[13px]">
                 <span
                   className={cn(
+                    "inline-flex items-center gap-2 truncate",
                     isSelected ? "text-white" : "text-zinc-300",
                   )}
                 >
-                  {meta.label}
+                  <span
+                    className="h-2 w-2 flex-shrink-0 rounded-full"
+                    style={{ backgroundColor: meta.color }}
+                    aria-hidden
+                  />
+                  <span className="truncate">{meta.label}</span>
                 </span>
-                <span className="tabular-nums text-zinc-500">{count}</span>
+                <span className="tabular-nums text-zinc-500 flex-shrink-0 pl-2">
+                  {count}
+                </span>
               </div>
               <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/[0.04]">
                 <div
-                  className="h-full rounded-full bg-white transition-all duration-500"
+                  className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${pct}%`,
-                    opacity: isSelected ? 0.95 : 0.35,
+                    backgroundColor: meta.color,
+                    // Full strength when this bar is the active selection or
+                    // nothing is selected; muted when another row is focused.
+                    opacity: isDimmed ? 0.55 : isSelected ? 1 : 0.85,
                   }}
                   role="meter"
                   aria-valuenow={count}

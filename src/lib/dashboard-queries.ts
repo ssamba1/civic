@@ -87,6 +87,8 @@ export async function fetchRecentReports(
     location: { lng: r.lng ?? 0, lat: r.lat ?? 0 },
     photo_public_url: r.photo_public_url,
     created_at: r.created_at,
+    // reporter_id is PII — stripped from the public view; placeholder satisfies the type.
+    reporter_id: "",
     upvote_count: r.upvote_count ?? 0,
     tags: r.tags ?? [],
   }));

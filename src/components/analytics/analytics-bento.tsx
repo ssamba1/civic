@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useEffect, useMemo } from "react";
+import { memo, useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
   CheckCircle2,
@@ -14,7 +14,6 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import { LiquidGlassCard } from "@/components/ui/liquid-glass";
 import {
   useHoverTip,
   TipRow,
@@ -34,8 +33,66 @@ import type {
 } from "@/lib/analytics-data";
 
 /* ==================================================================
-   Shared shell + modal
+   Shared shell + modal + motion
+
+   Glassmorphism (LiquidGlassCard: backdrop-blur, frosted fills, inner
+   white highlights, SVG displacement) has been removed. Tiles are now
+   flat, solid Apple-dark panels matching the rest of the dashboard:
+   #1c1c1e fill, white/[0.06] hairline border, --radius-lg corners.
+
+   Motion: gsap is not installed in this project, so reveal / grow-in
+   motion is implemented with CSS transitions. All motion is gated
+   behind a single `prefers-reduced-motion` media query so the static
+   layout is the reduced-motion baseline.
    ================================================================== */
+
+const BENTO_MOTION_CSS = `
+@media (prefers-reduced-motion: no-preference) {
+  [data-bento-reveal] {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  [data-bento-reveal][data-shown="1"] {
+    opacity: 1;
+    transform: none;
+    transition: opacity 520ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 560ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+`;
+
+let bentoMotionInjected = false;
+
+/** Inject the shared motion stylesheet once (client only). */
+function useBentoMotionStyles() {
+  useEffect(() => {
+    if (bentoMotionInjected || typeof document === "undefined") return;
+    const el = document.createElement("style");
+    el.dataset.bentoMotion = "1";
+    el.textContent = BENTO_MOTION_CSS;
+    document.head.appendChild(el);
+    bentoMotionInjected = true;
+  }, []);
+}
+
+/**
+ * Reveal-on-mount. Returns a ref + the data attributes that drive the
+ * CSS transition above. No-ops under reduced motion (the CSS rules are
+ * scoped to `prefers-reduced-motion: no-preference`).
+ */
+function useReveal<T extends HTMLElement>() {
+  useBentoMotionStyles();
+  const ref = useRef<T>(null);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const id = requestAnimationFrame(() => {
+      node.setAttribute("data-shown", "1");
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
+  return ref;
+}
 
 interface TileProps {
   title?: string;
@@ -46,14 +103,16 @@ interface TileProps {
 }
 
 function Tile({ title, subtitle, className, children, onExpand }: TileProps) {
+  const ref = useReveal<HTMLDivElement>();
   return (
-    <LiquidGlassCard
-      className={cn("flex flex-col", className)}
-      contentClassName="bg-white/[0.035] p-5 flex flex-col h-full text-zinc-100"
-      blurIntensity="xl"
-      shadowIntensity="xs"
-      glowIntensity="xs"
-      borderRadius="16px"
+    <div
+      ref={ref}
+      data-bento-reveal
+      className={cn(
+        "flex flex-col rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] p-5 text-zinc-100",
+        "shadow-[0_1px_2px_rgba(0,0,0,0.4)]",
+        className,
+      )}
     >
       {(title || onExpand) && (
         <header className="flex items-center justify-between gap-3 mb-4 min-h-[20px]">
@@ -82,7 +141,7 @@ function Tile({ title, subtitle, className, children, onExpand }: TileProps) {
         </header>
       )}
       <div className="flex-1 min-h-0">{children}</div>
-    </LiquidGlassCard>
+    </div>
   );
 }
 
@@ -130,13 +189,13 @@ function ExpandModal({
         aria-label="Close expanded chart"
         className="absolute inset-0 bg-black/75 backdrop-blur-md"
       />
-      <LiquidGlassCard
-        className="relative w-full max-w-[1400px] max-h-[92vh] animate-in zoom-in-95 duration-200"
-        contentClassName="bg-white/[0.04] flex flex-col h-full max-h-[92vh] text-zinc-100 overflow-hidden"
-        blurIntensity="xl"
-        shadowIntensity="sm"
-        glowIntensity="sm"
-        borderRadius="20px"
+      <div
+        className={cn(
+          "relative w-full max-w-[1400px] max-h-[92vh] flex flex-col text-zinc-100 overflow-hidden",
+          "rounded-[18px] border border-white/[0.06] bg-[#1c1c1e]",
+          "shadow-[0_24px_64px_-12px_rgba(0,0,0,0.7)]",
+          "animate-in zoom-in-95 duration-200",
+        )}
       >
         <header className="flex items-baseline justify-between gap-3 px-6 pt-5 pb-4 border-b border-white/[0.06]">
           <div className="flex items-baseline gap-3 min-w-0 flex-wrap">
@@ -177,7 +236,7 @@ function ExpandModal({
             </div>
           )}
         </div>
-      </LiquidGlassCard>
+      </div>
     </div>,
     document.body,
   );
@@ -302,6 +361,19 @@ function Prose({ children }: { children: React.ReactNode }) {
     <p className="text-[13px] leading-relaxed text-zinc-400 max-w-prose">
       {children}
     </p>
+  );
+}
+
+/**
+ * Empty state shown when a tile's filtered data is empty or all-zero.
+ * Keeps the tile from collapsing and avoids any NaN / divide-by-zero
+ * math downstream.
+ */
+function EmptyState({ message = "No data in range" }: { message?: string }) {
+  return (
+    <div className="flex h-full min-h-[120px] flex-1 items-center justify-center">
+      <p className="text-[13px] text-zinc-500">{message}</p>
+    </div>
   );
 }
 
@@ -573,7 +645,8 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
               role="group"
               aria-label={`${c.label}: ${c.value}`}
               className={cn(
-                "rounded-2xl outline-none cursor-default",
+                "rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] p-5 text-zinc-100 outline-none cursor-default",
+                "shadow-[0_1px_2px_rgba(0,0,0,0.4)]",
                 "transition-[transform,opacity,box-shadow] duration-200 ease-out",
                 "motion-reduce:transition-none",
                 isActive
@@ -592,13 +665,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
               }
               {...bindCard(c)}
             >
-              <LiquidGlassCard
-                contentClassName="bg-white/[0.035] p-5 text-zinc-100"
-                blurIntensity="xl"
-                shadowIntensity="xs"
-                glowIntensity="xs"
-                borderRadius="16px"
-              >
+              <div>
                 <div className="flex items-center justify-between">
                   <span
                     className="transition-colors"
@@ -631,7 +698,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
                   {c.value}
                 </p>
                 <p className="text-[13px] text-zinc-400 mt-2">{c.label}</p>
-              </LiquidGlassCard>
+              </div>
             </div>
           );
         })}
@@ -674,6 +741,15 @@ function renderTrendChart(
   const innerW = w - pad.l - pad.r;
   const innerH = h - pad.t - pad.b;
   const hoveredIdx = opts?.hovered ?? null;
+
+  // Guard: empty series would crash on pts[0] / data[peakIdx] below.
+  if (data.length === 0) {
+    return (
+      <div className={cn("flex items-center justify-center", heightClass)}>
+        <span className="text-[13px] text-zinc-500">No data in range</span>
+      </div>
+    );
+  }
 
   const visible: ("created" | "closed")[] = [];
   if (showCreated) visible.push("created");
@@ -931,6 +1007,14 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
     [data, days],
   );
 
+  if (data.length === 0) {
+    return (
+      <Tile title="Reports over time" className="lg:col-span-8 lg:row-span-2">
+        <EmptyState message="No reports in range" />
+      </Tile>
+    );
+  }
+
   const totalCreated = data.reduce((s, d) => s + d.created, 0);
   const totalClosed = data.reduce((s, d) => s + d.closed, 0);
   const ratio = totalCreated ? (totalClosed / totalCreated) * 100 : 0;
@@ -939,9 +1023,12 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
 
   const sliceCreated = slice.reduce((s, d) => s + d.created, 0);
   const sliceClosed = slice.reduce((s, d) => s + d.closed, 0);
-  const peakDay = slice.reduce((peak, d) =>
-    d.created > peak.created ? d : peak,
-  );
+  // `slice` can be empty when the user picks a window via the modal pills;
+  // provide an initial accumulator so reduce never throws, and fall back to
+  // a zero point so downstream `.date` reads are safe.
+  const peakDay = slice.length
+    ? slice.reduce((peak, d) => (d.created > peak.created ? d : peak))
+    : { date: "", created: 0, closed: 0 };
 
   const tipForDay = (i: number) => {
     const d = data[i];
@@ -1294,6 +1381,7 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
     null,
   );
   const tip = useHoverTip();
+  const hasData = data.some((d) => d.count > 0);
   const total = data.reduce((s, d) => s + d.count, 0) || 1;
   const dominant = [...data].sort((a, b) => b.count - a.count)[0];
   const emergencyShare = ((data.find((d) => d.severity === 5)?.count ?? 0) / total) * 100;
@@ -1370,8 +1458,11 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
         title="Severity mix"
         subtitle={`${total} reports`}
         className="lg:col-span-4"
-        onExpand={() => setOpen(true)}
+        onExpand={hasData ? () => setOpen(true) : undefined}
       >
+        {!hasData ? (
+          <EmptyState message="No classified reports in range" />
+        ) : (
         <div className="flex items-center gap-5">
           <div className="flex-shrink-0">
             {renderDonut(data, 150, {
@@ -1414,6 +1505,7 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
             })}
           </ul>
         </div>
+        )}
         <tip.Portal />
       </Tile>
       <ExpandModal
@@ -1681,9 +1773,13 @@ function StatusFunnelInner({ data }: StatusFunnelProps) {
       <Tile
         title="Workflow pipeline"
         className="lg:col-span-4"
-        onExpand={() => setOpen(true)}
+        onExpand={total > 0 ? () => setOpen(true) : undefined}
       >
-        {renderFunnelBars(data, false, { hovered, bindHover: bindStep })}
+        {total > 0 ? (
+          renderFunnelBars(data, false, { hovered, bindHover: bindStep })
+        ) : (
+          <EmptyState message="No reports in range" />
+        )}
         <tip.Portal />
       </Tile>
       <ExpandModal
@@ -1975,14 +2071,18 @@ function ResolutionHistogramInner({ data }: ResolutionHistogramProps) {
     <>
       <Tile
         title="Resolution time"
-        subtitle={`Median ~${medianLabel}`}
+        subtitle={total > 0 ? `Median ~${medianLabel}` : undefined}
         className="lg:col-span-8"
-        onExpand={() => setOpen(true)}
+        onExpand={total > 0 ? () => setOpen(true) : undefined}
       >
-        {renderHistogram(data, "h-[180px]", true, {
-          hovered: hoveredBar,
-          bindHover: bindBar,
-        })}
+        {total > 0 ? (
+          renderHistogram(data, "h-[180px]", true, {
+            hovered: hoveredBar,
+            bindHover: bindBar,
+          })
+        ) : (
+          <EmptyState message="No resolved reports in range" />
+        )}
         <tip.Portal />
       </Tile>
       <ExpandModal
@@ -2242,9 +2342,14 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
   const [hoveredLegend, setHoveredLegend] = useState<number | null>(null);
   const tip = useHoverTip();
 
-  const peak = data.reduce((p, c) => (c.count > p.count ? c : p));
+  // Initial accumulator: reduce with no seed throws on an empty array.
+  const peak = data.reduce(
+    (p, c) => (c.count > p.count ? c : p),
+    { day: 0, hour: 0, count: 0 } as HeatCell,
+  );
   const totalReports = data.reduce((s, c) => s + c.count, 0);
-  const avgPerCell = totalReports / data.length;
+  const avgPerCell = totalReports / Math.max(data.length, 1);
+  const hasData = totalReports > 0;
 
   // 168-cell ranking by count desc for "intensity rank" tooltip stat
   const cellRankMap = useMemo(() => {
@@ -2453,16 +2558,20 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
         title="Reporting heatmap"
         subtitle="By day & hour"
         className="lg:col-span-8"
-        onExpand={() => setOpen(true)}
+        onExpand={hasData ? () => setOpen(true) : undefined}
       >
-        {renderHeatmap(data, 14, false, false, {
-          hoveredCell,
-          hoveredDay,
-          hoveredLegend,
-          bindCell,
-          bindDay,
-          bindLegend,
-        })}
+        {hasData ? (
+          renderHeatmap(data, 14, false, false, {
+            hoveredCell,
+            hoveredDay,
+            hoveredLegend,
+            bindCell,
+            bindDay,
+            bindLegend,
+          })
+        ) : (
+          <EmptyState message="No reports in range" />
+        )}
       </Tile>
       <ExpandModal
         open={open}
@@ -2521,7 +2630,7 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
               />
               <Stat
                 label="Coverage"
-                value={`${Math.round((data.filter((c) => c.count > 0).length / data.length) * 100)}%`}
+                value={`${Math.round((data.filter((c) => c.count > 0).length / Math.max(data.length, 1)) * 100)}%`}
                 hint="Slots with activity"
               />
             </StatGrid>
@@ -2650,6 +2759,7 @@ function TopNeighborhoodsInner({ data }: TopNeighborhoodsProps) {
   const [hovered, setHovered] = useState<string | null>(null);
   const tip = useHoverTip();
 
+  const hasData = data.length > 0;
   const total = data.reduce((s, d) => s + d.count, 0);
   const totalSafe = total || 1;
   const totalOpen = data.reduce((s, d) => s + d.open, 0);
@@ -2733,12 +2843,16 @@ function TopNeighborhoodsInner({ data }: TopNeighborhoodsProps) {
       <Tile
         title="Top neighborhoods"
         className="lg:col-span-4"
-        onExpand={() => setOpen(true)}
+        onExpand={hasData ? () => setOpen(true) : undefined}
       >
-        {renderNeighborhoods(data, "total", 6, {
-          hovered,
-          bindHover: bindNeighborhood,
-        })}
+        {hasData ? (
+          renderNeighborhoods(data, "total", 6, {
+            hovered,
+            bindHover: bindNeighborhood,
+          })
+        ) : (
+          <EmptyState message="No reports in range" />
+        )}
         <tip.Portal />
       </Tile>
       <ExpandModal
@@ -2777,13 +2891,13 @@ function TopNeighborhoodsInner({ data }: TopNeighborhoodsProps) {
             <StatGrid>
               <Stat
                 label="Top area"
-                value={top.name}
-                hint={`${top.count} reports`}
+                value={top?.name ?? "—"}
+                hint={top ? `${top.count} reports` : ""}
               />
               <Stat
                 label="Most stuck"
-                value={mostStuck.name}
-                hint={`${mostStuck.open} open`}
+                value={mostStuck?.name ?? "—"}
+                hint={mostStuck ? `${mostStuck.open} open` : ""}
               />
               <Stat
                 label="Total open"
@@ -2791,7 +2905,7 @@ function TopNeighborhoodsInner({ data }: TopNeighborhoodsProps) {
               />
               <Stat
                 label="Avg / area"
-                value={(total / data.length).toFixed(1)}
+                value={(total / Math.max(data.length, 1)).toFixed(1)}
               />
             </StatGrid>
           </div>
@@ -2926,6 +3040,7 @@ function CategoryResolutionTableInner({ data }: CategoryResolutionTableProps) {
   const [hovered, setHovered] = useState<string | null>(null);
   const tip = useHoverTip();
 
+  const hasData = data.length > 0;
   const overSlaCount = data.filter((d) => d.avg_hours > d.target_hours).length;
   const worstOffender = [...data].sort(
     (a, b) => b.avg_hours / b.target_hours - a.avg_hours / a.target_hours,
@@ -3030,13 +3145,17 @@ function CategoryResolutionTableInner({ data }: CategoryResolutionTableProps) {
       <Tile
         title="Resolution time by category"
         subtitle="vs. target SLA"
-        className="lg:col-span-8"
-        onExpand={() => setOpen(true)}
+        className="lg:col-span-12"
+        onExpand={hasData ? () => setOpen(true) : undefined}
       >
-        {renderCategoryBars(data, false, "avg", {
-          hovered,
-          bindHover: bindRow,
-        })}
+        {hasData ? (
+          renderCategoryBars(data, false, "avg", {
+            hovered,
+            bindHover: bindRow,
+          })
+        ) : (
+          <EmptyState message="No reports in range" />
+        )}
         <tip.Portal />
       </Tile>
       <ExpandModal
@@ -3088,8 +3207,12 @@ function CategoryResolutionTableInner({ data }: CategoryResolutionTableProps) {
               />
               <Stat
                 label="Worst offender"
-                value={worstOffender.label}
-                hint={`${((worstOffender.avg_hours / worstOffender.target_hours - 1) * 100).toFixed(0)}% over target`}
+                value={worstOffender?.label ?? "—"}
+                hint={
+                  worstOffender
+                    ? `${((worstOffender.avg_hours / worstOffender.target_hours - 1) * 100).toFixed(0)}% over target`
+                    : ""
+                }
               />
               <Stat
                 label="Weighted avg"
@@ -3134,6 +3257,7 @@ function renderSpark(
   },
 ) {
   const max = Math.max(...spark, 1);
+  // Single-point or empty sparks would otherwise produce a degenerate path.
   const step = spark.length > 1 ? w / (spark.length - 1) : w;
   const coords = spark.map((v, i) => ({
     x: i * step,
@@ -3228,8 +3352,10 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
   const [activePoint, setActivePoint] = useState<number | null>(null);
   const tip = useHoverTip();
 
-  const peak = Math.max(...data.spark);
-  const trough = Math.min(...data.spark);
+  const hasSpark = data.spark.length > 0;
+  // Math.max/min spread on an empty array yields -Infinity / +Infinity.
+  const peak = hasSpark ? Math.max(...data.spark) : 0;
+  const trough = hasSpark ? Math.min(...data.spark) : 0;
   const recent = data.spark.slice(-3).reduce((s, v) => s + v, 0) / 3;
   const earlier = data.spark.slice(0, 3).reduce((s, v) => s + v, 0) / 3;
   const momentumPct = earlier ? ((recent - earlier) / earlier) * 100 : 0;
@@ -3370,7 +3496,7 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
       <Tile
         title="Reporter activity"
         className="lg:col-span-4"
-        onExpand={() => setOpen(true)}
+        onExpand={hasSpark ? () => setOpen(true) : undefined}
       >
         <div className="flex items-end justify-between gap-4">
           <div
@@ -3394,10 +3520,16 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
             </p>
           </div>
           <div className="h-14 w-[140px]">
-            {renderSpark(data.spark, 200, 56, {
-              activeIdx: activePoint,
-              bindHover: bindSparkPoint,
-            })}
+            {hasSpark ? (
+              renderSpark(data.spark, 200, 56, {
+                activeIdx: activePoint,
+                bindHover: bindSparkPoint,
+              })
+            ) : (
+              <div className="flex h-full items-center justify-end text-[11px] text-zinc-600">
+                no trend
+              </div>
+            )}
           </div>
         </div>
         <tip.Portal />

@@ -1,14 +1,8 @@
 import { notFound } from "next/navigation";
-import { MapPin } from "lucide-react";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
-import {
-  fetchCity,
-  fetchCityStats,
-  fetchCategoryBreakdown,
-  fetchRecentReports,
-  fetchUserUpvotes,
-} from "@/lib/dashboard-queries";
+import { fetchCity, fetchCityStats, fetchUserUpvotes } from "@/lib/dashboard-queries";
 import { DashboardInteractive } from "@/components/dashboard/dashboard-interactive";
+import { FilterBar } from "@/components/filters/filter-bar";
 
 export const metadata = { title: "Browse Local Issues | Civic" };
 
@@ -22,36 +16,31 @@ export default async function BrowsePage({ params }: PageProps) {
   if (!city) notFound();
 
   const known = KNOWN_CITIES[slug];
-  const [stats, categories, reports, upvotedIds] = await Promise.all([
+  const [stats, upvotedIds] = await Promise.all([
     fetchCityStats(city.id),
-    fetchCategoryBreakdown(city.id),
-    fetchRecentReports(city.id, 100),
     fetchUserUpvotes(),
   ]);
 
-  // Sort by community upvotes — the loudest issues first.
-  const sorted = [...reports].sort((a, b) => b.upvote_count - a.upvote_count);
-
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="flex-grow mx-auto w-full max-w-7xl px-4 pt-20 pb-10 sm:px-6 lg:px-8">
       <section className="mb-8">
-        <div className="flex items-center gap-2 text-sm font-medium text-blue-600">
-          <MapPin className="h-4 w-4" />
-          Browse Local Issues
-        </div>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
+        <p className="text-[13px] text-zinc-500">
           {city.name}, {city.state}
+        </p>
+        <h1 className="mt-1 text-[34px] sm:text-[40px] font-semibold tracking-tight text-white leading-[1.1]">
+          Browse local issues
         </h1>
-        <p className="mt-2 text-zinc-500">
-          Vote up the issues that matter most to your neighborhood. Sorted by
-          community upvotes.
+        <p className="mt-3 text-sm text-zinc-400">
+          Upvote the issues that matter most to your neighborhood.
         </p>
       </section>
 
+      <div className="mb-6">
+        <FilterBar />
+      </div>
+
       <DashboardInteractive
         initialStats={stats}
-        initialCategories={categories}
-        initialReports={sorted}
         center={known?.center ?? [-84.14, 34.21]}
         zoom={known?.zoom ?? 12}
         upvotedIds={upvotedIds}
