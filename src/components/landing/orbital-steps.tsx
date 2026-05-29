@@ -164,10 +164,16 @@ export function OrbitalSteps() {
   const calculatePosition = (index: number, total: number) => {
     const angle = ((index / total) * 360 + rotationAngle) % 360;
     const radian = (angle * Math.PI) / 180;
-    const x = RADIUS * Math.cos(radian);
-    const y = RADIUS * Math.sin(radian);
+    // Round to fixed precision so SSR (Node V8) and client (any JS engine)
+    // emit byte-identical style strings — raw trig differs in the last ULP
+    // across engines and trips a hydration mismatch.
+    const x = Math.round(RADIUS * Math.cos(radian) * 100) / 100;
+    const y = Math.round(RADIUS * Math.sin(radian) * 100) / 100;
     const zIndex = Math.round(100 + 50 * Math.cos(radian));
-    const opacity = Math.max(0.45, Math.min(1, 0.5 + 0.5 * ((1 + Math.sin(radian)) / 2)));
+    const opacity =
+      Math.round(
+        Math.max(0.45, Math.min(1, 0.5 + 0.5 * ((1 + Math.sin(radian)) / 2))) * 1000,
+      ) / 1000;
     return { x, y, angle, zIndex, opacity };
   };
 
