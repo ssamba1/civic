@@ -14,7 +14,7 @@ export interface ReportFilter {
 }
 
 export const DEFAULT_FILTER: ReportFilter = {
-  preset: "30d",
+  preset: "14d",
   from: null,
   to: null,
   categories: [],

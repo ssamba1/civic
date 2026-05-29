@@ -121,11 +121,13 @@ export function deriveTrend(reports: DashboardReport[]): TrendPoint[] {
     const k = dayKey(t);
     created.set(k, (created.get(k) ?? 0) + 1);
 
+    // Count the synthetic close event, but never extend the axis past the last
+    // created day — a close time can fall in the future (created_at + resolution),
+    // which would tail the chart out to empty days where `created` is 0.
     const ct = closeTime(r);
     if (ct !== null) {
       const ck = dayKey(ct);
       closed.set(ck, (closed.get(ck) ?? 0) + 1);
-      maxMs = Math.max(maxMs, ct);
     }
   }
 

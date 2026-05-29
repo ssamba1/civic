@@ -190,11 +190,11 @@ function statusForAge(ageDays: number, r: number): ReportStatus {
   if (ageDays > 14) {
     return pickWeighted<ReportStatus>(
       [
-        ["closed", 58],
-        ["in_progress", 22],
-        ["dispatched", 10],
-        ["open", 5],
-        ["rejected", 5],
+        ["closed", 70],
+        ["in_progress", 15],
+        ["dispatched", 7],
+        ["open", 4],
+        ["rejected", 4],
       ],
       r,
     );
@@ -202,20 +202,20 @@ function statusForAge(ageDays: number, r: number): ReportStatus {
   if (ageDays > 3) {
     return pickWeighted<ReportStatus>(
       [
-        ["closed", 28],
-        ["in_progress", 32],
-        ["dispatched", 25],
-        ["open", 15],
+        ["closed", 66],
+        ["in_progress", 18],
+        ["dispatched", 10],
+        ["open", 6],
       ],
       r,
     );
   }
   return pickWeighted<ReportStatus>(
     [
-      ["open", 50],
-      ["dispatched", 25],
-      ["in_progress", 22],
-      ["closed", 3],
+      ["open", 34],
+      ["dispatched", 24],
+      ["in_progress", 24],
+      ["closed", 18],
     ],
     r,
   );
@@ -233,8 +233,9 @@ const PHOTO_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""}/storage/v1/obj
 const categoryPhoto = (category: ReportCategory): string => `${PHOTO_BASE}/${category}.jpg`;
 
 function buildCorpus(): CorpusReport[] {
-  const N = 120;
+  const N = 1100;
   const SPAN_DAYS = 180; // ~6 months
+  const RECENCY = 1.6; // >1 front-loads activity toward the present (dense recent window)
   const DAY_MS = 86_400_000;
   const now = Date.now();
   const center = KNOWN_CITIES.cumming.center;
@@ -242,8 +243,10 @@ function buildCorpus(): CorpusReport[] {
   const latSpread = 0.048;
 
   const reports: CorpusReport[] = Array.from({ length: N }, (_, i) => {
-    // Spread linearly across SPAN_DAYS with small jitter so the timeline isn't a perfect grid.
-    const baseAge = ((i + 0.5) / N) * SPAN_DAYS;
+    // Power-curve age: u^RECENCY clusters reports toward the present, so the
+    // recent window (what the chart shows) is densely populated while older
+    // history thins out. Small jitter keeps the timeline off a perfect grid.
+    const baseAge = ((i + 0.5) / N) ** RECENCY * SPAN_DAYS;
     const jitter = (seeded(i, 10) - 0.5) * 1.5;
     const ageDays = Math.max(0.1, baseAge + jitter);
 
