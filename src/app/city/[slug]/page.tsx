@@ -72,7 +72,7 @@ export default async function CityDashboardPage({
 
   return (
     <div className="flex flex-col min-h-dvh">
-      <div className="flex-grow mx-auto w-full max-w-7xl px-4 pt-20 pb-10 sm:px-6 lg:px-8">
+      <div className="flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-10 sm:px-6 lg:px-8">
         {/* Hero */}
         <section className="mb-10">
           {/* Municipality switcher — search + toggle between cities */}
