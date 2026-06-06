@@ -7,7 +7,8 @@ import {
   classificationSchema,
   GEMINI_CLASSIFICATION_SCHEMA,
 } from "./classification-schema";
-import { CLASSIFICATION_PROMPT } from "./prompt";
+import { CLASSIFICATION_PROMPT, CLASSIFICATION_SYSTEM_PROMPT } from "./prompt";
+import { checkAndRecordGeminiCall } from "./rate-limiter";
 
 function getClient() {
   return new GoogleGenerativeAI(serverEnv.GEMINI_API_KEY);
@@ -32,17 +33,28 @@ function stripCodeFences(raw: string): string {
  * Send a photo to Gemini and get a validated Classification back, along with
  * the raw model text so the caller can persist what the model actually said.
  *
- * Uses structured output (JSON schema) + per-attempt timeout and retry with
- * exponential backoff on transient failures.
+ * Uses structured output (JSON schema) + a per-attempt timeout and retry with
+ * exponential backoff. Rate-limited via a global sliding window — if the limit
+ * is exceeded the call returns ok:false so the classify pipeline can fall back
+ * gracefully instead of crashing.
  */
 export async function classifyPhoto(
   imageBase64: string,
   mimeType: string,
 ): Promise<Result<{ classification: Classification; rawText: string }>> {
+  const rateCheck = checkAndRecordGeminiCall();
+  if (!rateCheck.allowed) {
+    return {
+      ok: false,
+      error: `Gemini rate limit: ${rateCheck.reason}. Retry in ${Math.ceil((rateCheck.retryAfterMs ?? 0) / 1000)}s.`,
+    };
+  }
+
   try {
     const genAI = getClient();
     const model = genAI.getGenerativeModel({
       model: GEMINI_MODEL,
+      systemInstruction: CLASSIFICATION_SYSTEM_PROMPT,
       generationConfig: {
         responseMimeType: "application/json",
         responseSchema: GEMINI_CLASSIFICATION_SCHEMA,
@@ -78,7 +90,7 @@ export async function classifyPhoto(
     } catch {
       return {
         ok: false,
-        error: `Gemini returned invalid JSON: ${cleaned.slice(0, 200)}`,
+        error: `Gemini returned invalid JSON: ${cleaned.slice(0, 300)}`,
       };
     }
 
