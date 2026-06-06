@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { AlertCircle, ArrowRight, Lock, Mail, MapPin } from "lucide-react";
 import Link from "next/link";
-import { MapPin, Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { DemoSignIn } from "@/components/auth/demo-sign-in";
 import { createBrowserSupabase } from "@/lib/db/browser-client";
 
 type Mode = "signin" | "signup";
@@ -19,6 +20,7 @@ export default function LoginForm() {
   const params = useSearchParams();
   const redirectTo = params.get("redirect") || "/";
   const initialError = params.get("error");
+  const demoError = params.get("demo_error");
 
   const [mode, setMode] = useState<Mode>("signin");
   const [showEmail, setShowEmail] = useState(DEV_PREFILL);
@@ -55,7 +57,10 @@ export default function LoginForm() {
     setError(null);
     const supabase = createBrowserSupabase();
     if (mode === "signin") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       if (error) {
         setError(error.message);
         setBusy(null);
@@ -187,10 +192,14 @@ export default function LoginForm() {
                   type="password"
                   required
                   minLength={mode === "signup" ? 8 : undefined}
-                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                  autoComplete={
+                    mode === "signin" ? "current-password" : "new-password"
+                  }
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={mode === "signup" ? "At least 8 characters" : "Password"}
+                  placeholder={
+                    mode === "signup" ? "At least 8 characters" : "Password"
+                  }
                   className="h-12 w-full bg-transparent pl-10 pr-3 text-base sm:text-[14px] outline-none placeholder:text-[var(--color-muted)]"
                 />
               </FieldIcon>
@@ -200,14 +209,18 @@ export default function LoginForm() {
                 disabled={anyBusy}
                 className="group mt-1 flex h-12 w-full items-center justify-center gap-1.5 rounded-full bg-[var(--color-primary)] text-[14px] font-semibold text-white shadow-[0_10px_30px_-10px_rgba(10,132,255,0.7)] transition-all hover:bg-[var(--color-primary-hover)] hover:-translate-y-[1px] active:translate-y-0 disabled:opacity-60 disabled:hover:translate-y-0"
               >
-                {busy === "email"
-                  ? mode === "signin" ? "Signing in…" : "Creating account…"
-                  : (
-                    <>
-                      {mode === "signin" ? "Sign in" : "Create account"}
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                    </>
-                  )}
+                {busy === "email" ? (
+                  mode === "signin" ? (
+                    "Signing in…"
+                  ) : (
+                    "Creating account…"
+                  )
+                ) : (
+                  <>
+                    {mode === "signin" ? "Sign in" : "Create account"}
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </>
+                )}
               </button>
             </form>
           )}
@@ -220,6 +233,8 @@ export default function LoginForm() {
           >
             {busy === "guest" ? "Signing in…" : "Continue as guest"}
           </button>
+
+          <DemoSignIn error={demoError} />
         </div>
 
         <p className="mt-6 text-center text-[13px] text-[var(--color-muted)]">
@@ -228,7 +243,11 @@ export default function LoginForm() {
               New to Civic?{" "}
               <button
                 type="button"
-                onClick={() => { setMode("signup"); setError(null); setShowEmail(false); }}
+                onClick={() => {
+                  setMode("signup");
+                  setError(null);
+                  setShowEmail(false);
+                }}
                 className="inline-flex sm:inline items-center min-h-[44px] sm:min-h-0 font-medium text-[var(--color-primary)] hover:underline"
               >
                 Create an account
@@ -239,7 +258,11 @@ export default function LoginForm() {
               Already have an account?{" "}
               <button
                 type="button"
-                onClick={() => { setMode("signin"); setError(null); setShowEmail(false); }}
+                onClick={() => {
+                  setMode("signin");
+                  setError(null);
+                  setShowEmail(false);
+                }}
                 className="inline-flex sm:inline items-center min-h-[44px] sm:min-h-0 font-medium text-[var(--color-primary)] hover:underline"
               >
                 Sign in
@@ -249,14 +272,34 @@ export default function LoginForm() {
         </p>
 
         <p className="mt-3 text-center text-[11px] leading-relaxed text-[var(--color-muted)]">
-          By continuing you agree to Civic's Terms and acknowledge the Privacy Policy.
+          By continuing you agree to Civic's{" "}
+          <Link
+            href="/terms"
+            className="font-medium text-[var(--foreground)] hover:underline"
+          >
+            Terms
+          </Link>{" "}
+          and acknowledge the{" "}
+          <Link
+            href="/privacy"
+            className="font-medium text-[var(--foreground)] hover:underline"
+          >
+            Privacy Policy
+          </Link>
+          .
         </p>
       </div>
     </div>
   );
 }
 
-function FieldIcon({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+function FieldIcon({
+  icon,
+  children,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <div className="relative rounded-xl border border-[var(--color-border)] bg-[var(--background)] transition-colors focus-within:border-[var(--color-primary)] focus-within:ring-2 focus-within:ring-[var(--color-primary)]/20">
       <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)]">

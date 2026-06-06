@@ -1,5 +1,5 @@
-import type { City, Report, ReportCategory, ReportStatus } from "@/lib/types";
 import type { TeamId } from "@/lib/teams";
+import type { City, Report, ReportCategory, ReportStatus } from "@/lib/types";
 
 /* ------------------------------------------------------------------
    Dashboard-specific types (flattened from Report + Classification)
@@ -25,6 +25,11 @@ export interface DashboardReport {
   demo?: boolean;
   // Baked AI classification text shown in expanded views for demo reports.
   ai_reasoning?: string;
+  // Task-completion overlay (src/lib/task-completion.ts), resolved into the
+  // corpus by FilterProvider. When a team marks a task done, status becomes
+  // "closed" and these carry the resolution photo + timestamp for before/after.
+  afterPhoto?: string;
+  completed_at?: string;
 }
 
 export interface CityStats {
@@ -74,16 +79,76 @@ export interface Municipality {
 }
 
 export const MUNICIPALITIES: Municipality[] = [
-  { slug: "cumming", name: "Cumming", state: "GA", county: "Forsyth County", live: true },
-  { slug: "south-forsyth", name: "South Forsyth", state: "GA", county: "Forsyth County", live: false },
-  { slug: "coal-mountain", name: "Coal Mountain", state: "GA", county: "Forsyth County", live: false },
-  { slug: "sawnee", name: "Sawnee", state: "GA", county: "Forsyth County", live: false },
-  { slug: "alpharetta", name: "Alpharetta", state: "GA", county: "Fulton County", live: false },
-  { slug: "milton", name: "Milton", state: "GA", county: "Fulton County", live: false },
-  { slug: "gainesville", name: "Gainesville", state: "GA", county: "Hall County", live: false },
-  { slug: "buford", name: "Buford", state: "GA", county: "Gwinnett County", live: false },
-  { slug: "suwanee", name: "Suwanee", state: "GA", county: "Gwinnett County", live: false },
-  { slug: "dawsonville", name: "Dawsonville", state: "GA", county: "Dawson County", live: false },
+  {
+    slug: "cumming",
+    name: "Cumming",
+    state: "GA",
+    county: "Forsyth County",
+    live: true,
+  },
+  {
+    slug: "south-forsyth",
+    name: "South Forsyth",
+    state: "GA",
+    county: "Forsyth County",
+    live: false,
+  },
+  {
+    slug: "coal-mountain",
+    name: "Coal Mountain",
+    state: "GA",
+    county: "Forsyth County",
+    live: false,
+  },
+  {
+    slug: "sawnee",
+    name: "Sawnee",
+    state: "GA",
+    county: "Forsyth County",
+    live: false,
+  },
+  {
+    slug: "alpharetta",
+    name: "Alpharetta",
+    state: "GA",
+    county: "Fulton County",
+    live: false,
+  },
+  {
+    slug: "milton",
+    name: "Milton",
+    state: "GA",
+    county: "Fulton County",
+    live: false,
+  },
+  {
+    slug: "gainesville",
+    name: "Gainesville",
+    state: "GA",
+    county: "Hall County",
+    live: false,
+  },
+  {
+    slug: "buford",
+    name: "Buford",
+    state: "GA",
+    county: "Gwinnett County",
+    live: false,
+  },
+  {
+    slug: "suwanee",
+    name: "Suwanee",
+    state: "GA",
+    county: "Gwinnett County",
+    live: false,
+  },
+  {
+    slug: "dawsonville",
+    name: "Dawsonville",
+    state: "GA",
+    county: "Dawson County",
+    live: false,
+  },
 ];
 
 /* ------------------------------------------------------------------
@@ -104,7 +169,11 @@ export const CATEGORY_META: Record<
   tree_down: { label: "Tree Down", color: "#22c55e", icon: "tree-pine" },
   debris: { label: "Debris", color: "#a3a3a3", icon: "construction" },
   drainage: { label: "Drainage", color: "#3b82f6", icon: "waves" },
-  faded_signage: { label: "Faded Signage", color: "#d4d4d4", icon: "sign-post" },
+  faded_signage: {
+    label: "Faded Signage",
+    color: "#d4d4d4",
+    icon: "sign-post",
+  },
   other: { label: "Other", color: "#737373", icon: "help-circle" },
 };
 
@@ -161,10 +230,26 @@ export async function fetchCity(slug: string): Promise<City | null> {
    ------------------------------------------------------------------ */
 
 const STREET_NAMES = [
-  "Main St", "Elm Ave", "Oak Dr", "Peachtree Rd", "Maple Ln",
-  "Walnut Ct", "Cedar Blvd", "Pine Way", "Birch St", "Willow Ave",
-  "Spruce Dr", "Hickory Rd", "Poplar Ln", "Magnolia Ct", "Dogwood Blvd",
-  "Chestnut Way", "Sycamore St", "Aspen Ave", "Redwood Dr", "Juniper Rd",
+  "Main St",
+  "Elm Ave",
+  "Oak Dr",
+  "Peachtree Rd",
+  "Maple Ln",
+  "Walnut Ct",
+  "Cedar Blvd",
+  "Pine Way",
+  "Birch St",
+  "Willow Ave",
+  "Spruce Dr",
+  "Hickory Rd",
+  "Poplar Ln",
+  "Magnolia Ct",
+  "Dogwood Blvd",
+  "Chestnut Way",
+  "Sycamore St",
+  "Aspen Ave",
+  "Redwood Dr",
+  "Juniper Rd",
 ];
 
 const CATEGORY_WEIGHTS: ReadonlyArray<readonly [ReportCategory, number]> = [
@@ -264,7 +349,8 @@ interface CorpusReport extends DashboardReport {
 // seed/<category>.jpg — one image per issue type so every report shows a photo
 // that actually matches the issue (replaces the old random picsum placeholders).
 const PHOTO_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""}/storage/v1/object/public/photos-public/seed`;
-const categoryPhoto = (category: ReportCategory): string => `${PHOTO_BASE}/${category}.jpg`;
+const categoryPhoto = (category: ReportCategory): string =>
+  `${PHOTO_BASE}/${category}.jpg`;
 
 function buildCorpus(): CorpusReport[] {
   const N = 1100;
@@ -288,7 +374,8 @@ function buildCorpus(): CorpusReport[] {
     const severity = pickWeighted(SEVERITY_WEIGHTS, seeded(i, 2));
     const status = statusForAge(ageDays, seeded(i, 3));
 
-    const streetName = STREET_NAMES[Math.floor(seeded(i, 4) * STREET_NAMES.length)];
+    const streetName =
+      STREET_NAMES[Math.floor(seeded(i, 4) * STREET_NAMES.length)];
     const houseNum = 100 + Math.floor(seeded(i, 5) * 900);
 
     // Power-law reporter distribution: squaring the uniform draw biases toward
@@ -349,11 +436,12 @@ export async function fetchCityStats(cityId: string): Promise<CityStats> {
 
   // Synthetic avg resolution: severity-weighted hours (sev 1 ~30h, sev 5 ~102h).
   const closed = REPORT_CORPUS.filter((r) => r.status === "closed");
-  const avg_resolution_hours = closed.length === 0
-    ? 0
-    : Math.round(
-        closed.reduce((s, r) => s + 12 + r.severity * 18, 0) / closed.length,
-      );
+  const avg_resolution_hours =
+    closed.length === 0
+      ? 0
+      : Math.round(
+          closed.reduce((s, r) => s + 12 + r.severity * 18, 0) / closed.length,
+        );
 
   return { total, open, resolved, avg_resolution_hours, this_week, prev_week };
 }

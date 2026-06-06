@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
+
+import { CorpusMapView } from "@/components/map/corpus-map-view";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
-import { fetchCity, fetchRecentReports } from "@/lib/dashboard-queries";
-import { FullscreenMapOrchestrator } from "@/components/map/fullscreen-map";
+import { fetchCity } from "@/lib/dashboard-queries";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -15,12 +16,10 @@ export default async function FullscreenMapPage({ params }: PageProps) {
 
   const known = KNOWN_CITIES[slug];
 
-  // Fetch up to 100 recent reports to provide a rich dataset for concentration & dispersal maps
-  const reports = await fetchRecentReports(city.id, 100);
-
+  // All-teams map: reads the same shared corpus as the team maps, so the city
+  // view is always a superset of every team and reflects task completions.
   return (
-    <FullscreenMapOrchestrator
-      reports={reports}
+    <CorpusMapView
       center={known?.center ?? [-84.14, 34.21]}
       zoom={known?.zoom ?? 12}
       cityName={city.name}
