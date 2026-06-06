@@ -221,10 +221,16 @@ export function WorkOrderDetail({
             )}
 
             {/* Location */}
-            <div className="flex items-start gap-3">
-              <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-zinc-400" />
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${report.location?.lat ?? 0},${report.location?.lng ?? 0}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-start gap-3"
+              title="Open in Google Maps"
+            >
+              <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-zinc-400 group-hover:text-sky-500" />
               <div>
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <p className="text-sm font-medium text-zinc-900 underline-offset-2 group-hover:text-sky-600 group-hover:underline dark:text-zinc-100 dark:group-hover:text-sky-400">
                   {report.address ?? "Unknown address"}
                 </p>
                 <p className="text-xs text-zinc-500">
@@ -232,7 +238,7 @@ export function WorkOrderDetail({
                   {report.location?.lng?.toFixed(6) ?? "—"}
                 </p>
               </div>
-            </div>
+            </a>
 
             {/* Classification details */}
             <div className="rounded-lg border border-zinc-200 dark:border-zinc-700">

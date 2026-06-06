@@ -136,7 +136,7 @@ export function renderPopupHTML(report: DashboardReport): string {
           <strong style="font-size:15px;color:#ffffff;letter-spacing:-0.01em;font-weight:600;">${esc(meta.label)}</strong>
           <span style="font-size:12px;color:${esc(status.color)};">${esc(status.label)}</span>
         </div>
-        <p style="margin:4px 0 0;font-size:13px;color:#a1a1aa;line-height:1.35;">${esc(report.address)}</p>
+        <a href="https://www.google.com/maps/search/?api=1&query=${report.location.lat},${report.location.lng}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin:4px 0 0;font-size:13px;color:#a1a1aa;line-height:1.35;text-decoration:none;" onmouseover="this.style.color='#0a84ff';this.style.textDecoration='underline';" onmouseout="this.style.color='#a1a1aa';this.style.textDecoration='none';">${esc(report.address)}</a>
 
         <div style="margin:14px 0 0;display:flex;flex-direction:column;gap:7px;font-size:13px;">
           <div style="display:flex;justify-content:space-between;color:#86868b;">

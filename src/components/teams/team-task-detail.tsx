@@ -222,10 +222,18 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
     <div className="flex flex-col gap-5 px-4 py-4">
       {/* Meta */}
       <div className="flex flex-col gap-1.5 text-[13px] text-zinc-400">
-        <span className="inline-flex items-center gap-2">
+        <a
+          href={`https://www.google.com/maps/search/?api=1&query=${report.location.lat},${report.location.lng}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group inline-flex items-center gap-2 transition-colors hover:text-white"
+          title="Open in Google Maps"
+        >
           <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-          <span className="text-zinc-200">{report.address}</span>
-        </span>
+          <span className="text-zinc-200 underline-offset-2 group-hover:underline">
+            {report.address}
+          </span>
+        </a>
         <span className="inline-flex items-center gap-2">
           <Clock className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
           Reported {timeAgo(report.created_at)}

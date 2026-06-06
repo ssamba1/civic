@@ -106,19 +106,33 @@ function Stat({
   label,
   value,
   hint,
+  href,
 }: {
   label: string;
   value: string;
   hint?: string;
+  href?: string;
 }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-[11px] uppercase tracking-wider text-zinc-500">
         {label}
       </span>
-      <span className="text-[15px] font-medium tabular-nums text-white leading-tight">
-        {value}
-      </span>
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[15px] font-medium tabular-nums text-white leading-tight underline-offset-2 transition-colors hover:text-sky-400 hover:underline"
+          title="Open in Google Maps"
+        >
+          {value}
+        </a>
+      ) : (
+        <span className="text-[15px] font-medium tabular-nums text-white leading-tight">
+          {value}
+        </span>
+      )}
       {hint && <span className="text-[11px] text-zinc-500">{hint}</span>}
     </div>
   );
@@ -336,10 +350,18 @@ export function ReportDetail({ report }: { report: DashboardReport | null }) {
           </h2>
           <StatusPill status={report.status} />
         </div>
-        <p className="flex items-center gap-1.5 text-[13px] text-zinc-400">
+        <a
+          href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex items-center gap-1.5 text-[13px] text-zinc-400 transition-colors hover:text-white"
+          title="Open in Google Maps"
+        >
           <MapPin className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={1.75} />
-          <span className="truncate">{report.address}</span>
-        </p>
+          <span className="truncate underline-offset-2 group-hover:underline">
+            {report.address}
+          </span>
+        </a>
       </div>
 
       {/* 3. Info grid */}
@@ -362,6 +384,7 @@ export function ReportDetail({ report }: { report: DashboardReport | null }) {
         <Stat
           label="Coordinates"
           value={`${lat.toFixed(4)}, ${lng.toFixed(4)}`}
+          href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`}
         />
         <Stat label="Assigned team" value={report.assigned_team ?? "None"} />
       </div>

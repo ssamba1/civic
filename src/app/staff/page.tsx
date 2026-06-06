@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { createServerClient } from "@/lib/db/client";
 import { StaffInbox } from "@/components/staff/staff-inbox";
-import type { WorkOrderWithDetails } from "@/lib/types";
+import { normalizeLocation, type WorkOrderWithDetails } from "@/lib/types";
 
 export { type WorkOrderWithDetails };
 
@@ -77,7 +77,7 @@ async function getWorkOrders(cityId: string): Promise<WorkOrderWithDetails[]> {
           id: report.id,
           city_id: report.city_id,
           reporter_id: report.reporter_id,
-          location: report.location,
+          location: normalizeLocation(report.location) ?? { lng: 0, lat: 0 },
           photo_public_url: report.photo_public_url,
           photo_raw_url: report.photo_raw_url ?? null,
           status: report.status,

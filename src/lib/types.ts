@@ -89,6 +89,26 @@ export function normalizeLocation(raw: unknown): GeoPoint | null {
       const lat = Number(m[2]);
       if (!isNaN(lng) && !isNaN(lat)) return { lng, lat };
     }
+    // Hex EWKB (what PostgREST returns for geography columns), e.g.
+    // "0101000020E6100000...": byte-order, geom type (+SRID flag), [SRID], X, Y.
+    if (/^[0-9A-Fa-f]+$/.test(raw) && raw.length >= 42) {
+      const bytes = new Uint8Array(raw.length / 2);
+      for (let i = 0; i < bytes.length; i++) {
+        bytes[i] = parseInt(raw.slice(i * 2, i * 2 + 2), 16);
+      }
+      const view = new DataView(bytes.buffer);
+      const little = bytes[0] === 1;
+      const type = view.getUint32(1, little);
+      if ((type & 0xff) === 1) {
+        // Point. Coords start after type, plus 4 bytes if the SRID flag is set.
+        const offset = (type & 0x20000000) !== 0 ? 9 : 5;
+        if (bytes.length >= offset + 16) {
+          const lng = view.getFloat64(offset, little);
+          const lat = view.getFloat64(offset + 8, little);
+          if (!isNaN(lng) && !isNaN(lat)) return { lng, lat };
+        }
+      }
+    }
   }
   return null;
 }
