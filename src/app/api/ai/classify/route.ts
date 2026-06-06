@@ -1,32 +1,77 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
-import { getAuthUser } from "@/lib/db/ssr-client";
 import { runClassifyPipeline } from "@/lib/ai/classify-pipeline";
+import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
+import { createSSRClient, getAuthUser } from "@/lib/db/ssr-client";
 
 export async function POST(request: Request) {
   try {
     // Auth check: accept either a valid user session OR an internal secret header.
     // The internal secret allows server actions and background jobs to call this
     // without forwarding browser cookies.
-    const user = await getAuthUser();
-    if (!user) {
-      const internalKey = (request as Request & { headers: Headers }).headers.get("x-internal-key");
-      const expectedKey = process.env.INTERNAL_CLASSIFY_SECRET;
-      const isInternal =
-        expectedKey &&
+    const internalKey = (request as Request & { headers: Headers }).headers.get(
+      "x-internal-key",
+    );
+    const expectedKey = process.env.INTERNAL_CLASSIFY_SECRET;
+    const isInternal = Boolean(
+      expectedKey &&
         internalKey &&
         internalKey.length === expectedKey.length &&
-        timingSafeEqual(Buffer.from(internalKey), Buffer.from(expectedKey));
+        timingSafeEqual(Buffer.from(internalKey), Buffer.from(expectedKey)),
+    );
 
-      if (!isInternal) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Rate limit non-internal callers (browser users, anonymous). The internal
+    // x-internal-key path (server actions + Open311) is exempt.
+    if (!isInternal) {
+      const rl = checkRateLimit("classify:" + clientIp(request));
+      if (!rl.allowed) {
+        return NextResponse.json(
+          { error: "Rate limited" },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)),
+            },
+          },
+        );
       }
+    }
+
+    const user = await getAuthUser();
+    if (!user && !isInternal) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
     const reportId = body?.report_id;
     if (typeof reportId !== "string" || !reportId) {
-      return NextResponse.json({ error: "report_id is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "report_id is required" },
+        { status: 400 },
+      );
+    }
+
+    // Object-level authorization. The pipeline runs under the service-role
+    // client (RLS-bypassing), so an authenticated caller must NOT be allowed to
+    // re-classify an arbitrary report. Gate the non-internal path with an
+    // RLS-scoped read via the cookie-aware SSR client: reports_select_own
+    // (reporter_id = auth.uid()) and reports_select_staff (is_staff + city)
+    // return a row only when the caller actually owns or staffs the report.
+    // No row -> not authorized -> 404 (don't disclose existence). The internal
+    // x-internal-key path (server actions, Open311) stays exempt.
+    if (!isInternal) {
+      const ssr = await createSSRClient();
+      const { data: ownedReport, error: ownErr } = await ssr
+        .from("reports")
+        .select("id")
+        .eq("id", reportId)
+        .maybeSingle();
+      if (ownErr || !ownedReport) {
+        return NextResponse.json(
+          { error: "Report not found" },
+          { status: 404 },
+        );
+      }
     }
 
     const result = await runClassifyPipeline(reportId);
@@ -39,6 +84,9 @@ export async function POST(request: Request) {
     return NextResponse.json(result.data, { status: 200 });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: `Unexpected error: ${message}` }, { status: 500 });
+    return NextResponse.json(
+      { error: `Unexpected error: ${message}` },
+      { status: 500 },
+    );
   }
 }

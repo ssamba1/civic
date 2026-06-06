@@ -149,6 +149,24 @@
 .pl-safe { padding-left: env(safe-area-inset-left); }
 .pr-safe { padding-right: env(safe-area-inset-right); }
 
+/* ── City dashboard content offset (clears the FIXED CityHeader) ──
+   Mobile (<md): two-row header measured at 118px tall, PLUS the notch inset.
+   Desktop (md+): single-row 56px header.
+   The header is position:fixed and carries pt-safe, so its rendered height is
+   `inset-top + rows`. Content below it must add the SAME inset-top term or it
+   desyncs on notched iPhones (header grows, offset doesn't → content buried).
+   Centralizes what used to be a per-page pt-16/pt-20 guess + a layout spacer
+   that ignored the inset entirely. Map page opts out (fullscreen, transparent
+   header) by simply not using this class. */
+.pt-city-content {
+  padding-top: calc(env(safe-area-inset-top) + 8rem);
+}
+@media (min-width: 768px) {
+  .pt-city-content {
+    padding-top: 5rem;
+  }
+}
+
 /* ── Minimum touch target (44×44 per Apple HIG) ── */
 .min-tap {
   min-height: 44px;

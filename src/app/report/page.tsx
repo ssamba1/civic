@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import CameraCapture from "@/components/report/camera-capture";
-import PhotoPreview from "@/components/report/photo-preview";
 import EmergencyInterstitial from "@/components/report/emergency-interstitial";
+import PhotoPreview from "@/components/report/photo-preview";
 import SubmissionConfirmation from "@/components/report/submission-confirmation";
-import { submitReport } from "./actions";
-import { blurFacesAndPlates } from "@/lib/privacy/blur";
+import { ASYNC_CLASSIFY } from "@/lib/ai/config";
 import { createBrowserSupabase } from "@/lib/db/browser-client";
+import { blurFacesAndPlates } from "@/lib/privacy/blur";
 import type { Classification } from "@/lib/types";
+import { submitReport } from "./actions";
 
 async function blobToBase64(blob: Blob): Promise<string> {
   const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -33,19 +34,40 @@ const FALLBACK_CLASSIFICATION: Classification = {
   reasoning: "",
 };
 
+// Async-classify path only: if the background job never lands a result (e.g. an
+// UNHANDLED throw in the fire-and-forget pipeline), resolve the pending spinner
+// to a terminal manual-review state after this deadline so the resident never
+// dead-ends on an infinite spinner.
+const CLASSIFY_PENDING_TIMEOUT_MS = 20000;
+
 type GpsStatus = "acquiring" | "found" | "manual";
 
 type Step =
   | { name: "camera" }
   | { name: "preview"; photo: File }
   | { name: "submitting"; photo: File }
-  | { name: "emergency"; photo: File; classification: Classification; description: string | null; reportId: string }
-  | { name: "done"; reportId: string; classification: Classification };
+  | {
+      name: "emergency";
+      photo: File;
+      classification: Classification;
+      description: string | null;
+      reportId: string;
+    }
+  // `pending` is only ever set on the async-classify path (flag ON); on the
+  // default path it stays undefined so behavior is byte-identical to before.
+  | {
+      name: "done";
+      reportId: string;
+      classification: Classification;
+      pending?: boolean;
+    };
 
 export default function ReportPage() {
   const [step, setStep] = useState<Step>({ name: "camera" });
   const [gpsStatus, setGpsStatus] = useState<GpsStatus>("acquiring");
-  const [location, setLocation] = useState<{ lng: number; lat: number } | null>(null);
+  const [location, setLocation] = useState<{ lng: number; lat: number } | null>(
+    null,
+  );
   const [address, setAddress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,7 +103,7 @@ export default function ReportPage() {
       () => {
         setGpsStatus("manual");
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 10000 },
     );
   }, []);
 
@@ -101,15 +123,32 @@ export default function ReportPage() {
       setStep({ name: "submitting", photo });
       setError(null);
 
+      // Decode + blur on-device. This can FAIL before anything is submitted —
+      // most commonly when the user picks a HEIC from the library on desktop
+      // Chrome / Android Chrome, where createImageBitmap rejects (blur.ts:136).
+      // That failure must NOT fall through to the success screen (no report was
+      // created): show a recoverable error and return to preview so the user can
+      // retake or pick a JPEG/PNG. Only genuine POST-submit failures use the
+      // fallback-to-done path below.
+      let photoBlurred: string;
+      let photoOriginal: string;
       try {
         // Blur faces/plates on-device, then send both versions:
         // blurred → public bucket, original → raw bucket (staff-only).
         const { blurred, original } = await blurFacesAndPlates(photo);
-        const [photoBlurred, photoOriginal] = await Promise.all([
+        [photoBlurred, photoOriginal] = await Promise.all([
           blobToBase64(blurred),
           blobToBase64(original),
         ]);
+      } catch {
+        setError(
+          "Could not process that image format. Please try a JPEG/PNG or retake the photo.",
+        );
+        setStep({ name: "preview", photo });
+        return;
+      }
 
+      try {
         const result = await submitReport({
           photoBlurred,
           photoOriginal,
@@ -122,7 +161,11 @@ export default function ReportPage() {
         if (!result.ok) {
           // Demo must never dead-end: land on the thanks screen with a
           // fallback classification (confidence 0 hides the AI-details card).
-          setStep({ name: "done", reportId: crypto.randomUUID(), classification: FALLBACK_CLASSIFICATION });
+          setStep({
+            name: "done",
+            reportId: crypto.randomUUID(),
+            classification: FALLBACK_CLASSIFICATION,
+          });
           return;
         }
 
@@ -140,12 +183,21 @@ export default function ReportPage() {
           return;
         }
 
-        setStep({ name: "done", reportId: id, classification });
+        // Async-classify path (flag ON): the action returns immediately with a
+        // neutral pending sentinel (confidence 0) before the background job
+        // runs. Tag the step `pending` so the Realtime effect below subscribes
+        // for the real classification. Flag OFF → never pending → unchanged.
+        const pending = ASYNC_CLASSIFY && classification.confidence === 0;
+        setStep({ name: "done", reportId: id, classification, pending });
       } catch {
-        setStep({ name: "done", reportId: crypto.randomUUID(), classification: FALLBACK_CLASSIFICATION });
+        setStep({
+          name: "done",
+          reportId: crypto.randomUUID(),
+          classification: FALLBACK_CLASSIFICATION,
+        });
       }
     },
-    [step, location, address]
+    [step, location, address],
   );
 
   const handleEmergencyOverride = useCallback(() => {
@@ -158,6 +210,112 @@ export default function ReportPage() {
     });
   }, [step]);
 
+  // OPTIONAL async-classify path (NEXT_PUBLIC_ASYNC_CLASSIFY=1). When the action
+  // returned a pending sentinel, subscribe to Supabase Realtime for the
+  // classifications INSERT on this report and upgrade the confirmation UI in
+  // place when the background job lands. The INSERT payload carries the full
+  // classification, so no follow-up fetch is needed. RLS (classifications_select_own)
+  // authorizes the reporter; the table is added to supabase_realtime in
+  // migration 007.
+  //
+  // Fully gated: when the flag is OFF this entire effect is inert (the guard
+  // returns immediately and `pending` is never set), so the default path is
+  // unchanged. Existing fallback-on-error behavior is untouched — the !result.ok
+  // and catch branches never set `pending`, so they never subscribe.
+  const isPendingStep = step.name === "done" && step.pending === true;
+  const pendingReportId = isPendingStep ? step.reportId : null;
+  useEffect(() => {
+    if (!ASYNC_CLASSIFY || !pendingReportId) return;
+
+    const supabase = createBrowserSupabase();
+
+    // Terminal/timeout backstop: if neither the Realtime INSERT nor the one-shot
+    // fetch lands a real classification within the deadline (the pipeline threw
+    // and never persisted a row), stop the pending spinner and settle on the
+    // neutral fallback. confidence 0 keeps the AI-details card and the would-404
+    // "Track this report" link hidden — the report is already persisted and sits
+    // in the staff manual-triage queue, so this is a graceful terminal state, not
+    // a dead-end. Cleared on a real result or on unmount.
+    const timeout = setTimeout(() => {
+      setStep({
+        name: "done",
+        reportId: pendingReportId,
+        classification: FALLBACK_CLASSIFICATION,
+        pending: false,
+      });
+    }, CLASSIFY_PENDING_TIMEOUT_MS);
+
+    // Normalize a classifications row (Realtime payload OR initial fetch) into a
+    // Classification and apply it. Ignores the pipeline's neutral fallback
+    // (confidence 0) so the pending thanks screen stays up rather than flashing
+    // an empty card.
+    const applyRow = (
+      row: (Partial<Classification> & { confidence?: number }) | null,
+    ) => {
+      if (!row || typeof row.confidence !== "number" || row.confidence <= 0)
+        return;
+      clearTimeout(timeout);
+      const classification: Classification = {
+        category: (row.category as Classification["category"]) ?? "other",
+        subcategory: row.subcategory ?? "unclassified",
+        severity: (row.severity as Classification["severity"]) ?? 3,
+        hazard_radius_m: row.hazard_radius_m ?? 0,
+        visible_size_estimate: row.visible_size_estimate ?? "unknown",
+        is_emergency: row.is_emergency ?? false,
+        confidence: row.confidence,
+        reasoning: row.reasoning ?? "",
+      };
+      setStep({
+        name: "done",
+        reportId: pendingReportId,
+        classification,
+        pending: false,
+      });
+    };
+
+    const channel = supabase
+      .channel(`classify_${pendingReportId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "classifications",
+          filter: `report_id=eq.${pendingReportId}`,
+        },
+        (payload) =>
+          applyRow(
+            payload.new as Partial<Classification> & { confidence?: number },
+          ),
+      )
+      .subscribe(() => {
+        // Subscribe-after-fire race: the background classify is fired server-side
+        // before this client subscribes, so an INSERT may land before the channel
+        // is live and be lost. Mirror work-order-comments: once subscribed, do a
+        // one-shot fetch in case the result already exists. RLS scopes this to the
+        // reporter's own report.
+        supabase
+          .from("classifications")
+          .select(
+            "category, subcategory, severity, hazard_radius_m, visible_size_estimate, is_emergency, confidence, reasoning",
+          )
+          .eq("report_id", pendingReportId)
+          .maybeSingle()
+          .then(({ data }) =>
+            applyRow(
+              data as
+                | (Partial<Classification> & { confidence?: number })
+                | null,
+            ),
+          );
+      });
+
+    return () => {
+      clearTimeout(timeout);
+      supabase.removeChannel(channel);
+    };
+  }, [pendingReportId]);
+
   return (
     <div className="fixed inset-0 h-dvh flex flex-col bg-black">
       {/* Error toast — clears notch via pt-safe */}
@@ -166,6 +324,7 @@ export default function ReportPage() {
           <div className="mt-3 rounded-xl bg-red-500/90 backdrop-blur-sm px-4 py-3 text-sm text-white font-medium shadow-lg relative">
             {error}
             <button
+              type="button"
               onClick={() => setError(null)}
               className="absolute top-2 right-3 text-white/70 text-lg min-tap flex items-center justify-center"
               aria-label="Dismiss error"

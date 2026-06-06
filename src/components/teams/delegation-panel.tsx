@@ -50,6 +50,9 @@ interface DelegationPanelProps {
   limit?: number;
 }
 
+/** Rows shown before the "Show N more" expander — keeps the phone scroll sane. */
+const INITIAL_VISIBLE = 8;
+
 const STATUS_LABEL: Record<ReportStatus, string> = {
   open: "Open",
   dispatched: "Dispatched",
@@ -99,13 +102,21 @@ function DelegationPanelInner({
   const sliced = reports.slice(0, limit);
   const overrideCount = sliced.filter((r) => overrides[r.id]).length;
 
+  // Progressive disclosure: a 30-row list is a multi-thousand-px scroll on a
+  // phone. Show a short batch first and reveal the rest on tap. Bounded list
+  // (≤limit) + expandable rows make windowing overkill; a slice + button gets
+  // most of the height win with no scroll math and no fight with the row GSAP.
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? sliced : sliced.slice(0, INITIAL_VISIBLE);
+  const hiddenCount = sliced.length - visible.length;
+
   return (
     <Tile
       title="Delegation"
       subtitle={
         overrideCount > 0
-          ? `${sliced.length} shown · ${overrideCount} overridden`
-          : `${sliced.length} shown`
+          ? `${visible.length} of ${sliced.length} · ${overrideCount} overridden`
+          : `${visible.length} of ${sliced.length} shown`
       }
     >
       {sliced.length === 0 ? (
@@ -113,22 +124,34 @@ function DelegationPanelInner({
           No reports match the current filters.
         </p>
       ) : (
-        <ul className="flex flex-col divide-y divide-white/[0.04]">
-          {sliced.map((r) => (
-            <DelegationRow
-              key={r.id}
-              report={r}
-              override={overrides[r.id]}
-              history={history[r.id] ?? []}
-              corpus={corpus}
-              workloads={workloads}
-              reasoningCache={reasoningCacheRef.current}
-              setReasoningCache={setReasoningCache}
-              onReassign={(teamId) => setReportTeam(r, teamId)}
-              onClear={() => clearReportTeam(r)}
-            />
-          ))}
-        </ul>
+        <>
+          <ul className="flex flex-col divide-y divide-white/[0.04]">
+            {visible.map((r) => (
+              <DelegationRow
+                key={r.id}
+                report={r}
+                override={overrides[r.id]}
+                history={history[r.id] ?? []}
+                corpus={corpus}
+                workloads={workloads}
+                reasoningCache={reasoningCacheRef.current}
+                setReasoningCache={setReasoningCache}
+                onReassign={(teamId) => setReportTeam(r, teamId)}
+                onClear={() => clearReportTeam(r)}
+              />
+            ))}
+          </ul>
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowAll(true)}
+              className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-lg border border-white/[0.08] text-[13px] font-medium text-zinc-300 transition-colors hover:bg-white/[0.03] hover:text-white"
+            >
+              Show {hiddenCount} more
+              <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} />
+            </button>
+          )}
+        </>
       )}
     </Tile>
   );

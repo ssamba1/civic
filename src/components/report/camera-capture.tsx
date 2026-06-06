@@ -56,7 +56,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
       });
       onCapture(file);
     },
-    [onCapture]
+    [onCapture],
   );
 
   // capture="environment" → native camera; no capture attr → photo library.
@@ -106,7 +106,9 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "NotAllowedError") {
-        setError("Camera access denied. Please allow camera permissions and reload.");
+        setError(
+          "Camera access denied. Please allow camera permissions and reload.",
+        );
       } else if (err instanceof DOMException && err.name === "NotFoundError") {
         setError("No camera found on this device.");
       } else {
@@ -145,12 +147,12 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
         });
         // Stop camera after capture
         streamRef.current?.getTracks().forEach((t) => {
-        t.stop();
-      });
+          t.stop();
+        });
         onCapture(file);
       },
       "image/jpeg",
-      0.85
+      0.85,
     );
   }, [onCapture]);
 
@@ -305,6 +307,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
       <div className="relative z-10 pb-safe">
         <div className="pb-10 pt-6 flex flex-col items-center gap-4">
           <button
+            type="button"
             onClick={capture}
             disabled={!ready}
             aria-label="Take photo"

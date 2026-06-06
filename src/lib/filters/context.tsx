@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -8,15 +9,19 @@ import {
   useRef,
   useState,
 } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-
-import type { DashboardReport } from "@/lib/dashboard-data";
-import { filterPreviousWindow, filterReports } from "@/lib/filters/filter-reports";
-import { type ReportFilter, DEFAULT_FILTER } from "@/lib/filters/types";
-import { filterToParams, parseFilterFromParams } from "@/lib/filters/url-sync";
-import { useTeamOverrides } from "@/lib/teams-overrides";
 import { useCategoryOverrides } from "@/lib/category-overrides";
+import type { DashboardReport } from "@/lib/dashboard-data";
 import { useDemoReports } from "@/lib/demo-reports";
+import {
+  filterPreviousWindow,
+  filterReports,
+} from "@/lib/filters/filter-reports";
+import { DEFAULT_FILTER, type ReportFilter } from "@/lib/filters/types";
+import { filterToParams, parseFilterFromParams } from "@/lib/filters/url-sync";
+import { useTaskCompletion } from "@/lib/task-completion";
+import type { TeamId } from "@/lib/teams";
+import { useTeamOverrides } from "@/lib/teams-overrides";
+import type { ReportStatus } from "@/lib/types";
 
 interface FilterContextValue {
   filter: ReportFilter;
@@ -38,10 +43,19 @@ interface FilterProviderProps {
   // a client-side Date.now() would drift past window boundaries and trip a
   // hydration mismatch.
   now: number;
+  // When set (team view), the team filter is seeded to this team and locked —
+  // every setFilter/patch forces it back, so reused surfaces (map, analytics,
+  // lists) only ever see this team's reports. Omit for the city/admin view.
+  lockedTeam?: TeamId;
   children: React.ReactNode;
 }
 
-export function FilterProvider({ corpus: baseCorpus, now: serverNow, children }: FilterProviderProps) {
+export function FilterProvider({
+  corpus: baseCorpus,
+  now: serverNow,
+  lockedTeam,
+  children,
+}: FilterProviderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -50,16 +64,36 @@ export function FilterProvider({ corpus: baseCorpus, now: serverNow, children }:
   // here — a single point that flows to every map/chart/list consuming this
   // provider. Newest first so they surface at the top of recency-sorted views.
   const { demoReports } = useDemoReports();
-  const corpus = useMemo(
-    () => (demoReports.length ? [...demoReports, ...baseCorpus] : baseCorpus),
-    [demoReports, baseCorpus],
-  );
+  // Task completions resolve into the corpus here — the single chokepoint both
+  // the city and team views flow through — so a done task reads as "closed"
+  // with its after-photo on every downstream surface (map, charts, lists).
+  const { completions } = useTaskCompletion();
+  const corpus = useMemo(() => {
+    const merged = demoReports.length
+      ? [...demoReports, ...baseCorpus]
+      : baseCorpus;
+    if (Object.keys(completions).length === 0) return merged;
+    return merged.map((r) => {
+      const c = completions[r.id];
+      if (!c) return r;
+      return {
+        ...r,
+        status: "closed" as ReportStatus,
+        afterPhoto: c.afterPhoto,
+        completed_at: c.completedAt,
+      };
+    });
+  }, [demoReports, baseCorpus, completions]);
 
   // Initialize once from the URL; subsequent state is owned locally and pushed
-  // back to the URL so it stays shareable without re-deriving from params.
-  const [filter, setFilterState] = useState<ReportFilter>(() =>
-    parseFilterFromParams(new URLSearchParams(searchParams.toString())),
-  );
+  // back to the URL so it stays shareable without re-deriving from params. In
+  // the team view, the locked team overrides any team in the URL.
+  const [filter, setFilterState] = useState<ReportFilter>(() => {
+    const parsed = parseFilterFromParams(
+      new URLSearchParams(searchParams.toString()),
+    );
+    return lockedTeam ? { ...parsed, team: lockedTeam } : parsed;
+  });
 
   // Stable `now` for the lifetime of the provider so window math doesn't drift
   // between renders (and SSR/CSR stay aligned). Seeded from the server value.
@@ -76,21 +110,23 @@ export function FilterProvider({ corpus: baseCorpus, now: serverNow, children }:
 
   const setFilter = useCallback(
     (next: ReportFilter) => {
-      setFilterState(next);
-      syncUrl(next);
+      const scoped = lockedTeam ? { ...next, team: lockedTeam } : next;
+      setFilterState(scoped);
+      syncUrl(scoped);
     },
-    [syncUrl],
+    [syncUrl, lockedTeam],
   );
 
   const patch = useCallback(
     (partial: Partial<ReportFilter>) => {
       setFilterState((prev) => {
         const next = { ...prev, ...partial };
+        if (lockedTeam) next.team = lockedTeam;
         syncUrl(next);
         return next;
       });
     },
-    [syncUrl],
+    [syncUrl, lockedTeam],
   );
 
   const reset = useCallback(() => setFilter(DEFAULT_FILTER), [setFilter]);
@@ -133,7 +169,16 @@ export function FilterProvider({ corpus: baseCorpus, now: serverNow, children }:
       filtered,
       previousWindow,
     }),
-    [filter, setFilter, patch, reset, isDefault, corpus, filtered, previousWindow],
+    [
+      filter,
+      setFilter,
+      patch,
+      reset,
+      isDefault,
+      corpus,
+      filtered,
+      previousWindow,
+    ],
   );
 
   return (

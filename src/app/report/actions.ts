@@ -1,10 +1,11 @@
 "use server";
 
 import { z } from "zod/v4";
+import { runClassifyPipeline } from "@/lib/ai/classify-pipeline";
+import { ASYNC_CLASSIFY } from "@/lib/ai/config";
 import { createServerClient } from "@/lib/db/client";
 import { createSSRClient } from "@/lib/db/ssr-client";
-import { runClassifyPipeline } from "@/lib/ai/classify-pipeline";
-import type { Result, Classification } from "@/lib/types";
+import type { Classification, Result } from "@/lib/types";
 
 const submitReportSchema = z.object({
   // Both images are base64 (no data-URL prefix). Blurred → public bucket,
@@ -41,13 +42,14 @@ function fallbackClassification(reason: string): Classification {
 }
 
 export async function submitReport(
-  input: SubmitReportInput
+  input: SubmitReportInput,
 ): Promise<Result<{ id: string; classification: Classification }>> {
   const parsed = submitReportSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: z.prettifyError(parsed.error) };
   }
-  const { photoBlurred, photoOriginal, location, address, description, tags } = parsed.data;
+  const { photoBlurred, photoOriginal, location, address, description, tags } =
+    parsed.data;
 
   // reports.location is NOT NULL geography(POINT,4326). When GPS is unavailable,
   // fall back to the demo city center (Cumming, GA) so submission never dead-ends.
@@ -88,7 +90,7 @@ export async function submitReport(
           role: "resident",
           email: user.email ?? null,
         },
-        { onConflict: "id" }
+        { onConflict: "id" },
       );
       cityId = city.id;
     }
@@ -131,7 +133,12 @@ export async function submitReport(
 
   // Insert the report via the SSR client so RLS is the backstop
   // (reporter_id = auth.uid(), city_id = current_user_city_id()).
-  const { error: insertErr } = await ssr.from("reports").insert({
+  //
+  // Flag-gated: the async path stamps classify_status:"pending" so the resident
+  // UI can subscribe for the result. The classify_status column ships in
+  // migration 007 (NOT auto-applied), so the synchronous default path must
+  // NEVER reference it — keep the flag-off insert byte-identical to before.
+  const reportRow = {
     id: reportId,
     city_id: cityId,
     reporter_id: user.id,
@@ -142,14 +149,76 @@ export async function submitReport(
     description,
     tags,
     status: "open",
-  });
+    // classify_status is only stamped on the async path; the column ships in
+    // migration 007 but isn't reflected in the generated Supabase types yet, so
+    // attach it via a typed-loose record only when async is ON. The flag-off
+    // insert is the bare reportRow — byte-identical to the original behavior.
+    ...(ASYNC_CLASSIFY ? { classify_status: "pending" } : {}),
+  } as Record<string, unknown>;
+  const { error: insertErr } = await ssr.from("reports").insert(reportRow);
   if (insertErr) {
     await service.storage.from(PUBLIC_BUCKET).remove([publicPath]);
     await service.storage.from(RAW_BUCKET).remove([rawPath]);
-    return { ok: false, error: `Failed to create report: ${insertErr.message}` };
+    return {
+      ok: false,
+      error: `Failed to create report: ${insertErr.message}`,
+    };
   }
 
-  // Classify directly — no HTTP self-call.
+  // OPTIONAL async path (NEXT_PUBLIC_ASYNC_CLASSIFY=1): do NOT await the
+  // pipeline. Fire-and-forget so the UI shows the thanks screen instantly, then
+  // return a neutral pending classification (confidence 0). The resident page
+  // subscribes to Supabase Realtime on the classifications row to fill in the
+  // real result when the background job lands; classify_status was stamped
+  // "pending" on insert above and the pipeline flips it to done/failed.
+  //
+  // Serverless note: a non-awaited promise may be frozen after the response
+  // returns; it completes reliably on a persistent/dev server. Blessed for the
+  // demo. The .catch() prevents an unhandled rejection from tearing down the action.
+  if (ASYNC_CLASSIFY) {
+    void runClassifyPipeline(reportId).catch(async (err) => {
+      // The pipeline self-logs + stamps classify_status:"failed" for its HANDLED
+      // ok:false returns. But an UNEXPECTED throw (createServerClient,
+      // photoBlob.arrayBuffer(), generateWorkOrder, or a network-level throw
+      // from the supabase client before any markClassifyStatus call) bypasses
+      // all of that — nothing would be logged and classify_status would stay
+      // "pending" forever, dead-ending the resident. Backstop here: log the
+      // throw to error_log and stamp classify_status:"failed" so an operator has
+      // a signal and the report lands in manual triage. Use the service client
+      // (RLS-bypassing, no request cookies in this fire-and-forget context).
+      const message = err instanceof Error ? err.message : String(err);
+      try {
+        await service.from("error_log").insert({
+          // correlation_id is NOT NULL in the schema; mint one so the backstop
+          // write itself doesn't silently fail the constraint.
+          correlation_id: crypto.randomUUID(),
+          context: "submit-report:async-classify",
+          message: `Unhandled classify pipeline throw: ${message}`,
+          metadata: { reportId },
+        });
+        await service
+          .from("reports")
+          .update({ classify_status: "failed" } as Record<string, unknown>)
+          .eq("id", reportId);
+      } catch (logErr) {
+        // Last resort: even the backstop writes failed. Surface to server logs.
+        console.error(
+          `submit-report: classify backstop failed for ${reportId}`,
+          message,
+          logErr,
+        );
+      }
+    });
+    return {
+      ok: true,
+      data: {
+        id: reportId,
+        classification: fallbackClassification("Classification pending"),
+      },
+    };
+  }
+
+  // Default synchronous path — classify directly, no HTTP self-call.
   let classification: Classification;
   try {
     const result = await runClassifyPipeline(reportId);
@@ -157,7 +226,9 @@ export async function submitReport(
       ? { ...result.data.classification, is_emergency: result.data.emergency }
       : fallbackClassification(result.error);
   } catch {
-    classification = fallbackClassification("Classification service unavailable");
+    classification = fallbackClassification(
+      "Classification service unavailable",
+    );
   }
 
   return { ok: true, data: { id: reportId, classification } };

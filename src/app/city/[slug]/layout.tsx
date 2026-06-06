@@ -21,12 +21,11 @@ export default async function CityDashboardLayout({
       <Suspense fallback={null}>
         <FilterProvider corpus={corpus} now={now}>
           {/*
-           * Mobile header is two rows: row1 h-14 (56px) + row2 nav ~52px = ~108px total.
-           * Pages already pad pt-20 (80px) for the old single-row header.
-           * Delta on mobile: 108-80 = 28px → h-7 spacer visible on mobile only.
-           * Desktop header is still h-14 (56px), pages' existing pt-20 is sufficient there.
+           * Top offset for the FIXED CityHeader is owned by each content page
+           * via the `pt-city-content` utility (globals.css), which is
+           * safe-area-aware. The old scheme (h-7 spacer + per-page pt-20) was
+           * not inset-aware and buried content under the notch on iPhones.
            */}
-          <div className="h-7 md:hidden" aria-hidden="true" />
           <main className="flex-1 flex flex-col">{children}</main>
         </FilterProvider>
       </Suspense>

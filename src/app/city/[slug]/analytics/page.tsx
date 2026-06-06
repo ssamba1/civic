@@ -34,7 +34,7 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
 
   return (
     <div className="relative flex flex-col min-h-dvh bg-black">
-      <div className="relative flex-grow mx-auto w-full max-w-7xl px-4 pt-16 pb-10 sm:pt-20 sm:px-6 lg:px-8">
+      <div className="relative flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-10 sm:px-6 lg:px-8">
         {/* Hero */}
         <section className="mb-6 sm:mb-8">
           <p className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.08em] text-zinc-500">

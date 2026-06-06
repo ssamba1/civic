@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { Camera } from "lucide-react";
 import Link from "next/link";
 
-import { KNOWN_CITIES } from "@/lib/dashboard-data";
-import { fetchCity, fetchCityStats } from "@/lib/dashboard-queries";
+import { KNOWN_CITIES, fetchCity as fetchCityMock } from "@/lib/dashboard-data";
+import { fetchCity as fetchCityFromDb, fetchCityStats } from "@/lib/dashboard-queries";
 import { TeamsInteractive } from "@/components/teams/teams-interactive";
 import { FilterBar } from "@/components/filters/filter-bar";
 import { CitySwitcher } from "@/components/city/city-switcher";
@@ -22,7 +22,15 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const city = await fetchCity(slug);
+  let city = null;
+  try {
+    city = await fetchCityFromDb(slug);
+  } catch {
+    city = null;
+  }
+  if (!city) {
+    city = await fetchCityMock(slug);
+  }
   if (!city) return { title: "City not found | Civic" };
 
   const title = `Civic | ${city.name}, ${city.state} — Teams & Delegation`;
@@ -49,15 +57,22 @@ export default async function CityDashboardPage({
   params,
 }: PageProps) {
   const { slug } = await params;
-
-  const city = await fetchCity(slug);
+  let city = null;
+  try {
+    city = await fetchCityFromDb(slug);
+  } catch {
+    city = null;
+  }
+  if (!city) {
+    city = await fetchCityMock(slug);
+  }
   if (!city) notFound();
 
   const stats = await fetchCityStats(city.id);
 
   return (
     <div className="flex flex-col min-h-dvh">
-      <div className="flex-grow mx-auto w-full max-w-7xl px-4 pt-20 pb-10 sm:px-6 lg:px-8">
+      <div className="flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-10 sm:px-6 lg:px-8">
         {/* Hero */}
         <section className="mb-10">
           {/* Municipality switcher — search + toggle between cities */}

@@ -32,6 +32,10 @@ interface FullscreenMapOrchestratorProps {
   center: [number, number];
   zoom: number;
   cityName: string;
+  // Team view: scope + lock the map to this team. Hides the team switcher and
+  // the cross-team dispatch/override actions ("no other team things"), while
+  // keeping the identical fullscreen chrome + filter panel as the city map.
+  lockedTeam?: TeamId;
 }
 
 // Hoisted to module scope — these were previously rebuilt inside the
@@ -65,6 +69,7 @@ export function FullscreenMapOrchestrator({
   center,
   zoom,
   cityName,
+  lockedTeam,
 }: FullscreenMapOrchestratorProps) {
   // Local mutable reports state (to allow dynamic routing/updating status!)
   const [reports, setReports] = useState<DashboardReport[]>(initialReports);
@@ -91,14 +96,18 @@ export function FullscreenMapOrchestrator({
   const isLightBasemap = mapTheme === "light";
 
   // --- Active Filters State ---
-  const [selectedTeam, setSelectedTeam] = useState<TeamId>("all");
+  // Team view seeds + locks the team scope; city view starts at "all".
+  const [selectedTeam, setSelectedTeam] = useState<TeamId>(lockedTeam ?? "all");
   const [selectedCategory, setSelectedCategory] = useState<ReportCategory | null>(null);
   const [minSeverity, setMinSeverity] = useState<number>(1);
+  // Default to live work only — open / dispatched / in-progress. Completed
+  // (closed/resolved) is hidden by default on both the city and team maps so
+  // they read as "what's active", not the full resolved archive. Users can
+  // re-enable Resolved via the status filter.
   const [activeStatuses, setActiveStatuses] = useState<ReportStatus[]>([
     "open",
     "dispatched",
     "in_progress",
-    "closed",
   ]);
   const activeTeamMeta = TEAM_META[selectedTeam];
 
@@ -213,14 +222,16 @@ export function FullscreenMapOrchestrator({
               {activeTeamMeta.shortLabel}
             </p>
           </div>
-          <button
-            onClick={() => setSelectedTeam("all")}
-            className="text-zinc-400 hover:text-white p-0.5 rounded min-h-[44px] min-w-[44px] flex items-center justify-center lg:min-h-0 lg:min-w-0"
-            title="Switch back to All Teams"
-            aria-label="Switch back to All Teams"
-          >
-            <X className="h-3.5 w-3.5" strokeWidth={1.75} />
-          </button>
+          {!lockedTeam && (
+            <button
+              onClick={() => setSelectedTeam("all")}
+              className="text-zinc-400 hover:text-white p-0.5 rounded min-h-[44px] min-w-[44px] flex items-center justify-center lg:min-h-0 lg:min-w-0"
+              title="Switch back to All Teams"
+              aria-label="Switch back to All Teams"
+            >
+              <X className="h-3.5 w-3.5" strokeWidth={1.75} />
+            </button>
+          )}
         </div>
       )}
 
@@ -234,33 +245,37 @@ export function FullscreenMapOrchestrator({
 
       {/* Quick filters */}
       <div className="rounded-lg bg-white/[0.025] border border-white/[0.05] p-3 flex flex-col gap-3">
-        {/* Team — primary scoping */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[12px] text-zinc-300 flex items-center gap-1.5">
-            <Shield className="w-3 h-3" strokeWidth={1.75} />
-            Team view
-          </label>
-          <div className="relative">
-            <select
-              value={selectedTeam}
-              onChange={(e) => setSelectedTeam(e.target.value as TeamId)}
-              className="w-full bg-black/40 border border-white/[0.08] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:border-white/20 cursor-pointer appearance-none pr-8 transition-colors lg:py-1.5 lg:text-[13px]"
-            >
-              {TEAM_LIST.map((team) => (
-                <option key={team.id} value={team.id}>
-                  {team.shortLabel}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" strokeWidth={1.75} />
+        {/* Team — primary scoping. Hidden in the team view (locked). */}
+        {!lockedTeam && (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[12px] text-zinc-300 flex items-center gap-1.5">
+              <Shield className="w-3 h-3" strokeWidth={1.75} />
+              Team view
+            </label>
+            <div className="relative">
+              <select
+                value={selectedTeam}
+                onChange={(e) => setSelectedTeam(e.target.value as TeamId)}
+                className="w-full bg-black/40 border border-white/[0.08] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:border-white/20 cursor-pointer appearance-none pr-8 transition-colors lg:py-1.5 lg:text-[13px]"
+              >
+                {TEAM_LIST.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.shortLabel}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" strokeWidth={1.75} />
+            </div>
+            <p className="text-[11px] text-zinc-500 leading-snug">
+              {activeTeamMeta.duties}
+            </p>
           </div>
-          <p className="text-[11px] text-zinc-500 leading-snug">
-            {activeTeamMeta.duties}
-          </p>
-        </div>
+        )}
 
         {/* Category */}
-        <div className="flex flex-col gap-1.5 border-t border-white/[0.06] pt-3">
+        <div
+          className={`flex flex-col gap-1.5 ${lockedTeam ? "" : "border-t border-white/[0.06] pt-3"}`}
+        >
           <label className="text-[12px] text-zinc-300">Category</label>
           <div className="relative">
             <select
@@ -395,8 +410,8 @@ export function FullscreenMapOrchestrator({
                   </span>
                 </div>
 
-                {/* Route action */}
-                {isSelected && (
+                {/* Route action — admin dispatch only; hidden in the team view. */}
+                {isSelected && !lockedTeam && (
                   <div className="mt-2 pt-2.5 border-t border-white/[0.06] flex flex-col gap-2 relative z-20 animate-in fade-in duration-150">
                     {!isMenuOpen ? (
                       <div className="flex gap-1.5">
@@ -523,7 +538,7 @@ export function FullscreenMapOrchestrator({
       <BottomSheet
         open={isDispatchSheetOpen}
         onClose={() => setIsDispatchSheetOpen(false)}
-        title={`Dispatch · ${filteredReports.length} reports`}
+        title={`${lockedTeam ? "Reports" : "Dispatch"} · ${filteredReports.length} reports`}
         className="bg-[#0a0a0b] text-white border-t border-white/[0.08]"
       >
         {dispatchPanelContent}
@@ -543,7 +558,9 @@ export function FullscreenMapOrchestrator({
 
         {/* Panel header */}
         <div className="flex items-center justify-between shrink-0 mb-3">
-          <h2 className="text-[15px] font-semibold text-white">Dispatch</h2>
+          <h2 className="text-[15px] font-semibold text-white">
+            {lockedTeam ? "Reports" : "Dispatch"}
+          </h2>
           <span className="text-[13px] text-zinc-300 tabular-nums">
             {filteredReports.length} reports
           </span>
