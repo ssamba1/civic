@@ -1,7 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { Classification, Result } from "@/lib/types";
 import { classificationSchema } from "./classification-schema";
-import { CLASSIFICATION_PROMPT } from "./prompt";
+import { CLASSIFICATION_SYSTEM_PROMPT, CLASSIFICATION_PROMPT } from "./prompt";
+import { checkAndRecordGeminiCall } from "./rate-limiter";
 import { serverEnv } from "@/lib/env";
 
 const MODEL = "gemini-2.5-flash";
@@ -11,8 +12,8 @@ function getClient() {
 }
 
 /**
- * Strip markdown code fences Gemini sometimes wraps around JSON.
- * Handles ```json ... ```, ``` ... ```, and bare JSON.
+ * Strip markdown code fences as a safety fallback.
+ * Should rarely trigger now that responseMimeType forces raw JSON output.
  */
 function stripCodeFences(raw: string): string {
   const trimmed = raw.trim();
@@ -22,15 +23,34 @@ function stripCodeFences(raw: string): string {
 }
 
 /**
- * Send a photo to Gemini 2.5 Flash and get a validated Classification back.
+ * Send a photo to Gemini 2.5 Flash and return a validated Classification.
+ *
+ * Rate-limited: checks global sliding-window buckets before dispatching.
+ * If the limit is exceeded the call is rejected with ok:false so the
+ * classify pipeline can fall back gracefully without crashing.
  */
 export async function classifyPhoto(
   imageBase64: string,
   mimeType: string
 ): Promise<Result<Classification>> {
+  const rateCheck = checkAndRecordGeminiCall();
+  if (!rateCheck.allowed) {
+    return {
+      ok: false,
+      error: `Gemini rate limit: ${rateCheck.reason}. Retry in ${Math.ceil((rateCheck.retryAfterMs ?? 0) / 1000)}s.`,
+    };
+  }
+
   try {
     const genAI = getClient();
-    const model = genAI.getGenerativeModel({ model: MODEL });
+    const model = genAI.getGenerativeModel({
+      model: MODEL,
+      systemInstruction: CLASSIFICATION_SYSTEM_PROMPT,
+      generationConfig: {
+        // Forces the model to return raw JSON without any markdown wrapping.
+        responseMimeType: "application/json",
+      },
+    });
 
     const result = await model.generateContent([
       CLASSIFICATION_PROMPT,
@@ -51,7 +71,7 @@ export async function classifyPhoto(
     } catch {
       return {
         ok: false,
-        error: `Gemini returned invalid JSON: ${cleaned.slice(0, 200)}`,
+        error: `Gemini returned invalid JSON: ${cleaned.slice(0, 300)}`,
       };
     }
 
