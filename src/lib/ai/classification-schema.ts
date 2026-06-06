@@ -1,3 +1,4 @@
+import { type ObjectSchema, SchemaType } from "@google/generative-ai";
 import { z } from "zod/v4";
 
 const CATEGORIES = [
@@ -31,3 +32,38 @@ export const classificationSchema = z.object({
   confidence: z.number().min(0).max(1),
   reasoning: z.string().min(1),
 });
+
+/**
+ * Gemini structured-output schema mirroring `classificationSchema`. Passed as
+ * `generationConfig.responseSchema` so the model returns clean JSON matching
+ * the shape we then re-validate with zod. `enum` is spread to a mutable string
+ * array because the SDK's `Schema.enum` type is `string[]` (CATEGORIES is a
+ * readonly tuple). severity is INTEGER (1-5); the zod schema enforces the range.
+ */
+export const GEMINI_CLASSIFICATION_SCHEMA: ObjectSchema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    category: {
+      type: SchemaType.STRING,
+      format: "enum",
+      enum: [...CATEGORIES],
+    },
+    subcategory: { type: SchemaType.STRING },
+    severity: { type: SchemaType.INTEGER },
+    hazard_radius_m: { type: SchemaType.NUMBER },
+    visible_size_estimate: { type: SchemaType.STRING },
+    is_emergency: { type: SchemaType.BOOLEAN },
+    confidence: { type: SchemaType.NUMBER },
+    reasoning: { type: SchemaType.STRING },
+  },
+  required: [
+    "category",
+    "subcategory",
+    "severity",
+    "hazard_radius_m",
+    "visible_size_estimate",
+    "is_emergency",
+    "confidence",
+    "reasoning",
+  ],
+};

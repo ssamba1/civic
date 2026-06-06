@@ -24,6 +24,15 @@ function isPublicRoute(pathname: string): boolean {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Dev fast path: auth gating is disabled in development (see the unconditional
+  // return below), so the per-request Supabase `getUser()` call only adds an auth
+  // server round-trip to every navigation without changing dev behavior. Skip it
+  // entirely here. The browser Supabase client still refreshes tokens client-side,
+  // and production keeps the full session-refresh + gating logic untouched.
+  if (process.env.NODE_ENV === "development") {
+    return NextResponse.next({ request: { headers: request.headers } });
+  }
+
   // Always create the Supabase client and call getUser() so that the auth
   // session cookies are refreshed on every request — including public routes.
   // Skipping this for public routes would let sessions expire silently.
@@ -61,12 +70,6 @@ export async function proxy(request: NextRequest) {
   // Allow public routes through — but return `response` (not NextResponse.next())
   // so any refreshed cookies set above are forwarded to the browser.
   if (isPublicRoute(pathname)) {
-    return response;
-  }
-
-  // Dev convenience: don't gate /staff or /admin locally so the full gov UI is
-  // reachable without a login during development/demo. Prod stays gated below.
-  if (process.env.NODE_ENV === "development") {
     return response;
   }
 

@@ -4,6 +4,10 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig: NextConfig = {
   output: "standalone",
 
+  experimental: {
+    turbopackFileSystemCacheForDev: true,
+  },
+
   images: {
     remotePatterns: [
       {
@@ -74,10 +78,14 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
-  silent: !process.env.CI,
-  widenClientFileUpload: true,
-  // hideSourceMaps was renamed in newer @sentry/nextjs; source maps are hidden
-  // from the client bundle by default, so the explicit flag is no longer needed.
-  disableLogger: true,
-});
+// Only wrap with Sentry for production builds. In dev the wrapper adds compile
+// overhead and emits deprecation warnings for options Turbopack ignores, while
+// Sentry.init is DSN-gated off locally anyway — so skip it entirely for `next dev`.
+export default process.env.NODE_ENV === "production"
+  ? withSentryConfig(nextConfig, {
+      silent: !process.env.CI,
+      widenClientFileUpload: true,
+      // Strip Sentry debug logging from the production client bundle.
+      disableLogger: true,
+    })
+  : nextConfig;

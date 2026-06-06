@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { createServerClient } from "@/lib/db/client";
 import type { City, ReportCategory, ReportStatus } from "@/lib/types";
 import type {
@@ -7,7 +8,10 @@ import type {
   DashboardReport,
 } from "@/lib/dashboard-data";
 
-export async function fetchCity(slug: string): Promise<City | null> {
+// Request-scoped memoization: a city page renders both `generateMetadata` and
+// the page body, each of which looks up the same city by slug. `cache()` dedupes
+// those into a single Supabase round-trip per request (no cross-request caching).
+export const fetchCity = cache(async (slug: string): Promise<City | null> => {
   const db = createServerClient();
   const { data, error } = await db
     .from("cities")
@@ -16,7 +20,7 @@ export async function fetchCity(slug: string): Promise<City | null> {
     .maybeSingle();
   if (error || !data) return null;
   return { ...data, boundary: null } as City;
-}
+});
 
 export async function fetchCityStats(cityId: string): Promise<CityStats> {
   const db = createServerClient();
