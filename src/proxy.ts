@@ -1,12 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_ROUTES = [
-  "/",
-  "/login",
-  "/report",
-  "/offline",
-];
+const PUBLIC_ROUTES = ["/", "/login", "/report", "/offline"];
 
 const PUBLIC_PREFIXES = [
   "/city/",
@@ -21,24 +16,75 @@ function isPublicRoute(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
+/**
+ * Build the Content-Security-Policy. This lives in the proxy (not next.config
+ * `headers()`) because a strong CSP for the App Router needs a PER-REQUEST nonce:
+ * Next streams its RSC payload and bootstraps hydration through INLINE <script>
+ * tags. A static `script-src 'self'` (no nonce, no 'unsafe-inline') makes the
+ * browser refuse every inline script, so the client never hydrates and any
+ * client-only subtree (e.g. the WebGL map) never mounts — a blank page in prod
+ * while `next dev` appears fine. See https://nextjs.org/docs (CSP guide).
+ *
+ * Dev keeps the original permissive script-src ('unsafe-inline' 'unsafe-eval',
+ * no nonce) so Turbopack Fast Refresh is unaffected. Prod uses nonce +
+ * 'strict-dynamic': the nonced bootstrap is trusted to load the Next chunks,
+ * and no host needs to be listed for each one.
+ */
+function buildCsp(nonce: string, isDev: boolean): string {
+  const scriptSrc = isDev
+    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`;
+
+  return [
+    "default-src 'self'",
+    scriptSrc,
+    // Keep 'unsafe-inline' for styles: maplibre-gl, deck.gl, and React's
+    // `style={{…}}` attributes all set inline styles, which a nonce cannot cover.
+    "style-src 'self' 'unsafe-inline'",
+    // picsum.photos (and its fastly redirect target) host seed/demo report
+    // photos; production photos come from *.supabase.co storage. blob: covers
+    // maplibre canvas/tile blobs.
+    "img-src 'self' data: blob: https://*.supabase.co https://*.openstreetmap.org https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.arcgisonline.com https://picsum.photos https://fastly.picsum.photos",
+    "font-src 'self'",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.openstreetmap.org https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.arcgisonline.com https://*.sentry.io https://generativelanguage.googleapis.com",
+    // maplibre-gl parses vector tiles in a Web Worker created from a blob URL.
+    "worker-src 'self' blob:",
+    "frame-ancestors 'none'",
+  ].join("; ");
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const isDev = process.env.NODE_ENV === "development";
+  // btoa (not Buffer) so this runs identically in the Edge runtime Vercel uses
+  // for middleware/proxy — Buffer is a Node global and may be absent on edge.
+  const nonce = btoa(crypto.randomUUID());
+  const csp = buildCsp(nonce, isDev);
 
-  // Dev fast path: auth gating is disabled in development (see the unconditional
-  // return below), so the per-request Supabase `getUser()` call only adds an auth
-  // server round-trip to every navigation without changing dev behavior. Skip it
-  // entirely here. The browser Supabase client still refreshes tokens client-side,
-  // and production keeps the full session-refresh + gating logic untouched.
-  if (process.env.NODE_ENV === "development") {
-    return NextResponse.next({ request: { headers: request.headers } });
+  // Clone the *current* request headers and inject the nonce. Setting the CSP on
+  // the request headers is what makes Next apply the nonce to its inline scripts;
+  // re-reading request.headers each call preserves any cookies Supabase refreshed
+  // below. The matching response header is what the browser actually enforces.
+  const reqHeaders = () => {
+    const h = new Headers(request.headers);
+    h.set("x-nonce", nonce);
+    h.set("Content-Security-Policy", csp);
+    return h;
+  };
+
+  // Dev fast path: auth gating is disabled in development, so the per-request
+  // Supabase getUser() round-trip is pure overhead on every navigation. Skip it
+  // and just attach the (permissive) dev CSP.
+  if (isDev) {
+    const response = NextResponse.next({ request: { headers: reqHeaders() } });
+    response.headers.set("Content-Security-Policy", csp);
+    return response;
   }
 
-  // Always create the Supabase client and call getUser() so that the auth
-  // session cookies are refreshed on every request — including public routes.
-  // Skipping this for public routes would let sessions expire silently.
-  let response = NextResponse.next({
-    request: { headers: request.headers },
-  });
+  // Always create the Supabase client and call getUser() so the auth session
+  // cookies refresh on every request — including public routes — otherwise
+  // sessions expire silently.
+  let response = NextResponse.next({ request: { headers: reqHeaders() } });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -49,54 +95,62 @@ export async function proxy(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          for (const { name, value, options } of cookiesToSet) {
+          for (const { name, value } of cookiesToSet) {
             request.cookies.set(name, value);
-            response = NextResponse.next({
-              request: { headers: request.headers },
-            });
+          }
+          response = NextResponse.next({ request: { headers: reqHeaders() } });
+          for (const { name, value, options } of cookiesToSet) {
             response.cookies.set(name, value, options);
           }
         },
       },
-    }
+    },
   );
 
-  // M1 fix: getUser() refreshes the session cookie as a side effect.
-  // Must run before any early return so public-route visitors keep their sessions alive.
+  // getUser() refreshes the session cookie as a side effect. Must run before any
+  // early return so public-route visitors keep their sessions alive.
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Allow public routes through — but return `response` (not NextResponse.next())
-  // so any refreshed cookies set above are forwarded to the browser.
+  // Allow public routes through — return `response` so refreshed cookies + the
+  // CSP header reach the browser.
   if (isPublicRoute(pathname)) {
+    response.headers.set("Content-Security-Policy", csp);
     return response;
   }
 
-  // Protected: /staff/* — require authenticated user
+  // Protected: /staff/* — require an authenticated user.
   if (pathname.startsWith("/staff/") && !user) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
+    const redirect = NextResponse.redirect(loginUrl);
+    redirect.headers.set("Content-Security-Policy", csp);
+    return redirect;
   }
 
-  // Protected: /admin/* — require admin role
+  // Protected: /admin/* — require admin role.
   if (pathname.startsWith("/admin/")) {
     if (!user) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(loginUrl);
+      const redirect = NextResponse.redirect(loginUrl);
+      redirect.headers.set("Content-Security-Policy", csp);
+      return redirect;
     }
 
-    // C7 fix: read role ONLY from app_metadata (server-writable via Supabase Admin API).
-    // Never trust user_metadata — any authenticated user can write it via
+    // Read role ONLY from app_metadata (server-writable via the Supabase Admin
+    // API). Never trust user_metadata — any authenticated user can write it via
     // supabase.auth.updateUser() and self-promote to admin.
     const role = user.app_metadata?.role;
     if (role !== "admin") {
-      return NextResponse.redirect(new URL("/staff", request.url));
+      const redirect = NextResponse.redirect(new URL("/staff", request.url));
+      redirect.headers.set("Content-Security-Policy", csp);
+      return redirect;
     }
   }
 
+  response.headers.set("Content-Security-Policy", csp);
   return response;
 }
 
