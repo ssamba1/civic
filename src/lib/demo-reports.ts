@@ -113,9 +113,9 @@ function getSnapshot(): DashboardReport[] {
   return snapshot;
 }
 
-// Stable empty reference for SSR / pre-hydration (useSyncExternalStore requires
-// a referentially-stable server snapshot).
-const EMPTY: DashboardReport[] = [];
+// Referentially-stable frozen server snapshot — matches the Object.freeze({})
+// pattern used by every other store in this codebase.
+const EMPTY: DashboardReport[] = Object.freeze([]) as DashboardReport[];
 function getServerSnapshot(): DashboardReport[] {
   return EMPTY;
 }

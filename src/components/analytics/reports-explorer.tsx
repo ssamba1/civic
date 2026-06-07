@@ -40,6 +40,11 @@ export function ReportsExplorer({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Mobile: track whether the detail drawer is open (separate from list overlay)
   const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
+  // Portal mount gate: SSR and the first CSR render must both return null so
+  // hydration trees match. createPortal is deferred until after mount.
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   // Escape-to-close + body scroll lock while the overlay is open.
   useEffect(() => {
@@ -71,8 +76,7 @@ export function ReportsExplorer({
     if (!open) setDetailDrawerOpen(false);
   }, [open]);
 
-  if (!open) return null;
-  if (typeof document === "undefined") return null;
+  if (!mounted || !open) return null;
 
   const selectedReport = reports.find((r) => r.id === selectedId) ?? null;
 

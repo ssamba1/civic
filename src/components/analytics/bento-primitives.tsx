@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Maximize2, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
@@ -130,6 +130,12 @@ export function ExpandModal({
   controls,
   info,
 }: ExpandModalProps) {
+  // Portal mount gate: SSR and the first CSR render must both return null so
+  // React's hydration tree is identical. createPortal is deferred until after
+  // mount, matching the pattern used by every other portal in this codebase.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -144,8 +150,7 @@ export function ExpandModal({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
-  if (typeof document === "undefined") return null;
+  if (!mounted || !open) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 animate-in fade-in duration-200">
