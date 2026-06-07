@@ -286,6 +286,23 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* Hide the iOS/WebKit inline-video play/pause overlay that flashes on play-state
+   changes (the only <video> in the app is the decorative camera viewfinder —
+   capture happens via the shutter button, so native media controls must never
+   appear). iOS Safari does NOT apply these shadow-pseudo rules when combined
+   with an attribute selector, so they are intentionally un-scoped. */
+video::-webkit-media-controls,
+video::-webkit-media-controls-enclosure,
+video::-webkit-media-controls-panel,
+video::-webkit-media-controls-play-button,
+video::-webkit-media-controls-start-playback-button,
+video::-webkit-media-controls-overlay-play-button {
+  display: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+  opacity: 0 !important;
+}
+
 *:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import CameraCapture from "@/components/report/camera-capture";
 import EmergencyInterstitial from "@/components/report/emergency-interstitial";
@@ -335,11 +336,39 @@ export default function ReportPage() {
         </div>
       )}
 
-      {/* Address fallback input — clears notch via pt-safe */}
+      {/* Back-to-home — top-left, clears notch via pt-safe. Camera step only:
+          preview has its own Retake, and done/emergency have their own nav. */}
+      {step.name === "camera" && (
+        <div className="absolute top-0 left-0 z-40 pt-safe pl-4">
+          <Link
+            href="/"
+            aria-label="Back to home"
+            className="mt-3 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm active:scale-90 transition-transform"
+          >
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.75}
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.75 19.5L8.25 12l7.5-7.5"
+              />
+            </svg>
+          </Link>
+        </div>
+      )}
+
+      {/* Address fallback input — clears notch via pt-safe. Left padding leaves
+          room for the back button. */}
       {gpsStatus === "manual" &&
         step.name !== "done" &&
         step.name !== "emergency" && (
-          <div className="absolute top-0 left-0 right-0 z-30 pt-safe px-4">
+          <div className="absolute top-0 left-0 right-0 z-30 pt-safe pl-16 pr-4">
             <input
               type="text"
               value={address ?? ""}

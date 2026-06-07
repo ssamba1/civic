@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Camera, HeartPulse, Bell } from "lucide-react";
+import { Home, Map, Camera, HeartPulse, Bell } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils/cn";
@@ -27,6 +27,12 @@ const TABS: TabItem[] = [
     isActive: (p) => p === "/",
   },
   {
+    label: "Map",
+    href: "/city/cumming/map",
+    icon: Map,
+    isActive: (p) => /^\/city\/[^/]+\/map$/.test(p),
+  },
+  {
     label: "Pulse",
     href: "/user/pulse",
     icon: HeartPulse,
@@ -43,15 +49,20 @@ const TABS: TabItem[] = [
 export function BottomTabBar() {
   const pathname = usePathname();
 
-  // Self-gate: resident surfaces only. Renders on the landing page ("/") and
-  // anything under "/user". Returns null on /report, /city, /staff, /login.
-  if (pathname == null || !(pathname === "/" || pathname.startsWith("/user"))) {
+  // Self-gate: resident surfaces only. Renders on the landing page ("/"),
+  // anything under "/user", and the city map (the Map tab target). Returns null
+  // on /report, other /city pages, /staff, /login.
+  const onCityMap = /^\/city\/[^/]+\/map$/.test(pathname ?? "");
+  if (
+    pathname == null ||
+    !(pathname === "/" || pathname.startsWith("/user") || onCityMap)
+  ) {
     return null;
   }
 
-  // Split tabs around the center FAB: Home | [Report] | Pulse + Updates.
-  const left = TABS.slice(0, 1);
-  const right = TABS.slice(1);
+  // Split tabs around the center FAB: Home + Map | [Report] | Pulse + Updates.
+  const left = TABS.slice(0, 2);
+  const right = TABS.slice(2);
 
   const fabActive = pathname.startsWith("/report"); // bar never renders on /report, kept defensive.
 

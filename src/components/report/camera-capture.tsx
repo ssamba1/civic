@@ -28,29 +28,145 @@ const CameraIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const ImageIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    aria-hidden="true"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
+    />
+  </svg>
+);
+
+const FlipIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    aria-hidden="true"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3"
+    />
+  </svg>
+);
+
+const BoltIcon = ({
+  className,
+  slash,
+}: {
+  className?: string;
+  slash?: boolean;
+}) => (
+  <svg
+    className={className}
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    aria-hidden="true"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M3.75 3.75l16.5 16.5M3.98 8.223A10.477 10.477 0 003.75 12"
+      style={{ display: slash ? undefined : "none" }}
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M3.75 6.75L13.5 3v6.75h6.75L10.5 21v-6.75H3.75z"
+      transform="translate(0 0)"
+    />
+  </svg>
+);
+
+const GridIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    aria-hidden="true"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M3 8.25h18M3 15.75h18M8.25 3v18M15.75 3v18"
+    />
+  </svg>
+);
+
+// Subset of MediaTrackCapabilities that browsers expose but TS lib.dom omits.
+type ExtraCaps = {
+  torch?: boolean;
+  zoom?: { min: number; max: number; step?: number };
+};
+
+// How long to wait for the live viewfinder to produce a frame before giving up
+// and dropping to the native camera input. iOS Safari can leave getUserMedia in
+// a started-but-never-ready state (autoplay race); without this the user stares
+// at a spinner forever.
+const VIEWFINDER_READY_TIMEOUT_MS = 4000;
+
 export default function CameraCapture({ onCapture }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const libraryInputRef = useRef<HTMLInputElement>(null);
+  const readyRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
-  // Capture strategy is decided in an effect (never during render) so the
-  // server + first client render produce the same tree — no hydration mismatch.
-  //   useNative  → native camera input (mobile/touch + the live-stream fallback)
-  //   !useNative → live getUserMedia viewfinder (desktop webcams)
-  // `decided === false` shows a brief neutral spinner until the effect resolves,
-  // which also prevents getUserMedia from ever starting on a touch device.
+  // `decided === false` shows a neutral spinner (also the SSR tree) until the
+  // client picks a strategy — no hydration mismatch.
+  //   useNative  → native camera input (no getUserMedia available, e.g. some
+  //                in-app webviews)
+  //   camFailed  → tried the live viewfinder, it errored or never produced a
+  //                frame → fall back to the native input
+  // Otherwise we open the live in-page viewfinder immediately on mount.
   const [decided, setDecided] = useState(false);
   const [useNative, setUseNative] = useState(false);
+  const [camFailed, setCamFailed] = useState(false);
+
+  // Viewfinder controls
+  const [facingMode, setFacingMode] = useState<"environment" | "user">(
+    "environment",
+  );
+  const [grid, setGrid] = useState(false);
+  const [flash, setFlash] = useState(false); // brief white shutter flash
+  const [torchOn, setTorchOn] = useState(false);
+  const [torchSupported, setTorchSupported] = useState(false);
+  const [zoomCaps, setZoomCaps] = useState<{
+    min: number;
+    max: number;
+    step: number;
+  } | null>(null);
+  const [zoom, setZoom] = useState(1);
+
+  const markReady = useCallback(() => {
+    readyRef.current = true;
+    setReady(true);
+  }, []);
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
-      // Live stream may still be running if user picked from viewfinder.
+      // Live stream may still be running if the user picked from the viewfinder.
       streamRef.current?.getTracks().forEach((t) => {
         t.stop();
       });
@@ -67,16 +183,14 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
     libraryInputRef.current?.click();
   }, []);
 
-  // Decide capture strategy once, on the client. Touch devices (and any browser
-  // without a working getUserMedia) use the native camera input — the live
-  // viewfinder path is unreliable on iOS Safari (autoplay stalls, ready races).
+  // Decide strategy once, on the client. Only force the native input when the
+  // browser can't do getUserMedia at all — everything else attempts the live
+  // viewfinder for the seamless "camera opens instantly" flow, with a timeout
+  // fallback (below) covering iOS stalls and webview blocks.
   useEffect(() => {
-    const coarsePointer =
-      window.matchMedia("(pointer: coarse)").matches ||
-      window.matchMedia("(max-width: 768px)").matches;
     const noGetUserMedia =
       typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia;
-    setUseNative(coarsePointer || noGetUserMedia);
+    setUseNative(noGetUserMedia);
     setDecided(true);
   }, []);
 
@@ -84,21 +198,43 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: "environment",
+          facingMode,
           width: { ideal: 1920 },
           height: { ideal: 1080 },
         },
         audio: false,
       });
       streamRef.current = stream;
+
+      // Probe capabilities for torch + zoom (Android Chrome; iOS Safari omits).
+      const track = stream.getVideoTracks()[0];
+      const caps = (track?.getCapabilities?.() ?? {}) as MediaTrackCapabilities &
+        ExtraCaps;
+      setTorchSupported(Boolean(caps.torch));
+      if (caps.zoom && typeof caps.zoom.max === "number") {
+        setZoomCaps({
+          min: caps.zoom.min ?? 1,
+          max: caps.zoom.max,
+          step: caps.zoom.step ?? 0.1,
+        });
+        setZoom(caps.zoom.min ?? 1);
+      } else {
+        setZoomCaps(null);
+      }
+
       const video = videoRef.current;
       if (video) {
-        // Attach readiness handlers BEFORE srcObject so a fast-firing
-        // loadedmetadata/canplay isn't missed, then nudge playback — autoPlay
-        // alone can stall on some browsers.
-        const markReady = () => setReady(true);
+        // Legacy iOS attribute — required on older Safari to keep the stream
+        // inline and avoid the fullscreen/start-playback affordance.
+        video.setAttribute("webkit-playsinline", "true");
+        // Attach readiness handlers BEFORE srcObject so a fast-firing event
+        // isn't missed, then nudge playback — autoPlay alone can stall on some
+        // browsers. `onplaying` is the authoritative "frames are flowing" signal
+        // (after it, iOS has dropped the start-playback overlay); the others are
+        // earlier fallbacks so the 4s timeout doesn't trip on a slow device.
         video.onloadedmetadata = markReady;
         video.oncanplay = markReady;
+        video.onplaying = markReady;
         video.srcObject = stream;
         video.play().catch(() => {
           /* autoplay may reject; canplay/metadata still flips ready */
@@ -107,26 +243,74 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
     } catch (err) {
       if (err instanceof DOMException && err.name === "NotAllowedError") {
         setError(
-          "Camera access denied. Please allow camera permissions and reload.",
+          "Camera access denied. Allow camera permissions and reload, or upload a photo instead.",
         );
       } else if (err instanceof DOMException && err.name === "NotFoundError") {
         setError("No camera found on this device.");
       } else {
-        setError("Could not access camera. Please try again.");
+        // Unknown failure (often a webview that blocks getUserMedia): silently
+        // drop to the native camera input rather than dead-end the user.
+        setCamFailed(true);
       }
     }
-  }, []);
+  }, [facingMode, markReady]);
 
-  // Start the live viewfinder only on the desktop path.
+  // Open the live viewfinder on mount and whenever the camera (facingMode)
+  // changes. A timeout drops to the native input if no frame arrives.
   useEffect(() => {
-    if (!decided || useNative) return;
+    if (!decided || useNative || camFailed) return;
+    readyRef.current = false;
+    setReady(false);
     startCamera();
+    const timeout = setTimeout(() => {
+      if (!readyRef.current) {
+        streamRef.current?.getTracks().forEach((t) => {
+          t.stop();
+        });
+        setCamFailed(true);
+      }
+    }, VIEWFINDER_READY_TIMEOUT_MS);
     return () => {
+      clearTimeout(timeout);
       streamRef.current?.getTracks().forEach((t) => {
         t.stop();
       });
     };
-  }, [decided, useNative, startCamera]);
+  }, [decided, useNative, camFailed, startCamera]);
+
+  // Apply torch on/off without restarting the stream.
+  const toggleTorch = useCallback(async () => {
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track) return;
+    const next = !torchOn;
+    try {
+      await track.applyConstraints({
+        advanced: [{ torch: next }],
+      } as unknown as MediaTrackConstraints);
+      setTorchOn(next);
+    } catch {
+      /* device rejected torch; leave state unchanged */
+    }
+  }, [torchOn]);
+
+  // Apply optical/digital zoom live.
+  const applyZoom = useCallback((value: number) => {
+    setZoom(value);
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track) return;
+    track
+      .applyConstraints({
+        advanced: [{ zoom: value }],
+      } as unknown as MediaTrackConstraints)
+      .catch(() => {
+        /* ignore unsupported */
+      });
+  }, []);
+
+  const flipCamera = useCallback(() => {
+    setTorchOn(false); // torch is rear-only; reset on flip
+    setFacingMode((m) => (m === "environment" ? "user" : "environment"));
+  }, []);
 
   const capture = useCallback(() => {
     const video = videoRef.current;
@@ -139,6 +323,12 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
     if (!ctx) return;
 
     ctx.drawImage(video, 0, 0);
+
+    // Tactile feedback: brief white flash + haptic tick.
+    setFlash(true);
+    setTimeout(() => setFlash(false), 180);
+    navigator.vibrate?.(30);
+
     canvas.toBlob(
       (blob) => {
         if (!blob) return;
@@ -186,8 +376,8 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
     );
   }
 
-  // ── Mobile / touch: native camera capture (reliable on iOS Safari) ──
-  if (useNative) {
+  // ── Fallback: no getUserMedia, or the live viewfinder failed/stalled ──
+  if (useNative || camFailed) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-black px-6 text-center gap-6">
         {hiddenFileInputs}
@@ -216,8 +406,9 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
           <button
             type="button"
             onClick={openLibraryPicker}
-            className="inline-flex items-center justify-center rounded-full border border-zinc-600 px-6 py-3 min-h-[56px] text-base font-semibold text-white active:scale-95 active:bg-zinc-800 transition-transform"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-600 px-6 py-3 min-h-[56px] text-base font-semibold text-white active:scale-95 active:bg-zinc-800 transition-transform"
           >
+            <ImageIcon className="w-5 h-5" />
             Upload from library
           </button>
         </div>
@@ -225,7 +416,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
     );
   }
 
-  // ── Desktop error state: offer the native fallbacks ──
+  // ── Camera permission denied / not found: clear message + recovery paths ──
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-black px-6 text-center gap-4">
@@ -254,21 +445,25 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
         <button
           type="button"
           onClick={openCameraPicker}
-          className="mt-2 rounded-full bg-blue-600 px-6 py-3 min-h-[44px] text-sm font-semibold text-white active:scale-95 transition-transform"
+          className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-3 min-h-[44px] text-sm font-semibold text-white active:scale-95 transition-transform"
         >
+          <CameraIcon className="w-5 h-5" />
           Take a photo instead
         </button>
         <button
           type="button"
           onClick={openLibraryPicker}
-          className="rounded-full border border-zinc-600 px-6 py-3 min-h-[44px] text-sm font-semibold text-white active:scale-95 transition-transform"
+          className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-600 px-6 py-3 min-h-[44px] text-sm font-semibold text-white active:scale-95 transition-transform"
         >
+          <ImageIcon className="w-5 h-5" />
           Upload from library
         </button>
         <button
           type="button"
           onClick={() => {
             setError(null);
+            setReady(false);
+            readyRef.current = false;
             startCamera();
           }}
           className="rounded-full border border-zinc-600 px-6 py-3 min-h-[44px] text-sm font-semibold text-white active:scale-95 transition-transform"
@@ -279,33 +474,151 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
     );
   }
 
-  // ── Desktop: live getUserMedia viewfinder ──
+  // Discrete zoom stops within the device's supported range (iOS-style pills).
+  const zoomLevels = zoomCaps
+    ? [1, 2, 3, 5].filter((z) => z >= zoomCaps.min && z <= zoomCaps.max)
+    : [];
+  // Guarantee at least the min + a couple of stops so the pills aren't empty
+  // when the device reports an unusual range.
+  if (zoomCaps && zoomLevels.length < 2) {
+    zoomLevels.length = 0;
+    zoomLevels.push(
+      zoomCaps.min,
+      Number(((zoomCaps.min + zoomCaps.max) / 2).toFixed(1)),
+      zoomCaps.max,
+    );
+  }
+  const activeZoom = zoomLevels.reduce(
+    (best, z) => (Math.abs(z - zoom) < Math.abs(best - zoom) ? z : best),
+    zoomLevels[0] ?? 1,
+  );
+
+  // ── Live in-page viewfinder (mobile + desktop): opens on mount ──
   return (
-    <div className="relative flex flex-col items-center justify-end h-full bg-black">
+    <div className="relative flex flex-col items-center justify-end h-full bg-black overflow-hidden">
       {hiddenFileInputs}
 
-      {/* Live viewfinder */}
+      {/* Live viewfinder — front camera is mirrored to match user expectation.
+          Decorative: capture happens via the shutter button, so the video is
+          non-interactive (taps must never toggle the native play/pause overlay)
+          and all media controls are suppressed. */}
       <video
         ref={videoRef}
+        data-viewfinder
         autoPlay
         playsInline
         muted
-        className="absolute inset-0 w-full h-full object-cover"
+        controls={false}
+        disablePictureInPicture
+        tabIndex={-1}
+        controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
+        className={`pointer-events-none absolute inset-0 w-full h-full object-cover ${
+          facingMode === "user" ? "-scale-x-100" : ""
+        }`}
       />
 
       {/* Hidden canvas for capture */}
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Crosshair overlay */}
-      {ready && (
+      {/* Rule-of-thirds grid */}
+      {ready && grid && (
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-2 border-white/30 rounded-2xl" />
+          <div className="absolute inset-y-0 left-1/3 w-px bg-white/25" />
+          <div className="absolute inset-y-0 left-2/3 w-px bg-white/25" />
+          <div className="absolute inset-x-0 top-1/3 h-px bg-white/25" />
+          <div className="absolute inset-x-0 top-2/3 h-px bg-white/25" />
         </div>
       )}
 
-      {/* Capture button — pb-safe wrapper clears home indicator */}
-      <div className="relative z-10 pb-safe">
-        <div className="pb-10 pt-6 flex flex-col items-center gap-4">
+      {/* Subtle corner-bracket framing (no full box — cleaner viewfinder look) */}
+      {ready && !grid && (
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+          <div className="relative h-72 w-72 max-h-[78vw] max-w-[78vw]">
+            <span className="absolute left-0 top-0 h-7 w-7 rounded-tl-xl border-l-2 border-t-2 border-white/50" />
+            <span className="absolute right-0 top-0 h-7 w-7 rounded-tr-xl border-r-2 border-t-2 border-white/50" />
+            <span className="absolute bottom-0 left-0 h-7 w-7 rounded-bl-xl border-b-2 border-l-2 border-white/50" />
+            <span className="absolute bottom-0 right-0 h-7 w-7 rounded-br-xl border-b-2 border-r-2 border-white/50" />
+          </div>
+        </div>
+      )}
+
+      {/* Shutter flash */}
+      {flash && <div className="absolute inset-0 z-30 bg-white animate-none" />}
+
+      {/* Top-right tool cluster: torch (if supported) + grid toggle */}
+      {ready && (
+        <div className="absolute right-4 top-4 z-20 flex flex-col gap-3 pt-safe">
+          {torchSupported && (
+            <button
+              type="button"
+              onClick={toggleTorch}
+              aria-label={torchOn ? "Turn flash off" : "Turn flash on"}
+              aria-pressed={torchOn}
+              className={`flex h-11 w-11 items-center justify-center rounded-full backdrop-blur-sm transition-colors active:scale-90 ${
+                torchOn
+                  ? "bg-yellow-400 text-black"
+                  : "border border-white/30 bg-black/30 text-white"
+              }`}
+            >
+              <BoltIcon className="h-5 w-5" slash={!torchOn} />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setGrid((g) => !g)}
+            aria-label={grid ? "Hide grid" : "Show grid"}
+            aria-pressed={grid}
+            className={`flex h-11 w-11 items-center justify-center rounded-full backdrop-blur-sm transition-colors active:scale-90 ${
+              grid
+                ? "bg-white text-black"
+                : "border border-white/30 bg-black/30 text-white"
+            }`}
+          >
+            <GridIcon className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+
+      {/* Zoom pills (only where the track reports zoom support) */}
+      {ready && zoomLevels.length > 1 && (
+        <div className="absolute inset-x-0 bottom-44 z-20 flex justify-center">
+          <div className="flex items-center gap-2 rounded-full bg-black/40 p-1.5 backdrop-blur-sm">
+            {zoomLevels.map((z) => {
+              const active = z === activeZoom;
+              return (
+                <button
+                  key={z}
+                  type="button"
+                  onClick={() => applyZoom(z)}
+                  aria-label={`Zoom ${z}x`}
+                  aria-pressed={active}
+                  className={`flex h-9 min-w-9 items-center justify-center rounded-full px-2 text-[13px] font-semibold tabular-nums transition-colors active:scale-90 ${
+                    active
+                      ? "bg-white text-black"
+                      : "text-white/80 active:text-white"
+                  }`}
+                >
+                  {active ? `${z}×` : `${z}`}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Controls — shutter centered, upload left, flip right. pb-safe clears
+          the home indicator. */}
+      <div className="absolute inset-x-0 bottom-0 z-20 pb-safe">
+        <div className="relative flex items-center justify-center pb-10 pt-6">
+          <button
+            type="button"
+            onClick={openLibraryPicker}
+            aria-label="Upload from library"
+            className="absolute left-8 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-black/30 text-white backdrop-blur-sm active:scale-90 transition-transform"
+          >
+            <ImageIcon className="h-6 w-6" />
+          </button>
+
           <button
             type="button"
             onClick={capture}
@@ -315,12 +628,14 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
           >
             <span className="block w-14 h-14 mx-auto rounded-full bg-white" />
           </button>
+
           <button
             type="button"
-            onClick={openLibraryPicker}
-            className="text-sm font-medium text-white/80 underline-offset-4 underline min-h-[44px] px-4 active:text-white transition-colors"
+            onClick={flipCamera}
+            aria-label="Switch camera"
+            className="absolute right-8 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-black/30 text-white backdrop-blur-sm active:scale-90 transition-transform"
           >
-            Upload from library
+            <FlipIcon className="h-6 w-6" />
           </button>
         </div>
       </div>
