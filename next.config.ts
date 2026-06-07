@@ -1,5 +1,5 @@
-import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -25,32 +25,16 @@ const nextConfig: NextConfig = {
   // keep sentry-specific keys here for the wrapper to pick up.
   serverExternalPackages: ["@sentry/nextjs"],
 
+  // NOTE: Content-Security-Policy is NOT set here. It needs a per-request nonce
+  // for the App Router's inline hydration scripts, which static config headers
+  // can't provide — it lives in `src/proxy.ts` instead. Setting a (nonce-less)
+  // CSP here too would emit a second, conflicting header. The remaining headers
+  // below are request-independent, so they stay.
   async headers() {
-    const isDev = process.env.NODE_ENV === "development";
-
-    const cspDirectives = [
-      "default-src 'self'",
-      isDev
-        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-        : "script-src 'self'",
-      "style-src 'self' 'unsafe-inline'",
-      // picsum.photos (and its fastly redirect target) host the seed/demo
-      // report photos; production photos come from *.supabase.co storage.
-      "img-src 'self' data: blob: https://*.supabase.co https://*.openstreetmap.org https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.arcgisonline.com https://picsum.photos https://fastly.picsum.photos",
-      "font-src 'self'",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.openstreetmap.org https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.arcgisonline.com https://*.sentry.io https://generativelanguage.googleapis.com",
-      "worker-src 'self' blob:",
-      "frame-ancestors 'none'",
-    ];
-
     return [
       {
         source: "/(.*)",
         headers: [
-          {
-            key: "Content-Security-Policy",
-            value: cspDirectives.join("; "),
-          },
           {
             key: "X-Frame-Options",
             value: "DENY",

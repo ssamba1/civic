@@ -3,6 +3,13 @@ import { Cormorant_Garamond, Hanken_Grotesk, JetBrains_Mono, Newsreader } from "
 import "./globals.css";
 import { BottomTabBar } from "@/components/resident/bottom-tab-bar";
 
+// Force every route to render per-request. Our CSP (src/proxy.ts) uses a
+// per-request nonce with 'strict-dynamic'; statically prerendered HTML is baked
+// at build time with no nonce, so its inline hydration scripts would be blocked
+// at runtime (the request's nonce can't match build-time HTML). Dynamic
+// rendering lets Next stamp the live nonce onto every page's inline scripts.
+export const dynamic = "force-dynamic";
+
 // Body / UI — humanist grotesk, warmer and more characterful than the
 // default Geist/Inter that reads as generic AI output.
 const sans = Hanken_Grotesk({
