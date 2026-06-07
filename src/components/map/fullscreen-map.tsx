@@ -400,7 +400,10 @@ export function FullscreenMapOrchestrator({
                 </div>
 
                 <div className="flex items-center justify-between text-[12px] text-zinc-400">
-                  <span className="inline-flex items-center gap-1">
+                  <span
+                    className="inline-flex items-center gap-1"
+                    suppressHydrationWarning
+                  >
                     <Clock className="w-3 h-3" strokeWidth={1.75} />
                     {formatTimeAgo(report.created_at)}
                   </span>
