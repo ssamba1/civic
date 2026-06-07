@@ -115,7 +115,7 @@ function getSnapshot(): DashboardReport[] {
 
 // Referentially-stable frozen server snapshot — matches the Object.freeze({})
 // pattern used by every other store in this codebase.
-const EMPTY: DashboardReport[] = Object.freeze([]) as DashboardReport[];
+const EMPTY: DashboardReport[] = Object.freeze([] as DashboardReport[]) as DashboardReport[];
 function getServerSnapshot(): DashboardReport[] {
   return EMPTY;
 }
