@@ -1,43 +1,51 @@
 "use client";
 
-import { memo, useState, useMemo, useRef, useEffect, useCallback } from "react";
 import {
   CheckCircle2,
-  Timer,
-  ShieldCheck,
   Inbox,
-  TrendingUp,
+  ShieldCheck,
+  Timer,
   TrendingDown,
+  TrendingUp,
   Users,
 } from "lucide-react";
-import { cn } from "@/lib/utils/cn";
 import {
-  useHoverTip,
-  TipRow,
-  TipBar,
-  TipChip,
-} from "@/components/analytics/hover-tip";
+  memo,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
-  Tile,
+  EmptyState,
   ExpandModal,
   PillGroup,
-  Toggle,
+  Prose,
   Stat,
   StatGrid,
-  Prose,
-  EmptyState,
+  Tile,
+  Toggle,
 } from "@/components/analytics/bento-primitives";
+import {
+  TipBar,
+  TipChip,
+  TipRow,
+  useHoverTip,
+} from "@/components/analytics/hover-tip";
 import type {
   AnalyticsKpis,
-  TrendPoint,
-  ResolutionBucket,
-  StatusFunnelStep,
-  SeveritySlice,
+  CategoryResolution,
   HeatCell,
   NeighborhoodVolume,
-  CategoryResolution,
   ReporterVelocity,
+  ResolutionBucket,
+  SeveritySlice,
+  StatusFunnelStep,
+  TrendPoint,
 } from "@/lib/analytics-data";
+import { cn } from "@/lib/utils/cn";
 
 /* ------------------------------------------------------------------
    Touch-tip helper — builds pointer-enter/leave + onClick handlers
@@ -83,7 +91,10 @@ function useTouchTipBinder(tip: ReturnType<typeof useHoverTip>) {
       onFocus: (e: React.FocusEvent) => {
         const r = (e.currentTarget as Element).getBoundingClientRect();
         setActive(key);
-        tip.show(tipContent(), { clientX: r.left + r.width / 2, clientY: r.top });
+        tip.show(tipContent(), {
+          clientX: r.left + r.width / 2,
+          clientY: r.top,
+        });
       },
       onBlur: () => {
         if (activeKey.current === key) activeKey.current = null;
@@ -126,204 +137,216 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
     tip: () => Parameters<typeof tip.show>[0];
   };
 
-  const cards: KpiCard[] = [
-    {
-      key: "resolution",
-      label: "Resolution rate",
-      value: `${kpis.resolution_rate_pct.toFixed(1)}%`,
-      icon: <CheckCircle2 className="h-4 w-4" strokeWidth={1.75} />,
-      accent: "#30d158",
-      delta: kpis.resolution_rate_delta_pct,
-      betterWhenUp: true,
-      tip: () => {
-        const gap = RESOLUTION_IDEAL - kpis.resolution_rate_pct;
-        const delta = kpis.resolution_rate_delta_pct;
-        return {
-          title: "Resolution rate",
-          accent: "#30d158",
-          body: (
-            <div className="flex flex-col gap-1.5">
-              <TipRow
-                label="Current"
-                value={`${kpis.resolution_rate_pct.toFixed(1)}%`}
-              />
-              <TipRow
-                label="Prior period"
-                value={`${(kpis.resolution_rate_pct - delta).toFixed(1)}%`}
-                muted
-              />
-              <TipBar pct={kpis.resolution_rate_pct} color="#30d158" />
-              <p className="text-[11px] text-zinc-500 leading-snug mt-1">
-                Share of intake that reached closed. 100% means every report
-                was resolved.
-              </p>
-            </div>
-          ),
-          footer: (
-            <div className="flex items-center justify-between">
-              <span>Gap to ideal: {gap.toFixed(1)}pp</span>
-              <TipChip tone={delta >= 0 ? "good" : "bad"}>
-                {delta >= 0 ? "+" : ""}
-                {delta.toFixed(1)}% vs prior
-              </TipChip>
-            </div>
-          ),
-        };
+  const cards: KpiCard[] = useMemo(
+    () => [
+      {
+        key: "resolution",
+        label: "Resolution rate",
+        value: `${kpis.resolution_rate_pct.toFixed(1)}%`,
+        icon: <CheckCircle2 className="h-4 w-4" strokeWidth={1.75} />,
+        accent: "#30d158",
+        delta: kpis.resolution_rate_delta_pct,
+        betterWhenUp: true,
+        tip: () => {
+          const gap = RESOLUTION_IDEAL - kpis.resolution_rate_pct;
+          const delta = kpis.resolution_rate_delta_pct;
+          return {
+            title: "Resolution rate",
+            accent: "#30d158",
+            body: (
+              <div className="flex flex-col gap-1.5">
+                <TipRow
+                  label="Current"
+                  value={`${kpis.resolution_rate_pct.toFixed(1)}%`}
+                />
+                <TipRow
+                  label="Prior period"
+                  value={`${(kpis.resolution_rate_pct - delta).toFixed(1)}%`}
+                  muted
+                />
+                <TipBar pct={kpis.resolution_rate_pct} color="#30d158" />
+                <p className="text-[11px] text-zinc-500 leading-snug mt-1">
+                  Share of intake that reached closed. 100% means every report
+                  was resolved.
+                </p>
+              </div>
+            ),
+            footer: (
+              <div className="flex items-center justify-between">
+                <span>Gap to ideal: {gap.toFixed(1)}pp</span>
+                <TipChip tone={delta >= 0 ? "good" : "bad"}>
+                  {delta >= 0 ? "+" : ""}
+                  {delta.toFixed(1)}% vs prior
+                </TipChip>
+              </div>
+            ),
+          };
+        },
       },
-    },
-    {
-      key: "mttr",
-      label: "Mean time to resolve",
-      value: formatHours(kpis.mttr_hours),
-      icon: <Timer className="h-4 w-4" strokeWidth={1.75} />,
-      accent: "#5ac8fa",
-      delta: kpis.mttr_delta_pct,
-      betterWhenUp: false,
-      tip: () => {
-        const delta = kpis.mttr_delta_pct;
-        const days = kpis.mttr_hours / 24;
-        const overTarget = kpis.mttr_hours - MTTR_TARGET_HOURS;
-        const targetPct = Math.min(
-          (MTTR_TARGET_HOURS / Math.max(kpis.mttr_hours, 1)) * 100,
-          100,
-        );
-        return {
-          title: "Mean time to resolve",
-          accent: "#5ac8fa",
-          body: (
-            <div className="flex flex-col gap-1.5">
-              <TipRow label="Raw" value={`${kpis.mttr_hours.toFixed(1)}h`} />
-              <TipRow
-                label="Equivalent"
-                value={`${days.toFixed(2)} days`}
-                muted
-              />
-              <TipRow
-                label={`Target ${MTTR_TARGET_HOURS}h`}
-                value={`${targetPct.toFixed(0)}% headroom`}
-                muted
-              />
-              <TipBar pct={targetPct} color="#5ac8fa" />
-              <p className="text-[11px] text-zinc-500 leading-snug mt-1">
-                Lower is better. Time from report intake to closed status.
-              </p>
-            </div>
-          ),
-          footer: (
-            <div className="flex items-center justify-between">
-              <span>
-                {overTarget > 0
-                  ? `${overTarget.toFixed(1)}h over target`
-                  : `${Math.abs(overTarget).toFixed(1)}h under target`}
-              </span>
-              <TipChip tone={delta <= 0 ? "good" : "bad"}>
-                {delta >= 0 ? "+" : ""}
-                {delta.toFixed(1)}% vs prior
-              </TipChip>
-            </div>
-          ),
-        };
+      {
+        key: "mttr",
+        label: "Mean time to resolve",
+        value: formatHours(kpis.mttr_hours),
+        icon: <Timer className="h-4 w-4" strokeWidth={1.75} />,
+        accent: "#5ac8fa",
+        delta: kpis.mttr_delta_pct,
+        betterWhenUp: false,
+        tip: () => {
+          const delta = kpis.mttr_delta_pct;
+          const days = kpis.mttr_hours / 24;
+          const overTarget = kpis.mttr_hours - MTTR_TARGET_HOURS;
+          const targetPct = Math.min(
+            (MTTR_TARGET_HOURS / Math.max(kpis.mttr_hours, 1)) * 100,
+            100,
+          );
+          return {
+            title: "Mean time to resolve",
+            accent: "#5ac8fa",
+            body: (
+              <div className="flex flex-col gap-1.5">
+                <TipRow label="Raw" value={`${kpis.mttr_hours.toFixed(1)}h`} />
+                <TipRow
+                  label="Equivalent"
+                  value={`${days.toFixed(2)} days`}
+                  muted
+                />
+                <TipRow
+                  label={`Target ${MTTR_TARGET_HOURS}h`}
+                  value={`${targetPct.toFixed(0)}% headroom`}
+                  muted
+                />
+                <TipBar pct={targetPct} color="#5ac8fa" />
+                <p className="text-[11px] text-zinc-500 leading-snug mt-1">
+                  Lower is better. Time from report intake to closed status.
+                </p>
+              </div>
+            ),
+            footer: (
+              <div className="flex items-center justify-between">
+                <span>
+                  {overTarget > 0
+                    ? `${overTarget.toFixed(1)}h over target`
+                    : `${Math.abs(overTarget).toFixed(1)}h under target`}
+                </span>
+                <TipChip tone={delta <= 0 ? "good" : "bad"}>
+                  {delta >= 0 ? "+" : ""}
+                  {delta.toFixed(1)}% vs prior
+                </TipChip>
+              </div>
+            ),
+          };
+        },
       },
-    },
-    {
-      key: "sla",
-      label: "SLA compliance",
-      value: `${kpis.sla_compliance_pct.toFixed(1)}%`,
-      icon: <ShieldCheck className="h-4 w-4" strokeWidth={1.75} />,
-      accent: "#0a84ff",
-      sub: `Target ${kpis.sla_target_pct}%`,
-      tip: () => {
-        const gap = kpis.sla_compliance_pct - kpis.sla_target_pct;
-        const passing = kpis.sla_compliance_pct >= kpis.sla_target_pct;
-        return {
-          title: "SLA compliance",
-          accent: "#0a84ff",
-          body: (
-            <div className="flex flex-col gap-1.5">
-              <TipRow
-                label="Current"
-                value={`${kpis.sla_compliance_pct.toFixed(1)}%`}
-              />
-              <TipRow label="Target" value={`${kpis.sla_target_pct}%`} muted />
-              <TipBar pct={kpis.sla_compliance_pct} color="#0a84ff" />
-              <p className="text-[11px] text-zinc-500 leading-snug mt-1">
-                Share of reports closed inside their category SLA window.
-              </p>
-            </div>
-          ),
-          footer: (
-            <div className="flex items-center justify-between">
-              <span>
-                {gap >= 0 ? "+" : ""}
-                {gap.toFixed(1)}pp vs target
-              </span>
-              <TipChip tone={passing ? "good" : "bad"}>
-                {passing ? "Passing" : "Missing"}
-              </TipChip>
-            </div>
-          ),
-        };
+      {
+        key: "sla",
+        label: "SLA compliance",
+        value: `${kpis.sla_compliance_pct.toFixed(1)}%`,
+        icon: <ShieldCheck className="h-4 w-4" strokeWidth={1.75} />,
+        accent: "#0a84ff",
+        sub: `Target ${kpis.sla_target_pct}%`,
+        tip: () => {
+          const gap = kpis.sla_compliance_pct - kpis.sla_target_pct;
+          const passing = kpis.sla_compliance_pct >= kpis.sla_target_pct;
+          return {
+            title: "SLA compliance",
+            accent: "#0a84ff",
+            body: (
+              <div className="flex flex-col gap-1.5">
+                <TipRow
+                  label="Current"
+                  value={`${kpis.sla_compliance_pct.toFixed(1)}%`}
+                />
+                <TipRow
+                  label="Target"
+                  value={`${kpis.sla_target_pct}%`}
+                  muted
+                />
+                <TipBar pct={kpis.sla_compliance_pct} color="#0a84ff" />
+                <p className="text-[11px] text-zinc-500 leading-snug mt-1">
+                  Share of reports closed inside their category SLA window.
+                </p>
+              </div>
+            ),
+            footer: (
+              <div className="flex items-center justify-between">
+                <span>
+                  {gap >= 0 ? "+" : ""}
+                  {gap.toFixed(1)}pp vs target
+                </span>
+                <TipChip tone={passing ? "good" : "bad"}>
+                  {passing ? "Passing" : "Missing"}
+                </TipChip>
+              </div>
+            ),
+          };
+        },
       },
-    },
-    {
-      key: "backlog",
-      label: "Active backlog",
-      value: kpis.active_backlog.toLocaleString(),
-      icon: <Inbox className="h-4 w-4" strokeWidth={1.75} />,
-      accent: "#ff9f0a",
-      delta: kpis.backlog_delta_pct,
-      betterWhenUp: false,
-      tip: () => {
-        const delta = kpis.backlog_delta_pct;
-        const growing = delta > 0;
-        const priorEstimate =
-          delta !== 0
-            ? Math.round(kpis.active_backlog / (1 + delta / 100))
-            : kpis.active_backlog;
-        const change = kpis.active_backlog - priorEstimate;
-        return {
-          title: "Active backlog",
-          accent: "#ff9f0a",
-          body: (
-            <div className="flex flex-col gap-1.5">
-              <TipRow
-                label="Open now"
-                value={kpis.active_backlog.toLocaleString()}
-              />
-              <TipRow
-                label="Prior period"
-                value={priorEstimate.toLocaleString()}
-                muted
-              />
-              <TipRow
-                label="Net change"
-                value={`${change >= 0 ? "+" : ""}${change.toLocaleString()}`}
-                muted
-              />
-              <p className="text-[11px] text-zinc-500 leading-snug mt-1">
-                Reports not yet closed. A growing backlog means intake is
-                outpacing resolution.
-              </p>
-            </div>
-          ),
-          footer: (
-            <div className="flex items-center justify-between">
-              <span>
-                {growing ? "Growing" : delta < 0 ? "Shrinking" : "Flat"}
-              </span>
-              <TipChip tone={growing ? "bad" : delta < 0 ? "good" : "neutral"}>
-                {delta >= 0 ? "+" : ""}
-                {delta.toFixed(1)}% vs prior
-              </TipChip>
-            </div>
-          ),
-        };
+      {
+        key: "backlog",
+        label: "Active backlog",
+        value: kpis.active_backlog.toLocaleString(),
+        icon: <Inbox className="h-4 w-4" strokeWidth={1.75} />,
+        accent: "#ff9f0a",
+        delta: kpis.backlog_delta_pct,
+        betterWhenUp: false,
+        tip: () => {
+          const delta = kpis.backlog_delta_pct;
+          const growing = delta > 0;
+          const priorEstimate =
+            delta !== 0
+              ? Math.round(kpis.active_backlog / (1 + delta / 100))
+              : kpis.active_backlog;
+          const change = kpis.active_backlog - priorEstimate;
+          return {
+            title: "Active backlog",
+            accent: "#ff9f0a",
+            body: (
+              <div className="flex flex-col gap-1.5">
+                <TipRow
+                  label="Open now"
+                  value={kpis.active_backlog.toLocaleString()}
+                />
+                <TipRow
+                  label="Prior period"
+                  value={priorEstimate.toLocaleString()}
+                  muted
+                />
+                <TipRow
+                  label="Net change"
+                  value={`${change >= 0 ? "+" : ""}${change.toLocaleString()}`}
+                  muted
+                />
+                <p className="text-[11px] text-zinc-500 leading-snug mt-1">
+                  Reports not yet closed. A growing backlog means intake is
+                  outpacing resolution.
+                </p>
+              </div>
+            ),
+            footer: (
+              <div className="flex items-center justify-between">
+                <span>
+                  {growing ? "Growing" : delta < 0 ? "Shrinking" : "Flat"}
+                </span>
+                <TipChip
+                  tone={growing ? "bad" : delta < 0 ? "good" : "neutral"}
+                >
+                  {delta >= 0 ? "+" : ""}
+                  {delta.toFixed(1)}% vs prior
+                </TipChip>
+              </div>
+            ),
+          };
+        },
       },
-    },
-  ];
+    ],
+    [kpis],
+  );
 
-  const bindCard = (c: KpiCard) =>
-    bindTip(c.key, c.tip, (k) => setHoveredKpi(k as string | null));
+  const bindCard = useCallback(
+    (c: KpiCard) =>
+      bindTip(c.key, c.tip, (k) => setHoveredKpi(k as string | null)),
+    [bindTip],
+  );
 
   return (
     <>
@@ -426,6 +449,7 @@ function renderTrendChart(
   showCreated: boolean,
   showClosed: boolean,
   smooth: boolean,
+  idPrefix: string,
   opts?: {
     hovered?: number | null;
     bindHover?: (i: number) => {
@@ -445,10 +469,7 @@ function renderTrendChart(
   // Guard: empty series would crash on pts[0] / data[peakIdx] below.
   if (data.length === 0) {
     return (
-      <div
-        className="flex items-center justify-center"
-        style={{ height: h }}
-      >
+      <div className="flex items-center justify-center" style={{ height: h }}>
         <span className="text-[13px] text-zinc-500">No data in range</span>
       </div>
     );
@@ -458,13 +479,7 @@ function renderTrendChart(
   if (showCreated) visible.push("created");
   if (showClosed) visible.push("closed");
 
-  const max =
-    Math.max(
-      1,
-      ...data.flatMap((d) =>
-        visible.map((k) => d[k]),
-      ),
-    );
+  const max = Math.max(1, ...data.flatMap((d) => visible.map((k) => d[k])));
   const xStep = innerW / Math.max(data.length - 1, 1);
   // Cap axis labels to ~one per 70px so dense ranges (e.g. 90d) don't render an
   // unreadable wall of overlapping dates.
@@ -547,6 +562,12 @@ function renderTrendChart(
     Math.round((max / ticks) * i),
   );
 
+  // Per-instance gradient IDs so the in-tile and expanded charts (mounted
+  // simultaneously) don't share a global id — duplicate ids make the browser
+  // resolve url(#…) to the first match, swapping one chart's area fill.
+  const gCreated = `g-created-${idPrefix}`;
+  const gClosed = `g-closed-${idPrefix}`;
+
   return (
     <svg
       viewBox={`0 0 ${w} ${h}`}
@@ -555,11 +576,11 @@ function renderTrendChart(
       aria-label="Reports created vs resolved over time"
     >
       <defs>
-        <linearGradient id="g-created" x1="0" x2="0" y1="0" y2="1">
+        <linearGradient id={gCreated} x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor="#0a84ff" stopOpacity="0.35" />
           <stop offset="100%" stopColor="#0a84ff" stopOpacity="0" />
         </linearGradient>
-        <linearGradient id="g-closed" x1="0" x2="0" y1="0" y2="1">
+        <linearGradient id={gClosed} x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor="#30d158" stopOpacity="0.25" />
           <stop offset="100%" stopColor="#30d158" stopOpacity="0" />
         </linearGradient>
@@ -590,7 +611,7 @@ function renderTrendChart(
       })}
       {showCreated && (
         <>
-          <path d={areaPath("created")} fill="url(#g-created)" />
+          <path d={areaPath("created")} fill={`url(#${gCreated})`} />
           <path
             d={linePath("created")}
             fill="none"
@@ -603,7 +624,7 @@ function renderTrendChart(
       )}
       {showClosed && (
         <>
-          <path d={areaPath("closed")} fill="url(#g-closed)" />
+          <path d={areaPath("closed")} fill={`url(#${gClosed})`} />
           <path
             d={linePath("closed")}
             fill="none"
@@ -636,50 +657,68 @@ function renderTrendChart(
         );
       })}
       {/* Static markers — peak day pin + daily-avg dashed lines */}
-      {showCreated && (() => {
-        const peakIdx = data.reduce(
-          (pi, d, i) => (d.created > data[pi].created ? i : pi),
-          0,
-        );
-        const avg = data.reduce((s, d) => s + d.created, 0) / Math.max(data.length, 1);
-        const avgY = pad.t + innerH - (avg / max) * innerH;
-        const p = xy(peakIdx, data[peakIdx].created);
-        return (
-          <g pointerEvents="none">
+      {showCreated &&
+        (() => {
+          const peakIdx = data.reduce(
+            (pi, d, i) => (d.created > data[pi].created ? i : pi),
+            0,
+          );
+          const avg =
+            data.reduce((s, d) => s + d.created, 0) / Math.max(data.length, 1);
+          const avgY = pad.t + innerH - (avg / max) * innerH;
+          const p = xy(peakIdx, data[peakIdx].created);
+          return (
+            <g pointerEvents="none">
+              <line
+                x1={pad.l}
+                x2={w - pad.r}
+                y1={avgY}
+                y2={avgY}
+                stroke="#0a84ff"
+                strokeOpacity={0.3}
+                strokeWidth={1}
+                strokeDasharray="3 3"
+              />
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={4}
+                fill="#0a84ff"
+                stroke="#fff"
+                strokeWidth={1.5}
+              />
+              <text
+                x={p.x}
+                y={p.y - 8}
+                fontSize={9}
+                fill="#fff"
+                textAnchor="middle"
+                fontWeight={600}
+              >
+                peak {data[peakIdx].created}
+              </text>
+            </g>
+          );
+        })()}
+      {showClosed &&
+        (() => {
+          const avg =
+            data.reduce((s, d) => s + d.closed, 0) / Math.max(data.length, 1);
+          const avgY = pad.t + innerH - (avg / max) * innerH;
+          return (
             <line
               x1={pad.l}
               x2={w - pad.r}
               y1={avgY}
               y2={avgY}
-              stroke="#0a84ff"
+              stroke="#30d158"
               strokeOpacity={0.3}
               strokeWidth={1}
               strokeDasharray="3 3"
+              pointerEvents="none"
             />
-            <circle cx={p.x} cy={p.y} r={4} fill="#0a84ff" stroke="#fff" strokeWidth={1.5} />
-            <text x={p.x} y={p.y - 8} fontSize={9} fill="#fff" textAnchor="middle" fontWeight={600}>
-              peak {data[peakIdx].created}
-            </text>
-          </g>
-        );
-      })()}
-      {showClosed && (() => {
-        const avg = data.reduce((s, d) => s + d.closed, 0) / Math.max(data.length, 1);
-        const avgY = pad.t + innerH - (avg / max) * innerH;
-        return (
-          <line
-            x1={pad.l}
-            x2={w - pad.r}
-            y1={avgY}
-            y2={avgY}
-            stroke="#30d158"
-            strokeOpacity={0.3}
-            strokeWidth={1}
-            strokeDasharray="3 3"
-            pointerEvents="none"
-          />
-        );
-      })()}
+          );
+        })()}
       {hoveredIdx !== null && data[hoveredIdx] && (
         <g pointerEvents="none">
           <line
@@ -765,7 +804,7 @@ interface TrendChartProps {
   showCreated: boolean;
   showClosed: boolean;
   smooth: boolean;
-  opts?: Parameters<typeof renderTrendChart>[6];
+  opts?: Parameters<typeof renderTrendChart>[7];
 }
 
 function TrendChart({
@@ -777,6 +816,7 @@ function TrendChart({
   opts,
 }: TrendChartProps) {
   const { ref, size } = useElementSize({ w: 720, h: 260 });
+  const idPrefix = useId();
   return (
     <div ref={ref} className={cn("w-full", heightClass)}>
       {renderTrendChart(
@@ -786,6 +826,7 @@ function TrendChart({
         showCreated,
         showClosed,
         smooth,
+        idPrefix,
         opts,
       )}
     </div>
@@ -800,6 +841,12 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
   const [smooth, setSmooth] = useState(true);
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
   const tip = useHoverTip();
+
+  // Clamp the selected window if it now exceeds the data length (e.g. range
+  // switch), but preserve an explicit narrower 7d/14d choice across refreshes.
+  useEffect(() => {
+    setDays((d) => (d > data.length ? data.length : d));
+  }, [data.length]);
 
   const slice = useMemo(
     () => (days >= data.length ? data : data.slice(-days)),
@@ -841,18 +888,42 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
       accent: "#0a84ff",
       body: (
         <div className="flex flex-col gap-1.5">
-          <TipRow label="Created" value={d.created.toLocaleString()} accent="#0a84ff" />
-          <TipRow label="Resolved" value={d.closed.toLocaleString()} accent="#30d158" />
+          <TipRow
+            label="Created"
+            value={d.created.toLocaleString()}
+            accent="#0a84ff"
+          />
+          <TipRow
+            label="Resolved"
+            value={d.closed.toLocaleString()}
+            accent="#30d158"
+          />
           <TipRow label="Throughput" value={`${dayRatio.toFixed(0)}%`} muted />
           {prev && (
             <div className="flex items-center justify-between gap-3 pt-1">
               <span className="text-zinc-500 text-[11px]">vs prior day</span>
               <span className="inline-flex items-center gap-1.5">
-                <TipChip tone={deltaCreated > 0 ? "warn" : deltaCreated < 0 ? "good" : "neutral"}>
+                <TipChip
+                  tone={
+                    deltaCreated > 0
+                      ? "warn"
+                      : deltaCreated < 0
+                        ? "good"
+                        : "neutral"
+                  }
+                >
                   {deltaCreated > 0 ? "+" : ""}
                   {deltaCreated} new
                 </TipChip>
-                <TipChip tone={deltaClosed > 0 ? "good" : deltaClosed < 0 ? "bad" : "neutral"}>
+                <TipChip
+                  tone={
+                    deltaClosed > 0
+                      ? "good"
+                      : deltaClosed < 0
+                        ? "bad"
+                        : "neutral"
+                  }
+                >
                   {deltaClosed > 0 ? "+" : ""}
                   {deltaClosed} cls
                 </TipChip>
@@ -863,13 +934,13 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
       ),
       footer: prev ? (
         <div className="flex items-center justify-between">
-          <span>Day {i + 1} of {data.length}</span>
-          <TipChip tone={netDelta < 0 ? "good" : netDelta > 0 ? "bad" : "neutral"}>
-            {netDelta < 0
-              ? "Backlog ↓"
-              : netDelta > 0
-                ? "Backlog ↑"
-                : "Flat"}
+          <span>
+            Day {i + 1} of {data.length}
+          </span>
+          <TipChip
+            tone={netDelta < 0 ? "good" : netDelta > 0 ? "bad" : "neutral"}
+          >
+            {netDelta < 0 ? "Backlog ↓" : netDelta > 0 ? "Backlog ↑" : "Flat"}
           </TipChip>
         </div>
       ) : (
@@ -897,8 +968,13 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
     },
     onClick: (e: React.MouseEvent) => {
       if (lastPtrType.current !== "touch") return;
-      if (hoveredDay === i) { setHoveredDay(null); tip.hide(); }
-      else { setHoveredDay(i); tip.show(tipForDay(i), e); }
+      if (hoveredDay === i) {
+        setHoveredDay(null);
+        tip.hide();
+      } else {
+        setHoveredDay(i);
+        tip.show(tipForDay(i), e);
+      }
     },
     onFocus: (e: React.FocusEvent) => {
       const target = e.currentTarget as Element;
@@ -1028,27 +1104,39 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
               />
             </div>
             <div className="flex flex-col gap-2 pt-2 border-t border-white/[0.06]">
-              <Toggle label="Smooth curves" value={smooth} onChange={setSmooth} />
+              <Toggle
+                label="Smooth curves"
+                value={smooth}
+                onChange={setSmooth}
+              />
             </div>
           </>
         }
         info={
           <div className="flex flex-col gap-5">
             <Prose>
-              Daily count of reports filed (blue) vs. closed (green). The
-              ratio of closed-to-created is the operational throughput — a
-              ratio above 100% means crews are eating into the backlog.
+              Daily count of reports filed (blue) vs. closed (green). The ratio
+              of closed-to-created is the operational throughput — a ratio above
+              100% means crews are eating into the backlog.
             </Prose>
             <StatGrid>
               <Stat
                 label="Window"
                 value={`${slice.length}d`}
-                hint={`${slice[0].date.slice(5)} → ${slice[slice.length - 1].date.slice(5)}`}
+                hint={
+                  slice.length
+                    ? `${slice[0].date.slice(5)} → ${slice[slice.length - 1].date.slice(5)}`
+                    : "—"
+                }
               />
               <Stat
                 label="Throughput"
                 value={`${sliceCreated ? ((sliceClosed / sliceCreated) * 100).toFixed(0) : 0}%`}
-                hint={sliceClosed >= sliceCreated ? "Backlog shrinking" : "Backlog growing"}
+                hint={
+                  sliceClosed >= sliceCreated
+                    ? "Backlog shrinking"
+                    : "Backlog growing"
+                }
               />
               <Stat
                 label="Peak day"
@@ -1169,13 +1257,12 @@ function renderDonut(
             role={bind ? "button" : undefined}
             aria-label={
               bind
-                ? `Severity ${s.severity}, ${s.count} reports, ${((frac * 100) | 0)}%`
+                ? `Severity ${s.severity}, ${s.count} reports, ${(frac * 100) | 0}%`
                 : undefined
             }
             style={{
               opacity: isDim ? 0.32 : 1,
-              transition:
-                "stroke-width 160ms ease-out, opacity 160ms ease-out",
+              transition: "stroke-width 160ms ease-out, opacity 160ms ease-out",
               cursor: bind ? "pointer" : undefined,
               outline: "none",
             }}
@@ -1199,7 +1286,8 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
   const hasData = data.some((d) => d.count > 0);
   const total = data.reduce((s, d) => s + d.count, 0) || 1;
   const dominant = [...data].sort((a, b) => b.count - a.count)[0];
-  const emergencyShare = ((data.find((d) => d.severity === 5)?.count ?? 0) / total) * 100;
+  const emergencyShare =
+    ((data.find((d) => d.severity === 5)?.count ?? 0) / total) * 100;
   const ranked = [...data].sort((a, b) => b.count - a.count);
   const sliceRank = (sev: SeveritySlice["severity"]) =>
     ranked.findIndex((s) => s.severity === sev) + 1;
@@ -1261,8 +1349,13 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
     },
     onClick: (e: React.MouseEvent) => {
       if (slicePtrType.current !== "touch") return;
-      if (hovered === s.severity) { setHovered(null); tip.hide(); }
-      else { setHovered(s.severity); tip.show(tipFor(s), e); }
+      if (hovered === s.severity) {
+        setHovered(null);
+        tip.hide();
+      } else {
+        setHovered(s.severity);
+        tip.show(tipFor(s), e);
+      }
     },
     onFocus: (e: React.FocusEvent) => {
       const target = e.currentTarget as Element;
@@ -1290,50 +1383,50 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
         {!hasData ? (
           <EmptyState message="No classified reports in range" />
         ) : (
-        <div className="flex h-full flex-col items-center justify-center gap-5">
-          <div className="flex-shrink-0">
-            {renderDonut(data, 150, {
-              hovered,
-              bindHover: bindSlice,
-            })}
-          </div>
-          {/* Legend sits below the donut as 5 equal columns. A side-by-side
+          <div className="flex h-full flex-col items-center justify-center gap-5">
+            <div className="flex-shrink-0">
+              {renderDonut(data, 150, {
+                hovered,
+                bindHover: bindSlice,
+              })}
+            </div>
+            {/* Legend sits below the donut as 5 equal columns. A side-by-side
              legend clips at this col-span-4 width once the viewport hits the
              lg breakpoint; stacking is width-robust and uses the tile's slack
              vertical space. */}
-          <ul className="grid w-full grid-cols-5 gap-1 text-[12px]">
-            {data.map((s) => {
-              const pct = (s.count / total) * 100;
-              const isActive = hovered === s.severity;
-              return (
-                <li
-                  key={s.severity}
-                  className={cn(
-                    "flex flex-col items-center gap-1 rounded-md py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 justify-center transition-colors cursor-default",
-                    isActive
-                      ? "bg-white/[0.05]"
-                      : hovered !== null
-                        ? "opacity-50"
-                        : "",
-                  )}
-                  {...bindSlice(s)}
-                >
-                  <span
+            <ul className="grid w-full grid-cols-5 gap-1 text-[12px]">
+              {data.map((s) => {
+                const pct = (s.count / total) * 100;
+                const isActive = hovered === s.severity;
+                return (
+                  <li
+                    key={s.severity}
                     className={cn(
-                      "h-2 w-2 rounded-full transition-transform",
-                      isActive && "scale-150",
+                      "flex flex-col items-center gap-1 rounded-md py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 justify-center transition-colors cursor-default",
+                      isActive
+                        ? "bg-white/[0.05]"
+                        : hovered !== null
+                          ? "opacity-50"
+                          : "",
                     )}
-                    style={{ background: SEVERITY_COLORS[s.severity] }}
-                  />
-                  <span className="text-zinc-300">Sev {s.severity}</span>
-                  <span className="tabular-nums text-zinc-500">
-                    {pct.toFixed(0)}%
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+                    {...bindSlice(s)}
+                  >
+                    <span
+                      className={cn(
+                        "h-2 w-2 rounded-full transition-transform",
+                        isActive && "scale-150",
+                      )}
+                      style={{ background: SEVERITY_COLORS[s.severity] }}
+                    />
+                    <span className="text-zinc-300">Sev {s.severity}</span>
+                    <span className="tabular-nums text-zinc-500">
+                      {pct.toFixed(0)}%
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         )}
         <tip.Portal />
       </Tile>
@@ -1390,10 +1483,10 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
         info={
           <div className="flex flex-col gap-5">
             <Prose>
-              Severity is assigned by the AI classifier at report ingest
-              (0-5 scale). Sev 5 incidents page on-call dispatch
-              immediately; sev 4 routes to next-business-day; sev 1-3
-              batches into weekly crew runs.
+              Severity is assigned by the AI classifier at report ingest (0-5
+              scale). Sev 5 incidents page on-call dispatch immediately; sev 4
+              routes to next-business-day; sev 1-3 batches into weekly crew
+              runs.
             </Prose>
             <StatGrid>
               <Stat label="Total" value={total.toLocaleString()} />
@@ -1409,7 +1502,7 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
               />
               <Stat
                 label="Critical+"
-                value={`${(((data.find((d) => d.severity === 4)?.count ?? 0) + (data.find((d) => d.severity === 5)?.count ?? 0)) / total * 100).toFixed(0)}%`}
+                value={`${((((data.find((d) => d.severity === 4)?.count ?? 0) + (data.find((d) => d.severity === 5)?.count ?? 0)) / total) * 100).toFixed(0)}%`}
                 hint="Sev 4-5"
               />
             </StatGrid>
@@ -1469,7 +1562,8 @@ function renderFunnelBars(
             tabIndex={bind ? 0 : -1}
             className={cn(
               "rounded-md px-1.5 py-1 -mx-1.5 transition-all duration-150 outline-none",
-              bind && "cursor-default focus-visible:ring-1 focus-visible:ring-white/20",
+              bind &&
+                "cursor-default focus-visible:ring-1 focus-visible:ring-white/20",
               isActive && "bg-white/[0.05]",
               isDim && "opacity-45",
             )}
@@ -1486,9 +1580,7 @@ function renderFunnelBars(
               </span>
               <span className="tabular-nums text-zinc-500 inline-flex items-center gap-2">
                 {showConversion && conv !== null && (
-                  <span className="text-[11px] text-zinc-600">
-                    {conv}%
-                  </span>
+                  <span className="text-[11px] text-zinc-600">{conv}%</span>
                 )}
                 {step.count}
               </span>
@@ -1515,7 +1607,10 @@ function renderFunnelBars(
   );
 }
 
-const STATUS_INTERPRETATION: Record<string, { label: string; tone: "neutral" | "good" | "bad" | "warn" }> = {
+const STATUS_INTERPRETATION: Record<
+  string,
+  { label: string; tone: "neutral" | "good" | "bad" | "warn" }
+> = {
   open: { label: "Dispatch backlog", tone: "warn" },
   dispatched: { label: "Routed to crew", tone: "neutral" },
   in_progress: { label: "Crews active", tone: "neutral" },
@@ -1537,9 +1632,10 @@ function StatusFunnelInner({ data }: StatusFunnelProps) {
   const tipFor = (step: StatusFunnelStep) => {
     const idx = data.findIndex((d) => d.status === step.status);
     const prev = idx > 0 ? data[idx - 1] : null;
-    const conv = prev && prev.count > 0
-      ? Math.round((step.count / prev.count) * 100)
-      : null;
+    const conv =
+      prev && prev.count > 0
+        ? Math.round((step.count / prev.count) * 100)
+        : null;
     const pct = (step.count / totalSafe) * 100;
     const color = STATUS_COLOR[step.status] ?? "#86868b";
     const interp = STATUS_INTERPRETATION[step.status] ?? {
@@ -1555,17 +1651,15 @@ function StatusFunnelInner({ data }: StatusFunnelProps) {
           <TipRow label="Share of total" value={`${pct.toFixed(1)}%`} />
           <TipBar pct={pct} color={color} />
           {conv !== null && prev && (
-            <TipRow
-              label={`From ${prev.label}`}
-              value={`${conv}%`}
-              muted
-            />
+            <TipRow label={`From ${prev.label}`} value={`${conv}%`} muted />
           )}
         </div>
       ),
       footer: (
         <div className="flex items-center justify-between">
-          <span>Stage {idx + 1} of {data.length}</span>
+          <span>
+            Stage {idx + 1} of {data.length}
+          </span>
           <TipChip tone={interp.tone}>{interp.label}</TipChip>
         </div>
       ),
@@ -1591,8 +1685,13 @@ function StatusFunnelInner({ data }: StatusFunnelProps) {
     },
     onClick: (e: React.MouseEvent) => {
       if (stepPtrType.current !== "touch") return;
-      if (hovered === step.status) { setHovered(null); tip.hide(); }
-      else { setHovered(step.status); tip.show(tipFor(step), e); }
+      if (hovered === step.status) {
+        setHovered(null);
+        tip.hide();
+      } else {
+        setHovered(step.status);
+        tip.show(tipFor(step), e);
+      }
     },
     onFocus: (e: React.FocusEvent) => {
       const target = e.currentTarget as Element;
@@ -1648,13 +1747,17 @@ function StatusFunnelInner({ data }: StatusFunnelProps) {
         info={
           <div className="flex flex-col gap-5">
             <Prose>
-              Reports flow through four stages: residents file (Open) →
-              dispatch routes to a crew (Dispatched) → crew working
-              (In progress) → verified fixed (Resolved). Drop-off between
-              stages reveals where the system is bottlenecked.
+              Reports flow through four stages: residents file (Open) → dispatch
+              routes to a crew (Dispatched) → crew working (In progress) →
+              verified fixed (Resolved). Drop-off between stages reveals where
+              the system is bottlenecked.
             </Prose>
             <StatGrid>
-              <Stat label="In flight" value={stuck.toLocaleString()} hint="Not yet resolved" />
+              <Stat
+                label="In flight"
+                value={stuck.toLocaleString()}
+                hint="Not yet resolved"
+              />
               <Stat label="Resolved" value={closed.toLocaleString()} />
               <Stat
                 label="Resolution rate"
@@ -1662,7 +1765,9 @@ function StatusFunnelInner({ data }: StatusFunnelProps) {
               />
               <Stat
                 label="Dispatch backlog"
-                value={(data.find((d) => d.status === "open")?.count ?? 0).toString()}
+                value={(
+                  data.find((d) => d.status === "open")?.count ?? 0
+                ).toString()}
                 hint="Awaiting routing"
               />
             </StatGrid>
@@ -1782,7 +1887,9 @@ function renderHistogram(
               aria-valuemin={0}
               aria-valuemax={max}
               aria-label={
-                bind ? undefined : `${b.label}: ${b.count} reports, cumulative ${cum}%`
+                bind
+                  ? undefined
+                  : `${b.label}: ${b.count} reports, cumulative ${cum}%`
               }
             />
             <div className="text-center">
@@ -1800,9 +1907,7 @@ function renderHistogram(
                 {isSla && " ✓"}
               </p>
               {showCumulative && (
-                <p className="text-[10px] text-zinc-600 tabular-nums">
-                  {cum}%
-                </p>
+                <p className="text-[10px] text-zinc-600 tabular-nums">{cum}%</p>
               )}
             </div>
           </div>
@@ -1822,8 +1927,7 @@ function ResolutionHistogramInner({ data }: ResolutionHistogramProps) {
   const totalSafe = total || 1;
   const within24h = data[0]?.count ?? 0;
   const within72h = (data[0]?.count ?? 0) + (data[1]?.count ?? 0);
-  const overWeek =
-    (data[3]?.count ?? 0) + (data[4]?.count ?? 0);
+  const overWeek = (data[3]?.count ?? 0) + (data[4]?.count ?? 0);
 
   // Approx median bucket
   let acc = 0;
@@ -1843,14 +1947,24 @@ function ResolutionHistogramInner({ data }: ResolutionHistogramProps) {
     return next;
   }, 0);
 
-  const bucketMeaning = (b: ResolutionBucket): { text: string; tone: "good" | "warn" | "bad" | "neutral"; chip: string } => {
+  const bucketMeaning = (
+    b: ResolutionBucket,
+  ): {
+    text: string;
+    tone: "good" | "warn" | "bad" | "neutral";
+    chip: string;
+  } => {
     if (b.hours_max <= 72) {
       return { text: "Within standard 72h SLA", tone: "good", chip: "On-SLA" };
     }
     if (b.hours_max <= 168) {
       return { text: "Same-week resolution", tone: "warn", chip: "Slow" };
     }
-    return { text: "Over a week — escalation candidates", tone: "bad", chip: "Escalate" };
+    return {
+      text: "Over a week — escalation candidates",
+      tone: "bad",
+      chip: "Escalate",
+    };
   };
 
   const tipForBar = (i: number) => {
@@ -1902,8 +2016,13 @@ function ResolutionHistogramInner({ data }: ResolutionHistogramProps) {
     },
     onClick: (e: React.MouseEvent) => {
       if (barPtrType.current !== "touch") return;
-      if (hoveredBar === i) { setHoveredBar(null); tip.hide(); }
-      else { setHoveredBar(i); tip.show(tipForBar(i), e); }
+      if (hoveredBar === i) {
+        setHoveredBar(null);
+        tip.hide();
+      } else {
+        setHoveredBar(i);
+        tip.show(tipForBar(i), e);
+      }
     },
     onFocus: (e: React.FocusEvent) => {
       const target = e.currentTarget as Element;
@@ -1958,10 +2077,10 @@ function ResolutionHistogramInner({ data }: ResolutionHistogramProps) {
         info={
           <div className="flex flex-col gap-5">
             <Prose>
-              Time from report submission to verified closure, bucketed.
-              The shape of this distribution is the single best signal of
-              operational health — a left-skewed (fast) curve means crews
-              are turning around tickets quickly.
+              Time from report submission to verified closure, bucketed. The
+              shape of this distribution is the single best signal of
+              operational health — a left-skewed (fast) curve means crews are
+              turning around tickets quickly.
             </Prose>
             <StatGrid>
               <Stat
@@ -1974,10 +2093,7 @@ function ResolutionHistogramInner({ data }: ResolutionHistogramProps) {
                 value={`${total ? ((within72h / total) * 100).toFixed(0) : 0}%`}
                 hint="Standard SLA"
               />
-              <Stat
-                label="Median bucket"
-                value={medianLabel}
-              />
+              <Stat label="Median bucket" value={medianLabel} />
               <Stat
                 label="Over 1 week"
                 value={`${total ? ((overWeek / total) * 100).toFixed(0) : 0}%`}
@@ -2056,8 +2172,7 @@ function renderHeatmap(
         {days.map((d) => {
           const dayBind = opts?.bindDay?.(d);
           const isDayActive =
-            hoveredDay === d ||
-            (hoveredCell !== null && hoveredCell.day === d);
+            hoveredDay === d || (hoveredCell !== null && hoveredCell.day === d);
           const isDayDim = hasHover && !isDayActive;
           return (
             <span
@@ -2069,8 +2184,7 @@ function renderHeatmap(
                   : isDayDim
                     ? "text-zinc-600"
                     : "text-zinc-500",
-                dayBind &&
-                  "focus-visible:ring-1 focus-visible:ring-white/40",
+                dayBind && "focus-visible:ring-1 focus-visible:ring-white/40",
               )}
               style={{
                 height: cellHeight,
@@ -2080,9 +2194,7 @@ function renderHeatmap(
               tabIndex={dayBind ? 0 : -1}
               role={dayBind ? "button" : undefined}
               aria-label={
-                dayBind
-                  ? `${DAY_LABELS[d]}: show daily summary`
-                  : undefined
+                dayBind ? `${DAY_LABELS[d]}: show daily summary` : undefined
               }
               {...(dayBind ?? {})}
             >
@@ -2172,9 +2284,7 @@ function renderHeatmap(
                   tabIndex={legendBind ? 0 : -1}
                   role={legendBind ? "img" : undefined}
                   aria-label={
-                    legendBind
-                      ? `Intensity bucket ${idx + 1} of 5`
-                      : undefined
+                    legendBind ? `Intensity bucket ${idx + 1} of 5` : undefined
                   }
                   {...(legendBind ?? {})}
                 />
@@ -2191,16 +2301,20 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
   const [open, setOpen] = useState(false);
   const [weekdayOnly, setWeekdayOnly] = useState(false);
   const [intense, setIntense] = useState(false);
-  const [hoveredCell, setHoveredCell] = useState<{ day: number; hour: number } | null>(null);
+  const [hoveredCell, setHoveredCell] = useState<{
+    day: number;
+    hour: number;
+  } | null>(null);
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
   const [hoveredLegend, setHoveredLegend] = useState<number | null>(null);
   const tip = useHoverTip();
 
   // Initial accumulator: reduce with no seed throws on an empty array.
-  const peak = data.reduce(
-    (p, c) => (c.count > p.count ? c : p),
-    { day: 0, hour: 0, count: 0 } as HeatCell,
-  );
+  const peak = data.reduce((p, c) => (c.count > p.count ? c : p), {
+    day: 0,
+    hour: 0,
+    count: 0,
+  } as HeatCell);
   const totalReports = data.reduce((s, c) => s + c.count, 0);
   const avgPerCell = totalReports / Math.max(data.length, 1);
   const hasData = totalReports > 0;
@@ -2304,8 +2418,7 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
     const o = opacities[idx];
     const baseAlphaRef = 0.08;
     const peakAlphaRef = 0.82;
-    const intensityFrac =
-      (o - baseAlphaRef) / (peakAlphaRef - baseAlphaRef);
+    const intensityFrac = (o - baseAlphaRef) / (peakAlphaRef - baseAlphaRef);
     const lowPct = Math.max(0, intensityFrac * 100 - 12);
     const highPct = Math.min(100, intensityFrac * 100 + 12);
     return {
@@ -2319,8 +2432,8 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
           />
           <TipBar pct={intensityFrac * 100} color="#0a84ff" />
           <p className="text-[11px] text-zinc-500 leading-snug mt-1">
-            Each cell's color maps its report count to a fraction of the
-            single peak slot ({peak.count} reports).
+            Each cell's color maps its report count to a fraction of the single
+            peak slot ({peak.count} reports).
           </p>
         </div>
       ),
@@ -2347,9 +2460,16 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
     },
     onClick: (e) => {
       if (heatPtrType.current !== "touch") return;
-      const isActive = hoveredCell?.day === cell.day && hoveredCell?.hour === cell.hour;
-      if (isActive) { setHoveredCell(null); tip.hide(); }
-      else { setHoveredCell({ day: cell.day, hour: cell.hour }); setHoveredDay(null); tip.show(tipForCell(cell), e); }
+      const isActive =
+        hoveredCell?.day === cell.day && hoveredCell?.hour === cell.hour;
+      if (isActive) {
+        setHoveredCell(null);
+        tip.hide();
+      } else {
+        setHoveredCell({ day: cell.day, hour: cell.hour });
+        setHoveredDay(null);
+        tip.show(tipForCell(cell), e);
+      }
     },
     onFocus: (e) => {
       const target = e.currentTarget as Element;
@@ -2386,8 +2506,14 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
     },
     onClick: (e) => {
       if (heatPtrType.current !== "touch") return;
-      if (hoveredDay === day) { setHoveredDay(null); tip.hide(); }
-      else { setHoveredDay(day); setHoveredCell(null); tip.show(tipForDay(day), e); }
+      if (hoveredDay === day) {
+        setHoveredDay(null);
+        tip.hide();
+      } else {
+        setHoveredDay(day);
+        setHoveredCell(null);
+        tip.show(tipForDay(day), e);
+      }
     },
     onFocus: (e) => {
       const target = e.currentTarget as Element;
@@ -2423,8 +2549,13 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
     },
     onClick: (e) => {
       if (heatPtrType.current !== "touch") return;
-      if (hoveredLegend === idx) { setHoveredLegend(null); tip.hide(); }
-      else { setHoveredLegend(idx); tip.show(tipForLegend(idx), e); }
+      if (hoveredLegend === idx) {
+        setHoveredLegend(null);
+        tip.hide();
+      } else {
+        setHoveredLegend(idx);
+        tip.show(tipForLegend(idx), e);
+      }
     },
     onFocus: (e) => {
       const target = e.currentTarget as Element;
@@ -2496,11 +2627,10 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
         info={
           <div className="flex flex-col gap-5">
             <Prose>
-              When residents file. Commute spikes (7-9am, 4-7pm) and
-              weekday density indicate driving-related reports;
-              evening/weekend spikes correlate with pedestrian-discovered
-              issues like graffiti or sidewalk damage. Use this to staff
-              the dispatch desk accurately.
+              When residents file. Commute spikes (7-9am, 4-7pm) and weekday
+              density indicate driving-related reports; evening/weekend spikes
+              correlate with pedestrian-discovered issues like graffiti or
+              sidewalk damage. Use this to staff the dispatch desk accurately.
             </Prose>
             <StatGrid>
               <Stat
@@ -2508,10 +2638,7 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
                 value={`${DAY_LABELS[peak.day]} ${String(peak.hour).padStart(2, "0")}:00`}
                 hint={`${peak.count} reports`}
               />
-              <Stat
-                label="Avg / hour"
-                value={avgPerCell.toFixed(1)}
-              />
+              <Stat label="Avg / hour" value={avgPerCell.toFixed(1)} />
               <Stat
                 label="Total"
                 value={totalReports.toLocaleString()}
@@ -2548,7 +2675,10 @@ function renderNeighborhoods(
   limit: number,
   opts?: {
     hovered?: string | null;
-    bindHover?: (n: NeighborhoodVolume, rank: number) => {
+    bindHover?: (
+      n: NeighborhoodVolume,
+      rank: number,
+    ) => {
       onPointerEnter: (e: React.PointerEvent) => void;
       onPointerMove: (e: React.PointerEvent) => void;
       onPointerLeave: () => void;
@@ -2581,7 +2711,8 @@ function renderNeighborhoods(
             tabIndex={bind ? 0 : -1}
             className={cn(
               "rounded-md px-1.5 py-1 -mx-1.5 transition-all duration-150 outline-none",
-              bind && "cursor-default focus-visible:ring-1 focus-visible:ring-white/20",
+              bind &&
+                "cursor-default focus-visible:ring-1 focus-visible:ring-white/20",
               isActive && "bg-white/[0.05]",
               isDim && "opacity-45",
             )}
@@ -2721,8 +2852,13 @@ function TopNeighborhoodsInner({ data }: TopNeighborhoodsProps) {
     },
     onClick: (e: React.MouseEvent) => {
       if (nbPtrType.current !== "touch") return;
-      if (hovered === n.name) { setHovered(null); tip.hide(); }
-      else { setHovered(n.name); tip.show(tipFor(n, rank), e); }
+      if (hovered === n.name) {
+        setHovered(null);
+        tip.hide();
+      } else {
+        setHovered(n.name);
+        tip.show(tipFor(n, rank), e);
+      }
     },
     onFocus: (e: React.FocusEvent) => {
       const target = e.currentTarget as Element;
@@ -2783,11 +2919,10 @@ function TopNeighborhoodsInner({ data }: TopNeighborhoodsProps) {
         info={
           <div className="flex flex-col gap-5">
             <Prose>
-              Geographic concentration of reports. Hotspots reveal
-              underserved areas, infrastructure-age clusters, or recent
-              storm/event damage. Compare &ldquo;total&rdquo; vs.
-              &ldquo;open&rdquo; ranking to find places where backlog is
-              disproportionately large.
+              Geographic concentration of reports. Hotspots reveal underserved
+              areas, infrastructure-age clusters, or recent storm/event damage.
+              Compare &ldquo;total&rdquo; vs. &ldquo;open&rdquo; ranking to find
+              places where backlog is disproportionately large.
             </Prose>
             <StatGrid>
               <Stat
@@ -2800,10 +2935,7 @@ function TopNeighborhoodsInner({ data }: TopNeighborhoodsProps) {
                 value={mostStuck?.name ?? "—"}
                 hint={mostStuck ? `${mostStuck.open} open` : ""}
               />
-              <Stat
-                label="Total open"
-                value={totalOpen.toLocaleString()}
-              />
+              <Stat label="Total open" value={totalOpen.toLocaleString()} />
               <Stat
                 label="Avg / area"
                 value={(total / Math.max(data.length, 1)).toFixed(1)}
@@ -2948,8 +3080,7 @@ function CategoryResolutionTableInner({ data }: CategoryResolutionTableProps) {
   )[0];
   const total = data.reduce((s, d) => s + d.count, 0);
   const weightedAvg =
-    data.reduce((s, d) => s + d.avg_hours * d.count, 0) /
-    Math.max(total, 1);
+    data.reduce((s, d) => s + d.avg_hours * d.count, 0) / Math.max(total, 1);
 
   const rankedByVolume = useMemo(
     () => [...data].sort((a, b) => b.count - a.count),
@@ -2958,8 +3089,7 @@ function CategoryResolutionTableInner({ data }: CategoryResolutionTableProps) {
   const rankedBySlaBreach = useMemo(
     () =>
       [...data].sort(
-        (a, b) =>
-          b.avg_hours / b.target_hours - a.avg_hours / a.target_hours,
+        (a, b) => b.avg_hours / b.target_hours - a.avg_hours / a.target_hours,
       ),
     [data],
   );
@@ -2989,9 +3119,7 @@ function CategoryResolutionTableInner({ data }: CategoryResolutionTableProps) {
           <TipRow
             label="Variance"
             value={`${variancePct >= 0 ? "+" : ""}${variancePct.toFixed(0)}%`}
-            accent={
-              overSla ? "#ff453a" : wellUnder ? "#30d158" : undefined
-            }
+            accent={overSla ? "#ff453a" : wellUnder ? "#30d158" : undefined}
           />
           <TipBar pct={barPct} color={overSla ? "#ff453a" : row.color} />
           <TipRow label="Volume" value={row.count.toLocaleString()} muted />
@@ -3000,7 +3128,8 @@ function CategoryResolutionTableInner({ data }: CategoryResolutionTableProps) {
       footer: (
         <div className="flex items-center justify-between gap-2">
           <span className="text-zinc-500">
-            Vol #{volumeRank(row.category)} · SLA #{slaRank(row.category)} of {data.length}
+            Vol #{volumeRank(row.category)} · SLA #{slaRank(row.category)} of{" "}
+            {data.length}
           </span>
           {overSla ? (
             <TipChip tone="bad">
@@ -3035,8 +3164,13 @@ function CategoryResolutionTableInner({ data }: CategoryResolutionTableProps) {
     },
     onClick: (e: React.MouseEvent) => {
       if (rowPtrType.current !== "touch") return;
-      if (hovered === row.category) { setHovered(null); tip.hide(); }
-      else { setHovered(row.category); tip.show(tipFor(row), e); }
+      if (hovered === row.category) {
+        setHovered(null);
+        tip.hide();
+      } else {
+        setHovered(row.category);
+        tip.show(tipFor(row), e);
+      }
     },
     onFocus: (e: React.FocusEvent) => {
       const target = e.currentTarget as Element;
@@ -3107,10 +3241,9 @@ function CategoryResolutionTableInner({ data }: CategoryResolutionTableProps) {
           <div className="flex flex-col gap-5">
             <Prose>
               Each bar shows mean resolution time per category; the white
-              vertical mark is the target SLA for that category.
-              Red bars exceed the SLA — these categories are operationally
-              underperforming and should drive crew-assignment changes or
-              vendor reviews.
+              vertical mark is the target SLA for that category. Red bars exceed
+              the SLA — these categories are operationally underperforming and
+              should drive crew-assignment changes or vendor reviews.
             </Prose>
             <StatGrid>
               <Stat
@@ -3132,10 +3265,7 @@ function CategoryResolutionTableInner({ data }: CategoryResolutionTableProps) {
                 value={formatHours(Math.round(weightedAvg))}
                 hint="Volume-weighted MTTR"
               />
-              <Stat
-                label="Reports"
-                value={total.toLocaleString()}
-              />
+              <Stat label="Reports" value={total.toLocaleString()} />
             </StatGrid>
           </div>
         }
@@ -3158,9 +3288,13 @@ function renderSpark(
   spark: number[],
   w: number,
   h: number,
+  idPrefix: string,
   opts?: {
     activeIdx?: number | null;
-    bindHover?: (i: number, v: number) => {
+    bindHover?: (
+      i: number,
+      v: number,
+    ) => {
       onPointerEnter: (e: React.PointerEvent) => void;
       onPointerMove: (e: React.PointerEvent) => void;
       onPointerLeave: () => void;
@@ -3189,6 +3323,9 @@ function renderSpark(
   const interactive = !!opts?.bindHover;
   // Generous hit radius scaled to chart height — covers gaps between points.
   const hitR = Math.max(8, Math.min(step * 0.6, h * 0.35));
+  // Per-instance gradient id; the tile and expanded sparks mount together, so a
+  // shared id would let the browser resolve url(#…) to the wrong gradient.
+  const gVelocity = `g-velocity-${idPrefix}`;
 
   return (
     <svg
@@ -3199,14 +3336,14 @@ function renderSpark(
       aria-label={`Reporter activity sparkline, ${spark.length} days`}
     >
       <defs>
-        <linearGradient id="g-velocity" x1="0" x2="0" y1="0" y2="1">
+        <linearGradient id={gVelocity} x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor="#5ac8fa" stopOpacity="0.4" />
           <stop offset="100%" stopColor="#5ac8fa" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path
         d={areaPath}
-        fill="url(#g-velocity)"
+        fill={`url(#${gVelocity})`}
         style={{
           opacity: activeIdx !== null ? 0.55 : 1,
           transition: "opacity 160ms ease-out",
@@ -3237,8 +3374,7 @@ function renderSpark(
                 fill="#5ac8fa"
                 style={{
                   opacity: isDim ? 0.3 : isActive ? 1 : 0.85,
-                  transition:
-                    "r 140ms ease-out, opacity 140ms ease-out",
+                  transition: "r 140ms ease-out, opacity 140ms ease-out",
                   pointerEvents: "none",
                 }}
               />
@@ -3264,6 +3400,7 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
   const [open, setOpen] = useState(false);
   const [activePoint, setActivePoint] = useState<number | null>(null);
   const tip = useHoverTip();
+  const sparkId = useId();
 
   const hasSpark = data.spark.length > 0;
   // Math.max/min spread on an empty array yields -Infinity / +Infinity.
@@ -3288,19 +3425,11 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
           label="Reports / reporter"
           value={data.reports_per_reporter.toFixed(2)}
         />
-        <TipRow
-          label="Recent avg (3d)"
-          value={recent.toFixed(1)}
-          muted
-        />
-        <TipRow
-          label="Early avg (3d)"
-          value={earlier.toFixed(1)}
-          muted
-        />
+        <TipRow label="Recent avg (3d)" value={recent.toFixed(1)} muted />
+        <TipRow label="Early avg (3d)" value={earlier.toFixed(1)} muted />
         <p className="text-[11px] text-zinc-500 leading-snug mt-1">
-          Civic-engagement signal — breadth (unique reporters) vs depth
-          (reports per reporter).
+          Civic-engagement signal — breadth (unique reporters) vs depth (reports
+          per reporter).
         </p>
       </div>
     ),
@@ -3316,7 +3445,10 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
   });
 
   const bigNumPtrType = useRef<string>("mouse");
-  const [bigNumTipOpen, setBigNumTipOpen] = useState(false);
+  // Tap-to-toggle state lives in a ref (like activeKey in useTouchTipBinder):
+  // nothing in render reads it, so a useState would only force dead re-renders
+  // and leave the onClick toggle reading a one-render-stale value.
+  const bigNumTipOpen = useRef(false);
   const bindBigNumber = {
     onPointerEnter: (e: React.PointerEvent) => {
       bigNumPtrType.current = e.pointerType;
@@ -3333,8 +3465,13 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
     },
     onClick: (e: React.MouseEvent) => {
       if (bigNumPtrType.current !== "touch") return;
-      if (bigNumTipOpen) { setBigNumTipOpen(false); tip.hide(); }
-      else { setBigNumTipOpen(true); tip.show(bigNumberTip(), e); }
+      if (bigNumTipOpen.current) {
+        bigNumTipOpen.current = false;
+        tip.hide();
+      } else {
+        bigNumTipOpen.current = true;
+        tip.show(bigNumberTip(), e);
+      }
     },
     onFocus: (e: React.FocusEvent) => {
       const r = (e.currentTarget as Element).getBoundingClientRect();
@@ -3343,10 +3480,16 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
         clientY: r.top,
       });
     },
-    onBlur: () => { setBigNumTipOpen(false); tip.hide(); },
+    onBlur: () => {
+      bigNumTipOpen.current = false;
+      tip.hide();
+    },
   };
 
-  const sparkTipFor = (i: number, v: number): Parameters<typeof tip.show>[0] => {
+  const sparkTipFor = (
+    i: number,
+    v: number,
+  ): Parameters<typeof tip.show>[0] => {
     const delta = v - sparkAvg;
     const deltaPct = sparkAvg ? (delta / sparkAvg) * 100 : 0;
     return {
@@ -3356,10 +3499,7 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
         <div className="flex flex-col gap-1.5">
           <TipRow label="Reporters" value={v.toLocaleString()} />
           <TipRow label="Window avg" value={sparkAvg.toFixed(1)} muted />
-          <TipBar
-            pct={(v / Math.max(peak, 1)) * 100}
-            color="#5ac8fa"
-          />
+          <TipBar pct={(v / Math.max(peak, 1)) * 100} color="#5ac8fa" />
           <p className="text-[11px] text-zinc-500 leading-snug mt-1">
             {i === 0
               ? "First day in window."
@@ -3416,8 +3556,13 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
     },
     onClick: (e: React.MouseEvent) => {
       if (sparkPtrType.current !== "touch") return;
-      if (activePoint === i) { setActivePoint(null); tip.hide(); }
-      else { setActivePoint(i); tip.show(sparkTipFor(i, v), e); }
+      if (activePoint === i) {
+        setActivePoint(null);
+        tip.hide();
+      } else {
+        setActivePoint(i);
+        tip.show(sparkTipFor(i, v), e);
+      }
     },
     onFocus: (e: React.FocusEvent) => {
       const r = (e.currentTarget as Element).getBoundingClientRect();
@@ -3463,7 +3608,7 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
           </div>
           <div className="h-14 w-[140px]">
             {hasSpark ? (
-              renderSpark(data.spark, 200, 56, {
+              renderSpark(data.spark, 200, 56, `${sparkId}-tile`, {
                 activeIdx: activePoint,
                 bindHover: bindSparkPoint,
               })
@@ -3490,7 +3635,8 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
                 </p>
                 <p className="text-[13px] text-zinc-400 mt-2 inline-flex items-center gap-1.5">
                   <Users className="h-3.5 w-3.5" strokeWidth={1.75} />
-                  unique reporters · {data.reports_per_reporter.toFixed(2)} reports each
+                  unique reporters · {data.reports_per_reporter.toFixed(2)}{" "}
+                  reports each
                 </p>
               </div>
               <div
@@ -3508,17 +3654,17 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
               </div>
             </div>
             <div className="h-[40vh] min-h-[280px] w-full">
-              {renderSpark(data.spark, 400, 140)}
+              {renderSpark(data.spark, 400, 140, `${sparkId}-expanded`)}
             </div>
           </div>
         }
         info={
           <div className="flex flex-col gap-5">
             <Prose>
-              Civic-engagement signal. Unique reporters indicates breadth
-              of citizen participation; reports-per-reporter indicates
-              depth (do residents file once and leave, or stay engaged?).
-              A healthy system grows breadth over time.
+              Civic-engagement signal. Unique reporters indicates breadth of
+              citizen participation; reports-per-reporter indicates depth (do
+              residents file once and leave, or stay engaged?). A healthy system
+              grows breadth over time.
             </Prose>
             <StatGrid>
               <Stat

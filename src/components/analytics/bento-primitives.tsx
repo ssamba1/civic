@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Maximize2, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { lockBodyScroll } from "@/lib/utils/scroll-lock";
 
 /* ==================================================================
    Shared bento shell + modal + motion + control primitives.
@@ -130,6 +131,10 @@ export function ExpandModal({
   controls,
   info,
 }: ExpandModalProps) {
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
   // Portal mount gate: SSR and the first CSR render must both return null so
   // React's hydration tree is identical. createPortal is deferred until after
   // mount, matching the pattern used by every other portal in this codebase.
@@ -139,16 +144,15 @@ export function ExpandModal({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     };
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlock = lockBodyScroll();
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = prevOverflow;
+      unlock();
       window.removeEventListener("keydown", onKey);
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!mounted || !open) return null;
 

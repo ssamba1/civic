@@ -25,6 +25,7 @@ export function WorkOrderComments({ workOrderId }: WorkOrderCommentsProps) {
 
   // Fetch initial comments and subscribe to Realtime inserts
   useEffect(() => {
+    let cancelled = false;
     const supabase = createBrowserSupabase();
 
     supabase
@@ -33,7 +34,7 @@ export function WorkOrderComments({ workOrderId }: WorkOrderCommentsProps) {
       .eq("work_order_id", workOrderId)
       .order("created_at", { ascending: true })
       .then(({ data }) => {
-        if (data) setComments(data as Comment[]);
+        if (!cancelled && data) setComments(data as Comment[]);
       });
 
     const channel = supabase
@@ -58,6 +59,7 @@ export function WorkOrderComments({ workOrderId }: WorkOrderCommentsProps) {
       .subscribe();
 
     return () => {
+      cancelled = true;
       supabase.removeChannel(channel);
     };
   }, [workOrderId]);

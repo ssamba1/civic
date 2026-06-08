@@ -111,9 +111,21 @@ export function useReasoningHover(): UseReasoningHoverReturn {
   const [pos, setPos] = useState<{ x: number; y: number }>({ x: -9999, y: -9999 });
   const [mounted, setMounted] = useState(false);
 
+  // Latest state mirrored into refs so Portal can keep a stable identity
+  // (deps: [mounted]) yet still render the current value. JSX uses <Portal/>;
+  // a changing function reference would remount the whole portal tree on every
+  // position or data update, restarting the fade-in transition.
+  const targetRef = useRef(target);
+  targetRef.current = target;
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  const posRef = useRef(pos);
+  posRef.current = pos;
+
   const cache = useRef<Map<string, ReasoningResponse>>(new Map());
   const cardRef = useRef<HTMLDivElement | null>(null);
   const intentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fetchController = useRef<AbortController | null>(null);
   // The id we are actively showing — guards against a slow fetch resolving
   // after the user has moved on to a different row.
   const activeId = useRef<string | null>(null);
@@ -122,6 +134,7 @@ export function useReasoningHover(): UseReasoningHoverReturn {
     setMounted(true);
     return () => {
       if (intentTimer.current) clearTimeout(intentTimer.current);
+      fetchController.current?.abort();
     };
   }, []);
 
@@ -154,17 +167,22 @@ export function useReasoningHover(): UseReasoningHoverReturn {
       return;
     }
     setData(null); // loading
+    fetchController.current?.abort();
+    const controller = new AbortController();
+    fetchController.current = controller;
     fetch("/api/ai/reasoning", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ report_id: id }),
+      signal: controller.signal,
     })
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
       .then((json: ReasoningResponse) => {
         cache.current.set(id, json);
         if (activeId.current === id) setData(json);
       })
-      .catch(() => {
+      .catch((e: unknown) => {
+        if (e instanceof DOMException && e.name === "AbortError") return;
         /* leave in loading; row will just not populate */
       });
   }, []);
@@ -257,6 +275,9 @@ export function useReasoningHover(): UseReasoningHoverReturn {
 
   const Portal = useCallback(() => {
     if (!mounted || typeof document === "undefined") return null;
+    const target = targetRef.current;
+    const data = dataRef.current;
+    const pos = posRef.current;
     const visible = target !== null;
     const noMotion = reducedMotion();
     return createPortal(
@@ -308,7 +329,7 @@ export function useReasoningHover(): UseReasoningHoverReturn {
       </div>,
       document.body,
     );
-  }, [mounted, target, data, pos]);
+  }, [mounted]);
 
   return { bindReport, Portal };
 }

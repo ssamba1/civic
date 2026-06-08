@@ -40,28 +40,30 @@ export async function auditPublicBucket(
     return { violations };
   }
 
+  // List the raw bucket once and index by name to avoid an N+1 of per-file RPCs
+  const { data: rawFiles } = await supabase.storage
+    .from(RAW_BUCKET)
+    .list(cityId, { limit: 1000 });
+
+  const rawMetaByName = new Map(
+    rawFiles?.map((rawFile) => [rawFile.name, rawFile.metadata]) ?? []
+  );
+
   // For each public file, check if an identical-size file exists in raw
   for (const file of publicFiles) {
     const path = `${cityId}/${file.name}`;
 
-    // Fetch metadata from the raw bucket for comparison
-    const { data: rawFiles } = await supabase.storage
-      .from(RAW_BUCKET)
-      .list(cityId, { limit: 1, search: file.name });
-
-    if (!rawFiles || rawFiles.length === 0) continue;
-
-    const rawFile = rawFiles[0];
+    const rawMeta = rawMetaByName.get(file.name);
 
     // Size match is a strong indicator the raw file leaked to public
     if (
-      rawFile.metadata?.size &&
+      rawMeta?.size &&
       file.metadata?.size &&
-      rawFile.metadata.size === file.metadata.size
+      rawMeta.size === file.metadata.size
     ) {
       violations.push(
         `Possible raw photo in public bucket: ${path} ` +
-          `(public size: ${file.metadata.size}, raw size: ${rawFile.metadata.size})`
+          `(public size: ${file.metadata.size}, raw size: ${rawMeta.size})`
       );
     }
   }

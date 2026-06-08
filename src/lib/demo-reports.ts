@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
 import type { WorkOrderWithDetails } from "@/lib/types";
@@ -98,6 +98,11 @@ function hydrateOnce() {
   emit();
 }
 
+// Hydrate synchronously at client module-eval — before any component mounts —
+// so useSyncExternalStore's first client snapshot already has persisted reports
+// (no empty first frame / marker-pop). SSR-safe via the window guard inside.
+hydrateOnce();
+
 export function getDemoReportsSnapshot(): DashboardReport[] {
   return snapshot;
 }
@@ -190,10 +195,6 @@ interface UseDemoReportsReturn {
 }
 
 export function useDemoReports(): UseDemoReportsReturn {
-  useEffect(() => {
-    hydrateOnce();
-  }, []);
-
   const demoReports = useSyncExternalStore(
     subscribe,
     getSnapshot,

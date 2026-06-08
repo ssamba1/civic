@@ -72,40 +72,51 @@ export default function ReportPage() {
   const [address, setAddress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Ref to avoid re-requesting GPS on re-renders
-  const gpsRequested = useRef(false);
-
   // Ensure a session exists so submit isn't rejected as unauthenticated.
   // New visitors get a silent anonymous session (guest) — keeps the 2-tap goal.
   useEffect(() => {
     const supabase = createBrowserSupabase();
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) {
-        supabase.auth.signInAnonymously();
+        // Surface the failure now — otherwise an unauthenticated submit falls
+        // through to the fake-success `done` screen (handleSubmit's catch), so a
+        // dropped session looks like a saved report. supabase-js returns the
+        // error in-band rather than rejecting, so check `error`, not `.catch`.
+        supabase.auth.signInAnonymously().then(({ error }) => {
+          if (error) {
+            setError(
+              "Could not start a session. Check your connection and refresh.",
+            );
+          }
+        });
       }
     });
   }, []);
 
   // Auto-acquire GPS on mount
   useEffect(() => {
-    if (gpsRequested.current) return;
-    gpsRequested.current = true;
-
     if (!navigator.geolocation) {
       setGpsStatus("manual");
       return;
     }
 
+    // getCurrentPosition isn't cancellable, so guard the callbacks from running
+    // setState after unmount (user navigates away during the 10s timeout).
+    let active = true;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        if (!active) return;
         setLocation({ lng: pos.coords.longitude, lat: pos.coords.latitude });
         setGpsStatus("found");
       },
       () => {
-        setGpsStatus("manual");
+        if (active) setGpsStatus("manual");
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleCapture = useCallback((file: File) => {
@@ -230,6 +241,10 @@ export default function ReportPage() {
 
     const supabase = createBrowserSupabase();
 
+    // Guards the inflight one-shot fetch (and any late Realtime payload) from
+    // calling setStep after the effect cleans up on unmount.
+    let active = true;
+
     // Terminal/timeout backstop: if neither the Realtime INSERT nor the one-shot
     // fetch lands a real classification within the deadline (the pipeline threw
     // and never persisted a row), stop the pending spinner and settle on the
@@ -253,6 +268,7 @@ export default function ReportPage() {
     const applyRow = (
       row: (Partial<Classification> & { confidence?: number }) | null,
     ) => {
+      if (!active) return;
       if (!row || typeof row.confidence !== "number" || row.confidence <= 0)
         return;
       clearTimeout(timeout);
@@ -312,6 +328,7 @@ export default function ReportPage() {
       });
 
     return () => {
+      active = false;
       clearTimeout(timeout);
       supabase.removeChannel(channel);
     };

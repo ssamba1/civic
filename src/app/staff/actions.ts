@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
-import type { Result, ReportCategory, WorkOrderWithDetails } from "@/lib/types";
+import type { ReportCategory, Result, WorkOrderWithDetails } from "@/lib/types";
 
 const STAFF_ROLES = ["staff_dispatcher", "staff_supervisor", "admin"] as const;
 
@@ -52,7 +52,7 @@ async function getStaffUser() {
 
 export async function dispatchWorkOrder(
   workOrderId: string,
-  crewId?: string
+  crewId?: string,
 ): Promise<Result<void>> {
   const staff = await getStaffUser();
   if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
@@ -64,35 +64,30 @@ export async function dispatchWorkOrder(
     assigned_crew_id: crewId ?? null,
   };
 
-  const { error: woError } = await supabase
+  // Update and read back report_id in one round-trip so a concurrent
+  // mutation/delete can't slip between the write and a follow-up fetch.
+  const { data: wo, error: woError } = await supabase
     .from("work_orders")
     .update(update)
-    .eq("id", workOrderId);
-
-  if (woError) return { ok: false, error: woError.message };
-
-  // Also update the linked report status
-  const { data: wo } = await supabase
-    .from("work_orders")
-    .select("report_id")
     .eq("id", workOrderId)
+    .select("report_id")
     .single();
 
-  if (wo) {
-    // M9 fix: check error on report status update
-    const { error: reportError } = await supabase
-      .from("reports")
-      .update({ status: "dispatched", updated_at: new Date().toISOString() })
-      .eq("id", wo.report_id);
-    if (reportError) return { ok: false, error: "status_update_failed" };
-  }
+  if (woError) return { ok: false, error: "work_order_not_found" };
+
+  // M9 fix: check error on report status update
+  const { error: reportError } = await supabase
+    .from("reports")
+    .update({ status: "dispatched", updated_at: new Date().toISOString() })
+    .eq("id", wo.report_id);
+  if (reportError) return { ok: false, error: "status_update_failed" };
 
   return { ok: true, data: undefined };
 }
 
 export async function closeWorkOrder(
   workOrderId: string,
-  resolutionPhotoUrl?: string
+  resolutionPhotoUrl?: string,
 ): Promise<Result<void>> {
   const staff = await getStaffUser();
   if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
@@ -104,34 +99,30 @@ export async function closeWorkOrder(
     resolution_photo_url: resolutionPhotoUrl ?? null,
   };
 
-  const { error: woError } = await supabase
+  // Update and read back report_id in one round-trip so a concurrent
+  // mutation/delete can't slip between the write and a follow-up fetch.
+  const { data: wo, error: woError } = await supabase
     .from("work_orders")
     .update(update)
-    .eq("id", workOrderId);
-
-  if (woError) return { ok: false, error: woError.message };
-
-  const { data: wo } = await supabase
-    .from("work_orders")
-    .select("report_id")
     .eq("id", workOrderId)
+    .select("report_id")
     .single();
 
-  if (wo) {
-    // M9 fix: check error on report status update
-    const { error: reportError } = await supabase
-      .from("reports")
-      .update({ status: "closed", updated_at: new Date().toISOString() })
-      .eq("id", wo.report_id);
-    if (reportError) return { ok: false, error: "status_update_failed" };
-  }
+  if (woError) return { ok: false, error: "work_order_not_found" };
+
+  // M9 fix: check error on report status update
+  const { error: reportError } = await supabase
+    .from("reports")
+    .update({ status: "closed", updated_at: new Date().toISOString() })
+    .eq("id", wo.report_id);
+  if (reportError) return { ok: false, error: "status_update_failed" };
 
   return { ok: true, data: undefined };
 }
 
 export async function rejectReport(
   reportId: string,
-  reason: string
+  reason: string,
 ): Promise<Result<void>> {
   const staff = await getStaffUser();
   if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
@@ -155,7 +146,7 @@ export async function rejectReport(
 
 export async function overrideClassification(
   reportId: string,
-  newCategory: ReportCategory
+  newCategory: ReportCategory,
 ): Promise<Result<void>> {
   const staff = await getStaffUser();
   if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
@@ -196,7 +187,7 @@ export async function overrideClassification(
 
 export async function addWorkOrderComment(
   workOrderId: string,
-  body: string
+  body: string,
 ): Promise<Result<{ id: string }>> {
   const staff = await getStaffUser();
   if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
@@ -227,7 +218,7 @@ export async function addWorkOrderComment(
  * and are only shown when the admin clicks Refresh.
  */
 export async function fetchQueuedWorkOrders(
-  afterTimestamp: string
+  afterTimestamp: string,
 ): Promise<Result<WorkOrderWithDetails[]>> {
   const staff = await getStaffUser();
   if (!staff) return { ok: false, error: "Unauthorized" };
@@ -262,7 +253,7 @@ export async function fetchQueuedWorkOrders(
           reasoning
         )
       )
-    `
+    `,
     )
     .eq("reports.city_id", staff.city_id)
     .gt("created_at", afterTimestamp)

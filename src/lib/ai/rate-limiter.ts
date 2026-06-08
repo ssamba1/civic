@@ -36,9 +36,9 @@ function limit(envKey: string, fallback: number): number {
 
 function prune(w: Window): void {
   const cutoff = Date.now() - w.maxMs;
-  while (w.timestamps.length > 0 && w.timestamps[0] < cutoff) {
-    w.timestamps.shift();
-  }
+  let i = 0;
+  while (i < w.timestamps.length && w.timestamps[i] < cutoff) i++;
+  if (i > 0) w.timestamps.splice(0, i);
 }
 
 export interface RateLimitResult {

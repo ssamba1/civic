@@ -105,7 +105,7 @@ function popFactor(t: number, a: Ambient): number {
   const fade = 0.16
   if (p < grow) {
     const k = p / grow
-    return 1 - Math.pow(1 - k, 3)
+    return 1 - (1 - k) ** 3
   }
   if (p > 1 - fade) return (1 - p) / fade
   return 1
@@ -332,12 +332,14 @@ export function Globe({
       setTimeout(() => canvas && (canvas.style.opacity = "1"))
     }
 
+    let ro: ResizeObserver | null = null
     if (canvas.offsetWidth > 0) {
       init()
     } else {
-      const ro = new ResizeObserver((entries) => {
+      ro = new ResizeObserver((entries) => {
         if (entries[0]?.contentRect.width > 0) {
-          ro.disconnect()
+          ro?.disconnect()
+          ro = null
           init()
         }
       })
@@ -345,6 +347,7 @@ export function Globe({
     }
 
     return () => {
+      ro?.disconnect()
       io.disconnect()
       if (animationId) cancelAnimationFrame(animationId)
       if (globe) globe.destroy()

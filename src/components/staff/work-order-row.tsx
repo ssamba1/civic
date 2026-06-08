@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import {
-  AlertTriangle,
+  type AlertTriangle,
   Zap,
   Construction,
   Paintbrush,
@@ -101,6 +101,23 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`;
 }
 
+/**
+ * Render-safe wrapper for {@link timeAgo}. Seeds with the synchronous value so
+ * there is no blank flash, then recomputes on the client every minute. Pair the
+ * rendered node with `suppressHydrationWarning`: the server timestamp and the
+ * hydrating client timestamp can straddle a minute boundary and produce
+ * different labels, which would otherwise log a hydration mismatch.
+ */
+function useTimeAgo(dateStr: string): string {
+  const [label, setLabel] = useState(() => timeAgo(dateStr));
+  useEffect(() => {
+    setLabel(timeAgo(dateStr));
+    const id = setInterval(() => setLabel(timeAgo(dateStr)), 60_000);
+    return () => clearInterval(id);
+  }, [dateStr]);
+  return label;
+}
+
 export function WorkOrderRow({
   report,
   classification,
@@ -109,6 +126,7 @@ export function WorkOrderRow({
   onSelect,
 }: WorkOrderRowProps) {
   const [detailOpen, setDetailOpen] = useState(false);
+  const timeLabel = useTimeAgo(report.created_at);
 
   const Icon = CATEGORY_ICONS[classification.category] ?? HelpCircle;
   const sevColor =
@@ -183,7 +201,7 @@ export function WorkOrderRow({
         <td className="px-4 py-3">
           <div className="flex items-center gap-1 text-sm text-zinc-500">
             <Clock className="h-3.5 w-3.5" />
-            {timeAgo(report.created_at)}
+            <span suppressHydrationWarning>{timeLabel}</span>
           </div>
         </td>
 
@@ -269,6 +287,7 @@ export function WorkOrderCard({
   onSelect,
   onDetailOpen,
 }: WorkOrderCardProps) {
+  const timeLabel = useTimeAgo(report.created_at);
   const Icon = CATEGORY_ICONS[classification.category] ?? HelpCircle;
   const sevColor =
     SEVERITY_COLORS[classification.severity] ?? SEVERITY_COLORS[3];
@@ -342,9 +361,9 @@ export function WorkOrderCard({
 
         {/* Row 3: meta */}
         <div className="mt-1 flex items-center gap-3 text-[11px] text-zinc-400">
-          <span className="flex items-center gap-0.5">
+          <span className="flex items-center gap-0.5" suppressHydrationWarning>
             <Clock className="h-3 w-3" />
-            {timeAgo(report.created_at)}
+            {timeLabel}
           </span>
           <span>{workOrder.est_minutes}m est.</span>
         </div>
@@ -371,6 +390,7 @@ export function WorkOrderRowControlled({
   onDetailOpen: () => void;
   onDetailClose: () => void;
 }) {
+  const timeLabel = useTimeAgo(report.created_at);
   const Icon = CATEGORY_ICONS[classification.category] ?? HelpCircle;
   const sevColor =
     SEVERITY_COLORS[classification.severity] ?? SEVERITY_COLORS[3];
@@ -444,7 +464,7 @@ export function WorkOrderRowControlled({
         <td className="px-4 py-3">
           <div className="flex items-center gap-1 text-sm text-zinc-500">
             <Clock className="h-3.5 w-3.5" />
-            {timeAgo(report.created_at)}
+            <span suppressHydrationWarning>{timeLabel}</span>
           </div>
         </td>
 

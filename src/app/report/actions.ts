@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { z } from "zod/v4";
 import { runClassifyPipeline } from "@/lib/ai/classify-pipeline";
 import { ASYNC_CLASSIFY } from "@/lib/ai/config";
@@ -172,41 +173,48 @@ export async function submitReport(
   // real result when the background job lands; classify_status was stamped
   // "pending" on insert above and the pipeline flips it to done/failed.
   //
-  // Serverless note: a non-awaited promise may be frozen after the response
-  // returns; it completes reliably on a persistent/dev server. Blessed for the
-  // demo. The .catch() prevents an unhandled rejection from tearing down the action.
+  // Serverless note: a bare non-awaited promise is frozen/reclaimed once the
+  // response flushes, so the pipeline would never run and classify_status would
+  // stay "pending" forever. next/server's after() schedules the work to run
+  // after the response is sent and signals the platform (Vercel's waitUntil) to
+  // keep the invocation alive until it settles. The try/catch is the backstop
+  // for an unexpected pipeline throw (see below).
   if (ASYNC_CLASSIFY) {
-    void runClassifyPipeline(reportId).catch(async (err) => {
-      // The pipeline self-logs + stamps classify_status:"failed" for its HANDLED
-      // ok:false returns. But an UNEXPECTED throw (createServerClient,
-      // photoBlob.arrayBuffer(), generateWorkOrder, or a network-level throw
-      // from the supabase client before any markClassifyStatus call) bypasses
-      // all of that — nothing would be logged and classify_status would stay
-      // "pending" forever, dead-ending the resident. Backstop here: log the
-      // throw to error_log and stamp classify_status:"failed" so an operator has
-      // a signal and the report lands in manual triage. Use the service client
-      // (RLS-bypassing, no request cookies in this fire-and-forget context).
-      const message = err instanceof Error ? err.message : String(err);
+    after(async () => {
       try {
-        await service.from("error_log").insert({
-          // correlation_id is NOT NULL in the schema; mint one so the backstop
-          // write itself doesn't silently fail the constraint.
-          correlation_id: crypto.randomUUID(),
-          context: "submit-report:async-classify",
-          message: `Unhandled classify pipeline throw: ${message}`,
-          metadata: { reportId },
-        });
-        await service
-          .from("reports")
-          .update({ classify_status: "failed" } as Record<string, unknown>)
-          .eq("id", reportId);
-      } catch (logErr) {
-        // Last resort: even the backstop writes failed. Surface to server logs.
-        console.error(
-          `submit-report: classify backstop failed for ${reportId}`,
-          message,
-          logErr,
-        );
+        await runClassifyPipeline(reportId);
+      } catch (err) {
+        // The pipeline self-logs + stamps classify_status:"failed" for its HANDLED
+        // ok:false returns. But an UNEXPECTED throw (createServerClient,
+        // photoBlob.arrayBuffer(), generateWorkOrder, or a network-level throw
+        // from the supabase client before any markClassifyStatus call) bypasses
+        // all of that — nothing would be logged and classify_status would stay
+        // "pending" forever, dead-ending the resident. Backstop here: log the
+        // throw to error_log and stamp classify_status:"failed" so an operator has
+        // a signal and the report lands in manual triage. Use the service client
+        // (RLS-bypassing, no request cookies in this fire-and-forget context).
+        const message = err instanceof Error ? err.message : String(err);
+        try {
+          await service.from("error_log").insert({
+            // correlation_id is NOT NULL in the schema; mint one so the backstop
+            // write itself doesn't silently fail the constraint.
+            correlation_id: crypto.randomUUID(),
+            context: "submit-report:async-classify",
+            message: `Unhandled classify pipeline throw: ${message}`,
+            metadata: { reportId },
+          });
+          await service
+            .from("reports")
+            .update({ classify_status: "failed" } as Record<string, unknown>)
+            .eq("id", reportId);
+        } catch (logErr) {
+          // Last resort: even the backstop writes failed. Surface to server logs.
+          console.error(
+            `submit-report: classify backstop failed for ${reportId}`,
+            message,
+            logErr,
+          );
+        }
       }
     });
     return {

@@ -204,6 +204,12 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
         },
         audio: false,
       });
+      // Release any stream a prior acquire left behind (e.g. React dev's
+      // double-invoked effect races two getUserMedia promises) before adopting
+      // this one — otherwise the earlier track leaks and keeps the camera lit.
+      streamRef.current?.getTracks().forEach((t) => {
+        t.stop();
+      });
       streamRef.current = stream;
 
       // Probe capabilities for torch + zoom (Android Chrome; iOS Safari omits).

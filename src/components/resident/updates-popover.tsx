@@ -1,27 +1,27 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import {
   Activity,
   Bell,
   CheckCircle2,
   Clock,
   Loader2,
+  type LucideIcon,
   MapPin,
   Megaphone,
   MessageSquare,
   X,
-  type LucideIcon,
 } from "lucide-react";
-
-import type { NotificationItem } from "@/lib/resident-data";
-import { fetchResidentNotifications } from "@/lib/notifications-actions";
-import { timeAgo } from "@/lib/utils/time-ago";
-import { cn } from "@/lib/utils/cn";
+import Image from "next/image";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PillGroup } from "@/components/analytics/bento-primitives";
 import BottomSheet from "@/components/ui/bottom-sheet";
+import { fetchResidentNotifications } from "@/lib/notifications-actions";
+import type { NotificationItem } from "@/lib/resident-data";
+import { cn } from "@/lib/utils/cn";
+import { lockBodyScroll } from "@/lib/utils/scroll-lock";
+import { timeAgo } from "@/lib/utils/time-ago";
 
 type FeedFilter = "all" | "unread";
 
@@ -61,7 +61,10 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
-  // Lazy-fetch on first open.
+  // Lazy-fetch on first open. `loading` is intentionally omitted from deps:
+  // including it re-runs the effect when setLoading(true) fires, cancelling the
+  // in-flight fetch before it resolves.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: loading is a re-entrancy guard; including it would cancel the in-flight fetch
   useEffect(() => {
     if (!open || items !== null || loading) return;
     let cancelled = false;
@@ -82,7 +85,7 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
     return () => {
       cancelled = true;
     };
-  }, [open, items, loading]);
+  }, [open, items]);
 
   // Click outside + Escape.
   useEffect(() => {
@@ -241,9 +244,7 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
         </div>
       )}
 
-      {detail && (
-        <DetailModal item={detail} onClose={() => setDetail(null)} />
-      )}
+      {detail && <DetailModal item={detail} onClose={() => setDetail(null)} />}
     </>
   );
 }
@@ -445,7 +446,15 @@ function MobileUpdatesSheet({
   // desktop dropdown handles its own visibility. We do want to avoid
   // double-rendering the feed on desktop, so we gate on a CSS media check
   // via a simple hook.
-  const [isMobile, setIsMobile] = useState(false);
+  // Seed from matchMedia on the first client render so we don't paint a null
+  // sheet (and miss the user's tap) for one frame on mobile. SSR yields false,
+  // but BottomSheet itself renders null until its own mount effect, so the
+  // first client render still matches the server output — no hydration mismatch.
+  const [isMobile, setIsMobile] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 639px)").matches,
+  );
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 639px)");
     setIsMobile(mq.matches);
@@ -509,14 +518,8 @@ function DetailModal({
   const snap = item.reportSnapshot;
   const filed = new Date(item.at);
 
-  // Lock scroll while open.
-  useEffect(() => {
-    const original = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = original;
-    };
-  }, []);
+  // Lock scroll while open (the modal mounts only while a detail is selected).
+  useEffect(() => lockBodyScroll(), []);
 
   return (
     <div

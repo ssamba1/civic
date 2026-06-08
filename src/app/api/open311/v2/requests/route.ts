@@ -1,5 +1,5 @@
-import { timingSafeEqual } from "node:crypto";
-import { NextRequest, NextResponse } from "next/server";
+import { createHash, timingSafeEqual } from "node:crypto";
+import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/db/client";
 import { reportToOpen311, expandStatus } from "@/lib/open311/transform";
 import { toOpen311Xml, toErrorXml } from "@/lib/open311/xml";
@@ -275,8 +275,11 @@ export async function POST(request: NextRequest) {
 
 /** Constant-time string comparison — prevents timing oracle on API key check. */
 function safeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+  // Hash both sides to fixed-length digests so an unequal-length guess takes the
+  // same path as an equal-length one (no early-exit length oracle).
+  const ah = createHash("sha256").update(a).digest();
+  const bh = createHash("sha256").update(b).digest();
+  return timingSafeEqual(ah, bh);
 }
 
 function requestWantsXml(request: NextRequest): boolean {

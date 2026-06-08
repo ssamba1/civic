@@ -257,8 +257,7 @@ function useReasoning(report: DashboardReport | null): ReasoningState {
     return () => {
       cancelled = true;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reportId]);
+  }, [reportId, report?.demo, report?.ai_reasoning]);
 
   return state;
 }

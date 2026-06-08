@@ -72,6 +72,7 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
   const [pendingQueue, setPendingQueue] = useState<WorkOrderWithDetails[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const lastFetchedAtRef = useRef<string>(initialFetchedAt ?? new Date().toISOString());
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Background poll: every POLL_INTERVAL_MS, fetch new work orders and merge
   // them straight into the list (auto-populate — no manual refresh needed).
@@ -111,9 +112,18 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
       setPendingQueue([]);
       setSelectedIndex(0);
     }
-    // Brief spinner flash
-    setTimeout(() => setIsRefreshing(false), 600);
+    // Brief spinner flash. Track the timer so rapid clicks don't queue
+    // overlapping timers that flip the spinner off prematurely.
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    refreshTimerRef.current = setTimeout(() => setIsRefreshing(false), 600);
   }, [pendingQueue]);
+
+  // Cancel any pending spinner timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     let result = displayedOrders;

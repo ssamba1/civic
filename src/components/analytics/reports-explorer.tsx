@@ -8,6 +8,7 @@ import { CATEGORY_META } from "@/lib/dashboard-data";
 import { ReportDetail } from "@/components/analytics/report-detail";
 import { Drawer } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils/cn";
+import { lockBodyScroll } from "@/lib/utils/scroll-lock";
 import type { ReportStatus } from "@/lib/types";
 
 const STATUS_LABEL: Record<ReportStatus, string> = {
@@ -52,11 +53,10 @@ export function ReportsExplorer({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlock = lockBodyScroll();
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = prevOverflow;
+      unlock();
       window.removeEventListener("keydown", onKey);
     };
   }, [open, onClose]);
@@ -65,11 +65,8 @@ export function ReportsExplorer({
   // list changes and the current selection is no longer valid.
   useEffect(() => {
     if (!open) return;
-    const stillValid = reports.some((r) => r.id === selectedId);
-    if (!stillValid) {
-      setSelectedId(reports[0]?.id ?? null);
-    }
-  }, [open, reports, selectedId]);
+    setSelectedId((prev) => (reports.some((r) => r.id === prev) ? prev : (reports[0]?.id ?? null)));
+  }, [open, reports]);
 
   // Close detail drawer when explorer closes
   useEffect(() => {

@@ -1,19 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Activity,
   CheckCircle2,
+  type LucideIcon,
   Megaphone,
   MessageSquare,
-  type LucideIcon,
 } from "lucide-react";
-
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { EmptyState, PillGroup } from "@/components/analytics/bento-primitives";
 import type { NotificationItem } from "@/lib/resident-data";
-import { timeAgo } from "@/lib/utils/time-ago";
 import { cn } from "@/lib/utils/cn";
-import { PillGroup, EmptyState } from "@/components/analytics/bento-primitives";
+import { timeAgo } from "@/lib/utils/time-ago";
 
 /* ------------------------------------------------------------------
    Resident updates feed — status changes on the resident's own
@@ -49,6 +48,20 @@ export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
     () => new Set(items.filter((i) => i.read).map((i) => i.id)),
   );
 
+  // Merge server-side reads from refreshed `items` while preserving reads
+  // the resident made locally this session.
+  useEffect(() => {
+    setReadIds((prev) => {
+      const serverRead = items.filter((i) => i.read && !prev.has(i.id));
+      if (serverRead.length === 0) return prev;
+      const next = new Set(prev);
+      serverRead.forEach((i) => {
+        next.add(i.id);
+      });
+      return next;
+    });
+  }, [items]);
+
   const isRead = (i: NotificationItem) => readIds.has(i.id);
 
   const unreadCount = useMemo(
@@ -57,7 +70,8 @@ export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
   );
 
   const visible = useMemo(
-    () => (filter === "unread" ? items.filter((i) => !readIds.has(i.id)) : items),
+    () =>
+      filter === "unread" ? items.filter((i) => !readIds.has(i.id)) : items,
     [items, filter, readIds],
   );
 

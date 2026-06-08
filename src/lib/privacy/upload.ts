@@ -7,8 +7,9 @@
  * Invariant: no raw photo ever reaches the public bucket.
  */
 
-import type { Result } from "@/lib/types";
 import { createBrowserSupabase } from "@/lib/db/browser-client";
+import { sniffImageMime } from "@/lib/image/sniff-mime";
+import type { Result } from "@/lib/types";
 
 const ALLOWED_MIME_TYPES = new Set([
   "image/webp",
@@ -26,12 +27,24 @@ function storagePath(cityId: string, reportId: string): string {
 
 /**
  * Validate MIME type before sending bytes to storage.
+ *
+ * Two gates: the self-reported `blob.type` allow-list (cheap), then a magic-byte
+ * sniff of the leading bytes (authoritative — `blob.type` is browser-inferred
+ * from the extension and trivially spoofable by renaming a file).
  */
-function validateMime(blob: Blob, label: string): Result<void> {
+async function validateMime(blob: Blob, label: string): Promise<Result<void>> {
   if (!ALLOWED_MIME_TYPES.has(blob.type)) {
     return {
       ok: false,
       error: `${label}: rejected MIME type "${blob.type}". Allowed: ${[...ALLOWED_MIME_TYPES].join(", ")}`,
+    };
+  }
+  const header = await blob.slice(0, 12).arrayBuffer();
+  const sniffed = sniffImageMime(new Uint8Array(header));
+  if (!sniffed || !ALLOWED_MIME_TYPES.has(sniffed)) {
+    return {
+      ok: false,
+      error: `${label}: file header does not match an allowed image type`,
     };
   }
   return { ok: true, data: undefined };
@@ -49,12 +62,12 @@ export async function uploadReportPhotos(
   blurred: Blob,
   original: Blob,
   reportId: string,
-  cityId: string
+  cityId: string,
 ): Promise<Result<{ publicUrl: string; rawUrl: string }>> {
   // Validate MIME types
-  const blurCheck = validateMime(blurred, "blurred");
+  const blurCheck = await validateMime(blurred, "blurred");
   if (!blurCheck.ok) return blurCheck;
-  const rawCheck = validateMime(original, "original");
+  const rawCheck = await validateMime(original, "original");
   if (!rawCheck.ok) return rawCheck;
 
   const supabase = createBrowserSupabase();

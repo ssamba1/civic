@@ -94,9 +94,9 @@ export async function fetchAnalyticsKpis(
 export async function fetchReportsTrend(
   cityId: string,
   days = 14,
+  now = Date.now(),
 ): Promise<TrendPoint[]> {
   void cityId;
-  const now = Date.now();
   return Array.from({ length: days }, (_, i) => {
     const idx = days - 1 - i;
     const date = new Date(now - idx * 86_400_000);

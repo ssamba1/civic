@@ -321,7 +321,7 @@ export async function getCityMorale(citySlug: string): Promise<CityMorale> {
   const momentum: CityMorale["momentum"] =
     slope > 1 ? "up" : slope < -1 ? "down" : "flat";
 
-  const trend = await fetchReportsTrend(city?.id ?? "");
+  const trend = await fetchReportsTrend(city?.id ?? "", 14, now);
 
   const catCounts = new Map<ReportCategory, number>();
   for (const r of closed) {

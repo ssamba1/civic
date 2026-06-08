@@ -20,6 +20,7 @@ import { useTaskCompletion } from "@/lib/task-completion";
 import type { ReportStatus } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 import { downscaleImageToDataUrl } from "@/lib/utils/downscale-image";
+import { lockBodyScroll } from "@/lib/utils/scroll-lock";
 import { timeAgo } from "@/lib/utils/time-ago";
 
 const STATUS_LABEL: Record<ReportStatus, string> = {
@@ -87,11 +88,10 @@ export function TeamTaskDetail({ report, open, onClose }: TeamTaskDetailProps) {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlock = lockBodyScroll();
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
+      unlock();
     };
   }, [open, onClose]);
 

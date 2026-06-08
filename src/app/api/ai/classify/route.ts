@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     const isInternal = Boolean(
       expectedKey &&
         internalKey &&
-        internalKey.length === expectedKey.length &&
+        Buffer.byteLength(internalKey) === Buffer.byteLength(expectedKey) &&
         timingSafeEqual(Buffer.from(internalKey), Buffer.from(expectedKey)),
     );
 

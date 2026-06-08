@@ -4,6 +4,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { lockBodyScroll } from "@/lib/utils/scroll-lock";
 
 export interface DrawerProps {
   /** Whether the drawer is visible. The drawer mounts only while open so the
@@ -57,11 +58,7 @@ export function Drawer({
   // Lock body scroll while open so the page behind the drawer doesn't move.
   React.useEffect(() => {
     if (!open) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
+    return lockBodyScroll();
   }, [open]);
 
   if (!open || !mounted) return null;

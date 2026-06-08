@@ -119,14 +119,12 @@ export function FilterProvider({
 
   const patch = useCallback(
     (partial: Partial<ReportFilter>) => {
-      setFilterState((prev) => {
-        const next = { ...prev, ...partial };
-        if (lockedTeam) next.team = lockedTeam;
-        syncUrl(next);
-        return next;
-      });
+      const next = { ...filter, ...partial };
+      if (lockedTeam) next.team = lockedTeam;
+      setFilterState(next);
+      syncUrl(next);
     },
-    [syncUrl, lockedTeam],
+    [filter, syncUrl, lockedTeam],
   );
 
   const reset = useCallback(() => setFilter(DEFAULT_FILTER), [setFilter]);

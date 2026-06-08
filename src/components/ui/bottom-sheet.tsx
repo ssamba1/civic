@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils/cn";
+import { lockBodyScroll } from "@/lib/utils/scroll-lock";
 
 interface BottomSheetProps {
   open: boolean;
@@ -42,14 +43,11 @@ export default function BottomSheet({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
-  // Lock background scroll while open.
+  // Lock background scroll while open. Reference-counted so concurrent
+  // sheets/drawers don't restore a stale "hidden" on close.
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
+    return lockBodyScroll();
   }, [open]);
 
   // Move focus into the sheet on open; restore on close.

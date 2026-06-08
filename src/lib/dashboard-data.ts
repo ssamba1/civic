@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { TeamId } from "@/lib/teams";
 import type { City, Report, ReportCategory, ReportStatus } from "@/lib/types";
 
@@ -419,9 +420,9 @@ function stripCorpus(r: CorpusReport): DashboardReport {
    from created_at so they stay pure and corpus-shape stays clean.
    ------------------------------------------------------------------ */
 
-export function getReportCorpus(): DashboardReport[] {
-  return REPORT_CORPUS.map(stripCorpus);
-}
+export const getReportCorpus = cache((): DashboardReport[] =>
+  REPORT_CORPUS.map(stripCorpus),
+);
 
 export async function fetchCityStats(cityId: string): Promise<CityStats> {
   void cityId;
@@ -429,9 +430,16 @@ export async function fetchCityStats(cityId: string): Promise<CityStats> {
   const total = REPORT_CORPUS.length;
   const open = REPORT_CORPUS.filter((r) => r.status === "open").length;
   const resolved = REPORT_CORPUS.filter((r) => r.status === "closed").length;
-  const this_week = REPORT_CORPUS.filter((r) => r.age_days <= 7).length;
+
+  // Re-derive age from created_at at request time so week buckets stay in sync
+  // with getCityMorale (which does the same) instead of the module-load age_days,
+  // which freezes at build time and drifts across a long-lived server process.
+  const now = Date.now();
+  const ageDays = (r: CorpusReport) =>
+    (now - new Date(r.created_at).getTime()) / 86_400_000;
+  const this_week = REPORT_CORPUS.filter((r) => ageDays(r) <= 7).length;
   const prev_week = REPORT_CORPUS.filter(
-    (r) => r.age_days > 7 && r.age_days <= 14,
+    (r) => ageDays(r) > 7 && ageDays(r) <= 14,
   ).length;
 
   // Synthetic avg resolution: severity-weighted hours (sev 1 ~30h, sev 5 ~102h).

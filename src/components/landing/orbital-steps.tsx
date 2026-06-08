@@ -251,33 +251,27 @@ export function OrbitalSteps() {
   };
 
   const toggleItem = (id: number) => {
-    setExpandedItems((prev) => {
-      const next: Record<number, boolean> = {};
-      Object.keys(prev).forEach((key) => {
-        next[Number(key)] = false;
+    const wasExpanded = !!expandedItems[id];
+    setExpandedItems(() => ({ [id]: !wasExpanded }));
+
+    if (!wasExpanded) {
+      setActiveNodeId(id);
+      setAutoRotate(false);
+      const item = CIVIC_STEPS.find((i) => i.id === id);
+      const pulses: Record<number, boolean> = {};
+      item?.relatedIds.forEach((relId) => {
+        pulses[relId] = true;
       });
-      next[id] = !prev[id];
+      setPulseEffect(pulses);
 
-      if (!prev[id]) {
-        setActiveNodeId(id);
-        setAutoRotate(false);
-        const item = CIVIC_STEPS.find((i) => i.id === id);
-        const pulses: Record<number, boolean> = {};
-        item?.relatedIds.forEach((relId) => {
-          pulses[relId] = true;
-        });
-        setPulseEffect(pulses);
-
-        const nodeIndex = CIVIC_STEPS.findIndex((i) => i.id === id);
-        const targetAngle = (nodeIndex / CIVIC_STEPS.length) * 360;
-        setRotationAngle(270 - targetAngle);
-      } else {
-        setActiveNodeId(null);
-        setAutoRotate(true);
-        setPulseEffect({});
-      }
-      return next;
-    });
+      const nodeIndex = CIVIC_STEPS.findIndex((i) => i.id === id);
+      const targetAngle = (nodeIndex / CIVIC_STEPS.length) * 360;
+      setRotationAngle(270 - targetAngle);
+    } else {
+      setActiveNodeId(null);
+      setAutoRotate(true);
+      setPulseEffect({});
+    }
   };
 
   useEffect(() => {

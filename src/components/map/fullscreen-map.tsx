@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import { ReportMap, type MapTheme } from "@/components/map/report-map";
@@ -71,8 +71,13 @@ export function FullscreenMapOrchestrator({
   cityName,
   lockedTeam,
 }: FullscreenMapOrchestratorProps) {
-  // Local mutable reports state (to allow dynamic routing/updating status!)
-  const [reports, setReports] = useState<DashboardReport[]>(initialReports);
+  // Local status overrides keyed by report id (e.g. an in-session dispatch).
+  // Overlaid onto the live `initialReports` prop at render time rather than
+  // forking a stale copy of it — so a refreshed corpus (real-time row, a task
+  // marked done → "closed") still flows through while local dispatches persist.
+  const [statusOverrides, setStatusOverrides] = useState<
+    Record<string, ReportStatus>
+  >({});
 
   // Subscribe to category-level routing overrides. `categoryToTeam` reads
   // the module-level snapshot, but the memo'd filter below needs a dep
@@ -86,10 +91,15 @@ export function FullscreenMapOrchestrator({
   // outside FilterProvider, so we merge the overlay here rather than relying
   // on the shared corpus that powers the Teams/analytics surfaces.
   const { demoReports } = useDemoReports();
-  const allReports = useMemo(
-    () => (demoReports.length ? [...demoReports, ...reports] : reports),
-    [demoReports, reports],
-  );
+  const allReports = useMemo(() => {
+    const base = demoReports.length
+      ? [...demoReports, ...initialReports]
+      : initialReports;
+    if (Object.keys(statusOverrides).length === 0) return base;
+    return base.map((r) =>
+      statusOverrides[r.id] ? { ...r, status: statusOverrides[r.id] } : r,
+    );
+  }, [demoReports, initialReports, statusOverrides]);
 
   // --- Map theme (lifted from ReportMap so Dispatch panel can react) ---
   const [mapTheme, setMapTheme] = useState<MapTheme>("dark");
@@ -129,6 +139,21 @@ export function FullscreenMapOrchestrator({
     reportId: string;
   } | null>(null);
 
+  // Auto-dismiss timer for the route toast — held in a ref so it can be
+  // cancelled on unmount (no setState on a dead component) and reset when a
+  // new dispatch fires before the previous toast has cleared.
+  const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  useEffect(
+    () => () => {
+      if (notificationTimerRef.current) {
+        clearTimeout(notificationTimerRef.current);
+      }
+    },
+    [],
+  );
+
   // --- Filter Logic ---
   const filteredReports = useMemo(() => {
     return allReports.filter((report) => {
@@ -158,17 +183,8 @@ export function FullscreenMapOrchestrator({
 
   // Route/Assign to team action
   const handleRouteToTeam = (reportId: string, teamId: TeamId) => {
-    setReports((prevReports) =>
-      prevReports.map((r) => {
-        if (r.id === reportId) {
-          return {
-            ...r,
-            status: "dispatched", // Move to dispatched status!
-          };
-        }
-        return r;
-      })
-    );
+    // Record a local status override; overlaid onto the live prop in allReports.
+    setStatusOverrides((prev) => ({ ...prev, [reportId]: "dispatched" }));
 
     // Show beautiful HUD notification
     setRouteNotification({
@@ -180,7 +196,10 @@ export function FullscreenMapOrchestrator({
     setActiveRouteMenuId(null);
 
     // Auto clear notification after 3.5 seconds
-    setTimeout(() => {
+    if (notificationTimerRef.current) {
+      clearTimeout(notificationTimerRef.current);
+    }
+    notificationTimerRef.current = setTimeout(() => {
       setRouteNotification(null);
     }, 3500);
   };

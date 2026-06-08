@@ -217,7 +217,7 @@ function TaskRow({
         <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-white/[0.06] bg-[#0a0a0b]">
           {/* biome-ignore lint/performance/noImgElement: tiny lazy thumbnail; next/image is overkill for a 48px list cell. */}
           <img
-            src={report.photo_public_url}
+            src={report.photo_public_url || undefined}
             alt=""
             className="h-full w-full object-cover"
             loading="lazy"

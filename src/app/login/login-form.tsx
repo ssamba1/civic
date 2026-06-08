@@ -3,7 +3,7 @@
 import { AlertCircle, ArrowRight, Lock, Mail, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { DemoSignIn } from "@/components/auth/demo-sign-in";
 import { createBrowserSupabase } from "@/lib/db/browser-client";
 
@@ -28,10 +28,6 @@ export default function LoginForm() {
   const [password, setPassword] = useState(DEV_PREFILL ? DEV_PASSWORD : "");
   const [error, setError] = useState<string | null>(initialError);
   const [busy, setBusy] = useState<"google" | "email" | "guest" | null>(null);
-
-  useEffect(() => {
-    if (initialError) setError(initialError);
-  }, [initialError]);
 
   async function handleGoogle() {
     setBusy("google");

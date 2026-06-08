@@ -206,7 +206,8 @@ function DelegationRowExpandedInner({
       setError(false);
       return;
     }
-    let cancelled = false;
+    const controller = new AbortController();
+    const { signal } = controller;
     setLoading(true);
     setError(false);
 
@@ -216,22 +217,23 @@ function DelegationRowExpandedInner({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ report_id: report.id }),
+          signal,
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as ReasoningData;
-        if (cancelled) return;
+        if (signal.aborted) return;
         setData(json);
         setReasoningCache(report.id, json);
-      } catch {
-        if (cancelled) return;
+      } catch (e) {
+        if (e instanceof DOMException && e.name === "AbortError") return;
         setError(true);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!signal.aborted) setLoading(false);
       }
     })();
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [report.id]);

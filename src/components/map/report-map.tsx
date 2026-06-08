@@ -158,6 +158,13 @@ function ReportMapInner({
 
   const lastFlownIdRef = useRef<string | null>(null);
 
+  // Held in a ref so the layers useMemo doesn't rebuild (and re-upload GPU
+  // buffers) when a caller passes onSelectMarker as an inline callback.
+  const onSelectMarkerRef = useRef(onSelectMarker);
+  useEffect(() => {
+    onSelectMarkerRef.current = onSelectMarker;
+  }, [onSelectMarker]);
+
   // Fly to focused report — only when focusId actually changes.
   // reports must stay in deps so we can look up coords after filter mutations,
   // but the lastFlownIdRef guard prevents re-flying for the same selection.
@@ -184,7 +191,7 @@ function ReportMapInner({
         pitch: is3D ? 45 : 0,
         bearing: is3D ? -20 : 0,
         essential: true,
-        easing: (t) => 1 - Math.pow(1 - t, 3),
+        easing: (t) => 1 - (1 - t) ** 3,
       });
     }
     setPopupReport(focused);
@@ -347,7 +354,7 @@ function ReportMapInner({
       },
       onClick: ({ object }) => {
         if (object) {
-          onSelectMarker?.(object.id);
+          onSelectMarkerRef.current?.(object.id);
           setPopupReport(object);
         }
       },
@@ -382,7 +389,7 @@ function ReportMapInner({
       : null;
 
     return halo ? [glow, dots, halo] : [glow, dots];
-  }, [reports, focusId, onSelectMarker, viewMode, is3D]);
+  }, [reports, focusId, viewMode, is3D]);
 
   const containerClass = isFullscreen
     ? "h-full w-full relative overflow-hidden bg-[#050505]"

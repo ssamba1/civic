@@ -1,7 +1,7 @@
 "use client";
 
 import createGlobe, { type COBEOptions } from "cobe";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils/cn";
 
 const CITY_MARKERS: { location: [number, number]; size: number }[] = [
@@ -39,17 +39,14 @@ export function CivicGlobe({ className }: { className?: string }) {
   const widthRef = useRef(0);
   const pointerDownX = useRef<number | null>(null);
   const pointerMovement = useRef(0);
-  const [delta, setDelta] = useState(0);
+  const deltaRef = useRef(0);
 
-  const onRender = useCallback(
-    (state: Record<string, number>) => {
-      if (pointerDownX.current === null) phiRef.current += 0.0028;
-      state.phi = phiRef.current + delta;
-      state.width = widthRef.current * 2;
-      state.height = widthRef.current * 2;
-    },
-    [delta],
-  );
+  const onRender = useCallback((state: Record<string, number>) => {
+    if (pointerDownX.current === null) phiRef.current += 0.0028;
+    state.phi = phiRef.current + deltaRef.current;
+    state.width = widthRef.current * 2;
+    state.height = widthRef.current * 2;
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -99,14 +96,14 @@ export function CivicGlobe({ className }: { className?: string }) {
           if (pointerDownX.current !== null) {
             const d = e.clientX - pointerDownX.current;
             pointerMovement.current = d;
-            setDelta(d / 200);
+            deltaRef.current = d / 200;
           }
         }}
         onTouchMove={(e) => {
           if (pointerDownX.current !== null && e.touches[0]) {
             const d = e.touches[0].clientX - pointerDownX.current;
             pointerMovement.current = d;
-            setDelta(d / 100);
+            deltaRef.current = d / 100;
           }
         }}
       />

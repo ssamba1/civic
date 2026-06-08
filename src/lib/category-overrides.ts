@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
-import type { ReportCategory } from "@/lib/types";
 import { isValidTeamId, type TeamId } from "@/lib/teams";
+import type { ReportCategory } from "@/lib/types";
 
 /* ==================================================================
    Per-category default-routing override store.

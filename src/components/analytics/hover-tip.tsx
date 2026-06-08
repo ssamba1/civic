@@ -81,11 +81,22 @@ export function useHoverTip(): UseHoverTipReturn {
   });
   const tipRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
+  // Latest state mirrored into a ref so Portal can keep a stable identity
+  // (deps: [mounted]) yet still render the current value. JSX uses <tip.Portal/>;
+  // a changing function reference would remount the whole portal tree every move.
+  const stateRef = useRef(state);
+  stateRef.current = state;
   // Portal mount gate: SSR and the first client render must agree (both null),
   // otherwise hydration mismatches. The tooltip mounts after hydration.
   const [mounted, setMounted] = useState(false);
   // Track last pointer type so click handler knows whether to toggle (touch) or no-op (mouse).
   const lastPointerType = useRef<string>("mouse");
+  // Mirror visibility into a ref so the touch onClick reads the current value
+  // without closing over state.visible — keeps bindTarget's identity stable.
+  const visibleRef = useRef(false);
+  useEffect(() => {
+    visibleRef.current = state.visible;
+  }, [state.visible]);
 
   const positionFor = useCallback(
     (
@@ -205,7 +216,7 @@ export function useHoverTip(): UseHoverTipReturn {
         onClick: (e) => {
           // Only toggle on touch; mouse is handled by hover
           if (lastPointerType.current !== "touch") return;
-          if (state.visible) {
+          if (visibleRef.current) {
             hide();
           } else {
             show(resolve(e as unknown as React.MouseEvent), e, placement);
@@ -219,7 +230,7 @@ export function useHoverTip(): UseHoverTipReturn {
         onBlur: () => hide(),
       };
     },
-    [show, move, hide, state.visible],
+    [show, move, hide],
   );
 
   useEffect(() => {
@@ -231,6 +242,7 @@ export function useHoverTip(): UseHoverTipReturn {
 
   const Portal = useCallback(() => {
     if (!mounted || typeof document === "undefined") return null;
+    const state = stateRef.current;
     const noMotion = reducedMotion();
     return createPortal(
       <div
@@ -292,7 +304,7 @@ export function useHoverTip(): UseHoverTipReturn {
       </div>,
       document.body,
     );
-  }, [state, mounted]);
+  }, [mounted]);
 
   return { show, move, hide, bindTarget, Portal };
 }
