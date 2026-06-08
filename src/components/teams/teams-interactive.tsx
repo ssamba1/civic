@@ -1,27 +1,22 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { StatsCards } from "@/components/dashboard/stats-cards";
+import { DelegationPanel } from "@/components/teams/delegation-panel";
+import { RoutingChangesLog } from "@/components/teams/routing-changes-log";
+import { RoutingMatrix } from "@/components/teams/routing-matrix";
+import { TeamRoster } from "@/components/teams/team-roster";
+import { WorkloadBars } from "@/components/teams/workload-bars";
 import type { CityStats, DashboardReport } from "@/lib/dashboard-data";
 import {
   useFilteredReports,
   useFilters,
   useReportCorpus,
 } from "@/lib/filters/context";
-import {
-  getReportTeam,
-  useTeamOverrides,
-} from "@/lib/teams-overrides";
-import {
-  aggregateByTeam,
-  sortTeamsByLoad,
-} from "@/lib/teams-data";
 import { filterReports } from "@/lib/filters/filter-reports";
 import type { TeamId } from "@/lib/teams";
-import { StatsCards } from "@/components/dashboard/stats-cards";
-import { TeamRoster } from "@/components/teams/team-roster";
-import { WorkloadBars } from "@/components/teams/workload-bars";
-import { DelegationPanel } from "@/components/teams/delegation-panel";
-import { RoutingMatrix } from "@/components/teams/routing-matrix";
+import { aggregateByTeam, sortTeamsByLoad } from "@/lib/teams-data";
+import { getReportTeam, useTeamOverrides } from "@/lib/teams-overrides";
 
 /* ==================================================================
    Teams orchestrator. Replaces DashboardInteractive on the city
@@ -73,15 +68,11 @@ export function TeamsInteractive({ initialStats }: TeamsInteractiveProps) {
   // team id (Map form), TeamRoster / WorkloadBars need the sorted array.
   // Single source of truth — no duplicate aggregation.
   const workloadMap = useMemo(
-    () =>
-      aggregateByTeam(rosterReports, (r) => getReportTeam(r, overrides)),
+    () => aggregateByTeam(rosterReports, (r) => getReportTeam(r, overrides)),
     [rosterReports, overrides],
   );
 
-  const workloads = useMemo(
-    () => sortTeamsByLoad(workloadMap),
-    [workloadMap],
-  );
+  const workloads = useMemo(() => sortTeamsByLoad(workloadMap), [workloadMap]);
 
   // Delegation respects the LOCAL selection so the focused queue
   // narrows when the user clicks a card. Falls back to the
@@ -107,13 +98,16 @@ export function TeamsInteractive({ initialStats }: TeamsInteractiveProps) {
         />
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid items-stretch gap-4 lg:grid-cols-2">
         <WorkloadBars
           workloads={workloads}
           selectedTeam={selectedTeam}
           onSelectTeam={handleSelectTeam}
         />
-        <RoutingMatrix />
+        <div className="flex flex-col gap-4">
+          <RoutingMatrix />
+          <RoutingChangesLog />
+        </div>
       </div>
 
       <DelegationPanel

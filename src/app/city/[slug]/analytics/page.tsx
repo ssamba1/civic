@@ -36,18 +36,11 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
     <div className="relative flex flex-col min-h-dvh bg-black">
       <div className="relative flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-10 sm:px-6 lg:px-8">
         {/* Hero */}
-        <section className="mb-6 sm:mb-8">
-          <p className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.08em] text-zinc-500">
-            <span
-              className="h-1.5 w-1.5 rounded-full bg-[#0a84ff] shadow-[0_0_6px_rgba(10,132,255,0.6)]"
-              aria-hidden="true"
-            />
-            {city.name}, {city.state}
-          </p>
-          <h1 className="mt-2 text-[28px] sm:text-[34px] lg:text-[40px] font-semibold tracking-tight text-white leading-[1.1]">
+        <section className="mb-6">
+          <h1 className="text-[28px] sm:text-[34px] lg:text-[40px] font-semibold tracking-tight text-white leading-[1.1]">
             Analytics
           </h1>
-          <p className="mt-2 sm:mt-3 text-sm text-zinc-400">
+          <p className="mt-1.5 text-sm text-zinc-400">
             Operational signal — what&apos;s shipping, what&apos;s stuck, where it&apos;s happening.
           </p>
         </section>

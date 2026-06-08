@@ -10,6 +10,7 @@ import {
 } from "@/components/analytics/hover-tip";
 import { Tile } from "@/components/analytics/bento-primitives";
 import { cn } from "@/lib/utils/cn";
+import { stackedBarGradient } from "@/lib/utils/stacked-bar";
 
 /* ==================================================================
    Horizontal stacked bar per team, scaled to the heaviest-loaded team
@@ -100,22 +101,12 @@ function WorkloadBarsInner({
                     <span className="truncate">{team.shortLabel}</span>
                   </span>
                   <div className="relative h-3 w-full overflow-hidden rounded-full bg-white/[0.04]">
-                    <div
-                      className="flex h-full overflow-hidden rounded-full"
-                      style={{ width: `${widthPct}%` }}
-                    >
-                      <StackedSegments byStatus={w.byStatus} total={w.total} />
-                    </div>
+                    <StackedSegments byStatus={w.byStatus} widthPct={widthPct} />
                   </div>
                 </div>
                 {/* sm+ bar (middle column) */}
                 <div className="relative hidden sm:block h-3 w-full overflow-hidden rounded-full bg-white/[0.04]">
-                  <div
-                    className="flex h-full overflow-hidden rounded-full"
-                    style={{ width: `${widthPct}%` }}
-                  >
-                    <StackedSegments byStatus={w.byStatus} total={w.total} />
-                  </div>
+                  <StackedSegments byStatus={w.byStatus} widthPct={widthPct} />
                 </div>
                 <span className="text-right text-[12px] tabular-nums text-zinc-400">
                   {w.total.toLocaleString()}
@@ -133,30 +124,21 @@ function WorkloadBarsInner({
 
 interface StackedSegmentsProps {
   byStatus: TeamWorkload["byStatus"];
-  total: number;
+  widthPct: number;
 }
 
-function StackedSegments({ byStatus, total }: StackedSegmentsProps) {
-  if (total === 0) return null;
+function StackedSegments({ byStatus, widthPct }: StackedSegmentsProps) {
+  const gradient = stackedBarGradient(
+    (Object.keys(STATUS_PALETTE) as Array<keyof typeof STATUS_PALETTE>).map(
+      (status) => ({ value: byStatus[status] ?? 0, color: STATUS_PALETTE[status] }),
+    ),
+  );
+  if (!gradient) return null;
   return (
-    <>
-      {(Object.keys(STATUS_PALETTE) as Array<keyof typeof STATUS_PALETTE>).map(
-        (status) => {
-          const value = byStatus[status] ?? 0;
-          if (value === 0) return null;
-          return (
-            <div
-              key={status}
-              className="h-full"
-              style={{
-                width: `${(value / total) * 100}%`,
-                background: STATUS_PALETTE[status],
-              }}
-            />
-          );
-        },
-      )}
-    </>
+    <div
+      className="h-full rounded-full"
+      style={{ width: `${widthPct}%`, background: gradient }}
+    />
   );
 }
 

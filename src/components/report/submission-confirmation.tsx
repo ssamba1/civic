@@ -2,11 +2,21 @@
 
 import Link from "next/link";
 
+import { teamIcon } from "@/components/teams/team-icon";
+import {
+  resolveIssueTypeMeta,
+  resolveIssueTypeTeam,
+  useCustomCategories,
+} from "@/lib/custom-categories";
+import { useCategoryOverrides } from "@/lib/category-overrides";
+import { TEAMS } from "@/lib/teams";
 import type { Classification } from "@/lib/types";
 
 interface SubmissionConfirmationProps {
   reportId: string;
   classification: Classification;
+  /** Manual issue-type pick (built-in category or custom id), or null. */
+  manualIssueType?: string | null;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -27,11 +37,24 @@ const categoryLabels: Record<string, string> = {
 export default function SubmissionConfirmation({
   reportId,
   classification,
+  manualIssueType = null,
 }: SubmissionConfirmationProps) {
   const confidencePct = Math.round(classification.confidence * 100);
   // confidence === 0 is the offline/fallback sentinel: hide AI details and the
   // synthetic-ID-dependent "Track this report" link (it would 404).
   const hasAiResult = classification.confidence > 0;
+
+  // Resolve a manual issue-type pick to its routing team. Subscribing to both
+  // stores keeps this in sync with custom types and any staff re-routes.
+  const { categories: customCats } = useCustomCategories();
+  useCategoryOverrides();
+  const manualMeta = manualIssueType
+    ? resolveIssueTypeMeta(manualIssueType, customCats)
+    : null;
+  const manualTeam = manualIssueType
+    ? resolveIssueTypeTeam(manualIssueType, customCats)
+    : null;
+  const ManualTeamIcon = manualTeam ? teamIcon(TEAMS[manualTeam].icon) : null;
 
   return (
     <div className="flex flex-col items-center justify-center h-full min-h-dvh bg-white px-6 text-center overflow-y-auto pt-safe pb-safe">
@@ -60,6 +83,47 @@ export default function SubmissionConfirmation({
         <p className="text-zinc-500 text-sm mb-8">
           We&apos;ll notify you when it&apos;s solved.
         </p>
+
+        {/* Manual issue-type card — shown when the resident picked a type,
+            making its routing rule visible (bypasses the AI classifier). */}
+        {manualMeta && manualTeam && ManualTeamIcon && (
+          <div className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 p-5 mb-4 text-left space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
+                Issue type
+              </span>
+              <span className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-900">
+                <span
+                  className="h-2.5 w-2.5 rounded-full"
+                  style={{ background: manualMeta.color }}
+                  aria-hidden
+                />
+                {manualMeta.label}
+                {manualMeta.isCustom && (
+                  <span className="rounded-sm bg-zinc-200 px-1 text-[9px] uppercase tracking-wider text-zinc-500">
+                    custom
+                  </span>
+                )}
+              </span>
+            </div>
+            <div className="h-px bg-zinc-200" />
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
+                Routed to
+              </span>
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium"
+                style={{
+                  background: `${TEAMS[manualTeam].color}1a`,
+                  color: TEAMS[manualTeam].color,
+                }}
+              >
+                <ManualTeamIcon className="h-3.5 w-3.5" strokeWidth={2} />
+                {TEAMS[manualTeam].shortLabel}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Report details card — only on a real AI result */}
         {hasAiResult && (

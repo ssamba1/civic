@@ -1,12 +1,5 @@
 import { memo } from "react";
-import {
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  FileText,
-  TrendingDown,
-  TrendingUp,
-} from "lucide-react";
+import { TrendingDown, TrendingUp } from "lucide-react";
 import type { CityStats } from "@/lib/dashboard-data";
 import { cn } from "@/lib/utils/cn";
 
@@ -17,9 +10,17 @@ interface StatsCardsProps {
 interface CardDef {
   label: string;
   value: string;
-  icon: React.ReactNode;
+  accent: string;
   trend?: { direction: "up" | "down"; label: string; tone: "good" | "bad" };
 }
+
+// 2-col mobile grid → 4-col desktop row. Hairline dividers between cells.
+const BORDER_CLASSES = [
+  "border-r border-b lg:border-b-0 border-white/[0.06]",
+  "border-b lg:border-b-0 lg:border-r border-white/[0.06]",
+  "border-r border-white/[0.06]",
+  "",
+];
 
 function StatsCardsInner({ stats }: StatsCardsProps) {
   const weekDelta = stats.this_week - stats.prev_week;
@@ -46,63 +47,73 @@ function StatsCardsInner({ stats }: StatsCardsProps) {
     {
       label: "Total reports",
       value: stats.total.toLocaleString(),
-      icon: <FileText className="h-4 w-4" strokeWidth={1.75} />,
+      accent: "#0a84ff",
       trend: weekTrend,
     },
     {
       label: "Open",
       value: stats.open.toLocaleString(),
-      icon: <AlertCircle className="h-4 w-4" strokeWidth={1.75} />,
+      accent: "#ff9f0a",
     },
     {
       label: "Resolved",
       value: stats.resolved.toLocaleString(),
-      icon: <CheckCircle2 className="h-4 w-4" strokeWidth={1.75} />,
+      accent: "#30d158",
     },
     {
       label: "Avg resolution",
       value: formatHours(stats.avg_resolution_hours),
-      icon: <Clock className="h-4 w-4" strokeWidth={1.75} />,
+      accent: "#5ac8fa",
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      {cards.map((card) => (
-        <article
-          key={card.label}
-          className="rounded-xl bg-[#1c1c1e] border border-white/[0.06] p-4 sm:p-5 transition-colors hover:border-white/[0.12]"
-        >
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center justify-center text-zinc-500">
-              {card.icon}
-            </span>
-            {card.trend && (
-              <span
-                className={cn(
-                  "inline-flex items-center gap-0.5 text-[12px] font-medium tabular-nums",
-                  card.trend.tone === "bad"
-                    ? "text-[#ff453a]"
-                    : "text-[#30d158]",
-                )}
-                aria-label={`${card.trend.direction === "up" ? "Up" : "Down"} ${card.trend.label} versus last week`}
-              >
-                {card.trend.direction === "up" ? (
-                  <TrendingUp className="h-3 w-3" strokeWidth={2} aria-hidden />
-                ) : (
-                  <TrendingDown className="h-3 w-3" strokeWidth={2} aria-hidden />
-                )}
-                {card.trend.label}
-              </span>
+    <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-[#1c1c1e] shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
+      <div className="grid grid-cols-2 lg:grid-cols-4">
+        {cards.map((card, idx) => (
+          <div
+            key={card.label}
+            className={cn(
+              "px-4 py-4 sm:px-5 sm:py-5 transition-colors hover:bg-white/[0.02]",
+              BORDER_CLASSES[idx],
             )}
+          >
+            <div className="flex items-center justify-between gap-2 mb-2.5">
+              <span className="text-[11px] font-medium uppercase tracking-[0.07em] text-zinc-500 leading-none">
+                {card.label}
+              </span>
+              {card.trend && (
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-0.5 text-[11px] font-medium tabular-nums",
+                    card.trend.tone === "bad"
+                      ? "text-[#ff453a]"
+                      : "text-[#30d158]",
+                  )}
+                  aria-label={`${card.trend.direction === "up" ? "Up" : "Down"} ${card.trend.label} versus last week`}
+                >
+                  {card.trend.direction === "up" ? (
+                    <TrendingUp className="h-3 w-3" strokeWidth={2} aria-hidden />
+                  ) : (
+                    <TrendingDown
+                      className="h-3 w-3"
+                      strokeWidth={2}
+                      aria-hidden
+                    />
+                  )}
+                  {card.trend.label}
+                </span>
+              )}
+            </div>
+            <p
+              className="text-[26px] sm:text-[30px] font-semibold tracking-tight tabular-nums leading-none"
+              style={{ color: `${card.accent}cc` }}
+            >
+              {card.value}
+            </p>
           </div>
-
-          <p className="mt-3 sm:mt-4 text-[24px] sm:text-[28px] font-semibold tracking-tight text-white leading-none">
-            {card.value}
-          </p>
-          <p className="text-[13px] text-zinc-500 mt-2">{card.label}</p>
-        </article>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,6 +1,15 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useCategoryOverrides } from "@/lib/category-overrides";
+import {
+  builtinIssueTypeOptions,
+  customIssueTypeOptions,
+  resolveIssueTypeTeam,
+  useCustomCategories,
+} from "@/lib/custom-categories";
+import { TEAMS } from "@/lib/teams";
+import { teamIcon } from "@/components/teams/team-icon";
 
 type GpsStatus = "acquiring" | "found" | "manual";
 
@@ -8,11 +17,16 @@ interface PhotoPreviewProps {
   photo: File;
   gpsStatus: GpsStatus;
   onRetake: () => void;
-  onSubmit: (description: string | null, tags: string[]) => void;
+  onSubmit: (
+    description: string | null,
+    tags: string[],
+    issueType: string | null,
+  ) => void;
   submitting: boolean;
 }
 
 const PRESET_TAGS = ["School zone", "Blocking road", "Recurring", "Safety hazard"];
+const BUILTIN_ISSUE_TYPES = builtinIssueTypeOptions();
 
 export default function PhotoPreview({
   photo,
@@ -24,6 +38,17 @@ export default function PhotoPreview({
   const [showDescription, setShowDescription] = useState(false);
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [issueType, setIssueType] = useState<string | null>(null);
+
+  // Manual issue-type picker (bypasses the AI classifier). Subscribe to both
+  // stores so the "routes to" chip reflects custom types and any staff re-route.
+  const { categories: customCats } = useCustomCategories();
+  useCategoryOverrides();
+  const customIssueTypes = customIssueTypeOptions(customCats);
+  const routedTeam = issueType
+    ? resolveIssueTypeTeam(issueType, customCats)
+    : null;
+  const RoutedTeamIcon = routedTeam ? teamIcon(TEAMS[routedTeam].icon) : null;
 
   const toggleTag = (t: string) =>
     setTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
@@ -68,6 +93,57 @@ export default function PhotoPreview({
       {/* Bottom controls — pb-safe clears home indicator */}
       <div className="shrink-0 bg-zinc-950 px-4 pt-4 pb-safe">
         <div className="pb-8 space-y-3">
+          {/* Issue type — optional manual pick. Skipping it lets the AI
+              classify; picking one (incl. custom types) routes by that rule. */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="issue-type"
+              className="block text-xs font-medium text-zinc-400"
+            >
+              Issue type{" "}
+              <span className="text-zinc-600">(optional — AI decides if skipped)</span>
+            </label>
+            <select
+              id="issue-type"
+              value={issueType ?? ""}
+              onChange={(e) => setIssueType(e.target.value || null)}
+              className="w-full min-h-[44px] rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base text-white focus:outline-none focus:border-zinc-500"
+            >
+              <option value="">Let AI decide</option>
+              <optgroup label="Standard">
+                {BUILTIN_ISSUE_TYPES.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </optgroup>
+              {customIssueTypes.length > 0 && (
+                <optgroup label="Custom">
+                  {customIssueTypes.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
+            {routedTeam && RoutedTeamIcon && (
+              <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+                <span>Routes to</span>
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-medium"
+                  style={{
+                    background: `${TEAMS[routedTeam].color}1a`,
+                    color: TEAMS[routedTeam].color,
+                  }}
+                >
+                  <RoutedTeamIcon className="h-3 w-3" strokeWidth={2} />
+                  {TEAMS[routedTeam].shortLabel}
+                </span>
+              </div>
+            )}
+          </div>
+
           {/* Quick tags */}
           <div className="flex flex-wrap gap-2">
             {PRESET_TAGS.map((t) => {
@@ -122,7 +198,7 @@ export default function PhotoPreview({
             </button>
             <button
               type="button"
-              onClick={() => onSubmit(description.trim() || null, tags)}
+              onClick={() => onSubmit(description.trim() || null, tags, issueType)}
               disabled={submitting}
               className="flex-1 rounded-full bg-blue-600 min-h-[56px] text-sm font-semibold text-white active:bg-blue-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
             >

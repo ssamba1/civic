@@ -13,7 +13,16 @@ import { cn } from "@/lib/utils/cn";
  * disabled with a "Soon" badge so the rollout footprint is visible without
  * linking to empty dashboards.
  */
-export function CitySwitcher({ currentSlug }: { currentSlug: string }) {
+export function CitySwitcher({
+  currentSlug,
+  compact = false,
+  className,
+}: {
+  currentSlug: string;
+  /** Aligns the trigger to nav-control height (h-8) when nested in the header. */
+  compact?: boolean;
+  className?: string;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -63,7 +72,7 @@ export function CitySwitcher({ currentSlug }: { currentSlug: string }) {
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className={cn("relative", className)}>
       <style>{`@keyframes city-pop{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}`}</style>
 
       <button
@@ -73,20 +82,21 @@ export function CitySwitcher({ currentSlug }: { currentSlug: string }) {
         aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "inline-flex min-h-11 items-center gap-2 rounded-full border px-3.5 text-[13px] font-medium transition-colors",
+          "inline-flex min-w-0 max-w-full items-center gap-2 rounded-full border text-[13px] font-medium transition-colors",
+          compact ? "h-8 px-3" : "min-h-11 px-3.5",
           open
             ? "border-[#0a84ff]/40 bg-[#0a84ff]/10 text-white"
             : "border-white/[0.08] bg-white/[0.02] text-zinc-200 hover:border-white/15 hover:text-white",
         )}
       >
-        <MapPin className="h-4 w-4 text-[#0a84ff]" aria-hidden />
-        <span>
+        <MapPin className="h-4 w-4 shrink-0 text-[#0a84ff]" aria-hidden />
+        <span className="truncate">
           {current.name}
           <span className="text-zinc-500">, {current.state}</span>
         </span>
         <ChevronDown
           className={cn(
-            "h-3.5 w-3.5 text-zinc-500 transition-transform",
+            "h-3.5 w-3.5 shrink-0 text-zinc-500 transition-transform",
             open && "rotate-180",
           )}
         />

@@ -1,11 +1,12 @@
 "use client";
 
-import { memo } from "react";
-import { Clock, Timer } from "lucide-react";
+import { memo, useState } from "react";
+import { Clock, Timer, Plus } from "lucide-react";
 import { TEAMS, type TeamId } from "@/lib/teams";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import type { TeamWorkload } from "@/lib/teams-data";
 import { teamIcon } from "@/components/teams/team-icon";
+import { TeamSetupModal } from "@/components/teams/team-setup-modal";
 import {
   useHoverTip,
   TipRow,
@@ -13,6 +14,7 @@ import {
 } from "@/components/analytics/hover-tip";
 import { useReveal } from "@/components/analytics/bento-primitives";
 import { cn } from "@/lib/utils/cn";
+import { stackedBarGradient } from "@/lib/utils/stacked-bar";
 
 /* ==================================================================
    Team roster — grid of team cards, sorted by open backlog.
@@ -43,6 +45,7 @@ function TeamRosterInner({
 }: TeamRosterProps) {
   const tip = useHoverTip();
   const ref = useReveal<HTMLDivElement>();
+  const [setupOpen, setSetupOpen] = useState(false);
 
   return (
     <>
@@ -61,8 +64,10 @@ function TeamRosterInner({
             tipBindings={tip.bindTarget(() => buildTip(w))}
           />
         ))}
+        <AddTeamCard onClick={() => setSetupOpen(true)} />
       </div>
       <tip.Portal />
+      <TeamSetupModal open={setupOpen} onClose={() => setSetupOpen(false)} />
     </>
   );
 }
@@ -207,37 +212,49 @@ function TeamCard({
   );
 }
 
+function AddTeamCard({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "group relative flex flex-col items-center justify-center gap-3 rounded-[14px] border border-dashed p-4 text-left",
+        "border-white/[0.1] bg-[#1c1c1e] shadow-[0_1px_2px_rgba(0,0,0,0.4)]",
+        "transition-all duration-150 hover:border-white/[0.22] hover:bg-white/[0.03]",
+        "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+        "min-h-[108px]",
+      )}
+      aria-label="Set up a new team"
+    >
+      <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.04] text-zinc-400 transition-colors group-hover:border-white/[0.22] group-hover:text-white">
+        <Plus className="h-4 w-4" strokeWidth={2} />
+      </span>
+      <span className="text-[12px] font-medium text-zinc-500 transition-colors group-hover:text-zinc-300">
+        Add Team
+      </span>
+    </button>
+  );
+}
+
 interface StatusMiniBarProps {
   segments: { value: number; color: string; label: string }[];
 }
 
 function StatusMiniBar({ segments }: StatusMiniBarProps) {
-  const total = segments.reduce((s, seg) => s + seg.value, 0);
-  if (total === 0) {
+  const gradient = stackedBarGradient(segments);
+  if (!gradient) {
     return <div className="h-1.5 w-full rounded-full bg-white/[0.05]" />;
   }
   return (
     <div
-      className="flex h-1.5 w-full overflow-hidden rounded-full bg-white/[0.05]"
+      className="h-1.5 w-full rounded-full"
       role="img"
       aria-label={segments
         .filter((s) => s.value > 0)
         .map((s) => `${s.value} ${s.label}`)
         .join(", ")}
-    >
-      {segments.map((seg) =>
-        seg.value > 0 ? (
-          <div
-            key={seg.label}
-            className="h-full"
-            style={{
-              width: `${(seg.value / total) * 100}%`,
-              background: seg.color,
-            }}
-          />
-        ) : null,
-      )}
-    </div>
+      style={{ background: gradient }}
+    />
   );
 }
 

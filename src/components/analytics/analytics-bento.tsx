@@ -348,59 +348,51 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
     [bindTip],
   );
 
+  // Per-index divider classes: 2-col mobile grid → 4-col desktop row
+  const BORDER_CLASSES = [
+    "border-r border-b lg:border-b-0 border-white/[0.06]",
+    "border-b lg:border-b-0 lg:border-r border-white/[0.06]",
+    "border-r border-white/[0.06]",
+    "",
+  ];
+
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {cards.map((c) => {
-          const goodDirection =
-            c.delta !== undefined
-              ? c.betterWhenUp
-                ? c.delta > 0
-                : c.delta < 0
-              : null;
-          const isActive = hoveredKpi === c.key;
-          const isDim = hoveredKpi !== null && !isActive;
-          return (
-            <div
-              key={c.key}
-              tabIndex={0}
-              role="group"
-              aria-label={`${c.label}: ${c.value}`}
-              className={cn(
-                "rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] p-4 sm:p-5 text-zinc-100 outline-none cursor-default",
-                "shadow-[0_1px_2px_rgba(0,0,0,0.4)]",
-                "transition-[transform,opacity,box-shadow] duration-200 ease-out",
-                "motion-reduce:transition-none",
-                /* min-tap so the whole card is a 44px+ target on mobile */
-                "min-h-[80px]",
-                isActive
-                  ? "scale-[1.015] opacity-100"
-                  : isDim
-                    ? "opacity-70"
-                    : "opacity-100",
-                "focus-visible:ring-2 focus-visible:ring-white/30",
-              )}
-              style={
-                isActive
-                  ? {
-                      boxShadow: `0 0 0 1px ${c.accent}55, 0 8px 24px ${c.accent}22`,
-                    }
-                  : undefined
-              }
-              {...bindCard(c)}
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <span
-                    className="transition-colors"
-                    style={{ color: isActive ? c.accent : undefined }}
-                  >
-                    {c.icon}
+      <div className="rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
+        <div className="grid grid-cols-2 lg:grid-cols-4">
+          {cards.map((c, idx) => {
+            const goodDirection =
+              c.delta !== undefined
+                ? c.betterWhenUp
+                  ? c.delta > 0
+                  : c.delta < 0
+                : null;
+            const isActive = hoveredKpi === c.key;
+            const isDim = hoveredKpi !== null && !isActive;
+            return (
+              <div
+                key={c.key}
+                tabIndex={0}
+                role="group"
+                aria-label={`${c.label}: ${c.value}`}
+                className={cn(
+                  "relative px-4 sm:px-5 py-4 sm:py-5 min-h-[80px] outline-none cursor-default",
+                  "transition-[background,opacity] duration-200 ease-out motion-reduce:transition-none",
+                  BORDER_CLASSES[idx],
+                  isActive && "bg-white/[0.04]",
+                  isDim ? "opacity-50" : "opacity-100",
+                  "focus-visible:ring-inset focus-visible:ring-2 focus-visible:ring-white/[0.15]",
+                )}
+                {...bindCard(c)}
+              >
+                <div className="flex items-center justify-between gap-2 mb-2.5">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.07em] text-zinc-500 leading-none">
+                    {c.label}
                   </span>
                   {c.delta !== undefined && (
                     <span
                       className={cn(
-                        "inline-flex items-center gap-0.5 text-[12px] tabular-nums",
+                        "inline-flex items-center gap-0.5 text-[11px] tabular-nums",
                         goodDirection ? "text-[#30d158]" : "text-[#ff453a]",
                       )}
                     >
@@ -413,19 +405,21 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
                     </span>
                   )}
                   {c.sub && (
-                    <span className="text-[12px] text-zinc-400 tabular-nums">
+                    <span className="text-[11px] text-zinc-500 tabular-nums">
                       {c.sub}
                     </span>
                   )}
                 </div>
-                <p className="mt-4 text-[28px] font-semibold tracking-tight text-white leading-none tabular-nums">
+                <p
+                  className="text-[28px] sm:text-[30px] font-semibold tracking-tight tabular-nums leading-none transition-colors duration-200"
+                  style={{ color: isActive ? c.accent : `${c.accent}cc` }}
+                >
                   {c.value}
                 </p>
-                <p className="text-[13px] text-zinc-400 mt-2">{c.label}</p>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
       <tip.Portal />
     </>

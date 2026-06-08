@@ -71,6 +71,10 @@ export default function ReportPage() {
   );
   const [address, setAddress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Manual issue-type pick from the preview (built-in or custom id), or null
+  // when the resident let the AI classify. Surfaced on the confirmation so a
+  // custom type's routing rule is visible without touching the classifier.
+  const [manualIssueType, setManualIssueType] = useState<string | null>(null);
 
   // Ensure a session exists so submit isn't rejected as unauthenticated.
   // New visitors get a silent anonymous session (guest) — keeps the 2-tap goal.
@@ -128,11 +132,16 @@ export default function ReportPage() {
   }, []);
 
   const handleSubmit = useCallback(
-    async (description: string | null, tags: string[]) => {
+    async (
+      description: string | null,
+      tags: string[],
+      issueType: string | null,
+    ) => {
       if (step.name !== "preview") return;
 
       const photo = step.photo;
       setStep({ name: "submitting", photo });
+      setManualIssueType(issueType);
       setError(null);
 
       // Decode + blur on-device. This can FAIL before anything is submitted —
@@ -417,6 +426,7 @@ export default function ReportPage() {
         <SubmissionConfirmation
           reportId={step.reportId}
           classification={step.classification}
+          manualIssueType={manualIssueType}
         />
       )}
     </div>
