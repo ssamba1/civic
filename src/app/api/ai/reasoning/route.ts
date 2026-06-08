@@ -24,7 +24,12 @@ export interface ReasoningResponse {
 
 export async function POST(request: Request) {
   try {
-    // Auth check: accept either a valid user session OR an internal secret header.
+    // The public dashboard (/city/[slug]) is an unauthenticated route, so the
+    // reasoning shown there must be reachable by logged-out visitors. We don't
+    // gate access — the response is read-only explanation text derived from
+    // already-public report fields. Instead we gate the EXPENSIVE path: only an
+    // authenticated user or an internal-secret caller may trigger live Gemini;
+    // anonymous browsers get the deterministic template (free, no model spend).
     // The internal secret lets server actions and background jobs call this
     // without forwarding browser cookies.
     const user = await getAuthUser();
@@ -35,10 +40,7 @@ export async function POST(request: Request) {
       !!internalKey &&
       Buffer.byteLength(internalKey) === Buffer.byteLength(expectedKey) &&
       timingSafeEqual(Buffer.from(internalKey), Buffer.from(expectedKey));
-
-    if (!user && !isInternal) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const allowLiveModel = !!user || isInternal;
 
     // Rate limit non-internal callers (browser users). Internal-key callers
     // (server actions, jobs) bypass — they are trusted and not user-facing.
@@ -74,22 +76,28 @@ export async function POST(request: Request) {
       );
     }
 
-    // Hybrid sourcing: cache -> live Gemini -> deterministic template fallback.
-    // getReasoning swallows any Gemini failure into the template path, so this
-    // never dead-ends; the only non-200s above are intentional auth/limit gates.
-    const { payload } = await getReasoning(
-      {
-        id: report.id,
-        category: report.category,
-        severity: report.severity,
-        status: report.status,
-        address: report.address,
-        created_at: report.created_at,
-      },
-      CATEGORY_SLA_TARGETS[report.category],
-      CATEGORY_META[report.category].label,
-      () => templateReasoningForReport(report),
-    );
+    // Authenticated / internal callers: hybrid sourcing (cache -> live Gemini ->
+    // deterministic template fallback). getReasoning swallows any Gemini failure
+    // into the template path, so it never dead-ends.
+    // Anonymous browsers: deterministic template only — same shape, zero model
+    // spend, no abuse surface. Either way a 200 with full reasoning is returned.
+    const payload = allowLiveModel
+      ? (
+          await getReasoning(
+            {
+              id: report.id,
+              category: report.category,
+              severity: report.severity,
+              status: report.status,
+              address: report.address,
+              created_at: report.created_at,
+            },
+            CATEGORY_SLA_TARGETS[report.category],
+            CATEGORY_META[report.category].label,
+            () => templateReasoningForReport(report),
+          )
+        ).payload
+      : templateReasoningForReport(report);
 
     return NextResponse.json({ reportId, ...payload } as ReasoningResponse, {
       status: 200,
