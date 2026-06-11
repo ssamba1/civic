@@ -1,29 +1,37 @@
 /**
- * Build a single hard-stop `linear-gradient` for a stacked proportion bar.
+ * Compute paint layers for a stacked proportion bar.
  *
- * Rendering a stack as N flexed child divs gives each segment a fractional
- * pixel width that the browser rounds independently, leaving sub-pixel seams
- * where the track bleeds through — which, under a `rounded-full` overflow clip,
- * reads as segments of uneven height. One gradient-filled box has no seams, no
- * flex rounding, and a uniform edge-to-edge height.
+ * Two failed approaches inform this one:
+ * - N flexed child divs: each segment's fractional pixel width rounds
+ *   independently, leaving sub-pixel seams where the track bleeds through.
+ * - One hard-stop `linear-gradient`: Chromium rasterizes hard stops with a
+ *   dithered ~1px diagonal edge, so on a short bar (especially at fractional
+ *   devicePixelRatio like Windows 150% scaling) each color band appears
+ *   vertically raised or sunk relative to its neighbors.
  *
- * Returns null when nothing has a positive value (caller renders an empty track).
+ * Instead, render each part as an absolutely positioned full-height layer that
+ * starts at its cumulative offset and extends to the bar's end, painted in
+ * order so each later layer covers the remainder of the previous one. Every
+ * visible boundary is a single element's left edge drawn over solid color —
+ * no adjacent-edge rounding (no seams) and box edges rasterize as crisp
+ * vertical lines (no gradient dithering).
+ *
+ * Returns layers in paint order (render them in order; DOM order = z-order).
+ * Returns an empty array when nothing has a positive value (caller renders an
+ * empty track).
  */
-export function stackedBarGradient(
+export function stackedBarLayers(
   parts: { value: number; color: string }[],
-): string | null {
+): { color: string; startPct: number }[] {
   const total = parts.reduce((sum, p) => sum + Math.max(0, p.value), 0);
-  if (total <= 0) return null;
+  if (total <= 0) return [];
 
-  const stops: string[] = [];
+  const layers: { color: string; startPct: number }[] = [];
   let acc = 0;
   for (const part of parts) {
     if (part.value <= 0) continue;
-    const start = (acc / total) * 100;
+    layers.push({ color: part.color, startPct: (acc / total) * 100 });
     acc += part.value;
-    const end = (acc / total) * 100;
-    // Shared boundary percentage between adjacent stops = crisp edge, no blend.
-    stops.push(`${part.color} ${start}% ${end}%`);
   }
-  return `linear-gradient(to right, ${stops.join(", ")})`;
+  return layers;
 }

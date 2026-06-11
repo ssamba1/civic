@@ -1,16 +1,14 @@
 "use client";
 
-import { memo } from "react";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
+import { memo, useRef } from "react";
+import { Tile } from "@/components/analytics/bento-primitives";
+import { TipChip, TipRow, useHoverTip } from "@/components/analytics/hover-tip";
 import { TEAMS, type TeamId } from "@/lib/teams";
 import type { TeamWorkload } from "@/lib/teams-data";
-import {
-  useHoverTip,
-  TipRow,
-  TipChip,
-} from "@/components/analytics/hover-tip";
-import { Tile } from "@/components/analytics/bento-primitives";
 import { cn } from "@/lib/utils/cn";
-import { stackedBarGradient } from "@/lib/utils/stacked-bar";
+import { stackedBarLayers } from "@/lib/utils/stacked-bar";
 
 /* ==================================================================
    Horizontal stacked bar per team, scaled to the heaviest-loaded team
@@ -52,23 +50,52 @@ function WorkloadBarsInner({
   const populated = workloads.filter((w) => w.total > 0);
   const rows = populated.length > 0 ? populated : workloads;
 
+  // Draw the bars left-to-right on mount: scaleX 0 → 1, staggered 40ms per row.
+  // transform-only (no layout) and reduced-motion users see them at full width
+  // instantly. Runs once — keyed off row count so a data swap re-plays cleanly.
+  const listRef = useRef<HTMLUListElement>(null);
+  useGSAP(
+    () => {
+      const bars =
+        listRef.current?.querySelectorAll<HTMLElement>("[data-wl-bar]");
+      if (!bars || bars.length === 0) return;
+      const mm = gsap.matchMedia();
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        gsap.from(bars, {
+          scaleX: 0,
+          transformOrigin: "left center",
+          duration: 0.6,
+          ease: "power2.out",
+          stagger: 0.04,
+        });
+      });
+      return () => mm.revert();
+    },
+    { dependencies: [rows.length] },
+  );
+
   return (
     <Tile
       title="Workload distribution"
       subtitle={`${rows.length} teams · scaled to busiest`}
     >
-      <ul className="flex flex-col gap-2">
+      <ul ref={listRef} className="flex flex-col gap-2">
         {rows.map((w) => {
           const team = TEAMS[w.teamId];
           const widthPct = (w.total / maxTotal) * 100;
           const isSelected = selectedTeam === w.teamId;
           const isDimmed = selectedTeam !== "all" && !isSelected;
-          const { onClick: tipOnClick, ...tipRest } = tip.bindTarget(() => buildTip(w));
+          const { onClick: tipOnClick, ...tipRest } = tip.bindTarget(() =>
+            buildTip(w),
+          );
           return (
             <li key={w.teamId}>
               <button
                 type="button"
-                onClick={(e) => { tipOnClick?.(e); onSelectTeam(w.teamId); }}
+                onClick={(e) => {
+                  tipOnClick?.(e);
+                  onSelectTeam(w.teamId);
+                }}
                 aria-pressed={isSelected}
                 aria-label={`Scope view to ${team.label}`}
                 className={cn(
@@ -101,7 +128,10 @@ function WorkloadBarsInner({
                     <span className="truncate">{team.shortLabel}</span>
                   </span>
                   <div className="relative h-3 w-full overflow-hidden rounded-full bg-white/[0.04]">
-                    <StackedSegments byStatus={w.byStatus} widthPct={widthPct} />
+                    <StackedSegments
+                      byStatus={w.byStatus}
+                      widthPct={widthPct}
+                    />
                   </div>
                 </div>
                 {/* sm+ bar (middle column) */}
@@ -128,17 +158,30 @@ interface StackedSegmentsProps {
 }
 
 function StackedSegments({ byStatus, widthPct }: StackedSegmentsProps) {
-  const gradient = stackedBarGradient(
+  const layers = stackedBarLayers(
     (Object.keys(STATUS_PALETTE) as Array<keyof typeof STATUS_PALETTE>).map(
-      (status) => ({ value: byStatus[status] ?? 0, color: STATUS_PALETTE[status] }),
+      (status) => ({
+        value: byStatus[status] ?? 0,
+        color: STATUS_PALETTE[status],
+      }),
     ),
   );
-  if (!gradient) return null;
+  if (layers.length === 0) return null;
   return (
     <div
-      className="h-full rounded-full"
-      style={{ width: `${widthPct}%`, background: gradient }}
-    />
+      data-wl-bar
+      className="relative h-full overflow-hidden rounded-full will-change-transform"
+      style={{ width: `${widthPct}%` }}
+    >
+      {layers.map((l) => (
+        <span
+          key={`${l.color}-${l.startPct}`}
+          className="absolute inset-y-0 right-0"
+          style={{ left: `${l.startPct}%`, background: l.color }}
+          aria-hidden
+        />
+      ))}
+    </div>
   );
 }
 

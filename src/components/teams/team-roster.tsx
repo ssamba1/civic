@@ -1,20 +1,16 @@
 "use client";
 
+import { Clock, Plus, Timer } from "lucide-react";
 import { memo, useState } from "react";
-import { Clock, Timer, Plus } from "lucide-react";
-import { TEAMS, type TeamId } from "@/lib/teams";
-import { CATEGORY_META } from "@/lib/dashboard-data";
-import type { TeamWorkload } from "@/lib/teams-data";
+import { useReveal } from "@/components/analytics/bento-primitives";
+import { TipChip, TipRow, useHoverTip } from "@/components/analytics/hover-tip";
 import { teamIcon } from "@/components/teams/team-icon";
 import { TeamSetupModal } from "@/components/teams/team-setup-modal";
-import {
-  useHoverTip,
-  TipRow,
-  TipChip,
-} from "@/components/analytics/hover-tip";
-import { useReveal } from "@/components/analytics/bento-primitives";
+import { CATEGORY_META } from "@/lib/dashboard-data";
+import { TEAMS, type TeamId } from "@/lib/teams";
+import type { TeamWorkload } from "@/lib/teams-data";
 import { cn } from "@/lib/utils/cn";
-import { stackedBarGradient } from "@/lib/utils/stacked-bar";
+import { stackedBarLayers } from "@/lib/utils/stacked-bar";
 
 /* ==================================================================
    Team roster — grid of team cards, sorted by open backlog.
@@ -74,9 +70,7 @@ function TeamRosterInner({
 
 function buildTip(w: TeamWorkload) {
   const team = TEAMS[w.teamId];
-  const topCatLabel = w.topCategory
-    ? CATEGORY_META[w.topCategory].label
-    : "—";
+  const topCatLabel = w.topCategory ? CATEGORY_META[w.topCategory].label : "—";
   const closureRate =
     w.total > 0 ? Math.round((w.closedCount / w.total) * 100) : 0;
   return {
@@ -84,9 +78,7 @@ function buildTip(w: TeamWorkload) {
     accent: team.color,
     body: (
       <div className="flex flex-col gap-1.5">
-        <p className="text-[11px] text-zinc-500 leading-snug">
-          {team.duties}
-        </p>
+        <p className="text-[11px] text-zinc-500 leading-snug">{team.duties}</p>
         <TipRow
           label="Open backlog"
           value={w.openCount.toLocaleString()}
@@ -145,21 +137,26 @@ function TeamCard({
   return (
     <button
       type="button"
-      onClick={(e) => { tipOnClick?.(e); onSelect(); }}
+      onClick={(e) => {
+        tipOnClick?.(e);
+        onSelect();
+      }}
       aria-pressed={isSelected}
       aria-label={`Scope view to ${team.label}`}
       className={cn(
         "group relative flex flex-col gap-3 rounded-[14px] border bg-[#1c1c1e] p-4 text-left",
-        "shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150",
+        "shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 will-change-transform active:scale-[0.97] motion-reduce:active:scale-100",
         "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
         isSelected
-          ? "border-white/[0.18]"
+          ? "border-white/[0.18] scale-[1.01] motion-reduce:scale-100"
           : "border-white/[0.06] hover:border-white/[0.12]",
         isDimmed && "opacity-55",
       )}
       style={
         isSelected
-          ? { boxShadow: `0 0 0 1px ${team.color}66, 0 8px 24px ${team.color}22` }
+          ? {
+              boxShadow: `0 0 0 1px ${team.color}66, 0 8px 24px ${team.color}22`,
+            }
           : undefined
       }
       {...tipRest}
@@ -241,20 +238,28 @@ interface StatusMiniBarProps {
 }
 
 function StatusMiniBar({ segments }: StatusMiniBarProps) {
-  const gradient = stackedBarGradient(segments);
-  if (!gradient) {
+  const layers = stackedBarLayers(segments);
+  if (layers.length === 0) {
     return <div className="h-1.5 w-full rounded-full bg-white/[0.05]" />;
   }
   return (
     <div
-      className="h-1.5 w-full rounded-full"
+      className="relative h-1.5 w-full overflow-hidden rounded-full"
       role="img"
       aria-label={segments
         .filter((s) => s.value > 0)
         .map((s) => `${s.value} ${s.label}`)
         .join(", ")}
-      style={{ background: gradient }}
-    />
+    >
+      {layers.map((l) => (
+        <span
+          key={`${l.color}-${l.startPct}`}
+          className="absolute inset-y-0 right-0"
+          style={{ left: `${l.startPct}%`, background: l.color }}
+          aria-hidden
+        />
+      ))}
+    </div>
   );
 }
 
