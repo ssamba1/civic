@@ -362,11 +362,20 @@ export function TipBar({
   color?: string;
 }) {
   const w = clamp(pct, 0, 100);
+  // Draw-in: render at width 0, then flip to the real width on the next frame so
+  // the CSS width transition plays whenever the tip opens. Reduced-motion users
+  // mount straight at full width (no transition, no rAF flip).
+  const [drawn, setDrawn] = useState(reducedMotion());
+  useEffect(() => {
+    if (drawn) return;
+    const id = requestAnimationFrame(() => setDrawn(true));
+    return () => cancelAnimationFrame(id);
+  }, [drawn]);
   return (
     <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.05]">
       <div
-        className="h-full rounded-full"
-        style={{ width: `${w}%`, background: color, opacity: 0.85 }}
+        className="h-full rounded-full transition-[width] duration-300 ease-out motion-reduce:transition-none"
+        style={{ width: drawn ? `${w}%` : 0, background: color, opacity: 0.85 }}
       />
     </div>
   );

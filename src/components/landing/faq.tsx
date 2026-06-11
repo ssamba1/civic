@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Reveal } from "@/components/landing/reveal";
 
 const FAQ_ITEMS = [
   {
@@ -65,10 +66,15 @@ export function FAQ() {
 
         <Accordion type="single" collapsible className="w-full">
           {FAQ_ITEMS.map((item, i) => (
-            <AccordionItem key={item.q} value={`item-${i}`}>
-              <AccordionTrigger>{item.q}</AccordionTrigger>
-              <AccordionContent>{item.a}</AccordionContent>
-            </AccordionItem>
+            <Reveal key={item.q} delay={Math.min(i, 4) * 60}>
+              <AccordionItem
+                value={`item-${i}`}
+                className={i === FAQ_ITEMS.length - 1 ? "border-b-0" : undefined}
+              >
+                <AccordionTrigger>{item.q}</AccordionTrigger>
+                <AccordionContent>{item.a}</AccordionContent>
+              </AccordionItem>
+            </Reveal>
           ))}
         </Accordion>
       </div>

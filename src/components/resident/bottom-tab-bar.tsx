@@ -7,8 +7,6 @@ import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils/cn";
 
-const ACCENT = "#0a84ff";
-
 interface TabItem {
   label: string;
   href: string;
@@ -136,7 +134,6 @@ function TabLink({ tab, active }: { tab: TabItem; active: boolean }) {
         <Icon
           className="h-5 w-5 shrink-0"
           strokeWidth={active ? 2.25 : 2}
-          color={active ? ACCENT : undefined}
           aria-hidden="true"
         />
         <span className="max-w-full truncate">{label}</span>

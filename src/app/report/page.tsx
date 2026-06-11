@@ -180,13 +180,9 @@ export default function ReportPage() {
         });
 
         if (!result.ok) {
-          // Demo must never dead-end: land on the thanks screen with a
-          // fallback classification (confidence 0 hides the AI-details card).
-          setStep({
-            name: "done",
-            reportId: crypto.randomUUID(),
-            classification: FALLBACK_CLASSIFICATION,
-          });
+          // Stay on preview so the user can retry; surface the server error.
+          setError(result.error ?? "Submission failed. Please try again.");
+          setStep({ name: "preview", photo });
           return;
         }
 
@@ -210,12 +206,12 @@ export default function ReportPage() {
         // for the real classification. Flag OFF → never pending → unchanged.
         const pending = ASYNC_CLASSIFY && classification.confidence === 0;
         setStep({ name: "done", reportId: id, classification, pending });
-      } catch {
-        setStep({
-          name: "done",
-          reportId: crypto.randomUUID(),
-          classification: FALLBACK_CLASSIFICATION,
-        });
+      } catch (e) {
+        // Network/unexpected error — stay on preview, allow retry.
+        setError(
+          e instanceof Error ? e.message : "Unexpected error. Please try again.",
+        );
+        setStep({ name: "preview", photo });
       }
     },
     [step, location, address],
@@ -345,10 +341,22 @@ export default function ReportPage() {
 
   return (
     <div className="fixed inset-0 h-dvh flex flex-col bg-black">
-      {/* Error toast — clears notch via pt-safe */}
+      {/* Error toast — clears notch via pt-safe. Slides down on mount so it
+          doesn't hard-pop at the top of the screen mid-submit. */}
       {error && (
         <div className="absolute top-0 left-0 right-0 z-40 pt-safe px-4">
-          <div className="mt-3 rounded-xl bg-red-500/90 backdrop-blur-sm px-4 py-3 text-sm text-white font-medium shadow-lg relative">
+          <style>{`
+            @keyframes report-toast-in {
+              from { opacity: 0; transform: translateY(-8px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            @media (prefers-reduced-motion: no-preference) {
+              .report-toast {
+                animation: report-toast-in 250ms cubic-bezier(0.22, 1, 0.36, 1) both;
+              }
+            }
+          `}</style>
+          <div className="report-toast mt-3 rounded-xl bg-red-500/90 backdrop-blur-sm px-4 py-3 text-sm text-white font-medium shadow-lg relative">
             {error}
             <button
               type="button"

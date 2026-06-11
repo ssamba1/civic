@@ -1,10 +1,11 @@
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
+import { Loader2 } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils/cn";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-[background-color,box-shadow,transform] duration-200 outline-offset-2 focus-visible:outline-2 focus-visible:outline-[var(--color-primary)] disabled:pointer-events-none disabled:opacity-50 active:translate-y-px [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4",
+  "relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-[background-color,box-shadow,transform] duration-200 outline-offset-2 focus-visible:outline-2 focus-visible:outline-[var(--color-primary)] disabled:pointer-events-none disabled:opacity-50 active:translate-y-px data-[loading=true]:pointer-events-none data-[loading=true]:opacity-70 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4",
   {
     variants: {
       variant: {
@@ -35,17 +36,38 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  /** Shows a spinner, dims the label, and blocks interaction during async work. */
+  isPending?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, isPending, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
+    // asChild forwards a single child element — can't inject a sibling spinner
+    // without breaking Slot's single-child contract, so skip the overlay there.
+    const showSpinner = isPending && !asChild;
     return (
       <Comp
         ref={ref}
+        data-loading={isPending ? "true" : undefined}
+        aria-busy={isPending || undefined}
         className={cn(buttonVariants({ variant, size, className }))}
         {...props}
-      />
+      >
+        {showSpinner ? (
+          <>
+            <span
+              aria-hidden="true"
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              <Loader2 className="motion-safe:animate-spin" />
+            </span>
+            <span className="invisible inline-flex items-center gap-2">{children}</span>
+          </>
+        ) : (
+          children
+        )}
+      </Comp>
     );
   },
 );

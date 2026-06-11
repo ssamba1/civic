@@ -98,8 +98,12 @@ export function ReportsExplorer({
               onClick={() => handleSelectReport(report.id)}
               aria-current={isSelected ? "true" : undefined}
               className={cn(
-                /* min-h-[56px] ensures 44px+ tap target on mobile */
-                "w-full text-left flex flex-col gap-1 min-h-[56px] py-3 px-3 rounded-md transition-colors",
+                /* min-h-[56px] ensures 44px+ tap target on mobile.
+                   Single transition covers both bg (hover/select) and the
+                   active press scale — separate transition-* utilities would
+                   clobber each other's transition-property. */
+                "w-full text-left flex flex-col gap-1 min-h-[56px] py-3 px-3 rounded-md",
+                "transition-[background-color,transform] duration-100 active:scale-[0.98] active:duration-75 motion-reduce:active:scale-100",
                 "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1c1c1e]",
                 isSelected ? "bg-white/[0.06]" : "hover:bg-white/[0.03] active:bg-white/[0.05]",
               )}

@@ -15,6 +15,7 @@ import {
 } from "@/lib/teams";
 import { useCategoryOverrides } from "@/lib/category-overrides";
 import { useDemoReports } from "@/lib/demo-reports";
+import { dispatchWorkOrderForReport } from "@/app/staff/actions";
 import {
   Sliders,
   Clock,
@@ -52,6 +53,27 @@ const STATUS_TONE: Record<string, string> = {
   in_progress: "text-[#5ac8fa]",
   closed: "text-[#30d158]",
 };
+// Hoisted from the status-filter .map() — was rebuilt on every render inside the callback.
+const STATUS_DISPLAY_NAMES: Record<string, string> = {
+  open: "Open",
+  dispatched: "Dispatched",
+  in_progress: "In progress",
+  closed: "Resolved",
+};
+
+// Lightweight prefers-reduced-motion subscription. Returns true when the OS
+// requests reduced motion so stagger delays + slide-ins can be neutralized.
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return reduced;
+}
 
 function formatTimeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -121,8 +143,18 @@ export function FullscreenMapOrchestrator({
   ]);
   const activeTeamMeta = TEAM_META[selectedTeam];
 
+  const reducedMotion = useReducedMotion();
+
   // --- Interaction & Selection States ---
   const [focusedReportId, setFocusedReportId] = useState<string | null>(null);
+
+  // Report id whose auto-dispatch server action is in flight — drives the inline
+  // button spinner + disabled state so the click registers as "working".
+  const [dispatchingId, setDispatchingId] = useState<string | null>(null);
+
+  // Toast exit choreography: when the auto-dismiss timer fires we first flip
+  // `toastLeaving` to play the slide-out, then null the notification.
+  const [toastLeaving, setToastLeaving] = useState(false);
 
   // Routing UI state: keeps track of which report ID has the routing dropdown active
   const [activeRouteMenuId, setActiveRouteMenuId] = useState<string | null>(null);
@@ -167,42 +199,67 @@ export function FullscreenMapOrchestrator({
     });
   }, [allReports, selectedTeam, selectedCategory, minSeverity, activeStatuses, categoryOverrides]);
 
-  // Toggle status filter helper
-  const handleToggleStatus = (status: ReportStatus) => {
-    if (activeStatuses.includes(status)) {
-      if (activeStatuses.length > 1) {
-        setActiveStatuses(activeStatuses.filter((s) => s !== status));
+  // Toggle status filter helper — useCallback so it's a stable dep for dispatchPanelContent's useMemo.
+  const handleToggleStatus = useCallback((status: ReportStatus) => {
+    setActiveStatuses((prev) => {
+      if (prev.includes(status)) {
+        return prev.length > 1 ? prev.filter((s) => s !== status) : prev;
       }
-    } else {
-      setActiveStatuses([...activeStatuses, status]);
-    }
-  };
+      return [...prev, status];
+    });
+  }, []);
 
   // Mobile: bottom-sheet open state for dispatch panel
   const [isDispatchSheetOpen, setIsDispatchSheetOpen] = useState(false);
 
-  // Route/Assign to team action
-  const handleRouteToTeam = (reportId: string, teamId: TeamId) => {
-    // Record a local status override; overlaid onto the live prop in allReports.
-    setStatusOverrides((prev) => ({ ...prev, [reportId]: "dispatched" }));
+  // Schedule a toast dismissal that plays the exit animation first (set leaving
+  // → wait for the 200ms slide-out → null). Reused by every toast path so the
+  // toast never pops off the DOM instantly. ref-held timers stay cancellable.
+  const dismissToast = useCallback((delay: number) => {
+    if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
+    notificationTimerRef.current = setTimeout(() => {
+      setToastLeaving(true);
+      notificationTimerRef.current = setTimeout(() => {
+        setRouteNotification(null);
+        setToastLeaving(false);
+      }, 200);
+    }, delay);
+  }, []);
 
-    // Show beautiful HUD notification
+  // Route/Assign to team action — optimistic update + server write with rollback.
+  const handleRouteToTeam = useCallback(async (reportId: string, teamId: TeamId) => {
+    // Optimistic: overlay dispatched status immediately for snappy UI.
+    setStatusOverrides((prev) => ({ ...prev, [reportId]: "dispatched" }));
+    setActiveRouteMenuId(null);
+    setDispatchingId(reportId);
+
+    // Show HUD notification optimistically.
+    setToastLeaving(false);
     setRouteNotification({
       message: `Dispatched to ${TEAM_META[teamId].shortLabel}!`,
-      reportId: reportId,
+      reportId,
     });
+    dismissToast(3500);
 
-    // Close routing menu
-    setActiveRouteMenuId(null);
-
-    // Auto clear notification after 3.5 seconds
-    if (notificationTimerRef.current) {
-      clearTimeout(notificationTimerRef.current);
+    // The map surface receives reports, not work orders — dispatch via the
+    // report-id variant which resolves the linked work order server-side.
+    const result = await dispatchWorkOrderForReport(reportId);
+    setDispatchingId((cur) => (cur === reportId ? null : cur));
+    if (!result.ok) {
+      // Rollback optimistic override on failure.
+      setStatusOverrides((prev) => {
+        const next = { ...prev };
+        delete next[reportId];
+        return next;
+      });
+      setToastLeaving(false);
+      setRouteNotification({
+        message: `Dispatch failed: ${result.error}`,
+        reportId,
+      });
+      dismissToast(4000);
     }
-    notificationTimerRef.current = setTimeout(() => {
-      setRouteNotification(null);
-    }, 3500);
-  };
+  }, [dismissToast]);
 
   // Human-readable category list for dropdowns
   const categoriesList = useMemo(() => {
@@ -216,9 +273,18 @@ export function FullscreenMapOrchestrator({
     return list;
   }, [allReports]);
 
-  // Shared dispatch panel content — rendered both in desktop sidebar and mobile bottom-sheet
-  const dispatchPanelContent = (
+  // Memoized so neither the desktop sidebar nor the mobile bottom-sheet re-renders
+  // when unrelated state (e.g. focusedReportId timer) changes.
+  const dispatchPanelContent = useMemo(() => (
     <div className="flex flex-col gap-3 h-full overflow-y-auto custom-scrollbar pr-1 select-none">
+      <style>{`
+        @keyframes emptyBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+        @keyframes fmCardIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes fmEmptyIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+        @keyframes fmToastIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes fmToastOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-4px)}}
+        @keyframes fmFadeIn{from{opacity:0}to{opacity:1}}
+      `}</style>
       {/* Active team banner */}
       {selectedTeam !== "all" && (
         <div
@@ -256,7 +322,18 @@ export function FullscreenMapOrchestrator({
 
       {/* Route confirmation toast */}
       {routeNotification && (
-        <div className="bg-[#30d158]/10 border border-[#30d158]/20 rounded-lg p-3 flex items-center gap-2 shrink-0 animate-in fade-in slide-in-from-top-1 duration-150">
+        <div
+          className="bg-[#30d158]/10 border border-[#30d158]/20 rounded-lg p-3 flex items-center gap-2 shrink-0"
+          style={
+            reducedMotion
+              ? undefined
+              : {
+                  animation: toastLeaving
+                    ? "fmToastOut 200ms cubic-bezier(0.4,0,1,1) forwards"
+                    : "fmToastIn 150ms cubic-bezier(0.16,1,0.3,1)",
+                }
+          }
+        >
           <CheckCircle2 className="w-4 h-4 text-[#30d158] shrink-0" strokeWidth={1.75} />
           <p className="text-[13px] text-white/90 leading-tight">{routeNotification.message}</p>
         </div>
@@ -338,12 +415,6 @@ export function FullscreenMapOrchestrator({
           <div className="grid grid-cols-2 gap-1">
             {(["open", "dispatched", "in_progress", "closed"] as const).map((s) => {
               const isChecked = activeStatuses.includes(s);
-              const displayNames: Record<string, string> = {
-                open: "Open",
-                dispatched: "Dispatched",
-                in_progress: "In progress",
-                closed: "Resolved",
-              };
               return (
                 <button
                   key={s}
@@ -354,7 +425,7 @@ export function FullscreenMapOrchestrator({
                       : "bg-transparent text-zinc-400 hover:text-white hover:bg-white/[0.03]"
                   }`}
                 >
-                  {displayNames[s]}
+                  {STATUS_DISPLAY_NAMES[s]}
                 </button>
               );
             })}
@@ -368,13 +439,27 @@ export function FullscreenMapOrchestrator({
       {/* Incident Feed list */}
       <div className="space-y-2">
         {filteredReports.length === 0 ? (
-          <div className="flex flex-col items-center justify-center text-center p-6 text-zinc-500">
-            <Sliders className="w-7 h-7 opacity-25 mb-3" />
+          <div
+            className="flex flex-col items-center justify-center text-center p-6 text-zinc-500"
+            style={
+              reducedMotion
+                ? undefined
+                : { animation: "fmEmptyIn 200ms cubic-bezier(0.16,1,0.3,1)" }
+            }
+          >
+            <Sliders
+              className="w-7 h-7 opacity-25 mb-3"
+              style={
+                reducedMotion
+                  ? undefined
+                  : { animation: "emptyBob 3s ease-in-out infinite" }
+              }
+            />
             <p className="text-sm text-zinc-300">No matching reports</p>
             <p className="text-xs text-zinc-500 mt-1">Adjust filters to see more.</p>
           </div>
         ) : (
-          filteredReports.map((report) => {
+          filteredReports.map((report, index) => {
             const meta = CATEGORY_META[report.category];
             const isSelected = focusedReportId === report.id;
             const isMenuOpen = activeRouteMenuId === report.id;
@@ -385,10 +470,18 @@ export function FullscreenMapOrchestrator({
               <div
                 key={report.id}
                 onClick={() => setFocusedReportId(isSelected ? null : report.id)}
-                className={`p-3 rounded-lg transition-colors cursor-pointer flex flex-col gap-1.5 min-h-[44px] lg:min-h-0 ${
+                style={
+                  reducedMotion
+                    ? undefined
+                    : {
+                        animation: "fmCardIn 150ms cubic-bezier(0.16,1,0.3,1) both",
+                        animationDelay: `${Math.min(index * 30, 300)}ms`,
+                      }
+                }
+                className={`p-3 rounded-lg border transition-[background-color,border-color,transform] cursor-pointer flex flex-col gap-1.5 min-h-[44px] lg:min-h-0 active:scale-[0.98] ${
                   isSelected
-                    ? "bg-white/[0.08]"
-                    : "bg-transparent hover:bg-white/[0.03]"
+                    ? "bg-white/[0.08] border-white/[0.12]"
+                    : "bg-transparent border-transparent hover:bg-white/[0.03]"
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -434,7 +527,14 @@ export function FullscreenMapOrchestrator({
 
                 {/* Route action — admin dispatch only; hidden in the team view. */}
                 {isSelected && !lockedTeam && (
-                  <div className="mt-2 pt-2.5 border-t border-white/[0.06] flex flex-col gap-2 relative z-20 animate-in fade-in duration-150">
+                  <div
+                    className="mt-2 pt-2.5 border-t border-white/[0.06] flex flex-col gap-2 relative z-20"
+                    style={
+                      reducedMotion
+                        ? undefined
+                        : { animation: "fmFadeIn 150ms ease-out" }
+                    }
+                  >
                     {!isMenuOpen ? (
                       <div className="flex gap-1.5">
                         <button
@@ -442,18 +542,27 @@ export function FullscreenMapOrchestrator({
                             e.stopPropagation();
                             handleRouteToTeam(report.id, ownerTeamId);
                           }}
-                          disabled={report.status === "closed"}
+                          disabled={report.status === "closed" || dispatchingId === report.id}
                           className="flex-1 py-2.5 bg-[#0a84ff] hover:bg-[#0070e0] text-white rounded-md text-[12px] flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] lg:py-1.5 lg:min-h-0"
                         >
-                          <Send className="w-3 h-3" strokeWidth={1.75} />
-                          Auto-dispatch
+                          {dispatchingId === report.id ? (
+                            <>
+                              <span className="w-3 h-3 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                              Dispatching
+                            </>
+                          ) : (
+                            <>
+                              <Send className="w-3 h-3" strokeWidth={1.75} />
+                              Auto-dispatch
+                            </>
+                          )}
                         </button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setActiveRouteMenuId(report.id);
                           }}
-                          disabled={report.status === "closed"}
+                          disabled={report.status === "closed" || dispatchingId === report.id}
                           className="px-3 py-2.5 bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 rounded-md text-[12px] flex items-center justify-center gap-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] lg:py-1.5 lg:px-2 lg:min-h-0"
                           aria-label="Override target team"
                         >
@@ -461,7 +570,14 @@ export function FullscreenMapOrchestrator({
                         </button>
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-1 bg-black/40 border border-white/[0.08] rounded-md p-2 animate-in fade-in duration-100 pointer-events-auto">
+                      <div
+                        className="flex flex-col gap-1 bg-black/40 border border-white/[0.08] rounded-md p-2 pointer-events-auto"
+                        style={
+                          reducedMotion
+                            ? undefined
+                            : { animation: "fmFadeIn 100ms ease-out" }
+                        }
+                      >
                         <div className="flex justify-between items-center pb-1 mb-1 text-[12px] text-zinc-400">
                           <span>Override target team</span>
                           <button
@@ -515,10 +631,28 @@ export function FullscreenMapOrchestrator({
         )}
       </div>
     </div>
-  );
+  ), [
+    filteredReports,
+    focusedReportId,
+    activeRouteMenuId,
+    routeNotification,
+    toastLeaving,
+    dispatchingId,
+    reducedMotion,
+    selectedTeam,
+    selectedCategory,
+    minSeverity,
+    activeStatuses,
+    categoriesList,
+    lockedTeam,
+    activeTeamMeta,
+    handleRouteToTeam,
+    handleToggleStatus,
+  ]);
 
   return (
     <div className="h-dvh w-full relative overflow-hidden flex bg-black select-none">
+      <style>{`@keyframes fmPanelIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}`}</style>
 
       {/* Full-viewport map */}
       <div className="absolute inset-0 z-0 h-full w-full pointer-events-auto">
@@ -568,7 +702,12 @@ export function FullscreenMapOrchestrator({
 
       {/* Desktop side panel — Dispatch (hidden on mobile) */}
       <LiquidGlassCard
-        className="hidden lg:flex absolute top-16 left-4 bottom-4 w-[280px] pointer-events-auto z-10 overflow-hidden animate-in slide-in-from-left-2 duration-300"
+        className="hidden lg:flex absolute top-16 left-4 bottom-4 w-[280px] pointer-events-auto z-10 overflow-hidden"
+        style={
+          reducedMotion
+            ? undefined
+            : { animation: "fmPanelIn 300ms cubic-bezier(0.16,1,0.3,1)" }
+        }
         contentClassName={`${
           isLightBasemap ? "bg-black/55" : "bg-black/10"
         } p-4 text-white flex flex-col overflow-hidden`}

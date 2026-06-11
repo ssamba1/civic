@@ -15,7 +15,7 @@ import {
   fetchCategoryResolution,
   type TrendPoint,
 } from "@/lib/analytics-data";
-import { getAuthUser } from "@/lib/db/ssr-client";
+import { getAuthUser, createSSRClient } from "@/lib/db/ssr-client";
 
 /* ------------------------------------------------------------------
    Resident-facing types
@@ -208,13 +208,95 @@ export async function getCurrentResident(
   return { id, displayName, citySlug, isDemo };
 }
 
+// PostgREST serializes geography(POINT) as GeoJSON (object or string). Decode
+// to {lng,lat}; tolerate the rare WKB-hex passthrough by giving up to {0,0}.
+function decodeLocation(loc: unknown): { lng: number; lat: number } {
+  let geo = loc;
+  if (typeof geo === "string") {
+    try {
+      geo = JSON.parse(geo);
+    } catch {
+      return { lng: 0, lat: 0 };
+    }
+  }
+  const coords = (geo as { coordinates?: [number, number] })?.coordinates;
+  if (Array.isArray(coords) && coords.length >= 2) {
+    return { lng: coords[0], lat: coords[1] };
+  }
+  return { lng: 0, lat: 0 };
+}
+
+interface MyReportRow {
+  id: string;
+  status: ReportStatus;
+  address: string | null;
+  location: unknown;
+  photo_public_url: string;
+  created_at: string;
+  reporter_id: string;
+  classifications:
+    | { category: ReportCategory | null; severity: number | null }[]
+    | { category: ReportCategory | null; severity: number | null }
+    | null;
+}
+
+// Synthetic fallback: the demo reporter's slice of the corpus. Used whenever the
+// live query errors or the signed-in user has no reports, so the demo stays alive.
+function myReportsFallback(): DashboardReport[] {
+  const mine = demoReporterId();
+  // Corpus is already newest-first; filter preserves order.
+  return getReportCorpus().filter((r) => r.reporter_id === mine);
+}
+
 export async function getMyReports(
   citySlug: string,
 ): Promise<DashboardReport[]> {
   void citySlug;
-  const mine = demoReporterId();
-  // Corpus is already newest-first; filter preserves order.
-  return getReportCorpus().filter((r) => r.reporter_id === mine);
+  try {
+    const supabase = await createSSRClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      console.warn("resident-data: falling back to synthetic corpus");
+      return myReportsFallback();
+    }
+
+    // RLS (reports_select_own) already scopes to auth.uid(); the explicit
+    // reporter_id filter is defense-in-depth and keeps intent obvious.
+    const { data, error } = await supabase
+      .from("reports")
+      .select(
+        "id, status, address, location, photo_public_url, created_at, reporter_id, classifications ( category, severity )",
+      )
+      .eq("reporter_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error || !data || data.length === 0) {
+      console.warn("resident-data: falling back to synthetic corpus");
+      return myReportsFallback();
+    }
+
+    return (data as unknown as MyReportRow[]).map((r) => {
+      const cl = Array.isArray(r.classifications)
+        ? (r.classifications[0] ?? null)
+        : r.classifications;
+      return {
+        id: r.id,
+        category: (cl?.category ?? "other") as ReportCategory,
+        severity: ((cl?.severity ?? 3) as 1 | 2 | 3 | 4 | 5),
+        status: r.status,
+        address: r.address ?? "Unknown location",
+        location: decodeLocation(r.location),
+        photo_public_url: r.photo_public_url,
+        created_at: r.created_at,
+        reporter_id: r.reporter_id,
+      };
+    });
+  } catch {
+    console.warn("resident-data: falling back to synthetic corpus");
+    return myReportsFallback();
+  }
 }
 
 export async function getMyReport(
@@ -433,7 +515,63 @@ const ANNOUNCEMENTS: ReadonlyArray<{
   },
 ];
 
+// Map a persisted notification_type to the resident-facing NotificationItem type.
+const NOTIF_TYPE_MAP: Record<string, NotificationItem["type"]> = {
+  status_change: "status",
+  resolved: "resolved",
+  comment: "comment",
+  announcement: "announcement",
+};
+
+interface NotificationRow {
+  id: string;
+  report_id: string | null;
+  type: string;
+  title: string;
+  body: string | null;
+  read_at: string | null;
+  created_at: string;
+}
+
 export async function getResidentNotifications(
+  citySlug: string,
+): Promise<NotificationItem[]> {
+  try {
+    const supabase = await createSSRClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      // RLS notifications_select_own scopes to the signed-in user. The table may
+      // not be applied to the live DB yet (migration 20260528_006) — a missing
+      // table surfaces as a query error, which we treat as "no live rows".
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("id, report_id, type, title, body, read_at, created_at")
+        .order("created_at", { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        return (data as NotificationRow[]).map((n) => ({
+          id: n.id,
+          type: NOTIF_TYPE_MAP[n.type] ?? "status",
+          title: n.title,
+          body: n.body ?? "",
+          at: n.created_at,
+          read: n.read_at !== null,
+          reportId: n.report_id ?? undefined,
+          icon: n.type === "resolved" ? "check-circle" : "wrench",
+        }));
+      }
+    }
+  } catch {
+    // Fall through to the synthetic path below.
+  }
+
+  console.warn("resident-data: falling back to synthetic corpus");
+  return syntheticNotifications(citySlug);
+}
+
+async function syntheticNotifications(
   citySlug: string,
 ): Promise<NotificationItem[]> {
   const mine = await getMyReports(citySlug);

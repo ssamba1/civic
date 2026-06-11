@@ -42,6 +42,9 @@ const TYPE_META: Record<
 export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
   const router = useRouter();
   const [filter, setFilter] = useState<FeedFilter>("all");
+  // Brief confirmation window after "Mark all read" — flips the label to a
+  // checkmark for ~1.2s so the bulk action gets visible acknowledgement.
+  const [marked, setMarked] = useState(false);
   // Track ids the resident has read this session, layered over the
   // server-provided `read` flag.
   const [readIds, setReadIds] = useState<Set<string>>(
@@ -84,7 +87,11 @@ export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
     });
   };
 
-  const markAllRead = () => setReadIds(new Set(items.map((i) => i.id)));
+  const markAllRead = () => {
+    setReadIds(new Set(items.map((i) => i.id)));
+    setMarked(true);
+    setTimeout(() => setMarked(false), 1200);
+  };
 
   const handleClick = (item: NotificationItem) => {
     markRead(item.id);
@@ -104,15 +111,24 @@ export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
         <button
           type="button"
           onClick={markAllRead}
-          disabled={unreadCount === 0}
+          disabled={unreadCount === 0 && !marked}
           className={cn(
-            "flex min-h-[44px] items-center text-[12px] transition-colors",
-            unreadCount === 0
-              ? "text-zinc-600 cursor-default"
-              : "text-[#0a84ff] hover:text-[#3b9dff]",
+            "flex min-h-[44px] items-center gap-1 text-[12px] transition-colors",
+            marked
+              ? "text-[#30d158] cursor-default"
+              : unreadCount === 0
+                ? "text-zinc-600 cursor-default"
+                : "text-[#0a84ff] hover:text-[#3b9dff]",
           )}
         >
-          Mark all read
+          {marked ? (
+            <>
+              <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
+              Done
+            </>
+          ) : (
+            "Mark all read"
+          )}
         </button>
       </header>
 
@@ -125,7 +141,10 @@ export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
           }
         />
       ) : (
-        <ul className="custom-scrollbar divide-y divide-white/[0.06] md:max-h-[600px] md:overflow-y-auto">
+        <ul
+          key={filter}
+          className="custom-scrollbar divide-y divide-white/[0.06] animate-in fade-in duration-200 md:max-h-[600px] md:overflow-y-auto"
+        >
           {visible.map((item) => {
             const meta = TYPE_META[item.type];
             const Icon = meta.icon;

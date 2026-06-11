@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Maximize2, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { lockBodyScroll } from "@/lib/utils/scroll-lock";
+import { useTiltHover } from "@/components/analytics/hover-tip";
 
 /* ==================================================================
    Shared bento shell + modal + motion + control primitives.
@@ -30,6 +31,15 @@ const BENTO_MOTION_CSS = `
     transition: opacity 520ms cubic-bezier(0.22, 1, 0.36, 1),
       transform 560ms cubic-bezier(0.22, 1, 0.36, 1);
   }
+  @keyframes bento-grow-up {
+    from { transform: scaleY(0); }
+    to { transform: scaleY(1); }
+  }
+  [data-bento-bar] {
+    transform-origin: bottom;
+    animation: bento-grow-up 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--bar-idx, 0) * 45ms);
+  }
 }
 `;
 
@@ -46,12 +56,42 @@ export function useBentoMotionStyles() {
   }, []);
 }
 
-export function useReveal<T extends HTMLElement>() {
+// Frame-batched stagger counter. Every Tile that mounts within the same paint
+// frame claims the next slot (0,1,2…); the counter resets on the following
+// frame so a later-mounting surface starts its own cascade from 0. This makes
+// the grid enter top-left→bottom-right without threading an index prop through
+// eight chart components. `index` prop (when given) overrides the auto-slot.
+let revealSlot = 0;
+let revealResetScheduled = false;
+
+function claimRevealSlot(): number {
+  const slot = revealSlot++;
+  if (!revealResetScheduled && typeof requestAnimationFrame !== "undefined") {
+    revealResetScheduled = true;
+    requestAnimationFrame(() => {
+      revealSlot = 0;
+      revealResetScheduled = false;
+    });
+  }
+  return slot;
+}
+
+export function useReveal<T extends HTMLElement>(index?: number) {
   useBentoMotionStyles();
   const ref = useRef<T>(null);
+  const slotRef = useRef<number | null>(null);
+  if (slotRef.current === null) {
+    slotRef.current = index ?? claimRevealSlot();
+  }
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
+    // Stagger entrance: each tile waits slot*60ms before its reveal transition
+    // fires, so the grid cascades instead of flashing as one flat block. Capped
+    // so a long grid never feels laggy. Delay rides transition-delay (not a
+    // timeout) so reduced-motion — which kills the transition via the media
+    // query — is unaffected.
+    node.style.transitionDelay = `${Math.min(slotRef.current ?? 0, 11) * 60}ms`;
     const id = requestAnimationFrame(() => {
       node.setAttribute("data-shown", "1");
     });
@@ -66,13 +106,37 @@ interface TileProps {
   className?: string;
   children: React.ReactNode;
   onExpand?: () => void;
+  /** Position in the bento grid — drives staggered reveal delay. */
+  index?: number;
+  /** Subtle 3D tilt-on-hover (reduced-motion safe). On by default; pass false
+   *  to opt a surface out. */
+  tilt?: boolean;
 }
 
-export function Tile({ title, subtitle, className, children, onExpand }: TileProps) {
-  const ref = useReveal<HTMLDivElement>();
+export function Tile({
+  title,
+  subtitle,
+  className,
+  children,
+  onExpand,
+  index,
+  tilt = true,
+}: TileProps) {
+  const revealRef = useReveal<HTMLDivElement>(index);
+  // useTiltHover authors its own ref + pointer handlers; merge it onto the same
+  // node as the reveal ref so the tilt transform composes over the revealed tile.
+  const tiltHover = useTiltHover<HTMLDivElement>();
+  const setRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      revealRef.current = node;
+      if (tilt) tiltHover.ref.current = node;
+    },
+    [revealRef, tiltHover.ref, tilt],
+  );
   return (
     <div
-      ref={ref}
+      ref={setRef}
+      {...(tilt ? { "data-tilt-id": tiltHover["data-tilt-id"] } : {})}
       data-bento-reveal
       className={cn(
         "flex flex-col rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] p-4 sm:p-5 text-zinc-100",
@@ -141,6 +205,26 @@ export function ExpandModal({
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
+  // Keep the modal in the tree through its exit animation. `open` drives enter;
+  // on close we flip to a "closing" render that plays animate-out, then unmount
+  // after the 150ms exit. render=true whenever it should be in the DOM.
+  const [render, setRender] = useState(open);
+  const [closing, setClosing] = useState(false);
+  useEffect(() => {
+    if (open) {
+      setRender(true);
+      setClosing(false);
+      return;
+    }
+    if (!render) return;
+    setClosing(true);
+    const t = setTimeout(() => {
+      setRender(false);
+      setClosing(false);
+    }, 150);
+    return () => clearTimeout(t);
+  }, [open, render]);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -154,10 +238,17 @@ export function ExpandModal({
     };
   }, [open]);
 
-  if (!mounted || !open) return null;
+  if (!mounted || !render) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 animate-in fade-in duration-200">
+    <div
+      data-state={closing ? "closed" : "open"}
+      className={cn(
+        "fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6",
+        "animate-in fade-in duration-200",
+        "data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:duration-150",
+      )}
+    >
       <button
         type="button"
         onClick={onClose}
@@ -165,13 +256,15 @@ export function ExpandModal({
         className="absolute inset-0 bg-black/75 backdrop-blur-md"
       />
       <div
+        data-state={closing ? "closed" : "open"}
         className={cn(
           /* Mobile: full-width bottom sheet, max 90dvh */
           "relative w-full sm:max-w-[min(92vw,1400px)] flex flex-col text-zinc-100 overflow-hidden",
           "max-h-[90dvh] sm:max-h-[92vh]",
           "rounded-t-[18px] sm:rounded-[18px] border border-white/[0.06] bg-[#1c1c1e]",
           "shadow-[0_24px_64px_-12px_rgba(0,0,0,0.7)]",
-          "animate-in zoom-in-95 duration-200",
+          "animate-in zoom-in-95 slide-in-from-bottom-2 sm:slide-in-from-bottom-0 duration-200",
+          "data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=closed]:fade-out data-[state=closed]:slide-out-to-bottom-2 sm:data-[state=closed]:slide-out-to-bottom-0 data-[state=closed]:duration-150",
         )}
       >
         <header className="flex items-center justify-between gap-3 px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 border-b border-white/[0.06]">
@@ -296,7 +389,8 @@ export function Toggle({
       >
         <span
           className={cn(
-            "block h-3 w-3 rounded-full bg-white transition-transform",
+            "block h-3 w-3 rounded-full bg-white",
+            "transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:transition-none",
             value ? "translate-x-3" : "translate-x-0",
           )}
         />

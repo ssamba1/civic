@@ -1863,19 +1863,23 @@ function renderHistogram(
               {b.count}
             </span>
             <div
+              data-bento-bar
               className={cn(
                 "w-full rounded-md bg-gradient-to-t transition-all duration-300",
                 isHovered
                   ? "from-[#0a84ff]/60 to-[#0a84ff] shadow-[0_0_18px_rgba(10,132,255,0.35)]"
                   : "from-[#0a84ff]/30 to-[#0a84ff]/70",
               )}
-              style={{
-                height: `${h}%`,
-                minHeight: 4,
-                boxShadow: isSla
-                  ? "inset 0 0 0 1.5px rgba(48,209,88,0.65)"
-                  : undefined,
-              }}
+              style={
+                {
+                  height: `${h}%`,
+                  minHeight: 4,
+                  "--bar-idx": i,
+                  boxShadow: isSla
+                    ? "inset 0 0 0 1.5px rgba(48,209,88,0.65)"
+                    : undefined,
+                } as React.CSSProperties
+              }
               role="meter"
               aria-valuenow={b.count}
               aria-valuemin={0}

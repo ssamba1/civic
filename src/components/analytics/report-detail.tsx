@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Clock, MapPin, ImageOff } from "lucide-react";
+import { Clock, MapPin, ImageOff } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import {
   CATEGORY_META,
@@ -312,7 +312,10 @@ export function ReportDetail({ report }: { report: DashboardReport | null }) {
   const { lat, lng } = report.location;
 
   return (
-    <div className="flex flex-col gap-5 sm:gap-7">
+    <div
+      key={report.id}
+      className="flex flex-col gap-5 sm:gap-7 animate-in fade-in slide-in-from-bottom-1 duration-200 motion-reduce:animate-none"
+    >
       {/* 1. Image with overlaid severity chip + status pill */}
       <div className="relative overflow-hidden rounded-xl border border-white/[0.06] bg-[#1c1c1e]">
         <ReportImage
@@ -400,8 +403,22 @@ export function ReportDetail({ report }: { report: DashboardReport | null }) {
         </div>
 
         {reasoning.phase === "loading" && (
-          <div className="flex h-28 items-center justify-center">
-            <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+          /* Skeleton mirrors the two-column ReasoningColumn grid so the section
+             reserves its real height — no layout shift when data lands. */
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {[0, 1].map((col) => (
+              <div key={col} className="flex flex-col gap-4">
+                <div className="h-2.5 w-16 rounded bg-white/[0.08] animate-pulse motion-reduce:animate-none" />
+                <div className="flex flex-col gap-3">
+                  {[0, 1, 2].map((row) => (
+                    <div key={row} className="flex flex-col gap-1.5">
+                      <div className="h-2 w-24 rounded bg-white/[0.05] animate-pulse motion-reduce:animate-none" />
+                      <div className="h-2.5 w-full max-w-[220px] rounded bg-white/[0.04] animate-pulse motion-reduce:animate-none" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

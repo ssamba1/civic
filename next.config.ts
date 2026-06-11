@@ -6,6 +6,14 @@ const nextConfig: NextConfig = {
 
   experimental: {
     turbopackFileSystemCacheForDev: true,
+    // Every route is force-dynamic (per-request CSP nonce, see app/layout.tsx),
+    // so the client Router Cache's default dynamic staleTime of 0 refetches the
+    // RSC payload on every in-app navigation — re-flashing each route's
+    // loading.tsx skeleton even after the page already loaded once. Hold visited
+    // dynamic segments fresh for 30s so revisits reuse the cache instead.
+    staleTimes: {
+      dynamic: 30,
+    },
   },
 
   images: {

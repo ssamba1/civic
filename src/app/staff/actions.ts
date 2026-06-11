@@ -1,22 +1,15 @@
 "use server";
 
-import { z } from "zod";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import type { ReportCategory, Result, WorkOrderWithDetails } from "@/lib/types";
+// Reuse the canonical 12-category enum so staff overrides aren't limited to the
+// original 8-item local list (adds debris/drainage/faded_signage/other).
+import { classificationSchema } from "@/lib/ai/classification-schema";
 
 const STAFF_ROLES = ["staff_dispatcher", "staff_supervisor", "admin"] as const;
 
-const ReportCategorySchema = z.enum([
-  "pothole",
-  "streetlight",
-  "downed_sign",
-  "graffiti",
-  "illegal_dump",
-  "water_leak",
-  "sidewalk_damage",
-  "tree_down",
-]);
+const ReportCategorySchema = classificationSchema.shape.category;
 
 async function getStaffUser() {
   // C5 fix: use cookie-aware SSR client for auth, service-role client only for DB queries
@@ -24,9 +17,11 @@ async function getStaffUser() {
   const db = createServerClient();
 
   if (!user) {
-    // Dev convenience: fall back to a seeded staff/admin so the inbox's live
-    // poll and dispatch actions work locally without a login. Prod stays strict.
-    if (process.env.NODE_ENV === "development") {
+    // Bypass only when DEV_AUTH_BYPASS=1 AND NODE_ENV=development — never in prod.
+    if (
+      process.env.NODE_ENV === "development" &&
+      process.env.DEV_AUTH_BYPASS === "1"
+    ) {
       const { data: devStaff } = await db
         .from("users")
         .select("id, role, city_id")
@@ -80,6 +75,35 @@ export async function dispatchWorkOrder(
     .from("reports")
     .update({ status: "dispatched", updated_at: new Date().toISOString() })
     .eq("id", wo.report_id);
+  if (reportError) return { ok: false, error: "status_update_failed" };
+
+  return { ok: true, data: undefined };
+}
+
+// Map UI exposes reports, not work orders — resolve the work order by
+// report_id (may legitimately not exist yet if classify hasn't created one).
+export async function dispatchWorkOrderForReport(
+  reportId: string,
+  crewId?: string,
+): Promise<Result<void>> {
+  const staff = await getStaffUser();
+  if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
+
+  const supabase = createServerClient();
+
+  const { error: woError } = await supabase
+    .from("work_orders")
+    .update({
+      dispatched_at: new Date().toISOString(),
+      assigned_crew_id: crewId ?? null,
+    })
+    .eq("report_id", reportId);
+  if (woError) return { ok: false, error: "work_order_update_failed" };
+
+  const { error: reportError } = await supabase
+    .from("reports")
+    .update({ status: "dispatched", updated_at: new Date().toISOString() })
+    .eq("id", reportId);
   if (reportError) return { ok: false, error: "status_update_failed" };
 
   return { ok: true, data: undefined };
@@ -219,7 +243,10 @@ export async function addWorkOrderComment(
  */
 export async function fetchQueuedWorkOrders(
   afterTimestamp: string,
-): Promise<Result<WorkOrderWithDetails[]>> {
+): Promise<
+  | { ok: true; data: WorkOrderWithDetails[]; fetchedAt: string }
+  | { ok: false; error: string }
+> {
   const staff = await getStaffUser();
   if (!staff) return { ok: false, error: "Unauthorized" };
 
@@ -261,6 +288,10 @@ export async function fetchQueuedWorkOrders(
 
   if (error) return { ok: false, error: error.message };
 
+  // Capture server-side query time so callers can advance poll cursors without
+  // relying on client clocks (avoids skew between browser and DB server).
+  const fetchedAt = new Date().toISOString();
+
   const result = (data ?? [])
     .map((row: Record<string, unknown>) => {
       const report = Array.isArray(row.reports)
@@ -298,5 +329,5 @@ export async function fetchQueuedWorkOrders(
     })
     .filter(Boolean) as WorkOrderWithDetails[];
 
-  return { ok: true, data: result };
+  return { ok: true, data: result, fetchedAt };
 }

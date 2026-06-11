@@ -143,6 +143,147 @@
   }
 }
 
+/* ── Skeleton shimmer (loading placeholders) ──
+   A diagonal highlight sweeps across a neutral surface. Consumed by loading.tsx
+   route shells + any inline placeholder. Compositor-friendly (background-position
+   only). prefers-reduced-motion drops the sweep but keeps the resting surface so
+   the placeholder still reads as "loading", just static. */
+@keyframes skeleton-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+/* Soft breathing layered under the sweep so the surface gently pulses rather
+   than sitting flat — reads calmer than Tailwind's animate-pulse hard dip. */
+@keyframes skeleton-breathe {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+/* One-shot ease-in so skeleton blocks fade up on mount instead of popping. */
+@keyframes skeleton-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.skeleton {
+  border-radius: inherit;
+  background-color: var(--color-surface);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation:
+    skeleton-in 0.4s ease-out both,
+    skeleton-shimmer 2s ease-in-out 0.4s infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background-image: none;
+  }
+}
+
+/* ── Sliding-pill indicator (segmented controls / nav) ──
+   Drives the eased slide for the active-segment pill. Authored as a real class
+   (not a Tailwind arbitrary `transition-[...]`) so the multi-property transition
+   is emitted reliably and reduced motion can be honored centrally. Geometry
+   (transform/width) is supplied inline by the component via useSlidingPill. */
+.pill-slide {
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease-out;
+  will-change: transform, width;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pill-slide {
+    transition: opacity 0.2s ease-out;
+  }
+}
+
+/* ── Route enter (per-navigation fade) ──
+   Applied by app/template.tsx, which remounts on every navigation so this
+   replays each route change — softening both the loading skeleton's entrance
+   and the resolved content. Compositor-only. Honors reduced motion. */
+@keyframes route-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.route-enter {
+  animation: route-fade-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-enter {
+    animation: none;
+  }
+}
+
+/* ── Fade-up entrance + stagger helper ──
+   .fade-up plays a single compositor-only rise on mount. Wrap children in
+   .stagger-children and set style={{ "--stagger-index": i }} on each child to
+   ramp their delay (60ms steps). Reduced motion renders everything instantly. */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up {
+  animation: fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.stagger-children > * {
+  --stagger-delay: calc(var(--stagger-index, 0) * 60ms);
+  animation: fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) var(--stagger-delay) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fade-up,
+  .stagger-children > * {
+    animation: none;
+  }
+}
+
+/* ── Page enter (route transitions) ──
+   Applied to the layout's main content wrapper so route changes ease in rather
+   than hard-cutting. Compositor-only. Honors reduced motion. */
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: page-fade-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation: none;
+  }
+}
+
+/* ── City switcher popover pop (moved out of an inline <style> in the
+   component so it can be motion-guarded centrally) ── */
+@keyframes city-pop {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-\[city-pop_120ms_ease-out\] {
+    animation: none;
+  }
+}
+
+/* ── Backdrop fade-in (bottom-sheet / drawer scrims) ── */
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-backdrop-in {
+  animation: backdrop-in 200ms ease both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-backdrop-in {
+    animation: none;
+  }
+}
+
 /* ── Safe-area utilities (notch / home-indicator insets) ── */
 .pt-safe { padding-top: env(safe-area-inset-top); }
 .pb-safe { padding-bottom: env(safe-area-inset-bottom); }

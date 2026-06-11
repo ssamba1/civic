@@ -200,20 +200,27 @@ export const CATEGORY_SLA_TARGETS: Record<ReportCategory, number> = {
 };
 
 /* ------------------------------------------------------------------
-   Data fetching — mock until Supabase tables exist
-   TODO: Replace with real Supabase queries once the civic schema is migrated
+   Data fetching
    ------------------------------------------------------------------ */
 
-// TODO: Replace with real Supabase query: `select * from cities where slug = $slug limit 1`
-// The UUID below is a deterministic placeholder — real rows will have actual Postgres UUIDs.
+// Placeholder UUID — only ever returned when the DB lookup fails, so readers
+// and writers don't disagree silently (they share the resolved real row below).
 const CITY_SLUG_TO_UUID: Record<string, string> = {
   cumming: "00000000-0000-0000-0000-000000000001",
 };
 
+// Module-level cache: slug -> resolved real City row. fetchCity is called on
+// every dashboard render; one round-trip per slug per process is plenty.
+const _cityCache = new Map<string, City>();
+
 export async function fetchCity(slug: string): Promise<City | null> {
   const known = KNOWN_CITIES[slug];
   if (!known) return null;
-  return {
+
+  const cached = _cityCache.get(slug);
+  if (cached) return cached;
+
+  const fallback: City = {
     id: CITY_SLUG_TO_UUID[slug] ?? "00000000-0000-0000-0000-000000000000",
     slug,
     name: known.name,
@@ -222,6 +229,26 @@ export async function fetchCity(slug: string): Promise<City | null> {
     open311_jurisdiction_id: null,
     active: true,
   };
+
+  try {
+    const { createServerClient } = await import("@/lib/db/client");
+    const db = createServerClient();
+    const { data, error } = await db
+      .from("cities")
+      .select("id, slug, name, state, open311_jurisdiction_id, active")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (error || !data) {
+      console.warn("dashboard-data: falling back to placeholder city");
+      return fallback;
+    }
+    const city: City = { ...(data as Omit<City, "boundary">), boundary: null };
+    _cityCache.set(slug, city);
+    return city;
+  } catch {
+    console.warn("dashboard-data: falling back to placeholder city");
+    return fallback;
+  }
 }
 
 /* ------------------------------------------------------------------

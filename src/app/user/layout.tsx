@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { getAuthUser } from "@/lib/db/ssr-client";
 import { UserNav } from "@/components/resident/user-nav";
 import { ViewSwitch } from "@/components/view-switch";
 
@@ -6,6 +8,9 @@ export default async function UserLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const user = await getAuthUser();
+  if (!user) redirect("/login");
+
   return (
     <div className="flex min-h-dvh flex-col bg-black text-zinc-100">
       <UserNav />

@@ -12,8 +12,8 @@ type Mode = "signin" | "signup";
 // DEMO ONLY: in dev, prefill a known admin so clicking "Sign in" just works.
 // Never active in production builds.
 const DEV_PREFILL = process.env.NODE_ENV !== "production";
-const DEV_EMAIL = "admin@civicdemo.com";
-const DEV_PASSWORD = "civic-admin-2026";
+const DEV_EMAIL = process.env.NODE_ENV !== "production" ? "admin@civicdemo.com" : "";
+const DEV_PASSWORD = process.env.NODE_ENV !== "production" ? "civic-admin-2026" : "";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -99,6 +99,34 @@ export default function LoginForm() {
 
   return (
     <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-[var(--background)] px-4 pt-[max(3rem,env(safe-area-inset-top,0px))] pb-[max(3rem,env(safe-area-inset-bottom,0px))] text-[var(--foreground)]">
+      <style>{`
+        @keyframes lf-card-in {
+          from { opacity: 0; transform: translateY(16px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes lf-logo-in {
+          from { opacity: 0; transform: translateY(-6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes lf-fade-down {
+          from { opacity: 0; transform: translateY(-4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .lf-card { animation: lf-card-in 320ms cubic-bezier(0.22,1,0.36,1) both; }
+        .lf-logo { animation: lf-logo-in 360ms cubic-bezier(0.22,1,0.36,1) 80ms both; }
+        .lf-fade-down { animation: lf-fade-down 200ms cubic-bezier(0.22,1,0.36,1) both; }
+        .lf-expand {
+          display: grid;
+          grid-template-rows: 0fr;
+          transition: grid-template-rows 260ms cubic-bezier(0.22,1,0.36,1);
+        }
+        .lf-expand.lf-open { grid-template-rows: 1fr; }
+        .lf-expand > * { overflow: hidden; min-height: 0; }
+        @media (prefers-reduced-motion: reduce) {
+          .lf-card, .lf-logo, .lf-fade-down { animation: none; }
+          .lf-expand { transition: none; }
+        }
+      `}</style>
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-[0.35]"
@@ -110,7 +138,7 @@ export default function LoginForm() {
 
       <Link
         href="/"
-        className="relative z-10 mb-6 sm:mb-10 flex items-center gap-2 text-2xl font-semibold tracking-tight"
+        className="lf-logo relative z-10 mb-6 sm:mb-10 flex items-center gap-2 text-2xl font-semibold tracking-tight"
       >
         <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-primary)] text-white shadow-[0_8px_24px_-8px_rgba(10,132,255,0.6)]">
           <MapPin className="h-5 w-5" />
@@ -119,9 +147,9 @@ export default function LoginForm() {
       </Link>
 
       <div className="relative z-10 w-full max-w-[400px]">
-        <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)]/60 p-5 sm:p-7 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+        <div className="lf-card rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)]/60 p-5 sm:p-7 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.35)] backdrop-blur-xl">
           <div className="flex items-center justify-between">
-            <div>
+            <div key={mode} className="lf-fade-down">
               <h1 className="text-[22px] font-semibold tracking-tight">
                 {mode === "signin" ? "Welcome back" : "Create account"}
               </h1>
@@ -134,7 +162,10 @@ export default function LoginForm() {
           </div>
 
           {error && (
-            <div className="mt-5 flex items-start gap-2 rounded-xl border border-[var(--color-danger)]/30 bg-[var(--color-danger)]/8 px-3 py-2.5 text-[13px] text-[var(--color-danger)]">
+            <div
+              key={error}
+              className="lf-fade-down mt-5 flex items-start gap-2 rounded-xl border border-[var(--color-danger)]/30 bg-[var(--color-danger)]/8 px-3 py-2.5 text-[13px] text-[var(--color-danger)]"
+            >
               <AlertCircle className="mt-[2px] h-4 w-4 flex-shrink-0" />
               <span className="leading-snug">{error}</span>
             </div>
@@ -144,9 +175,15 @@ export default function LoginForm() {
             type="button"
             onClick={handleGoogle}
             disabled={anyBusy}
-            className="mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-full border border-[var(--color-border)] bg-white px-4 text-[14px] font-medium text-zinc-900 shadow-sm transition-all hover:shadow-md hover:-translate-y-[1px] active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0 dark:bg-white dark:text-zinc-900"
+            className={`mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-full border border-[var(--color-border)] bg-white px-4 text-[14px] font-medium text-zinc-900 shadow-sm transition-all hover:shadow-md motion-safe:hover:-translate-y-[1px] active:translate-y-0 disabled:hover:translate-y-0 dark:bg-white dark:text-zinc-900 ${
+              busy === "google" ? "opacity-70" : "disabled:opacity-50"
+            }`}
           >
-            <GoogleGlyph className="h-5 w-5" />
+            {busy === "google" ? (
+              <Spinner className="h-5 w-5 text-zinc-900" />
+            ) : (
+              <GoogleGlyph className="h-5 w-5" />
+            )}
             {busy === "google"
               ? "Redirecting…"
               : mode === "signin"
@@ -160,7 +197,7 @@ export default function LoginForm() {
             <span className="h-px flex-1 bg-[var(--color-border)]" />
           </div>
 
-          {!showEmail ? (
+          {!showEmail && (
             <button
               type="button"
               onClick={() => setShowEmail(true)}
@@ -170,8 +207,10 @@ export default function LoginForm() {
               <Mail className="h-4 w-4" />
               Continue with email
             </button>
-          ) : (
-            <form onSubmit={handleEmail} className="space-y-3">
+          )}
+          <div className={`lf-expand ${showEmail ? "lf-open" : ""}`}>
+            <div>
+              <form onSubmit={handleEmail} className="space-y-3 pt-px">
               <FieldIcon icon={<Mail className="h-4 w-4" />}>
                 <input
                   type="email"
@@ -203,14 +242,15 @@ export default function LoginForm() {
               <button
                 type="submit"
                 disabled={anyBusy}
-                className="group mt-1 flex h-12 w-full items-center justify-center gap-1.5 rounded-full bg-[var(--color-primary)] text-[14px] font-semibold text-white shadow-[0_10px_30px_-10px_rgba(10,132,255,0.7)] transition-all hover:bg-[var(--color-primary-hover)] hover:-translate-y-[1px] active:translate-y-0 disabled:opacity-60 disabled:hover:translate-y-0"
+                className={`group mt-1 flex h-12 w-full items-center justify-center gap-1.5 rounded-full bg-[var(--color-primary)] text-[14px] font-semibold text-white shadow-[0_10px_30px_-10px_rgba(10,132,255,0.7)] transition-all hover:bg-[var(--color-primary-hover)] motion-safe:hover:-translate-y-[1px] active:translate-y-0 disabled:hover:translate-y-0 ${
+                  busy === "email" ? "opacity-70" : "disabled:opacity-60"
+                }`}
               >
                 {busy === "email" ? (
-                  mode === "signin" ? (
-                    "Signing in…"
-                  ) : (
-                    "Creating account…"
-                  )
+                  <>
+                    <Spinner className="h-4 w-4 text-white" />
+                    {mode === "signin" ? "Signing in…" : "Creating account…"}
+                  </>
                 ) : (
                   <>
                     {mode === "signin" ? "Sign in" : "Create account"}
@@ -218,16 +258,26 @@ export default function LoginForm() {
                   </>
                 )}
               </button>
-            </form>
-          )}
+              </form>
+            </div>
+          </div>
 
           <button
             type="button"
             onClick={handleGuest}
             disabled={anyBusy}
-            className="mt-3 h-11 w-full rounded-full text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--foreground)] disabled:opacity-50"
+            className={`mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-full text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--foreground)] ${
+              busy === "guest" ? "opacity-60" : "disabled:opacity-50"
+            }`}
           >
-            {busy === "guest" ? "Signing in…" : "Continue as guest"}
+            {busy === "guest" ? (
+              <>
+                <Spinner className="h-4 w-4" />
+                Signing in…
+              </>
+            ) : (
+              "Continue as guest"
+            )}
           </button>
 
           <DemoSignIn error={demoError} />
@@ -297,12 +347,38 @@ function FieldIcon({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative rounded-xl border border-[var(--color-border)] bg-[var(--background)] transition-colors focus-within:border-[var(--color-primary)] focus-within:ring-2 focus-within:ring-[var(--color-primary)]/20">
-      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)]">
+    <div className="group/field relative rounded-xl border border-[var(--color-border)] bg-[var(--background)] transition-colors focus-within:border-[var(--color-primary)] focus-within:ring-2 focus-within:ring-[var(--color-primary)]/20">
+      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)] transition-colors group-focus-within/field:text-[var(--color-primary)]">
         {icon}
       </span>
       {children}
     </div>
+  );
+}
+
+function Spinner({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`animate-spin ${className ?? ""}`}
+      aria-hidden
+      fill="none"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        opacity="0.25"
+      />
+      <path
+        d="M21 12a9 9 0 0 0-9-9"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 

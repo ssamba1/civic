@@ -83,9 +83,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result.data, { status: 200 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    console.error("[classify] unhandled error:", err);
     return NextResponse.json(
-      { error: `Unexpected error: ${message}` },
+      { error: "Internal error" },
       { status: 500 },
     );
   }

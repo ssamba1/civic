@@ -28,12 +28,31 @@ export default function StaffStatsPage() {
           </p>
         </section>
 
-        <Suspense fallback={null}>
+        <Suspense fallback={<StatsBentoSkeleton />}>
           <FilterProvider corpus={corpus} now={now}>
             <AnalyticsInteractive />
           </FilterProvider>
         </Suspense>
       </div>
+    </div>
+  );
+}
+
+// Bento-grid ghost matching the analytics layout — prevents the empty→full
+// layout jump when AnalyticsInteractive streams in. Pulse-only, dark theme.
+function StatsBentoSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {[
+        "h-28", "h-28", "h-28", "h-28",
+        "h-64 sm:col-span-2", "h-64 sm:col-span-2",
+        "h-72 lg:col-span-3", "h-72",
+      ].map((h, i) => (
+        <div
+          key={i}
+          className={`${h} animate-pulse rounded-2xl border border-zinc-800 bg-zinc-900/60`}
+        />
+      ))}
     </div>
   );
 }

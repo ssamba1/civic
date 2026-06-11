@@ -111,6 +111,18 @@ function MobileStepCard({
   onToggle: () => void;
   onRelatedClick: (id: number) => void;
 }) {
+  // Bar fills from 0 → energy% once the card has opened, so the value counts up
+  // rather than snapping to its final width on mount.
+  const [barFill, setBarFill] = useState(false);
+  useEffect(() => {
+    if (!open) {
+      setBarFill(false);
+      return;
+    }
+    const t = setTimeout(() => setBarFill(true), 80);
+    return () => clearTimeout(t);
+  }, [open]);
+
   return (
     <div className="border-b border-[var(--color-border)] last:border-b-0">
       <button
@@ -143,49 +155,56 @@ function MobileStepCard({
         </span>
       </button>
 
-      {open && (
-        <div className="pb-5 pl-[3.75rem] pr-2">
-          <p className="text-[14px] leading-relaxed text-[var(--color-muted)]">{item.content}</p>
+      {/* grid-rows trick animates height from 0fr→1fr with no fixed max-height guesswork */}
+      <div
+        className={`grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="pb-5 pl-[3.75rem] pr-2">
+            <p className="text-[14px] leading-relaxed text-[var(--color-muted)]">{item.content}</p>
 
-          <div className="mt-4 border-t border-[var(--color-border)] pt-3">
-            <div className="mb-1.5 flex items-center justify-between text-[11px]">
-              <span className="text-[var(--color-muted)]">Confidence</span>
-              <span className="font-mono text-[var(--color-foreground)]">{item.energy}%</span>
-            </div>
-            <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--color-surface)]">
-              <div
-                className="h-full rounded-full bg-[var(--color-primary)] transition-all duration-700"
-                style={{ width: `${item.energy}%` }}
-              />
-            </div>
-          </div>
-
-          {item.relatedIds.length > 0 && (
             <div className="mt-4 border-t border-[var(--color-border)] pt-3">
-              <div className="mb-2 text-[10px] uppercase tracking-[0.14em] text-[var(--color-muted)]">
-                Connected
+              <div className="mb-1.5 flex items-center justify-between text-[11px]">
+                <span className="text-[var(--color-muted)]">Confidence</span>
+                <span className="font-mono text-[var(--color-foreground)]">{item.energy}%</span>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {item.relatedIds.map((relId) => {
-                  const rel = CIVIC_STEPS.find((i) => i.id === relId);
-                  if (!rel) return null;
-                  return (
-                    <Button
-                      key={relId}
-                      variant="outline"
-                      size="sm"
-                      className="min-h-[44px] min-w-[44px] rounded-full px-3 text-[11px]"
-                      onClick={() => onRelatedClick(relId)}
-                    >
-                      {rel.title}
-                    </Button>
-                  );
-                })}
+              <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--color-surface)]">
+                <div
+                  className="h-full rounded-full bg-[var(--color-primary)] transition-[width] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                  style={{ width: barFill ? `${item.energy}%` : "0%" }}
+                />
               </div>
             </div>
-          )}
+
+            {item.relatedIds.length > 0 && (
+              <div className="mt-4 border-t border-[var(--color-border)] pt-3">
+                <div className="mb-2 text-[10px] uppercase tracking-[0.14em] text-[var(--color-muted)]">
+                  Connected
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {item.relatedIds.map((relId) => {
+                    const rel = CIVIC_STEPS.find((i) => i.id === relId);
+                    if (!rel) return null;
+                    return (
+                      <Button
+                        key={relId}
+                        variant="outline"
+                        size="sm"
+                        className="min-h-[44px] min-w-[44px] rounded-full px-3 text-[11px]"
+                        onClick={() => onRelatedClick(relId)}
+                      >
+                        {rel.title}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -393,6 +412,29 @@ export function OrbitalSteps() {
             className="absolute rounded-full border border-dashed border-[var(--color-border)]"
             style={{ width: RADIUS * 2, height: RADIUS * 2 }}
           />
+
+          {/* CSS-only ghost ring — holds the layout before JS hydrates, no empty-box flash */}
+          {!hydrated &&
+            CIVIC_STEPS.map((item, index) => {
+              const angle = (index / CIVIC_STEPS.length) * 360;
+              const radian = (angle * Math.PI) / 180;
+              const x = Math.round(RADIUS * Math.cos(radian) * 100) / 100;
+              const y = Math.round(RADIUS * Math.sin(radian) * 100) / 100;
+              return (
+                <div
+                  key={item.id}
+                  aria-hidden
+                  className="absolute"
+                  style={{ transform: `translate(${x}px, ${y}px)`, opacity: 0.6 }}
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[var(--color-border)] bg-[var(--color-background)]">
+                    <span className="font-mono text-[14px] font-semibold tabular-nums text-[var(--color-muted)]">
+                      {item.id}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
 
           {hydrated && CIVIC_STEPS.map((item, index) => {
             const pos = calculatePosition(index, CIVIC_STEPS.length);

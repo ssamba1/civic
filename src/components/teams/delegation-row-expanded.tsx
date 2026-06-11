@@ -2,7 +2,6 @@
 
 import { memo, useEffect, useState } from "react";
 import {
-  Loader2,
   ImageOff,
   Plus,
   Send,
@@ -283,7 +282,14 @@ function DelegationRowExpandedInner({
 
         <div className="min-w-0 flex flex-col gap-1.5">
           {loading && (
-            <Loader2 className="h-4 w-4 animate-spin text-zinc-500" />
+            <div
+              className="flex flex-col gap-1.5"
+              role="status"
+              aria-label="Loading reasoning"
+            >
+              <span className="skeleton h-3 w-full rounded" />
+              <span className="skeleton h-3 w-4/5 rounded" />
+            </div>
           )}
 
           {!loading && error && (

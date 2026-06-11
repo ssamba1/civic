@@ -28,7 +28,9 @@ export function toOpen311Xml(requests: Open311Request[]): string {
     lines.push(`    ${tag("status_notes", r.status_notes)}`);
     lines.push(`    ${tag("service_name", r.service_name)}`);
     lines.push(`    ${tag("service_code", r.service_code)}`);
-    lines.push(`    ${tag("description", r.description)}`);
+    if (r.description !== undefined) {
+      lines.push(`    ${tag("description", r.description)}`);
+    }
     lines.push(`    ${tag("agency_responsible", r.agency_responsible)}`);
     lines.push(`    ${tag("service_notice", r.service_notice)}`);
     lines.push(`    ${tag("requested_datetime", r.requested_datetime)}`);

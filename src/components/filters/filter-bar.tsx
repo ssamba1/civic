@@ -6,6 +6,7 @@ import { DEFAULT_FILTER, type DateRangePreset, PRESET_LABELS } from "@/lib/filte
 import { TEAM_LIST, TEAMS, type TeamId } from "@/lib/teams";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
+import { useSlidingPill } from "@/lib/hooks/use-sliding-pill";
 import BottomSheet from "@/components/ui/bottom-sheet";
 import {
   Calendar,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 import {
   type ReactNode,
+  useCallback,
   useEffect,
   useId,
   useRef,
@@ -62,18 +64,36 @@ function Popover({
   align?: "start" | "end";
 }) {
   const [open, setOpen] = useState(false);
+  // `closing` keeps the panel mounted for one exit-animation frame window so the
+  // popover fades/scales out instead of hard-cutting. mounted = open || closing.
+  const [closing, setClosing] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const panelId = useId();
+
+  const beginClose = useCallback(() => {
+    setOpen(false);
+    setClosing(true);
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => setClosing(false), 100);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!open) return;
     function onPointer(e: PointerEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
+        beginClose();
       }
     }
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") beginClose();
     }
     document.addEventListener("pointerdown", onPointer);
     document.addEventListener("keydown", onKey);
@@ -81,7 +101,7 @@ function Popover({
       document.removeEventListener("pointerdown", onPointer);
       document.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [open, beginClose]);
 
   return (
     <div ref={ref} className="relative">
@@ -90,12 +110,12 @@ function Popover({
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={panelId}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => (open ? beginClose() : setOpen(true))}
         className="contents"
       >
         {trigger(open)}
       </button>
-      {open && (
+      {(open || closing) && (
         <div
           id={panelId}
           role="dialog"
@@ -103,11 +123,13 @@ function Popover({
             "absolute top-[calc(100%+6px)] z-50 min-w-[13rem] origin-top",
             "rounded-[14px] border border-white/[0.08] bg-[#1c1c1e] p-1.5",
             "shadow-[0_16px_40px_-12px_rgba(0,0,0,0.7)] ring-1 ring-black/40",
-            "animate-[popover-in_120ms_ease-out]",
+            closing
+              ? "animate-[popover-out_100ms_ease-in_forwards]"
+              : "animate-[popover-in_120ms_ease-out]",
             align === "end" ? "right-0" : "left-0",
           )}
         >
-          {children(() => setOpen(false))}
+          {children(beginClose)}
         </div>
       )}
     </div>
@@ -146,7 +168,7 @@ function TriggerPill({
       ) : null}
       <ChevronDown
         className={cn(
-          "h-3.5 w-3.5 text-zinc-500 transition-transform",
+          "h-3.5 w-3.5 text-zinc-500 transition-transform motion-reduce:transition-none",
           open && "rotate-180",
         )}
       />
@@ -280,6 +302,12 @@ function SheetSection({
 export function FilterBar() {
   const { filter, patch, reset, isDefault } = useFilters();
   const [sheetOpen, setSheetOpen] = useState(false);
+  // Sliding pill for the desktop date-range segmented control. Tracks the active
+  // preset; on "custom" no preset is active so the pill fades out (the Custom
+  // trigger keeps its own highlight).
+  const { trackRef: rangeTrackRef, pill: rangePill } = useSlidingPill(
+    filter.preset === "custom" ? undefined : filter.preset,
+  );
 
   const statusCount = filter.statuses.length;
   const categoryCount = filter.categories.length;
@@ -305,7 +333,7 @@ export function FilterBar() {
           DESKTOP (md+): unchanged inline bar
           ============================================================ */}
       <div className="hidden md:block rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] px-3 py-2.5">
-        <style>{`@keyframes popover-in{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}`}</style>
+        <style>{`@media (prefers-reduced-motion:no-preference){@keyframes popover-in{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}@keyframes popover-out{from{opacity:1;transform:none}to{opacity:0;transform:scale(.98)}}}`}</style>
 
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
           <span className="inline-flex items-center gap-1.5 pr-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500">
@@ -346,7 +374,7 @@ export function FilterBar() {
                 <span className="text-white">{activeTeam.shortLabel}</span>
                 <ChevronDown
                   className={cn(
-                    "h-3.5 w-3.5 text-zinc-500 transition-transform",
+                    "h-3.5 w-3.5 text-zinc-500 transition-transform motion-reduce:transition-none",
                     open && "rotate-180",
                   )}
                 />
@@ -390,16 +418,30 @@ export function FilterBar() {
           </Popover>
 
           {/* ---- Date range: segmented control + custom popover ---- */}
-          <div className="inline-flex items-center rounded-[10px] border border-white/[0.08] bg-black/30 p-0.5">
+          <div
+            ref={rangeTrackRef}
+            className="relative inline-flex items-center rounded-[10px] border border-white/[0.08] bg-black/30 p-0.5"
+          >
+            {/* Sliding active pill — eases between presets instead of hard-swapping. */}
+            <span
+              aria-hidden="true"
+              className="pill-slide pointer-events-none absolute top-0.5 bottom-0.5 left-0 z-0 rounded-[7px] bg-[#0a84ff] shadow-[0_1px_2px_rgba(0,0,0,0.4)]"
+              style={{
+                width: rangePill.width,
+                transform: `translateX(${rangePill.left}px)`,
+                opacity: rangePill.ready ? 1 : 0,
+              }}
+            />
             {PRESETS.filter((p) => p !== "custom").map((p) => (
               <button
                 key={p}
                 type="button"
+                data-pill-active={filter.preset === p || undefined}
                 onClick={() => patch({ preset: p })}
                 className={cn(
-                  "rounded-[7px] px-2.5 py-1 text-[12px] font-medium transition-colors",
+                  "relative z-10 rounded-[7px] px-2.5 py-1 text-[12px] font-medium transition-colors",
                   filter.preset === p
-                    ? "bg-[#0a84ff] text-white shadow-[0_1px_2px_rgba(0,0,0,0.4)]"
+                    ? "text-white"
                     : "text-zinc-400 hover:text-white",
                 )}
               >
@@ -410,7 +452,7 @@ export function FilterBar() {
               trigger={(open) => (
                 <span
                   className={cn(
-                    "inline-flex items-center gap-1 rounded-[7px] px-2.5 py-1 text-[12px] font-medium transition-colors",
+                    "relative z-10 inline-flex items-center gap-1 rounded-[7px] px-2.5 py-1 text-[12px] font-medium transition-colors",
                     filter.preset === "custom"
                       ? "bg-[#0a84ff] text-white shadow-[0_1px_2px_rgba(0,0,0,0.4)]"
                       : "text-zinc-400 hover:text-white",
@@ -600,7 +642,7 @@ export function FilterBar() {
                   onClick={() =>
                     patch({ categories: toggle(filter.categories, cat) })
                   }
-                  className="group inline-flex h-7 items-center gap-1.5 rounded-full border px-2 text-[11px] font-medium text-white transition-colors"
+                  className="group inline-flex h-7 items-center gap-1.5 rounded-full border px-2 text-[11px] font-medium text-white transition-[colors,transform] active:scale-95 active:opacity-70 motion-reduce:active:scale-100"
                   style={{
                     borderColor: `${meta.color}66`,
                     backgroundColor: `${meta.color}1f`,

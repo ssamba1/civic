@@ -141,6 +141,9 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
   const [decided, setDecided] = useState(false);
   const [useNative, setUseNative] = useState(false);
   const [camFailed, setCamFailed] = useState(false);
+  // Incremented by "Try Again" to re-trigger the camera effect without
+  // needing to call startCamera() imperatively after state resets.
+  const [retryCount, setRetryCount] = useState(0);
 
   // Viewfinder controls
   const [facingMode, setFacingMode] = useState<"environment" | "user">(
@@ -194,95 +197,81 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
     setDecided(true);
   }, []);
 
-  const startCamera = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
-        audio: false,
-      });
-      // Release any stream a prior acquire left behind (e.g. React dev's
-      // double-invoked effect races two getUserMedia promises) before adopting
-      // this one — otherwise the earlier track leaks and keeps the camera lit.
-      streamRef.current?.getTracks().forEach((t) => {
-        t.stop();
-      });
-      streamRef.current = stream;
-
-      // Probe capabilities for torch + zoom (Android Chrome; iOS Safari omits).
-      const track = stream.getVideoTracks()[0];
-      const caps = (track?.getCapabilities?.() ?? {}) as MediaTrackCapabilities &
-        ExtraCaps;
-      setTorchSupported(Boolean(caps.torch));
-      if (caps.zoom && typeof caps.zoom.max === "number") {
-        setZoomCaps({
-          min: caps.zoom.min ?? 1,
-          max: caps.zoom.max,
-          step: caps.zoom.step ?? 0.1,
-        });
-        setZoom(caps.zoom.min ?? 1);
-      } else {
-        setZoomCaps(null);
-      }
-
-      const video = videoRef.current;
-      if (video) {
-        // Legacy iOS attribute — required on older Safari to keep the stream
-        // inline and avoid the fullscreen/start-playback affordance.
-        video.setAttribute("webkit-playsinline", "true");
-        // Attach readiness handlers BEFORE srcObject so a fast-firing event
-        // isn't missed, then nudge playback — autoPlay alone can stall on some
-        // browsers. `onplaying` is the authoritative "frames are flowing" signal
-        // (after it, iOS has dropped the start-playback overlay); the others are
-        // earlier fallbacks so the 4s timeout doesn't trip on a slow device.
-        video.onloadedmetadata = markReady;
-        video.oncanplay = markReady;
-        video.onplaying = markReady;
-        video.srcObject = stream;
-        video.play().catch(() => {
-          /* autoplay may reject; canplay/metadata still flips ready */
-        });
-      }
-    } catch (err) {
-      if (err instanceof DOMException && err.name === "NotAllowedError") {
-        setError(
-          "Camera access denied. Allow camera permissions and reload, or upload a photo instead.",
-        );
-      } else if (err instanceof DOMException && err.name === "NotFoundError") {
-        setError("No camera found on this device.");
-      } else {
-        // Unknown failure (often a webview that blocks getUserMedia): silently
-        // drop to the native camera input rather than dead-end the user.
-        setCamFailed(true);
-      }
-    }
-  }, [facingMode, markReady]);
-
   // Open the live viewfinder on mount and whenever the camera (facingMode)
   // changes. A timeout drops to the native input if no frame arrives.
   useEffect(() => {
     if (!decided || useNative || camFailed) return;
     readyRef.current = false;
     setReady(false);
-    startCamera();
+
+    // cancelled flag: if the effect cleans up while getUserMedia is still
+    // awaiting (StrictMode double-mount / rapid facingMode flip), the resolved
+    // stream must be stopped immediately — it won't be in streamRef yet.
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
+          audio: false,
+        });
+        if (cancelled) {
+          // Effect already cleaned up while the promise was in-flight — stop
+          // the stream that arrived too late so the camera indicator goes dark.
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        // Release any prior stream before adopting this one.
+        streamRef.current?.getTracks().forEach((t) => t.stop());
+        streamRef.current = stream;
+
+        const track = stream.getVideoTracks()[0];
+        const caps = (track?.getCapabilities?.() ?? {}) as MediaTrackCapabilities & ExtraCaps;
+        setTorchSupported(Boolean(caps.torch));
+        if (caps.zoom && typeof caps.zoom.max === "number") {
+          setZoomCaps({ min: caps.zoom.min ?? 1, max: caps.zoom.max, step: caps.zoom.step ?? 0.1 });
+          setZoom(caps.zoom.min ?? 1);
+        } else {
+          setZoomCaps(null);
+        }
+
+        const video = videoRef.current;
+        if (video) {
+          video.setAttribute("webkit-playsinline", "true");
+          video.onloadedmetadata = markReady;
+          video.oncanplay = markReady;
+          video.onplaying = markReady;
+          video.srcObject = stream;
+          video.play().catch(() => { /* canplay/metadata still flips ready */ });
+        }
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof DOMException && err.name === "NotAllowedError") {
+          setError("Camera access denied. Allow camera permissions and reload, or upload a photo instead.");
+        } else if (err instanceof DOMException && err.name === "NotFoundError") {
+          setError("No camera found on this device.");
+        } else {
+          setCamFailed(true);
+        }
+      }
+    };
+
+    run();
+
     const timeout = setTimeout(() => {
       if (!readyRef.current) {
-        streamRef.current?.getTracks().forEach((t) => {
-          t.stop();
-        });
+        streamRef.current?.getTracks().forEach((t) => t.stop());
         setCamFailed(true);
       }
     }, VIEWFINDER_READY_TIMEOUT_MS);
+
     return () => {
+      cancelled = true;
       clearTimeout(timeout);
-      streamRef.current?.getTracks().forEach((t) => {
-        t.stop();
-      });
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
     };
-  }, [decided, useNative, camFailed, startCamera]);
+  }, [decided, useNative, camFailed, facingMode, markReady, retryCount]);
 
   // Apply torch on/off without restarting the stream.
   const toggleTorch = useCallback(async () => {
@@ -470,7 +459,8 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
             setError(null);
             setReady(false);
             readyRef.current = false;
-            startCamera();
+            // Increment retryCount to re-trigger the camera effect.
+            setRetryCount((c) => c + 1);
           }}
           className="rounded-full border border-zinc-600 px-6 py-3 min-h-[44px] text-sm font-semibold text-white active:scale-95 transition-transform"
         >
@@ -548,12 +538,34 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
         </div>
       )}
 
-      {/* Shutter flash */}
-      {flash && <div className="absolute inset-0 z-30 bg-white animate-none" />}
+      {/* Shutter flash — scoped keyframe (globals.css is owned elsewhere).
+          Reduced-motion: a brief static flash still reads as capture feedback. */}
+      {flash && (
+        <div className="pointer-events-none absolute inset-0 z-30 bg-white report-shutter-flash" />
+      )}
+      <style>{`
+        @keyframes report-shutter-flash-kf {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
+        .report-shutter-flash { opacity: 0; }
+        @keyframes report-fade-in-kf {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: no-preference) {
+          .report-shutter-flash {
+            animation: report-shutter-flash-kf 180ms ease-out forwards;
+          }
+          .report-fade-in {
+            animation: report-fade-in-kf 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+          }
+        }
+      `}</style>
 
       {/* Top-right tool cluster: torch (if supported) + grid toggle */}
       {ready && (
-        <div className="absolute right-4 top-4 z-20 flex flex-col gap-3 pt-safe">
+        <div className="report-fade-in absolute right-4 top-4 z-20 flex flex-col gap-3 pt-safe">
           {torchSupported && (
             <button
               type="button"
@@ -587,7 +599,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
 
       {/* Zoom pills (only where the track reports zoom support) */}
       {ready && zoomLevels.length > 1 && (
-        <div className="absolute inset-x-0 bottom-44 z-20 flex justify-center">
+        <div className="report-fade-in absolute inset-x-0 bottom-44 z-20 flex justify-center">
           <div className="flex items-center gap-2 rounded-full bg-black/40 p-1.5 backdrop-blur-sm">
             {zoomLevels.map((z) => {
               const active = z === activeZoom;

@@ -18,12 +18,19 @@ function freshKey(label: string): string {
 }
 
 describe("clientIp", () => {
-  it("parses the first IP of x-forwarded-for and trims it", () => {
+  it("prefers x-real-ip over x-forwarded-for (XFF first entry is spoofable)", () => {
     const req = reqWithHeaders({
       "x-forwarded-for": "  203.0.113.7 , 70.41.3.18, 150.172.238.178",
       "x-real-ip": "10.0.0.1",
     });
-    expect(clientIp(req)).toBe("203.0.113.7");
+    expect(clientIp(req)).toBe("10.0.0.1");
+  });
+
+  it("uses the LAST x-forwarded-for entry when no platform header is set", () => {
+    const req = reqWithHeaders({
+      "x-forwarded-for": "  203.0.113.7 , 70.41.3.18, 150.172.238.178  ",
+    });
+    expect(clientIp(req)).toBe("150.172.238.178");
   });
 
   it("handles a single-value x-forwarded-for", () => {

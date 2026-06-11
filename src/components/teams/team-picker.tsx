@@ -92,11 +92,15 @@ export function TeamPicker({
       {open && (
         <div
           role="listbox"
-          style={{ width: menuWidth }}
+          style={{
+            width: menuWidth,
+            transformOrigin: align === "right" ? "top right" : "top left",
+          }}
           className={cn(
             "absolute z-30 mt-1.5 overflow-hidden rounded-lg border border-white/[0.08]",
             "bg-[#1c1c1e] shadow-[0_12px_32px_-12px_rgba(0,0,0,0.7)]",
             "max-w-[min(92vw,240px)]",
+            "origin-top animate-[city-pop_120ms_ease-out]",
             align === "right" ? "right-0" : "left-0",
           )}
         >

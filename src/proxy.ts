@@ -1,6 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
+// Open311 spec-compliant clients append .json/.xml extensions. Rewrite to
+// canonical routes before auth/public-route checks so they resolve correctly.
+const OPEN311_JSON_REWRITES: [RegExp, string][] = [
+  [/^\/api\/open311\/v2\/services\.json$/, "/api/open311/v2/services"],
+  [/^\/api\/open311\/v2\/requests\.json$/, "/api/open311/v2/requests"],
+  [/^\/api\/open311\/v2\/requests\/([^/]+)\.json$/, "/api/open311/v2/requests/$1"],
+];
+
 const PUBLIC_ROUTES = ["/", "/login", "/report", "/offline"];
 
 const PUBLIC_PREFIXES = [
@@ -54,6 +62,18 @@ function buildCsp(nonce: string, isDev: boolean): string {
 }
 
 export async function proxy(request: NextRequest) {
+  // Rewrite Open311 .json extension URLs to canonical paths (spec §2.1 format suffix)
+  for (const [pattern, replacement] of OPEN311_JSON_REWRITES) {
+    const match = request.nextUrl.pathname.match(pattern);
+    if (match) {
+      const url = request.nextUrl.clone();
+      url.pathname = match[1]
+        ? replacement.replace("$1", match[1])
+        : replacement;
+      return NextResponse.rewrite(url);
+    }
+  }
+
   const { pathname } = request.nextUrl;
   const isDev = process.env.NODE_ENV === "development";
   // btoa (not Buffer) so this runs identically in the Edge runtime Vercel uses

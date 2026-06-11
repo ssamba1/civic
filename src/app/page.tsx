@@ -1,14 +1,46 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { Globe } from "@/components/ui/cobe-globe";
 import { WaveStage } from "@/components/landing/wave-stage";
 import { FAQ } from "@/components/landing/faq";
 import { OrbitalSteps } from "@/components/landing/orbital-steps";
 import { Reveal } from "@/components/landing/reveal";
+import { CountUp } from "@/components/landing/count-up";
 import { Button } from "@/components/ui/button";
 import { fetchReportMarkers } from "@/lib/dashboard-queries";
 
-export default async function HomePage() {
+/** Holds the globe's square footprint while COBE inits — kills the opacity-0 void flash. */
+function GlobeSkeleton() {
+  return (
+    <div className="mx-auto aspect-square w-full max-w-[min(68vw,360px)] sm:max-w-[400px] lg:max-w-none">
+      <div className="h-full w-full animate-pulse rounded-full bg-[var(--color-surface)]" />
+    </div>
+  );
+}
+
+/** Async leaf: the slow DB fetch lives here so the rest of the hero streams immediately. */
+async function GlobeWithData() {
   const reportMarkers = await fetchReportMarkers();
+  return (
+    <Globe
+      className="mx-auto w-full max-w-[min(68vw,360px)] sm:max-w-[400px] lg:max-w-none"
+      markers={reportMarkers}
+      markerColor={[0.04, 0.518, 1]}
+      baseColor={[0.95, 0.96, 0.98]}
+      glowColor={[0.92, 0.94, 0.98]}
+      arcColor={[0.04, 0.518, 1]}
+      dark={0}
+      mapBrightness={5.5}
+      diffuse={1.1}
+      theta={0.28}
+      speed={0.0028}
+      markerSize={0.06}
+      populate={90}
+    />
+  );
+}
+
+export default function HomePage() {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-[var(--color-background)]">
       {/* nav */}
@@ -23,13 +55,13 @@ export default async function HomePage() {
           <nav className="flex items-center gap-1">
             <Link
               href="/city/cumming"
-              className="hidden sm:inline-flex rounded-full px-3 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white"
+              className="hidden rounded-full px-3 py-1.5 text-sm font-medium text-white/70 outline-none transition-colors hover:text-white focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent sm:inline-flex"
             >
               Dashboard
             </Link>
             <Link
               href="/staff"
-              className="hidden sm:inline-flex rounded-full px-3 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white"
+              className="hidden rounded-full px-3 py-1.5 text-sm font-medium text-white/70 outline-none transition-colors hover:text-white focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent sm:inline-flex"
             >
               For cities
             </Link>
@@ -104,21 +136,9 @@ export default async function HomePage() {
           </div>
 
           <div className="relative flex items-center justify-center">
-            <Globe
-              className="mx-auto w-full max-w-[min(68vw,360px)] sm:max-w-[400px] lg:max-w-none"
-              markers={reportMarkers}
-              markerColor={[0.04, 0.518, 1]}
-              baseColor={[0.95, 0.96, 0.98]}
-              glowColor={[0.92, 0.94, 0.98]}
-              arcColor={[0.04, 0.518, 1]}
-              dark={0}
-              mapBrightness={5.5}
-              diffuse={1.1}
-              theta={0.28}
-              speed={0.0028}
-              markerSize={0.06}
-              populate={90}
-            />
+            <Suspense fallback={<GlobeSkeleton />}>
+              <GlobeWithData />
+            </Suspense>
           </div>
         </div>
       </section>
@@ -260,7 +280,7 @@ function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex items-baseline gap-2">
       <dt className="font-display text-[22px] font-medium tracking-tight text-[var(--color-foreground)] tabular-nums">
-        {value}
+        <CountUp value={value} />
       </dt>
       <dd className="text-[12.5px] leading-tight text-[var(--color-muted)]">{label}</dd>
     </div>
@@ -277,12 +297,12 @@ function Feature({
   body: string;
 }) {
   return (
-    <li className="grid grid-cols-[auto_1fr] gap-x-6 py-7">
+    <li className="group grid grid-cols-[auto_1fr] gap-x-6 rounded-lg px-3 -mx-3 py-7 transition-colors duration-200 hover:bg-[var(--color-surface)]/50">
       <span className="pt-1 font-mono text-[12px] tabular-nums text-[var(--color-primary)]">
         {index}
       </span>
       <div>
-        <h3 className="text-[15px] font-semibold tracking-tight text-[var(--color-foreground)]">
+        <h3 className="text-[15px] font-semibold tracking-tight text-[var(--color-foreground)] transition-transform duration-200 group-hover:translate-x-0.5">
           {title}
         </h3>
         <p className="mt-1.5 max-w-xl text-[14px] leading-relaxed text-[var(--color-muted)]">

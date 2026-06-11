@@ -73,8 +73,6 @@ export function CitySwitcher({
 
   return (
     <div ref={ref} className={cn("relative", className)}>
-      <style>{`@keyframes city-pop{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}`}</style>
-
       <button
         type="button"
         aria-haspopup="dialog"

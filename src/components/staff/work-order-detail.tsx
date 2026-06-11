@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import Image from "next/image";
 import {
   X,
@@ -14,6 +14,7 @@ import {
   Brain,
   Upload,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import type {
@@ -95,18 +96,42 @@ export function WorkOrderDetail({
   standalone = true,
 }: WorkOrderDetailProps) {
   const [isPending, startTransition] = useTransition();
+  const [pendingAction, setPendingAction] = useState<
+    "dispatch" | "close" | "reject" | "override" | null
+  >(null);
   const [showRejectInput, setShowRejectInput] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [showOverride, setShowOverride] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  // Confidence bar fills from 0 on mount so the CSS transition fires visibly.
+  const [barFilled, setBarFilled] = useState(false);
 
   const sevConfig = SEVERITY_CONFIG[classification.severity] ?? SEVERITY_CONFIG[3];
   const isDemo =
     report.reporter_id === DEMO_REPORTER_ID || isDemoId(report.id);
 
+  // Auto-clear the success banner after 3s.
+  useEffect(() => {
+    if (!actionSuccess) return;
+    const t = setTimeout(() => setActionSuccess(null), 3000);
+    return () => clearTimeout(t);
+  }, [actionSuccess]);
+
+  // Trigger the confidence-bar grow on mount (next frame so 0→target transitions).
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setBarFilled(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  // Clear the in-flight action marker once the transition settles.
+  useEffect(() => {
+    if (!isPending) setPendingAction(null);
+  }, [isPending]);
+
   function handleDispatch() {
     setActionError(null);
+    setPendingAction("dispatch");
     startTransition(async () => {
       const result = await dispatchWorkOrder(workOrder.id);
       if (result.ok) {
@@ -119,6 +144,7 @@ export function WorkOrderDetail({
 
   function handleClose() {
     setActionError(null);
+    setPendingAction("close");
     startTransition(async () => {
       const result = await closeWorkOrder(workOrder.id);
       if (result.ok) {
@@ -132,6 +158,7 @@ export function WorkOrderDetail({
   function handleReject() {
     if (!rejectReason.trim()) return;
     setActionError(null);
+    setPendingAction("reject");
     startTransition(async () => {
       const result = await rejectReport(report.id, rejectReason);
       if (result.ok) {
@@ -145,6 +172,7 @@ export function WorkOrderDetail({
 
   function handleOverride(newCategory: ReportCategory) {
     setActionError(null);
+    setPendingAction("override");
     startTransition(async () => {
       const result = await overrideClassification(report.id, newCategory);
       if (result.ok) {
@@ -214,7 +242,7 @@ export function WorkOrderDetail({
               </div>
             )}
             {actionSuccess && (
-              <div className="flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
+              <div className="flex animate-in fade-in slide-in-from-top-2 items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700 duration-200 dark:bg-green-900/20 dark:text-green-400">
                 <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
                 {actionSuccess}
               </div>
@@ -301,7 +329,7 @@ export function WorkOrderDetail({
                 <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
                   <div
                     className={cn(
-                      "h-full rounded-full transition-all",
+                      "h-full rounded-full transition-[width] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
                       classification.confidence >= 0.9
                         ? "bg-green-500"
                         : classification.confidence >= 0.7
@@ -309,7 +337,9 @@ export function WorkOrderDetail({
                           : "bg-red-500"
                     )}
                     style={{
-                      width: `${classification.confidence * 100}%`,
+                      width: barFilled
+                        ? `${classification.confidence * 100}%`
+                        : "0%",
                     }}
                   />
                 </div>
@@ -394,7 +424,7 @@ export function WorkOrderDetail({
                       key={cat}
                       onClick={() => handleOverride(cat)}
                       disabled={isPending}
-                      className="flex min-h-11 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-medium capitalize text-zinc-700 transition-colors hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-blue-600 md:min-h-0"
+                      className="flex min-h-11 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-medium capitalize text-zinc-700 transition-[transform,colors] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-blue-300 hover:bg-blue-50 active:scale-95 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-blue-600 md:min-h-0"
                     >
                       {cat.replace("_", " ")}
                     </button>
@@ -420,8 +450,11 @@ export function WorkOrderDetail({
                   <button
                     onClick={handleReject}
                     disabled={isPending || !rejectReason.trim()}
-                    className="flex min-h-11 items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50 md:min-h-0"
+                    className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50 md:min-h-0"
                   >
+                    {pendingAction === "reject" && (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    )}
                     Confirm Reject
                   </button>
                   <button
@@ -471,7 +504,11 @@ export function WorkOrderDetail({
             disabled={isPending}
             className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50 sm:flex-none"
           >
-            <Send className="h-4 w-4" />
+            {pendingAction === "dispatch" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
             Dispatch
           </button>
           <button
@@ -479,7 +516,11 @@ export function WorkOrderDetail({
             disabled={isPending}
             className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50 sm:flex-none"
           >
-            <CheckCircle2 className="h-4 w-4" />
+            {pendingAction === "close" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4" />
+            )}
             Close
           </button>
           <button
@@ -516,11 +557,11 @@ export function WorkOrderDetail({
     <div className="fixed inset-0 z-50 flex items-start justify-end">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+        className="absolute inset-0 animate-in fade-in bg-black/30 backdrop-blur-sm duration-200"
         onClick={onClose}
       />
       {/* Panel */}
-      <div className="relative z-10 flex h-full w-full max-w-2xl flex-col overflow-hidden bg-white shadow-2xl dark:bg-zinc-900">
+      <div className="relative z-10 flex h-full w-full max-w-2xl flex-col overflow-hidden bg-white shadow-2xl animate-in slide-in-from-right duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] dark:bg-zinc-900">
         {panelContent}
       </div>
     </div>

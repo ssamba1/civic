@@ -56,8 +56,13 @@ export async function POST(request: Request) {
       }
     }
 
-    const body = await request.json();
-    const reportId = body?.report_id;
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+    const reportId = (body as Record<string, unknown>)?.report_id;
 
     if (typeof reportId !== "string" || !reportId) {
       return NextResponse.json(
@@ -71,7 +76,7 @@ export async function POST(request: Request) {
 
     if (!report) {
       return NextResponse.json(
-        { error: `Report not found: ${reportId}` },
+        { error: "Report not found" },
         { status: 404 },
       );
     }
@@ -103,9 +108,9 @@ export async function POST(request: Request) {
       status: 200,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    console.error("[reasoning] unhandled error:", err);
     return NextResponse.json(
-      { error: `Unexpected error: ${message}` },
+      { error: "Internal error" },
       { status: 500 },
     );
   }

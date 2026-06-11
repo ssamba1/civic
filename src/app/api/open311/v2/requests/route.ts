@@ -1,10 +1,11 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/db/client";
+import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 import { reportToOpen311, expandStatus } from "@/lib/open311/transform";
 import { toOpen311Xml, toErrorXml } from "@/lib/open311/xml";
 import { getService } from "@/lib/open311/services";
-import { normalizeLocation, type Report, type Classification, type City, type ReportCategory, type ReportStatus } from "@/lib/types";
+import { normalizeLocation, type Report, type Classification, type City, type ReportStatus } from "@/lib/types";
 
 /**
  * GET /api/open311/v2/requests
@@ -15,22 +16,52 @@ import { normalizeLocation, type Report, type Classification, type City, type Re
  *
  * Content negotiation: ?format=xml → XML, otherwise JSON.
  */
+
+/** Safe columns for public GET — no reporter PII, no raw storage paths */
+const PUBLIC_REPORT_SELECT =
+  "id, city_id, location, photo_public_url, status, address, created_at, updated_at, classifications(category, severity, confidence, reasoning, is_emergency), cities!inner(id, name, open311_jurisdiction_id)";
+
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit: 60 requests/min per IP (generous for public spec clients)
+    const rl = checkRateLimit("open311_list:" + clientIp(request), {
+      windowMs: 60_000,
+      max: 60,
+    });
+    if (!rl.allowed) {
+      return errorResponse(429, "Rate limit exceeded", requestWantsXml(request));
+    }
+
     const params = request.nextUrl.searchParams;
     const jurisdictionId = params.get("jurisdiction_id");
     const serviceCode = params.get("service_code");
     const startDate = params.get("start_date");
     const endDate = params.get("end_date");
-    const status = params.get("status") as "open" | "closed" | null;
+    const statusParam = params.get("status");
     const wantsXml = requestWantsXml(request);
+
+    // Reject unknown status values — silently ignoring them violates spec
+    if (statusParam !== null && statusParam !== "open" && statusParam !== "closed") {
+      return errorResponse(400, "status must be 'open' or 'closed'", wantsXml);
+    }
+    const status = statusParam as "open" | "closed" | null;
+
+    // Pagination (Open311 spec §4.2: page + page_size, 1-based page)
+    const pageRaw = params.get("page");
+    const pageSizeRaw = params.get("page_size");
+    const page = pageRaw !== null ? Math.max(1, parseInt(pageRaw, 10) || 1) : 1;
+    const pageSize = pageSizeRaw !== null
+      ? Math.min(200, Math.max(1, parseInt(pageSizeRaw, 10) || 100))
+      : 200;
+    const rangeFrom = (page - 1) * pageSize;
+    const rangeTo = rangeFrom + pageSize - 1;
 
     const db = createServerClient();
 
-    // Build the reports query with LEFT JOIN on classifications
+    // Select only safe public columns — no description, no photo_raw_url, no reporter PII
     let query = db
       .from("reports")
-      .select("*, classifications(*), cities!inner(*)");
+      .select(PUBLIC_REPORT_SELECT);
 
     // Filter by jurisdiction if provided
     if (jurisdictionId) {
@@ -58,8 +89,7 @@ export async function GET(request: NextRequest) {
     // Exclude rejected (and merged) reports from the public feed — H13
     query = query.not("status", "in", '("rejected","merged")');
 
-    // Limit to 200 results (Open311 convention for pagination default)
-    query = query.order("created_at", { ascending: false }).limit(200);
+    query = query.order("created_at", { ascending: false }).range(rangeFrom, rangeTo);
 
     const { data, error } = await query;
 
@@ -75,7 +105,8 @@ export async function GET(request: NextRequest) {
         (row as Record<string, unknown>).classifications != null
           ? ((row as Record<string, unknown[]>).classifications?.[0] ?? null) as Classification | null
           : null;
-      const city: City = (row as Record<string, City>).cities;
+      const cityRaw = (row as Record<string, unknown>).cities;
+      const city = (Array.isArray(cityRaw) ? cityRaw[0] : cityRaw) as City;
       return reportToOpen311(report, classification, city);
     });
 
@@ -142,6 +173,21 @@ export async function POST(request: NextRequest) {
     const lng = parseFloat(body.long);
     if (isNaN(lat) || isNaN(lng)) {
       return errorResponse(400, "lat and long are required numeric fields", wantsXml);
+    }
+    if (lat < -90 || lat > 90) {
+      return errorResponse(400, "lat must be between -90 and 90", wantsXml);
+    }
+    if (lng < -180 || lng > 180) {
+      return errorResponse(400, "long must be between -180 and 180", wantsXml);
+    }
+
+    const description = body.description ?? null;
+    if (description && description.length > 2000) {
+      return errorResponse(400, "description must be 2000 characters or fewer", wantsXml);
+    }
+    const addressString = body.address_string ?? null;
+    if (addressString && addressString.length > 300) {
+      return errorResponse(400, "address_string must be 300 characters or fewer", wantsXml);
     }
 
     const db = createServerClient();
@@ -212,8 +258,8 @@ export async function POST(request: NextRequest) {
         photo_public_url: mediaUrl,
         photo_raw_url: null,
         status: "open" as const,
-        address: body.address_string ?? null,
-        description: body.description ?? null,
+        address: addressString,
+        description: description,
       })
       .select()
       .single();
@@ -307,16 +353,14 @@ function escXml(value: string): string {
     .replace(/>/g, "&gt;");
 }
 
+// Only safe public columns are fetched — no description, no photo_raw_url, no reporter_id
 type ReportRow = {
   id: string;
   city_id: string;
-  reporter_id: string;
   location: unknown;
   photo_public_url: string;
-  photo_raw_url: string | null;
   status: string;
   address: string | null;
-  description: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -325,13 +369,13 @@ function rowToReport(row: ReportRow): Report {
   return {
     id: row.id,
     city_id: row.city_id,
-    reporter_id: row.reporter_id,
+    reporter_id: "",
     location: normalizeLocation(row.location) ?? { lat: 0, lng: 0 },
     photo_public_url: row.photo_public_url,
-    photo_raw_url: row.photo_raw_url,
+    photo_raw_url: null,
     status: row.status as ReportStatus,
     address: row.address,
-    description: row.description,
+    description: null,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };

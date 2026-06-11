@@ -1,5 +1,8 @@
 "use client";
 
+import { useRef } from "react";
+import { useGSAP } from "@gsap/react";
+import { gsap } from "gsap";
 import Link from "next/link";
 
 import { teamIcon } from "@/components/teams/team-icon";
@@ -56,12 +59,70 @@ export default function SubmissionConfirmation({
     : null;
   const ManualTeamIcon = manualTeam ? teamIcon(TEAMS[manualTeam].icon) : null;
 
+  // Orchestrated reveal after the multi-second submit wait: container fades up,
+  // checkmark pops with a soft overshoot, then detail rows stagger in. Wrapped
+  // in matchMedia so reduced-motion users get instant content (opacity reset).
+  const rootRef = useRef<HTMLDivElement>(null);
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+      mm.add(
+        {
+          motion: "(prefers-reduced-motion: no-preference)",
+          reduced: "(prefers-reduced-motion: reduce)",
+        },
+        (ctx) => {
+          const { motion } = ctx.conditions as { motion: boolean };
+          if (!motion) {
+            gsap.set("[data-confirm-fx]", { opacity: 1, y: 0, scale: 1 });
+            return;
+          }
+          // expo.out closely matches cubic-bezier(0.22,1,0.36,1) without needing
+          // the CustomEase plugin (GSAP core doesn't parse raw cubic-bezier).
+          const ease = "expo.out";
+          const tl = gsap.timeline();
+          tl.from("[data-confirm-root]", {
+            opacity: 0,
+            y: 16,
+            duration: 0.35,
+            ease,
+          })
+            .from(
+              "[data-confirm-check]",
+              { opacity: 0, scale: 0.5, duration: 0.34, ease: "back.out(1.7)" },
+              "-=0.1",
+            )
+            .from(
+              "[data-confirm-row]",
+              {
+                opacity: 0,
+                y: 8,
+                duration: 0.3,
+                ease,
+                stagger: 0.05,
+              },
+              "-=0.15",
+            );
+        },
+      );
+    },
+    { scope: rootRef },
+  );
+
   return (
-    <div className="flex flex-col items-center justify-center h-full min-h-dvh bg-white px-6 text-center overflow-y-auto pt-safe pb-safe">
+    <div
+      ref={rootRef}
+      data-confirm-root
+      className="flex flex-col items-center justify-center h-full min-h-dvh bg-white px-6 text-center overflow-y-auto pt-safe pb-safe"
+    >
       {/* Safe-area inner wrapper so content doesn't clip on notched phones */}
       <div className="flex flex-col items-center w-full max-w-sm py-12">
-        {/* Success animation - green check */}
-        <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-100 animate-[scale-in_0.3s_ease-out]">
+        {/* Success animation - green check (GSAP back-out pop on mount) */}
+        <div
+          data-confirm-check
+          data-confirm-fx
+          className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-100"
+        >
           <svg
             className="h-12 w-12 text-green-600"
             fill="none"
@@ -128,7 +189,7 @@ export default function SubmissionConfirmation({
         {/* Report details card — only on a real AI result */}
         {hasAiResult && (
           <div className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 p-5 mb-8 text-left space-y-3">
-            <div className="flex justify-between items-center">
+            <div data-confirm-row data-confirm-fx className="flex justify-between items-center">
               <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
                 Report ID
               </span>
@@ -137,7 +198,7 @@ export default function SubmissionConfirmation({
               </span>
             </div>
             <div className="h-px bg-zinc-200" />
-            <div className="flex justify-between items-center">
+            <div data-confirm-row data-confirm-fx className="flex justify-between items-center">
               <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
                 Category
               </span>
@@ -145,13 +206,13 @@ export default function SubmissionConfirmation({
                 {categoryLabels[classification.category] ?? classification.category}
               </span>
             </div>
-            <div className="flex justify-between items-center">
+            <div data-confirm-row data-confirm-fx className="flex justify-between items-center">
               <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
                 Confidence
               </span>
               <span className="text-sm text-zinc-700">{confidencePct}%</span>
             </div>
-            <div className="flex justify-between items-center">
+            <div data-confirm-row data-confirm-fx className="flex justify-between items-center">
               <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
                 Severity
               </span>
@@ -186,7 +247,7 @@ export default function SubmissionConfirmation({
             Submit Another Report
           </a>
           <a
-            href="/"
+            href="/city/cumming/browse"
             className="w-full rounded-full border border-zinc-300 min-h-[56px] flex items-center justify-center text-center text-sm font-semibold text-zinc-700 active:bg-zinc-100 transition-colors"
           >
             View Dashboard

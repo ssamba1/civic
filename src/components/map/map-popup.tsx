@@ -117,8 +117,9 @@ export function renderPopupHTML(report: DashboardReport): string {
   const isDemo = report.demo === true || report.reporter_id === DEMO_REPORTER_ID;
 
   return `
+    <style>@keyframes popupShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}@media (prefers-reduced-motion:reduce){.popup-img-shimmer{animation:none!important}}</style>
     <div class="${isDemo ? "demo-glow" : ""}" style="width:100%;max-width:min(300px,90vw);border-radius:12px;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',Inter,system-ui,sans-serif;color:#f5f5f7;">
-      <div style="position:relative;width:100%;height:140px;border-radius:12px 12px 0 0;overflow:hidden;background:#1c1c1e;">
+      <div class="popup-img-shimmer" style="position:relative;width:100%;height:140px;border-radius:12px 12px 0 0;overflow:hidden;background:linear-gradient(110deg,#1c1c1e 30%,#2c2c2e 50%,#1c1c1e 70%);background-size:200% 100%;animation:popupShimmer 1.4s linear infinite;">
         <img
           src="${esc(report.photo_public_url)}"
           alt="${esc(meta.label)} report"

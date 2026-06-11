@@ -23,18 +23,26 @@ interface RateLimitResult {
 const windows = new Map<string, WindowState>();
 
 /**
- * Best-effort client IP: first entry of `x-forwarded-for`, else `x-real-ip`,
- * else "unknown".
+ * Best-effort client IP. Priority order (spoof-resistant):
+ *   1. x-real-ip       — set by nginx/proxy, not user-controllable
+ *   2. cf-connecting-ip — Cloudflare's authoritative client IP
+ *   3. LAST entry of x-forwarded-for — outermost proxy appends; harder to spoof
+ *      than the first entry, which an attacker controls in their own request headers
+ *   4. "unknown"
  */
 export function clientIp(req: Request): string {
-  const forwarded = req.headers.get("x-forwarded-for");
-  if (forwarded) {
-    const first = forwarded.split(",")[0]?.trim();
-    if (first) return first;
-  }
-
   const realIp = req.headers.get("x-real-ip")?.trim();
   if (realIp) return realIp;
+
+  const cfIp = req.headers.get("cf-connecting-ip")?.trim();
+  if (cfIp) return cfIp;
+
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) {
+    const entries = forwarded.split(",");
+    const last = entries[entries.length - 1]?.trim();
+    if (last) return last;
+  }
 
   return "unknown";
 }

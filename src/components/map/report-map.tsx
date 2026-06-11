@@ -147,6 +147,33 @@ function ReportMapInner({
     "markers",
   );
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  // Panel exit choreography: closing flips `panelLeaving` to play the slide-out,
+  // then unmounts after the 150ms animation. The gear icon stays tied to the
+  // logical open state below so it rotates back in sync with the panel exit.
+  const [panelLeaving, setPanelLeaving] = useState(false);
+  const panelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closePanel = () => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setIsPanelOpen(false);
+      return;
+    }
+    setPanelLeaving(true);
+    if (panelTimerRef.current) clearTimeout(panelTimerRef.current);
+    panelTimerRef.current = setTimeout(() => {
+      setIsPanelOpen(false);
+      setPanelLeaving(false);
+    }, 150);
+  };
+  const togglePanel = () => {
+    if (isPanelOpen) closePanel();
+    else setIsPanelOpen(true);
+  };
+  useEffect(
+    () => () => {
+      if (panelTimerRef.current) clearTimeout(panelTimerRef.current);
+    },
+    [],
+  );
   const [popupReport, setPopupReport] = useState<DashboardReport | null>(null);
 
   const mapStyle =
@@ -224,6 +251,32 @@ function ReportMapInner({
       setActiveStatuses([...activeStatuses, status]);
     }
   };
+
+  // Halo layer depends only on focusId + reports — separated so a focus change
+  // doesn't rebuild the glow/dots layers (GPU buffer re-upload) unnecessarily.
+  const haloLayer = useMemo(() => {
+    if (viewMode !== "markers") return null;
+    const highlighted = focusId ? reports.find((r) => r.id === focusId) : null;
+    if (!highlighted) return null;
+    return new ScatterplotLayer<DashboardReport>({
+      id: "report-halo",
+      data: [highlighted],
+      parameters: { depthCompare: "always", depthWriteEnabled: false },
+      pickable: false,
+      stroked: true,
+      filled: false,
+      radiusUnits: "meters",
+      radiusMinPixels: 18,
+      radiusMaxPixels: 80,
+      lineWidthMinPixels: 2,
+      getPosition: (r) => [r.location.lng, r.location.lat],
+      getRadius: 180,
+      getLineColor: () => {
+        const [cr, cg, cb] = statusColor(highlighted.status, highlighted.severity);
+        return [cr, cg, cb, 200];
+      },
+    });
+  }, [focusId, reports, viewMode]);
 
   const layers = useMemo(() => {
     // ---- Aggregation views (choropleth-style spatial distribution) ----
@@ -360,36 +413,17 @@ function ReportMapInner({
       },
     });
 
-    const highlighted = focusId ? reports.find((r) => r.id === focusId) : null;
-
-    // Focus halo — pulse-look outer ring on the selected dot only
-    const halo = highlighted
-      ? new ScatterplotLayer<DashboardReport>({
-          id: "report-halo",
-          data: [highlighted],
-          // Same depth-overlay treatment as the glow — see report-glow above.
-          parameters: { depthCompare: "always", depthWriteEnabled: false },
-          pickable: false,
-          stroked: true,
-          filled: false,
-          radiusUnits: "meters",
-          radiusMinPixels: 18,
-          radiusMaxPixels: 80,
-          lineWidthMinPixels: 2,
-          getPosition: (r) => [r.location.lng, r.location.lat],
-          getRadius: 180,
-          getLineColor: () => {
-            const [cr, cg, cb] = statusColor(
-              highlighted.status,
-              highlighted.severity,
-            );
-            return [cr, cg, cb, 200];
-          },
-        })
-      : null;
-
-    return halo ? [glow, dots, halo] : [glow, dots];
+    // Halo is built in a separate useMemo (haloLayer); including it here would
+    // force an extra array allocation on focusId change but the glow/dots layers
+    // still need focusId in deps so deck.gl sees fresh updateTrigger values.
+    return [glow, dots];
   }, [reports, focusId, viewMode, is3D]);
+
+  // Combine base layers with the separately-memoized halo.
+  const allLayers = useMemo(
+    () => (haloLayer ? [...layers, haloLayer] : layers),
+    [layers, haloLayer],
+  );
 
   const containerClass = isFullscreen
     ? "h-full w-full relative overflow-hidden bg-[#050505]"
@@ -431,7 +465,7 @@ function ReportMapInner({
       >
         {/* interleaved=true shares maplibre's WebGL context (single GPU canvas),
             avoiding a second compositor layer + second WebGL context. */}
-        <DeckGLOverlay layers={layers} interleaved={true} />
+        <DeckGLOverlay layers={allLayers} interleaved={true} />
         {popupReport && (
           <Popup
             longitude={popupReport.location.lng}
@@ -451,10 +485,15 @@ function ReportMapInner({
         )}
       </MapLibreMap>
 
+      <style>{`
+        @keyframes rmPanelIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes rmPanelOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-8px)}}
+        @media (prefers-reduced-motion:reduce){.rm-controls *{animation:none!important}}
+      `}</style>
       {/* Floating settings — top-16 (not top-4) to clear the fixed global header on /city/[slug]/map. */}
-      <div className="absolute top-16 right-4 z-20 flex flex-col items-end gap-2">
+      <div className="rm-controls absolute top-16 right-4 z-20 flex flex-col items-end gap-2">
         <button
-          onClick={() => setIsPanelOpen(!isPanelOpen)}
+          onClick={togglePanel}
           className="flex h-11 w-11 items-center justify-center rounded-full bg-[#1c1c1e] border border-white/[0.08] text-white hover:border-white/[0.2] transition-colors pointer-events-auto"
           title="Map Controls"
           aria-label="Toggle map controls"
@@ -469,7 +508,12 @@ function ReportMapInner({
 
         {isPanelOpen && (
           <LiquidGlassCard
-            className="w-[min(280px,calc(100vw-2rem))] animate-in fade-in slide-in-from-top-2 duration-200 pointer-events-auto"
+            className="w-[min(280px,calc(100vw-2rem))] pointer-events-auto"
+            style={{
+              animation: panelLeaving
+                ? "rmPanelOut 150ms cubic-bezier(0.4,0,1,1) forwards"
+                : "rmPanelIn 200ms cubic-bezier(0.16,1,0.3,1)",
+            }}
             contentClassName="bg-black/45 p-4 text-white flex flex-col gap-4 max-h-[420px] overflow-y-auto custom-scrollbar"
             borderRadius="16px"
             blurIntensity="xl"
@@ -493,7 +537,7 @@ function ReportMapInner({
                   <button
                     key={key}
                     onClick={() => setViewMode(key)}
-                    className={`rounded-md py-3 text-[11px] flex items-center justify-center gap-1 transition-all min-h-[44px] lg:py-1.5 lg:min-h-0 ${
+                    className={`rounded-md py-3 text-[11px] flex items-center justify-center gap-1 transition-all duration-200 min-h-[44px] lg:py-1.5 lg:min-h-0 ${
                       viewMode === key
                         ? "bg-electric-indigo/20 text-white"
                         : "text-zinc-300 hover:text-white hover:bg-white/5"
@@ -629,6 +673,7 @@ function ReportMapInner({
                           <button
                             key={s}
                             onClick={() => handleToggleStatus(s)}
+                            aria-pressed={isChecked}
                             className={`rounded px-2 py-3 text-xs text-left border flex items-center gap-1.5 transition-all min-h-[44px] lg:py-1 lg:min-h-0 ${
                               isChecked
                                 ? "bg-white/10 border-white/15 text-white"
@@ -673,24 +718,34 @@ function ReportMapInner({
         glowIntensity="xs"
       >
         {viewMode === "markers" ? (
-          <>
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#0a84ff]" />
+          // Legend mixes status colours (Dispatched/Resolved/In progress) with a
+          // severity override (Critical = severity ≥4, open). Grouping them under
+          // labelled sections makes the distinction audible to screen readers and
+          // removes the visual-colour-only information barrier.
+          <div role="list" aria-label="Map marker legend">
+            {/* Status group */}
+            <p className="sr-only">Status</p>
+            <div role="listitem" className="flex items-center gap-2">
+              <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-[#0a84ff]" />
               Dispatched
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#30d158]" />
+            <div role="listitem" className="flex items-center gap-2">
+              <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-[#30d158]" />
               Resolved
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#ff9f0a]" />
+            <div role="listitem" className="flex items-center gap-2">
+              <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-[#ff9f0a]" />
               In progress
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#ff453a]" />
-              Critical
+            {/* Severity override — open reports with severity ≥4 render red
+                regardless of status; separate label prevents confusion with
+                a "Critical" status that does not exist in the data model. */}
+            <p className="sr-only">Severity</p>
+            <div role="listitem" className="flex items-center gap-2">
+              <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-[#ff453a]" />
+              Critical (sev 4–5)
             </div>
-          </>
+          </div>
         ) : (
           <>
             <div className="text-[10.5px] uppercase tracking-wider text-zinc-400 mb-0.5">

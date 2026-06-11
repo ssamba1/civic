@@ -107,16 +107,51 @@ function DelegationPanelInner({
   // (≤limit) + expandable rows make windowing overkill; a slice + button gets
   // most of the height win with no scroll math and no fight with the row GSAP.
   const [showAll, setShowAll] = useState(false);
-  const visible = showAll ? sliced : sliced.slice(0, INITIAL_VISIBLE);
-  const hiddenCount = sliced.length - visible.length;
+  const headRows = sliced.slice(0, INITIAL_VISIBLE);
+  const tailRows = sliced.slice(INITIAL_VISIBLE);
+  const hiddenCount = showAll ? 0 : tailRows.length;
+
+  // Smoothly grow the overflow rows when "Show N more" is pressed instead of
+  // snapping the list taller. Mirrors the row-level height tween below; honors
+  // reduced motion via matchMedia (set vs. tween).
+  const tailRef = useRef<HTMLDivElement>(null);
+  const tailFirstRun = useRef(true);
+  useGSAP(
+    () => {
+      const el = tailRef.current;
+      if (!el) return;
+      if (tailFirstRun.current) {
+        tailFirstRun.current = false;
+        gsap.set(el, showAll ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 });
+        return;
+      }
+      const mm = gsap.matchMedia();
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        gsap.to(el, {
+          height: showAll ? "auto" : 0,
+          opacity: showAll ? 1 : 0,
+          duration: showAll ? 0.4 : 0.28,
+          ease: "power3.out",
+          overwrite: true,
+        });
+      });
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        gsap.set(el, showAll ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 });
+      });
+      return () => mm.revert();
+    },
+    { dependencies: [showAll, tailRows.length] },
+  );
+
+  const shownCount = showAll ? sliced.length : headRows.length;
 
   return (
     <Tile
       title="Delegation"
       subtitle={
         overrideCount > 0
-          ? `${visible.length} of ${sliced.length} · ${overrideCount} overridden`
-          : `${visible.length} of ${sliced.length} shown`
+          ? `${shownCount} of ${sliced.length} · ${overrideCount} overridden`
+          : `${shownCount} of ${sliced.length} shown`
       }
     >
       {sliced.length === 0 ? (
@@ -126,7 +161,7 @@ function DelegationPanelInner({
       ) : (
         <>
           <ul className="flex flex-col divide-y divide-white/[0.04]">
-            {visible.map((r) => (
+            {headRows.map((r) => (
               <DelegationRow
                 key={r.id}
                 report={r}
@@ -141,6 +176,26 @@ function DelegationPanelInner({
               />
             ))}
           </ul>
+          {tailRows.length > 0 && (
+            <div ref={tailRef} className="overflow-hidden">
+              <ul className="flex flex-col divide-y divide-white/[0.04] border-t border-white/[0.04]">
+                {tailRows.map((r) => (
+                  <DelegationRow
+                    key={r.id}
+                    report={r}
+                    override={overrides[r.id]}
+                    history={history[r.id] ?? []}
+                    corpus={corpus}
+                    workloads={workloads}
+                    reasoningCache={reasoningCacheRef.current}
+                    setReasoningCache={setReasoningCache}
+                    onReassign={(teamId) => setReportTeam(r, teamId)}
+                    onClear={() => clearReportTeam(r)}
+                  />
+                ))}
+              </ul>
+            </div>
+          )}
           {hiddenCount > 0 && (
             <button
               type="button"
@@ -190,9 +245,8 @@ function DelegationRow({
 
   // GSAP height collapse/expand. Animates 0 ↔ auto (CSS can't tween to auto).
   // Runs in a layout effect (pre-paint) so the mount set never flashes.
-  // Animates regardless of prefers-reduced-motion — this is an explicitly
-  // requested, low-amplitude height tween, and the project owner runs the OS
-  // with reduce-motion on but wants the motion here (see the hero wave).
+  // Wrapped in matchMedia: reduce-motion users get an instant set (no tween)
+  // so the content still reveals, just without the height animation.
   useGSAP(
     () => {
       const el = contentRef.current;
@@ -204,13 +258,20 @@ function DelegationRow({
         return;
       }
 
-      gsap.to(el, {
-        height: expanded ? "auto" : 0,
-        opacity: expanded ? 1 : 0,
-        duration: expanded ? 0.34 : 0.26,
-        ease: expanded ? "power3.out" : "power2.inOut",
-        overwrite: true,
+      const mm = gsap.matchMedia();
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        gsap.to(el, {
+          height: expanded ? "auto" : 0,
+          opacity: expanded ? 1 : 0,
+          duration: expanded ? 0.34 : 0.26,
+          ease: expanded ? "power3.out" : "power2.inOut",
+          overwrite: true,
+        });
       });
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        gsap.set(el, expanded ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 });
+      });
+      return () => mm.revert();
     },
     { dependencies: [expanded] },
   );

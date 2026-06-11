@@ -48,3 +48,8 @@ next-env.d.ts
 .vercel
 
 certificates
+
+# graphify tool artifacts
+graphify-out/
+.graphify_python
+.graphify_uncached.txt

@@ -13,7 +13,7 @@ export interface Open311Request {
   status_notes: string;
   service_name: string;
   service_code: string;
-  description: string;
+  description?: string;
   agency_responsible: string;
   service_notice: string;
   requested_datetime: string;
@@ -85,7 +85,6 @@ export function reportToOpen311(
     status_notes: "",
     service_name: serviceName(category),
     service_code: category,
-    description: report.description ?? "",
     agency_responsible: getAgencyResponsible(category, city.name),
     service_notice: "",
     requested_datetime: report.created_at,

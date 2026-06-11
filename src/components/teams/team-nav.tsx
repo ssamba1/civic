@@ -3,6 +3,7 @@
 import { BarChart3, ListChecks, Map as MapIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSlidingPill } from "@/lib/hooks/use-sliding-pill";
 
 interface TeamNavProps {
   team: string;
@@ -76,25 +77,41 @@ export function TeamNav({ team, city, mobileSlot }: TeamNavProps) {
   }
 
   // ── Desktop inline row (md+) ────────────────────────────────────────────
+  const activeHref = items.find((i) => i.active)?.href;
+  const { trackRef, pill } = useSlidingPill(activeHref);
   return (
     <nav
       className="flex min-w-0 shrink items-center gap-2"
       aria-label="Team views"
     >
-      <div className="flex min-w-0 items-center gap-0.5 rounded-[10px] border border-white/[0.06] bg-white/[0.03] p-0.5">
+      <div
+        ref={trackRef}
+        className="relative flex min-w-0 items-center gap-0.5 rounded-[10px] border border-white/[0.06] bg-white/[0.03] p-0.5"
+      >
+        {/* Sliding active pill — measured to the active tab, eases between them. */}
+        <span
+          aria-hidden="true"
+          className="pill-slide pointer-events-none absolute top-0.5 bottom-0.5 left-0 z-0 rounded-md bg-white/[0.09] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+          style={{
+            width: pill.width,
+            transform: `translateX(${pill.left}px)`,
+            opacity: pill.ready ? 1 : 0,
+          }}
+        />
         {items.map(({ label, href, icon: Icon, active }) => (
           <Link
             key={href}
             href={href}
+            data-pill-active={active || undefined}
             aria-current={active ? "page" : undefined}
             aria-label={label}
             title={label}
             className={[
-              "group relative inline-flex h-7 items-center gap-1.5 rounded-md px-2 sm:px-2.5 text-[13px] font-medium",
+              "group relative z-10 inline-flex h-7 items-center gap-1.5 rounded-md px-2 sm:px-2.5 text-[13px] font-medium",
               "transition-colors duration-150 outline-none",
               "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
               active
-                ? "bg-white/[0.09] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+                ? "text-white"
                 : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-100",
             ].join(" ")}
           >

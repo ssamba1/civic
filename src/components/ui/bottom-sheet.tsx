@@ -67,7 +67,7 @@ export default function BottomSheet({
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="absolute inset-0 h-full w-full cursor-default bg-black/40 motion-safe:transition-opacity"
+        className="absolute inset-0 h-full w-full cursor-default bg-black/40 animate-backdrop-in"
       />
 
       {/* Panel */}

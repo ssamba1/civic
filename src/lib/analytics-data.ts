@@ -75,20 +75,91 @@ const seed = (i: number, salt: number) => {
   return x - Math.floor(x);
 };
 
+// Hardcoded demo KPIs — returned when the live aggregate errors or finds no
+// reports, so analytics never renders an empty dashboard.
+const KPI_FALLBACK: AnalyticsKpis = {
+  resolution_rate_pct: 76.5,
+  resolution_rate_delta_pct: 4.2,
+  mttr_hours: 64,
+  mttr_delta_pct: -8.1, // negative = faster (good)
+  sla_compliance_pct: 88.4,
+  sla_target_pct: 90,
+  active_backlog: 43,
+  backlog_delta_pct: 12.5,
+};
+
+const DAY_MS = 86_400_000;
+
 export async function fetchAnalyticsKpis(
   cityId: string,
 ): Promise<AnalyticsKpis> {
-  void cityId;
-  return {
-    resolution_rate_pct: 76.5,
-    resolution_rate_delta_pct: 4.2,
-    mttr_hours: 64,
-    mttr_delta_pct: -8.1, // negative = faster (good)
-    sla_compliance_pct: 88.4,
-    sla_target_pct: 90,
-    active_backlog: 43,
-    backlog_delta_pct: 12.5,
-  };
+  if (!cityId) return KPI_FALLBACK;
+  try {
+    const { createServerClient } = await import("@/lib/db/client");
+    const db = createServerClient();
+    const { data, error } = await db
+      .from("reports")
+      .select("status, created_at")
+      .eq("city_id", cityId);
+
+    if (error || !data || data.length === 0) {
+      console.warn("analytics-data: falling back to literals");
+      return KPI_FALLBACK;
+    }
+
+    const rows = data as { status: ReportStatus; created_at: string }[];
+    const now = Date.now();
+    const ageDays = (iso: string) =>
+      (now - new Date(iso).getTime()) / DAY_MS;
+
+    const total = rows.length;
+    const closed = rows.filter((r) => r.status === "closed").length;
+    const backlog = rows.filter(
+      (r) =>
+        r.status === "open" ||
+        r.status === "dispatched" ||
+        r.status === "in_progress",
+    ).length;
+
+    // Week-over-week: resolution rate and backlog arrivals.
+    const inWeek = (r: { created_at: string }, lo: number, hi: number) =>
+      ageDays(r.created_at) > lo && ageDays(r.created_at) <= hi;
+    const thisWeek = rows.filter((r) => inWeek(r, 0, 7));
+    const prevWeek = rows.filter((r) => inWeek(r, 7, 14));
+
+    const rate = (closedN: number, totalN: number) =>
+      totalN === 0 ? 0 : (closedN / totalN) * 100;
+    const resolutionRate = rate(closed, total);
+    const thisWeekRate = rate(
+      thisWeek.filter((r) => r.status === "closed").length,
+      thisWeek.length,
+    );
+    const prevWeekRate = rate(
+      prevWeek.filter((r) => r.status === "closed").length,
+      prevWeek.length,
+    );
+
+    const pctChange = (cur: number, prev: number) =>
+      prev === 0 ? (cur > 0 ? 100 : 0) : ((cur - prev) / prev) * 100;
+
+    const round1 = (n: number) => Math.round(n * 10) / 10;
+
+    return {
+      resolution_rate_pct: round1(resolutionRate),
+      resolution_rate_delta_pct: round1(pctChange(thisWeekRate, prevWeekRate)),
+      // MTTR + SLA need work-order completion timestamps that the synthetic DB
+      // rows don't carry; keep the demo literals for those two signals.
+      mttr_hours: KPI_FALLBACK.mttr_hours,
+      mttr_delta_pct: KPI_FALLBACK.mttr_delta_pct,
+      sla_compliance_pct: KPI_FALLBACK.sla_compliance_pct,
+      sla_target_pct: KPI_FALLBACK.sla_target_pct,
+      active_backlog: backlog,
+      backlog_delta_pct: round1(pctChange(thisWeek.length, prevWeek.length)),
+    };
+  } catch {
+    console.warn("analytics-data: falling back to literals");
+    return KPI_FALLBACK;
+  }
 }
 
 export async function fetchReportsTrend(

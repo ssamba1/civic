@@ -110,25 +110,30 @@ export function MyReportsInteractive({
           On mobile let it grow freely (no max-height cap) so the user
           doesn't need to scroll within a scrolling container; on sm+
           restore the 640px cap. */}
-      {visible.length === 0 ? (
-        <div className="rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
-          <EmptyState
-            message={
-              reports.length === 0
-                ? "You haven't filed any reports yet."
-                : filter === "resolved"
-                  ? "No resolved reports yet — they'll land here once crews wrap up."
-                  : "Nothing active right now — you're all caught up."
-            }
+      {/* key={filter} remounts the wrapper so the fade-in re-fires on every
+          filter switch — cross-fades between All / Active / Resolved states
+          (notably the jump to/from the empty Resolved view). */}
+      <div key={filter} className="animate-in fade-in duration-300">
+        {visible.length === 0 ? (
+          <div className="rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
+            <EmptyState
+              message={
+                reports.length === 0
+                  ? "You haven't filed any reports yet."
+                  : filter === "resolved"
+                    ? "No resolved reports yet — they'll land here once crews wrap up."
+                    : "Nothing active right now — you're all caught up."
+              }
+            />
+          </div>
+        ) : (
+          <RecentReports
+            reports={visible}
+            maxHeightClass="max-h-none sm:max-h-[640px]"
+            onClickReport={(id) => router.push(`/user/my-reports/${id}`)}
           />
-        </div>
-      ) : (
-        <RecentReports
-          reports={visible}
-          maxHeightClass="max-h-none sm:max-h-[640px]"
-          onClickReport={(id) => router.push(`/user/my-reports/${id}`)}
-        />
-      )}
+        )}
+      </div>
     </div>
   );
 }

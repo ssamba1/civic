@@ -92,7 +92,7 @@ export default function RootLayout({
       className={`${sans.variable} ${display.variable} ${hero.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        {children}
+        <div className="page-enter flex flex-1 flex-col">{children}</div>
         <BottomTabBar />
       </body>
     </html>

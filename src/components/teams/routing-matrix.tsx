@@ -63,7 +63,14 @@ function RoutingMatrixInner() {
       <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2">
         {rows.map(
           ({ category, meta, defaultTeam, effectiveTeam, isOverridden }) => (
-            <li key={category} className={li}>
+            <li
+              key={category}
+              className={cn(
+                li,
+                isOverridden &&
+                  "border-l-2 border-l-[#ff9f0a] bg-[#ff9f0a]/[0.04] pl-1.5",
+              )}
+            >
               <span className="inline-flex flex-1 min-w-0 items-center gap-2 text-zinc-300">
                 <span
                   className="h-2 w-2 flex-shrink-0 rounded-full"

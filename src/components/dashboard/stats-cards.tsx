@@ -69,6 +69,11 @@ function StatsCardsInner({ stats }: StatsCardsProps) {
 
   return (
     <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-[#1c1c1e] shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
+      <style>{`
+@keyframes stat-roll{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.stat-val{animation:stat-roll 260ms cubic-bezier(0.22,1,0.36,1) both}
+@media (prefers-reduced-motion:reduce){.stat-val{animation:none}}
+`}</style>
       <div className="grid grid-cols-2 lg:grid-cols-4">
         {cards.map((card, idx) => (
           <div
@@ -106,7 +111,10 @@ function StatsCardsInner({ stats }: StatsCardsProps) {
               )}
             </div>
             <p
-              className="text-[26px] sm:text-[30px] font-semibold tracking-tight tabular-nums leading-none"
+              // key on the value re-mounts the node when the number changes,
+              // re-firing the brief rise animation; static between filter swaps.
+              key={card.value}
+              className="stat-val text-[26px] sm:text-[30px] font-semibold tracking-tight tabular-nums leading-none"
               style={{ color: `${card.accent}cc` }}
             >
               {card.value}

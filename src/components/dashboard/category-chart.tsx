@@ -4,7 +4,7 @@ import { memo } from "react";
 import type { CategoryCount } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import type { ReportCategory } from "@/lib/types";
-import { X } from "lucide-react";
+import { BarChart2, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 interface CategoryChartProps {
@@ -29,7 +29,15 @@ function CategoryChartInner({
     return (
       <div className={`${panelClass} p-5`}>
         <h2 className="text-[15px] font-semibold text-white">Categories</h2>
-        <p className="mt-3 text-sm text-zinc-400">No data yet.</p>
+        <div className="flex flex-col items-center justify-center py-10 text-center">
+          <BarChart2
+            className="h-8 w-8 text-zinc-700"
+            strokeWidth={1.5}
+            aria-hidden
+          />
+          <p className="mt-3 text-sm text-zinc-400">No data yet.</p>
+          <p className="mt-1 text-[13px] text-zinc-500">Try adjusting filters.</p>
+        </div>
       </div>
     );
   }
@@ -68,7 +76,7 @@ function CategoryChartInner({
               onClick={() => onSelectCategory?.(category)}
               aria-pressed={isSelected}
               className={cn(
-                "w-full text-left px-2 py-2.5 sm:py-2 min-h-11 rounded-md transition-[background-color,opacity] cursor-pointer",
+                "w-full text-left px-2 py-2.5 sm:py-2 min-h-11 rounded-md transition-[background-color,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-pointer",
                 "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1c1c1e]",
                 isSelected ? "bg-white/[0.06]" : "hover:bg-white/[0.03]",
                 isDimmed ? "opacity-40" : "opacity-100",

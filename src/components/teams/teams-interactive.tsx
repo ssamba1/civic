@@ -85,12 +85,12 @@ export function TeamsInteractive({ initialStats }: TeamsInteractiveProps) {
   }, [globallyFiltered, selectedTeam, overrides]);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <section aria-label="City statistics">
+    <div className="stagger-children space-y-6">
+      <section aria-label="City statistics" style={{ "--stagger-index": 0 } as React.CSSProperties}>
         <StatsCards stats={initialStats} />
       </section>
 
-      <section aria-label="Team roster">
+      <section aria-label="Team roster" style={{ "--stagger-index": 1 } as React.CSSProperties}>
         <TeamRoster
           workloads={workloads}
           selectedTeam={selectedTeam}
@@ -98,7 +98,10 @@ export function TeamsInteractive({ initialStats }: TeamsInteractiveProps) {
         />
       </section>
 
-      <div className="grid items-stretch gap-4 lg:grid-cols-2">
+      <div
+        className="grid items-stretch gap-4 lg:grid-cols-2"
+        style={{ "--stagger-index": 2 } as React.CSSProperties}
+      >
         <WorkloadBars
           workloads={workloads}
           selectedTeam={selectedTeam}
@@ -110,15 +113,17 @@ export function TeamsInteractive({ initialStats }: TeamsInteractiveProps) {
         </div>
       </div>
 
-      <DelegationPanel
-        reports={delegationReports}
-        overrides={overrides}
-        history={history}
-        corpus={corpus}
-        workloads={workloadMap}
-        setReportTeam={setReportTeam}
-        clearReportTeam={clearReportTeam}
-      />
+      <div style={{ "--stagger-index": 3 } as React.CSSProperties}>
+        <DelegationPanel
+          reports={delegationReports}
+          overrides={overrides}
+          history={history}
+          corpus={corpus}
+          workloads={workloadMap}
+          setReportTeam={setReportTeam}
+          clearReportTeam={clearReportTeam}
+        />
+      </div>
     </div>
   );
 }

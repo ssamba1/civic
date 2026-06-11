@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 
 import {
   KpiCards,
@@ -34,11 +34,21 @@ import {
 } from "@/lib/filters/derive";
 
 export function AnalyticsInteractive() {
-  const filtered = useFilteredReports();
-  const previous = usePreviousWindowReports();
+  const liveFiltered = useFilteredReports();
+  const livePrevious = usePreviousWindowReports();
   const [focusedReportId, setFocusedReportId] = useState<string | null>(null);
   const [explorerOpen, setExplorerOpen] = useState(false);
   const reasoning = useReasoningHover();
+
+  // Defer the dataset that feeds the (heavy) chart derivations. The FilterBar
+  // reads the live value and repaints its pills instantly; the eight derive*
+  // memos below recompute in a low-priority pass off the deferred copy, so a
+  // filter change never blocks the click feedback on large datasets.
+  const filtered = useDeferredValue(liveFiltered);
+  const previous = useDeferredValue(livePrevious);
+  // True while React is still rendering the deferred (stale) data — used to dim
+  // the grid with a brief pulse so the lag reads as intentional, not frozen.
+  const isPending = filtered !== liveFiltered;
 
   const kpis = useMemo(() => deriveKpis(filtered, previous), [filtered, previous]);
   const trend = useMemo(() => deriveTrend(filtered), [filtered]);
@@ -63,6 +73,16 @@ export function AnalyticsInteractive() {
     <div className="space-y-4 animate-in fade-in duration-500">
       <FilterBar />
 
+      {/* Deferred-update region: while React renders the stale snapshot after a
+         filter change, dim to 60% so the pause reads as deliberate. Transition
+         (not animation) keeps it subtle; reduced-motion users skip the fade. */}
+      <div
+        className="space-y-4 motion-reduce:transition-none"
+        style={{
+          opacity: isPending ? 0.6 : 1,
+          transition: "opacity 200ms cubic-bezier(0.22,1,0.36,1)",
+        }}
+      >
       <KpiCards kpis={kpis} />
 
       {/* Charts bento (lhs) + live reports rail (rhs).
@@ -95,6 +115,7 @@ export function AnalyticsInteractive() {
             bindReportHover={reasoning.bindReport}
           />
         </div>
+      </div>
       </div>
 
       <reasoning.Portal />

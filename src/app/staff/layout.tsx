@@ -1,22 +1,8 @@
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import {
-  Inbox,
-  Map,
-  BarChart3,
-  Settings,
-  LogOut,
-  Shield,
-} from "lucide-react";
-
-const navItems = [
-  { href: "/staff", label: "Inbox", icon: Inbox },
-  { href: "/staff/map", label: "Map View", icon: Map },
-  { href: "/staff/stats", label: "Stats", icon: BarChart3 },
-  { href: "/staff/settings", label: "Settings", icon: Settings },
-];
+import { LogOut, Shield } from "lucide-react";
+import { SidebarNav, MobileNav } from "@/components/staff/sidebar-nav";
 
 export default async function StaffLayout({
   children,
@@ -25,18 +11,19 @@ export default async function StaffLayout({
 }) {
   const user = await getAuthUser();
 
-  // Dev mode: allow access without auth for testing
-  const isDev = process.env.NODE_ENV === "development";
-  
-  if (!user && !isDev) redirect("/login");
+  // Bypass only when BOTH flags are set — never in prod even if someone sets DEV_AUTH_BYPASS
+  const devBypass =
+    process.env.NODE_ENV === "development" &&
+    process.env.DEV_AUTH_BYPASS === "1";
+
+  if (!user && !devBypass) redirect("/login");
 
   // Use service-role client to read users table (RLS may block anon key)
   const supabase = createServerClient();
-  
+
   let profile;
-  
-  if (isDev && !user) {
-    // Temporary dev profile
+
+  if (devBypass && !user) {
     profile = {
       id: "dev-user",
       role: "admin",
@@ -44,11 +31,19 @@ export default async function StaffLayout({
       email: "dev@local",
     };
   } else if (user) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("users")
       .select("id, role, display_name, email")
       .eq("id", user.id)
       .single();
+    if (error) {
+      console.error("[staff/layout] profile fetch failed:", error.message);
+      return (
+        <div className="flex h-screen items-center justify-center text-red-500">
+          Failed to load staff profile. Please try again.
+        </div>
+      );
+    }
     profile = data;
   }
 
@@ -72,18 +67,7 @@ export default async function StaffLayout({
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 space-y-1 px-3 py-4">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        <SidebarNav />
 
         {/* User info */}
         <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
@@ -119,19 +103,7 @@ export default async function StaffLayout({
             <Shield className="h-5 w-5 text-blue-600" />
             <span className="font-semibold">Civic Staff</span>
           </div>
-          <div className="flex items-center gap-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800"
-                aria-label={item.label}
-                title={item.label}
-              >
-                <item.icon className="h-5 w-5" />
-              </Link>
-            ))}
-          </div>
+          <MobileNav />
         </header>
 
         {/* Main content */}

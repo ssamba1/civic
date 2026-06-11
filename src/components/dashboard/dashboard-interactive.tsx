@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useTransition } from "react";
 import type { CityStats, CategoryCount } from "@/lib/dashboard-data";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { StatsCards } from "@/components/dashboard/stats-cards";
@@ -31,8 +31,19 @@ export function DashboardInteractive({
   center,
   zoom,
 }: DashboardInteractiveProps) {
-  const { filter, patch } = useFilters();
+  const { filter, patch: rawPatch } = useFilters();
   const filteredReports = useFilteredReports();
+
+  // Filter changes recompute the whole result set. Mark them as transitions so
+  // React keeps the previous content interactive while the swap is prepared;
+  // isPending then drives a subtle work-in-progress dim on the result panels.
+  const [isPending, startTransition] = useTransition();
+  const patch = useCallback(
+    (next: Parameters<typeof rawPatch>[0]) => {
+      startTransition(() => rawPatch(next));
+    },
+    [rawPatch],
+  );
 
   // Map click focus is purely local interaction state.
   const [focusedReportId, setFocusedReportId] = useState<string | null>(null);
@@ -104,7 +115,17 @@ export function DashboardInteractive({
   }, []);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 db-enter">
+      {/* Section-staggered entrance + pending dim. Inline so it ships without a
+          globals.css edit; transforms/opacity only; reduced-motion neutralized. */}
+      <style>{`
+@keyframes db-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.db-enter>*{animation:db-rise 300ms cubic-bezier(0.22,1,0.36,1) both}
+.db-enter>*:nth-child(2){animation-delay:60ms}
+.db-enter>*:nth-child(3){animation-delay:120ms}
+.db-enter>*:nth-child(4){animation-delay:180ms}
+@media (prefers-reduced-motion:reduce){.db-enter>*{animation:none}}
+`}</style>
       <section aria-label="Key statistics">
         <StatsCards stats={dynamicStats} />
       </section>
@@ -125,7 +146,12 @@ export function DashboardInteractive({
         />
       </section>
 
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5">
+      <div
+        className={`grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5 transition-opacity duration-200 ${
+          isPending ? "opacity-50 pointer-events-none" : "opacity-100"
+        }`}
+        aria-busy={isPending}
+      >
         <div className="lg:col-span-3">
           <CategoryChart
             data={categories}

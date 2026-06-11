@@ -74,7 +74,11 @@ export function ReportTimeline({ steps }: { steps: TimelineStep[] }) {
         return (
           /* pb-7 on mobile gives each step more breathing room on the
              small screen; pb-6 on sm+ preserves the original compact look. */
-          <li key={step.stage} className="relative flex gap-3 pb-7 last:pb-0 sm:gap-4 sm:pb-6">
+          <li
+            key={step.stage}
+            style={{ animationDelay: `${i * 80}ms` }}
+            className="relative flex gap-3 pb-7 last:pb-0 animate-in fade-in slide-in-from-left-2 fill-mode-both duration-300 motion-reduce:animate-none sm:gap-4 sm:pb-6"
+          >
             {/* Connector line behind the node.
                 Offset accounts for the larger mobile node (44px → left-[21px])
                 and the smaller sm+ node (32px → left-4 = 16px center). */}

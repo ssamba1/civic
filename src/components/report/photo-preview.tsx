@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCategoryOverrides } from "@/lib/category-overrides";
 import {
   builtinIssueTypeOptions,
@@ -37,6 +37,7 @@ export default function PhotoPreview({
 }: PhotoPreviewProps) {
   const [showDescription, setShowDescription] = useState(false);
   const [description, setDescription] = useState("");
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [issueType, setIssueType] = useState<string | null>(null);
 
@@ -50,16 +51,27 @@ export default function PhotoPreview({
     : null;
   const RoutedTeamIcon = routedTeam ? teamIcon(TEAMS[routedTeam].icon) : null;
 
+  // Focus the textarea after it expands (replaces the removed autoFocus, which
+  // no longer fits now that the textarea is always mounted for the height anim).
+  useEffect(() => {
+    if (showDescription) descriptionRef.current?.focus();
+  }, [showDescription]);
+
   const toggleTag = (t: string) =>
     setTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
 
-  const previewUrl = useMemo(() => URL.createObjectURL(photo), [photo]);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+  // Create the object URL inside an effect so React Strict Mode's double-mount
+  // doesn't revoke a memoized URL that's still in use. The cleanup revokes only
+  // when photo changes or on unmount — never while the <img> is still rendered.
   useEffect(() => {
+    const url = URL.createObjectURL(photo);
+    setPreviewUrl(url);
     return () => {
-      URL.revokeObjectURL(previewUrl);
+      URL.revokeObjectURL(url);
     };
-  }, [previewUrl]);
+  }, [photo]);
 
   const gpsIndicator: Record<GpsStatus, { label: string; color: string }> = {
     acquiring: { label: "Getting location...", color: "bg-yellow-400" },
@@ -73,12 +85,43 @@ export default function PhotoPreview({
     <div className="flex flex-col h-full bg-black">
       {/* Photo preview */}
       <div className="relative flex-1 min-h-0">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={previewUrl}
-          alt="Captured photo preview"
-          className="w-full h-full object-cover"
-        />
+        {previewUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={previewUrl}
+            alt="Captured photo preview"
+            className="w-full h-full object-cover"
+          />
+        )}
+
+        {/* Processing overlay — the on-device blur + upload pipeline can take
+            2–5s; this gives clear feedback that work is happening on the photo. */}
+        {submitting && (
+          <div className="report-processing-overlay absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/45 backdrop-blur-[2px]">
+            <span className="h-9 w-9 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+            <span className="report-processing-label text-sm font-medium text-white">
+              Processing photo…
+            </span>
+          </div>
+        )}
+        <style>{`
+          @keyframes report-fade-in-overlay {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          .report-processing-overlay {
+            animation: report-fade-in-overlay 200ms ease-out both;
+          }
+          @keyframes report-label-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.55; }
+          }
+          @media (prefers-reduced-motion: no-preference) {
+            .report-processing-label {
+              animation: report-label-pulse 1.4s ease-in-out infinite;
+            }
+          }
+        `}</style>
 
         {/* GPS status badge — offset by safe-area-inset-top so it clears the notch */}
         <div
@@ -153,7 +196,7 @@ export default function PhotoPreview({
                   key={t}
                   type="button"
                   onClick={() => toggleTag(t)}
-                  className={`rounded-full px-3 py-2 text-xs font-medium transition-colors min-h-[44px] flex items-center ${
+                  className={`rounded-full px-3 py-2 text-xs font-medium transition-[color,background-color,border-color,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] motion-safe:active:scale-95 min-h-[44px] flex items-center ${
                     active
                       ? "bg-blue-600 text-white"
                       : "border border-zinc-700 text-zinc-300 active:bg-zinc-800"
@@ -165,8 +208,9 @@ export default function PhotoPreview({
             })}
           </div>
 
-          {/* Optional description */}
-          {!showDescription ? (
+          {/* Optional description — grid-rows height transition avoids the
+              instant layout jump when the textarea expands. */}
+          {!showDescription && (
             <button
               type="button"
               onClick={() => setShowDescription(true)}
@@ -174,17 +218,26 @@ export default function PhotoPreview({
             >
               + Add description (optional)
             </button>
-          ) : (
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe the issue..."
-              rows={3}
-              maxLength={500}
-              autoFocus
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-500 resize-none"
-            />
           )}
+          <div
+            className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+              showDescription ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+            }`}
+          >
+            <div className="overflow-hidden">
+              <textarea
+                ref={descriptionRef}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe the issue..."
+                rows={3}
+                maxLength={500}
+                tabIndex={showDescription ? 0 : -1}
+                aria-hidden={!showDescription}
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-500 resize-none"
+              />
+            </div>
+          </div>
 
           {/* Action buttons — min-h-[56px] ensures thumb-reachable targets */}
           <div className="flex gap-3">
@@ -198,7 +251,10 @@ export default function PhotoPreview({
             </button>
             <button
               type="button"
-              onClick={() => onSubmit(description.trim() || null, tags, issueType)}
+              onClick={() => {
+                if (submitting) return;
+                onSubmit(description.trim() || null, tags, issueType);
+              }}
               disabled={submitting}
               className="flex-1 rounded-full bg-blue-600 min-h-[56px] text-sm font-semibold text-white active:bg-blue-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
             >

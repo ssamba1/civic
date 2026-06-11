@@ -13,6 +13,8 @@ import {
 
 import { ReportsTrend } from "@/components/analytics/analytics-bento";
 import { EmptyState, Tile } from "@/components/analytics/bento-primitives";
+import { useEffect, useState } from "react";
+
 import {
   TipBar,
   TipChip,
@@ -108,7 +110,15 @@ function ProgressRing({
 }) {
   const r = 38;
   const c = 2 * Math.PI * r;
-  const dash = (Math.min(100, Math.max(0, pct)) / 100) * c;
+  // Arc fills from 0 on mount so the CSS stroke transition always plays —
+  // SSR renders the full arc otherwise and the animation never fires. The
+  // label keeps the real pct so the number never flashes 0.
+  const [fill, setFill] = useState(0);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setFill(pct));
+    return () => cancelAnimationFrame(id);
+  }, [pct]);
+  const dash = (Math.min(100, Math.max(0, fill)) / 100) * c;
   return (
     <div className="relative h-[104px] w-[104px] flex-shrink-0">
       <svg
@@ -223,6 +233,14 @@ function BarRow({
   tipBindings?: TipBindings;
   hoverLabel?: string;
 }) {
+  // Width grows from 0 on mount so the CSS width transition always plays —
+  // SSR renders the final width otherwise and the bar never animates in.
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setW(pct));
+    return () => cancelAnimationFrame(id);
+  }, [pct]);
+
   const content = (
     <>
       <div className="flex items-center justify-between gap-3">
@@ -242,7 +260,7 @@ function BarRow({
         <div
           className="h-full rounded-full"
           style={{
-            width: `${pct}%`,
+            width: `${w}%`,
             background: color,
             transition: "width 600ms cubic-bezier(0.16,1,0.3,1)",
           }}

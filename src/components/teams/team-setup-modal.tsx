@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import {
   X,
   Check,
@@ -250,6 +252,25 @@ export function TeamSetupModal({
   const [draftColor, setDraftColor] = useState(COLOR_PRESETS[0]);
   const [submitted, setSubmitted] = useState(false);
 
+  // Success-state celebration: pulse the confirmation check (0 → 1.3 → 1).
+  // matchMedia-gated so reduce-motion users get a clean static check.
+  const checkRef = useRef<HTMLDivElement>(null);
+  useGSAP(
+    () => {
+      if (!submitted || !checkRef.current) return;
+      const mm = gsap.matchMedia();
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        gsap.fromTo(
+          checkRef.current,
+          { scale: 0 },
+          { scale: 1, duration: 0.4, ease: "back.out(2.6)" },
+        );
+      });
+      return () => mm.revert();
+    },
+    { dependencies: [submitted] },
+  );
+
   // Escape-to-close + scroll lock while open.
   useEffect(() => {
     if (!open) return;
@@ -351,7 +372,7 @@ export function TeamSetupModal({
     : ICON_OPTIONS.slice(0, PRIMARY_ICON_COUNT);
 
   return createPortal(
-    <div className="fixed inset-0 z-50 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 animate-backdrop-in">
       <button
         type="button"
         onClick={onClose}
@@ -367,7 +388,7 @@ export function TeamSetupModal({
           "flex flex-col overflow-hidden text-zinc-100",
           "rounded-2xl border border-white/[0.06] bg-[#1c1c1e]",
           "shadow-[0_24px_64px_-12px_rgba(0,0,0,0.7)]",
-          "animate-in fade-in zoom-in-95 duration-300 motion-reduce:animate-none",
+          "origin-center animate-[city-pop_120ms_ease-out]",
         )}
       >
         {/* Header */}
@@ -406,7 +427,10 @@ export function TeamSetupModal({
             >
               <SelectedIcon className="h-7 w-7" strokeWidth={1.75} />
             </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#30d158]/20 text-[#30d158]">
+            <div
+              ref={checkRef}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#30d158]/20 text-[#30d158] will-change-transform"
+            >
               <Check className="h-4 w-4" strokeWidth={2.5} />
             </div>
             <div>

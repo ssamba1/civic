@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UsersRound, ThumbsUp, Map, BarChart3, Camera, RefreshCw } from "lucide-react";
 import { useDemoReports } from "@/lib/demo-reports";
+import { useSlidingPill } from "@/lib/hooks/use-sliding-pill";
 
 /**
  * Demo Refresh — toggles the live fallen-tree report in the shared overlay
@@ -42,7 +43,7 @@ function NavRefreshButton() {
       ].join(" ")}
     >
       <RefreshCw
-        className={["h-3.5 w-3.5 shrink-0", spinning && "animate-spin"]
+        className={["h-3.5 w-3.5 shrink-0", spinning && "motion-safe:animate-spin"]
           .filter(Boolean)
           .join(" ")}
         strokeWidth={2}
@@ -96,11 +97,33 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
 
   // ── Mobile slot: full-width 4-up segmented tabs ────────────────────────
   if (mobileSlot === "tabs") {
+    // Equal-width (flex-1) tabs → a sliding pill can translate by index×100% of
+    // one tab's width. --tab-count keeps the math correct if items change.
+    const activeIndex = Math.max(
+      0,
+      items.findIndex((i) => i.active),
+    );
     return (
       <nav
-        className="flex items-center gap-0.5 rounded-[10px] border border-white/[0.06] bg-white/[0.03] p-0.5 w-full"
+        className="relative flex items-center rounded-[10px] border border-white/[0.06] bg-white/[0.03] p-0.5 w-full"
         aria-label="City views"
+        style={
+          {
+            "--tab-count": items.length,
+            "--tab-index": activeIndex,
+          } as React.CSSProperties
+        }
       >
+        {/* Sliding active pill — sits behind the tabs, translates to active index.
+            p-0.5 (2px) inset on each side, so the track is the nav inner box. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute left-0.5 top-0.5 bottom-0.5 z-0 rounded-[8px] bg-white/[0.09] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] transition-transform duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
+          style={{
+            width: "calc((100% - 0.25rem) / var(--tab-count))",
+            transform: "translateX(calc(var(--tab-index) * 100%))",
+          }}
+        />
         {items.map(({ label, href, icon: Icon, active }) => (
           <Link
             key={href}
@@ -108,12 +131,10 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
             aria-current={active ? "page" : undefined}
             className={[
               // flex-1 makes all 4 tabs equal width; min-h-11 = 44px touch target
-              "group relative flex flex-1 flex-col items-center justify-center gap-1 min-h-11 rounded-[8px] px-1 py-2",
+              "group relative z-10 flex flex-1 flex-col items-center justify-center gap-1 min-h-11 rounded-[8px] px-1 py-2",
               "transition-colors duration-150 outline-none",
               "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
-              active
-                ? "bg-white/[0.09] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-                : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-100",
+              active ? "text-white" : "text-zinc-400 hover:text-zinc-100",
             ].join(" ")}
           >
             <Icon
@@ -156,26 +177,42 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
   }
 
   // ── Desktop inline row (md+ default, no mobileSlot) ───────────────────
+  const activeHref = items.find((i) => i.active)?.href;
+  const { trackRef, pill } = useSlidingPill(activeHref);
   return (
     <nav className="flex min-w-0 shrink items-center gap-2" aria-label="City views">
       {/* Demo Refresh — left of the Teams tab */}
       <NavRefreshButton />
 
       {/* Segmented control track */}
-      <div className="flex min-w-0 items-center gap-0.5 rounded-[10px] border border-white/[0.06] bg-white/[0.03] p-0.5">
+      <div
+        ref={trackRef}
+        className="relative flex min-w-0 items-center gap-0.5 rounded-[10px] border border-white/[0.06] bg-white/[0.03] p-0.5"
+      >
+        {/* Sliding active pill — measured to the active tab, eases between them. */}
+        <span
+          aria-hidden="true"
+          className="pill-slide pointer-events-none absolute top-0.5 bottom-0.5 left-0 z-0 rounded-md bg-white/[0.09] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+          style={{
+            width: pill.width,
+            transform: `translateX(${pill.left}px)`,
+            opacity: pill.ready ? 1 : 0,
+          }}
+        />
         {items.map(({ label, href, icon: Icon, active }) => (
           <Link
             key={href}
             href={href}
+            data-pill-active={active || undefined}
             aria-current={active ? "page" : undefined}
             aria-label={label}
             title={label}
             className={[
-              "group relative inline-flex h-7 items-center gap-1.5 rounded-md px-2 sm:px-2.5 text-[13px] font-medium",
+              "group relative z-10 inline-flex h-7 items-center gap-1.5 rounded-md px-2 sm:px-2.5 text-[13px] font-medium",
               "transition-colors duration-150 outline-none",
               "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
               active
-                ? "bg-white/[0.09] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+                ? "text-white"
                 : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-100",
             ].join(" ")}
           >

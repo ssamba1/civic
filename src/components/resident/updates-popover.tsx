@@ -49,14 +49,48 @@ const STATUS_TONE: Record<string, string> = {
   rejected: "text-[#ff453a] bg-[#ff453a]/10",
 };
 
+// Exit-animation duration (ms) — kept in sync with the `duration-150` enter so
+// the close mirrors the open. Used to defer unmount until the CSS animate-out
+// finishes (no framer-motion / AnimatePresence available — no new deps).
+const EXIT_MS = 150;
+
 export function UpdatesPopover({ active = false }: { active?: boolean }) {
   const [open, setOpen] = useState(false);
+  // Mirror of `open` that stays true through the exit animation, plus a flag
+  // that flips the panel into its data-[closing] exit variant for one frame
+  // before unmount.
+  const [dropdownMounted, setDropdownMounted] = useState(false);
+  const [dropdownClosing, setDropdownClosing] = useState(false);
   const [items, setItems] = useState<NotificationItem[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FeedFilter>("all");
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<NotificationItem | null>(null);
+  const [detailClosing, setDetailClosing] = useState(false);
+
+  // Keep the desktop dropdown mounted through its exit animation. On open it
+  // mounts immediately; on close it plays animate-out then unmounts.
+  useEffect(() => {
+    if (open) {
+      setDropdownMounted(true);
+      setDropdownClosing(false);
+      return;
+    }
+    if (!dropdownMounted) return;
+    setDropdownClosing(true);
+    const id = setTimeout(() => setDropdownMounted(false), EXIT_MS);
+    return () => clearTimeout(id);
+  }, [open, dropdownMounted]);
+
+  // Animated dismiss for the detail modal — plays the exit variant, then clears.
+  const closeDetail = useCallback(() => {
+    setDetailClosing(true);
+    setTimeout(() => {
+      setDetail(null);
+      setDetailClosing(false);
+    }, EXIT_MS);
+  }, []);
 
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -99,7 +133,7 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-      if (detail) setDetail(null);
+      if (detail) closeDetail();
       else setOpen(false);
     };
     document.addEventListener("mousedown", onPointer);
@@ -210,19 +244,24 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
         openDetail={openDetail}
       />
 
-      {/* Desktop dropdown — hidden on mobile, shown on sm+ */}
-      {open && (
+      {/* Desktop dropdown — hidden on mobile, shown on sm+. Stays mounted
+          through the exit animation via dropdownMounted/dropdownClosing so
+          close mirrors the open instead of snapping out. */}
+      {dropdownMounted && (
         <div
           ref={panelRef}
           role="dialog"
           aria-label="Updates"
+          data-state={dropdownClosing ? "closed" : "open"}
           className={cn(
             // hidden below sm, present on sm+
             "hidden sm:block",
             "fixed right-3 sm:right-6 top-[60px] z-50 w-[min(420px,calc(100vw-1.5rem))]",
             "rounded-[14px] border border-white/[0.06] bg-[#1c1c1e]/95 backdrop-blur-xl",
             "shadow-[0_24px_60px_rgba(0,0,0,0.55)]",
-            "animate-in fade-in slide-in-from-top-1 duration-150",
+            "duration-150",
+            "data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-top-1",
+            "data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:slide-out-to-top-1",
           )}
         >
           <UpdatesFeedHeader
@@ -244,7 +283,13 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
         </div>
       )}
 
-      {detail && <DetailModal item={detail} onClose={() => setDetail(null)} />}
+      {detail && (
+        <DetailModal
+          item={detail}
+          closing={detailClosing}
+          onClose={closeDetail}
+        />
+      )}
     </>
   );
 }
@@ -508,9 +553,11 @@ function MobileUpdatesSheet({
 
 function DetailModal({
   item,
+  closing,
   onClose,
 }: {
   item: NotificationItem;
+  closing: boolean;
   onClose: () => void;
 }) {
   const meta = TYPE_META[item.type];
@@ -526,22 +573,31 @@ function DetailModal({
       role="dialog"
       aria-modal="true"
       aria-label={item.title}
+      data-state={closing ? "closed" : "open"}
       className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-6"
     >
       <button
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150"
+        data-state={closing ? "closed" : "open"}
+        className={cn(
+          "absolute inset-0 bg-black/70 backdrop-blur-sm duration-150",
+          "data-[state=open]:animate-in data-[state=open]:fade-in",
+          "data-[state=closed]:animate-out data-[state=closed]:fade-out",
+        )}
       />
       <div
+        data-state={closing ? "closed" : "open"}
         className={cn(
           // Mobile: full-width, rounded top corners only, slide up from bottom.
           // sm+: centered card with full rounded corners, max-w-lg.
           "relative w-full max-w-[min(100%,32rem)] overflow-hidden",
           "rounded-t-[20px] sm:rounded-[16px]",
           "border border-white/[0.08] bg-[#1c1c1e] shadow-[0_30px_80px_rgba(0,0,0,0.65)]",
-          "animate-in fade-in slide-in-from-bottom-4 sm:zoom-in-95 duration-150",
+          "duration-150",
+          "data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-bottom-4 sm:data-[state=open]:zoom-in-95",
+          "data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:slide-out-to-bottom-4 sm:data-[state=closed]:zoom-out-95",
           // Safe-area bottom inset on mobile so content isn't under the home bar.
           "pb-safe",
         )}

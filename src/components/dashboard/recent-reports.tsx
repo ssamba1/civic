@@ -70,7 +70,12 @@ function RecentReportsInner({
 
   if (reports.length === 0) {
     return (
-      <section className={`${panelClass} p-5`}>
+      <section className={`${panelClass} p-5 rr-empty`}>
+        <style>{`
+@keyframes rr-empty-in{from{opacity:0}to{opacity:1}}
+.rr-empty{animation:rr-empty-in 300ms ease 150ms both}
+@media (prefers-reduced-motion:reduce){.rr-empty{animation:none}}
+`}</style>
         <div className="flex items-center justify-between">
           <h2 className="text-[15px] font-semibold text-white">Reports</h2>
           <div className="flex items-center gap-2">
@@ -119,12 +124,17 @@ function RecentReportsInner({
         </div>
       </div>
 
+      <style>{`
+@keyframes rr-row-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.rr-row{animation:rr-row-in 220ms cubic-bezier(0.22,1,0.36,1) both}
+@media (prefers-reduced-motion:reduce){.rr-row{animation:none}}
+`}</style>
       <ul
         ref={listContainerRef}
         className="overflow-y-auto custom-scrollbar -mx-1 px-1 flex-1 scroll-smooth flex flex-col mt-2"
         role="list"
       >
-        {reports.map((report) => {
+        {reports.map((report, index) => {
           const meta = CATEGORY_META[report.category];
           const isFocused = focusedId === report.id;
           const isDemo = report.demo === true;
@@ -135,6 +145,10 @@ function RecentReportsInner({
               ref={(el) => {
                 itemsRef.current[report.id] = el;
               }}
+              className="rr-row"
+              // Cap the stagger so a long list never delays the tail by seconds;
+              // only the first ~10 rows above the fold get the cascade.
+              style={{ animationDelay: `${Math.min(index, 10) * 30}ms` }}
             >
               <button
                 type="button"

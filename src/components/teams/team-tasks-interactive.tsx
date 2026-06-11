@@ -151,7 +151,7 @@ export function TeamTasksInteractive({ teamId }: TeamTasksInteractiveProps) {
               </p>
             </div>
           ) : (
-            <ul className="flex flex-col gap-2">
+            <ul key={tab} className="fade-up flex flex-col gap-2">
               {visible.map((report) => (
                 <TaskRow
                   key={report.id}

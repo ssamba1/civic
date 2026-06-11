@@ -108,6 +108,7 @@ function CardBody({ data }: { data: ReasoningResponse }) {
 export function useReasoningHover(): UseReasoningHoverReturn {
   const [target, setTarget] = useState<ActiveTarget | null>(null);
   const [data, setData] = useState<ReasoningResponse | null>(null);
+  const [fetchError, setFetchError] = useState(false);
   const [pos, setPos] = useState<{ x: number; y: number }>({ x: -9999, y: -9999 });
   const [mounted, setMounted] = useState(false);
 
@@ -119,6 +120,8 @@ export function useReasoningHover(): UseReasoningHoverReturn {
   targetRef.current = target;
   const dataRef = useRef(data);
   dataRef.current = data;
+  const fetchErrorRef = useRef(fetchError);
+  fetchErrorRef.current = fetchError;
   const posRef = useRef(pos);
   posRef.current = pos;
 
@@ -167,6 +170,7 @@ export function useReasoningHover(): UseReasoningHoverReturn {
       return;
     }
     setData(null); // loading
+    setFetchError(false);
     fetchController.current?.abort();
     const controller = new AbortController();
     fetchController.current = controller;
@@ -183,7 +187,9 @@ export function useReasoningHover(): UseReasoningHoverReturn {
       })
       .catch((e: unknown) => {
         if (e instanceof DOMException && e.name === "AbortError") return;
-        /* leave in loading; row will just not populate */
+        // Surface real errors so the Portal can show a retry state instead of
+        // leaving an infinite spinner.
+        if (activeId.current === id) setFetchError(true);
       });
   }, []);
 
@@ -211,12 +217,26 @@ export function useReasoningHover(): UseReasoningHoverReturn {
 
   const lastReportPtrType = useRef<string>("mouse");
 
+  // Chrome fires pointerenter for an element that merely renders under a
+  // stationary cursor (e.g. on page load), popping the card with no user
+  // intent. Ignore hover until the pointer has actually moved.
+  const pointerHasMoved = useRef(false);
+  useEffect(() => {
+    const markMoved = () => {
+      pointerHasMoved.current = true;
+      window.removeEventListener("pointermove", markMoved);
+    };
+    window.addEventListener("pointermove", markMoved, { passive: true });
+    return () => window.removeEventListener("pointermove", markMoved);
+  }, []);
+
   const bindReport: UseReasoningHoverReturn["bindReport"] = useCallback(
     (report) => ({
       onPointerEnter: (e) => {
         lastReportPtrType.current = e.pointerType;
         // Touch: don't show on hover-enter — wait for explicit tap (onClick)
         if (e.pointerType === "touch") return;
+        if (!pointerHasMoved.current) return;
         const el = e.currentTarget as HTMLElement;
         const rect = el.getBoundingClientRect();
         if (intentTimer.current) clearTimeout(intentTimer.current);
@@ -240,6 +260,10 @@ export function useReasoningHover(): UseReasoningHoverReturn {
         }
       },
       onFocus: (e) => {
+        // Only open on explicit keyboard focus — relatedTarget is null when focus
+        // moves from outside the document (page load, programmatic .focus()) which
+        // was causing the popover to auto-open on analytics page load.
+        if (!e.relatedTarget) return;
         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
         open(report, rect);
       },
@@ -277,6 +301,7 @@ export function useReasoningHover(): UseReasoningHoverReturn {
     if (!mounted || typeof document === "undefined") return null;
     const target = targetRef.current;
     const data = dataRef.current;
+    const hasFetchError = fetchErrorRef.current;
     const pos = posRef.current;
     const visible = target !== null;
     const noMotion = reducedMotion();
@@ -319,6 +344,20 @@ export function useReasoningHover(): UseReasoningHoverReturn {
             </header>
             {data ? (
               <CardBody data={data} />
+            ) : hasFetchError ? (
+              <div className="flex flex-col h-24 items-center justify-center gap-2 px-4">
+                <p className="text-[12px] text-zinc-400">Failed to load reasoning.</p>
+                <button
+                  type="button"
+                  className="pointer-events-auto text-[11px] text-zinc-300 underline underline-offset-2 hover:text-white"
+                  onClick={() => {
+                    const t = targetRef.current;
+                    if (t) ensureData(t.id);
+                  }}
+                >
+                  Retry
+                </button>
+              </div>
             ) : (
               <div className="flex h-24 items-center justify-center">
                 <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
@@ -329,7 +368,7 @@ export function useReasoningHover(): UseReasoningHoverReturn {
       </div>,
       document.body,
     );
-  }, [mounted]);
+  }, [mounted, ensureData]);
 
   return { bindReport, Portal };
 }

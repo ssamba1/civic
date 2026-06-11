@@ -286,7 +286,8 @@ export function WorkOrderCard({
   isSelected,
   onSelect,
   onDetailOpen,
-}: WorkOrderCardProps) {
+  isNew = false,
+}: WorkOrderCardProps & { isNew?: boolean }) {
   const timeLabel = useTimeAgo(report.created_at);
   const Icon = CATEGORY_ICONS[classification.category] ?? HelpCircle;
   const sevColor =
@@ -305,6 +306,7 @@ export function WorkOrderCard({
       }}
       className={cn(
         "w-full text-left flex items-start gap-3 rounded-[10px] border px-4 py-3 transition-colors active:scale-[0.99]",
+        isNew && "animate-in fade-in slide-in-from-top-2 duration-300",
         "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900",
         isSelected
           ? "border-blue-300 bg-blue-50/60 dark:border-blue-700 dark:bg-blue-900/20"
@@ -385,10 +387,12 @@ export function WorkOrderRowControlled({
   detailOpen,
   onDetailOpen,
   onDetailClose,
+  isNew = false,
 }: WorkOrderRowProps & {
   detailOpen: boolean;
   onDetailOpen: () => void;
   onDetailClose: () => void;
+  isNew?: boolean;
 }) {
   const timeLabel = useTimeAgo(report.created_at);
   const Icon = CATEGORY_ICONS[classification.category] ?? HelpCircle;
@@ -414,6 +418,7 @@ export function WorkOrderRowControlled({
         role="button"
         className={cn(
           "cursor-pointer border-b border-zinc-100 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50",
+          isNew && "animate-in fade-in slide-in-from-top-2 duration-300",
           isSelected && "bg-blue-50/70 dark:bg-blue-900/10",
           isDemo && "demo-glow"
         )}

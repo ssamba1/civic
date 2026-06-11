@@ -73,21 +73,41 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const lastFetchedAtRef = useRef<string>(initialFetchedAt ?? new Date().toISOString());
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Prevents a slow fetch response from overlapping with the next tick.
+  const fetchInFlightRef = useRef(false);
 
   // Background poll: every POLL_INTERVAL_MS, fetch new work orders and merge
   // them straight into the list (auto-populate — no manual refresh needed).
   useEffect(() => {
     const poll = async () => {
-      const result = await fetchQueuedWorkOrders(lastFetchedAtRef.current);
-      if (!result.ok || result.data.length === 0) return;
-      setDisplayedOrders((prev) => {
-        const existingIds = new Set(prev.map((o) => o.id));
-        const fresh = result.data.filter((o) => !existingIds.has(o.id));
-        if (fresh.length === 0) return prev;
-        lastFetchedAtRef.current = new Date().toISOString();
-        return [...fresh, ...prev];
-      });
-      setSelectedIndex(0);
+      if (fetchInFlightRef.current) return;
+      fetchInFlightRef.current = true;
+      try {
+        const result = await fetchQueuedWorkOrders(lastFetchedAtRef.current);
+        if (!result.ok || result.data.length === 0) return;
+        // Prefer server-supplied fetchedAt (avoids client clock skew); fall back to
+        // max created_at among the returned rows so the cursor stays server-anchored.
+        const nextCursor =
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (result as any).fetchedAt ??
+          result.data.reduce(
+            (max, o) =>
+              o.report?.created_at && o.report.created_at > max
+                ? o.report.created_at
+                : max,
+            lastFetchedAtRef.current,
+          );
+        setDisplayedOrders((prev) => {
+          const existingIds = new Set(prev.map((o) => o.id));
+          const fresh = result.data.filter((o) => !existingIds.has(o.id));
+          if (fresh.length === 0) return prev;
+          lastFetchedAtRef.current = nextCursor;
+          return [...fresh, ...prev];
+        });
+        setSelectedIndex(0);
+      } finally {
+        fetchInFlightRef.current = false;
+      }
     };
 
     const timer = setInterval(poll, POLL_INTERVAL_MS);
@@ -191,6 +211,23 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
     return { total, active, resolved, pctResolved };
   }, [displayedOrders]);
 
+  // Track which work-order ids were already on the board last render so newly
+  // arrived rows (poll-prepended / demo-injected) can play a one-shot entrance
+  // animation while existing rows stay put. First render seeds the set without
+  // animating everything. Pure-CSS approach — no animation library.
+  const seenIdsRef = useRef<Set<string> | null>(null);
+  const newIds = useMemo(() => {
+    const prev = seenIdsRef.current;
+    const fresh = new Set<string>();
+    if (prev) {
+      for (const wo of displayedOrders) {
+        if (!prev.has(wo.id)) fresh.add(wo.id);
+      }
+    }
+    seenIdsRef.current = new Set(displayedOrders.map((o) => o.id));
+    return fresh;
+  }, [displayedOrders]);
+
   // Keep selectedIndex in bounds
   useEffect(() => {
     if (selectedIndex >= filtered.length) {
@@ -227,7 +264,13 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
   const handleReject = useCallback(async () => {
     const wo = filtered[selectedIndex];
     if (!wo?.report) return;
-    await rejectReport(wo.report.id, "Rejected via keyboard shortcut");
+    // Route through the same prompt flow used by the detail panel so the reason
+    // is never silently hardcoded — the browser prompt is intentionally minimal
+    // for the keyboard shortcut path; the detail panel has a richer UI.
+    const reason = window.prompt("Rejection reason:");
+    if (reason === null) return; // user cancelled
+    if (!reason.trim()) return; // empty — server would reject anyway
+    await rejectReport(wo.report.id, reason.trim());
     setDetailOpenIndex(null);
   }, [filtered, selectedIndex]);
 
@@ -346,7 +389,10 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
       </div>
 
       {/* Mobile card list (<md) */}
-      <div className="flex-1 overflow-auto md:hidden">
+      <div
+        key={`m-${activeTab}`}
+        className="flex-1 animate-in fade-in overflow-auto duration-150 md:hidden"
+      >
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <SlidersHorizontal className="mb-4 h-12 w-12 text-zinc-300 dark:text-zinc-600" />
@@ -372,6 +418,7 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
                   isSelected={selectedIndex === idx}
                   onSelect={() => setSelectedIndex(idx)}
                   onDetailOpen={() => setMobileDrawerIndex(idx)}
+                  isNew={newIds.has(wo.id)}
                 />
               );
             })}
@@ -403,7 +450,10 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
       })()}
 
       {/* Desktop table (md+) */}
-      <div className="hidden flex-1 overflow-auto md:block">
+      <div
+        key={`d-${activeTab}`}
+        className="hidden flex-1 animate-in fade-in overflow-auto duration-150 md:block"
+      >
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <SlidersHorizontal className="mb-4 h-12 w-12 text-zinc-300 dark:text-zinc-600" />
@@ -447,6 +497,7 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
                     detailOpen={detailOpenIndex === idx}
                     onDetailOpen={() => setDetailOpenIndex(idx)}
                     onDetailClose={() => setDetailOpenIndex(null)}
+                    isNew={newIds.has(wo.id)}
                   />
                 );
               })}
