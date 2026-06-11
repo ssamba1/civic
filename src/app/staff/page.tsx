@@ -1,7 +1,9 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { createServerClient } from "@/lib/db/client";
 import { StaffInbox } from "@/components/staff/staff-inbox";
+import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
 import { normalizeLocation, type WorkOrderWithDetails } from "@/lib/types";
 
 export { type WorkOrderWithDetails };
@@ -99,6 +101,11 @@ export default async function StaffPage() {
   // C5: Auth check — use cookie-based client, not service-role
   const user = await getAuthUser();
 
+  // Demo persona (soft auth, see demo-auth.ts) — authorized like the layout.
+  const demoAccount = findDemoAccount(
+    (await cookies()).get(DEMO_SESSION_COOKIE)?.value,
+  );
+
   let cityId: string | null = null;
 
   if (user) {
@@ -106,18 +113,18 @@ export default async function StaffPage() {
       .from("users")
       .select("city_id, role")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
     if (
       userRow &&
       ["staff_dispatcher", "staff_supervisor", "admin"].includes(userRow.role)
     ) {
       cityId = userRow.city_id;
-    } else if (!isDev) {
-      redirect("/login");
+    } else if (!isDev && !demoAccount) {
+      redirect("/login?redirect=/staff");
     }
-  } else if (!isDev) {
-    redirect("/login");
+  } else if (!isDev && !demoAccount) {
+    redirect("/login?redirect=/staff");
   }
 
   // Dev convenience (and staff without a resolved city): default to Cumming so

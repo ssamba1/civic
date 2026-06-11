@@ -1,18 +1,18 @@
-import { redirect } from "next/navigation";
-import { getAuthUser } from "@/lib/db/ssr-client";
 import { UserNav } from "@/components/resident/user-nav";
 import { ViewSwitch } from "@/components/view-switch";
+import { AnonBootstrap } from "@/components/resident/anon-bootstrap";
 
 export default async function UserLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getAuthUser();
-  if (!user) redirect("/login");
-
+  // Anon-first (PLAN.md §7): no login wall. Pages render with the resident's
+  // session data when present and a demo fallback otherwise; AnonBootstrap
+  // silently establishes a guest session for reports/upvotes/my-reports.
   return (
     <div className="flex min-h-dvh flex-col bg-black text-zinc-100">
+      <AnonBootstrap />
       <UserNav />
 
       {/* Mobile has no top header (BottomTabBar covers nav) — float the

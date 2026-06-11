@@ -1,8 +1,10 @@
+import { cookies } from "next/headers";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { redirect } from "next/navigation";
 import { LogOut, Shield } from "lucide-react";
 import { SidebarNav, MobileNav } from "@/components/staff/sidebar-nav";
+import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
 
 export default async function StaffLayout({
   children,
@@ -11,19 +13,37 @@ export default async function StaffLayout({
 }) {
   const user = await getAuthUser();
 
+  // Demo persona sign-in (soft auth — "every URL stays open", see demo-auth.ts).
+  // The demo cookie is NOT a Supabase session, so getAuthUser() is null for a
+  // demo-signed-in presenter; resolve it here so the staff console is reachable
+  // for the demo just like the city/team surfaces.
+  const demoAccount = findDemoAccount(
+    (await cookies()).get(DEMO_SESSION_COOKIE)?.value,
+  );
+
   // Bypass only when BOTH flags are set — never in prod even if someone sets DEV_AUTH_BYPASS
   const devBypass =
     process.env.NODE_ENV === "development" &&
     process.env.DEV_AUTH_BYPASS === "1";
 
-  if (!user && !devBypass) redirect("/login");
+  // No demo session, no real session, no dev bypass → send to sign-in (which
+  // carries the demo persona picker) rather than dead-ending on home.
+  if (!user && !demoAccount && !devBypass) redirect("/login?redirect=/staff");
 
   // Use service-role client to read users table (RLS may block anon key)
   const supabase = createServerClient();
 
   let profile;
 
-  if (devBypass && !user) {
+  if (demoAccount) {
+    // Any demo persona opens the console (synthetic admin profile for the chrome).
+    profile = {
+      id: demoAccount.username,
+      role: "admin",
+      display_name: demoAccount.label,
+      email: demoAccount.username,
+    };
+  } else if (devBypass && !user) {
     profile = {
       id: "dev-user",
       role: "admin",
@@ -31,11 +51,15 @@ export default async function StaffLayout({
       email: "dev@local",
     };
   } else if (user) {
+    // maybeSingle (not single): a session with no `users` row — e.g. an
+    // anonymous resident who wandered to /staff — yields null, not an error.
+    // That falls through to the role gate below and redirects to sign-in. The
+    // error screen is reserved for genuine query failures.
     const { data, error } = await supabase
       .from("users")
       .select("id, role, display_name, email")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
     if (error) {
       console.error("[staff/layout] profile fetch failed:", error.message);
       return (
@@ -51,7 +75,7 @@ export default async function StaffLayout({
     !profile ||
     !["staff_dispatcher", "staff_supervisor", "admin"].includes(profile.role)
   ) {
-    redirect("/");
+    redirect("/login?redirect=/staff");
   }
 
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle, LogIn } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 
@@ -14,6 +15,7 @@ import { DEMO_ACCOUNTS } from "@/lib/demo-auth";
  * posts to the signInDemo server action which sets the cookie and redirects.
  */
 export function DemoSignIn({ error }: { error?: string | null }) {
+  const redirectTo = useSearchParams().get("redirect");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -43,6 +45,9 @@ export function DemoSignIn({ error }: { error?: string | null }) {
       )}
 
       <form action={signInDemo} className="mt-3 space-y-2.5">
+        {redirectTo && (
+          <input type="hidden" name="redirect" value={redirectTo} />
+        )}
         <input
           name="username"
           value={username}

@@ -1079,7 +1079,11 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
               options={[
                 { value: 7, label: "7d" },
                 { value: 14, label: "14d" },
-                { value: data.length, label: "All" },
+                // Only offer "All" when it isn't already one of the fixed ranges
+                // (a `data.length` of 7 or 14 would duplicate a pill).
+                ...(data.length !== 7 && data.length !== 14
+                  ? [{ value: data.length, label: "All" }]
+                  : []),
               ]}
             />
             <div className="flex flex-col gap-2">

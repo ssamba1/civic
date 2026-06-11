@@ -13,6 +13,8 @@ interface CorpusMapViewProps {
   center: [number, number];
   zoom: number;
   cityName: string;
+  /** Resident community view: hide all gov dispatch affordances (see orchestrator). */
+  readOnly?: boolean;
 }
 
 /**
@@ -27,6 +29,7 @@ export function CorpusMapView({
   center,
   zoom,
   cityName,
+  readOnly,
 }: CorpusMapViewProps) {
   const corpus = useReportCorpus();
   const reports = useMemo(() => {
@@ -41,6 +44,7 @@ export function CorpusMapView({
       zoom={zoom}
       cityName={cityName}
       lockedTeam={teamId}
+      readOnly={readOnly}
     />
   );
 }

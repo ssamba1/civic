@@ -26,9 +26,9 @@ const TABS: TabItem[] = [
   },
   {
     label: "Map",
-    href: "/city/cumming/map",
+    href: "/user/map",
     icon: Map,
-    isActive: (p) => /^\/city\/[^/]+\/map$/.test(p),
+    isActive: (p) => p.startsWith("/user/map"),
   },
   {
     label: "Pulse",
@@ -47,14 +47,10 @@ const TABS: TabItem[] = [
 export function BottomTabBar() {
   const pathname = usePathname();
 
-  // Self-gate: resident surfaces only. Renders on the landing page ("/"),
-  // anything under "/user", and the city map (the Map tab target). Returns null
-  // on /report, other /city pages, /staff, /login.
-  const onCityMap = /^\/city\/[^/]+\/map$/.test(pathname ?? "");
-  if (
-    pathname == null ||
-    !(pathname === "/" || pathname.startsWith("/user") || onCityMap)
-  ) {
+  // Self-gate: resident surfaces only. Renders on the landing page ("/") and
+  // anything under "/user" (which now includes the resident community map at
+  // /user/map). Returns null on /report, all /city pages, /staff, /login.
+  if (pathname == null || !(pathname === "/" || pathname.startsWith("/user"))) {
     return null;
   }
 

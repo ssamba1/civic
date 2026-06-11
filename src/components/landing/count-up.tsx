@@ -14,11 +14,14 @@ export function CountUp({
   value: string;
   duration?: number;
 }) {
-  const match = value.match(/^(\D*)([\d.,]+)(.*)$/);
   const ref = useRef<HTMLSpanElement>(null);
   const [display, setDisplay] = useState(value);
 
   useEffect(() => {
+    // Recompute inside the effect — a top-level match() returns a fresh array
+    // each render, which (in the dep list) would restart the animation every
+    // setDisplay and pin the value near 0.
+    const match = value.match(/^(\D*)([\d.,]+)(.*)$/);
     if (!match) return;
     const node = ref.current;
     if (!node) return;
@@ -63,7 +66,7 @@ export function CountUp({
       io.disconnect();
       cancelAnimationFrame(raf);
     };
-  }, [value, duration, match]);
+  }, [value, duration]);
 
   return <span ref={ref}>{display}</span>;
 }

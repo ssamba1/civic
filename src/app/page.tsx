@@ -54,7 +54,7 @@ export default function HomePage() {
           </Link>
           <nav className="flex items-center gap-1">
             <Link
-              href="/city/cumming"
+              href="/user/map"
               className="hidden rounded-full px-3 py-1.5 text-sm font-medium text-white/70 outline-none transition-colors hover:text-white focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent sm:inline-flex"
             >
               Dashboard

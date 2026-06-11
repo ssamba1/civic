@@ -16,6 +16,7 @@ import {
 import { useCategoryOverrides } from "@/lib/category-overrides";
 import { useDemoReports } from "@/lib/demo-reports";
 import { dispatchWorkOrderForReport } from "@/app/staff/actions";
+import { UpvoteButton } from "@/components/resident/upvote-button";
 import {
   Sliders,
   Clock,
@@ -37,6 +38,11 @@ interface FullscreenMapOrchestratorProps {
   // the cross-team dispatch/override actions ("no other team things"), while
   // keeping the identical fullscreen chrome + filter panel as the city map.
   lockedTeam?: TeamId;
+  // Resident community view: same map + side list, but no gov affordances —
+  // hides the team scoping, the per-team chip, and all dispatch/route actions,
+  // and shows an optimistic upvote on each list row instead. Default false, so
+  // every existing (gov) call site is byte-identical.
+  readOnly?: boolean;
 }
 
 // Hoisted to module scope — these were previously rebuilt inside the
@@ -92,6 +98,7 @@ export function FullscreenMapOrchestrator({
   zoom,
   cityName,
   lockedTeam,
+  readOnly = false,
 }: FullscreenMapOrchestratorProps) {
   // Local status overrides keyed by report id (e.g. an in-session dispatch).
   // Overlaid onto the live `initialReports` prop at render time rather than
@@ -341,8 +348,9 @@ export function FullscreenMapOrchestrator({
 
       {/* Quick filters */}
       <div className="rounded-lg bg-white/[0.025] border border-white/[0.05] p-3 flex flex-col gap-3">
-        {/* Team — primary scoping. Hidden in the team view (locked). */}
-        {!lockedTeam && (
+        {/* Team — primary scoping. Hidden in the team view (locked) and the
+            resident community view (no team concept). */}
+        {!lockedTeam && !readOnly && (
           <div className="flex flex-col gap-1.5">
             <label className="text-[12px] text-zinc-300 flex items-center gap-1.5">
               <Shield className="w-3 h-3" strokeWidth={1.75} />
@@ -370,7 +378,7 @@ export function FullscreenMapOrchestrator({
 
         {/* Category */}
         <div
-          className={`flex flex-col gap-1.5 ${lockedTeam ? "" : "border-t border-white/[0.06] pt-3"}`}
+          className={`flex flex-col gap-1.5 ${lockedTeam || readOnly ? "" : "border-t border-white/[0.06] pt-3"}`}
         >
           <label className="text-[12px] text-zinc-300">Category</label>
           <div className="relative">
@@ -478,12 +486,13 @@ export function FullscreenMapOrchestrator({
                         animationDelay: `${Math.min(index * 30, 300)}ms`,
                       }
                 }
-                className={`p-3 rounded-lg border transition-[background-color,border-color,transform] cursor-pointer flex flex-col gap-1.5 min-h-[44px] lg:min-h-0 active:scale-[0.98] ${
+                className={`p-3 rounded-lg border transition-[background-color,border-color,transform] cursor-pointer flex items-stretch gap-2 min-h-[44px] lg:min-h-0 active:scale-[0.98] ${
                   isSelected
                     ? "bg-white/[0.08] border-white/[0.12]"
                     : "bg-transparent border-transparent hover:bg-white/[0.03]"
                 }`}
               >
+                <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[13px] font-medium text-white leading-tight">
                     {meta.label}
@@ -499,17 +508,19 @@ export function FullscreenMapOrchestrator({
                   {report.address}
                 </p>
 
-                {/* Auto-assigned team chip */}
-                <div
-                  className="inline-flex self-start items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium"
-                  style={{
-                    borderColor: `${ownerTeam.color}66`,
-                    backgroundColor: `${ownerTeam.color}1f`,
-                    color: ownerTeam.color,
-                  }}
-                >
-                  {ownerTeam.shortLabel}
-                </div>
+                {/* Auto-assigned team chip — gov only; residents don't route. */}
+                {!readOnly && (
+                  <div
+                    className="inline-flex self-start items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium"
+                    style={{
+                      borderColor: `${ownerTeam.color}66`,
+                      backgroundColor: `${ownerTeam.color}1f`,
+                      color: ownerTeam.color,
+                    }}
+                  >
+                    {ownerTeam.shortLabel}
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between text-[12px] text-zinc-400">
                   <span
@@ -525,8 +536,9 @@ export function FullscreenMapOrchestrator({
                   </span>
                 </div>
 
-                {/* Route action — admin dispatch only; hidden in the team view. */}
-                {isSelected && !lockedTeam && (
+                {/* Route action — admin dispatch only; hidden in the team view
+                    and the resident community (read-only) view. */}
+                {isSelected && !lockedTeam && !readOnly && (
                   <div
                     className="mt-2 pt-2.5 border-t border-white/[0.06] flex flex-col gap-2 relative z-20"
                     style={
@@ -625,6 +637,15 @@ export function FullscreenMapOrchestrator({
                     )}
                   </div>
                 )}
+                </div>
+                {readOnly && (
+                  <UpvoteButton
+                    reportId={report.id}
+                    severity={report.severity}
+                    size="sm"
+                    className="self-center shrink-0"
+                  />
+                )}
               </div>
             );
           })
@@ -645,6 +666,7 @@ export function FullscreenMapOrchestrator({
     activeStatuses,
     categoriesList,
     lockedTeam,
+    readOnly,
     activeTeamMeta,
     handleRouteToTeam,
     handleToggleStatus,
@@ -694,7 +716,7 @@ export function FullscreenMapOrchestrator({
       <BottomSheet
         open={isDispatchSheetOpen}
         onClose={() => setIsDispatchSheetOpen(false)}
-        title={`${lockedTeam ? "Reports" : "Dispatch"} · ${filteredReports.length} reports`}
+        title={`${readOnly ? "Nearby" : lockedTeam ? "Reports" : "Dispatch"} · ${filteredReports.length} reports`}
         className="bg-[#0a0a0b] text-white border-t border-white/[0.08]"
       >
         {dispatchPanelContent}
@@ -720,7 +742,7 @@ export function FullscreenMapOrchestrator({
         {/* Panel header */}
         <div className="flex items-center justify-between shrink-0 mb-3">
           <h2 className="text-[15px] font-semibold text-white">
-            {lockedTeam ? "Reports" : "Dispatch"}
+            {readOnly ? "Nearby" : lockedTeam ? "Reports" : "Dispatch"}
           </h2>
           <span className="text-[13px] text-zinc-300 tabular-nums">
             {filteredReports.length} reports

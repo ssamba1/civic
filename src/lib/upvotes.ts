@@ -1,0 +1,126 @@
+"use client";
+
+import { useCallback, useEffect, useSyncExternalStore } from "react";
+
+/* ==================================================================
+   Optimistic, client-only upvote store.
+
+   Residents can upvote community reports from the /user/map browse
+   list. There is no durable backend yet (PLAN.md §10 / migration 005:
+   `report_upvotes` table + count trigger + RLS — approval-gated), so
+   this keeps the upvoted-id set in localStorage and surfaces it
+   reactively. Display count = a deterministic per-report base + 1 when
+   the local user has upvoted.
+
+   Pattern mirrors category-overrides.ts: module-level snapshot for sync
+   reads, `useUpvotes()` for React reactivity. When the table lands, swap
+   the localStorage read/write for an RPC — call-sites stay unchanged.
+   ================================================================== */
+
+const STORAGE_KEY = "civic.upvotes.v1";
+
+type UpvoteSet = ReadonlySet<string>;
+
+let snapshot: UpvoteSet = new Set();
+const listeners = new Set<() => void>();
+let hydrated = false;
+
+function emit() {
+  for (const l of listeners) l();
+}
+
+function readStorage(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(parsed.filter((x): x is string => typeof x === "string"));
+  } catch {
+    return new Set();
+  }
+}
+
+function writeStorage(set: UpvoteSet) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([...set]));
+  } catch {
+    // Quota / private mode — silently drop. In-memory snapshot still works.
+  }
+}
+
+function hydrateOnce() {
+  if (hydrated || typeof window === "undefined") return;
+  snapshot = readStorage();
+  hydrated = true;
+  emit();
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function getSnapshot(): UpvoteSet {
+  return snapshot;
+}
+
+// Referentially-stable empty set for SSR so React doesn't loop.
+const EMPTY: UpvoteSet = new Set();
+function getServerSnapshot(): UpvoteSet {
+  return EMPTY;
+}
+
+/**
+ * Deterministic per-report base upvote count so the community list reads as
+ * populated without a backend. Same hashing approach as map-popup's cost
+ * estimate — stable across reloads, varied across reports.
+ */
+export function baseUpvoteCount(reportId: string, severity = 3): number {
+  let hash = 0;
+  for (let i = 0; i < reportId.length; i++) {
+    hash = reportId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  // 0–23 base, nudged up by severity so worse issues trend higher.
+  return (Math.abs(hash) % 24) + severity * 2;
+}
+
+interface UseUpvotesReturn {
+  /** True if the local user has upvoted this report. */
+  has: (reportId: string) => boolean;
+  /** Display count = deterministic base + 1 when locally upvoted. */
+  count: (reportId: string, severity?: number) => number;
+  /** Optimistically toggle the local user's upvote. */
+  toggle: (reportId: string) => void;
+}
+
+export function useUpvotes(): UseUpvotesReturn {
+  useEffect(() => {
+    hydrateOnce();
+  }, []);
+
+  const set = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  const has = useCallback((reportId: string) => set.has(reportId), [set]);
+
+  const count = useCallback(
+    (reportId: string, severity = 3) =>
+      baseUpvoteCount(reportId, severity) + (set.has(reportId) ? 1 : 0),
+    [set],
+  );
+
+  const toggle = useCallback((reportId: string) => {
+    const next = new Set(snapshot);
+    if (next.has(reportId)) next.delete(reportId);
+    else next.add(reportId);
+    snapshot = next;
+    writeStorage(snapshot);
+    emit();
+  }, []);
+
+  return { has, count, toggle };
+}
