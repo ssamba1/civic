@@ -1,5 +1,6 @@
-import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { CATEGORY_META } from "@/lib/dashboard-data";
+import { DEMO_MODE } from "@/lib/demo-mode";
+import type { ReportCategory, ReportStatus } from "@/lib/types";
 
 /* ------------------------------------------------------------------
    Analytics types
@@ -88,12 +89,27 @@ const KPI_FALLBACK: AnalyticsKpis = {
   backlog_delta_pct: 12.5,
 };
 
+// Live-mode fallback: honest zeros instead of demo literals, so an empty
+// city renders an empty (not fabricated) analytics dashboard.
+const KPI_EMPTY: AnalyticsKpis = {
+  resolution_rate_pct: 0,
+  resolution_rate_delta_pct: 0,
+  mttr_hours: 0,
+  mttr_delta_pct: 0,
+  sla_compliance_pct: 0,
+  sla_target_pct: 90,
+  active_backlog: 0,
+  backlog_delta_pct: 0,
+};
+
+const kpiFallback = () => (DEMO_MODE ? KPI_FALLBACK : KPI_EMPTY);
+
 const DAY_MS = 86_400_000;
 
 export async function fetchAnalyticsKpis(
   cityId: string,
 ): Promise<AnalyticsKpis> {
-  if (!cityId) return KPI_FALLBACK;
+  if (!cityId) return kpiFallback();
   try {
     const { createServerClient } = await import("@/lib/db/client");
     const db = createServerClient();
@@ -104,13 +120,12 @@ export async function fetchAnalyticsKpis(
 
     if (error || !data || data.length === 0) {
       console.warn("analytics-data: falling back to literals");
-      return KPI_FALLBACK;
+      return kpiFallback();
     }
 
     const rows = data as { status: ReportStatus; created_at: string }[];
     const now = Date.now();
-    const ageDays = (iso: string) =>
-      (now - new Date(iso).getTime()) / DAY_MS;
+    const ageDays = (iso: string) => (now - new Date(iso).getTime()) / DAY_MS;
 
     const total = rows.length;
     const closed = rows.filter((r) => r.status === "closed").length;
@@ -148,17 +163,18 @@ export async function fetchAnalyticsKpis(
       resolution_rate_pct: round1(resolutionRate),
       resolution_rate_delta_pct: round1(pctChange(thisWeekRate, prevWeekRate)),
       // MTTR + SLA need work-order completion timestamps that the synthetic DB
-      // rows don't carry; keep the demo literals for those two signals.
-      mttr_hours: KPI_FALLBACK.mttr_hours,
-      mttr_delta_pct: KPI_FALLBACK.mttr_delta_pct,
-      sla_compliance_pct: KPI_FALLBACK.sla_compliance_pct,
-      sla_target_pct: KPI_FALLBACK.sla_target_pct,
+      // rows don't carry; keep the demo literals for those two signals (zeros
+      // in live mode so real deployments never show fabricated numbers).
+      mttr_hours: kpiFallback().mttr_hours,
+      mttr_delta_pct: kpiFallback().mttr_delta_pct,
+      sla_compliance_pct: kpiFallback().sla_compliance_pct,
+      sla_target_pct: kpiFallback().sla_target_pct,
       active_backlog: backlog,
       backlog_delta_pct: round1(pctChange(thisWeek.length, prevWeek.length)),
     };
   } catch {
     console.warn("analytics-data: falling back to literals");
-    return KPI_FALLBACK;
+    return kpiFallback();
   }
 }
 
@@ -171,12 +187,13 @@ export async function fetchReportsTrend(
   return Array.from({ length: days }, (_, i) => {
     const idx = days - 1 - i;
     const date = new Date(now - idx * 86_400_000);
+    // Live mode: keep the date axis but flatline at zero (charts stay mounted).
+    if (!DEMO_MODE) {
+      return { date: date.toISOString().slice(0, 10), created: 0, closed: 0 };
+    }
     const base = 8 + Math.round(seed(idx, 7) * 10);
     const created = base + (idx % 4 === 0 ? 4 : 0);
-    const closed = Math.max(
-      1,
-      Math.round(base * 0.78 + seed(idx, 13) * 4 - 2),
-    );
+    const closed = Math.max(1, Math.round(base * 0.78 + seed(idx, 13) * 4 - 2));
     return {
       date: date.toISOString().slice(0, 10),
       created,
@@ -189,6 +206,15 @@ export async function fetchResolutionDistribution(
   cityId: string,
 ): Promise<ResolutionBucket[]> {
   void cityId;
+  if (!DEMO_MODE) {
+    return [
+      { label: "<24h", hours_max: 24, count: 0 },
+      { label: "1-3d", hours_max: 72, count: 0 },
+      { label: "3-7d", hours_max: 168, count: 0 },
+      { label: "1-2w", hours_max: 336, count: 0 },
+      { label: ">2w", hours_max: 9999, count: 0 },
+    ];
+  }
   return [
     { label: "<24h", hours_max: 24, count: 62 },
     { label: "1-3d", hours_max: 72, count: 71 },
@@ -202,11 +228,12 @@ export async function fetchStatusFunnel(
   cityId: string,
 ): Promise<StatusFunnelStep[]> {
   void cityId;
+  const demo = DEMO_MODE;
   return [
-    { status: "open", label: "Open", count: 43 },
-    { status: "dispatched", label: "Dispatched", count: 31 },
-    { status: "in_progress", label: "In progress", count: 22 },
-    { status: "closed", label: "Resolved", count: 189 },
+    { status: "open", label: "Open", count: demo ? 43 : 0 },
+    { status: "dispatched", label: "Dispatched", count: demo ? 31 : 0 },
+    { status: "in_progress", label: "In progress", count: demo ? 22 : 0 },
+    { status: "closed", label: "Resolved", count: demo ? 189 : 0 },
   ];
 }
 
@@ -214,6 +241,12 @@ export async function fetchSeverityDistribution(
   cityId: string,
 ): Promise<SeveritySlice[]> {
   void cityId;
+  if (!DEMO_MODE) {
+    return ([1, 2, 3, 4, 5] as const).map((severity) => ({
+      severity,
+      count: 0,
+    }));
+  }
   return [
     { severity: 1, count: 58 },
     { severity: 2, count: 71 },
@@ -223,19 +256,16 @@ export async function fetchSeverityDistribution(
   ];
 }
 
-export async function fetchHourlyHeatmap(
-  cityId: string,
-): Promise<HeatCell[]> {
+export async function fetchHourlyHeatmap(cityId: string): Promise<HeatCell[]> {
   void cityId;
   const cells: HeatCell[] = [];
   for (let d = 0; d < 7; d++) {
     for (let h = 0; h < 24; h++) {
       // Higher during commute (7-9, 16-19) and on weekdays
-      const commute =
-        (h >= 7 && h <= 9) || (h >= 16 && h <= 19) ? 1.6 : 1;
+      const commute = (h >= 7 && h <= 9) || (h >= 16 && h <= 19) ? 1.6 : 1;
       const weekday = d >= 1 && d <= 5 ? 1.25 : 0.6;
       const noise = 0.5 + seed(d * 24 + h, 23);
-      const v = Math.round(commute * weekday * noise * 4);
+      const v = DEMO_MODE ? Math.round(commute * weekday * noise * 4) : 0;
       cells.push({ day: d, hour: h, count: v });
     }
   }
@@ -246,6 +276,7 @@ export async function fetchTopNeighborhoods(
   cityId: string,
 ): Promise<NeighborhoodVolume[]> {
   void cityId;
+  if (!DEMO_MODE) return [];
   return [
     { name: "Downtown", count: 64, open: 12 },
     { name: "Vickery Village", count: 47, open: 9 },
@@ -260,6 +291,7 @@ export async function fetchCategoryResolution(
   cityId: string,
 ): Promise<CategoryResolution[]> {
   void cityId;
+  if (!DEMO_MODE) return [];
   const rows: Array<{
     category: ReportCategory;
     avg_hours: number;
@@ -269,7 +301,12 @@ export async function fetchCategoryResolution(
     { category: "pothole", avg_hours: 58, target_hours: 72, count: 68 },
     { category: "streetlight", avg_hours: 96, target_hours: 120, count: 41 },
     { category: "water_leak", avg_hours: 14, target_hours: 24, count: 29 },
-    { category: "sidewalk_damage", avg_hours: 184, target_hours: 168, count: 24 },
+    {
+      category: "sidewalk_damage",
+      avg_hours: 184,
+      target_hours: 168,
+      count: 24,
+    },
     { category: "downed_sign", avg_hours: 28, target_hours: 48, count: 22 },
     { category: "graffiti", avg_hours: 122, target_hours: 96, count: 18 },
     { category: "tree_down", avg_hours: 18, target_hours: 24, count: 14 },
@@ -286,6 +323,13 @@ export async function fetchReporterVelocity(
   cityId: string,
 ): Promise<ReporterVelocity> {
   void cityId;
+  if (!DEMO_MODE) {
+    return {
+      unique_reporters: 0,
+      reports_per_reporter: 0,
+      spark: Array.from({ length: 14 }, () => 0),
+    };
+  }
   const spark = Array.from({ length: 14 }, (_, i) =>
     Math.round(6 + seed(i, 91) * 10),
   );

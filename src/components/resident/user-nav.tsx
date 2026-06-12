@@ -1,9 +1,9 @@
 "use client";
 
+import { Camera, HeartPulse } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HeartPulse, Camera } from "lucide-react";
-
+import { EnvSwitch } from "@/components/env-switch";
 import { UpdatesPopover } from "@/components/resident/updates-popover";
 import { ViewSwitch } from "@/components/view-switch";
 
@@ -38,7 +38,10 @@ export function UserNav() {
           Civic
         </Link>
 
-        <nav className="flex min-w-0 shrink items-center gap-2" aria-label="Resident views">
+        <nav
+          className="flex min-w-0 shrink items-center gap-2"
+          aria-label="Resident views"
+        >
           {/* Segmented control track */}
           <div className="flex min-w-0 items-center gap-0.5 rounded-[10px] border border-white/[0.06] bg-white/[0.03] p-0.5">
             {items.map(({ label, href, icon: Icon }) => {
@@ -62,7 +65,9 @@ export function UserNav() {
                   <Icon
                     className={[
                       "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
-                      active ? "text-[#0a84ff]" : "text-zinc-500 group-hover:text-zinc-300",
+                      active
+                        ? "text-[#0a84ff]"
+                        : "text-zinc-500 group-hover:text-zinc-300",
                     ].join(" ")}
                     strokeWidth={2}
                     aria-hidden="true"
@@ -85,11 +90,16 @@ export function UserNav() {
               "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
             ].join(" ")}
           >
-            <Camera className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />
+            <Camera
+              className="h-3.5 w-3.5 shrink-0"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
             <span className="hidden sm:inline">Report an issue</span>
           </Link>
 
           <ViewSwitch />
+          <EnvSwitch />
         </nav>
       </div>
     </header>

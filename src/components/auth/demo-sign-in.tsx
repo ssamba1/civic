@@ -7,6 +7,7 @@ import { useFormStatus } from "react-dom";
 
 import { signInDemo } from "@/app/login/actions";
 import { DEMO_ACCOUNTS } from "@/lib/demo-auth";
+import { DEMO_MODE } from "@/lib/demo-mode";
 
 /**
  * Demo persona sign-in. DEMO ONLY — credentials are baked in (see demo-auth.ts)
@@ -18,6 +19,9 @@ export function DemoSignIn({ error }: { error?: string | null }) {
   const redirectTo = useSearchParams().get("redirect");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  // Live deployments (civic-testing): real Supabase auth only.
+  if (!DEMO_MODE) return null;
 
   const personas = DEMO_ACCOUNTS.map((a) => ({
     username: a.username,

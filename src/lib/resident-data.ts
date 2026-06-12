@@ -1,21 +1,22 @@
 import "server-only";
 
-import type { ReportCategory, ReportStatus } from "@/lib/types";
-import type { DashboardReport } from "@/lib/dashboard-data";
 import {
-  getReportCorpus,
-  fetchCity,
-  fetchCityStats,
-  CATEGORY_META,
-} from "@/lib/dashboard-data";
-import {
-  fetchReportsTrend,
-  fetchTopNeighborhoods,
-  fetchResolutionDistribution,
   fetchCategoryResolution,
+  fetchReportsTrend,
+  fetchResolutionDistribution,
+  fetchTopNeighborhoods,
   type TrendPoint,
 } from "@/lib/analytics-data";
-import { getAuthUser, createSSRClient } from "@/lib/db/ssr-client";
+import type { DashboardReport } from "@/lib/dashboard-data";
+import {
+  CATEGORY_META,
+  fetchCity,
+  fetchCityStats,
+  getReportCorpus,
+} from "@/lib/dashboard-data";
+import { createSSRClient, getAuthUser } from "@/lib/db/ssr-client";
+import { DEMO_MODE } from "@/lib/demo-mode";
+import type { ReportCategory, ReportStatus } from "@/lib/types";
 
 /* ------------------------------------------------------------------
    Resident-facing types
@@ -176,9 +177,7 @@ function reachedStages(status: ReportStatus): {
    Public API — DATA CONTRACT
    ------------------------------------------------------------------ */
 
-export async function getCurrentResident(
-  citySlug = "cumming",
-): Promise<{
+export async function getCurrentResident(citySlug = "cumming"): Promise<{
   id: string;
   displayName: string;
   citySlug: string;
@@ -284,7 +283,7 @@ export async function getMyReports(
       return {
         id: r.id,
         category: (cl?.category ?? "other") as ReportCategory,
-        severity: ((cl?.severity ?? 3) as 1 | 2 | 3 | 4 | 5),
+        severity: (cl?.severity ?? 3) as 1 | 2 | 3 | 4 | 5,
         status: r.status,
         address: r.address ?? "Unknown location",
         location: decodeLocation(r.location),
@@ -458,7 +457,10 @@ export async function getCityMorale(citySlug: string): Promise<CityMorale> {
       ? null
       : catRes.reduce((best, c) => (c.avg_hours < best.avg_hours ? c : best));
   const fastest = fastestCategory
-    ? { category: fastestCategory.category, hours: Math.round(fastestCategory.avg_hours) }
+    ? {
+        category: fastestCategory.category,
+        hours: Math.round(fastestCategory.avg_hours),
+      }
     : null;
 
   return {
@@ -622,7 +624,9 @@ async function syntheticNotifications(
     });
   }
 
-  for (let i = 0; i < ANNOUNCEMENTS.length; i++) {
+  // City announcements are demo set-dressing — never show them on live
+  // deployments, where notifications must come from real reports only.
+  for (let i = 0; DEMO_MODE && i < ANNOUNCEMENTS.length; i++) {
     const a = ANNOUNCEMENTS[i];
     const at = new Date(now - a.ageDays * DAY_MS).toISOString();
     items.push({

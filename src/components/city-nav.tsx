@@ -1,9 +1,17 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import {
+  BarChart3,
+  Camera,
+  Map,
+  RefreshCw,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UsersRound, ThumbsUp, Map, BarChart3, Camera, RefreshCw } from "lucide-react";
+import { useCallback, useState } from "react";
+import { EnvSwitch } from "@/components/env-switch";
+import { DEMO_MODE } from "@/lib/demo-mode";
 import { useDemoReports } from "@/lib/demo-reports";
 import { useSlidingPill } from "@/lib/hooks/use-sliding-pill";
 
@@ -32,7 +40,9 @@ function NavRefreshButton() {
       onClick={onClick}
       aria-pressed={active}
       aria-label={active ? "Remove live demo report" : "Add live demo report"}
-      title={active ? "Remove the live report (demo)" : "Add a live report (demo)"}
+      title={
+        active ? "Remove the live report (demo)" : "Add a live report (demo)"
+      }
       className={[
         "group inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2 sm:px-2.5 text-[13px] font-medium",
         "transition-colors duration-150 outline-none",
@@ -43,7 +53,10 @@ function NavRefreshButton() {
       ].join(" ")}
     >
       <RefreshCw
-        className={["h-3.5 w-3.5 shrink-0", spinning && "motion-safe:animate-spin"]
+        className={[
+          "h-3.5 w-3.5 shrink-0",
+          spinning && "motion-safe:animate-spin",
+        ]
           .filter(Boolean)
           .join(" ")}
         strokeWidth={2}
@@ -140,13 +153,17 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
             <Icon
               className={[
                 "h-4 w-4 shrink-0 transition-colors duration-150",
-                active ? "text-[#0a84ff]" : "text-zinc-500 group-hover:text-zinc-300",
+                active
+                  ? "text-[#0a84ff]"
+                  : "text-zinc-500 group-hover:text-zinc-300",
               ].join(" ")}
               strokeWidth={2}
               aria-hidden="true"
             />
             {/* Labels always visible on mobile tabs */}
-            <span className="text-[11px] font-medium leading-none">{label}</span>
+            <span className="text-[11px] font-medium leading-none">
+              {label}
+            </span>
           </Link>
         ))}
       </nav>
@@ -157,6 +174,7 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
   if (mobileSlot === "actions") {
     return (
       <div className="flex items-center gap-2">
+        <EnvSwitch />
         <Link
           href="/report"
           aria-label="Report"
@@ -169,7 +187,11 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
             "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
           ].join(" ")}
         >
-          <Camera className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+          <Camera
+            className="h-4 w-4 shrink-0"
+            strokeWidth={2}
+            aria-hidden="true"
+          />
           <span className="sr-only">Report</span>
         </Link>
       </div>
@@ -180,9 +202,15 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
   const activeHref = items.find((i) => i.active)?.href;
   const { trackRef, pill } = useSlidingPill(activeHref);
   return (
-    <nav className="flex min-w-0 shrink items-center gap-2" aria-label="City views">
-      {/* Demo Refresh — left of the Teams tab */}
-      <NavRefreshButton />
+    <nav
+      className="flex min-w-0 shrink items-center gap-2"
+      aria-label="City views"
+    >
+      {/* Demo ⇄ Testing deployment switch — leftmost action */}
+      <EnvSwitch />
+      {/* Demo Refresh — left of the Teams tab. Demo deployments only: the
+          injected tree report is sample data, not for the live site. */}
+      {DEMO_MODE && <NavRefreshButton />}
 
       {/* Segmented control track */}
       <div
@@ -219,7 +247,9 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
             <Icon
               className={[
                 "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
-                active ? "text-[#0a84ff]" : "text-zinc-500 group-hover:text-zinc-300",
+                active
+                  ? "text-[#0a84ff]"
+                  : "text-zinc-500 group-hover:text-zinc-300",
               ].join(" ")}
               strokeWidth={2}
               aria-hidden="true"
@@ -240,7 +270,11 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
           "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
         ].join(" ")}
       >
-        <Camera className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />
+        <Camera
+          className="h-3.5 w-3.5 shrink-0"
+          strokeWidth={2}
+          aria-hidden="true"
+        />
         <span className="hidden sm:inline">Report</span>
       </Link>
     </nav>

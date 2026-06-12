@@ -3,11 +3,19 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { authenticateDemo, DEMO_SESSION_COOKIE } from "@/lib/demo-auth";
+import { DEMO_MODE } from "@/lib/demo-mode";
 
 /* Demo persona sign-in. Validates against the baked credential table, sets a
    session cookie, and redirects to the persona's home. DEMO ONLY — see
    demo-auth.ts. On bad credentials, redirects back to /login with an error. */
 export async function signInDemo(formData: FormData): Promise<void> {
+  // Live deployments hide the demo form (demo-sign-in.tsx), but the server
+  // action must refuse too — the baked credentials are public.
+  if (!DEMO_MODE) {
+    redirect(
+      `/login?demo_error=${encodeURIComponent("Demo accounts are disabled on this deployment")}`,
+    );
+  }
   const username = String(formData.get("username") ?? "");
   const password = String(formData.get("password") ?? "");
 

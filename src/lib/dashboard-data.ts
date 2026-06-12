@@ -1,6 +1,7 @@
 import { cache } from "react";
+import { DEMO_MODE } from "@/lib/demo-mode";
 import type { TeamId } from "@/lib/teams";
-import type { City, Report, ReportCategory, ReportStatus } from "@/lib/types";
+import type { City, ReportCategory, ReportStatus } from "@/lib/types";
 
 /* ------------------------------------------------------------------
    Dashboard-specific types (flattened from Report + Classification)
@@ -381,6 +382,10 @@ const categoryPhoto = (category: ReportCategory): string =>
   `${PHOTO_BASE}/${category}.jpg`;
 
 function buildCorpus(): CorpusReport[] {
+  // Live deployments (NEXT_PUBLIC_DEMO_MODE=0) run with an empty corpus —
+  // every dashboard/analytics surface derives from real Supabase rows or
+  // renders empty. Demo deployments get the full synthetic city below.
+  if (!DEMO_MODE) return [];
   const N = 1100;
   const SPAN_DAYS = 180; // ~6 months
   const RECENCY = 1.6; // >1 front-loads activity toward the present (dense recent window)
