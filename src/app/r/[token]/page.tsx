@@ -1,0 +1,141 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getPublicReport, type PublicStatus } from "@/lib/public-report";
+
+// Public, account-less status page — resolved per request from an opaque token.
+export const dynamic = "force-dynamic";
+
+interface PageProps {
+  params: Promise<{ token: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { token } = await params;
+  const report = getPublicReport(token);
+  if (!report) return { title: "Report not found | Civic" };
+  return {
+    title: `Civic | ${report.categoryLabel} — ${report.statusLabel}`,
+    description: `Public status for a reported ${report.categoryLabel.toLowerCase()}.`,
+    // Status pages carry a location — keep them out of search indexes.
+    robots: { index: false, follow: false },
+  };
+}
+
+const STATUS_TONE: Record<PublicStatus, string> = {
+  in_progress: "text-[#5ac8fa] bg-[#5ac8fa]/10 ring-[#5ac8fa]/30",
+  resolved: "text-[#30d158] bg-[#30d158]/10 ring-[#30d158]/30",
+  closed: "text-zinc-300 bg-white/[0.06] ring-white/10",
+};
+
+function fmtDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export default async function PublicReportPage({ params }: PageProps) {
+  const { token } = await params;
+  const report = getPublicReport(token);
+  if (!report) notFound();
+
+  const isResolved = report.publicStatus === "resolved";
+
+  return (
+    <main className="min-h-dvh bg-black text-zinc-100">
+      <div className="mx-auto w-full max-w-2xl px-4 py-12 sm:px-6">
+        {/* Brand */}
+        <div className="mb-8 flex items-center gap-2">
+          <span
+            className="h-2 w-2 rounded-full bg-[#0a84ff] shadow-[0_0_8px_rgba(10,132,255,0.6)]"
+            aria-hidden="true"
+          />
+          <span className="text-[15px] font-semibold tracking-tight text-white">
+            Civic
+          </span>
+        </div>
+
+        {/* Header */}
+        <section className="mb-6">
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="flex min-w-0 items-center gap-2.5 text-[28px] sm:text-[34px] font-semibold tracking-tight text-white leading-[1.1]">
+              <span
+                className="h-3 w-3 flex-shrink-0 rounded-full"
+                style={{ backgroundColor: report.categoryColor }}
+                aria-hidden="true"
+              />
+              <span className="truncate">{report.categoryLabel}</span>
+            </h1>
+            <span
+              className={`mt-1 flex-shrink-0 rounded-full px-2.5 py-0.5 text-[12px] font-medium ring-1 ${STATUS_TONE[report.publicStatus]}`}
+            >
+              {report.statusLabel}
+            </span>
+          </div>
+          <p className="mt-2 text-[13px] text-zinc-400">
+            {report.address} · Reported {fmtDate(report.filedAt)}
+          </p>
+        </section>
+
+        {/* Photo(s) */}
+        <div className="mb-6 overflow-hidden rounded-xl border border-white/[0.06] bg-[#1c1c1e]">
+          {isResolved && report.resolutionPhotoUrl ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2">
+              <figure className="relative border-b border-white/[0.06] sm:border-b-0 sm:border-r">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={report.photoUrl}
+                  alt={`${report.categoryLabel} — reported`}
+                  className="aspect-[16/9] w-full object-cover"
+                />
+                <figcaption className="absolute left-2 top-2 rounded-md bg-black/55 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm">
+                  Reported
+                </figcaption>
+              </figure>
+              <figure className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={report.resolutionPhotoUrl}
+                  alt={`${report.categoryLabel} — after the fix`}
+                  className="aspect-[16/9] w-full object-cover"
+                />
+                <figcaption className="absolute left-2 top-2 rounded-md bg-[#30d158]/85 px-2 py-0.5 text-[11px] font-medium text-black backdrop-blur-sm">
+                  Fixed
+                </figcaption>
+              </figure>
+            </div>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={report.photoUrl}
+              alt={`${report.categoryLabel} at ${report.address}`}
+              className="aspect-[16/9] w-full object-cover"
+            />
+          )}
+        </div>
+
+        {/* Resolved confirmation */}
+        {isResolved && (
+          <section className="rounded-[14px] border border-[#30d158]/25 bg-[#30d158]/[0.06] p-5">
+            <h2 className="text-[15px] font-semibold tracking-tight text-white">
+              Resolved
+              {report.resolvedAt ? ` · ${fmtDate(report.resolvedAt)}` : ""}
+            </h2>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-300">
+              This issue has been fixed. Thanks for reporting it — reports like
+              this keep the city running.
+            </p>
+          </section>
+        )}
+
+        <p className="mt-8 text-[12px] text-zinc-500">
+          This is a public status page. No account needed — bookmark this link
+          to check back anytime.
+        </p>
+      </div>
+    </main>
+  );
+}
