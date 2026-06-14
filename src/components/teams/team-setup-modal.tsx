@@ -264,6 +264,7 @@ export function TeamSetupModal({
   // Success-state celebration: pulse the confirmation check (0 → 1.3 → 1).
   // matchMedia-gated so reduce-motion users get a clean static check.
   const checkRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   useGSAP(
     () => {
       if (!submitted || !checkRef.current) return;
@@ -280,17 +281,42 @@ export function TeamSetupModal({
     { dependencies: [submitted] },
   );
 
-  // Escape-to-close + scroll lock while open.
+  // Escape-to-close + scroll lock + focus trap while open. aria-modal alone
+  // doesn't keep keyboard focus inside the dialog; trap Tab/Shift+Tab at the
+  // boundaries, move focus in on open, and restore it to the opener on close.
   useEffect(() => {
     if (!open) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const dialog = dialogRef.current;
+    dialog?.focus();
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab" || !dialog) return;
+      const focusables = dialog.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && (active === first || active === dialog)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     const unlock = lockBodyScroll();
     window.addEventListener("keydown", onKey);
     return () => {
       unlock();
       window.removeEventListener("keydown", onKey);
+      previouslyFocused?.focus?.();
     };
   }, [open, onClose]);
 
@@ -389,9 +415,11 @@ export function TeamSetupModal({
         className="absolute inset-0 bg-black/75 backdrop-blur-md"
       />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="New team setup"
+        tabIndex={-1}
         className={cn(
           "absolute inset-2 sm:inset-4 lg:inset-x-0 lg:inset-y-6 lg:mx-auto lg:max-w-2xl",
           "flex flex-col overflow-hidden text-zinc-100",

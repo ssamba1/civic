@@ -144,6 +144,31 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
     };
   }, [open, detail]);
 
+  // Focus management for the desktop dropdown: move focus into the panel on
+  // open, restore it to the trigger on close, so keyboard users aren't
+  // stranded behind a closed popover. Guarded by wasOpenRef so the initial
+  // mount (open=false) never steals focus. The mobile path is a BottomSheet,
+  // which manages its own focus.
+  const wasOpenRef = useRef(false);
+  useEffect(() => {
+    if (open) {
+      wasOpenRef.current = true;
+      const raf = requestAnimationFrame(() => {
+        const panel = panelRef.current;
+        if (!panel) return;
+        const first = panel.querySelector<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        );
+        (first ?? panel).focus();
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+    if (wasOpenRef.current) {
+      wasOpenRef.current = false;
+      buttonRef.current?.focus();
+    }
+  }, [open]);
+
   const unreadCount = useMemo(() => {
     if (!items) return 0;
     return items.filter((i) => !readIds.has(i.id)).length;
@@ -252,6 +277,7 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
           ref={panelRef}
           role="dialog"
           aria-label="Updates"
+          tabIndex={-1}
           data-state={dropdownClosing ? "closed" : "open"}
           className={cn(
             // hidden below sm, present on sm+
