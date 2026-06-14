@@ -427,8 +427,15 @@ export async function getCityMorale(citySlug: string): Promise<CityMorale> {
   const ageDays = (r: DashboardReport) =>
     (now - new Date(r.created_at).getTime()) / DAY_MS;
 
-  // Literal contract reading: closed AND created within last 7 days.
-  const resolvedThisWeek = closed.filter((r) => ageDays(r) <= 7).length;
+  // "Resolved this week" must measure when a report was RESOLVED, not when it
+  // was filed — a report filed months ago and closed yesterday belongs to this
+  // week. The synthetic corpus has no closed_at, so derive the resolution time
+  // from the same deterministic stage clock the timeline uses (single source of
+  // truth), keeping this metric consistent with what residents see per-report.
+  const resolvedAgeDays = (r: DashboardReport) =>
+    (now - new Date(synthStageTimes(r).resolved).getTime()) / DAY_MS;
+
+  const resolvedThisWeek = closed.filter((r) => resolvedAgeDays(r) <= 7).length;
 
   const pctResolved =
     total === 0 ? 0 : Math.round((resolvedTotal / total) * 100);
@@ -438,11 +445,11 @@ export async function getCityMorale(citySlug: string): Promise<CityMorale> {
   const stats = await fetchCityStats(city?.id ?? "");
   const avgFixHours = stats.avg_resolution_hours;
 
-  // Momentum: last-week vs prior-week resolved volume, with a small dead-band
-  // so tiny count swings read "flat" rather than noisy up/down.
-  const lastWeek = closed.filter((r) => ageDays(r) <= 7).length;
+  // Momentum: last-week vs prior-week RESOLVED volume (by resolution time, as
+  // above), with a small dead-band so tiny count swings read "flat".
+  const lastWeek = resolvedThisWeek;
   const priorWeek = closed.filter(
-    (r) => ageDays(r) > 7 && ageDays(r) <= 14,
+    (r) => resolvedAgeDays(r) > 7 && resolvedAgeDays(r) <= 14,
   ).length;
   const slope = lastWeek - priorWeek;
   const momentum: CityMorale["momentum"] =
@@ -456,7 +463,9 @@ export async function getCityMorale(citySlug: string): Promise<CityMorale> {
   }
   const topFixedCategories = Array.from(catCounts.entries())
     .map(([category, count]) => ({ category, count }))
-    .sort((a, b) => b.count - a.count)
+    // Tie-break by category name so equal counts keep a stable order across
+    // reloads instead of surfacing in Map-insertion (i.e. arbitrary) order.
+    .sort((a, b) => b.count - a.count || a.category.localeCompare(b.category))
     .slice(0, 5);
 
   // Week-over-week deltas (percent change, guarded against divide-by-zero).
