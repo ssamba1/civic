@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { validateUpvotes } from "@/lib/schemas";
 
 /* ==================================================================
    Optimistic, client-only upvote store.
@@ -34,9 +35,7 @@ function readStorage(): Set<string> {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return new Set();
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return new Set();
-    return new Set(parsed.filter((x): x is string => typeof x === "string"));
+    return validateUpvotes(JSON.parse(raw));
   } catch {
     return new Set();
   }

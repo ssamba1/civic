@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from "vitest";
-import type { DashboardReport, ReportFilter } from "@/lib/filters/types";
+import type { DashboardReport } from "@/lib/dashboard-data";
+import type { ReportFilter } from "@/lib/filters/types";
 import { filterReports, filterPreviousWindow, resolveWindow } from "./filter-reports";
 
 const now = new Date("2026-06-13T12:00:00Z").getTime();
@@ -182,7 +183,7 @@ describe("filterReports", () => {
       {
         ...baseFilter,
         minSeverity: 3,
-        status: ["open"],
+        statuses: ["open"],
         categories: ["pothole"],
       },
       now,
@@ -196,25 +197,25 @@ describe("filterReports", () => {
       makeReport({ id: "r1", category: "pothole" }),
       makeReport({ id: "r2", category: "graffiti" }),
     ];
-    // Note: Actual team resolution depends on categoryToTeam() and overrides
-    // This test verifies the team constraint is applied
+    // Overrides are keyed by report id (see getReportTeam). Routing both
+    // reports to streets_roads via override means both pass the team filter.
     const result = filterReports(
       reports,
       { ...baseFilter, team: "streets_roads" },
       now,
-      { pothole: "streets_roads", graffiti: "streets_roads" },
+      { r1: "streets_roads", r2: "streets_roads" },
     );
     expect(result).toHaveLength(2);
   });
 
   it("filters by team override snapshot", () => {
     const reports = [makeReport({ id: "r1", category: "pothole" })];
-    // Pothole normally maps to streets_roads, but override maps it to parks
+    // Override (keyed by report id) routes r1 to parks_forestry, so it matches.
     const result = filterReports(
       reports,
       { ...baseFilter, team: "parks_forestry" },
       now,
-      { pothole: "parks_forestry" },
+      { r1: "parks_forestry" },
     );
     expect(result).toHaveLength(1);
   });

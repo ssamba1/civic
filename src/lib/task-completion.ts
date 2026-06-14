@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { validateCompletions } from "@/lib/schemas";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import type { ReportStatus } from "@/lib/types";
 
@@ -46,19 +47,7 @@ function readStorage(): CompletionMap {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};
-    const parsed = JSON.parse(raw) as unknown;
-    if (typeof parsed !== "object" || parsed === null) return {};
-    const out: CompletionMap = {};
-    for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
-      if (typeof v !== "object" || v === null) continue;
-      const c = v as Record<string, unknown>;
-      if (typeof c.completedAt !== "string") continue;
-      out[k] = {
-        completedAt: c.completedAt,
-        afterPhoto: typeof c.afterPhoto === "string" ? c.afterPhoto : undefined,
-      };
-    }
-    return out;
+    return validateCompletions(JSON.parse(raw));
   } catch {
     return {};
   }
@@ -89,7 +78,7 @@ export function getReportCompletion(
   report: Pick<DashboardReport, "id">,
   map: CompletionMap = snapshot,
 ): Completion | undefined {
-  return map[report.id];
+  return map?.[report.id];
 }
 
 /** Effective status: a completed task reads as "closed", else the corpus value. */
@@ -97,7 +86,7 @@ export function resolveReportStatus(
   report: Pick<DashboardReport, "id" | "status">,
   map: CompletionMap = snapshot,
 ): ReportStatus {
-  return map[report.id] ? "closed" : report.status;
+  return map?.[report.id] ? "closed" : report.status;
 }
 
 function subscribe(listener: () => void): () => void {

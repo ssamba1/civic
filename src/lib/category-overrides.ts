@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { categoryToTeamDefault, isValidTeamId, type TeamId } from "@/lib/teams";
+import { validateCategoryOverrides } from "@/lib/schemas";
 import type { ReportCategory } from "@/lib/types";
 
 /* ==================================================================
@@ -58,13 +59,10 @@ function readStorage(): OverrideMap {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};
-    const parsed = JSON.parse(raw) as unknown;
-    if (typeof parsed !== "object" || parsed === null) return {};
+    const validated = validateCategoryOverrides(JSON.parse(raw));
     const out: OverrideMap = {};
-    for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
-      if (typeof v === "string" && isValidTeamId(v) && v !== "all") {
-        out[k as ReportCategory] = v;
-      }
+    for (const [k, v] of Object.entries(validated)) {
+      out[k as ReportCategory] = v as TeamId;
     }
     return out;
   } catch {

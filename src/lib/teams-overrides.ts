@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { validateTeamOverrides } from "@/lib/schemas";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import type { OverrideEvent } from "@/lib/delegation-history";
 import { categoryToTeam, isValidTeamId, type TeamId } from "@/lib/teams";
@@ -57,15 +58,8 @@ function readStorage(): OverrideMap {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};
-    const parsed = JSON.parse(raw) as unknown;
-    if (typeof parsed !== "object" || parsed === null) return {};
-    const out: OverrideMap = {};
-    for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
-      if (typeof v === "string" && isValidTeamId(v) && v !== "all") {
-        out[k] = v;
-      }
-    }
-    return out;
+    const validated = validateTeamOverrides(JSON.parse(raw));
+    return validated as OverrideMap;
   } catch {
     return {};
   }

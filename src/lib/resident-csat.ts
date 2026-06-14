@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
+import { validateCsatRatings } from "@/lib/schemas";
 
 /* ==================================================================
    Resident satisfaction (CSAT) overlay store.
@@ -35,13 +36,7 @@ function readStorage(): CsatMap {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};
-    const parsed = JSON.parse(raw) as unknown;
-    if (typeof parsed !== "object" || parsed === null) return {};
-    const out: CsatMap = {};
-    for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
-      if (v === "up" || v === "down") out[k] = v;
-    }
-    return out;
+    return validateCsatRatings(JSON.parse(raw));
   } catch {
     return {};
   }

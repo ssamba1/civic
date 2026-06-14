@@ -62,8 +62,8 @@ describe("getReportCompletion", () => {
     const map: CompletionMap = {
       "report-1": { completedAt: "2026-06-06T00:00:00.000Z" },
     };
-    expect(getReportCompletion({ id: "", status: "open" }, map)).toBeUndefined();
-    expect(getReportCompletion({ id: null as any, status: "open" }, map)).toBeUndefined();
+    expect(getReportCompletion({ id: "" }, map)).toBeUndefined();
+    expect(getReportCompletion({ id: null as any }, map)).toBeUndefined();
   });
 });
 

@@ -65,10 +65,11 @@ describe("deriveKpis", () => {
   });
 
   it("calculates delta_pct with divide-by-zero guard", () => {
-    const current = [makeReport()];
+    // resolution_rate_delta_pct is in percentage POINTS (currRate - prevRate).
+    // current is 100% resolved, prior window is empty (0%) -> +100 points.
+    const current = [makeReport({ status: "closed" })];
     const previous: DashboardReport[] = [];
     const kpis = deriveKpis(current, previous);
-    // prev 0, current 1 -> +100%
     expect(kpis.resolution_rate_delta_pct).toBe(100);
   });
 
@@ -146,18 +147,18 @@ describe("deriveResolutionDistribution", () => {
     const reports = [
       makeReport({
         status: "closed",
-        severity: 1, // 30 hours -> <24h bucket
+        severity: 1, // 12 + 1*18 = 30h -> "1-3d" bucket (24h < 30h <= 72h)
       }),
       makeReport({
         status: "closed",
-        severity: 5, // 102 hours -> 1-2w bucket
+        severity: 5, // 12 + 5*18 = 102h -> "3-7d" bucket (72h < 102h <= 168h)
       }),
     ];
     const dist = deriveResolutionDistribution(reports);
-    const under24 = dist.find((b) => b.label === "<24h");
-    const over2w = dist.find((b) => b.label === ">2w");
-    expect(under24?.count).toBe(1);
-    expect(over2w?.count).toBe(1);
+    const oneToThreeDays = dist.find((b) => b.label === "1-3d");
+    const threeToSevenDays = dist.find((b) => b.label === "3-7d");
+    expect(oneToThreeDays?.count).toBe(1);
+    expect(threeToSevenDays?.count).toBe(1);
   });
 
   it("ignores non-closed status", () => {
