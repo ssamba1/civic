@@ -7,7 +7,7 @@ import { EnvSwitch } from "@/components/env-switch";
 import { UpdatesPopover } from "@/components/resident/updates-popover";
 import { ViewSwitch } from "@/components/view-switch";
 
-export function UserNav() {
+export function UserNav({ citySlug }: { citySlug?: string }) {
   const pathname = usePathname();
 
   const items = [
@@ -103,7 +103,7 @@ export function UserNav() {
             <span className="hidden sm:inline">Report an issue</span>
           </Link>
 
-          <ViewSwitch />
+          <ViewSwitch citySlug={citySlug} />
           <EnvSwitch />
         </nav>
       </div>

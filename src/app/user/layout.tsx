@@ -1,6 +1,7 @@
+import { AnonBootstrap } from "@/components/resident/anon-bootstrap";
 import { UserNav } from "@/components/resident/user-nav";
 import { ViewSwitch } from "@/components/view-switch";
-import { AnonBootstrap } from "@/components/resident/anon-bootstrap";
+import { getCurrentResident } from "@/lib/resident-data";
 
 export default async function UserLayout({
   children,
@@ -10,10 +11,16 @@ export default async function UserLayout({
   // Anon-first (PLAN.md §7): no login wall. Pages render with the resident's
   // session data when present and a demo fallback otherwise; AnonBootstrap
   // silently establishes a guest session for reports/upvotes/my-reports.
+  //
+  // Resolve the resident's city once here so the User⇄City switch links to
+  // THEIR city, not a hardcoded default — the whole header is city-correct from
+  // a single source.
+  const { citySlug } = await getCurrentResident();
+
   return (
     <div className="flex min-h-dvh flex-col bg-black text-zinc-100">
       <AnonBootstrap />
-      <UserNav />
+      <UserNav citySlug={citySlug} />
 
       {/* Mobile has no top header (BottomTabBar covers nav) — float the
           view switch top-right so User⇄City stays reachable on phones. */}
@@ -21,7 +28,7 @@ export default async function UserLayout({
         className="md:hidden fixed right-3 top-0 z-50"
         style={{ marginTop: "max(0.5rem, env(safe-area-inset-top))" }}
       >
-        <ViewSwitch />
+        <ViewSwitch citySlug={citySlug} />
       </div>
 
       {/*
