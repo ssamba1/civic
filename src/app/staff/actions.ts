@@ -1,11 +1,13 @@
 "use server";
 
-import { createServerClient } from "@/lib/db/client";
-import { getAuthUser } from "@/lib/db/ssr-client";
-import type { ReportCategory, Result, WorkOrderWithDetails } from "@/lib/types";
+import { after } from "next/server";
 // Reuse the canonical 12-category enum so staff overrides aren't limited to the
 // original 8-item local list (adds debris/drainage/faded_signage/other).
 import { classificationSchema } from "@/lib/ai/classification-schema";
+import { createServerClient } from "@/lib/db/client";
+import { getAuthUser } from "@/lib/db/ssr-client";
+import { notifyReportStatus } from "@/lib/notify/status-notify";
+import type { ReportCategory, Result, WorkOrderWithDetails } from "@/lib/types";
 
 const STAFF_ROLES = ["staff_dispatcher", "staff_supervisor", "admin"] as const;
 
@@ -77,6 +79,10 @@ export async function dispatchWorkOrder(
     .eq("id", wo.report_id);
   if (reportError) return { ok: false, error: "status_update_failed" };
 
+  // Out-of-band notify (acknowledged). Non-blocking: a delivery miss must never
+  // fail the dispatch the staffer just made.
+  after(() => notifyReportStatus(wo.report_id, "dispatched"));
+
   return { ok: true, data: undefined };
 }
 
@@ -105,6 +111,8 @@ export async function dispatchWorkOrderForReport(
     .update({ status: "dispatched", updated_at: new Date().toISOString() })
     .eq("id", reportId);
   if (reportError) return { ok: false, error: "status_update_failed" };
+
+  after(() => notifyReportStatus(reportId, "dispatched"));
 
   return { ok: true, data: undefined };
 }
@@ -141,6 +149,9 @@ export async function closeWorkOrder(
     .eq("id", wo.report_id);
   if (reportError) return { ok: false, error: "status_update_failed" };
 
+  // The lever: resolved notification carries the resolution photo. Non-blocking.
+  after(() => notifyReportStatus(wo.report_id, "closed"));
+
   return { ok: true, data: undefined };
 }
 
@@ -164,6 +175,8 @@ export async function rejectReport(
     .eq("id", reportId);
 
   if (error) return { ok: false, error: error.message };
+
+  after(() => notifyReportStatus(reportId, "rejected"));
 
   return { ok: true, data: undefined };
 }
