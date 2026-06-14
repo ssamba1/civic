@@ -4,7 +4,11 @@ import { z } from "zod/v4";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
-import { reportToOpen311, expandStatus } from "@/lib/open311/transform";
+import {
+  reportToOpen311,
+  expandStatus,
+  type Open311Request,
+} from "@/lib/open311/transform";
 import { toOpen311Xml, toErrorXml } from "@/lib/open311/xml";
 import { getService } from "@/lib/open311/services";
 import { normalizeLocation, type Report, type Classification, type City, type ReportStatus } from "@/lib/types";
@@ -134,7 +138,9 @@ export async function GET(request: NextRequest) {
           : (v.cities as City | null);
         return city ? reportToOpen311(report, classification, city) : null;
       })
-      .filter(Boolean);
+      // Type-guard filter so the result is Open311Request[], not
+      // (Open311Request | null)[] — Boolean alone doesn't narrow out null.
+      .filter((r): r is Open311Request => r !== null);
 
     if (wantsXml) {
       return new NextResponse(toOpen311Xml(open311Requests), {

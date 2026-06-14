@@ -66,15 +66,15 @@ describe("deriveKpis", () => {
 
   it("calculates delta_pct with divide-by-zero guard", () => {
     const current = [makeReport()];
-    const previous = [];
+    const previous: DashboardReport[] = [];
     const kpis = deriveKpis(current, previous);
     // prev 0, current 1 -> +100%
     expect(kpis.resolution_rate_delta_pct).toBe(100);
   });
 
   it("returns 0% delta when both are 0", () => {
-    const current = [];
-    const previous = [];
+    const current: DashboardReport[] = [];
+    const previous: DashboardReport[] = [];
     const kpis = deriveKpis(current, previous);
     expect(kpis.resolution_rate_delta_pct).toBe(0);
   });
