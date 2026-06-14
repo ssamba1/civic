@@ -479,6 +479,7 @@ function ReportMapInner({
           >
             {/* renderPopupHTML escapes all user-controlled fields via esc(); CATEGORY_META is a static constant. Do NOT pass un-sanitized strings here. */}
             <div
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is built by renderPopupHTML, which esc()-escapes every user-controlled field; inputs are a trusted static CATEGORY_META + escaped report fields.
               dangerouslySetInnerHTML={{
                 __html: renderPopupHTML(popupReport),
               }}
@@ -495,6 +496,7 @@ function ReportMapInner({
       {/* Floating settings — top-16 (not top-4) to clear the fixed global header on /city/[slug]/map. */}
       <div className="rm-controls absolute top-16 right-4 z-20 flex flex-col items-end gap-2">
         <button
+          type="button"
           onClick={togglePanel}
           className="flex h-11 w-11 items-center justify-center rounded-full bg-[#1c1c1e] border border-white/[0.08] text-white hover:border-white/[0.2] transition-colors pointer-events-auto"
           title="Map Controls"
@@ -537,6 +539,7 @@ function ReportMapInner({
                   ] as const
                 ).map(({ key, label, Icon }) => (
                   <button
+                    type="button"
                     key={key}
                     onClick={() => setViewMode(key)}
                     className={`rounded-md py-3 text-[11px] flex items-center justify-center gap-1 transition-all duration-200 min-h-[44px] lg:py-1.5 lg:min-h-0 ${
@@ -568,6 +571,7 @@ function ReportMapInner({
               <div className="grid grid-cols-3 gap-1 bg-white/[0.04] rounded-lg p-0.5 border border-white/5">
                 {(["dark", "light", "satellite"] as const).map((t) => (
                   <button
+                    type="button"
                     key={t}
                     onClick={() => setMapTheme(t)}
                     className={`rounded-md py-3 text-xs capitalize transition-all min-h-[44px] lg:py-1.5 lg:min-h-0 ${
@@ -596,6 +600,7 @@ function ReportMapInner({
                     switch itself stays h-5 w-9. lg: removes the extra hit area. */}
                 <span className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] -mr-1 lg:min-h-0 lg:min-w-0 lg:mr-0">
                   <button
+                    type="button"
                     onClick={() => setIs3D(!is3D)}
                     className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors ${
                       is3D ? "bg-electric-indigo" : "bg-white/10"
@@ -625,6 +630,7 @@ function ReportMapInner({
                     activeStatuses.length < 4 ||
                     selectedCategory) && (
                     <button
+                      type="button"
                       onClick={() => {
                         setMinSeverity?.(1);
                         setActiveStatuses?.([
@@ -676,6 +682,7 @@ function ReportMapInner({
                         const isChecked = activeStatuses.includes(s);
                         return (
                           <button
+                            type="button"
                             key={s}
                             onClick={() => handleToggleStatus(s)}
                             aria-pressed={isChecked}
@@ -727,9 +734,11 @@ function ReportMapInner({
           // severity override (Critical = severity ≥4, open). Grouping them under
           // labelled sections makes the distinction audible to screen readers and
           // removes the visual-colour-only information barrier.
+          // biome-ignore lint/a11y/useSemanticElements: role="list" intentional — <ul> applies UA list-style/margin/padding and disallows the interleaved sr-only <p> section labels; flex/gap layout is custom
           <div role="list" aria-label="Map marker legend">
             {/* Status group */}
             <p className="sr-only">Status</p>
+            {/* biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling */}
             <div role="listitem" className="flex items-center gap-2">
               <span
                 aria-hidden="true"
@@ -737,6 +746,7 @@ function ReportMapInner({
               />
               Dispatched
             </div>
+            {/* biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling */}
             <div role="listitem" className="flex items-center gap-2">
               <span
                 aria-hidden="true"
@@ -744,6 +754,7 @@ function ReportMapInner({
               />
               Resolved
             </div>
+            {/* biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling */}
             <div role="listitem" className="flex items-center gap-2">
               <span
                 aria-hidden="true"
@@ -755,6 +766,7 @@ function ReportMapInner({
                 regardless of status; separate label prevents confusion with
                 a "Critical" status that does not exist in the data model. */}
             <p className="sr-only">Severity</p>
+            {/* biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling */}
             <div role="listitem" className="flex items-center gap-2">
               <span
                 aria-hidden="true"

@@ -137,10 +137,12 @@ export function FilterProvider({
   // categoryToTeam) but the dep keeps memos invalidated on routing changes.
   const { overrides: categoryOverrides } = useCategoryOverrides();
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: categoryOverrides is an intentional cache-busting dep — filterReports reads the module-level routing snapshot (categoryToTeam), not this value, so the dep is required to invalidate the memo when category routing changes
   const filtered = useMemo(
     () => filterReports(corpus, filter, now, overrides),
     [corpus, filter, now, overrides, categoryOverrides],
   );
+  // biome-ignore lint/correctness/useExhaustiveDependencies: categoryOverrides is an intentional cache-busting dep — filterPreviousWindow reads the module-level routing snapshot (categoryToTeam), not this value, so the dep is required to invalidate the memo when category routing changes
   const previousWindow = useMemo(
     () => filterPreviousWindow(corpus, filter, now, overrides),
     [corpus, filter, now, overrides, categoryOverrides],

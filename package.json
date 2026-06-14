@@ -15,7 +15,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:rls": "node scripts/test-rls.mjs",
     "db:migrate": "supabase db push",
+    "db:apply-012": "node scripts/apply-012.mjs",
     "db:seed": "tsx supabase/seed/index.ts",
     "eval": "tsx scripts/eval-classify.ts",
     "health": "curl http://localhost:3000/api/health"

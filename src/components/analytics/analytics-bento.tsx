@@ -370,8 +370,10 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
             const isActive = hoveredKpi === c.key;
             const isDim = hoveredKpi !== null && !isActive;
             return (
+              // biome-ignore lint/a11y/useSemanticElements: role="group" is the correct intentional semantic for this KPI card cluster; no native equivalent preserves the layout
               <div
                 key={c.key}
+                // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y — focus reveals the hover tooltip via bindCard
                 tabIndex={0}
                 role="group"
                 aria-label={`${c.label}: ${c.value}`}
@@ -582,6 +584,7 @@ function renderTrendChart(
       {yTicks.map((t, i) => {
         const y = pad.t + innerH - (t / max) * innerH;
         return (
+          // biome-ignore lint/suspicious/noArrayIndexKey: yTicks is a static derived axis-tick list that never reorders or filters
           <g key={i}>
             <line
               x1={pad.l}
@@ -747,25 +750,29 @@ function renderTrendChart(
         </g>
       )}
       {opts?.bindHover &&
-        data.map((d, i) => {
-          const bind = opts.bindHover!(i);
-          return (
-            <rect
-              key={`hit-${d.date}`}
-              x={pad.l + i * xStep - xStep / 2}
-              y={pad.t}
-              width={xStep}
-              height={innerH}
-              fill="transparent"
-              pointerEvents="all"
-              tabIndex={0}
-              role="button"
-              aria-label={`${d.date}: ${d.created} created, ${d.closed} resolved`}
-              style={{ cursor: "crosshair", outline: "none" }}
-              {...bind}
-            />
-          );
-        })}
+        (() => {
+          const bindHover = opts.bindHover;
+          return data.map((d, i) => {
+            const bind = bindHover(i);
+            return (
+              // biome-ignore lint/a11y/useSemanticElements: role="button" on an SVG <rect> hit area is the standard accessible pattern; no native button element exists inside SVG without breaking layout
+              <rect
+                key={`hit-${d.date}`}
+                x={pad.l + i * xStep - xStep / 2}
+                y={pad.t}
+                width={xStep}
+                height={innerH}
+                fill="transparent"
+                pointerEvents="all"
+                tabIndex={0}
+                role="button"
+                aria-label={`${d.date}: ${d.created} created, ${d.closed} resolved`}
+                style={{ cursor: "crosshair", outline: "none" }}
+                {...bind}
+              />
+            );
+          });
+        })()}
     </svg>
   );
 }
@@ -1029,6 +1036,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
       >
         <div className="flex items-center gap-4 mb-2 text-[12px]">
           <span
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y — focus reveals a hover tooltip via tip.bindTarget
             tabIndex={0}
             className="rounded-md px-1 -mx-1 outline-none focus-visible:bg-white/[0.05] hover:bg-white/[0.04] transition-colors cursor-default"
             {...tip.bindTarget(() => legendTip("created"))}
@@ -1036,6 +1044,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
             <Legend color="#0a84ff" label={`Created · ${totalCreated}`} />
           </span>
           <span
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y — focus reveals a hover tooltip via tip.bindTarget
             tabIndex={0}
             className="rounded-md px-1 -mx-1 outline-none focus-visible:bg-white/[0.05] hover:bg-white/[0.04] transition-colors cursor-default"
             {...tip.bindTarget(() => legendTip("closed"))}
@@ -1473,13 +1482,11 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
           </div>
         }
         controls={
-          <>
-            <Toggle
-              label="Show raw counts"
-              value={showCounts}
-              onChange={setShowCounts}
-            />
-          </>
+          <Toggle
+            label="Show raw counts"
+            value={showCounts}
+            onChange={setShowCounts}
+          />
         }
         info={
           <div className="flex flex-col gap-5">
@@ -1587,6 +1594,7 @@ function renderFunnelBars(
               </span>
             </div>
             <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.04]">
+              {/* biome-ignore lint/a11y/useSemanticElements: role="meter" is correct; native <meter> renders its own non-stylable widget UI and would destroy this custom progress-bar layout */}
               <div
                 className="h-full rounded-full transition-all duration-300"
                 style={{
@@ -1837,6 +1845,7 @@ function renderHistogram(
         const isMedian = medianIdx === i;
         const bind = opts?.bindHover?.(i);
         return (
+          // biome-ignore lint/a11y/useAriaPropsSupportedByRole: aria-label is gated by the same `bind` condition as role="button" (which supports aria-label); when not interactive both are undefined
           <div
             key={b.label}
             tabIndex={bind ? 0 : -1}
@@ -1869,6 +1878,7 @@ function renderHistogram(
             >
               {b.count}
             </span>
+            {/* biome-ignore lint/a11y/useSemanticElements: role="meter" is correct; native <meter> renders its own non-stylable widget and would destroy this gradient bar layout */}
             <div
               data-bento-bar
               className={cn(
@@ -2180,6 +2190,7 @@ function renderHeatmap(
             hoveredDay === d || (hoveredCell !== null && hoveredCell.day === d);
           const isDayDim = hasHover && !isDayActive;
           return (
+            // biome-ignore lint/a11y/useAriaPropsSupportedByRole: aria-label is gated by the same `dayBind` condition as role="button" (which supports aria-label); without it both are undefined
             <span
               key={d}
               className={cn(
@@ -2255,7 +2266,7 @@ function renderHeatmap(
                         "opacity 140ms ease-out, transform 160ms ease-out, box-shadow 160ms ease-out",
                     }}
                     aria-label={`${DAY_LABELS[cell.day]} ${String(cell.hour).padStart(2, "0")}:00, ${cell.count} reports`}
-                    role={cellBind ? "img" : undefined}
+                    role="img"
                     {...(cellBind ?? {})}
                   />
                 );
@@ -2270,6 +2281,7 @@ function renderHeatmap(
               const legendBind = opts?.bindLegend?.(idx);
               const isLegendActive = opts?.hoveredLegend === idx;
               return (
+                // biome-ignore lint/a11y/useAriaPropsSupportedByRole: aria-label is gated by the same `legendBind` condition as role="img" (which supports aria-label); without it both are undefined
                 <div
                   key={o}
                   className={cn(
@@ -2328,7 +2340,9 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
   const cellRankMap = useMemo(() => {
     const sorted = [...data].sort((a, b) => b.count - a.count);
     const m = new Map<string, number>();
-    sorted.forEach((c, i) => m.set(`${c.day}-${c.hour}`, i + 1));
+    sorted.forEach((c, i) => {
+      m.set(`${c.day}-${c.hour}`, i + 1);
+    });
     return m;
   }, [data]);
 
@@ -3367,36 +3381,42 @@ function renderSpark(
         }}
       />
       {interactive &&
-        coords.map((p, i) => {
-          const isActive = activeIdx === i;
-          const isDim = activeIdx !== null && !isActive;
-          return (
-            <g key={i}>
-              <circle
-                cx={p.x}
-                cy={p.y}
-                r={isActive ? 3.5 : 2.25}
-                fill="#5ac8fa"
-                style={{
-                  opacity: isDim ? 0.3 : isActive ? 1 : 0.85,
-                  transition: "r 140ms ease-out, opacity 140ms ease-out",
-                  pointerEvents: "none",
-                }}
-              />
-              <circle
-                cx={p.x}
-                cy={p.y}
-                r={hitR}
-                fill="transparent"
-                tabIndex={0}
-                role="button"
-                aria-label={`Day ${i + 1}: ${p.v} reporters`}
-                style={{ cursor: "pointer", outline: "none" }}
-                {...opts!.bindHover!(i, p.v)}
-              />
-            </g>
-          );
-        })}
+        opts?.bindHover &&
+        (() => {
+          const bindHover = opts.bindHover;
+          return coords.map((p, i) => {
+            const isActive = activeIdx === i;
+            const isDim = activeIdx !== null && !isActive;
+            return (
+              // biome-ignore lint/suspicious/noArrayIndexKey: coords is a derived static sparkline point list (one per day) that never reorders or filters
+              <g key={i}>
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={isActive ? 3.5 : 2.25}
+                  fill="#5ac8fa"
+                  style={{
+                    opacity: isDim ? 0.3 : isActive ? 1 : 0.85,
+                    transition: "r 140ms ease-out, opacity 140ms ease-out",
+                    pointerEvents: "none",
+                  }}
+                />
+                {/* biome-ignore lint/a11y/useSemanticElements: role="button" on an SVG <circle> hit area is the standard accessible pattern; no native button element exists inside SVG */}
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={hitR}
+                  fill="transparent"
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`Day ${i + 1}: ${p.v} reporters`}
+                  style={{ cursor: "pointer", outline: "none" }}
+                  {...bindHover(i, p.v)}
+                />
+              </g>
+            );
+          });
+        })()}
     </svg>
   );
 }
@@ -3591,7 +3611,9 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
         onExpand={hasSpark ? () => setOpen(true) : undefined}
       >
         <div className="flex items-end justify-between gap-4">
+          {/* biome-ignore lint/a11y/useSemanticElements: role="group" is the correct intentional semantic for this big-number summary cluster; no native equivalent preserves the layout */}
           <div
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y — focus reveals a hover tooltip via bindBigNumber
             tabIndex={0}
             role="group"
             aria-label={`Unique reporters: ${data.unique_reporters}`}

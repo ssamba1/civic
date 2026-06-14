@@ -1,6 +1,45 @@
 // Route-level loading skeleton for the staff inbox. Mirrors the inbox shape:
 // header (title + refresh), four summary tiles, tab strip, then a ghost table
 // with 9 columns and ~8 rows. Pulse-only — no layout animation.
+
+// Stable keys for the fixed-shape skeleton placeholders. Mapping over named
+// arrays (rather than Array.from + index) keeps React keys position-independent
+// and avoids the noArrayIndexKey heuristic without per-line suppressions.
+const TILE_KEYS = ["volume", "open", "dispatched", "resolved"];
+const TAB_KEYS = [
+  "all",
+  "open",
+  "dispatched",
+  "progress",
+  "closed",
+  "rejected",
+];
+const HEADER_LABELS = [
+  "Category",
+  "Sev",
+  "Address",
+  "Submitted",
+  "Est",
+  "Materials",
+  "Status",
+  "Photo",
+  "",
+];
+const ROW_KEYS = ["r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8"];
+const CARD_KEYS = ["c1", "c2", "c3", "c4", "c5", "c6"];
+// Per-column ghost-cell width + a stable key (no positional index in the key).
+const GHOST_COLS = [
+  { key: "category", width: "3.5rem" },
+  { key: "sev", width: "3.5rem" },
+  { key: "address", width: "10rem" },
+  { key: "submitted", width: "3.5rem" },
+  { key: "est", width: "3.5rem" },
+  { key: "materials", width: "3.5rem" },
+  { key: "status", width: "3.5rem" },
+  { key: "photo", width: "3.5rem" },
+  { key: "actions", width: "1.5rem" },
+];
+
 export default function StaffInboxLoading() {
   return (
     <div className="flex h-full flex-col">
@@ -16,9 +55,9 @@ export default function StaffInboxLoading() {
 
         {/* Summary tiles */}
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+          {TILE_KEYS.map((k) => (
             <div
-              key={i}
+              key={k}
               className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-800/40"
             >
               <div className="h-3 w-16 animate-pulse rounded bg-zinc-200 dark:bg-zinc-700" />
@@ -31,9 +70,9 @@ export default function StaffInboxLoading() {
         {/* Tabs + search */}
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800">
-            {Array.from({ length: 6 }).map((_, i) => (
+            {TAB_KEYS.map((k) => (
               <div
-                key={i}
+                key={k}
                 className="h-8 w-20 animate-pulse rounded-md bg-zinc-200 dark:bg-zinc-700"
               />
             ))}
@@ -47,37 +86,24 @@ export default function StaffInboxLoading() {
         <table className="w-full min-w-[800px]">
           <thead>
             <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/50">
-              {[
-                "Category",
-                "Sev",
-                "Address",
-                "Submitted",
-                "Est",
-                "Materials",
-                "Status",
-                "Photo",
-                "",
-              ].map((h, i) => (
-                <th key={i} className="px-4 py-3">
+              {HEADER_LABELS.map((h) => (
+                <th key={h || "actions"} className="px-4 py-3">
                   {h}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {Array.from({ length: 8 }).map((_, r) => (
+            {ROW_KEYS.map((rk) => (
               <tr
-                key={r}
+                key={rk}
                 className="border-b border-zinc-100 dark:border-zinc-800/60"
               >
-                {Array.from({ length: 9 }).map((_, c) => (
-                  <td key={c} className="px-4 py-4">
+                {GHOST_COLS.map((col) => (
+                  <td key={`${rk}-${col.key}`} className="px-4 py-4">
                     <div
                       className="h-4 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800"
-                      style={{
-                        width:
-                          c === 2 ? "10rem" : c === 8 ? "1.5rem" : "3.5rem",
-                      }}
+                      style={{ width: col.width }}
                     />
                   </td>
                 ))}
@@ -89,9 +115,9 @@ export default function StaffInboxLoading() {
 
       {/* Mobile ghost cards */}
       <div className="flex-1 space-y-2 overflow-auto p-3 md:hidden">
-        {Array.from({ length: 6 }).map((_, i) => (
+        {CARD_KEYS.map((k) => (
           <div
-            key={i}
+            key={k}
             className="h-24 animate-pulse rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800/40"
           />
         ))}

@@ -8,7 +8,7 @@ import type {
 } from "@/lib/dashboard-data";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
-import type { City, ReportCategory, ReportStatus } from "@/lib/types";
+import type { City, ReportCategory } from "@/lib/types";
 
 // Error strategy for this module: log via the shared logger (Sentry-backed) and
 // return a safe empty/zeroed value. These run during SSR of the public dashboard
@@ -105,19 +105,6 @@ export async function fetchCategoryBreakdown(
       );
     },
   );
-}
-
-interface ViewRow {
-  id: string;
-  category: ReportCategory | null;
-  severity: number | null;
-  status: ReportStatus;
-  address: string | null;
-  lng: number | null;
-  lat: number | null;
-  photo_public_url: string;
-  created_at: string;
-  tags: string[] | null;
 }
 
 const ViewRowSchema = z.object({

@@ -25,6 +25,7 @@ declare class FaceDetector {
 }
 
 // Augment globalThis so `globalThis.FaceDetector` type-checks
+// biome-ignore lint/suspicious/noRedeclare: ambient class (type) + var (feature-detectable value) merging
 declare var FaceDetector:
   | {
       new (options?: FaceDetectorOptions): FaceDetector;

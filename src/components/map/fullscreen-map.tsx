@@ -96,7 +96,6 @@ export function FullscreenMapOrchestrator({
   reports: initialReports,
   center,
   zoom,
-  cityName,
   lockedTeam,
   readOnly = false,
 }: FullscreenMapOrchestratorProps) {
@@ -197,6 +196,7 @@ export function FullscreenMapOrchestrator({
   );
 
   // --- Filter Logic ---
+  // biome-ignore lint/correctness/useExhaustiveDependencies: categoryOverrides isn't referenced literally, but categoryToTeam() reads a snapshot it mutates — keeping it forces recompute when a dispatcher re-aims a category.
   const filteredReports = useMemo(() => {
     return allReports.filter((report) => {
       if (
@@ -335,6 +335,7 @@ export function FullscreenMapOrchestrator({
             </div>
             {!lockedTeam && (
               <button
+                type="button"
                 onClick={() => setSelectedTeam("all")}
                 className="text-zinc-400 hover:text-white p-0.5 rounded min-h-[44px] min-w-[44px] flex items-center justify-center lg:min-h-0 lg:min-w-0"
                 title="Switch back to All Teams"
@@ -376,12 +377,16 @@ export function FullscreenMapOrchestrator({
             resident community view (no team concept). */}
           {!lockedTeam && !readOnly && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-[12px] text-zinc-300 flex items-center gap-1.5">
+              <label
+                htmlFor="map-team-select"
+                className="text-[12px] text-zinc-300 flex items-center gap-1.5"
+              >
                 <Shield className="w-3 h-3" strokeWidth={1.75} />
                 Team view
               </label>
               <div className="relative">
                 <select
+                  id="map-team-select"
                   value={selectedTeam}
                   onChange={(e) => setSelectedTeam(e.target.value as TeamId)}
                   className="w-full bg-black/40 border border-white/[0.08] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:border-white/20 cursor-pointer appearance-none pr-8 transition-colors lg:py-1.5 lg:text-[13px]"
@@ -407,9 +412,15 @@ export function FullscreenMapOrchestrator({
           <div
             className={`flex flex-col gap-1.5 ${lockedTeam || readOnly ? "" : "border-t border-white/[0.06] pt-3"}`}
           >
-            <label className="text-[12px] text-zinc-300">Category</label>
+            <label
+              htmlFor="map-category-select"
+              className="text-[12px] text-zinc-300"
+            >
+              Category
+            </label>
             <div className="relative">
               <select
+                id="map-category-select"
                 value={selectedCategory || ""}
                 onChange={(e) =>
                   setSelectedCategory(
@@ -458,6 +469,7 @@ export function FullscreenMapOrchestrator({
                   const isChecked = activeStatuses.includes(s);
                   return (
                     <button
+                      type="button"
                       key={s}
                       onClick={() => handleToggleStatus(s)}
                       className={`rounded px-2 py-2 text-[12px] text-left transition-colors min-h-[44px] flex items-center lg:py-1 lg:min-h-0 ${
@@ -511,11 +523,20 @@ export function FullscreenMapOrchestrator({
               const ownerTeam = TEAM_META[ownerTeamId];
 
               return (
+                // biome-ignore lint/a11y/useSemanticElements: role=button on a div that contains nested buttons; native <button> can't nest buttons
                 <div
                   key={report.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() =>
                     setFocusedReportId(isSelected ? null : report.id)
                   }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setFocusedReportId(isSelected ? null : report.id);
+                    }
+                  }}
                   style={
                     reducedMotion
                       ? undefined
@@ -589,6 +610,7 @@ export function FullscreenMapOrchestrator({
                         {!isMenuOpen ? (
                           <div className="flex gap-1.5">
                             <button
+                              type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleRouteToTeam(report.id, ownerTeamId);
@@ -615,6 +637,7 @@ export function FullscreenMapOrchestrator({
                               )}
                             </button>
                             <button
+                              type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveRouteMenuId(report.id);
@@ -641,6 +664,7 @@ export function FullscreenMapOrchestrator({
                             <div className="flex justify-between items-center pb-1 mb-1 text-[12px] text-zinc-400">
                               <span>Override target team</span>
                               <button
+                                type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setActiveRouteMenuId(null);
@@ -657,6 +681,7 @@ export function FullscreenMapOrchestrator({
                                   const isOwner = team.id === ownerTeamId;
                                   return (
                                     <button
+                                      type="button"
                                       key={team.id}
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -750,6 +775,7 @@ export function FullscreenMapOrchestrator({
           Offset is +3.5rem above the HUD pill (same corner, same base offset) to
           prevent the two elements from stacking on top of each other. */}
       <button
+        type="button"
         onClick={() => setIsDispatchSheetOpen(true)}
         className="lg:hidden absolute bottom-[calc(env(safe-area-inset-bottom,0px)+3.5rem)] left-4 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-[#1c1c1e] border border-white/[0.12] text-white shadow-lg active:scale-95 transition-transform pointer-events-auto"
         aria-label="Open dispatch panel"

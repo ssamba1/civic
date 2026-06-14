@@ -174,6 +174,7 @@ export function ReportPhoto({ src, alt }: { src: string; alt: string }) {
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
+    // biome-ignore lint/performance/noImgElement: dynamic external photo URL with runtime onError fallback, not optimizable by next/image
     <img
       src={src}
       alt={alt}

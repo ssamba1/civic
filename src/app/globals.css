@@ -541,9 +541,11 @@ video::-webkit-media-controls-panel,
 video::-webkit-media-controls-play-button,
 video::-webkit-media-controls-start-playback-button,
 video::-webkit-media-controls-overlay-play-button {
+  /* biome-ignore lint/complexity/noImportantStyles: override WebKit UA-stylesheet media-control shadow pseudo-elements */
   display: none !important;
   -webkit-appearance: none;
   appearance: none;
+  /* biome-ignore lint/complexity/noImportantStyles: override WebKit UA-stylesheet media-control shadow pseudo-elements */
   opacity: 0 !important;
 }
 
@@ -586,26 +588,41 @@ video::-webkit-media-controls-overlay-play-button {
 
 /* Maplibre popup — quiet dark skin */
 .maplibregl-popup-content {
+  /* biome-ignore lint/complexity/noImportantStyles: override maplibre-gl injected popup styles */
   background: rgba(28, 28, 30, 0.92) !important;
+  /* biome-ignore lint/complexity/noImportantStyles: override maplibre-gl injected popup styles */
   color: #f5f5f7 !important;
+  /* biome-ignore lint/complexity/noImportantStyles: override maplibre-gl injected popup styles */
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  /* biome-ignore lint/complexity/noImportantStyles: override maplibre-gl injected popup styles */
   border-radius: 12px !important;
+  /* biome-ignore lint/complexity/noImportantStyles: override maplibre-gl injected popup styles */
   padding: 0 !important;
+  /* biome-ignore lint/complexity/noImportantStyles: override maplibre-gl injected popup styles */
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
   backdrop-filter: blur(20px) saturate(160%);
 }
 .maplibregl-popup-tip {
+  /* biome-ignore lint/complexity/noImportantStyles: override maplibre-gl injected popup-tip border color */
   border-top-color: rgba(28, 28, 30, 0.92) !important;
+  /* biome-ignore lint/complexity/noImportantStyles: override maplibre-gl injected popup-tip border color */
   border-bottom-color: rgba(28, 28, 30, 0.92) !important;
 }
 .maplibregl-popup-close-button {
+  /* biome-ignore lint/complexity/noImportantStyles: override maplibre-gl injected close-button styles */
   color: rgba(255, 255, 255, 0.6) !important;
+  /* biome-ignore lint/complexity/noImportantStyles: override maplibre-gl injected close-button styles */
   font-size: 18px !important;
+  /* biome-ignore lint/complexity/noImportantStyles: override maplibre-gl injected close-button styles */
   padding: 4px 8px !important;
+  /* biome-ignore lint/complexity/noImportantStyles: override maplibre-gl injected close-button styles */
   right: 4px !important;
+  /* biome-ignore lint/complexity/noImportantStyles: override maplibre-gl injected close-button styles */
   top: 2px !important;
 }
 .maplibregl-popup-close-button:hover {
+  /* biome-ignore lint/complexity/noImportantStyles: override maplibre-gl injected close-button hover styles */
   background: rgba(255, 255, 255, 0.06) !important;
+  /* biome-ignore lint/complexity/noImportantStyles: override maplibre-gl injected close-button hover styles */
   color: white !important;
 }

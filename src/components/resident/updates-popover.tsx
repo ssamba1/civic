@@ -142,7 +142,7 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
       document.removeEventListener("mousedown", onPointer);
       document.removeEventListener("keydown", onKey);
     };
-  }, [open, detail]);
+  }, [open, detail, closeDetail]);
 
   // Focus management for the desktop dropdown: move focus into the panel on
   // open, restore it to the trigger on close, so keyboard users aren't
@@ -471,6 +471,7 @@ function UpdatesFeedBody({
               </div>
               {!read && (
                 <span
+                  role="img"
                   className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-[#0a84ff]"
                   aria-label="Unread"
                 />

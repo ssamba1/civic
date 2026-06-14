@@ -221,6 +221,7 @@ function useReasoning(report: DashboardReport | null): ReasoningState {
   const [state, setState] = useState<ReasoningState>({ phase: "loading" });
   const reportId = report?.id ?? null;
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: depend on the primitive report fields used (id captured as reportId, demo, ai_reasoning), not the whole report object — its identity changes every parent render and would refetch/reset state on each render
   useEffect(() => {
     if (!reportId || !report) {
       setState({ phase: "loading" });
@@ -286,6 +287,7 @@ function ReportImage({ src, alt }: { src: string; alt: string }) {
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
+    // biome-ignore lint/performance/noImgElement: dynamic external/resident photo URL, next/image impractical
     <img
       src={src}
       alt={alt}

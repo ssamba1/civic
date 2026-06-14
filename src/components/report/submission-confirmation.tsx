@@ -125,6 +125,8 @@ export default function SubmissionConfirmation({
         >
           <svg
             className="h-12 w-12 text-green-600"
+            aria-hidden="true"
+            focusable="false"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={2.5}
@@ -236,6 +238,7 @@ export default function SubmissionConfirmation({
               <div className="flex gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <span
+                    // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, fixed order
                     key={i}
                     className={`w-2.5 h-2.5 rounded-full ${
                       i < classification.severity

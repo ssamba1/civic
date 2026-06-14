@@ -361,7 +361,8 @@ function Spinner({ className }: { className?: string }) {
     <svg
       viewBox="0 0 24 24"
       className={`animate-spin ${className ?? ""}`}
-      aria-hidden
+      aria-hidden="true"
+      focusable="false"
       fill="none"
     >
       <circle
@@ -384,7 +385,12 @@ function Spinner({ className }: { className?: string }) {
 
 function GoogleGlyph({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      aria-hidden="true"
+      focusable="false"
+    >
       <path
         fill="#4285F4"
         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09z"

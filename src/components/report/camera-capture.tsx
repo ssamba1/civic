@@ -199,6 +199,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
 
   // Open the live viewfinder on mount and whenever the camera (facingMode)
   // changes. A timeout drops to the native input if no frame arrives.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: retryCount is an intentional re-trigger dep — not read in the body, but bumping it via "Try Again" re-runs the effect to reopen the viewfinder after a failure
   useEffect(() => {
     if (!decided || useNative || camFailed) return;
     readyRef.current = false;
@@ -222,11 +223,15 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
         if (cancelled) {
           // Effect already cleaned up while the promise was in-flight — stop
           // the stream that arrived too late so the camera indicator goes dark.
-          stream.getTracks().forEach((t) => t.stop());
+          stream.getTracks().forEach((t) => {
+            t.stop();
+          });
           return;
         }
         // Release any prior stream before adopting this one.
-        streamRef.current?.getTracks().forEach((t) => t.stop());
+        streamRef.current?.getTracks().forEach((t) => {
+          t.stop();
+        });
         streamRef.current = stream;
 
         const track = stream.getVideoTracks()[0];
@@ -276,7 +281,9 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
 
     const timeout = setTimeout(() => {
       if (!readyRef.current) {
-        streamRef.current?.getTracks().forEach((t) => t.stop());
+        streamRef.current?.getTracks().forEach((t) => {
+          t.stop();
+        });
         setCamFailed(true);
       }
     }, VIEWFINDER_READY_TIMEOUT_MS);
@@ -284,7 +291,9 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
     return () => {
       cancelled = true;
       clearTimeout(timeout);
-      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current?.getTracks().forEach((t) => {
+        t.stop();
+      });
       streamRef.current = null;
     };
   }, [decided, useNative, camFailed, facingMode, markReady, retryCount]);

@@ -197,6 +197,7 @@ function DelegationRowExpandedInner({
   const [loading, setLoading] = useState<boolean>(!cached);
   const [error, setError] = useState<boolean>(false);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fire once per report.id — `cached` is derived from the ref-backed reasoningCache the fetch itself writes, so including it (or the stable setters) would re-run/loop the fetch on cache populate
   useEffect(() => {
     if (cached) {
       setData(cached);
@@ -233,7 +234,6 @@ function DelegationRowExpandedInner({
     return () => {
       controller.abort();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [report.id]);
 
   /* -------- Stat tile values -------- */
@@ -263,7 +263,7 @@ function DelegationRowExpandedInner({
       {/* Mobile: photo full-width then reasoning below. sm+: side-by-side */}
       <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-4">
         {report.photo_public_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
+          // biome-ignore lint/performance/noImgElement: dynamic external/user-uploaded photo URL with no known dimensions and no Next loader for arbitrary remote hosts — next/image is impractical
           <img
             src={report.photo_public_url}
             alt={report.address}
@@ -350,6 +350,7 @@ function DelegationRowExpandedInner({
         <ol className="flex flex-col gap-2 pl-3 border-l border-white/[0.06]">
           {events.map((event, idx) => (
             <li
+              // biome-ignore lint/suspicious/noArrayIndexKey: derived append-only timeline from buildTimeline that never reorders; TimelineEvent has no stable id, idx only disambiguates same kind+ts
               key={`${event.kind}-${event.ts}-${idx}`}
               className="relative flex items-start gap-2 text-[12px]"
             >

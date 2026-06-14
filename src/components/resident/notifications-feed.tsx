@@ -192,7 +192,11 @@ export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
                   </div>
 
                   {!read && (
+                    // role="img" so the aria-label is honored (generic role
+                    // drops it), exposing this decorative dot as an "Unread"
+                    // status graphic to screen readers.
                     <span
+                      role="img"
                       className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-[#0a84ff]"
                       aria-label="Unread"
                     />

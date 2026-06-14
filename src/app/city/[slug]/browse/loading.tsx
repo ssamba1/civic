@@ -20,9 +20,9 @@ export default function BrowseLoading() {
         {/* Stats cards: 4 cells, 2-col mobile → 4-col desktop */}
         <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-[#1c1c1e]">
           <div className="grid grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
+            {["s1", "s2", "s3", "s4"].map((k) => (
               <div
-                key={i}
+                key={k}
                 className="px-4 py-4 sm:px-5 sm:py-5 border-white/[0.06] [&:nth-child(odd)]:border-r [&:nth-child(-n+2)]:border-b lg:[&:not(:last-child)]:border-r lg:[&:nth-child(-n+2)]:border-b-0"
               >
                 <div className="mb-3 h-2.5 w-20 rounded bg-white/[0.06] animate-pulse" />
@@ -41,6 +41,7 @@ export default function BrowseLoading() {
             <div className="h-4 w-28 rounded bg-white/[0.08]" />
             <div className="mt-5 space-y-3">
               {Array.from({ length: 6 }).map((_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, fixed order
                 <div key={i} className="space-y-1.5">
                   <div
                     className="h-3 rounded bg-white/[0.06] animate-pulse"
@@ -55,6 +56,7 @@ export default function BrowseLoading() {
             <div className="h-4 w-20 rounded bg-white/[0.08]" />
             <div className="mt-4 space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, fixed order
                 <div key={i} className="space-y-1.5">
                   <div className="h-3 w-3/4 rounded bg-white/[0.06] animate-pulse" />
                   <div className="h-2.5 w-1/2 rounded bg-white/[0.04] animate-pulse" />

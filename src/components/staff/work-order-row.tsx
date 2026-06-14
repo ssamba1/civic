@@ -140,6 +140,7 @@ export function WorkOrderRow({
 
   return (
     <>
+      {/* biome-ignore lint/a11y/useSemanticElements: a clickable table row can't be a native <button> (invalid inside <table>); role="button" + tabIndex + onKeyDown give it full keyboard support */}
       <tr
         onClick={() => {
           onSelect();
@@ -407,6 +408,7 @@ export function WorkOrderRowControlled({
 
   return (
     <>
+      {/* biome-ignore lint/a11y/useSemanticElements: a clickable table row can't be a native <button> (invalid inside <table>); role="button" + tabIndex + onKeyDown give it full keyboard support */}
       <tr
         onClick={() => {
           onSelect();

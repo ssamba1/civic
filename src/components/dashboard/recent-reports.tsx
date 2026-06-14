@@ -132,7 +132,6 @@ function RecentReportsInner({
       <ul
         ref={listContainerRef}
         className="overflow-y-auto custom-scrollbar -mx-1 px-1 flex-1 scroll-smooth flex flex-col mt-2"
-        role="list"
       >
         {reports.map((report, index) => {
           const meta = CATEGORY_META[report.category];

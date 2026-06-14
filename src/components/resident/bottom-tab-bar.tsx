@@ -1,7 +1,13 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { Bell, Camera, FileText, HeartPulse, Map } from "lucide-react";
+import {
+  Bell,
+  Camera,
+  FileText,
+  HeartPulse,
+  Map as MapIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -27,7 +33,7 @@ const TABS: TabItem[] = [
   {
     label: "Map",
     href: "/user/map",
-    icon: Map,
+    icon: MapIcon,
     isActive: (p) => p.startsWith("/user/map"),
   },
   {

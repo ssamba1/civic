@@ -295,6 +295,7 @@ function DelegationRow({
 
   return (
     <li className={cn("flex flex-col", isDemo && "rounded-md demo-glow")}>
+      {/* biome-ignore lint/a11y/useSemanticElements: native <button> can't wrap the nested TeamPicker/reset buttons (invalid interactive nesting) or hold the grid layout; row has full keyboard support via onKeyDown + aria-expanded/controls */}
       <div
         role="button"
         tabIndex={0}
@@ -344,6 +345,7 @@ function DelegationRow({
             outside the stopRowToggle wrapper so tapping it still toggles the row.
             sm+: each child is its own grid column (auto). */}
         <div className="flex items-center justify-between sm:hidden">
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: not a control — wrapper only stops click/key bubbling so its child buttons don't toggle the row; keyboard path is the child buttons themselves */}
           <div
             className="flex items-center gap-1"
             onClick={stopRowToggle}
@@ -386,6 +388,7 @@ function DelegationRow({
         </div>
 
         {/* sm+: individual grid columns */}
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: not a control — wrapper only stops click/key bubbling so the TeamPicker doesn't toggle the row; keyboard path is the TeamPicker itself */}
         <div
           className="hidden sm:block"
           onClick={stopRowToggle}
@@ -399,6 +402,7 @@ function DelegationRow({
           />
         </div>
 
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: not a control — wrapper only stops click/key bubbling so the reset button doesn't toggle the row; keyboard path is the reset button itself */}
         <div
           className="hidden sm:block"
           onClick={stopRowToggle}
@@ -434,6 +438,7 @@ function DelegationRow({
         </span>
       </div>
 
+      {/* biome-ignore lint/a11y/useSemanticElements: intentional disclosure-region role on the GSAP height-animation wrapper (contentRef); it's the aria-controls target of the row trigger, no native element fits */}
       <div
         ref={contentRef}
         id={`delegation-row-${report.id}`}

@@ -54,8 +54,12 @@ describe("getReportCompletion", () => {
   });
 
   it("returns undefined when map is null/undefined", () => {
-    expect(getReportCompletion(report, null as any)).toBeUndefined();
-    expect(getReportCompletion(report, undefined as any)).toBeUndefined();
+    expect(
+      getReportCompletion(report, null as unknown as CompletionMap),
+    ).toBeUndefined();
+    expect(
+      getReportCompletion(report, undefined as unknown as CompletionMap),
+    ).toBeUndefined();
   });
 
   it("handles report with falsy id gracefully", () => {
@@ -63,7 +67,9 @@ describe("getReportCompletion", () => {
       "report-1": { completedAt: "2026-06-06T00:00:00.000Z" },
     };
     expect(getReportCompletion({ id: "" }, map)).toBeUndefined();
-    expect(getReportCompletion({ id: null as any }, map)).toBeUndefined();
+    expect(
+      getReportCompletion({ id: null as unknown as string }, map),
+    ).toBeUndefined();
   });
 });
 
