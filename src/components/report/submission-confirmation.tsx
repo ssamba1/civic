@@ -238,6 +238,7 @@ export default function SubmissionConfirmation({
               <div className="flex gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <span
+                    // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, fixed order
                     key={i}
                     className={`w-2.5 h-2.5 rounded-full ${
                       i < classification.severity

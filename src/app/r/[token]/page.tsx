@@ -86,6 +86,7 @@ export default async function PublicReportPage({ params }: PageProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2">
               <figure className="relative border-b border-white/[0.06] sm:border-b-0 sm:border-r">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
+                {/* biome-ignore lint/performance/noImgElement: dynamic external resident-uploaded photo URL, not optimizable by next/image */}
                 <img
                   src={report.photoUrl}
                   alt={`${report.categoryLabel} — reported`}
@@ -97,6 +98,7 @@ export default async function PublicReportPage({ params }: PageProps) {
               </figure>
               <figure className="relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
+                {/* biome-ignore lint/performance/noImgElement: dynamic external resident-uploaded photo URL, not optimizable by next/image */}
                 <img
                   src={report.resolutionPhotoUrl}
                   alt={`${report.categoryLabel} — after the fix`}
@@ -109,6 +111,7 @@ export default async function PublicReportPage({ params }: PageProps) {
             </div>
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
+            // biome-ignore lint/performance/noImgElement: dynamic external resident-uploaded photo URL, not optimizable by next/image
             <img
               src={report.photoUrl}
               alt={`${report.categoryLabel} at ${report.address}`}

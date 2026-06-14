@@ -46,6 +46,7 @@ export function useSlidingPill<T extends HTMLElement = HTMLDivElement>(
     });
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: activeKey is an intentional extra dep — not read in the body, but it re-runs measure() so the pill re-aligns when the active segment changes
   useLayoutEffect(() => {
     measure();
     const track = trackRef.current;

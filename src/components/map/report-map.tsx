@@ -478,8 +478,8 @@ function ReportMapInner({
             maxWidth="min(300px, 90vw)"
           >
             {/* renderPopupHTML escapes all user-controlled fields via esc(); CATEGORY_META is a static constant. Do NOT pass un-sanitized strings here. */}
-            {/* biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is built by renderPopupHTML, which esc()-escapes every user-controlled field; inputs are a trusted static CATEGORY_META + escaped report fields. */}
             <div
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is built by renderPopupHTML, which esc()-escapes every user-controlled field; inputs are a trusted static CATEGORY_META + escaped report fields.
               dangerouslySetInnerHTML={{
                 __html: renderPopupHTML(popupReport),
               }}
@@ -734,9 +734,11 @@ function ReportMapInner({
           // severity override (Critical = severity ≥4, open). Grouping them under
           // labelled sections makes the distinction audible to screen readers and
           // removes the visual-colour-only information barrier.
+          // biome-ignore lint/a11y/useSemanticElements: role="list" intentional — <ul> applies UA list-style/margin/padding and disallows the interleaved sr-only <p> section labels; flex/gap layout is custom
           <div role="list" aria-label="Map marker legend">
             {/* Status group */}
             <p className="sr-only">Status</p>
+            {/* biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling */}
             <div role="listitem" className="flex items-center gap-2">
               <span
                 aria-hidden="true"
@@ -744,6 +746,7 @@ function ReportMapInner({
               />
               Dispatched
             </div>
+            {/* biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling */}
             <div role="listitem" className="flex items-center gap-2">
               <span
                 aria-hidden="true"
@@ -751,6 +754,7 @@ function ReportMapInner({
               />
               Resolved
             </div>
+            {/* biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling */}
             <div role="listitem" className="flex items-center gap-2">
               <span
                 aria-hidden="true"
@@ -762,6 +766,7 @@ function ReportMapInner({
                 regardless of status; separate label prevents confusion with
                 a "Critical" status that does not exist in the data model. */}
             <p className="sr-only">Severity</p>
+            {/* biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling */}
             <div role="listitem" className="flex items-center gap-2">
               <span
                 aria-hidden="true"

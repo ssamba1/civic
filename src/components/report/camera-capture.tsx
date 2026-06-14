@@ -199,6 +199,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
 
   // Open the live viewfinder on mount and whenever the camera (facingMode)
   // changes. A timeout drops to the native input if no frame arrives.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: retryCount is an intentional re-trigger dep — not read in the body, but bumping it via "Try Again" re-runs the effect to reopen the viewfinder after a failure
   useEffect(() => {
     if (!decided || useNative || camFailed) return;
     readyRef.current = false;

@@ -196,6 +196,7 @@ export function FullscreenMapOrchestrator({
   );
 
   // --- Filter Logic ---
+  // biome-ignore lint/correctness/useExhaustiveDependencies: categoryOverrides isn't referenced literally, but categoryToTeam() reads a snapshot it mutates — keeping it forces recompute when a dispatcher re-aims a category.
   const filteredReports = useMemo(() => {
     return allReports.filter((report) => {
       if (
@@ -522,11 +523,20 @@ export function FullscreenMapOrchestrator({
               const ownerTeam = TEAM_META[ownerTeamId];
 
               return (
+                // biome-ignore lint/a11y/useSemanticElements: role=button on a div that contains nested buttons; native <button> can't nest buttons
                 <div
                   key={report.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() =>
                     setFocusedReportId(isSelected ? null : report.id)
                   }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setFocusedReportId(isSelected ? null : report.id);
+                    }
+                  }}
                   style={
                     reducedMotion
                       ? undefined

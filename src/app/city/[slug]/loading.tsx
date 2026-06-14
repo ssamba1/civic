@@ -6,6 +6,7 @@ export default function CityDashboardLoading() {
   return (
     <div
       className="flex flex-col min-h-dvh"
+      role="status"
       aria-busy="true"
       aria-label="Loading dashboard"
     >
@@ -41,9 +42,9 @@ export default function CityDashboardLoading() {
 
         {/* Teams card grid */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {["t1", "t2", "t3", "t4", "t5", "t6"].map((k) => (
             <div
-              key={i}
+              key={k}
               className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6"
             >
               <div className="flex items-center justify-between gap-3">

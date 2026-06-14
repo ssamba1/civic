@@ -89,6 +89,10 @@ function StatsCardsInner({ stats }: StatsCardsProps) {
               </span>
               {card.trend && (
                 <span
+                  // role="img" so the aria-label (generic role drops it) is
+                  // honored and replaces the raw "12%" text with the full
+                  // "Up 12% versus last week" phrase for screen readers.
+                  role="img"
                   className={cn(
                     "inline-flex items-center gap-0.5 text-[11px] font-medium tabular-nums",
                     card.trend.tone === "bad"

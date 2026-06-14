@@ -799,6 +799,7 @@ export function TeamSetupModal({
                   <div className="space-y-2.5 rounded-lg border border-white/[0.08] bg-white/[0.02] p-3">
                     <input
                       type="text"
+                      // biome-ignore lint/a11y/noAutofocus: intentional focus when the add-category input is revealed by an explicit user action (clicking "add report type"), not on page load
                       autoFocus
                       placeholder="New report type — e.g. Broken Bench"
                       value={draftLabel}

@@ -94,6 +94,7 @@ export default function PhotoPreview({
       <div className="relative flex-1 min-h-0">
         {previewUrl && (
           // eslint-disable-next-line @next/next/no-img-element
+          // biome-ignore lint/performance/noImgElement: blob object URL from URL.createObjectURL, not optimizable by next/image
           <img
             src={previewUrl}
             alt="The issue you captured"

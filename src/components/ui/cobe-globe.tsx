@@ -401,6 +401,7 @@ export function Globe({
             thetaOffsetRef.current += (thetaMax - thetaOffsetRef.current) * 0.1;
           }
         }
+        // biome-ignore lint/style/noNonNullAssertion: animate() is only invoked from init() after globe is assigned
         globe!.update({
           phi: phi + phiOffsetRef.current + dragOffset.current.phi,
           theta: theta + thetaOffsetRef.current + dragOffset.current.theta,

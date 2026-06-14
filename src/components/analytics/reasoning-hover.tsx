@@ -302,6 +302,7 @@ export function useReasoningHover(): UseReasoningHoverReturn {
 
   // Position after the card has measured itself; reposition on resize, and
   // dismiss on scroll so the card never floats away from its row.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `data` is an intentional extra dep — landing async data changes the card's offsetHeight, so place() must re-run to re-center
   useLayoutEffect(() => {
     if (!target || typeof window === "undefined") return;
     const place = () => {

@@ -8,7 +8,7 @@ import type {
 } from "@/lib/dashboard-data";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
-import type { City, ReportCategory, ReportStatus } from "@/lib/types";
+import type { City, ReportCategory } from "@/lib/types";
 
 // Error strategy for this module: log via the shared logger (Sentry-backed) and
 // return a safe empty/zeroed value. These run during SSR of the public dashboard

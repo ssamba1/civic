@@ -38,9 +38,9 @@ export default function Loading() {
           {/* KPI row — single panel, 4 cells on lg */}
           <div className="rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
             <div className="grid grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
+              {["k1", "k2", "k3", "k4"].map((k) => (
                 <div
-                  key={i}
+                  key={k}
                   className="px-4 sm:px-5 py-4 sm:py-5 min-h-[80px] border-b border-white/[0.06] lg:border-b-0 [&:not(:last-child)]:border-r"
                 >
                   <div className="h-3 w-24 rounded bg-white/[0.06] animate-pulse motion-reduce:animate-none" />

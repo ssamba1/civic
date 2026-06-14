@@ -426,6 +426,7 @@ export function WorkOrderDetail({
                             (o.qty && o.qty > 1 ? ` ×${o.qty}` : "");
                       return (
                         <span
+                          // biome-ignore lint/suspicious/noArrayIndexKey: derived read-only materials list, never reorders; no stable id on items
                           key={i}
                           className="inline-flex rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
                         >
@@ -601,6 +602,8 @@ export function WorkOrderDetail({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end">
       {/* Backdrop */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: decorative click-to-dismiss backdrop; keyboard users close via the labeled Close button */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: decorative click-to-dismiss backdrop; keyboard users close via the labeled Close button */}
       <div
         className="absolute inset-0 animate-in fade-in bg-black/30 backdrop-blur-sm duration-200"
         onClick={onClose}

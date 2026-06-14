@@ -395,6 +395,8 @@ export function OrbitalSteps() {
       </div>
 
       {/* Desktop: orbital canvas — hidden below md */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: click-empty-space-to-collapse is a pointer convenience on a decorative orbital canvas; the accessible path is the <MobileSteps> accordion rendered above with full button semantics. */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: same — no keyboard handler needed; keyboard users get the equivalent accessible <MobileSteps> accordion. */}
       <div
         ref={containerRef}
         onClick={handleContainerClick}
@@ -466,6 +468,8 @@ export function OrbitalSteps() {
               const pulsing = pulseEffect[item.id];
 
               return (
+                // biome-ignore lint/a11y/noStaticElementInteractions: orbital node on a continuously auto-rotating canvas; making spinning nodes focusable degrades UX. The accessible equivalent is the <MobileSteps> accordion with real button semantics.
+                // biome-ignore lint/a11y/useKeyWithClickEvents: same — keyboard activation is provided by the equivalent accessible <MobileSteps> accordion, not these decorative orbiting nodes.
                 <div
                   key={item.id}
                   onClick={(e) => {

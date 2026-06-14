@@ -41,22 +41,25 @@ export default function StaffStatsPage() {
 
 // Bento-grid ghost matching the analytics layout — prevents the empty→full
 // layout jump when AnalyticsInteractive streams in. Pulse-only, dark theme.
+// Stable id + height for each ghost tile (heights repeat, so key off the id).
+const STATS_TILES = [
+  { id: "kpi1", h: "h-28" },
+  { id: "kpi2", h: "h-28" },
+  { id: "kpi3", h: "h-28" },
+  { id: "kpi4", h: "h-28" },
+  { id: "chart1", h: "h-64 sm:col-span-2" },
+  { id: "chart2", h: "h-64 sm:col-span-2" },
+  { id: "wide", h: "h-72 lg:col-span-3" },
+  { id: "side", h: "h-72" },
+];
+
 function StatsBentoSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {[
-        "h-28",
-        "h-28",
-        "h-28",
-        "h-28",
-        "h-64 sm:col-span-2",
-        "h-64 sm:col-span-2",
-        "h-72 lg:col-span-3",
-        "h-72",
-      ].map((h, i) => (
+      {STATS_TILES.map((tile) => (
         <div
-          key={i}
-          className={`${h} animate-pulse rounded-2xl border border-zinc-800 bg-zinc-900/60`}
+          key={tile.id}
+          className={`${tile.h} animate-pulse rounded-2xl border border-zinc-800 bg-zinc-900/60`}
         />
       ))}
     </div>

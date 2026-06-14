@@ -71,6 +71,7 @@ export default function BottomSheet({
       />
 
       {/* Panel */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: onClick is a propagation guard, not an activation handler — the panel is a dialog container, not a control. Keyboard dismissal is handled by Escape and the focusable Close backdrop button. */}
       <div
         ref={panelRef}
         role="dialog"

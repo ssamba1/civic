@@ -16,6 +16,13 @@
     "indentWidth": 2
   },
   "files": {
-    "includes": ["**", "!**/node_modules", "!**/.next", "!public", "!scripts"]
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/.next",
+      "!public",
+      "!scripts",
+      "!src/app/globals.css"
+    ]
   }
 }

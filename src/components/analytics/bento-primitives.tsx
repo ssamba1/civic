@@ -334,9 +334,9 @@ export function PillGroup<T extends string | number>({
     <div>
       {label && <p className="text-[12px] text-zinc-400 mb-1.5">{label}</p>}
       <div className="inline-flex rounded-lg bg-white/[0.04] p-0.5">
-        {options.map((opt, i) => (
+        {options.map((opt) => (
           <button
-            key={`${String(opt.value)}-${i}`}
+            key={String(opt.value)}
             type="button"
             onClick={() => onChange(opt.value)}
             className={cn(

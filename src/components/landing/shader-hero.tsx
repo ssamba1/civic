@@ -64,12 +64,14 @@ export function ShaderHero({ className = "" }: { className?: string }) {
     if (!gl) return;
 
     const compile = (type: number, src: string) => {
+      // biome-ignore lint/style/noNonNullAssertion: createShader returns null only on context loss; gl was just validated above
       const sh = gl.createShader(type)!;
       gl.shaderSource(sh, src);
       gl.compileShader(sh);
       return sh;
     };
 
+    // biome-ignore lint/style/noNonNullAssertion: createProgram returns null only on context loss; gl was just validated above
     const program = gl.createProgram()!;
     gl.attachShader(program, compile(gl.VERTEX_SHADER, VERT));
     gl.attachShader(program, compile(gl.FRAGMENT_SHADER, FRAG));

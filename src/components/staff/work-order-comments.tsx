@@ -91,6 +91,7 @@ export function WorkOrderComments({ workOrderId }: WorkOrderCommentsProps) {
   }, [workOrderId]);
 
   // Keep latest comment in view
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional — scroll only when a comment is added/removed; bottomRef is stable and need not be a dep
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [comments.length]);
