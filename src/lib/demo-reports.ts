@@ -156,6 +156,8 @@ export function demoWorkOrderFromReport(r: DashboardReport): WorkOrderWithDetail
     priority_score: 72,
     est_minutes: 60,
     materials: ["chainsaw", "wood chipper", "hazard cones"],
+    est_cost: 285,
+    wo_source: "ai",
     assigned_crew_id: null,
     dispatched_at: null,
     completed_at: null,

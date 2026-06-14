@@ -13,8 +13,7 @@ export const CLASSIFICATION_SYSTEM_PROMPT =
  * User-facing classification prompt.
  * Sent alongside the inline photo as the task description.
  */
-export const CLASSIFICATION_PROMPT =
-  `Analyze the attached citizen photo and classify the infrastructure issue it depicts.
+export const CLASSIFICATION_PROMPT = `Analyze the attached citizen photo and classify the infrastructure issue it depicts.
 
 ## CATEGORY — choose the single best match
 - pothole            Road surface hole, depression, or severe cracking in asphalt/concrete roadway
@@ -83,8 +82,7 @@ export const WORK_ORDER_SYSTEM_PROMPT =
 /**
  * User-facing work-order prompt. The caller appends the classification JSON.
  */
-export const WORK_ORDER_PROMPT =
-  `Given the infrastructure classification below, produce a dispatch-ready work order.
+export const WORK_ORDER_PROMPT = `Given the infrastructure classification below, produce a dispatch-ready work order.
 
 ## ASSUMPTIONS
 - Blended crew labor rate: ~$75/hour (loaded — wage + equipment + overhead).

@@ -1,8 +1,8 @@
 import type {
   Classification,
-  ReportCategory,
-  Department,
   CrewType,
+  Department,
+  ReportCategory,
 } from "@/lib/types";
 
 interface WorkOrderRule {
@@ -146,7 +146,7 @@ interface GeneratedWorkOrder {
  */
 export function generateWorkOrder(
   classification: Classification,
-  meta: ReportMeta
+  meta: ReportMeta,
 ): GeneratedWorkOrder {
   const rule = RULES[classification.category];
 

@@ -3,8 +3,8 @@ import { AI_TIMEOUT_MS, GEMINI_MODEL } from "@/lib/ai/config";
 import { withRetry } from "@/lib/ai/retry";
 import { serverEnv } from "@/lib/env";
 import type { Classification, CrewType, Department, Result } from "@/lib/types";
-import { checkAndRecordGeminiCall } from "./rate-limiter";
 import { WORK_ORDER_PROMPT, WORK_ORDER_SYSTEM_PROMPT } from "./prompt";
+import { checkAndRecordGeminiCall } from "./rate-limiter";
 import {
   type AiWorkOrder,
   aiWorkOrderSchema,

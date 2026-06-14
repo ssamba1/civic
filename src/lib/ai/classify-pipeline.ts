@@ -2,11 +2,15 @@ import { AI_WORK_ORDER, ASYNC_CLASSIFY, GEMINI_MODEL } from "@/lib/ai/config";
 import { classifyPhoto } from "@/lib/ai/gemini";
 import { generateWorkOrderAI } from "@/lib/ai/work-order-ai";
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
-import type { WorkOrderSource } from "@/lib/types";
 import { createServerClient } from "@/lib/db/client";
 import { sniffImageMime } from "@/lib/image/sniff-mime";
 import { createLogger } from "@/lib/logger";
-import type { Classification, Result, WorkOrder } from "@/lib/types";
+import type {
+  Classification,
+  Result,
+  WorkOrder,
+  WorkOrderSource,
+} from "@/lib/types";
 
 export interface ClassifyPipelineResult {
   emergency: boolean;
