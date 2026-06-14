@@ -46,8 +46,9 @@ export type AiWorkOrder = z.infer<typeof aiWorkOrderSchema>;
 /**
  * Gemini structured-output schema mirroring `aiWorkOrderSchema`. Passed as
  * `generationConfig.responseSchema` so the model returns clean JSON we then
- * re-validate with zod. The SDK has no nullable flag, so crew_type is a plain
- * enum here and the zod layer enforces the null-for-"other" case after parse.
+ * re-validate with zod. crew_type is nullable + omitted from `required` so the
+ * model can legitimately return null for category "other" (which has no
+ * physical crew), matching the prompt and the zod `.nullable()` layer.
  */
 export const GEMINI_WORK_ORDER_SCHEMA: ObjectSchema = {
   type: SchemaType.OBJECT,
@@ -61,6 +62,7 @@ export const GEMINI_WORK_ORDER_SCHEMA: ObjectSchema = {
       type: SchemaType.STRING,
       format: "enum",
       enum: [...CREW_TYPES],
+      nullable: true,
     },
     est_minutes: { type: SchemaType.INTEGER },
     materials: {
@@ -77,12 +79,5 @@ export const GEMINI_WORK_ORDER_SCHEMA: ObjectSchema = {
     est_cost: { type: SchemaType.NUMBER },
     rationale: { type: SchemaType.STRING },
   },
-  required: [
-    "department",
-    "crew_type",
-    "est_minutes",
-    "materials",
-    "est_cost",
-    "rationale",
-  ],
+  required: ["department", "est_minutes", "materials", "est_cost", "rationale"],
 };
