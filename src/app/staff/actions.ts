@@ -30,7 +30,7 @@ async function getStaffUser() {
       const { data: devStaff } = await db
         .from("users")
         .select("id, role, city_id")
-        .in("role", STAFF_ROLES as unknown as string[])
+        .in("role", [...STAFF_ROLES])
         .limit(1)
         .single();
       return devStaff && STAFF_ROLES.includes(devStaff.role) ? devStaff : null;

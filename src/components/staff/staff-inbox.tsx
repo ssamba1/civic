@@ -87,16 +87,13 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
         if (!result.ok || result.data.length === 0) return;
         // Prefer server-supplied fetchedAt (avoids client clock skew); fall back to
         // max created_at among the returned rows so the cursor stays server-anchored.
-        const nextCursor =
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (result as any).fetchedAt ??
-          result.data.reduce(
-            (max, o) =>
-              o.report?.created_at && o.report.created_at > max
-                ? o.report.created_at
-                : max,
-            lastFetchedAtRef.current,
-          );
+        const nextCursor = result.fetchedAt ?? result.data.reduce(
+          (max, o) =>
+            o.report?.created_at && o.report.created_at > max
+              ? o.report.created_at
+              : max,
+          lastFetchedAtRef.current,
+        );
         setDisplayedOrders((prev) => {
           const existingIds = new Set(prev.map((o) => o.id));
           const fresh = result.data.filter((o) => !existingIds.has(o.id));

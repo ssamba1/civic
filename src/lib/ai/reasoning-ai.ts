@@ -115,24 +115,16 @@ function buildPrompt(
   ].join("\n");
 }
 
-function isReasoningPayload(value: unknown): value is ReasoningPayload {
-  if (!value || typeof value !== "object") return false;
-  const v = value as Record<string, unknown>;
-  const isSectionArray = (s: unknown): s is Section[] =>
-    Array.isArray(s) &&
-    s.every(
-      (item) =>
-        item != null &&
-        typeof item === "object" &&
-        typeof (item as Section).title === "string" &&
-        typeof (item as Section).value === "string",
-    );
-  return (
-    typeof v.reasoning === "string" &&
-    isSectionArray(v.costBreakdown) &&
-    isSectionArray(v.scoringExplanation)
-  );
-}
+const SectionSchema = z.object({
+  title: z.string(),
+  value: z.string(),
+});
+
+const ReasoningPayloadSchema = z.object({
+  reasoning: z.string().min(1),
+  costBreakdown: z.array(SectionSchema).min(1),
+  scoringExplanation: z.array(SectionSchema).min(1),
+});
 
 /**
  * Text-only Gemini call returning a structured municipal cost + scoring payload.
@@ -159,12 +151,7 @@ export async function geminiReasoning(
     async (signal) => {
       const result = await model.generateContent(prompt, { signal });
       const text = result.response.text();
-      const parsed: unknown = JSON.parse(text);
-      if (!isReasoningPayload(parsed)) {
-        throw new Error(
-          "Gemini returned a payload that failed shape validation.",
-        );
-      }
+      const parsed = ReasoningPayloadSchema.parse(JSON.parse(text));
       return parsed;
     },
     { timeoutMs: AI_TIMEOUT_MS },

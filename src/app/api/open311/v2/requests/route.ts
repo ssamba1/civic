@@ -1,5 +1,6 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { after, type NextRequest, NextResponse } from "next/server";
+import { z } from "zod/v4";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
@@ -101,17 +102,39 @@ export async function GET(request: NextRequest) {
       return errorResponse(500, "Database query failed", wantsXml);
     }
 
+    // Validate row shape before transformation
+    const RowSchema = z.object({
+      id: z.string(),
+      city_id: z.string(),
+      location: z.unknown(),
+      photo_public_url: z.string(),
+      status: z.string(),
+      address: z.string().nullable(),
+      created_at: z.string(),
+      updated_at: z.string(),
+      classifications: z.array(z.unknown()).nullable(),
+      cities: z.array(z.unknown()).nullable(),
+    }).passthrough();
+
     // Transform rows to Open311 format
-    const open311Requests = (data ?? []).map((row) => {
-      const report = rowToReport(row as ReportRow);
-      const classification: Classification | null =
-        (row as Record<string, unknown>).classifications != null
-          ? ((row as Record<string, unknown[]>).classifications?.[0] ?? null) as Classification | null
+    const open311Requests = (data ?? [])
+      .map((row) => {
+        const validated = RowSchema.safeParse(row);
+        if (!validated.success) {
+          logger.error("Open311 row schema mismatch", { row, issues: validated.error.issues });
+          return null;
+        }
+        const v = validated.data;
+        const report = rowToReport(v as ReportRow);
+        const classification: Classification | null = v.classifications != null
+          ? (v.classifications[0] ?? null) as Classification | null
           : null;
-      const cityRaw = (row as Record<string, unknown>).cities;
-      const city = (Array.isArray(cityRaw) ? cityRaw[0] : cityRaw) as City;
-      return reportToOpen311(report, classification, city);
-    });
+        const city = Array.isArray(v.cities) && v.cities.length > 0
+          ? (v.cities[0] as City)
+          : (v.cities as City | null);
+        return city ? reportToOpen311(report, classification, city) : null;
+      })
+      .filter(Boolean);
 
     if (wantsXml) {
       return new NextResponse(toOpen311Xml(open311Requests), {

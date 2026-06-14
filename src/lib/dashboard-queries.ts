@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { z } from "zod/v4";
 import type {
   CategoryCount,
   CityStats,
@@ -119,6 +120,23 @@ interface ViewRow {
   tags: string[] | null;
 }
 
+const ViewRowSchema = z.object({
+  id: z.string(),
+  category: z.enum([
+    "pothole", "streetlight", "downed_sign", "graffiti",
+    "illegal_dump", "water_leak", "sidewalk_damage", "tree_down",
+    "debris", "drainage", "faded_signage", "other"
+  ] as const).nullable(),
+  severity: z.number().nullable(),
+  status: z.enum(["open", "dispatched", "in_progress", "closed", "merged", "rejected"] as const),
+  address: z.string().nullable(),
+  lng: z.number().nullable(),
+  lat: z.number().nullable(),
+  photo_public_url: z.string(),
+  created_at: z.string(),
+  tags: z.array(z.string()).nullable(),
+});
+
 export async function fetchRecentReports(
   cityId: string,
   limit = 20,
@@ -136,7 +154,14 @@ export async function fetchRecentReports(
     if (error)
       log.error("fetchRecentReports view query failed", error, { cityId });
     if (error || !data) return [];
-    return (data as unknown as ViewRow[]).map((r) => ({
+
+    const parsed = z.array(ViewRowSchema).safeParse(data);
+    if (!parsed.success) {
+      log.error("fetchRecentReports schema mismatch", parsed.error, { cityId });
+      return [];
+    }
+
+    return parsed.data.map((r) => ({
       id: r.id,
       category: (r.category ?? "other") as ReportCategory,
       severity: (r.severity ?? 3) as 1 | 2 | 3 | 4 | 5,
