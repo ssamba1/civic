@@ -183,7 +183,11 @@ export async function getCurrentResident(citySlug = "cumming"): Promise<{
   citySlug: string;
   isDemo: boolean;
 }> {
-  const id = demoReporterId();
+  // Default to the demo reporter so the surface stays populated for anon/guest
+  // visitors and when Supabase is unconfigured. A real signed-in user overrides
+  // both id and name below — using their actual auth id, NOT the demo id, so
+  // "my" queries scope to the rows they own.
+  let id = demoReporterId();
   let displayName = "Cumming Resident";
   let isDemo = true;
 
@@ -198,6 +202,7 @@ export async function getCurrentResident(citySlug = "cumming"): Promise<{
         user.email ||
         null;
       if (name) displayName = name;
+      id = user.id;
       isDemo = false;
     }
   } catch {
@@ -581,11 +586,11 @@ async function syntheticNotifications(
   const items: NotificationItem[] = [];
 
   for (const r of mine) {
-    if (
-      r.status !== "dispatched" &&
-      r.status !== "in_progress" &&
-      r.status !== "closed"
-    ) {
+    // Skip only the terminal-at-filed states (merged/rejected) — those get no
+    // progress notification. Everything still moving, INCLUDING a freshly filed
+    // "open" report, gets at least a "received" acknowledgement so the resident
+    // never files into silence.
+    if (r.status === "merged" || r.status === "rejected") {
       continue;
     }
 
@@ -595,18 +600,25 @@ async function syntheticNotifications(
         ? t.resolved
         : r.status === "in_progress"
           ? t.in_progress
-          : t.dispatched;
+          : r.status === "dispatched"
+            ? t.dispatched
+            : t.filed; // open → acknowledge at filing time
     const label = STATUS_LABEL[r.status];
     const catLabel = CATEGORY_META[r.category].label;
     const isResolved = r.status === "closed";
+    const isReceived = r.status === "open";
 
     items.push({
       id: `notif-${r.id}`,
       type: isResolved ? "resolved" : "status",
-      title: `Your ${catLabel} report was ${label}`,
+      title: isReceived
+        ? `Your ${catLabel} report was received`
+        : `Your ${catLabel} report was ${label}`,
       body: isResolved
         ? "Crews finished the fix — thanks for helping keep the city running."
-        : `A crew has picked up your report. We'll keep you posted as it progresses.`,
+        : isReceived
+          ? "Thanks for the report — it's logged and waiting to be picked up. We'll let you know the moment a crew takes it on."
+          : `A crew has picked up your report. We'll keep you posted as it progresses.`,
       at,
       read: now - new Date(at).getTime() > 3 * DAY_MS,
       reportId: r.id,

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
-// Stub — resident dashboard content not yet built. Auth is enforced by layout.
+// Anon-first: no login wall. The bare /user index has no content of its own —
+// send residents to their reports, the home of the report→track→resolve loop.
 export default function UserIndexPage() {
-  redirect("/login");
+  redirect("/user/my-reports");
 }

@@ -1,9 +1,9 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
+import { Bell, Camera, FileText, HeartPulse, Map } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Map, Camera, HeartPulse, Bell } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils/cn";
 
@@ -17,12 +17,12 @@ interface TabItem {
 
 const TABS: TabItem[] = [
   {
-    label: "Home",
-    href: "/",
-    icon: Home,
-    // Exact match — every path starts with "/", so a prefix test would
-    // light Home up on every screen.
-    isActive: (p) => p === "/",
+    label: "My Reports",
+    href: "/user/my-reports",
+    icon: FileText,
+    // The resident's home: the report→track→resolve loop. Also light up on the
+    // bare /user index (which redirects here) so the tab reads active there.
+    isActive: (p) => p === "/user" || p.startsWith("/user/my-reports"),
   },
   {
     label: "Map",
@@ -54,7 +54,7 @@ export function BottomTabBar() {
     return null;
   }
 
-  // Split tabs around the center FAB: Home + Map | [Report] | Pulse + Updates.
+  // Split tabs around the center FAB: My Reports + Map | [Report] | Pulse + Updates.
   const left = TABS.slice(0, 2);
   const right = TABS.slice(2);
 
