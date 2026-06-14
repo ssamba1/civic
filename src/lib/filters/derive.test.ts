@@ -15,7 +15,6 @@ import {
 
 const now = new Date("2026-06-13T12:00:00Z").getTime();
 const DAY_MS = 86_400_000;
-const HOUR_MS = 3_600_000;
 
 function makeReport(overrides: Partial<DashboardReport> = {}): DashboardReport {
   return {

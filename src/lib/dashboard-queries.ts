@@ -107,19 +107,6 @@ export async function fetchCategoryBreakdown(
   );
 }
 
-interface ViewRow {
-  id: string;
-  category: ReportCategory | null;
-  severity: number | null;
-  status: ReportStatus;
-  address: string | null;
-  lng: number | null;
-  lat: number | null;
-  photo_public_url: string;
-  created_at: string;
-  tags: string[] | null;
-}
-
 const ViewRowSchema = z.object({
   id: z.string(),
   category: z

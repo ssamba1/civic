@@ -1473,13 +1473,11 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
           </div>
         }
         controls={
-          <>
-            <Toggle
-              label="Show raw counts"
-              value={showCounts}
-              onChange={setShowCounts}
-            />
-          </>
+          <Toggle
+            label="Show raw counts"
+            value={showCounts}
+            onChange={setShowCounts}
+          />
         }
         info={
           <div className="flex flex-col gap-5">

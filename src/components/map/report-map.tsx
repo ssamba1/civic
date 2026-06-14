@@ -478,6 +478,7 @@ function ReportMapInner({
             maxWidth="min(300px, 90vw)"
           >
             {/* renderPopupHTML escapes all user-controlled fields via esc(); CATEGORY_META is a static constant. Do NOT pass un-sanitized strings here. */}
+            {/* biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is built by renderPopupHTML, which esc()-escapes every user-controlled field; inputs are a trusted static CATEGORY_META + escaped report fields. */}
             <div
               dangerouslySetInnerHTML={{
                 __html: renderPopupHTML(popupReport),

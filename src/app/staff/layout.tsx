@@ -37,7 +37,12 @@ export default async function StaffLayout({
   const supabase = createServerClient();
 
   let profile:
-    | { id: string; role: string; display_name: string | null; email: string | null }
+    | {
+        id: string;
+        role: string;
+        display_name: string | null;
+        email: string | null;
+      }
     | null
     | undefined;
 
