@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  BarChart3,
-  Camera,
-  Map,
-  RefreshCw,
-  UsersRound,
-} from "lucide-react";
+import { BarChart3, Camera, Map, RefreshCw, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useState } from "react";

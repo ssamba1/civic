@@ -67,7 +67,13 @@ export function WaveHero({
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Live params the render loop reads each frame (avoids canvas re-init on tweak).
-  const live = useRef<Omit<WaveParams, "scale">>({ speed, intensity, tint, contrast, paused });
+  const live = useRef<Omit<WaveParams, "scale">>({
+    speed,
+    intensity,
+    tint,
+    contrast,
+    paused,
+  });
   live.current = { speed, intensity, tint, contrast, paused };
 
   useEffect(() => {
@@ -81,7 +87,9 @@ export function WaveHero({
     const isMobile =
       window.matchMedia("(max-width: 768px)").matches ||
       window.matchMedia("(pointer: coarse)").matches;
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
 
     // Mobile: skip the per-pixel plasma loop entirely. The canvas stays
     // transparent and the static CSS gradient shows through — zero main-thread

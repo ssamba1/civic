@@ -20,7 +20,8 @@ export default function Loading() {
               key={i}
               className="absolute inset-0 rounded-full border border-white/[0.12]"
               style={{
-                animation: "mapRingPulse 2.2s cubic-bezier(0.16,1,0.3,1) infinite",
+                animation:
+                  "mapRingPulse 2.2s cubic-bezier(0.16,1,0.3,1) infinite",
                 animationDelay: `${i * 400}ms`,
               }}
             />

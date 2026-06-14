@@ -38,7 +38,10 @@ export default function Loading() {
             </div>
             <div className="mt-8 flex flex-wrap gap-8 border-t border-white/10 pt-7">
               {[0, 1, 2].map((i) => (
-                <div key={i} className="h-6 w-28 animate-pulse rounded-full bg-white/[0.07]" />
+                <div
+                  key={i}
+                  className="h-6 w-28 animate-pulse rounded-full bg-white/[0.07]"
+                />
               ))}
             </div>
           </div>

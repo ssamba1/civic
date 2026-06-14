@@ -225,7 +225,11 @@ export function useHoverTip(): UseHoverTipReturn {
         onFocus: (e) => {
           const target = e.currentTarget as HTMLElement;
           const r = target.getBoundingClientRect();
-          show(resolve(e), { clientX: r.left + r.width / 2, clientY: r.top }, placement);
+          show(
+            resolve(e),
+            { clientX: r.left + r.width / 2, clientY: r.top },
+            placement,
+          );
         },
         onBlur: () => hide(),
       };
@@ -448,7 +452,8 @@ export function useTiltHover<T extends HTMLElement>(opts?: {
     const onLeave = () => {
       if (raf !== null) cancelAnimationFrame(raf);
       raf = null;
-      el.style.transform = "perspective(900px) rotateX(0deg) rotateY(0deg) scale(1)";
+      el.style.transform =
+        "perspective(900px) rotateX(0deg) rotateY(0deg) scale(1)";
     };
     const onEnter = () => {
       el.style.transition = "transform 120ms ease-out";

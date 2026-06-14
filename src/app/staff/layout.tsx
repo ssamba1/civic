@@ -1,11 +1,11 @@
+import { LogOut, Shield } from "lucide-react";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { MobileNav, SidebarNav } from "@/components/staff/sidebar-nav";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
-import { createLogger } from "@/lib/logger";
-import { redirect } from "next/navigation";
-import { LogOut, Shield } from "lucide-react";
-import { SidebarNav, MobileNav } from "@/components/staff/sidebar-nav";
 import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
+import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("[staff-layout]");
 
@@ -100,7 +100,7 @@ export default async function StaffLayout({
         <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-              {(profile.display_name?.charAt(0) ?? '?').toUpperCase()}
+              {(profile.display_name?.charAt(0) ?? "?").toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">

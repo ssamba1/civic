@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Check, ChevronDown, MapPin, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { MUNICIPALITIES } from "@/lib/dashboard-data";
 import { cn } from "@/lib/utils/cn";

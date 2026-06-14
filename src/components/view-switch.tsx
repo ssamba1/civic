@@ -1,8 +1,8 @@
 "use client";
 
+import { Building2, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Users, Building2 } from "lucide-react";
 
 import { cn } from "@/lib/utils/cn";
 
@@ -23,7 +23,13 @@ export function ViewSwitch({
   const onUser = pathname.startsWith("/user");
 
   const segments = [
-    { key: "user", label: "User", href: "/user/pulse", icon: Users, active: onUser },
+    {
+      key: "user",
+      label: "User",
+      href: "/user/pulse",
+      icon: Users,
+      active: onUser,
+    },
     {
       key: "city",
       label: "City",
@@ -61,7 +67,9 @@ export function ViewSwitch({
           <Icon
             className={cn(
               "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
-              active ? "text-[#0a84ff]" : "text-zinc-500 group-hover:text-zinc-300",
+              active
+                ? "text-[#0a84ff]"
+                : "text-zinc-500 group-hover:text-zinc-300",
             )}
             strokeWidth={2}
             aria-hidden="true"

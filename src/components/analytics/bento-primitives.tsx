@@ -1,11 +1,11 @@
 "use client";
 
+import { Maximize2, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Maximize2, X } from "lucide-react";
+import { useTiltHover } from "@/components/analytics/hover-tip";
 import { cn } from "@/lib/utils/cn";
 import { lockBodyScroll } from "@/lib/utils/scroll-lock";
-import { useTiltHover } from "@/components/analytics/hover-tip";
 
 /* ==================================================================
    Shared bento shell + modal + motion + control primitives.
@@ -273,7 +273,9 @@ export function ExpandModal({
               {title}
             </h2>
             {subtitle && (
-              <span className="text-[12px] sm:text-[13px] text-zinc-400">{subtitle}</span>
+              <span className="text-[12px] sm:text-[13px] text-zinc-400">
+                {subtitle}
+              </span>
             )}
           </div>
           <button
@@ -330,9 +332,7 @@ export function PillGroup<T extends string | number>({
 }) {
   return (
     <div>
-      {label && (
-        <p className="text-[12px] text-zinc-400 mb-1.5">{label}</p>
-      )}
+      {label && <p className="text-[12px] text-zinc-400 mb-1.5">{label}</p>}
       <div className="inline-flex rounded-lg bg-white/[0.04] p-0.5">
         {options.map((opt, i) => (
           <button
@@ -416,9 +416,7 @@ export function Stat({
       <p className="text-[22px] font-semibold tracking-tight text-white tabular-nums mt-1 leading-none">
         {value}
       </p>
-      {hint && (
-        <p className="text-[12px] text-zinc-500 mt-1.5">{hint}</p>
-      )}
+      {hint && <p className="text-[12px] text-zinc-500 mt-1.5">{hint}</p>}
     </div>
   );
 }
@@ -437,7 +435,11 @@ export function Prose({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function EmptyState({ message = "No data in range" }: { message?: string }) {
+export function EmptyState({
+  message = "No data in range",
+}: {
+  message?: string;
+}) {
   return (
     <div className="flex h-full min-h-[120px] flex-1 items-center justify-center">
       <p className="text-[13px] text-zinc-500">{message}</p>

@@ -1,33 +1,32 @@
 "use client";
 
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useState, useMemo, useEffect, useRef, memo } from "react";
+import { HeatmapLayer, HexagonLayer } from "@deck.gl/aggregation-layers";
+import { ScatterplotLayer } from "@deck.gl/layers";
+import { MapboxOverlay, type MapboxOverlayProps } from "@deck.gl/mapbox";
+import {
+  Flame,
+  Hexagon,
+  Map as MapIcon,
+  MapPin,
+  Mountain,
+  RotateCcw,
+  Settings,
+  Sliders,
+  Star,
+} from "lucide-react";
 import type { StyleSpecification } from "maplibre-gl";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import {
   Map as MapLibreMap,
+  type MapRef,
   Popup,
   useControl,
-  type MapRef,
 } from "react-map-gl/maplibre";
-import { MapboxOverlay, type MapboxOverlayProps } from "@deck.gl/mapbox";
-import { ScatterplotLayer } from "@deck.gl/layers";
-import { HexagonLayer, HeatmapLayer } from "@deck.gl/aggregation-layers";
-import {
-  Settings,
-  Map as MapIcon,
-  Sliders,
-  RotateCcw,
-  Star,
-  Mountain,
-  MapPin,
-  Hexagon,
-  Flame,
-} from "lucide-react";
-
-import type { DashboardReport } from "@/lib/dashboard-data";
-import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { renderPopupHTML } from "@/components/map/map-popup";
 import { LiquidGlassCard } from "@/components/ui/liquid-glass";
+import type { DashboardReport } from "@/lib/dashboard-data";
+import type { ReportCategory, ReportStatus } from "@/lib/types";
 
 export type MapTheme = "dark" | "light" | "satellite";
 
@@ -272,7 +271,10 @@ function ReportMapInner({
       getPosition: (r) => [r.location.lng, r.location.lat],
       getRadius: 180,
       getLineColor: () => {
-        const [cr, cg, cb] = statusColor(highlighted.status, highlighted.severity);
+        const [cr, cg, cb] = statusColor(
+          highlighted.status,
+          highlighted.severity,
+        );
         return [cr, cg, cb, 200];
       },
     });
@@ -584,7 +586,10 @@ function ReportMapInner({
             <div className="border-t border-white/5 pt-3">
               <div className="flex items-center justify-between text-xs text-zinc-300 min-h-[44px] lg:min-h-0">
                 <span className="flex items-center gap-1.5">
-                  <Mountain className="h-3.5 w-3.5 text-zinc-300" strokeWidth={1.75} />
+                  <Mountain
+                    className="h-3.5 w-3.5 text-zinc-300"
+                    strokeWidth={1.75}
+                  />
                   3D tilt
                 </span>
                 {/* Outer wrapper provides the 44px tap target on mobile; the visual
@@ -726,15 +731,24 @@ function ReportMapInner({
             {/* Status group */}
             <p className="sr-only">Status</p>
             <div role="listitem" className="flex items-center gap-2">
-              <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-[#0a84ff]" />
+              <span
+                aria-hidden="true"
+                className="w-1.5 h-1.5 rounded-full bg-[#0a84ff]"
+              />
               Dispatched
             </div>
             <div role="listitem" className="flex items-center gap-2">
-              <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-[#30d158]" />
+              <span
+                aria-hidden="true"
+                className="w-1.5 h-1.5 rounded-full bg-[#30d158]"
+              />
               Resolved
             </div>
             <div role="listitem" className="flex items-center gap-2">
-              <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-[#ff9f0a]" />
+              <span
+                aria-hidden="true"
+                className="w-1.5 h-1.5 rounded-full bg-[#ff9f0a]"
+              />
               In progress
             </div>
             {/* Severity override — open reports with severity ≥4 render red
@@ -742,7 +756,10 @@ function ReportMapInner({
                 a "Critical" status that does not exist in the data model. */}
             <p className="sr-only">Severity</p>
             <div role="listitem" className="flex items-center gap-2">
-              <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-[#ff453a]" />
+              <span
+                aria-hidden="true"
+                className="w-1.5 h-1.5 rounded-full bg-[#ff453a]"
+              />
               Critical (sev 4–5)
             </div>
           </div>

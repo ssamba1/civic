@@ -23,19 +23,27 @@ export function useSlidingPill<T extends HTMLElement = HTMLDivElement>(
   activeKey: string | number | undefined,
 ) {
   const trackRef = useRef<T | null>(null);
-  const [pill, setPill] = useState<{ left: number; width: number; ready: boolean }>(
-    { left: 0, width: 0, ready: false },
-  );
+  const [pill, setPill] = useState<{
+    left: number;
+    width: number;
+    ready: boolean;
+  }>({ left: 0, width: 0, ready: false });
 
   const measure = useCallback(() => {
     const track = trackRef.current;
     if (!track) return;
-    const active = track.querySelector<HTMLElement>('[data-pill-active="true"]');
+    const active = track.querySelector<HTMLElement>(
+      '[data-pill-active="true"]',
+    );
     if (!active) {
       setPill((p) => ({ ...p, ready: false }));
       return;
     }
-    setPill({ left: active.offsetLeft, width: active.offsetWidth, ready: true });
+    setPill({
+      left: active.offsetLeft,
+      width: active.offsetWidth,
+      ready: true,
+    });
   }, []);
 
   useLayoutEffect(() => {

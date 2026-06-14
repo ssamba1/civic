@@ -5,6 +5,6 @@ export function createServerClient() {
   return createClient(
     serverEnv.SUPABASE_URL,
     serverEnv.SUPABASE_SERVICE_ROLE_KEY,
-    { auth: { persistSession: false } }
+    { auth: { persistSession: false } },
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import {
   type ReactNode,
   useCallback,
@@ -9,12 +10,11 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils/cn";
 import type {
   ReasoningResponse,
   ReasoningSection,
 } from "@/app/api/ai/reasoning/route";
+import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
    Reasoning hover card — portal-rendered, anchored to a report row.
@@ -60,7 +60,12 @@ export interface ReasoningHoverHandlers {
 }
 
 interface UseReasoningHoverReturn {
-  bindReport: (report: { id: string; label: string; demo?: boolean; ai_reasoning?: string }) => ReasoningHoverHandlers;
+  bindReport: (report: {
+    id: string;
+    label: string;
+    demo?: boolean;
+    ai_reasoning?: string;
+  }) => ReasoningHoverHandlers;
   Portal: () => ReactNode;
 }
 
@@ -75,9 +80,9 @@ function reducedMotion() {
 
 function CardBody({ data }: { data: ReasoningResponse }) {
   const costLine = data.costBreakdown[0]?.value ?? "";
-  const bullets = BULLET_INDICES
-    .map((i) => data.scoringExplanation[i])
-    .filter((s): s is ReasoningSection => Boolean(s));
+  const bullets = BULLET_INDICES.map((i) => data.scoringExplanation[i]).filter(
+    (s): s is ReasoningSection => Boolean(s),
+  );
 
   return (
     <div className="flex flex-col gap-3 px-4 py-3">
@@ -93,7 +98,10 @@ function CardBody({ data }: { data: ReasoningResponse }) {
             key={b.title}
             className="flex gap-2 text-[12px] leading-snug text-zinc-300"
           >
-            <span aria-hidden className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-zinc-500" />
+            <span
+              aria-hidden
+              className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-zinc-500"
+            />
             <span>
               <span className="text-zinc-100">{b.title}:</span>{" "}
               <span className="text-zinc-400">{firstSentence(b.value)}</span>
@@ -109,7 +117,10 @@ export function useReasoningHover(): UseReasoningHoverReturn {
   const [target, setTarget] = useState<ActiveTarget | null>(null);
   const [data, setData] = useState<ReasoningResponse | null>(null);
   const [fetchError, setFetchError] = useState(false);
-  const [pos, setPos] = useState<{ x: number; y: number }>({ x: -9999, y: -9999 });
+  const [pos, setPos] = useState<{ x: number; y: number }>({
+    x: -9999,
+    y: -9999,
+  });
   const [mounted, setMounted] = useState(false);
 
   // Latest state mirrored into refs so Portal can keep a stable identity
@@ -141,60 +152,74 @@ export function useReasoningHover(): UseReasoningHoverReturn {
     };
   }, []);
 
-  const ensureData = useCallback((id: string, demo?: boolean, ai_reasoning?: string) => {
-    // Demo report: skip the network call, return baked data instantly.
-    if (demo && ai_reasoning) {
-      const baked: ReasoningResponse = {
-        reportId: id,
-        reasoning: ai_reasoning,
-        costBreakdown: [
-          { title: "Chainsaw crew (2 workers, 1 hr)", value: "$220" },
-          { title: "Wood chipper + debris hauling", value: "$125" },
-          { title: "Hazard cones + safety tape", value: "$15" },
-          { title: "Estimated total", value: "$360" },
-        ],
-        scoringExplanation: [
-          { title: "Severity", value: "3 / 5 — property access blocked, no injury risk" },
-          { title: "Confidence", value: "93%" },
-          { title: "Priority score", value: "72 / 100" },
-          { title: "SLA target", value: "< 48 hours" },
-        ],
-      };
-      cache.current.set(id, baked);
-      setData(baked);
-      return;
-    }
-    const cached = cache.current.get(id);
-    if (cached) {
-      setData(cached);
-      return;
-    }
-    setData(null); // loading
-    setFetchError(false);
-    fetchController.current?.abort();
-    const controller = new AbortController();
-    fetchController.current = controller;
-    fetch("/api/ai/reasoning", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ report_id: id }),
-      signal: controller.signal,
-    })
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then((json: ReasoningResponse) => {
-        cache.current.set(id, json);
-        if (activeId.current === id) setData(json);
+  const ensureData = useCallback(
+    (id: string, demo?: boolean, ai_reasoning?: string) => {
+      // Demo report: skip the network call, return baked data instantly.
+      if (demo && ai_reasoning) {
+        const baked: ReasoningResponse = {
+          reportId: id,
+          reasoning: ai_reasoning,
+          costBreakdown: [
+            { title: "Chainsaw crew (2 workers, 1 hr)", value: "$220" },
+            { title: "Wood chipper + debris hauling", value: "$125" },
+            { title: "Hazard cones + safety tape", value: "$15" },
+            { title: "Estimated total", value: "$360" },
+          ],
+          scoringExplanation: [
+            {
+              title: "Severity",
+              value: "3 / 5 — property access blocked, no injury risk",
+            },
+            { title: "Confidence", value: "93%" },
+            { title: "Priority score", value: "72 / 100" },
+            { title: "SLA target", value: "< 48 hours" },
+          ],
+        };
+        cache.current.set(id, baked);
+        setData(baked);
+        return;
+      }
+      const cached = cache.current.get(id);
+      if (cached) {
+        setData(cached);
+        return;
+      }
+      setData(null); // loading
+      setFetchError(false);
+      fetchController.current?.abort();
+      const controller = new AbortController();
+      fetchController.current = controller;
+      fetch("/api/ai/reasoning", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ report_id: id }),
+        signal: controller.signal,
       })
-      .catch((e: unknown) => {
-        if (e instanceof DOMException && e.name === "AbortError") return;
-        // Surface real errors so the Portal can show a retry state instead of
-        // leaving an infinite spinner.
-        if (activeId.current === id) setFetchError(true);
-      });
-  }, []);
+        .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+        .then((json: ReasoningResponse) => {
+          cache.current.set(id, json);
+          if (activeId.current === id) setData(json);
+        })
+        .catch((e: unknown) => {
+          if (e instanceof DOMException && e.name === "AbortError") return;
+          // Surface real errors so the Portal can show a retry state instead of
+          // leaving an infinite spinner.
+          if (activeId.current === id) setFetchError(true);
+        });
+    },
+    [],
+  );
 
   const open = useCallback(
-    (report: { id: string; label: string; demo?: boolean; ai_reasoning?: string }, rect: DOMRect) => {
+    (
+      report: {
+        id: string;
+        label: string;
+        demo?: boolean;
+        ai_reasoning?: string;
+      },
+      rect: DOMRect,
+    ) => {
       activeId.current = report.id;
       setTarget({
         id: report.id,
@@ -240,7 +265,10 @@ export function useReasoningHover(): UseReasoningHoverReturn {
         const el = e.currentTarget as HTMLElement;
         const rect = el.getBoundingClientRect();
         if (intentTimer.current) clearTimeout(intentTimer.current);
-        intentTimer.current = setTimeout(() => open(report, rect), HOVER_INTENT_MS);
+        intentTimer.current = setTimeout(
+          () => open(report, rect),
+          HOVER_INTENT_MS,
+        );
       },
       onPointerLeave: () => {
         // Touch: don't dismiss on pointer-leave
@@ -282,7 +310,11 @@ export function useReasoningHover(): UseReasoningHoverReturn {
       const w = card?.offsetWidth ?? CARD_WIDTH;
       const vh = window.innerHeight;
       // Open left of the row; clamp into the viewport.
-      const x = clamp(target.anchor.left - OFFSET - w, 8, window.innerWidth - w - 8);
+      const x = clamp(
+        target.anchor.left - OFFSET - w,
+        8,
+        window.innerWidth - w - 8,
+      );
       // Vertically center on the row, then clamp.
       const mid = (target.anchor.top + target.anchor.bottom) / 2;
       const y = clamp(mid - h / 2, 8, vh - h - 8);
@@ -346,7 +378,9 @@ export function useReasoningHover(): UseReasoningHoverReturn {
               <CardBody data={data} />
             ) : hasFetchError ? (
               <div className="flex flex-col h-24 items-center justify-center gap-2 px-4">
-                <p className="text-[12px] text-zinc-400">Failed to load reasoning.</p>
+                <p className="text-[12px] text-zinc-400">
+                  Failed to load reasoning.
+                </p>
                 <button
                   type="button"
                   className="pointer-events-auto text-[11px] text-zinc-300 underline underline-offset-2 hover:text-white"

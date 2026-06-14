@@ -1,12 +1,12 @@
-import { Suspense } from "react";
 import Link from "next/link";
-import { Globe } from "@/components/ui/cobe-globe";
-import { WaveStage } from "@/components/landing/wave-stage";
+import { Suspense } from "react";
+import { CountUp } from "@/components/landing/count-up";
 import { FAQ } from "@/components/landing/faq";
 import { OrbitalSteps } from "@/components/landing/orbital-steps";
 import { Reveal } from "@/components/landing/reveal";
-import { CountUp } from "@/components/landing/count-up";
+import { WaveStage } from "@/components/landing/wave-stage";
 import { Button } from "@/components/ui/button";
+import { Globe } from "@/components/ui/cobe-globe";
 import { fetchReportMarkers } from "@/lib/dashboard-queries";
 
 /** Holds the globe's square footprint while COBE inits — kills the opacity-0 void flash. */
@@ -65,7 +65,12 @@ export default function HomePage() {
             >
               For cities
             </Link>
-            <Button asChild size="sm" variant="primary" className="ml-2 min-h-[44px] min-w-[44px]">
+            <Button
+              asChild
+              size="sm"
+              variant="primary"
+              className="ml-2 min-h-[44px] min-w-[44px]"
+            >
               <Link href="/report">Report</Link>
             </Button>
           </nav>
@@ -103,24 +108,36 @@ export default function HomePage() {
               <h1 className="font-hero mt-7 text-[52px] text-[var(--color-foreground)] sm:text-[68px] lg:text-[80px]">
                 See it. Snap it.
                 <br />
-                <span className="italic text-[var(--color-primary)]">Your city fixes it.</span>
+                <span className="italic text-[var(--color-primary)]">
+                  Your city fixes it.
+                </span>
               </h1>
             </Reveal>
 
             <Reveal delay={160}>
               <p className="mt-6 max-w-md text-[17px] leading-relaxed text-[var(--color-muted)]">
-                Residents file infrastructure reports with a single photo. Our AI classifies the
-                issue, dedupes duplicates, and routes a work order to the right crew before a human
-                even reads it.
+                Residents file infrastructure reports with a single photo. Our
+                AI classifies the issue, dedupes duplicates, and routes a work
+                order to the right crew before a human even reads it.
               </p>
             </Reveal>
 
             <Reveal delay={240}>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-                <Button asChild size="lg" variant="accent" className="min-h-[44px] w-full sm:w-auto">
+                <Button
+                  asChild
+                  size="lg"
+                  variant="accent"
+                  className="min-h-[44px] w-full sm:w-auto"
+                >
                   <Link href="/login?redirect=/user">Report an issue</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="min-h-[44px] w-full sm:w-auto">
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="min-h-[44px] w-full sm:w-auto"
+                >
                   <Link href="/city/cumming">View Cumming dashboard</Link>
                 </Button>
               </div>
@@ -151,17 +168,19 @@ export default function HomePage() {
               The product
             </p>
             <h2 className="font-display mt-4 text-[30px] font-normal leading-[1.1] text-[var(--color-foreground)] sm:text-[40px] lg:text-[46px]">
-              311 was designed in 2003. We rebuilt it for the camera in your pocket.
+              311 was designed in 2003. We rebuilt it for the camera in your
+              pocket.
             </h2>
             <p className="mt-6 max-w-md text-[15px] leading-relaxed text-[var(--color-muted)]">
-              SeeClickFix and Tyler 311 still ask residents to choose between 47 dropdowns. Mark on
-              Cumming&apos;s paving crew still gets work orders that read{" "}
+              SeeClickFix and Tyler 311 still ask residents to choose between 47
+              dropdowns. Mark on Cumming&apos;s paving crew still gets work
+              orders that read{" "}
               <em className="text-[var(--color-foreground)]">
                 &ldquo;big hole on the road by the school&rdquo;
               </em>
-              . We replace the human triage layer with vision models, so by the time a foreman
-              opens the order, the photo, address, severity, and materials list are already
-              attached.
+              . We replace the human triage layer with vision models, so by the
+              time a foreman opens the order, the photo, address, severity, and
+              materials list are already attached.
             </p>
           </Reveal>
 
@@ -200,8 +219,8 @@ export default function HomePage() {
               </h2>
             </div>
             <p className="max-w-sm text-[15px] leading-relaxed text-[var(--color-muted)]">
-              Click any node to expand it. Each step lists what runs, who owns it, and how
-              confident the AI is in its decision.
+              Click any node to expand it. Each step lists what runs, who owns
+              it, and how confident the AI is in its decision.
             </p>
           </Reveal>
 
@@ -221,12 +240,18 @@ export default function HomePage() {
               Your city has a 311 system. Your residents have a camera.
             </h2>
             <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-white/60">
-              Cumming residents file in 8 seconds. Yours can too. The integration is Open311, the
-              cost is per-report, and the dashboard is public from day one.
+              Cumming residents file in 8 seconds. Yours can too. The
+              integration is Open311, the cost is per-report, and the dashboard
+              is public from day one.
             </p>
           </div>
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
-            <Button asChild variant="accent" size="lg" className="min-h-[44px] w-full sm:w-auto">
+            <Button
+              asChild
+              variant="accent"
+              size="lg"
+              className="min-h-[44px] w-full sm:w-auto"
+            >
               <Link href="/report">Try the resident PWA</Link>
             </Button>
             <Button
@@ -251,13 +276,22 @@ export default function HomePage() {
             <span>The AI-native citizen infrastructure platform.</span>
           </div>
           <div className="flex items-center gap-6">
-            <Link href="/city/cumming" className="inline-flex min-h-[44px] items-center hover:text-[var(--color-foreground)]">
+            <Link
+              href="/city/cumming"
+              className="inline-flex min-h-[44px] items-center hover:text-[var(--color-foreground)]"
+            >
               Dashboard
             </Link>
-            <Link href="/report" className="inline-flex min-h-[44px] items-center hover:text-[var(--color-foreground)]">
+            <Link
+              href="/report"
+              className="inline-flex min-h-[44px] items-center hover:text-[var(--color-foreground)]"
+            >
               Report
             </Link>
-            <Link href="/staff" className="inline-flex min-h-[44px] items-center hover:text-[var(--color-foreground)]">
+            <Link
+              href="/staff"
+              className="inline-flex min-h-[44px] items-center hover:text-[var(--color-foreground)]"
+            >
               For cities
             </Link>
             <span className="font-mono text-[var(--color-muted)]">
@@ -282,7 +316,9 @@ function Stat({ value, label }: { value: string; label: string }) {
       <dt className="font-display text-[22px] font-medium tracking-tight text-[var(--color-foreground)] tabular-nums">
         <CountUp value={value} />
       </dt>
-      <dd className="text-[12.5px] leading-tight text-[var(--color-muted)]">{label}</dd>
+      <dd className="text-[12.5px] leading-tight text-[var(--color-muted)]">
+        {label}
+      </dd>
     </div>
   );
 }

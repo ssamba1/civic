@@ -1,17 +1,23 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { after, type NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
-import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
+import { getService } from "@/lib/open311/services";
 import {
-  reportToOpen311,
   expandStatus,
   type Open311Request,
+  reportToOpen311,
 } from "@/lib/open311/transform";
-import { toOpen311Xml, toErrorXml } from "@/lib/open311/xml";
-import { getService } from "@/lib/open311/services";
-import { normalizeLocation, type Report, type Classification, type City, type ReportStatus } from "@/lib/types";
+import { toErrorXml, toOpen311Xml } from "@/lib/open311/xml";
+import {
+  type City,
+  type Classification,
+  normalizeLocation,
+  type Report,
+  type ReportStatus,
+} from "@/lib/types";
 
 const logger = createLogger("[open311-list]");
 
@@ -37,7 +43,11 @@ export async function GET(request: NextRequest) {
       max: 60,
     });
     if (!rl.allowed) {
-      return errorResponse(429, "Rate limit exceeded", requestWantsXml(request));
+      return errorResponse(
+        429,
+        "Rate limit exceeded",
+        requestWantsXml(request),
+      );
     }
 
     const params = request.nextUrl.searchParams;
@@ -49,7 +59,11 @@ export async function GET(request: NextRequest) {
     const wantsXml = requestWantsXml(request);
 
     // Reject unknown status values — silently ignoring them violates spec
-    if (statusParam !== null && statusParam !== "open" && statusParam !== "closed") {
+    if (
+      statusParam !== null &&
+      statusParam !== "open" &&
+      statusParam !== "closed"
+    ) {
       return errorResponse(400, "status must be 'open' or 'closed'", wantsXml);
     }
     const status = statusParam as "open" | "closed" | null;
@@ -58,18 +72,17 @@ export async function GET(request: NextRequest) {
     const pageRaw = params.get("page");
     const pageSizeRaw = params.get("page_size");
     const page = pageRaw !== null ? Math.max(1, parseInt(pageRaw, 10) || 1) : 1;
-    const pageSize = pageSizeRaw !== null
-      ? Math.min(200, Math.max(1, parseInt(pageSizeRaw, 10) || 100))
-      : 200;
+    const pageSize =
+      pageSizeRaw !== null
+        ? Math.min(200, Math.max(1, parseInt(pageSizeRaw, 10) || 100))
+        : 200;
     const rangeFrom = (page - 1) * pageSize;
     const rangeTo = rangeFrom + pageSize - 1;
 
     const db = createServerClient();
 
     // Select only safe public columns — no description, no photo_raw_url, no reporter PII
-    let query = db
-      .from("reports")
-      .select(PUBLIC_REPORT_SELECT);
+    let query = db.from("reports").select(PUBLIC_REPORT_SELECT);
 
     // Filter by jurisdiction if provided
     if (jurisdictionId) {
@@ -97,7 +110,9 @@ export async function GET(request: NextRequest) {
     // Exclude rejected (and merged) reports from the public feed — H13
     query = query.not("status", "in", '("rejected","merged")');
 
-    query = query.order("created_at", { ascending: false }).range(rangeFrom, rangeTo);
+    query = query
+      .order("created_at", { ascending: false })
+      .range(rangeFrom, rangeTo);
 
     const { data, error } = await query;
 
@@ -107,35 +122,42 @@ export async function GET(request: NextRequest) {
     }
 
     // Validate row shape before transformation
-    const RowSchema = z.object({
-      id: z.string(),
-      city_id: z.string(),
-      location: z.unknown(),
-      photo_public_url: z.string(),
-      status: z.string(),
-      address: z.string().nullable(),
-      created_at: z.string(),
-      updated_at: z.string(),
-      classifications: z.array(z.unknown()).nullable(),
-      cities: z.array(z.unknown()).nullable(),
-    }).passthrough();
+    const RowSchema = z
+      .object({
+        id: z.string(),
+        city_id: z.string(),
+        location: z.unknown(),
+        photo_public_url: z.string(),
+        status: z.string(),
+        address: z.string().nullable(),
+        created_at: z.string(),
+        updated_at: z.string(),
+        classifications: z.array(z.unknown()).nullable(),
+        cities: z.array(z.unknown()).nullable(),
+      })
+      .passthrough();
 
     // Transform rows to Open311 format
     const open311Requests = (data ?? [])
       .map((row) => {
         const validated = RowSchema.safeParse(row);
         if (!validated.success) {
-          logger.error("Open311 row schema mismatch", { row, issues: validated.error.issues });
+          logger.error("Open311 row schema mismatch", {
+            row,
+            issues: validated.error.issues,
+          });
           return null;
         }
         const v = validated.data;
         const report = rowToReport(v as ReportRow);
-        const classification: Classification | null = v.classifications != null
-          ? (v.classifications[0] ?? null) as Classification | null
-          : null;
-        const city = Array.isArray(v.cities) && v.cities.length > 0
-          ? (v.cities[0] as City)
-          : (v.cities as City | null);
+        const classification: Classification | null =
+          v.classifications != null
+            ? ((v.classifications[0] ?? null) as Classification | null)
+            : null;
+        const city =
+          Array.isArray(v.cities) && v.cities.length > 0
+            ? (v.cities[0] as City)
+            : (v.cities as City | null);
         return city ? reportToOpen311(report, classification, city) : null;
       })
       // Type-guard filter so the result is Open311Request[], not
@@ -152,7 +174,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(open311Requests);
   } catch (err) {
     logger.error("GET /requests unhandled error", err);
-    return errorResponse(500, "Internal server error", requestWantsXml(request));
+    return errorResponse(
+      500,
+      "Internal server error",
+      requestWantsXml(request),
+    );
   }
 }
 
@@ -184,11 +210,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate API key — constant-time comparison to prevent timing attacks (H10)
-    const apiKey =
-      body.api_key ?? request.nextUrl.searchParams.get("api_key");
+    const apiKey = body.api_key ?? request.nextUrl.searchParams.get("api_key");
     const expectedKey = process.env.OPEN311_API_KEY;
     if (!expectedKey || !apiKey || !safeCompare(apiKey, expectedKey)) {
-      return errorResponse(401, "API key is required and must be valid", wantsXml);
+      return errorResponse(
+        401,
+        "API key is required and must be valid",
+        wantsXml,
+      );
     }
 
     // Validate required fields
@@ -197,14 +226,18 @@ export async function POST(request: NextRequest) {
       return errorResponse(
         400,
         `Invalid or missing service_code. Use GET /services for valid codes.`,
-        wantsXml
+        wantsXml,
       );
     }
 
     const lat = parseFloat(body.lat);
     const lng = parseFloat(body.long);
     if (isNaN(lat) || isNaN(lng)) {
-      return errorResponse(400, "lat and long are required numeric fields", wantsXml);
+      return errorResponse(
+        400,
+        "lat and long are required numeric fields",
+        wantsXml,
+      );
     }
     if (lat < -90 || lat > 90) {
       return errorResponse(400, "lat must be between -90 and 90", wantsXml);
@@ -215,11 +248,19 @@ export async function POST(request: NextRequest) {
 
     const description = body.description ?? null;
     if (description && description.length > 2000) {
-      return errorResponse(400, "description must be 2000 characters or fewer", wantsXml);
+      return errorResponse(
+        400,
+        "description must be 2000 characters or fewer",
+        wantsXml,
+      );
     }
     const addressString = body.address_string ?? null;
     if (addressString && addressString.length > 300) {
-      return errorResponse(400, "address_string must be 300 characters or fewer", wantsXml);
+      return errorResponse(
+        400,
+        "address_string must be 300 characters or fewer",
+        wantsXml,
+      );
     }
 
     const db = createServerClient();
@@ -263,7 +304,7 @@ export async function POST(request: NextRequest) {
       return errorResponse(
         500,
         "Server misconfigured: OPEN311_SYSTEM_USER_ID not set",
-        wantsXml
+        wantsXml,
       );
     }
 
@@ -303,16 +344,21 @@ export async function POST(request: NextRequest) {
 
     // Trigger AI classification async — fire-and-forget (H2)
     // x-internal-key allows classify route to accept calls without a user session
-    const classifyHeaders: Record<string, string> = { "Content-Type": "application/json" };
+    const classifyHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
     if (process.env.INTERNAL_CLASSIFY_SECRET) {
       classifyHeaders["x-internal-key"] = process.env.INTERNAL_CLASSIFY_SECRET;
     }
     after(() =>
-      fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/api/ai/classify`, {
-        method: "POST",
-        headers: classifyHeaders,
-        body: JSON.stringify({ report_id: report.id }),
-      }).catch((err) => {
+      fetch(
+        `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/api/ai/classify`,
+        {
+          method: "POST",
+          headers: classifyHeaders,
+          body: JSON.stringify({ report_id: report.id }),
+        },
+      ).catch((err) => {
         logger.error("Classify trigger failed", err, { reportId: report.id });
       }),
     );

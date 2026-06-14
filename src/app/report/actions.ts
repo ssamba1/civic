@@ -5,8 +5,8 @@ import { z } from "zod/v4";
 import { runClassifyPipeline } from "@/lib/ai/classify-pipeline";
 import { ASYNC_CLASSIFY } from "@/lib/ai/config";
 import { createServerClient } from "@/lib/db/client";
-import { createLogger } from "@/lib/logger";
 import { createSSRClient } from "@/lib/db/ssr-client";
+import { createLogger } from "@/lib/logger";
 import type { Classification, Result } from "@/lib/types";
 
 const logger = createLogger("[submit-report]");
@@ -212,10 +212,14 @@ export async function submitReport(
             .eq("id", reportId);
         } catch (logErr) {
           // Last resort: even the backstop writes failed. Surface to server logs.
-          logger.error("Classify backstop failed (could not persist to error_log)", logErr, {
-            reportId,
-            originalError: message,
-          });
+          logger.error(
+            "Classify backstop failed (could not persist to error_log)",
+            logErr,
+            {
+              reportId,
+              originalError: message,
+            },
+          );
         }
       }
     });

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { Pause, Play, RotateCcw, SlidersHorizontal, X } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils/cn";
 import { DEFAULT_WAVE, type WaveParams } from "./wave-hero";
 
@@ -30,7 +30,9 @@ function Row({
     <label className="flex flex-col gap-1.5">
       <span className="flex items-baseline justify-between">
         <span className="text-[12px] font-medium text-white/85">{label}</span>
-        <span className="font-mono text-[11px] tabular-nums text-white/55">{fmt(value)}</span>
+        <span className="font-mono text-[11px] tabular-nums text-white/55">
+          {fmt(value)}
+        </span>
       </span>
       <input
         type="range"
@@ -42,7 +44,9 @@ function Row({
         aria-label={label}
         className="h-1.5 w-full cursor-pointer accent-[var(--color-primary)]"
       />
-      {hint ? <span className="text-[10px] leading-tight text-white/35">{hint}</span> : null}
+      {hint ? (
+        <span className="text-[10px] leading-tight text-white/35">{hint}</span>
+      ) : null}
     </label>
   );
 }
@@ -140,7 +144,11 @@ export function WaveTweaks({
             onClick={() => set({ paused: !params.paused })}
             className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[12px] font-medium text-white/90 transition-colors hover:bg-white/10 active:translate-y-px"
           >
-            {params.paused ? <Play className="size-3.5" /> : <Pause className="size-3.5" />}
+            {params.paused ? (
+              <Play className="size-3.5" />
+            ) : (
+              <Pause className="size-3.5" />
+            )}
             {params.paused ? "Resume" : "Pause"}
           </button>
           <button

@@ -1,4 +1,4 @@
-import type { ReportCategory, Department } from "@/lib/types";
+import type { Department, ReportCategory } from "@/lib/types";
 
 export interface Open311Service {
   service_code: string;
@@ -42,7 +42,8 @@ const SERVICE_DEFINITIONS: Record<ReportCategory, Open311Service> = {
   graffiti: {
     service_code: "graffiti",
     service_name: "Graffiti Removal",
-    description: "Report graffiti on public or private property visible from the street",
+    description:
+      "Report graffiti on public or private property visible from the street",
     metadata: false,
     type: "realtime",
     keywords: "graffiti,vandalism,paint,tagging",
@@ -60,7 +61,8 @@ const SERVICE_DEFINITIONS: Record<ReportCategory, Open311Service> = {
   water_leak: {
     service_code: "water_leak",
     service_name: "Water Leak",
-    description: "Report a water main break or visible water leak in the right-of-way",
+    description:
+      "Report a water main break or visible water leak in the right-of-way",
     metadata: false,
     type: "realtime",
     keywords: "water,leak,main,break,flooding",
@@ -78,7 +80,8 @@ const SERVICE_DEFINITIONS: Record<ReportCategory, Open311Service> = {
   tree_down: {
     service_code: "tree_down",
     service_name: "Downed Tree",
-    description: "Report a fallen tree or large branch blocking a road or sidewalk",
+    description:
+      "Report a fallen tree or large branch blocking a road or sidewalk",
     metadata: false,
     type: "realtime",
     keywords: "tree,branch,fallen,blocking",
@@ -105,7 +108,8 @@ const SERVICE_DEFINITIONS: Record<ReportCategory, Open311Service> = {
   faded_signage: {
     service_code: "faded_signage",
     service_name: "Faded Signage",
-    description: "Report a road sign that is faded, illegible, or needs replacement",
+    description:
+      "Report a road sign that is faded, illegible, or needs replacement",
     metadata: false,
     type: "realtime",
     keywords: "sign,faded,illegible,worn",
@@ -114,7 +118,8 @@ const SERVICE_DEFINITIONS: Record<ReportCategory, Open311Service> = {
   other: {
     service_code: "other",
     service_name: "Other Infrastructure Issue",
-    description: "Report an infrastructure problem not covered by other categories",
+    description:
+      "Report an infrastructure problem not covered by other categories",
     metadata: false,
     type: "realtime",
     keywords: "other,infrastructure,general",
@@ -165,7 +170,7 @@ export function getDepartment(category: ReportCategory): Department {
 /** Human-readable agency name from category + city name */
 export function getAgencyResponsible(
   category: ReportCategory,
-  cityName: string
+  cityName: string,
 ): string {
   const dept = CATEGORY_DEPARTMENT[category];
   return `${cityName} ${DEPARTMENT_LABELS[dept]}`;

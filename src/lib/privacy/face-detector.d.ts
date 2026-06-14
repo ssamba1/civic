@@ -25,7 +25,9 @@ declare class FaceDetector {
 }
 
 // Augment globalThis so `globalThis.FaceDetector` type-checks
-declare var FaceDetector: {
-  new (options?: FaceDetectorOptions): FaceDetector;
-  prototype: FaceDetector;
-} | undefined;
+declare var FaceDetector:
+  | {
+      new (options?: FaceDetectorOptions): FaceDetector;
+      prototype: FaceDetector;
+    }
+  | undefined;

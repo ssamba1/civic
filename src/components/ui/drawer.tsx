@@ -1,8 +1,8 @@
 "use client";
 
+import { X } from "lucide-react";
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { lockBodyScroll } from "@/lib/utils/scroll-lock";
 

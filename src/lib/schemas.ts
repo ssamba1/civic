@@ -16,7 +16,9 @@ export const CustomCategorySchema = z.object({
   id: z.string().regex(/^custom_/, "id must start with 'custom_'"),
   label: z.string().min(1, "label is required"),
   color: z.string(),
-  team: z.string().refine((t) => isValidTeamId(t) && t !== "all", "invalid team"),
+  team: z
+    .string()
+    .refine((t) => isValidTeamId(t) && t !== "all", "invalid team"),
 });
 
 export type CustomCategory = z.infer<typeof CustomCategorySchema>;

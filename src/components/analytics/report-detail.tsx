@@ -1,18 +1,15 @@
 "use client";
 
+import { Clock, ImageOff, MapPin } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Clock, MapPin, ImageOff } from "lucide-react";
-import { cn } from "@/lib/utils/cn";
-import {
-  CATEGORY_META,
-  CATEGORY_SLA_TARGETS,
-} from "@/lib/dashboard-data";
-import type { DashboardReport } from "@/lib/dashboard-data";
-import type { ReportStatus } from "@/lib/types";
 import type {
   ReasoningResponse,
   ReasoningSection,
 } from "@/app/api/ai/reasoning/route";
+import type { DashboardReport } from "@/lib/dashboard-data";
+import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
+import type { ReportStatus } from "@/lib/types";
+import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
    Report detail pane — right-hand column of the reports explorer.
@@ -193,7 +190,9 @@ type ReasoningState =
 
 // Baked cost + scoring sections for the demo tree report. Mirrors the
 // structure /api/ai/reasoning returns so both columns render fully.
-function buildDemoReasoningResponse(report: DashboardReport): ReasoningResponse {
+function buildDemoReasoningResponse(
+  report: DashboardReport,
+): ReasoningResponse {
   return {
     reportId: report.id,
     reasoning: report.ai_reasoning ?? "",
@@ -205,7 +204,10 @@ function buildDemoReasoningResponse(report: DashboardReport): ReasoningResponse 
       { title: "Estimated total", value: "$360" },
     ] satisfies ReasoningSection[],
     scoringExplanation: [
-      { title: "Severity", value: "3 / 5 — property access blocked, no injury risk" },
+      {
+        title: "Severity",
+        value: "3 / 5 — property access blocked, no injury risk",
+      },
       { title: "Category", value: "tree_down (confidence 93%)" },
       { title: "Priority score", value: "72 / 100" },
       { title: "SLA target", value: "< 48 hours" },

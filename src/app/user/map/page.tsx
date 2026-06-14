@@ -1,6 +1,6 @@
-import { FilterProvider } from "@/lib/filters/context";
-import { getReportCorpus, KNOWN_CITIES } from "@/lib/dashboard-data";
 import { CorpusMapView } from "@/components/map/corpus-map-view";
+import { getReportCorpus, KNOWN_CITIES } from "@/lib/dashboard-data";
+import { FilterProvider } from "@/lib/filters/context";
 
 export const metadata = { title: "Community Map | Civic" };
 

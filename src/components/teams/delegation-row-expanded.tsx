@@ -1,32 +1,31 @@
 "use client";
 
-import { memo, useEffect, useState } from "react";
 import {
-  ImageOff,
-  Plus,
-  Send,
-  Repeat2,
   Activity,
   CheckCircle2,
   GitMerge,
+  ImageOff,
+  Plus,
+  Repeat2,
+  Send,
   XCircle,
 } from "lucide-react";
-
-import { TEAMS, type TeamId } from "@/lib/teams";
+import { memo, useEffect, useState } from "react";
+import type { ReasoningResponse } from "@/app/api/ai/reasoning/route";
+import { Stat, StatGrid } from "@/components/analytics/bento-primitives";
 import {
   CATEGORY_SLA_TARGETS,
   type DashboardReport,
 } from "@/lib/dashboard-data";
 import {
   buildTimeline,
-  similarNearby,
   type OverrideEvent,
+  similarNearby,
   type TimelineEvent,
 } from "@/lib/delegation-history";
-import { timeAgo, timeUntil } from "@/lib/utils/time-ago";
+import { TEAMS, type TeamId } from "@/lib/teams";
 import type { TeamWorkload } from "@/lib/teams-data";
-import { Stat, StatGrid } from "@/components/analytics/bento-primitives";
-import type { ReasoningResponse } from "@/app/api/ai/reasoning/route";
+import { timeAgo, timeUntil } from "@/lib/utils/time-ago";
 
 /* ------------------------------------------------------------------
    Public types
@@ -242,12 +241,10 @@ function DelegationRowExpandedInner({
   const similar = similarNearby(report, corpus, 500);
   const teamQueue = workloads.get(effectiveTeam)?.openCount ?? 0;
 
-  const ageHours =
-    (Date.now() - Date.parse(report.created_at)) / 3_600_000;
+  const ageHours = (Date.now() - Date.parse(report.created_at)) / 3_600_000;
   const target = CATEGORY_SLA_TARGETS[report.category];
   const pct = Math.round((ageHours / target) * 100);
-  const slaColor =
-    pct > 100 ? "#ff453a" : pct >= 60 ? "#ff9f0a" : "#30d158";
+  const slaColor = pct > 100 ? "#ff453a" : pct >= 60 ? "#ff9f0a" : "#30d158";
 
   const estCost = 12 + report.severity * 18;
 
@@ -303,9 +300,8 @@ function DelegationRowExpandedInner({
           )}
 
           <p className="text-[12px] text-zinc-400">
-            Routed to{" "}
-            <span className="text-white">{effectiveMeta.label}</span> —{" "}
-            {dutyFirstSentence}.
+            Routed to <span className="text-white">{effectiveMeta.label}</span>{" "}
+            — {dutyFirstSentence}.
           </p>
 
           {!loading && !error && data && data.scoringExplanation[0] && (

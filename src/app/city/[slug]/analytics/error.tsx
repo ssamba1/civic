@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 export default function AnalyticsError({
   error,
@@ -9,7 +9,9 @@ export default function AnalyticsError({
 }) {
   return (
     <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-center px-4">
-      <p className="text-sm font-medium text-zinc-400">Analytics failed to load.</p>
+      <p className="text-sm font-medium text-zinc-400">
+        Analytics failed to load.
+      </p>
       {error.digest && (
         <p className="text-xs text-zinc-600">Ref: {error.digest}</p>
       )}

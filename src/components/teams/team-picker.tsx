@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { TEAMS, TEAM_LIST, type TeamId } from "@/lib/teams";
+import { useEffect, useRef, useState } from "react";
 import { teamIcon } from "@/components/teams/team-icon";
+import { TEAM_LIST, TEAMS, type TeamId } from "@/lib/teams";
 import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================

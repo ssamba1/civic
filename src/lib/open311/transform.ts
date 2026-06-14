@@ -1,9 +1,9 @@
 import type {
-  Report,
-  Classification,
   City,
-  ReportStatus,
+  Classification,
+  Report,
   ReportCategory,
+  ReportStatus,
 } from "@/lib/types";
 import { getAgencyResponsible } from "./services";
 
@@ -53,9 +53,7 @@ export function mapStatus(status: ReportStatus): "open" | "closed" {
 /**
  * Invert Open311 status → list of internal statuses for DB filtering.
  */
-export function expandStatus(
-  open311Status: "open" | "closed"
-): ReportStatus[] {
+export function expandStatus(open311Status: "open" | "closed"): ReportStatus[] {
   if (open311Status === "open") return ["open", "dispatched", "in_progress"];
   return ["closed", "merged", "rejected"];
 }
@@ -75,7 +73,7 @@ function serviceName(category: string): string {
 export function reportToOpen311(
   report: Report,
   classification: Classification | null,
-  city: City
+  city: City,
 ): Open311Request {
   const category = (classification?.category ?? "other") as ReportCategory;
 

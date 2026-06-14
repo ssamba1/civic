@@ -31,7 +31,8 @@ const shadowStyles: Record<ShadowIntensity, string> = {
   md: "inset 3px 3px 3px 0 rgba(255, 255, 255, 0.45), inset -3px -3px 3px 0 rgba(255, 255, 255, 0.45)",
   lg: "inset 4px 4px 4px 0 rgba(255, 255, 255, 0.5), inset -4px -4px 4px 0 rgba(255, 255, 255, 0.5)",
   xl: "inset 6px 6px 6px 0 rgba(255, 255, 255, 0.55), inset -6px -6px 6px 0 rgba(255, 255, 255, 0.55)",
-  "2xl": "inset 8px 8px 8px 0 rgba(255, 255, 255, 0.6), inset -8px -8px 8px 0 rgba(255, 255, 255, 0.6)",
+  "2xl":
+    "inset 8px 8px 8px 0 rgba(255, 255, 255, 0.6), inset -8px -8px 8px 0 rgba(255, 255, 255, 0.6)",
 };
 
 const glowStyles: Record<GlowIntensity, string> = {
@@ -41,7 +42,8 @@ const glowStyles: Record<GlowIntensity, string> = {
   md: "0 4px 4px rgba(0, 0, 0, 0.15), 0 0 12px rgba(0, 0, 0, 0.08), 0 0 32px rgba(255, 255, 255, 0.15)",
   lg: "0 4px 4px rgba(0, 0, 0, 0.15), 0 0 12px rgba(0, 0, 0, 0.08), 0 0 40px rgba(255, 255, 255, 0.2)",
   xl: "0 4px 4px rgba(0, 0, 0, 0.15), 0 0 12px rgba(0, 0, 0, 0.08), 0 0 48px rgba(255, 255, 255, 0.25)",
-  "2xl": "0 4px 4px rgba(0, 0, 0, 0.15), 0 0 12px rgba(0, 0, 0, 0.08), 0 0 60px rgba(255, 255, 255, 0.3)",
+  "2xl":
+    "0 4px 4px rgba(0, 0, 0, 0.15), 0 0 12px rgba(0, 0, 0, 0.08), 0 0 60px rgba(255, 255, 255, 0.3)",
 };
 
 function LiquidGlassFilter() {
@@ -75,58 +77,61 @@ function LiquidGlassFilter() {
   );
 }
 
-export const LiquidGlassCard = React.forwardRef<HTMLDivElement, LiquidGlassCardProps>(
-  function LiquidGlassCard(
-    {
-      children,
-      className,
-      contentClassName,
-      blurIntensity = "xl",
-      shadowIntensity = "md",
-      glowIntensity = "sm",
-      borderRadius = "20px",
-      style,
-      ...props
-    },
-    ref,
-  ) {
-    return (
-      <>
-        <LiquidGlassFilter />
-        <div
-          ref={ref}
-          className={cn("relative max-w-full overflow-hidden", className)}
-          style={{ borderRadius, ...style }}
-          {...props}
-        >
-          {/* Bend — refraction */}
-          <div
-            className={cn("absolute inset-0 z-0", blurClasses[blurIntensity])}
-            style={{
-              borderRadius,
-              filter: "url(#liquid-glass-blur)",
-            }}
-          />
-          {/* Face — outer glow */}
-          <div
-            className="absolute inset-0 z-10"
-            style={{
-              borderRadius,
-              boxShadow: glowStyles[glowIntensity],
-            }}
-          />
-          {/* Edge — inner highlight */}
-          <div
-            className="absolute inset-0 z-20"
-            style={{
-              borderRadius,
-              boxShadow: shadowStyles[shadowIntensity],
-            }}
-          />
-          {/* Content */}
-          <div className={cn("relative z-30 h-full w-full", contentClassName)}>{children}</div>
-        </div>
-      </>
-    );
+export const LiquidGlassCard = React.forwardRef<
+  HTMLDivElement,
+  LiquidGlassCardProps
+>(function LiquidGlassCard(
+  {
+    children,
+    className,
+    contentClassName,
+    blurIntensity = "xl",
+    shadowIntensity = "md",
+    glowIntensity = "sm",
+    borderRadius = "20px",
+    style,
+    ...props
   },
-);
+  ref,
+) {
+  return (
+    <>
+      <LiquidGlassFilter />
+      <div
+        ref={ref}
+        className={cn("relative max-w-full overflow-hidden", className)}
+        style={{ borderRadius, ...style }}
+        {...props}
+      >
+        {/* Bend — refraction */}
+        <div
+          className={cn("absolute inset-0 z-0", blurClasses[blurIntensity])}
+          style={{
+            borderRadius,
+            filter: "url(#liquid-glass-blur)",
+          }}
+        />
+        {/* Face — outer glow */}
+        <div
+          className="absolute inset-0 z-10"
+          style={{
+            borderRadius,
+            boxShadow: glowStyles[glowIntensity],
+          }}
+        />
+        {/* Edge — inner highlight */}
+        <div
+          className="absolute inset-0 z-20"
+          style={{
+            borderRadius,
+            boxShadow: shadowStyles[shadowIntensity],
+          }}
+        />
+        {/* Content */}
+        <div className={cn("relative z-30 h-full w-full", contentClassName)}>
+          {children}
+        </div>
+      </div>
+    </>
+  );
+});

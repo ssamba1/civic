@@ -1,9 +1,3 @@
-import {
-  type DashboardReport,
-  CATEGORY_META,
-  CATEGORY_SLA_TARGETS,
-} from "@/lib/dashboard-data";
-import type { ReportCategory, ReportStatus } from "@/lib/types";
 import type {
   AnalyticsKpis,
   CategoryResolution,
@@ -15,6 +9,12 @@ import type {
   StatusFunnelStep,
   TrendPoint,
 } from "@/lib/analytics-data";
+import {
+  CATEGORY_META,
+  CATEGORY_SLA_TARGETS,
+  type DashboardReport,
+} from "@/lib/dashboard-data";
+import type { ReportCategory, ReportStatus } from "@/lib/types";
 
 const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
@@ -34,7 +34,10 @@ function dayKey(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10);
 }
 
-const RESOLVED_STATUSES: ReadonlySet<ReportStatus> = new Set(["closed", "merged"]);
+const RESOLVED_STATUSES: ReadonlySet<ReportStatus> = new Set([
+  "closed",
+  "merged",
+]);
 const BACKLOG_STATUSES: ReadonlySet<ReportStatus> = new Set([
   "open",
   "dispatched",
@@ -45,7 +48,9 @@ const BACKLOG_STATUSES: ReadonlySet<ReportStatus> = new Set([
 
 function resolutionRate(reports: DashboardReport[]): number {
   if (!reports.length) return 0;
-  const resolved = reports.filter((r) => RESOLVED_STATUSES.has(r.status)).length;
+  const resolved = reports.filter((r) =>
+    RESOLVED_STATUSES.has(r.status),
+  ).length;
   return (resolved / reports.length) * 100;
 }
 

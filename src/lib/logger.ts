@@ -13,7 +13,7 @@ export function createLogger(context: string): Logger {
   function emit(
     level: "info" | "warn" | "error",
     message: string,
-    meta?: Record<string, unknown>
+    meta?: Record<string, unknown>,
   ) {
     const entry = JSON.stringify({
       level,
@@ -45,7 +45,11 @@ export function createLogger(context: string): Logger {
 
     error(message, err, meta) {
       const errMsg =
-        err instanceof Error ? err.message : err != null ? String(err) : undefined;
+        err instanceof Error
+          ? err.message
+          : err != null
+            ? String(err)
+            : undefined;
       emit("error", message, { ...meta, ...(errMsg ? { err: errMsg } : {}) });
 
       Sentry.withScope((scope) => {

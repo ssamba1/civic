@@ -1,17 +1,17 @@
 "use client";
 
-import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import Link from "next/link";
+import { useRef } from "react";
 
 import { teamIcon } from "@/components/teams/team-icon";
+import { useCategoryOverrides } from "@/lib/category-overrides";
 import {
   resolveIssueTypeMeta,
   resolveIssueTypeTeam,
   useCustomCategories,
 } from "@/lib/custom-categories";
-import { useCategoryOverrides } from "@/lib/category-overrides";
 import { TEAMS } from "@/lib/teams";
 import type { Classification } from "@/lib/types";
 
@@ -189,7 +189,11 @@ export default function SubmissionConfirmation({
         {/* Report details card — only on a real AI result */}
         {hasAiResult && (
           <div className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 p-5 mb-8 text-left space-y-3">
-            <div data-confirm-row data-confirm-fx className="flex justify-between items-center">
+            <div
+              data-confirm-row
+              data-confirm-fx
+              className="flex justify-between items-center"
+            >
               <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
                 Report ID
               </span>
@@ -198,21 +202,34 @@ export default function SubmissionConfirmation({
               </span>
             </div>
             <div className="h-px bg-zinc-200" />
-            <div data-confirm-row data-confirm-fx className="flex justify-between items-center">
+            <div
+              data-confirm-row
+              data-confirm-fx
+              className="flex justify-between items-center"
+            >
               <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
                 Category
               </span>
               <span className="text-sm font-semibold text-zinc-900">
-                {categoryLabels[classification.category] ?? classification.category}
+                {categoryLabels[classification.category] ??
+                  classification.category}
               </span>
             </div>
-            <div data-confirm-row data-confirm-fx className="flex justify-between items-center">
+            <div
+              data-confirm-row
+              data-confirm-fx
+              className="flex justify-between items-center"
+            >
               <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
                 Confidence
               </span>
               <span className="text-sm text-zinc-700">{confidencePct}%</span>
             </div>
-            <div data-confirm-row data-confirm-fx className="flex justify-between items-center">
+            <div
+              data-confirm-row
+              data-confirm-fx
+              className="flex justify-between items-center"
+            >
               <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
                 Severity
               </span>
@@ -221,7 +238,9 @@ export default function SubmissionConfirmation({
                   <span
                     key={i}
                     className={`w-2.5 h-2.5 rounded-full ${
-                      i < classification.severity ? "bg-orange-500" : "bg-zinc-200"
+                      i < classification.severity
+                        ? "bg-orange-500"
+                        : "bg-zinc-200"
                     }`}
                   />
                 ))}

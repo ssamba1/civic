@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
-import { validateCompletions } from "@/lib/schemas";
 import type { DashboardReport } from "@/lib/dashboard-data";
+import { validateCompletions } from "@/lib/schemas";
 import type { ReportStatus } from "@/lib/types";
 
 /* ==================================================================

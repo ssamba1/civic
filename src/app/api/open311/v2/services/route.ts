@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { getAllServices } from "@/lib/open311/services";
-import { toServicesXml, toErrorXml } from "@/lib/open311/xml";
+import { toErrorXml, toServicesXml } from "@/lib/open311/xml";
 
 /**
  * GET /api/open311/v2/services
@@ -33,7 +33,11 @@ export async function GET(request: NextRequest) {
       headers: { "Cache-Control": "public, max-age=3600" },
     });
   } catch {
-    return errorResponse(500, "Internal server error", requestWantsXml(request));
+    return errorResponse(
+      500,
+      "Internal server error",
+      requestWantsXml(request),
+    );
   }
 }
 
@@ -52,8 +56,5 @@ function errorResponse(code: number, description: string, xml: boolean) {
       headers: { "Content-Type": "text/xml; charset=utf-8" },
     });
   }
-  return NextResponse.json(
-    [{ code, description }],
-    { status: code }
-  );
+  return NextResponse.json([{ code, description }], { status: code });
 }

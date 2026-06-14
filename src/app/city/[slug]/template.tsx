@@ -5,6 +5,10 @@
  * (CityHeader + its sliding nav pill) is NOT remounted, so the pill slides
  * between views while the content below cross-fades. Motion-guarded in globals.css.
  */
-export default function CityTemplate({ children }: { children: React.ReactNode }) {
+export default function CityTemplate({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return <div className="route-enter flex flex-1 flex-col">{children}</div>;
 }

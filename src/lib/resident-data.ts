@@ -310,7 +310,9 @@ export async function getMyReports(
       .order("created_at", { ascending: false });
 
     if (error || !data || data.length === 0) {
-      logger.warn("Falling back to synthetic corpus (query error or empty result)");
+      logger.warn(
+        "Falling back to synthetic corpus (query error or empty result)",
+      );
       return myReportsFallback();
     }
 

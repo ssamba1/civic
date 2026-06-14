@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
-import { categoryToTeamDefault, isValidTeamId, type TeamId } from "@/lib/teams";
 import { validateCategoryOverrides } from "@/lib/schemas";
+import { categoryToTeamDefault, isValidTeamId, type TeamId } from "@/lib/teams";
 import type { ReportCategory } from "@/lib/types";
 
 /* ==================================================================

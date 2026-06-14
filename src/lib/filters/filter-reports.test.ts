@@ -1,8 +1,12 @@
 // @vitest-environment node
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import type { ReportFilter } from "@/lib/filters/types";
-import { filterReports, filterPreviousWindow, resolveWindow } from "./filter-reports";
+import {
+  filterPreviousWindow,
+  filterReports,
+  resolveWindow,
+} from "./filter-reports";
 
 const now = new Date("2026-06-13T12:00:00Z").getTime();
 const DAY_MS = 86_400_000;
@@ -106,8 +110,18 @@ describe("filterReports", () => {
 
   it("includes all reports when no constraints", () => {
     const reports = [
-      makeReport({ id: "r1", category: "pothole", severity: 5, status: "closed" }),
-      makeReport({ id: "r2", category: "graffiti", severity: 1, status: "open" }),
+      makeReport({
+        id: "r1",
+        category: "pothole",
+        severity: 5,
+        status: "closed",
+      }),
+      makeReport({
+        id: "r2",
+        category: "graffiti",
+        severity: 1,
+        status: "open",
+      }),
     ];
     const result = filterReports(reports, baseFilter, now);
     expect(result).toHaveLength(2);
@@ -115,7 +129,11 @@ describe("filterReports", () => {
 
   it("returns empty when filter matches nothing", () => {
     const reports = [makeReport({ severity: 1 })];
-    const result = filterReports(reports, { ...baseFilter, minSeverity: 3 }, now);
+    const result = filterReports(
+      reports,
+      { ...baseFilter, minSeverity: 3 },
+      now,
+    );
     expect(result).toHaveLength(0);
   });
 
@@ -125,7 +143,11 @@ describe("filterReports", () => {
       makeReport({ id: "r2", severity: 3 }),
       makeReport({ id: "r3", severity: 5 }),
     ];
-    const result = filterReports(reports, { ...baseFilter, minSeverity: 3 }, now);
+    const result = filterReports(
+      reports,
+      { ...baseFilter, minSeverity: 3 },
+      now,
+    );
     expect(result).toHaveLength(2);
     expect(result.map((r) => r.id)).toEqual(["r2", "r3"]);
   });
@@ -136,7 +158,11 @@ describe("filterReports", () => {
       makeReport({ id: "r2", category: "graffiti" }),
       makeReport({ id: "r3", category: "pothole" }),
     ];
-    const result = filterReports(reports, { ...baseFilter, categories: ["pothole"] }, now);
+    const result = filterReports(
+      reports,
+      { ...baseFilter, categories: ["pothole"] },
+      now,
+    );
     expect(result).toHaveLength(2);
     expect(result.map((r) => r.id)).toEqual(["r1", "r3"]);
   });
@@ -146,7 +172,11 @@ describe("filterReports", () => {
       makeReport({ id: "r1", category: "pothole" }),
       makeReport({ id: "r2", category: "graffiti" }),
     ];
-    const result = filterReports(reports, { ...baseFilter, categories: [] }, now);
+    const result = filterReports(
+      reports,
+      { ...baseFilter, categories: [] },
+      now,
+    );
     expect(result).toHaveLength(2);
   });
 
@@ -156,27 +186,61 @@ describe("filterReports", () => {
       makeReport({ id: "r2", status: "closed" }),
       makeReport({ id: "r3", status: "open" }),
     ];
-    const result = filterReports(reports, { ...baseFilter, statuses: ["closed"] }, now);
+    const result = filterReports(
+      reports,
+      { ...baseFilter, statuses: ["closed"] },
+      now,
+    );
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("r2");
   });
 
   it("applies date window (14d preset excludes older reports)", () => {
     const reports = [
-      makeReport({ id: "r1", created_at: new Date(now - 5 * DAY_MS).toISOString() }),
-      makeReport({ id: "r2", created_at: new Date(now - 20 * DAY_MS).toISOString() }),
+      makeReport({
+        id: "r1",
+        created_at: new Date(now - 5 * DAY_MS).toISOString(),
+      }),
+      makeReport({
+        id: "r2",
+        created_at: new Date(now - 20 * DAY_MS).toISOString(),
+      }),
     ];
-    const result = filterReports(reports, { ...baseFilter, preset: "14d" }, now);
+    const result = filterReports(
+      reports,
+      { ...baseFilter, preset: "14d" },
+      now,
+    );
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("r1");
   });
 
   it("combines multiple constraints (AND logic)", () => {
     const reports = [
-      makeReport({ id: "r1", severity: 3, status: "open", category: "pothole" }),
-      makeReport({ id: "r2", severity: 1, status: "open", category: "pothole" }),
-      makeReport({ id: "r3", severity: 3, status: "closed", category: "pothole" }),
-      makeReport({ id: "r4", severity: 3, status: "open", category: "graffiti" }),
+      makeReport({
+        id: "r1",
+        severity: 3,
+        status: "open",
+        category: "pothole",
+      }),
+      makeReport({
+        id: "r2",
+        severity: 1,
+        status: "open",
+        category: "pothole",
+      }),
+      makeReport({
+        id: "r3",
+        severity: 3,
+        status: "closed",
+        category: "pothole",
+      }),
+      makeReport({
+        id: "r4",
+        severity: 3,
+        status: "open",
+        category: "graffiti",
+      }),
     ];
     const result = filterReports(
       reports,
@@ -234,7 +298,11 @@ describe("filterPreviousWindow", () => {
 
   it("returns empty for 'all' preset (no comparable prior window)", () => {
     const reports = [makeReport()];
-    const result = filterPreviousWindow(reports, { ...baseFilter, preset: "all" }, now);
+    const result = filterPreviousWindow(
+      reports,
+      { ...baseFilter, preset: "all" },
+      now,
+    );
     expect(result).toHaveLength(0);
   });
 
@@ -255,7 +323,11 @@ describe("filterPreviousWindow", () => {
         created_at: new Date(now - 30 * DAY_MS).toISOString(), // before prior window
       }),
     ];
-    const result = filterPreviousWindow(reports, { ...baseFilter, preset: "14d" }, now);
+    const result = filterPreviousWindow(
+      reports,
+      { ...baseFilter, preset: "14d" },
+      now,
+    );
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("r2");
   });

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
+import { useEffect, useRef } from "react";
 
 interface EmergencyInterstitialProps {
   onOverride: () => void;
@@ -82,8 +82,10 @@ export default function EmergencyInterstitial({
       <div
         className="flex flex-col items-center justify-center min-h-full"
         style={{
-          paddingTop: "max(2.5rem, calc(2.5rem + env(safe-area-inset-top, 0px)))",
-          paddingBottom: "max(2.5rem, calc(2.5rem + env(safe-area-inset-bottom, 0px)))",
+          paddingTop:
+            "max(2.5rem, calc(2.5rem + env(safe-area-inset-top, 0px)))",
+          paddingBottom:
+            "max(2.5rem, calc(2.5rem + env(safe-area-inset-bottom, 0px)))",
         }}
       >
         {/* Warning icon — aria-label so screen readers announce the icon's meaning
@@ -115,7 +117,10 @@ export default function EmergencyInterstitial({
           </svg>
         </div>
 
-        <h1 id="emergency-heading" className="text-2xl font-bold text-white mb-2">
+        <h1
+          id="emergency-heading"
+          className="text-2xl font-bold text-white mb-2"
+        >
           This appears to be an emergency
         </h1>
         <p className="text-white/80 text-base mb-10 max-w-xs">

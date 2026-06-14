@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-
+import { AnalyticsInteractive } from "@/components/analytics/analytics-interactive";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
 import { fetchCity } from "@/lib/dashboard-queries";
-import { AnalyticsInteractive } from "@/components/analytics/analytics-interactive";
 
 export function generateStaticParams() {
   return Object.keys(KNOWN_CITIES).map((slug) => ({ slug }));
@@ -41,7 +40,8 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
             Analytics
           </h1>
           <p className="mt-1.5 text-sm text-zinc-400">
-            Operational signal — what&apos;s shipping, what&apos;s stuck, where it&apos;s happening.
+            Operational signal — what&apos;s shipping, what&apos;s stuck, where
+            it&apos;s happening.
           </p>
         </section>
 

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo, useCallback, useTransition } from "react";
-import type { CityStats, CategoryCount } from "@/lib/dashboard-data";
-import type { ReportCategory, ReportStatus } from "@/lib/types";
-import { StatsCards } from "@/components/dashboard/stats-cards";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { CategoryChart } from "@/components/dashboard/category-chart";
 import { RecentReports } from "@/components/dashboard/recent-reports";
+import { StatsCards } from "@/components/dashboard/stats-cards";
 import { ReportMapLazy as ReportMap } from "@/components/map/report-map-lazy";
+import type { CategoryCount, CityStats } from "@/lib/dashboard-data";
 import { useFilteredReports, useFilters } from "@/lib/filters/context";
+import type { ReportCategory, ReportStatus } from "@/lib/types";
 
 const ALL_STATUSES: ReportStatus[] = [
   "open",
@@ -54,7 +54,9 @@ export function DashboardInteractive({
     const open = filteredReports.filter((r) =>
       BACKLOG_STATUSES.includes(r.status),
     ).length;
-    const resolved = filteredReports.filter((r) => r.status === "closed").length;
+    const resolved = filteredReports.filter(
+      (r) => r.status === "closed",
+    ).length;
     return { ...initialStats, total, open, resolved };
   }, [filteredReports, initialStats]);
 
@@ -88,7 +90,9 @@ export function DashboardInteractive({
     [patch, selectedCategory],
   );
 
-  const activeStatuses = filter.statuses.length ? filter.statuses : ALL_STATUSES;
+  const activeStatuses = filter.statuses.length
+    ? filter.statuses
+    : ALL_STATUSES;
 
   const setActiveStatuses = useCallback(
     (next: ReportStatus[]) => {

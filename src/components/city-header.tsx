@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CitySwitcher } from "@/components/city/city-switcher";
 import { CityNav } from "@/components/city-nav";
 import { ViewSwitch } from "@/components/view-switch";
-import { CitySwitcher } from "@/components/city/city-switcher";
 import { cn } from "@/lib/utils/cn";
 
 interface CityHeaderProps {

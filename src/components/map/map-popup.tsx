@@ -104,17 +104,17 @@ function slaWindow(severity: number): string {
 
 export function renderPopupHTML(report: DashboardReport): string {
   const meta = CATEGORY_META[report.category];
-  const status =
-    STATUS_TONE[report.status] ?? {
-      label: report.status,
-      color: "#86868b",
-    };
+  const status = STATUS_TONE[report.status] ?? {
+    label: report.status,
+    color: "#86868b",
+  };
   const cost = estimateRepairCost(report.id, report.category, report.severity);
   const sla = slaWindow(report.severity);
   // Presenter-injected demo point: blue glow on the popup container + a "Live"
   // pill so it reads as the freshly-added marker. (cn() N/A — this surface is an
   // HTML string, not JSX, so the class is written into the root's class attr.)
-  const isDemo = report.demo === true || report.reporter_id === DEMO_REPORTER_ID;
+  const isDemo =
+    report.demo === true || report.reporter_id === DEMO_REPORTER_ID;
 
   return `
     <style>@keyframes popupShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}@media (prefers-reduced-motion:reduce){.popup-img-shimmer{animation:none!important}}</style>

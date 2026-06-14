@@ -1,8 +1,8 @@
 "use client";
 
 import { ChevronUp } from "lucide-react";
-import { cn } from "@/lib/utils/cn";
 import { useUpvotes } from "@/lib/upvotes";
+import { cn } from "@/lib/utils/cn";
 
 interface UpvoteButtonProps {
   reportId: string;

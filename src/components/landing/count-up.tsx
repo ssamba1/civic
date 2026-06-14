@@ -37,7 +37,7 @@ export function CountUp({
 
     let raf = 0;
     let start = 0;
-    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+    const ease = (t: number) => 1 - (1 - t) ** 3;
 
     const run = () => {
       setDisplay(`${prefix}${(0).toFixed(decimals)}${suffix}`);

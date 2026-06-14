@@ -1,16 +1,16 @@
 // @vitest-environment node
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import {
-  deriveKpis,
-  deriveTrend,
-  deriveResolutionDistribution,
-  deriveStatusFunnel,
-  deriveSeverityDistribution,
-  deriveHourlyHeatmap,
-  deriveTopNeighborhoods,
   deriveCategoryResolution,
+  deriveHourlyHeatmap,
+  deriveKpis,
   deriveReporterVelocity,
+  deriveResolutionDistribution,
+  deriveSeverityDistribution,
+  deriveStatusFunnel,
+  deriveTopNeighborhoods,
+  deriveTrend,
 } from "./derive";
 
 const now = new Date("2026-06-13T12:00:00Z").getTime();
@@ -135,8 +135,12 @@ describe("deriveTrend", () => {
       }),
     ];
     const trend = deriveTrend(reports);
-    const dayAgo = trend.find((p) => p.date === new Date(now - DAY_MS).toISOString().slice(0, 10));
-    const today = trend.find((p) => p.date === new Date(now).toISOString().slice(0, 10));
+    const dayAgo = trend.find(
+      (p) => p.date === new Date(now - DAY_MS).toISOString().slice(0, 10),
+    );
+    const today = trend.find(
+      (p) => p.date === new Date(now).toISOString().slice(0, 10),
+    );
     expect(dayAgo?.created).toBe(2);
     expect(today?.created).toBe(1);
   });
@@ -267,7 +271,9 @@ describe("deriveTopNeighborhoods", () => {
       makeReport({ address: "200 Oak Ave" }),
     ];
     const neighborhoods = deriveTopNeighborhoods(reports, 5);
-    expect(neighborhoods[0].count).toBeGreaterThanOrEqual(neighborhoods[1].count);
+    expect(neighborhoods[0].count).toBeGreaterThanOrEqual(
+      neighborhoods[1].count,
+    );
   });
 });
 

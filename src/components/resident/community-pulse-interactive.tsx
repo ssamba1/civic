@@ -10,10 +10,9 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-
+import { useEffect, useState } from "react";
 import { ReportsTrend } from "@/components/analytics/analytics-bento";
 import { EmptyState, Tile } from "@/components/analytics/bento-primitives";
-import { useEffect, useState } from "react";
 
 import {
   TipBar,

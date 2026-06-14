@@ -2,8 +2,8 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { runClassifyPipeline } from "@/lib/ai/classify-pipeline";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
-import { createLogger } from "@/lib/logger";
 import { createSSRClient, getAuthUser } from "@/lib/db/ssr-client";
+import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("[classify-api]");
 
@@ -55,7 +55,8 @@ export async function POST(request: Request) {
     }
 
     // Validate UUID format to prevent malformed IDs from reaching the database
-    const uuidRegex = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
+    const uuidRegex =
+      /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
     if (!uuidRegex.test(reportId)) {
       return NextResponse.json(
         { error: "Invalid report_id format" },
@@ -96,9 +97,6 @@ export async function POST(request: Request) {
     return NextResponse.json(result.data, { status: 200 });
   } catch (err) {
     logger.error("Unhandled error", err);
-    return NextResponse.json(
-      { error: "Internal error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

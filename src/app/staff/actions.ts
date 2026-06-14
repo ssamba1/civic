@@ -5,8 +5,8 @@ import { after } from "next/server";
 // original 8-item local list (adds debris/drainage/faded_signage/other).
 import { classificationSchema } from "@/lib/ai/classification-schema";
 import { createServerClient } from "@/lib/db/client";
-import { createLogger } from "@/lib/logger";
 import { getAuthUser } from "@/lib/db/ssr-client";
+import { createLogger } from "@/lib/logger";
 import { notifyReportStatus } from "@/lib/notify/status-notify";
 import type { ReportCategory, Result, WorkOrderWithDetails } from "@/lib/types";
 
@@ -88,7 +88,9 @@ export async function dispatchWorkOrder(
     try {
       await notifyReportStatus(wo.report_id, "dispatched");
     } catch (err) {
-      logger.error("Dispatch notification failed", err, { reportId: wo.report_id });
+      logger.error("Dispatch notification failed", err, {
+        reportId: wo.report_id,
+      });
     }
   });
 
@@ -169,7 +171,9 @@ export async function closeWorkOrder(
     try {
       await notifyReportStatus(wo.report_id, "closed");
     } catch (err) {
-      logger.error("Close notification failed", err, { reportId: wo.report_id });
+      logger.error("Close notification failed", err, {
+        reportId: wo.report_id,
+      });
     }
   });
 

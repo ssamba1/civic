@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-
+import { NotificationsFeed } from "@/components/resident/notifications-feed";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
 import {
   getCurrentResident,
   getResidentNotifications,
 } from "@/lib/resident-data";
-import { NotificationsFeed } from "@/components/resident/notifications-feed";
 
 const CITY_NAME = KNOWN_CITIES.cumming.name;
 

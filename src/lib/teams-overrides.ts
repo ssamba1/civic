@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
-import { validateTeamOverrides } from "@/lib/schemas";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import type { OverrideEvent } from "@/lib/delegation-history";
+import { validateTeamOverrides } from "@/lib/schemas";
 import { categoryToTeam, isValidTeamId, type TeamId } from "@/lib/teams";
 
 /* ==================================================================

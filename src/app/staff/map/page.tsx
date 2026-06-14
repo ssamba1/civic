@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
+import { FullscreenMapOrchestrator } from "@/components/map/fullscreen-map";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
 import { fetchCity, fetchRecentReports } from "@/lib/dashboard-queries";
-import { FullscreenMapOrchestrator } from "@/components/map/fullscreen-map";
 
 // Staff map view — same fullscreen orchestrator as the public map, scoped to
 // the staff's city (Cumming for the demo).

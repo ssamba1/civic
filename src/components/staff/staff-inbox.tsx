@@ -1,32 +1,32 @@
 "use client";
 
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { Search, SlidersHorizontal, RefreshCw } from "lucide-react";
-import { cn } from "@/lib/utils/cn";
-import type { WorkOrderWithDetails } from "@/lib/types";
-import type {
-  Report,
-  Classification,
-  WorkOrder,
-  ReportStatus,
-} from "@/lib/types";
-import { WorkOrderRowControlled, WorkOrderCard } from "./work-order-row";
-import { WorkOrderDetail } from "./work-order-detail";
-import { Drawer } from "@/components/ui/drawer";
-import { KeyboardNav } from "./keyboard-nav";
+import { RefreshCw, Search, SlidersHorizontal } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  dispatchWorkOrder,
   closeWorkOrder,
-  rejectReport,
+  dispatchWorkOrder,
   fetchQueuedWorkOrders,
+  rejectReport,
 } from "@/app/staff/actions";
+import { Drawer } from "@/components/ui/drawer";
 import {
   addDemoReport,
   demoWorkOrderFromReport,
-  resetDemoReports,
   getDemoReportsSnapshot,
   isDemoId,
+  resetDemoReports,
 } from "@/lib/demo-reports";
+import type {
+  Classification,
+  Report,
+  ReportStatus,
+  WorkOrder,
+  WorkOrderWithDetails,
+} from "@/lib/types";
+import { cn } from "@/lib/utils/cn";
+import { KeyboardNav } from "./keyboard-nav";
+import { WorkOrderDetail } from "./work-order-detail";
+import { WorkOrderCard, WorkOrderRowControlled } from "./work-order-row";
 
 /** How often (ms) the inbox polls for new work orders. Short interval so new
  *  reports auto-populate the inbox near-instantly (live demo). */
@@ -65,13 +65,18 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [detailOpenIndex, setDetailOpenIndex] = useState<number | null>(null);
   // Mobile drawer state — tracks which work order is open in the Drawer
-  const [mobileDrawerIndex, setMobileDrawerIndex] = useState<number | null>(null);
+  const [mobileDrawerIndex, setMobileDrawerIndex] = useState<number | null>(
+    null,
+  );
 
   // --- Queue state ---
-  const [displayedOrders, setDisplayedOrders] = useState<WorkOrderWithDetails[]>(workOrders);
+  const [displayedOrders, setDisplayedOrders] =
+    useState<WorkOrderWithDetails[]>(workOrders);
   const [pendingQueue, setPendingQueue] = useState<WorkOrderWithDetails[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const lastFetchedAtRef = useRef<string>(initialFetchedAt ?? new Date().toISOString());
+  const lastFetchedAtRef = useRef<string>(
+    initialFetchedAt ?? new Date().toISOString(),
+  );
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Prevents a slow fetch response from overlapping with the next tick.
   const fetchInFlightRef = useRef(false);
@@ -87,13 +92,15 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
         if (!result.ok || result.data.length === 0) return;
         // Prefer server-supplied fetchedAt (avoids client clock skew); fall back to
         // max created_at among the returned rows so the cursor stays server-anchored.
-        const nextCursor = result.fetchedAt ?? result.data.reduce(
-          (max, o) =>
-            o.report?.created_at && o.report.created_at > max
-              ? o.report.created_at
-              : max,
-          lastFetchedAtRef.current,
-        );
+        const nextCursor =
+          result.fetchedAt ??
+          result.data.reduce(
+            (max, o) =>
+              o.report?.created_at && o.report.created_at > max
+                ? o.report.created_at
+                : max,
+            lastFetchedAtRef.current,
+          );
         setDisplayedOrders((prev) => {
           const existingIds = new Set(prev.map((o) => o.id));
           const fresh = result.data.filter((o) => !existingIds.has(o.id));
@@ -109,7 +116,7 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
 
     const timer = setInterval(poll, POLL_INTERVAL_MS);
     return () => clearInterval(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Refresh toggles the live demo data point (the fallen tree). First click
@@ -292,15 +299,12 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
             onClick={handleRefresh}
             className={cn(
               "relative flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-all",
-              "border-blue-400 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
+              "border-blue-400 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30",
             )}
             title="Add a live report (demo)"
           >
             <RefreshCw
-              className={cn(
-                "h-4 w-4",
-                isRefreshing && "animate-spin"
-              )}
+              className={cn("h-4 w-4", isRefreshing && "animate-spin")}
             />
             <span>Refresh</span>
             {pendingQueue.length > 0 && (
@@ -331,7 +335,11 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
           <StatTile
             label="% resolved"
             value={`${summary.pctResolved}%`}
-            hint={summary.pctResolved >= 50 ? "Strong throughput" : "Momentum building"}
+            hint={
+              summary.pctResolved >= 50
+                ? "Strong throughput"
+                : "Momentum building"
+            }
           />
         </div>
 
@@ -350,7 +358,7 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
                   "flex min-h-11 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors md:min-h-0 md:px-3",
                   activeTab === tab.value
                     ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200",
                 )}
               >
                 {tab.label}
@@ -359,7 +367,7 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
                     "inline-flex min-w-[20px] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
                     activeTab === tab.value
                       ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400"
-                      : "bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400"
+                      : "bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400",
                   )}
                 >
                   {counts[tab.value]}
@@ -410,7 +418,9 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
                 <WorkOrderCard
                   key={wo.id}
                   report={wo.report as unknown as Report}
-                  classification={wo.classification as unknown as Classification}
+                  classification={
+                    wo.classification as unknown as Classification
+                  }
                   workOrder={wo as unknown as WorkOrder}
                   isSelected={selectedIndex === idx}
                   onSelect={() => setSelectedIndex(idx)}

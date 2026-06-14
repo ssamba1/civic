@@ -1,5 +1,5 @@
-import type { Open311Request } from "./transform";
 import type { Open311Service } from "./services";
+import type { Open311Request } from "./transform";
 
 /** Escape XML special characters */
 function esc(value: unknown): string {
@@ -19,7 +19,10 @@ function tag(name: string, value: unknown): string {
 
 /** Serialize an array of Open311 service requests to XML */
 export function toOpen311Xml(requests: Open311Request[]): string {
-  const lines = ['<?xml version="1.0" encoding="utf-8"?>', "<service_requests>"];
+  const lines = [
+    '<?xml version="1.0" encoding="utf-8"?>',
+    "<service_requests>",
+  ];
 
   for (const r of requests) {
     lines.push("  <request>");
@@ -44,14 +47,24 @@ export function toOpen311Xml(requests: Open311Request[]): string {
 
     if (r.extended_attributes) {
       lines.push("    <extended_attributes>");
-      lines.push(`      ${tag("civic_category", r.extended_attributes.civic_category)}`);
-      lines.push(`      ${tag("civic_severity", r.extended_attributes.civic_severity)}`);
-      lines.push(`      ${tag("civic_confidence", r.extended_attributes.civic_confidence)}`);
+      lines.push(
+        `      ${tag("civic_category", r.extended_attributes.civic_category)}`,
+      );
+      lines.push(
+        `      ${tag("civic_severity", r.extended_attributes.civic_severity)}`,
+      );
+      lines.push(
+        `      ${tag("civic_confidence", r.extended_attributes.civic_confidence)}`,
+      );
       if (r.extended_attributes.civic_reasoning) {
-        lines.push(`      ${tag("civic_reasoning", r.extended_attributes.civic_reasoning)}`);
+        lines.push(
+          `      ${tag("civic_reasoning", r.extended_attributes.civic_reasoning)}`,
+        );
       }
       if (r.extended_attributes.civic_is_emergency !== undefined) {
-        lines.push(`      ${tag("civic_is_emergency", r.extended_attributes.civic_is_emergency)}`);
+        lines.push(
+          `      ${tag("civic_is_emergency", r.extended_attributes.civic_is_emergency)}`,
+        );
       }
       lines.push("    </extended_attributes>");
     }

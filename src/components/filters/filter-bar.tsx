@@ -1,13 +1,5 @@
 "use client";
 
-import { CATEGORY_META } from "@/lib/dashboard-data";
-import { useFilters } from "@/lib/filters/context";
-import { DEFAULT_FILTER, type DateRangePreset, PRESET_LABELS } from "@/lib/filters/types";
-import { TEAM_LIST, TEAMS, type TeamId } from "@/lib/teams";
-import type { ReportCategory, ReportStatus } from "@/lib/types";
-import { cn } from "@/lib/utils/cn";
-import { useSlidingPill } from "@/lib/hooks/use-sliding-pill";
-import BottomSheet from "@/components/ui/bottom-sheet";
 import {
   Calendar,
   Check,
@@ -28,6 +20,18 @@ import {
   useRef,
   useState,
 } from "react";
+import BottomSheet from "@/components/ui/bottom-sheet";
+import { CATEGORY_META } from "@/lib/dashboard-data";
+import { useFilters } from "@/lib/filters/context";
+import {
+  type DateRangePreset,
+  DEFAULT_FILTER,
+  PRESET_LABELS,
+} from "@/lib/filters/types";
+import { useSlidingPill } from "@/lib/hooks/use-sliding-pill";
+import { TEAM_LIST, TEAMS, type TeamId } from "@/lib/teams";
+import type { ReportCategory, ReportStatus } from "@/lib/types";
+import { cn } from "@/lib/utils/cn";
 
 const PRESETS: DateRangePreset[] = ["7d", "14d", "30d", "90d", "all", "custom"];
 
@@ -260,7 +264,10 @@ function TeamRow({
         </span>
       </span>
       {selected && (
-        <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-[#0a84ff]" strokeWidth={3} />
+        <Check
+          className="mt-1 h-3.5 w-3.5 shrink-0 text-[#0a84ff]"
+          strokeWidth={3}
+        />
       )}
     </button>
   );
@@ -486,7 +493,9 @@ export function FilterBar() {
                     />
                   </label>
                   <label className="block">
-                    <span className="mb-1 block text-[11px] text-zinc-400">To</span>
+                    <span className="mb-1 block text-[11px] text-zinc-400">
+                      To
+                    </span>
                     <input
                       type="date"
                       value={filter.to ?? ""}
@@ -770,7 +779,9 @@ export function FilterBar() {
             {filter.preset === "custom" && (
               <div className="space-y-3">
                 <label className="block">
-                  <span className="mb-1.5 block text-[12px] text-zinc-400">From</span>
+                  <span className="mb-1.5 block text-[12px] text-zinc-400">
+                    From
+                  </span>
                   <input
                     type="date"
                     value={filter.from ?? ""}
@@ -781,7 +792,9 @@ export function FilterBar() {
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1.5 block text-[12px] text-zinc-400">To</span>
+                  <span className="mb-1.5 block text-[12px] text-zinc-400">
+                    To
+                  </span>
                   <input
                     type="date"
                     value={filter.to ?? ""}

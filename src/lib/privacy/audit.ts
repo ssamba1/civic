@@ -23,7 +23,7 @@ const RAW_BUCKET = "photos-raw";
  * likely raw-photo leak.
  */
 export async function auditPublicBucket(
-  cityId: string
+  cityId: string,
 ): Promise<{ violations: string[] }> {
   const supabase = createServerClient();
   const violations: string[] = [];
@@ -35,7 +35,7 @@ export async function auditPublicBucket(
 
   if (publicErr || !publicFiles) {
     violations.push(
-      `Could not list public bucket for city ${cityId}: ${publicErr?.message ?? "unknown"}`
+      `Could not list public bucket for city ${cityId}: ${publicErr?.message ?? "unknown"}`,
     );
     return { violations };
   }
@@ -46,7 +46,7 @@ export async function auditPublicBucket(
     .list(cityId, { limit: 1000 });
 
   const rawMetaByName = new Map(
-    rawFiles?.map((rawFile) => [rawFile.name, rawFile.metadata]) ?? []
+    rawFiles?.map((rawFile) => [rawFile.name, rawFile.metadata]) ?? [],
   );
 
   // For each public file, check if an identical-size file exists in raw
@@ -63,7 +63,7 @@ export async function auditPublicBucket(
     ) {
       violations.push(
         `Possible raw photo in public bucket: ${path} ` +
-          `(public size: ${file.metadata.size}, raw size: ${rawMeta.size})`
+          `(public size: ${file.metadata.size}, raw size: ${rawMeta.size})`,
       );
     }
   }

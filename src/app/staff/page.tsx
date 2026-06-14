@@ -1,15 +1,15 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getAuthUser } from "@/lib/db/ssr-client";
-import { createServerClient } from "@/lib/db/client";
-import { createLogger } from "@/lib/logger";
 import { StaffInbox } from "@/components/staff/staff-inbox";
+import { createServerClient } from "@/lib/db/client";
+import { getAuthUser } from "@/lib/db/ssr-client";
 import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
+import { createLogger } from "@/lib/logger";
 import { normalizeLocation, type WorkOrderWithDetails } from "@/lib/types";
 
 const logger = createLogger("[staff-page]");
 
-export { type WorkOrderWithDetails };
+export type { WorkOrderWithDetails };
 
 export const metadata = {
   title: "Staff Inbox | Civic",
@@ -47,7 +47,7 @@ async function getWorkOrders(cityId: string): Promise<WorkOrderWithDetails[]> {
           reasoning
         )
       )
-    `
+    `,
     )
     .eq("reports.city_id", cityId)
     .order("priority_score", { ascending: false });

@@ -4,7 +4,11 @@
 // reduced-motion handling live in the shared `.skeleton` utility (globals.css).
 export default function CityDashboardLoading() {
   return (
-    <div className="flex flex-col min-h-dvh" aria-busy="true" aria-label="Loading dashboard">
+    <div
+      className="flex flex-col min-h-dvh"
+      aria-busy="true"
+      aria-label="Loading dashboard"
+    >
       <div className="flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-10 sm:px-6 lg:px-8">
         {/* Hero */}
         <section className="mb-6">
@@ -14,9 +18,15 @@ export default function CityDashboardLoading() {
               <div className="skeleton mt-3 h-4 w-72 max-w-full rounded-md" />
               <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5">
                 <div className="skeleton h-4 w-24 rounded-md" />
-                <span className="h-3 w-px bg-white/[0.08] hidden sm:block" aria-hidden="true" />
+                <span
+                  className="h-3 w-px bg-white/[0.08] hidden sm:block"
+                  aria-hidden="true"
+                />
                 <div className="skeleton h-4 w-16 rounded-md" />
-                <span className="h-3 w-px bg-white/[0.08] hidden sm:block" aria-hidden="true" />
+                <span
+                  className="h-3 w-px bg-white/[0.08] hidden sm:block"
+                  aria-hidden="true"
+                />
                 <div className="skeleton h-4 w-20 rounded-md" />
               </div>
             </div>

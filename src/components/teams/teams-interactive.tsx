@@ -86,11 +86,17 @@ export function TeamsInteractive({ initialStats }: TeamsInteractiveProps) {
 
   return (
     <div className="stagger-children space-y-6">
-      <section aria-label="City statistics" style={{ "--stagger-index": 0 } as React.CSSProperties}>
+      <section
+        aria-label="City statistics"
+        style={{ "--stagger-index": 0 } as React.CSSProperties}
+      >
         <StatsCards stats={initialStats} />
       </section>
 
-      <section aria-label="Team roster" style={{ "--stagger-index": 1 } as React.CSSProperties}>
+      <section
+        aria-label="Team roster"
+        style={{ "--stagger-index": 1 } as React.CSSProperties}
+      >
         <TeamRoster
           workloads={workloads}
           selectedTeam={selectedTeam}

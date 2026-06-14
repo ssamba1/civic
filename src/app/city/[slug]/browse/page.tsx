@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import { KNOWN_CITIES } from "@/lib/dashboard-data";
-import { fetchCity, fetchCityStats } from "@/lib/dashboard-queries";
 import { DashboardInteractive } from "@/components/dashboard/dashboard-interactive";
 import { FilterBar } from "@/components/filters/filter-bar";
+import { KNOWN_CITIES } from "@/lib/dashboard-data";
+import { fetchCity, fetchCityStats } from "@/lib/dashboard-queries";
 
 export const metadata = { title: "Browse Local Issues | Civic" };
 

@@ -1,12 +1,12 @@
 "use client";
 
+import { Reveal } from "@/components/landing/reveal";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Reveal } from "@/components/landing/reveal";
 
 const FAQ_ITEMS = [
   {
@@ -52,8 +52,9 @@ export function FAQ() {
             <br /> you have to ask.
           </h2>
           <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-[var(--color-muted)]">
-            Civic is built so residents, city staff, and elected officials all see the same data. If
-            something is still unclear after this, write to{" "}
+            Civic is built so residents, city staff, and elected officials all
+            see the same data. If something is still unclear after this, write
+            to{" "}
             <a
               href="mailto:hello@civic.report"
               className="text-[var(--color-foreground)] underline underline-offset-4 hover:text-[var(--color-primary)]"
@@ -69,7 +70,9 @@ export function FAQ() {
             <Reveal key={item.q} delay={Math.min(i, 4) * 60}>
               <AccordionItem
                 value={`item-${i}`}
-                className={i === FAQ_ITEMS.length - 1 ? "border-b-0" : undefined}
+                className={
+                  i === FAQ_ITEMS.length - 1 ? "border-b-0" : undefined
+                }
               >
                 <AccordionTrigger>{item.q}</AccordionTrigger>
                 <AccordionContent>{item.a}</AccordionContent>

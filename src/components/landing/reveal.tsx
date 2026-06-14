@@ -48,7 +48,9 @@ export function Reveal({
     <div
       ref={ref}
       className={`reveal${visible ? " is-visible" : ""} ${className}`}
-      style={{ "--reveal-delay": `${delay}ms`, ...style } as React.CSSProperties}
+      style={
+        { "--reveal-delay": `${delay}ms`, ...style } as React.CSSProperties
+      }
       {...rest}
     >
       {children}

@@ -1,5 +1,5 @@
-import { memo } from "react";
 import { TrendingDown, TrendingUp } from "lucide-react";
+import { memo } from "react";
 import type { CityStats } from "@/lib/dashboard-data";
 import { cn } from "@/lib/utils/cn";
 
@@ -98,7 +98,11 @@ function StatsCardsInner({ stats }: StatsCardsProps) {
                   aria-label={`${card.trend.direction === "up" ? "Up" : "Down"} ${card.trend.label} versus last week`}
                 >
                   {card.trend.direction === "up" ? (
-                    <TrendingUp className="h-3 w-3" strokeWidth={2} aria-hidden />
+                    <TrendingUp
+                      className="h-3 w-3"
+                      strokeWidth={2}
+                      aria-hidden
+                    />
                   ) : (
                     <TrendingDown
                       className="h-3 w-3"

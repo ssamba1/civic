@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-
-import { KNOWN_CITIES } from "@/lib/dashboard-data";
-import { getCurrentResident, getCityMorale } from "@/lib/resident-data";
 import { CommunityPulseInteractive } from "@/components/resident/community-pulse-interactive";
+import { KNOWN_CITIES } from "@/lib/dashboard-data";
+import { getCityMorale, getCurrentResident } from "@/lib/resident-data";
 
 export function generateMetadata(): Metadata {
   const name = KNOWN_CITIES.cumming.name;
@@ -31,7 +30,8 @@ export default async function CommunityPulsePage() {
           {name} is getting better every week
         </h1>
         <p className="mt-3 text-sm text-zinc-400">
-          Real progress, made by neighbors. Here&apos;s what your city has been fixing.
+          Real progress, made by neighbors. Here&apos;s what your city has been
+          fixing.
         </p>
       </section>
 

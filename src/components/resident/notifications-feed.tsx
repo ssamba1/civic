@@ -123,7 +123,11 @@ export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
         >
           {marked ? (
             <>
-              <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
+              <CheckCircle2
+                className="h-3.5 w-3.5"
+                strokeWidth={2}
+                aria-hidden="true"
+              />
               Done
             </>
           ) : (

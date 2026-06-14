@@ -1,22 +1,22 @@
 "use client";
 
-import { memo, useCallback, useRef, useState } from "react";
-import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
 import { ChevronDown, Clock, RotateCcw } from "lucide-react";
-import type { DashboardReport } from "@/lib/dashboard-data";
-import { CATEGORY_META } from "@/lib/dashboard-data";
-import { categoryToTeam, type TeamId } from "@/lib/teams";
-import { useCategoryOverrides } from "@/lib/category-overrides";
-import type { ReportStatus } from "@/lib/types";
-import type { OverrideEvent } from "@/lib/delegation-history";
-import type { TeamWorkload } from "@/lib/teams-data";
-import { TeamPicker } from "@/components/teams/team-picker";
+import { memo, useCallback, useRef, useState } from "react";
+import { Tile } from "@/components/analytics/bento-primitives";
 import {
   DelegationRowExpanded,
   type ReasoningData,
 } from "@/components/teams/delegation-row-expanded";
-import { Tile } from "@/components/analytics/bento-primitives";
+import { TeamPicker } from "@/components/teams/team-picker";
+import { useCategoryOverrides } from "@/lib/category-overrides";
+import type { DashboardReport } from "@/lib/dashboard-data";
+import { CATEGORY_META } from "@/lib/dashboard-data";
+import type { OverrideEvent } from "@/lib/delegation-history";
+import { categoryToTeam, type TeamId } from "@/lib/teams";
+import type { TeamWorkload } from "@/lib/teams-data";
+import type { ReportStatus } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 import { timeAgo } from "@/lib/utils/time-ago";
 
@@ -92,12 +92,9 @@ function DelegationPanelInner({
   // Lives in a ref so populating it doesn't trigger re-renders of
   // siblings; the row that owns each entry pulls from it on mount.
   const reasoningCacheRef = useRef<Map<string, ReasoningData>>(new Map());
-  const setReasoningCache = useCallback(
-    (id: string, data: ReasoningData) => {
-      reasoningCacheRef.current.set(id, data);
-    },
-    [],
-  );
+  const setReasoningCache = useCallback((id: string, data: ReasoningData) => {
+    reasoningCacheRef.current.set(id, data);
+  }, []);
 
   const sliced = reports.slice(0, limit);
   const overrideCount = sliced.filter((r) => overrides[r.id]).length;
@@ -122,7 +119,10 @@ function DelegationPanelInner({
       if (!el) return;
       if (tailFirstRun.current) {
         tailFirstRun.current = false;
-        gsap.set(el, showAll ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 });
+        gsap.set(
+          el,
+          showAll ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 },
+        );
         return;
       }
       const mm = gsap.matchMedia();
@@ -136,7 +136,10 @@ function DelegationPanelInner({
         });
       });
       mm.add("(prefers-reduced-motion: reduce)", () => {
-        gsap.set(el, showAll ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 });
+        gsap.set(
+          el,
+          showAll ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 },
+        );
       });
       return () => mm.revert();
     },
@@ -254,7 +257,10 @@ function DelegationRow({
 
       if (firstRun.current) {
         firstRun.current = false;
-        gsap.set(el, expanded ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 });
+        gsap.set(
+          el,
+          expanded ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 },
+        );
         return;
       }
 
@@ -269,7 +275,10 @@ function DelegationRow({
         });
       });
       mm.add("(prefers-reduced-motion: reduce)", () => {
-        gsap.set(el, expanded ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 });
+        gsap.set(
+          el,
+          expanded ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 },
+        );
       });
       return () => mm.revert();
     },

@@ -5,8 +5,8 @@
  * Raw photos are accessible only by city staff via short-lived signed URLs.
  */
 
-import type { Result } from "@/lib/types";
 import { createServerClient } from "@/lib/db/client";
+import type { Result } from "@/lib/types";
 
 const RAW_BUCKET = "photos-raw";
 const SIGNED_URL_EXPIRY_SECONDS = 10 * 60; // 10 minutes
@@ -34,7 +34,7 @@ function storagePath(cityId: string, reportId: string): string {
 export async function getSignedRawPhotoUrl(
   reportId: string,
   cityId: string,
-  requestingUserId: string
+  requestingUserId: string,
 ): Promise<Result<string>> {
   const supabase = createServerClient();
 

@@ -1,15 +1,15 @@
 "use client";
 
+import { Clock, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Clock, X } from "lucide-react";
-import type { DashboardReport } from "@/lib/dashboard-data";
-import { CATEGORY_META } from "@/lib/dashboard-data";
 import { ReportDetail } from "@/components/analytics/report-detail";
 import { Drawer } from "@/components/ui/drawer";
+import type { DashboardReport } from "@/lib/dashboard-data";
+import { CATEGORY_META } from "@/lib/dashboard-data";
+import type { ReportStatus } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 import { lockBodyScroll } from "@/lib/utils/scroll-lock";
-import type { ReportStatus } from "@/lib/types";
 
 const STATUS_LABEL: Record<ReportStatus, string> = {
   open: "Open",
@@ -65,7 +65,9 @@ export function ReportsExplorer({
   // list changes and the current selection is no longer valid.
   useEffect(() => {
     if (!open) return;
-    setSelectedId((prev) => (reports.some((r) => r.id === prev) ? prev : (reports[0]?.id ?? null)));
+    setSelectedId((prev) =>
+      reports.some((r) => r.id === prev) ? prev : (reports[0]?.id ?? null),
+    );
   }, [open, reports]);
 
   // Close detail drawer when explorer closes
@@ -105,7 +107,9 @@ export function ReportsExplorer({
                 "w-full text-left flex flex-col gap-1 min-h-[56px] py-3 px-3 rounded-md",
                 "transition-[background-color,transform] duration-100 active:scale-[0.98] active:duration-75 motion-reduce:active:scale-100",
                 "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1c1c1e]",
-                isSelected ? "bg-white/[0.06]" : "hover:bg-white/[0.03] active:bg-white/[0.05]",
+                isSelected
+                  ? "bg-white/[0.06]"
+                  : "hover:bg-white/[0.03] active:bg-white/[0.05]",
               )}
             >
               <div className="flex items-center justify-between gap-2">
@@ -162,7 +166,9 @@ export function ReportsExplorer({
         >
           <header className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-white/[0.06]">
             <div className="flex items-baseline gap-2">
-              <h2 className="text-[16px] sm:text-[17px] font-semibold text-white">Reports</h2>
+              <h2 className="text-[16px] sm:text-[17px] font-semibold text-white">
+                Reports
+              </h2>
               <span className="text-[13px] text-zinc-500 tabular-nums">
                 {reports.length}
               </span>
@@ -197,7 +203,11 @@ export function ReportsExplorer({
       <Drawer
         open={detailDrawerOpen}
         onClose={() => setDetailDrawerOpen(false)}
-        title={selectedReport ? CATEGORY_META[selectedReport.category]?.label ?? "Report" : "Report"}
+        title={
+          selectedReport
+            ? (CATEGORY_META[selectedReport.category]?.label ?? "Report")
+            : "Report"
+        }
         side="right"
       >
         <ReportDetail report={selectedReport} />

@@ -1,6 +1,6 @@
 import type { DashboardReport } from "@/lib/dashboard-data";
-import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { TEAM_LIST, type TeamId } from "@/lib/teams";
+import type { ReportCategory, ReportStatus } from "@/lib/types";
 
 /* ==================================================================
    Per-team workload aggregation.

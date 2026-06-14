@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { teamIcon } from "@/components/teams/team-icon";
 import { useCategoryOverrides } from "@/lib/category-overrides";
 import {
   builtinIssueTypeOptions,
@@ -9,7 +10,6 @@ import {
   useCustomCategories,
 } from "@/lib/custom-categories";
 import { TEAMS } from "@/lib/teams";
-import { teamIcon } from "@/components/teams/team-icon";
 
 type GpsStatus = "acquiring" | "found" | "manual";
 
@@ -25,7 +25,12 @@ interface PhotoPreviewProps {
   submitting: boolean;
 }
 
-const PRESET_TAGS = ["School zone", "Blocking road", "Recurring", "Safety hazard"];
+const PRESET_TAGS = [
+  "School zone",
+  "Blocking road",
+  "Recurring",
+  "Safety hazard",
+];
 const BUILTIN_ISSUE_TYPES = builtinIssueTypeOptions();
 
 export default function PhotoPreview({
@@ -58,7 +63,9 @@ export default function PhotoPreview({
   }, [showDescription]);
 
   const toggleTag = (t: string) =>
-    setTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
+    setTags((prev) =>
+      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t],
+    );
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -126,9 +133,13 @@ export default function PhotoPreview({
         {/* GPS status badge — offset by safe-area-inset-top so it clears the notch */}
         <div
           className="absolute left-4 flex items-center gap-2 rounded-full bg-black/60 backdrop-blur-sm px-3 py-1.5"
-          style={{ top: "max(1rem, calc(1rem + env(safe-area-inset-top, 0px)))" }}
+          style={{
+            top: "max(1rem, calc(1rem + env(safe-area-inset-top, 0px)))",
+          }}
         >
-          <span className={`w-2 h-2 rounded-full ${gps.color} ${gpsStatus === "acquiring" ? "animate-pulse" : ""}`} />
+          <span
+            className={`w-2 h-2 rounded-full ${gps.color} ${gpsStatus === "acquiring" ? "animate-pulse" : ""}`}
+          />
           <span className="text-xs text-white font-medium">{gps.label}</span>
         </div>
       </div>
@@ -144,7 +155,9 @@ export default function PhotoPreview({
               className="block text-xs font-medium text-zinc-400"
             >
               Issue type{" "}
-              <span className="text-zinc-600">(optional — AI decides if skipped)</span>
+              <span className="text-zinc-600">
+                (optional — AI decides if skipped)
+              </span>
             </label>
             <select
               id="issue-type"

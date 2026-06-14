@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { CATEGORY_META } from "@/lib/dashboard-data";
-import { categoryToTeam, isValidTeamId, type TeamId } from "@/lib/teams";
 import { validateCustomCategories } from "@/lib/schemas";
+import { categoryToTeam, isValidTeamId, type TeamId } from "@/lib/teams";
 import type { ReportCategory } from "@/lib/types";
 
 /* ==================================================================
@@ -57,7 +57,10 @@ function readStorage(): CustomCategory[] {
       ...v,
       // Schema already guarantees a valid, non-"all" team; the cast keeps the
       // runtime guard defensive against stale storage without tripping TS2367.
-      team: (v.team as string) !== "all" && isValidTeamId(v.team) ? (v.team as TeamId) : "general_admin",
+      team:
+        (v.team as string) !== "all" && isValidTeamId(v.team)
+          ? (v.team as TeamId)
+          : "general_admin",
     }));
   } catch {
     return [];

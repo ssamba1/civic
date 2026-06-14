@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { DemoSignIn } from "@/components/auth/demo-sign-in";
-import { DEMO_MODE } from "@/lib/demo-mode";
 import { createBrowserSupabase } from "@/lib/db/browser-client";
+import { DEMO_MODE } from "@/lib/demo-mode";
 
 type Mode = "signin" | "signup";
 
@@ -212,53 +212,53 @@ export default function LoginForm() {
           <div className={`lf-expand ${showEmail ? "lf-open" : ""}`}>
             <div>
               <form onSubmit={handleEmail} className="space-y-3 pt-px">
-              <FieldIcon icon={<Mail className="h-4 w-4" />}>
-                <input
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="h-12 w-full bg-transparent pl-10 pr-3 text-base sm:text-[14px] outline-none placeholder:text-[var(--color-muted)]"
-                />
-              </FieldIcon>
-              <FieldIcon icon={<Lock className="h-4 w-4" />}>
-                <input
-                  type="password"
-                  required
-                  minLength={mode === "signup" ? 8 : undefined}
-                  autoComplete={
-                    mode === "signin" ? "current-password" : "new-password"
-                  }
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={
-                    mode === "signup" ? "At least 8 characters" : "Password"
-                  }
-                  className="h-12 w-full bg-transparent pl-10 pr-3 text-base sm:text-[14px] outline-none placeholder:text-[var(--color-muted)]"
-                />
-              </FieldIcon>
+                <FieldIcon icon={<Mail className="h-4 w-4" />}>
+                  <input
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="h-12 w-full bg-transparent pl-10 pr-3 text-base sm:text-[14px] outline-none placeholder:text-[var(--color-muted)]"
+                  />
+                </FieldIcon>
+                <FieldIcon icon={<Lock className="h-4 w-4" />}>
+                  <input
+                    type="password"
+                    required
+                    minLength={mode === "signup" ? 8 : undefined}
+                    autoComplete={
+                      mode === "signin" ? "current-password" : "new-password"
+                    }
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={
+                      mode === "signup" ? "At least 8 characters" : "Password"
+                    }
+                    className="h-12 w-full bg-transparent pl-10 pr-3 text-base sm:text-[14px] outline-none placeholder:text-[var(--color-muted)]"
+                  />
+                </FieldIcon>
 
-              <button
-                type="submit"
-                disabled={anyBusy}
-                className={`group mt-1 flex h-12 w-full items-center justify-center gap-1.5 rounded-full bg-[var(--color-primary)] text-[14px] font-semibold text-white shadow-[0_10px_30px_-10px_rgba(10,132,255,0.7)] transition-all hover:bg-[var(--color-primary-hover)] motion-safe:hover:-translate-y-[1px] active:translate-y-0 disabled:hover:translate-y-0 ${
-                  busy === "email" ? "opacity-70" : "disabled:opacity-60"
-                }`}
-              >
-                {busy === "email" ? (
-                  <>
-                    <Spinner className="h-4 w-4 text-white" />
-                    {mode === "signin" ? "Signing in…" : "Creating account…"}
-                  </>
-                ) : (
-                  <>
-                    {mode === "signin" ? "Sign in" : "Create account"}
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                  </>
-                )}
-              </button>
+                <button
+                  type="submit"
+                  disabled={anyBusy}
+                  className={`group mt-1 flex h-12 w-full items-center justify-center gap-1.5 rounded-full bg-[var(--color-primary)] text-[14px] font-semibold text-white shadow-[0_10px_30px_-10px_rgba(10,132,255,0.7)] transition-all hover:bg-[var(--color-primary-hover)] motion-safe:hover:-translate-y-[1px] active:translate-y-0 disabled:hover:translate-y-0 ${
+                    busy === "email" ? "opacity-70" : "disabled:opacity-60"
+                  }`}
+                >
+                  {busy === "email" ? (
+                    <>
+                      <Spinner className="h-4 w-4 text-white" />
+                      {mode === "signin" ? "Signing in…" : "Creating account…"}
+                    </>
+                  ) : (
+                    <>
+                      {mode === "signin" ? "Sign in" : "Create account"}
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </>
+                  )}
+                </button>
               </form>
             </div>
           </div>

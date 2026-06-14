@@ -6,7 +6,9 @@ import {
   type NotificationItem,
 } from "@/lib/resident-data";
 
-export async function fetchResidentNotifications(): Promise<NotificationItem[]> {
+export async function fetchResidentNotifications(): Promise<
+  NotificationItem[]
+> {
   const { citySlug } = await getCurrentResident();
   return getResidentNotifications(citySlug);
 }

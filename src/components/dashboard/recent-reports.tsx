@@ -1,12 +1,12 @@
 "use client";
 
-import { memo, useEffect, useRef } from "react";
 import { Clock, Maximize2 } from "lucide-react";
+import { memo, useEffect, useRef } from "react";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
+import type { ReportStatus } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 import { timeAgo } from "@/lib/utils/time-ago";
-import type { ReportStatus } from "@/lib/types";
 
 interface RecentReportsProps {
   reports: DashboardReport[];

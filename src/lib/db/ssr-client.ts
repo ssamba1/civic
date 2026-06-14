@@ -19,14 +19,14 @@ export async function createSSRClient() {
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              cookieStore.set(name, value, options),
             );
           } catch {
             // Called from Server Component — cookie writes ignored (expected)
           }
         },
       },
-    }
+    },
   );
 }
 
@@ -36,7 +36,10 @@ export async function createSSRClient() {
  */
 export async function getAuthUser() {
   const supabase = await createSSRClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
   if (error || !user) return null;
   return user;
 }

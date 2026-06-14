@@ -69,23 +69,38 @@ describe("getReportCompletion", () => {
 
 describe("resolveReportStatus edge cases", () => {
   it("returns corpus status when completion map is empty", () => {
-    const r = { id: "r1", status: "in_progress" } as Pick<DashboardReport, "id" | "status">;
+    const r = { id: "r1", status: "in_progress" } as Pick<
+      DashboardReport,
+      "id" | "status"
+    >;
     expect(resolveReportStatus(r, {})).toBe("in_progress");
   });
 
   it("returns closed for any non-open status when completion exists", () => {
-    const map: CompletionMap = { "r1": { completedAt: "2026-06-06T00:00:00.000Z" } };
-    expect(resolveReportStatus({ id: "r1", status: "dispatched" }, map)).toBe("closed");
-    expect(resolveReportStatus({ id: "r1", status: "in_progress" }, map)).toBe("closed");
+    const map: CompletionMap = {
+      r1: { completedAt: "2026-06-06T00:00:00.000Z" },
+    };
+    expect(resolveReportStatus({ id: "r1", status: "dispatched" }, map)).toBe(
+      "closed",
+    );
+    expect(resolveReportStatus({ id: "r1", status: "in_progress" }, map)).toBe(
+      "closed",
+    );
   });
 
   it("returns closed for merged status when completion exists (overrides merged)", () => {
-    const map: CompletionMap = { "r1": { completedAt: "2026-06-06T00:00:00.000Z" } };
-    expect(resolveReportStatus({ id: "r1", status: "merged" }, map)).toBe("closed");
+    const map: CompletionMap = {
+      r1: { completedAt: "2026-06-06T00:00:00.000Z" },
+    };
+    expect(resolveReportStatus({ id: "r1", status: "merged" }, map)).toBe(
+      "closed",
+    );
   });
 
   it("returns rejected unchanged (completion does not affect rejected)", () => {
-    const map: CompletionMap = { "r1": { completedAt: "2026-06-06T00:00:00.000Z" } };
+    const map: CompletionMap = {
+      r1: { completedAt: "2026-06-06T00:00:00.000Z" },
+    };
     // Rejected is terminal; should it stay rejected or become closed?
     // Current implementation likely maps to closed; verify behavior.
     const result = resolveReportStatus({ id: "r1", status: "rejected" }, map);

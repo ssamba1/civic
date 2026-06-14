@@ -1,9 +1,9 @@
 "use client";
 
+import { BarChart3, Inbox, Map, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
-import { Inbox, Map, BarChart3, Settings } from "lucide-react";
 
 const navItems = [
   { href: "/staff", label: "Inbox", icon: Inbox },

@@ -1,5 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Hanken_Grotesk, JetBrains_Mono, Newsreader } from "next/font/google";
+import {
+  Cormorant_Garamond,
+  Hanken_Grotesk,
+  JetBrains_Mono,
+  Newsreader,
+} from "next/font/google";
 import "./globals.css";
 import { BottomTabBar } from "@/components/resident/bottom-tab-bar";
 
@@ -65,8 +70,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Civic — AI-Powered Infrastructure Reporting",
-    description:
-      "Report infrastructure issues. AI classifies, city fixes.",
+    description: "Report infrastructure issues. AI classifies, city fixes.",
   },
 };
 

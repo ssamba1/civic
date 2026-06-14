@@ -1,5 +1,5 @@
-import type { ReportCategory, ReportStatus } from "@/lib/types";
 import type { TeamId } from "@/lib/teams";
+import type { ReportCategory, ReportStatus } from "@/lib/types";
 
 export type DateRangePreset = "7d" | "14d" | "30d" | "90d" | "all" | "custom";
 
@@ -24,7 +24,10 @@ export const DEFAULT_FILTER: ReportFilter = {
 };
 
 // Maps a non-custom preset to a lookback window in days. "all" = no lower bound.
-export const PRESET_DAYS: Record<Exclude<DateRangePreset, "custom" | "all">, number> = {
+export const PRESET_DAYS: Record<
+  Exclude<DateRangePreset, "custom" | "all">,
+  number
+> = {
   "7d": 7,
   "14d": 14,
   "30d": 30,

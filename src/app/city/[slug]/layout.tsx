@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { CityHeader } from "@/components/city-header";
-import { FilterProvider } from "@/lib/filters/context";
 import { getReportCorpus } from "@/lib/dashboard-data";
+import { FilterProvider } from "@/lib/filters/context";
 
 export default async function CityDashboardLayout({
   children,

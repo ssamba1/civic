@@ -243,9 +243,12 @@ export async function fetchCity(slug: string): Promise<City | null> {
       .eq("slug", slug)
       .maybeSingle();
     if (error || !data) {
-      logger.warn("Falling back to placeholder city (query error or not found)", {
-        slug,
-      });
+      logger.warn(
+        "Falling back to placeholder city (query error or not found)",
+        {
+          slug,
+        },
+      );
       return fallback;
     }
     const city: City = { ...(data as Omit<City, "boundary">), boundary: null };

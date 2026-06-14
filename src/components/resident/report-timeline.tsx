@@ -1,17 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import type { CSSProperties } from "react";
 import {
-  FileText,
-  Send,
-  Wrench,
   CheckCircle2,
+  FileText,
   ImageOff,
   type LucideIcon,
+  Send,
+  Wrench,
 } from "lucide-react";
-import { cn } from "@/lib/utils/cn";
+import type { CSSProperties } from "react";
+import { useState } from "react";
 import type { TimelineStep } from "@/lib/resident-data";
+import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
    Resident report timeline — "what happens next" vertical stepper.
@@ -102,7 +102,9 @@ export function ReportTimeline({ steps }: { steps: TimelineStep[] }) {
                 step.current && "ring-2 ring-offset-2 ring-offset-[#1c1c1e]",
               )}
               style={{
-                backgroundColor: step.done ? nodeColor : "rgba(255,255,255,0.04)",
+                backgroundColor: step.done
+                  ? nodeColor
+                  : "rgba(255,255,255,0.04)",
                 borderColor: step.done ? nodeColor : "rgba(255,255,255,0.10)",
                 ...(step.current
                   ? ({ "--tw-ring-color": nodeColor } as CSSProperties)
@@ -130,7 +132,9 @@ export function ReportTimeline({ steps }: { steps: TimelineStep[] }) {
               </span>
               <span
                 className="text-[13px] leading-tight tabular-nums sm:text-[12px]"
-                style={{ color: step.at ? "rgb(161 161 170)" : "rgb(113 113 122)" }}
+                style={{
+                  color: step.at ? "rgb(161 161 170)" : "rgb(113 113 122)",
+                }}
               >
                 {step.at ? absoluteDate(step.at) : "Pending"}
               </span>

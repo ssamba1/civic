@@ -1,10 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
-import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 import { reportToOpen311 } from "@/lib/open311/transform";
-import { toOpen311SingleXml, toErrorXml } from "@/lib/open311/xml";
-import { normalizeLocation, type Report, type Classification, type City, type ReportStatus } from "@/lib/types";
+import { toErrorXml, toOpen311SingleXml } from "@/lib/open311/xml";
+import {
+  type City,
+  type Classification,
+  normalizeLocation,
+  type Report,
+  type ReportStatus,
+} from "@/lib/types";
 
 const logger = createLogger("[open311-get]");
 
@@ -24,7 +30,7 @@ const PUBLIC_REPORT_SELECT =
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const wantsXml = requestWantsXml(request);
 
@@ -59,7 +65,8 @@ export async function GET(
 
     const report = rowToReport(row as ReportRow);
     const classification: Classification | null =
-      (row as Record<string, unknown[]>).classifications?.[0] as Classification | null ?? null;
+      ((row as Record<string, unknown[]>)
+        .classifications?.[0] as Classification | null) ?? null;
     const cityRaw = (row as Record<string, unknown>).cities;
     const city = (Array.isArray(cityRaw) ? cityRaw[0] : cityRaw) as City;
 

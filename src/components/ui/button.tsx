@@ -15,8 +15,7 @@ const buttonVariants = cva(
           "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] shadow-[0_1px_2px_rgba(10,132,255,0.12),0_10px_28px_-10px_rgba(10,132,255,0.45)]",
         outline:
           "border border-[var(--color-border)] bg-[var(--color-background)]/60 backdrop-blur-sm text-[var(--color-foreground)] hover:bg-[var(--color-surface)]",
-        ghost:
-          "text-[var(--color-foreground)] hover:bg-[var(--color-surface)]",
+        ghost: "text-[var(--color-foreground)] hover:bg-[var(--color-surface)]",
       },
       size: {
         default: "h-10 min-h-11 md:min-h-0 px-5",
@@ -41,7 +40,18 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, isPending, children, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      isPending,
+      children,
+      ...props
+    },
+    ref,
+  ) => {
     const Comp = asChild ? Slot : "button";
     // asChild forwards a single child element — can't inject a sibling spinner
     // without breaking Slot's single-child contract, so skip the overlay there.
@@ -62,7 +72,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             >
               <Loader2 className="motion-safe:animate-spin" />
             </span>
-            <span className="invisible inline-flex items-center gap-2">{children}</span>
+            <span className="invisible inline-flex items-center gap-2">
+              {children}
+            </span>
           </>
         ) : (
           children

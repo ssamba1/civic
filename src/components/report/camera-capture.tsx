@@ -212,7 +212,11 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
     const run = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
+          video: {
+            facingMode,
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
           audio: false,
         });
         if (cancelled) {
@@ -226,10 +230,15 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
         streamRef.current = stream;
 
         const track = stream.getVideoTracks()[0];
-        const caps = (track?.getCapabilities?.() ?? {}) as MediaTrackCapabilities & ExtraCaps;
+        const caps = (track?.getCapabilities?.() ??
+          {}) as MediaTrackCapabilities & ExtraCaps;
         setTorchSupported(Boolean(caps.torch));
         if (caps.zoom && typeof caps.zoom.max === "number") {
-          setZoomCaps({ min: caps.zoom.min ?? 1, max: caps.zoom.max, step: caps.zoom.step ?? 0.1 });
+          setZoomCaps({
+            min: caps.zoom.min ?? 1,
+            max: caps.zoom.max,
+            step: caps.zoom.step ?? 0.1,
+          });
           setZoom(caps.zoom.min ?? 1);
         } else {
           setZoomCaps(null);
@@ -242,13 +251,20 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
           video.oncanplay = markReady;
           video.onplaying = markReady;
           video.srcObject = stream;
-          video.play().catch(() => { /* canplay/metadata still flips ready */ });
+          video.play().catch(() => {
+            /* canplay/metadata still flips ready */
+          });
         }
       } catch (err) {
         if (cancelled) return;
         if (err instanceof DOMException && err.name === "NotAllowedError") {
-          setError("Camera access denied. Allow camera permissions and reload, or upload a photo instead.");
-        } else if (err instanceof DOMException && err.name === "NotFoundError") {
+          setError(
+            "Camera access denied. Allow camera permissions and reload, or upload a photo instead.",
+          );
+        } else if (
+          err instanceof DOMException &&
+          err.name === "NotFoundError"
+        ) {
           setError("No camera found on this device.");
         } else {
           setCamFailed(true);

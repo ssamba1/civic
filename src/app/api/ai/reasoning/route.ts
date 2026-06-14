@@ -1,7 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
-import { createLogger } from "@/lib/logger";
 import { getReasoning } from "@/lib/ai/reasoning-ai";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import {
@@ -10,6 +9,7 @@ import {
   getReportCorpus,
 } from "@/lib/dashboard-data";
 import { getAuthUser } from "@/lib/db/ssr-client";
+import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("[reasoning-api]");
 
@@ -78,10 +78,7 @@ export async function POST(request: Request) {
     const report = reports.find((r) => r.id === reportId);
 
     if (!report) {
-      return NextResponse.json(
-        { error: "Report not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Report not found" }, { status: 404 });
     }
 
     // Authenticated / internal callers: hybrid sourcing (cache -> live Gemini ->
@@ -112,10 +109,7 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     logger.error("Unhandled error", err);
-    return NextResponse.json(
-      { error: "Internal error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
 

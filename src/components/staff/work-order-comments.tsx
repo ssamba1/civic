@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
 import { MessageSquare, Send } from "lucide-react";
-import { createBrowserSupabase } from "@/lib/db/browser-client";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { addWorkOrderComment } from "@/app/staff/actions";
+import { createBrowserSupabase } from "@/lib/db/browser-client";
 
 interface Comment {
   id: string;
@@ -50,7 +50,7 @@ export function WorkOrderComments({ workOrderId }: WorkOrderCommentsProps) {
             if (prev.some((c) => c.id === incoming.id)) return prev;
             return [...prev, incoming];
           });
-        }
+        },
       )
       .subscribe();
 
@@ -124,7 +124,9 @@ export function WorkOrderComments({ workOrderId }: WorkOrderCommentsProps) {
           Staff Comments
         </p>
         {comments.length > 0 && (
-          <span className="ml-auto text-xs text-zinc-400">{comments.length}</span>
+          <span className="ml-auto text-xs text-zinc-400">
+            {comments.length}
+          </span>
         )}
       </div>
 
@@ -149,7 +151,9 @@ export function WorkOrderComments({ workOrderId }: WorkOrderCommentsProps) {
               key={c.id}
               className="rounded-md bg-zinc-50 p-2.5 dark:bg-zinc-800"
             >
-              <p className="text-sm text-zinc-800 dark:text-zinc-200">{c.body}</p>
+              <p className="text-sm text-zinc-800 dark:text-zinc-200">
+                {c.body}
+              </p>
               <p className="mt-1 text-xs text-zinc-400">
                 {new Date(c.created_at).toLocaleString()}
               </p>

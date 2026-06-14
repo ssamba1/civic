@@ -76,7 +76,12 @@ export function CivicGlobe({ className }: { className?: string }) {
   }, [onRender]);
 
   return (
-    <div className={cn("relative aspect-square w-full max-w-[min(80vw,720px)]", className)}>
+    <div
+      className={cn(
+        "relative aspect-square w-full max-w-[min(80vw,720px)]",
+        className,
+      )}
+    >
       <canvas
         ref={canvasRef}
         className="size-full opacity-0 transition-opacity duration-700 [contain:layout_paint_size]"

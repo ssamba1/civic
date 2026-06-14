@@ -3,20 +3,20 @@
 import { useDeferredValue, useMemo, useState } from "react";
 
 import {
+  CategoryResolutionTable,
   KpiCards,
+  PeakHoursHeatmap,
+  ReporterVelocityCard,
   ReportsTrend,
+  ResolutionHistogram,
   SeverityDonut,
   StatusFunnel,
-  ResolutionHistogram,
-  PeakHoursHeatmap,
   TopNeighborhoods,
-  CategoryResolutionTable,
-  ReporterVelocityCard,
 } from "@/components/analytics/analytics-bento";
-import { FilterBar } from "@/components/filters/filter-bar";
-import { RecentReports } from "@/components/dashboard/recent-reports";
-import { ReportsExplorer } from "@/components/analytics/reports-explorer";
 import { useReasoningHover } from "@/components/analytics/reasoning-hover";
+import { ReportsExplorer } from "@/components/analytics/reports-explorer";
+import { RecentReports } from "@/components/dashboard/recent-reports";
+import { FilterBar } from "@/components/filters/filter-bar";
 import {
   useFilteredReports,
   usePreviousWindowReports,
@@ -50,14 +50,20 @@ export function AnalyticsInteractive() {
   // the grid with a brief pulse so the lag reads as intentional, not frozen.
   const isPending = filtered !== liveFiltered;
 
-  const kpis = useMemo(() => deriveKpis(filtered, previous), [filtered, previous]);
+  const kpis = useMemo(
+    () => deriveKpis(filtered, previous),
+    [filtered, previous],
+  );
   const trend = useMemo(() => deriveTrend(filtered), [filtered]);
   const distribution = useMemo(
     () => deriveResolutionDistribution(filtered),
     [filtered],
   );
   const funnel = useMemo(() => deriveStatusFunnel(filtered), [filtered]);
-  const severity = useMemo(() => deriveSeverityDistribution(filtered), [filtered]);
+  const severity = useMemo(
+    () => deriveSeverityDistribution(filtered),
+    [filtered],
+  );
   const heatmap = useMemo(() => deriveHourlyHeatmap(filtered), [filtered]);
   const neighborhoods = useMemo(
     () => deriveTopNeighborhoods(filtered),
@@ -83,39 +89,39 @@ export function AnalyticsInteractive() {
           transition: "opacity 200ms cubic-bezier(0.22,1,0.36,1)",
         }}
       >
-      <KpiCards kpis={kpis} />
+        <KpiCards kpis={kpis} />
 
-      {/* Charts bento (lhs) + live reports rail (rhs).
+        {/* Charts bento (lhs) + live reports rail (rhs).
          Mobile: single column stack — charts first, then report feed below.
          lg+: 12-col split — charts col-span-8, sticky feed col-span-4.
          The bento keeps its own internal 12-col grid at lg+, so widening
          this wrapper rescales every tile without touching their spans. */}
-      <div className="grid gap-4 lg:grid-cols-12 lg:items-start">
-        <div className="lg:col-span-8">
-          <div className="grid gap-4 lg:grid-cols-12 lg:auto-rows-[minmax(190px,auto)]">
-            <ReportsTrend data={trend} />
-            <SeverityDonut data={severity} />
-            <ReporterVelocityCard data={velocity} />
-            <StatusFunnel data={funnel} />
-            <ResolutionHistogram data={distribution} />
-            <PeakHoursHeatmap data={heatmap} />
-            <TopNeighborhoods data={neighborhoods} />
-            <CategoryResolutionTable data={categoryRes} />
+        <div className="grid gap-4 lg:grid-cols-12 lg:items-start">
+          <div className="lg:col-span-8">
+            <div className="grid gap-4 lg:grid-cols-12 lg:auto-rows-[minmax(190px,auto)]">
+              <ReportsTrend data={trend} />
+              <SeverityDonut data={severity} />
+              <ReporterVelocityCard data={velocity} />
+              <StatusFunnel data={funnel} />
+              <ResolutionHistogram data={distribution} />
+              <PeakHoursHeatmap data={heatmap} />
+              <TopNeighborhoods data={neighborhoods} />
+              <CategoryResolutionTable data={categoryRes} />
+            </div>
+          </div>
+
+          {/* Live report feed — sticky rail on lg+, stacked below charts on mobile.
+           self-start collapses the column height so position:sticky engages. */}
+          <div className="lg:col-span-4 flex flex-col gap-4 lg:sticky lg:top-20 lg:self-start">
+            <RecentReports
+              reports={filtered.slice(0, 20)}
+              focusedId={focusedReportId}
+              onClickReport={setFocusedReportId}
+              onExpand={() => setExplorerOpen(true)}
+              bindReportHover={reasoning.bindReport}
+            />
           </div>
         </div>
-
-        {/* Live report feed — sticky rail on lg+, stacked below charts on mobile.
-           self-start collapses the column height so position:sticky engages. */}
-        <div className="lg:col-span-4 flex flex-col gap-4 lg:sticky lg:top-20 lg:self-start">
-          <RecentReports
-            reports={filtered.slice(0, 20)}
-            focusedId={focusedReportId}
-            onClickReport={setFocusedReportId}
-            onExpand={() => setExplorerOpen(true)}
-            bindReportHover={reasoning.bindReport}
-          />
-        </div>
-      </div>
       </div>
 
       <reasoning.Portal />

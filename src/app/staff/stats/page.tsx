@@ -1,7 +1,7 @@
 import { Suspense } from "react";
-import { FilterProvider } from "@/lib/filters/context";
-import { getReportCorpus } from "@/lib/dashboard-data";
 import { AnalyticsInteractive } from "@/components/analytics/analytics-interactive";
+import { getReportCorpus } from "@/lib/dashboard-data";
+import { FilterProvider } from "@/lib/filters/context";
 
 // Staff stats view — reuses the public analytics bento, wrapped in its own
 // FilterProvider (the staff layout has none, unlike the city layout).
@@ -24,7 +24,8 @@ export default function StaffStatsPage() {
             Stats
           </h1>
           <p className="mt-2 text-sm text-zinc-400">
-            Operational signal — what&apos;s shipping, what&apos;s stuck, where it&apos;s happening.
+            Operational signal — what&apos;s shipping, what&apos;s stuck, where
+            it&apos;s happening.
           </p>
         </section>
 
@@ -44,9 +45,14 @@ function StatsBentoSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {[
-        "h-28", "h-28", "h-28", "h-28",
-        "h-64 sm:col-span-2", "h-64 sm:col-span-2",
-        "h-72 lg:col-span-3", "h-72",
+        "h-28",
+        "h-28",
+        "h-28",
+        "h-28",
+        "h-64 sm:col-span-2",
+        "h-64 sm:col-span-2",
+        "h-72 lg:col-span-3",
+        "h-72",
       ].map((h, i) => (
         <div
           key={i}

@@ -138,14 +138,24 @@ function MobileStepCard({
               : "border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-foreground)]"
           }`}
         >
-          <span className="font-mono text-[13px] font-semibold tabular-nums">{item.id}</span>
+          <span className="font-mono text-[13px] font-semibold tabular-nums">
+            {item.id}
+          </span>
         </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-[15px] font-semibold text-[var(--color-foreground)]">{item.title}</span>
-            <Badge className={`${statusStyle(item.status)} text-[10px] px-2 py-0.5`}>{item.category}</Badge>
+            <span className="text-[15px] font-semibold text-[var(--color-foreground)]">
+              {item.title}
+            </span>
+            <Badge
+              className={`${statusStyle(item.status)} text-[10px] px-2 py-0.5`}
+            >
+              {item.category}
+            </Badge>
           </div>
-          <span className="font-mono text-[11px] text-[var(--color-muted)]">{item.date}</span>
+          <span className="font-mono text-[11px] text-[var(--color-muted)]">
+            {item.date}
+          </span>
         </div>
         <span
           aria-hidden
@@ -163,12 +173,16 @@ function MobileStepCard({
       >
         <div className="overflow-hidden">
           <div className="pb-5 pl-[3.75rem] pr-2">
-            <p className="text-[14px] leading-relaxed text-[var(--color-muted)]">{item.content}</p>
+            <p className="text-[14px] leading-relaxed text-[var(--color-muted)]">
+              {item.content}
+            </p>
 
             <div className="mt-4 border-t border-[var(--color-border)] pt-3">
               <div className="mb-1.5 flex items-center justify-between text-[11px]">
                 <span className="text-[var(--color-muted)]">Confidence</span>
-                <span className="font-mono text-[var(--color-foreground)]">{item.energy}%</span>
+                <span className="font-mono text-[var(--color-foreground)]">
+                  {item.energy}%
+                </span>
               </div>
               <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--color-surface)]">
                 <div
@@ -247,7 +261,9 @@ function MobileSteps() {
 /* ─── Desktop orbital view (md+) ──────────────────────────────────────── */
 
 export function OrbitalSteps() {
-  const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({});
+  const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>(
+    {},
+  );
   const [rotationAngle, setRotationAngle] = useState(0);
   const [autoRotate, setAutoRotate] = useState(true);
   const [pulseEffect, setPulseEffect] = useState<Record<number, boolean>>({});
@@ -349,14 +365,16 @@ export function OrbitalSteps() {
     const zIndex = Math.round(100 + 50 * Math.cos(radian));
     const opacity =
       Math.round(
-        Math.max(0.45, Math.min(1, 0.5 + 0.5 * ((1 + Math.sin(radian)) / 2))) * 1000,
+        Math.max(0.45, Math.min(1, 0.5 + 0.5 * ((1 + Math.sin(radian)) / 2))) *
+          1000,
       ) / 1000;
     return { x, y, angle, zIndex, opacity };
   };
 
   const isRelated = (id: number) =>
     activeNodeId !== null &&
-    (CIVIC_STEPS.find((i) => i.id === activeNodeId)?.relatedIds.includes(id) ?? false);
+    (CIVIC_STEPS.find((i) => i.id === activeNodeId)?.relatedIds.includes(id) ??
+      false);
 
   const statusStyleFn = (status: TimelineItem["status"]) => {
     switch (status) {
@@ -390,7 +408,8 @@ export function OrbitalSteps() {
             backgroundImage:
               "radial-gradient(circle at center, var(--color-border) 1px, transparent 1px)",
             backgroundSize: "32px 32px",
-            maskImage: "radial-gradient(circle at center, black 30%, transparent 75%)",
+            maskImage:
+              "radial-gradient(circle at center, black 30%, transparent 75%)",
           }}
         />
 
@@ -425,7 +444,10 @@ export function OrbitalSteps() {
                   key={item.id}
                   aria-hidden
                   className="absolute"
-                  style={{ transform: `translate(${x}px, ${y}px)`, opacity: 0.6 }}
+                  style={{
+                    transform: `translate(${x}px, ${y}px)`,
+                    opacity: 0.6,
+                  }}
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[var(--color-border)] bg-[var(--color-background)]">
                     <span className="font-mono text-[14px] font-semibold tabular-nums text-[var(--color-muted)]">
@@ -436,126 +458,137 @@ export function OrbitalSteps() {
               );
             })}
 
-          {hydrated && CIVIC_STEPS.map((item, index) => {
-            const pos = calculatePosition(index, CIVIC_STEPS.length);
-            const isExpanded = expandedItems[item.id];
-            const related = isRelated(item.id);
-            const pulsing = pulseEffect[item.id];
+          {hydrated &&
+            CIVIC_STEPS.map((item, index) => {
+              const pos = calculatePosition(index, CIVIC_STEPS.length);
+              const isExpanded = expandedItems[item.id];
+              const related = isRelated(item.id);
+              const pulsing = pulseEffect[item.id];
 
-            return (
-              <div
-                key={item.id}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleItem(item.id);
-                }}
-                className="absolute cursor-pointer transition-all duration-700"
-                style={{
-                  transform: `translate(${pos.x}px, ${pos.y}px)`,
-                  zIndex: isExpanded ? 200 : pos.zIndex,
-                  opacity: isExpanded ? 1 : pos.opacity,
-                }}
-              >
-                {pulsing && (
+              return (
+                <div
+                  key={item.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleItem(item.id);
+                  }}
+                  className="absolute cursor-pointer transition-all duration-700"
+                  style={{
+                    transform: `translate(${pos.x}px, ${pos.y}px)`,
+                    zIndex: isExpanded ? 200 : pos.zIndex,
+                    opacity: isExpanded ? 1 : pos.opacity,
+                  }}
+                >
+                  {pulsing && (
+                    <div
+                      aria-hidden
+                      className="absolute -inset-2 animate-pulse rounded-full"
+                      style={{
+                        background:
+                          "radial-gradient(circle, rgba(10,132,255,0.18) 0%, transparent 70%)",
+                      }}
+                    />
+                  )}
+
                   <div
-                    aria-hidden
-                    className="absolute -inset-2 animate-pulse rounded-full"
-                    style={{
-                      background:
-                        "radial-gradient(circle, rgba(10,132,255,0.18) 0%, transparent 70%)",
-                    }}
-                  />
-                )}
-
-                <div
-                  className={`flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-300 ${
-                    isExpanded
-                      ? "scale-125 border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-[0_8px_32px_-8px_rgba(10,132,255,0.5)]"
-                      : related
-                        ? "border-[var(--color-primary)] bg-white text-[var(--color-primary)]"
-                        : "border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-foreground)]"
-                  }`}
-                >
-                  <span className="font-mono text-[14px] font-semibold tabular-nums">
-                    {item.id}
-                  </span>
-                </div>
-
-                <div
-                  className={`absolute left-1/2 mt-2 -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.14em] transition-all duration-300 ${
-                    isExpanded ? "text-[var(--color-foreground)]" : "text-[var(--color-muted)]"
-                  }`}
-                >
-                  {item.title}
-                </div>
-
-                {isExpanded && (
-                  <Card
-                    className="absolute left-1/2 top-16 w-72 -translate-x-1/2 border-[var(--color-border)] bg-[var(--color-background)] shadow-[0_24px_64px_-24px_rgba(0,0,0,0.18)]"
-                    onClick={(e) => e.stopPropagation()}
+                    className={`flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-300 ${
+                      isExpanded
+                        ? "scale-125 border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-[0_8px_32px_-8px_rgba(10,132,255,0.5)]"
+                        : related
+                          ? "border-[var(--color-primary)] bg-white text-[var(--color-primary)]"
+                          : "border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-foreground)]"
+                    }`}
                   >
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <Badge className={statusStyleFn(item.status)}>{item.category}</Badge>
-                        <span className="font-mono text-[11px] text-[var(--color-muted)]">
-                          {item.date}
-                        </span>
-                      </div>
-                      <CardTitle className="text-base">{item.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-[13px] leading-relaxed text-[var(--color-muted)]">
-                        {item.content}
-                      </p>
+                    <span className="font-mono text-[14px] font-semibold tabular-nums">
+                      {item.id}
+                    </span>
+                  </div>
 
-                      <div className="border-t border-[var(--color-border)] pt-3">
-                        <div className="mb-1.5 flex items-center justify-between text-[11px]">
-                          <span className="text-[var(--color-muted)]">Confidence</span>
-                          <span className="font-mono text-[var(--color-foreground)]">
-                            {item.energy}%
+                  <div
+                    className={`absolute left-1/2 mt-2 -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.14em] transition-all duration-300 ${
+                      isExpanded
+                        ? "text-[var(--color-foreground)]"
+                        : "text-[var(--color-muted)]"
+                    }`}
+                  >
+                    {item.title}
+                  </div>
+
+                  {isExpanded && (
+                    <Card
+                      className="absolute left-1/2 top-16 w-72 -translate-x-1/2 border-[var(--color-border)] bg-[var(--color-background)] shadow-[0_24px_64px_-24px_rgba(0,0,0,0.18)]"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <Badge className={statusStyleFn(item.status)}>
+                            {item.category}
+                          </Badge>
+                          <span className="font-mono text-[11px] text-[var(--color-muted)]">
+                            {item.date}
                           </span>
                         </div>
-                        <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--color-surface)]">
-                          <div
-                            className="h-full rounded-full bg-[var(--color-primary)] transition-all duration-700"
-                            style={{ width: `${item.energy}%` }}
-                          />
-                        </div>
-                      </div>
+                        <CardTitle className="text-base">
+                          {item.title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-[13px] leading-relaxed text-[var(--color-muted)]">
+                          {item.content}
+                        </p>
 
-                      {item.relatedIds.length > 0 && (
                         <div className="border-t border-[var(--color-border)] pt-3">
-                          <div className="mb-2 text-[10px] uppercase tracking-[0.14em] text-[var(--color-muted)]">
-                            Connected
+                          <div className="mb-1.5 flex items-center justify-between text-[11px]">
+                            <span className="text-[var(--color-muted)]">
+                              Confidence
+                            </span>
+                            <span className="font-mono text-[var(--color-foreground)]">
+                              {item.energy}%
+                            </span>
                           </div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {item.relatedIds.map((relId) => {
-                              const rel = CIVIC_STEPS.find((i) => i.id === relId);
-                              if (!rel) return null;
-                              return (
-                                <Button
-                                  key={relId}
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-6 rounded-full px-2.5 text-[11px]"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleItem(relId);
-                                  }}
-                                >
-                                  {rel.title}
-                                </Button>
-                              );
-                            })}
+                          <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--color-surface)]">
+                            <div
+                              className="h-full rounded-full bg-[var(--color-primary)] transition-all duration-700"
+                              style={{ width: `${item.energy}%` }}
+                            />
                           </div>
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            );
-          })}
+
+                        {item.relatedIds.length > 0 && (
+                          <div className="border-t border-[var(--color-border)] pt-3">
+                            <div className="mb-2 text-[10px] uppercase tracking-[0.14em] text-[var(--color-muted)]">
+                              Connected
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {item.relatedIds.map((relId) => {
+                                const rel = CIVIC_STEPS.find(
+                                  (i) => i.id === relId,
+                                );
+                                if (!rel) return null;
+                                return (
+                                  <Button
+                                    key={relId}
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-6 rounded-full px-2.5 text-[11px]"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleItem(relId);
+                                    }}
+                                  >
+                                    {rel.title}
+                                  </Button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              );
+            })}
         </div>
       </div>
     </>

@@ -1,5 +1,5 @@
-import type { ReportCategory } from "@/lib/types";
 import { getCategoryOverridesSnapshot } from "@/lib/category-overrides";
+import type { ReportCategory } from "@/lib/types";
 
 /* ------------------------------------------------------------------
    Civil teams — based on US municipal department research.

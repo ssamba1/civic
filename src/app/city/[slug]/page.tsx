@@ -1,12 +1,14 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { Camera } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
-
-import { KNOWN_CITIES, fetchCity as fetchCityMock } from "@/lib/dashboard-data";
-import { fetchCity as fetchCityFromDb, fetchCityStats } from "@/lib/dashboard-queries";
-import { TeamsInteractive } from "@/components/teams/teams-interactive";
+import { notFound } from "next/navigation";
 import { FilterBar } from "@/components/filters/filter-bar";
+import { TeamsInteractive } from "@/components/teams/teams-interactive";
+import { fetchCity as fetchCityMock, KNOWN_CITIES } from "@/lib/dashboard-data";
+import {
+  fetchCity as fetchCityFromDb,
+  fetchCityStats,
+} from "@/lib/dashboard-queries";
 
 export function generateStaticParams() {
   return Object.keys(KNOWN_CITIES).map((slug) => ({ slug }));
@@ -52,9 +54,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function CityDashboardPage({
-  params,
-}: PageProps) {
+export default async function CityDashboardPage({ params }: PageProps) {
   const { slug } = await params;
   let city = null;
   try {
@@ -80,7 +80,8 @@ export default async function CityDashboardPage({
                 Teams
               </h1>
               <p className="mt-1.5 max-w-xl text-sm text-zinc-400">
-                Workload, delegation, and queue depth across municipal divisions.
+                Workload, delegation, and queue depth across municipal
+                divisions.
               </p>
               <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-zinc-400">
                 <span>
@@ -89,11 +90,20 @@ export default async function CityDashboardPage({
                   </span>{" "}
                   tracked
                 </span>
-                <span className="h-3 w-px bg-white/[0.08] hidden sm:block" aria-hidden="true" />
+                <span
+                  className="h-3 w-px bg-white/[0.08] hidden sm:block"
+                  aria-hidden="true"
+                />
                 <span>
-                  <span className="font-medium text-zinc-200">{stats.open}</span> open
+                  <span className="font-medium text-zinc-200">
+                    {stats.open}
+                  </span>{" "}
+                  open
                 </span>
-                <span className="h-3 w-px bg-white/[0.08] hidden sm:block" aria-hidden="true" />
+                <span
+                  className="h-3 w-px bg-white/[0.08] hidden sm:block"
+                  aria-hidden="true"
+                />
                 <span>
                   <span className="font-medium text-zinc-200">
                     {stats.this_week}

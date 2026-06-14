@@ -44,7 +44,9 @@ function parseServerEnv() {
       err instanceof z.ZodError
         ? err.issues.map((i) => i.path.join(".") || String(i)).join(", ")
         : String(err);
-    throw new Error(`Missing or invalid server environment variables: ${issues}`);
+    throw new Error(
+      `Missing or invalid server environment variables: ${issues}`,
+    );
   }
 }
 

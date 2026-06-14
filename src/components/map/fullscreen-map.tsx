@@ -1,33 +1,33 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import type { DashboardReport } from "@/lib/dashboard-data";
-import { CATEGORY_META } from "@/lib/dashboard-data";
-import { ReportMap, type MapTheme } from "@/components/map/report-map";
-import { LiquidGlassCard } from "@/components/ui/liquid-glass";
-import BottomSheet from "@/components/ui/bottom-sheet";
-import type { ReportCategory, ReportStatus } from "@/lib/types";
 import {
-  TEAM_LIST,
-  TEAMS as TEAM_META,
-  categoryToTeam,
-  type TeamId,
-} from "@/lib/teams";
-import { useCategoryOverrides } from "@/lib/category-overrides";
-import { useDemoReports } from "@/lib/demo-reports";
-import { dispatchWorkOrderForReport } from "@/app/staff/actions";
-import { UpvoteButton } from "@/components/resident/upvote-button";
-import {
-  Sliders,
-  Clock,
-  Star,
   CheckCircle2,
+  ChevronDown,
+  Clock,
+  ListFilter,
   Send,
   Shield,
-  ChevronDown,
+  Sliders,
+  Star,
   X,
-  ListFilter,
 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { dispatchWorkOrderForReport } from "@/app/staff/actions";
+import { type MapTheme, ReportMap } from "@/components/map/report-map";
+import { UpvoteButton } from "@/components/resident/upvote-button";
+import BottomSheet from "@/components/ui/bottom-sheet";
+import { LiquidGlassCard } from "@/components/ui/liquid-glass";
+import { useCategoryOverrides } from "@/lib/category-overrides";
+import type { DashboardReport } from "@/lib/dashboard-data";
+import { CATEGORY_META } from "@/lib/dashboard-data";
+import { useDemoReports } from "@/lib/demo-reports";
+import {
+  categoryToTeam,
+  TEAM_LIST,
+  TEAMS as TEAM_META,
+  type TeamId,
+} from "@/lib/teams";
+import type { ReportCategory, ReportStatus } from "@/lib/types";
 
 interface FullscreenMapOrchestratorProps {
   reports: DashboardReport[];
@@ -137,7 +137,8 @@ export function FullscreenMapOrchestrator({
   // --- Active Filters State ---
   // Team view seeds + locks the team scope; city view starts at "all".
   const [selectedTeam, setSelectedTeam] = useState<TeamId>(lockedTeam ?? "all");
-  const [selectedCategory, setSelectedCategory] = useState<ReportCategory | null>(null);
+  const [selectedCategory, setSelectedCategory] =
+    useState<ReportCategory | null>(null);
   const [minSeverity, setMinSeverity] = useState<number>(1);
   // Default to live work only — open / dispatched / in-progress. Completed
   // (closed/resolved) is hidden by default on both the city and team maps so
@@ -164,14 +165,16 @@ export function FullscreenMapOrchestrator({
   const [toastLeaving, setToastLeaving] = useState(false);
 
   // Routing UI state: keeps track of which report ID has the routing dropdown active
-  const [activeRouteMenuId, setActiveRouteMenuId] = useState<string | null>(null);
+  const [activeRouteMenuId, setActiveRouteMenuId] = useState<string | null>(
+    null,
+  );
 
   // Stable marker-select handler so the memo'd ReportMap doesn't see a new
   // function reference each render.
   const handleSelectMarker = useCallback((id: string) => {
     setFocusedReportId(id);
   }, []);
-  
+
   // Success notifications/routing notifications
   const [routeNotification, setRouteNotification] = useState<{
     message: string;
@@ -196,15 +199,26 @@ export function FullscreenMapOrchestrator({
   // --- Filter Logic ---
   const filteredReports = useMemo(() => {
     return allReports.filter((report) => {
-      if (selectedTeam !== "all" && categoryToTeam(report.category) !== selectedTeam) {
+      if (
+        selectedTeam !== "all" &&
+        categoryToTeam(report.category) !== selectedTeam
+      ) {
         return false;
       }
-      if (selectedCategory && report.category !== selectedCategory) return false;
+      if (selectedCategory && report.category !== selectedCategory)
+        return false;
       if (report.severity < minSeverity) return false;
       if (!activeStatuses.includes(report.status)) return false;
       return true;
     });
-  }, [allReports, selectedTeam, selectedCategory, minSeverity, activeStatuses, categoryOverrides]);
+  }, [
+    allReports,
+    selectedTeam,
+    selectedCategory,
+    minSeverity,
+    activeStatuses,
+    categoryOverrides,
+  ]);
 
   // Toggle status filter helper — useCallback so it's a stable dep for dispatchPanelContent's useMemo.
   const handleToggleStatus = useCallback((status: ReportStatus) => {
@@ -223,7 +237,8 @@ export function FullscreenMapOrchestrator({
   // → wait for the 200ms slide-out → null). Reused by every toast path so the
   // toast never pops off the DOM instantly. ref-held timers stay cancellable.
   const dismissToast = useCallback((delay: number) => {
-    if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
+    if (notificationTimerRef.current)
+      clearTimeout(notificationTimerRef.current);
     notificationTimerRef.current = setTimeout(() => {
       setToastLeaving(true);
       notificationTimerRef.current = setTimeout(() => {
@@ -234,39 +249,42 @@ export function FullscreenMapOrchestrator({
   }, []);
 
   // Route/Assign to team action — optimistic update + server write with rollback.
-  const handleRouteToTeam = useCallback(async (reportId: string, teamId: TeamId) => {
-    // Optimistic: overlay dispatched status immediately for snappy UI.
-    setStatusOverrides((prev) => ({ ...prev, [reportId]: "dispatched" }));
-    setActiveRouteMenuId(null);
-    setDispatchingId(reportId);
+  const handleRouteToTeam = useCallback(
+    async (reportId: string, teamId: TeamId) => {
+      // Optimistic: overlay dispatched status immediately for snappy UI.
+      setStatusOverrides((prev) => ({ ...prev, [reportId]: "dispatched" }));
+      setActiveRouteMenuId(null);
+      setDispatchingId(reportId);
 
-    // Show HUD notification optimistically.
-    setToastLeaving(false);
-    setRouteNotification({
-      message: `Dispatched to ${TEAM_META[teamId].shortLabel}!`,
-      reportId,
-    });
-    dismissToast(3500);
-
-    // The map surface receives reports, not work orders — dispatch via the
-    // report-id variant which resolves the linked work order server-side.
-    const result = await dispatchWorkOrderForReport(reportId);
-    setDispatchingId((cur) => (cur === reportId ? null : cur));
-    if (!result.ok) {
-      // Rollback optimistic override on failure.
-      setStatusOverrides((prev) => {
-        const next = { ...prev };
-        delete next[reportId];
-        return next;
-      });
+      // Show HUD notification optimistically.
       setToastLeaving(false);
       setRouteNotification({
-        message: `Dispatch failed: ${result.error}`,
+        message: `Dispatched to ${TEAM_META[teamId].shortLabel}!`,
         reportId,
       });
-      dismissToast(4000);
-    }
-  }, [dismissToast]);
+      dismissToast(3500);
+
+      // The map surface receives reports, not work orders — dispatch via the
+      // report-id variant which resolves the linked work order server-side.
+      const result = await dispatchWorkOrderForReport(reportId);
+      setDispatchingId((cur) => (cur === reportId ? null : cur));
+      if (!result.ok) {
+        // Rollback optimistic override on failure.
+        setStatusOverrides((prev) => {
+          const next = { ...prev };
+          delete next[reportId];
+          return next;
+        });
+        setToastLeaving(false);
+        setRouteNotification({
+          message: `Dispatch failed: ${result.error}`,
+          reportId,
+        });
+        dismissToast(4000);
+      }
+    },
+    [dismissToast],
+  );
 
   // Human-readable category list for dropdowns
   const categoriesList = useMemo(() => {
@@ -282,9 +300,10 @@ export function FullscreenMapOrchestrator({
 
   // Memoized so neither the desktop sidebar nor the mobile bottom-sheet re-renders
   // when unrelated state (e.g. focusedReportId timer) changes.
-  const dispatchPanelContent = useMemo(() => (
-    <div className="flex flex-col gap-3 h-full overflow-y-auto custom-scrollbar pr-1 select-none">
-      <style>{`
+  const dispatchPanelContent = useMemo(
+    () => (
+      <div className="flex flex-col gap-3 h-full overflow-y-auto custom-scrollbar pr-1 select-none">
+        <style>{`
         @keyframes emptyBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
         @keyframes fmCardIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
         @keyframes fmEmptyIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
@@ -292,385 +311,416 @@ export function FullscreenMapOrchestrator({
         @keyframes fmToastOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-4px)}}
         @keyframes fmFadeIn{from{opacity:0}to{opacity:1}}
       `}</style>
-      {/* Active team banner */}
-      {selectedTeam !== "all" && (
-        <div
-          className="flex items-center gap-2 rounded-md border px-2.5 py-1.5 shrink-0"
-          style={{
-            borderColor: `${activeTeamMeta.color}55`,
-            backgroundColor: `${activeTeamMeta.color}15`,
-          }}
-        >
-          <Shield
-            className="h-3.5 w-3.5 shrink-0"
-            style={{ color: activeTeamMeta.color }}
-            strokeWidth={1.75}
-          />
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] uppercase tracking-wide text-zinc-400">
-              Viewing as
-            </p>
-            <p className="text-[12px] font-medium text-white leading-tight truncate">
-              {activeTeamMeta.shortLabel}
-            </p>
-          </div>
-          {!lockedTeam && (
-            <button
-              onClick={() => setSelectedTeam("all")}
-              className="text-zinc-400 hover:text-white p-0.5 rounded min-h-[44px] min-w-[44px] flex items-center justify-center lg:min-h-0 lg:min-w-0"
-              title="Switch back to All Teams"
-              aria-label="Switch back to All Teams"
-            >
-              <X className="h-3.5 w-3.5" strokeWidth={1.75} />
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Route confirmation toast */}
-      {routeNotification && (
-        <div
-          className="bg-[#30d158]/10 border border-[#30d158]/20 rounded-lg p-3 flex items-center gap-2 shrink-0"
-          style={
-            reducedMotion
-              ? undefined
-              : {
-                  animation: toastLeaving
-                    ? "fmToastOut 200ms cubic-bezier(0.4,0,1,1) forwards"
-                    : "fmToastIn 150ms cubic-bezier(0.16,1,0.3,1)",
-                }
-          }
-        >
-          <CheckCircle2 className="w-4 h-4 text-[#30d158] shrink-0" strokeWidth={1.75} />
-          <p className="text-[13px] text-white/90 leading-tight">{routeNotification.message}</p>
-        </div>
-      )}
-
-      {/* Quick filters */}
-      <div className="rounded-lg bg-white/[0.025] border border-white/[0.05] p-3 flex flex-col gap-3">
-        {/* Team — primary scoping. Hidden in the team view (locked) and the
-            resident community view (no team concept). */}
-        {!lockedTeam && !readOnly && (
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[12px] text-zinc-300 flex items-center gap-1.5">
-              <Shield className="w-3 h-3" strokeWidth={1.75} />
-              Team view
-            </label>
-            <div className="relative">
-              <select
-                value={selectedTeam}
-                onChange={(e) => setSelectedTeam(e.target.value as TeamId)}
-                className="w-full bg-black/40 border border-white/[0.08] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:border-white/20 cursor-pointer appearance-none pr-8 transition-colors lg:py-1.5 lg:text-[13px]"
-              >
-                {TEAM_LIST.map((team) => (
-                  <option key={team.id} value={team.id}>
-                    {team.shortLabel}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" strokeWidth={1.75} />
+        {/* Active team banner */}
+        {selectedTeam !== "all" && (
+          <div
+            className="flex items-center gap-2 rounded-md border px-2.5 py-1.5 shrink-0"
+            style={{
+              borderColor: `${activeTeamMeta.color}55`,
+              backgroundColor: `${activeTeamMeta.color}15`,
+            }}
+          >
+            <Shield
+              className="h-3.5 w-3.5 shrink-0"
+              style={{ color: activeTeamMeta.color }}
+              strokeWidth={1.75}
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] uppercase tracking-wide text-zinc-400">
+                Viewing as
+              </p>
+              <p className="text-[12px] font-medium text-white leading-tight truncate">
+                {activeTeamMeta.shortLabel}
+              </p>
             </div>
-            <p className="text-[11px] text-zinc-500 leading-snug">
-              {activeTeamMeta.duties}
-            </p>
+            {!lockedTeam && (
+              <button
+                onClick={() => setSelectedTeam("all")}
+                className="text-zinc-400 hover:text-white p-0.5 rounded min-h-[44px] min-w-[44px] flex items-center justify-center lg:min-h-0 lg:min-w-0"
+                title="Switch back to All Teams"
+                aria-label="Switch back to All Teams"
+              >
+                <X className="h-3.5 w-3.5" strokeWidth={1.75} />
+              </button>
+            )}
           </div>
         )}
 
-        {/* Category */}
-        <div
-          className={`flex flex-col gap-1.5 ${lockedTeam || readOnly ? "" : "border-t border-white/[0.06] pt-3"}`}
-        >
-          <label className="text-[12px] text-zinc-300">Category</label>
-          <div className="relative">
-            <select
-              value={selectedCategory || ""}
-              onChange={(e) => setSelectedCategory((e.target.value as ReportCategory) || null)}
-              className="w-full bg-black/40 border border-white/[0.08] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:border-white/20 cursor-pointer appearance-none pr-8 transition-colors lg:py-1.5 lg:text-[13px]"
-            >
-              <option value="">All categories</option>
-              {categoriesList.map((c) => (
-                <option key={c.key} value={c.key}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" strokeWidth={1.75} />
-          </div>
-        </div>
-
-        {/* Severity */}
-        <div className="flex flex-col gap-1.5">
-          <div className="flex justify-between text-[12px] text-zinc-300">
-            <span>Min severity</span>
-            <span className="text-white tabular-nums">
-              {minSeverity}+
-            </span>
-          </div>
-          <input
-            type="range"
-            min="1"
-            max="5"
-            step="1"
-            value={minSeverity}
-            onChange={(e) => setMinSeverity(parseInt(e.target.value))}
-            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
-          />
-        </div>
-
-        {/* Status */}
-        <div className="flex flex-col gap-1.5 border-t border-white/[0.06] pt-3">
-          <span className="text-[12px] text-zinc-300">Status</span>
-          <div className="grid grid-cols-2 gap-1">
-            {(["open", "dispatched", "in_progress", "closed"] as const).map((s) => {
-              const isChecked = activeStatuses.includes(s);
-              return (
-                <button
-                  key={s}
-                  onClick={() => handleToggleStatus(s)}
-                  className={`rounded px-2 py-2 text-[12px] text-left transition-colors min-h-[44px] flex items-center lg:py-1 lg:min-h-0 ${
-                    isChecked
-                      ? "bg-white/[0.08] text-white"
-                      : "bg-transparent text-zinc-400 hover:text-white hover:bg-white/[0.03]"
-                  }`}
-                >
-                  {STATUS_DISPLAY_NAMES[s]}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Divider */}
-      <div className="border-t border-white/10" />
-
-      {/* Incident Feed list */}
-      <div className="space-y-2">
-        {filteredReports.length === 0 ? (
+        {/* Route confirmation toast */}
+        {routeNotification && (
           <div
-            className="flex flex-col items-center justify-center text-center p-6 text-zinc-500"
+            className="bg-[#30d158]/10 border border-[#30d158]/20 rounded-lg p-3 flex items-center gap-2 shrink-0"
             style={
               reducedMotion
                 ? undefined
-                : { animation: "fmEmptyIn 200ms cubic-bezier(0.16,1,0.3,1)" }
+                : {
+                    animation: toastLeaving
+                      ? "fmToastOut 200ms cubic-bezier(0.4,0,1,1) forwards"
+                      : "fmToastIn 150ms cubic-bezier(0.16,1,0.3,1)",
+                  }
             }
           >
-            <Sliders
-              className="w-7 h-7 opacity-25 mb-3"
+            <CheckCircle2
+              className="w-4 h-4 text-[#30d158] shrink-0"
+              strokeWidth={1.75}
+            />
+            <p className="text-[13px] text-white/90 leading-tight">
+              {routeNotification.message}
+            </p>
+          </div>
+        )}
+
+        {/* Quick filters */}
+        <div className="rounded-lg bg-white/[0.025] border border-white/[0.05] p-3 flex flex-col gap-3">
+          {/* Team — primary scoping. Hidden in the team view (locked) and the
+            resident community view (no team concept). */}
+          {!lockedTeam && !readOnly && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[12px] text-zinc-300 flex items-center gap-1.5">
+                <Shield className="w-3 h-3" strokeWidth={1.75} />
+                Team view
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedTeam}
+                  onChange={(e) => setSelectedTeam(e.target.value as TeamId)}
+                  className="w-full bg-black/40 border border-white/[0.08] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:border-white/20 cursor-pointer appearance-none pr-8 transition-colors lg:py-1.5 lg:text-[13px]"
+                >
+                  {TEAM_LIST.map((team) => (
+                    <option key={team.id} value={team.id}>
+                      {team.shortLabel}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none"
+                  strokeWidth={1.75}
+                />
+              </div>
+              <p className="text-[11px] text-zinc-500 leading-snug">
+                {activeTeamMeta.duties}
+              </p>
+            </div>
+          )}
+
+          {/* Category */}
+          <div
+            className={`flex flex-col gap-1.5 ${lockedTeam || readOnly ? "" : "border-t border-white/[0.06] pt-3"}`}
+          >
+            <label className="text-[12px] text-zinc-300">Category</label>
+            <div className="relative">
+              <select
+                value={selectedCategory || ""}
+                onChange={(e) =>
+                  setSelectedCategory(
+                    (e.target.value as ReportCategory) || null,
+                  )
+                }
+                className="w-full bg-black/40 border border-white/[0.08] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:border-white/20 cursor-pointer appearance-none pr-8 transition-colors lg:py-1.5 lg:text-[13px]"
+              >
+                <option value="">All categories</option>
+                {categoriesList.map((c) => (
+                  <option key={c.key} value={c.key}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none"
+                strokeWidth={1.75}
+              />
+            </div>
+          </div>
+
+          {/* Severity */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex justify-between text-[12px] text-zinc-300">
+              <span>Min severity</span>
+              <span className="text-white tabular-nums">{minSeverity}+</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="5"
+              step="1"
+              value={minSeverity}
+              onChange={(e) => setMinSeverity(parseInt(e.target.value))}
+              className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
+            />
+          </div>
+
+          {/* Status */}
+          <div className="flex flex-col gap-1.5 border-t border-white/[0.06] pt-3">
+            <span className="text-[12px] text-zinc-300">Status</span>
+            <div className="grid grid-cols-2 gap-1">
+              {(["open", "dispatched", "in_progress", "closed"] as const).map(
+                (s) => {
+                  const isChecked = activeStatuses.includes(s);
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => handleToggleStatus(s)}
+                      className={`rounded px-2 py-2 text-[12px] text-left transition-colors min-h-[44px] flex items-center lg:py-1 lg:min-h-0 ${
+                        isChecked
+                          ? "bg-white/[0.08] text-white"
+                          : "bg-transparent text-zinc-400 hover:text-white hover:bg-white/[0.03]"
+                      }`}
+                    >
+                      {STATUS_DISPLAY_NAMES[s]}
+                    </button>
+                  );
+                },
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-white/10" />
+
+        {/* Incident Feed list */}
+        <div className="space-y-2">
+          {filteredReports.length === 0 ? (
+            <div
+              className="flex flex-col items-center justify-center text-center p-6 text-zinc-500"
               style={
                 reducedMotion
                   ? undefined
-                  : { animation: "emptyBob 3s ease-in-out infinite" }
+                  : { animation: "fmEmptyIn 200ms cubic-bezier(0.16,1,0.3,1)" }
               }
-            />
-            <p className="text-sm text-zinc-300">No matching reports</p>
-            <p className="text-xs text-zinc-500 mt-1">Adjust filters to see more.</p>
-          </div>
-        ) : (
-          filteredReports.map((report, index) => {
-            const meta = CATEGORY_META[report.category];
-            const isSelected = focusedReportId === report.id;
-            const isMenuOpen = activeRouteMenuId === report.id;
-            const ownerTeamId = categoryToTeam(report.category);
-            const ownerTeam = TEAM_META[ownerTeamId];
-
-            return (
-              <div
-                key={report.id}
-                onClick={() => setFocusedReportId(isSelected ? null : report.id)}
+            >
+              <Sliders
+                className="w-7 h-7 opacity-25 mb-3"
                 style={
                   reducedMotion
                     ? undefined
-                    : {
-                        animation: "fmCardIn 150ms cubic-bezier(0.16,1,0.3,1) both",
-                        animationDelay: `${Math.min(index * 30, 300)}ms`,
-                      }
+                    : { animation: "emptyBob 3s ease-in-out infinite" }
                 }
-                className={`p-3 rounded-lg border transition-[background-color,border-color,transform] cursor-pointer flex items-stretch gap-2 min-h-[44px] lg:min-h-0 active:scale-[0.98] ${
-                  isSelected
-                    ? "bg-white/[0.08] border-white/[0.12]"
-                    : "bg-transparent border-transparent hover:bg-white/[0.03]"
-                }`}
-              >
-                <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[13px] font-medium text-white leading-tight">
-                    {meta.label}
-                  </span>
-                  <span
-                    className={`text-[12px] ${STATUS_TONE[report.status] ?? "text-zinc-400"}`}
-                  >
-                    {STATUS_LABEL[report.status] ?? report.status}
-                  </span>
-                </div>
+              />
+              <p className="text-sm text-zinc-300">No matching reports</p>
+              <p className="text-xs text-zinc-500 mt-1">
+                Adjust filters to see more.
+              </p>
+            </div>
+          ) : (
+            filteredReports.map((report, index) => {
+              const meta = CATEGORY_META[report.category];
+              const isSelected = focusedReportId === report.id;
+              const isMenuOpen = activeRouteMenuId === report.id;
+              const ownerTeamId = categoryToTeam(report.category);
+              const ownerTeam = TEAM_META[ownerTeamId];
 
-                <p className="text-[12px] text-zinc-300 leading-tight line-clamp-1">
-                  {report.address}
-                </p>
+              return (
+                <div
+                  key={report.id}
+                  onClick={() =>
+                    setFocusedReportId(isSelected ? null : report.id)
+                  }
+                  style={
+                    reducedMotion
+                      ? undefined
+                      : {
+                          animation:
+                            "fmCardIn 150ms cubic-bezier(0.16,1,0.3,1) both",
+                          animationDelay: `${Math.min(index * 30, 300)}ms`,
+                        }
+                  }
+                  className={`p-3 rounded-lg border transition-[background-color,border-color,transform] cursor-pointer flex items-stretch gap-2 min-h-[44px] lg:min-h-0 active:scale-[0.98] ${
+                    isSelected
+                      ? "bg-white/[0.08] border-white/[0.12]"
+                      : "bg-transparent border-transparent hover:bg-white/[0.03]"
+                  }`}
+                >
+                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[13px] font-medium text-white leading-tight">
+                        {meta.label}
+                      </span>
+                      <span
+                        className={`text-[12px] ${STATUS_TONE[report.status] ?? "text-zinc-400"}`}
+                      >
+                        {STATUS_LABEL[report.status] ?? report.status}
+                      </span>
+                    </div>
 
-                {/* Auto-assigned team chip — gov only; residents don't route. */}
-                {!readOnly && (
-                  <div
-                    className="inline-flex self-start items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium"
-                    style={{
-                      borderColor: `${ownerTeam.color}66`,
-                      backgroundColor: `${ownerTeam.color}1f`,
-                      color: ownerTeam.color,
-                    }}
-                  >
-                    {ownerTeam.shortLabel}
-                  </div>
-                )}
+                    <p className="text-[12px] text-zinc-300 leading-tight line-clamp-1">
+                      {report.address}
+                    </p>
 
-                <div className="flex items-center justify-between text-[12px] text-zinc-400">
-                  <span
-                    className="inline-flex items-center gap-1"
-                    suppressHydrationWarning
-                  >
-                    <Clock className="w-3 h-3" strokeWidth={1.75} />
-                    {formatTimeAgo(report.created_at)}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Star className="w-3 h-3" strokeWidth={1.75} />
-                    {report.severity}/5
-                  </span>
-                </div>
-
-                {/* Route action — admin dispatch only; hidden in the team view
-                    and the resident community (read-only) view. */}
-                {isSelected && !lockedTeam && !readOnly && (
-                  <div
-                    className="mt-2 pt-2.5 border-t border-white/[0.06] flex flex-col gap-2 relative z-20"
-                    style={
-                      reducedMotion
-                        ? undefined
-                        : { animation: "fmFadeIn 150ms ease-out" }
-                    }
-                  >
-                    {!isMenuOpen ? (
-                      <div className="flex gap-1.5">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRouteToTeam(report.id, ownerTeamId);
-                          }}
-                          disabled={report.status === "closed" || dispatchingId === report.id}
-                          className="flex-1 py-2.5 bg-[#0a84ff] hover:bg-[#0070e0] text-white rounded-md text-[12px] flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] lg:py-1.5 lg:min-h-0"
-                        >
-                          {dispatchingId === report.id ? (
-                            <>
-                              <span className="w-3 h-3 rounded-full border-2 border-white/20 border-t-white animate-spin" />
-                              Dispatching
-                            </>
-                          ) : (
-                            <>
-                              <Send className="w-3 h-3" strokeWidth={1.75} />
-                              Auto-dispatch
-                            </>
-                          )}
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveRouteMenuId(report.id);
-                          }}
-                          disabled={report.status === "closed" || dispatchingId === report.id}
-                          className="px-3 py-2.5 bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 rounded-md text-[12px] flex items-center justify-center gap-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] lg:py-1.5 lg:px-2 lg:min-h-0"
-                          aria-label="Override target team"
-                        >
-                          Override
-                        </button>
-                      </div>
-                    ) : (
+                    {/* Auto-assigned team chip — gov only; residents don't route. */}
+                    {!readOnly && (
                       <div
-                        className="flex flex-col gap-1 bg-black/40 border border-white/[0.08] rounded-md p-2 pointer-events-auto"
+                        className="inline-flex self-start items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium"
+                        style={{
+                          borderColor: `${ownerTeam.color}66`,
+                          backgroundColor: `${ownerTeam.color}1f`,
+                          color: ownerTeam.color,
+                        }}
+                      >
+                        {ownerTeam.shortLabel}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between text-[12px] text-zinc-400">
+                      <span
+                        className="inline-flex items-center gap-1"
+                        suppressHydrationWarning
+                      >
+                        <Clock className="w-3 h-3" strokeWidth={1.75} />
+                        {formatTimeAgo(report.created_at)}
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <Star className="w-3 h-3" strokeWidth={1.75} />
+                        {report.severity}/5
+                      </span>
+                    </div>
+
+                    {/* Route action — admin dispatch only; hidden in the team view
+                    and the resident community (read-only) view. */}
+                    {isSelected && !lockedTeam && !readOnly && (
+                      <div
+                        className="mt-2 pt-2.5 border-t border-white/[0.06] flex flex-col gap-2 relative z-20"
                         style={
                           reducedMotion
                             ? undefined
-                            : { animation: "fmFadeIn 100ms ease-out" }
+                            : { animation: "fmFadeIn 150ms ease-out" }
                         }
                       >
-                        <div className="flex justify-between items-center pb-1 mb-1 text-[12px] text-zinc-400">
-                          <span>Override target team</span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveRouteMenuId(null);
-                            }}
-                            className="p-2 hover:bg-white/[0.06] rounded text-zinc-400 hover:text-white min-h-[44px] min-w-[44px] flex items-center justify-center lg:p-0.5 lg:min-h-0 lg:min-w-0"
-                            aria-label="Close override menu"
-                          >
-                            <X className="w-3 h-3" strokeWidth={1.75} />
-                          </button>
-                        </div>
-                        <div className="flex flex-col gap-0.5 max-h-[18rem] overflow-y-auto custom-scrollbar">
-                          {TEAM_LIST.filter((t) => t.id !== "all").map(
-                            (team) => {
-                              const isOwner = team.id === ownerTeamId;
-                              return (
-                                <button
-                                  key={team.id}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRouteToTeam(report.id, team.id);
-                                  }}
-                                  className="flex items-center gap-2 px-2 py-3 text-left text-[12px] text-zinc-300 hover:bg-white/[0.06] hover:text-white rounded transition-colors min-h-[44px] lg:py-1.5 lg:min-h-0"
-                                >
-                                  <span
-                                    className="h-2 w-2 shrink-0 rounded-full"
-                                    style={{ backgroundColor: team.color }}
+                        {!isMenuOpen ? (
+                          <div className="flex gap-1.5">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRouteToTeam(report.id, ownerTeamId);
+                              }}
+                              disabled={
+                                report.status === "closed" ||
+                                dispatchingId === report.id
+                              }
+                              className="flex-1 py-2.5 bg-[#0a84ff] hover:bg-[#0070e0] text-white rounded-md text-[12px] flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] lg:py-1.5 lg:min-h-0"
+                            >
+                              {dispatchingId === report.id ? (
+                                <>
+                                  <span className="w-3 h-3 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                                  Dispatching
+                                </>
+                              ) : (
+                                <>
+                                  <Send
+                                    className="w-3 h-3"
+                                    strokeWidth={1.75}
                                   />
-                                  <span className="flex-1 truncate">
-                                    {team.shortLabel}
-                                  </span>
-                                  {isOwner && (
-                                    <span className="text-[10px] text-[#0a84ff] uppercase tracking-wide">
-                                      Default
-                                    </span>
-                                  )}
-                                </button>
-                              );
-                            },
-                          )}
-                        </div>
+                                  Auto-dispatch
+                                </>
+                              )}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveRouteMenuId(report.id);
+                              }}
+                              disabled={
+                                report.status === "closed" ||
+                                dispatchingId === report.id
+                              }
+                              className="px-3 py-2.5 bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 rounded-md text-[12px] flex items-center justify-center gap-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] lg:py-1.5 lg:px-2 lg:min-h-0"
+                              aria-label="Override target team"
+                            >
+                              Override
+                            </button>
+                          </div>
+                        ) : (
+                          <div
+                            className="flex flex-col gap-1 bg-black/40 border border-white/[0.08] rounded-md p-2 pointer-events-auto"
+                            style={
+                              reducedMotion
+                                ? undefined
+                                : { animation: "fmFadeIn 100ms ease-out" }
+                            }
+                          >
+                            <div className="flex justify-between items-center pb-1 mb-1 text-[12px] text-zinc-400">
+                              <span>Override target team</span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveRouteMenuId(null);
+                                }}
+                                className="p-2 hover:bg-white/[0.06] rounded text-zinc-400 hover:text-white min-h-[44px] min-w-[44px] flex items-center justify-center lg:p-0.5 lg:min-h-0 lg:min-w-0"
+                                aria-label="Close override menu"
+                              >
+                                <X className="w-3 h-3" strokeWidth={1.75} />
+                              </button>
+                            </div>
+                            <div className="flex flex-col gap-0.5 max-h-[18rem] overflow-y-auto custom-scrollbar">
+                              {TEAM_LIST.filter((t) => t.id !== "all").map(
+                                (team) => {
+                                  const isOwner = team.id === ownerTeamId;
+                                  return (
+                                    <button
+                                      key={team.id}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleRouteToTeam(report.id, team.id);
+                                      }}
+                                      className="flex items-center gap-2 px-2 py-3 text-left text-[12px] text-zinc-300 hover:bg-white/[0.06] hover:text-white rounded transition-colors min-h-[44px] lg:py-1.5 lg:min-h-0"
+                                    >
+                                      <span
+                                        className="h-2 w-2 shrink-0 rounded-full"
+                                        style={{ backgroundColor: team.color }}
+                                      />
+                                      <span className="flex-1 truncate">
+                                        {team.shortLabel}
+                                      </span>
+                                      {isOwner && (
+                                        <span className="text-[10px] text-[#0a84ff] uppercase tracking-wide">
+                                          Default
+                                        </span>
+                                      )}
+                                    </button>
+                                  );
+                                },
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
+                  {readOnly && (
+                    <UpvoteButton
+                      reportId={report.id}
+                      severity={report.severity}
+                      size="sm"
+                      className="self-center shrink-0"
+                    />
+                  )}
                 </div>
-                {readOnly && (
-                  <UpvoteButton
-                    reportId={report.id}
-                    severity={report.severity}
-                    size="sm"
-                    className="self-center shrink-0"
-                  />
-                )}
-              </div>
-            );
-          })
-        )}
+              );
+            })
+          )}
+        </div>
       </div>
-    </div>
-  ), [
-    filteredReports,
-    focusedReportId,
-    activeRouteMenuId,
-    routeNotification,
-    toastLeaving,
-    dispatchingId,
-    reducedMotion,
-    selectedTeam,
-    selectedCategory,
-    minSeverity,
-    activeStatuses,
-    categoriesList,
-    lockedTeam,
-    readOnly,
-    activeTeamMeta,
-    handleRouteToTeam,
-    handleToggleStatus,
-  ]);
+    ),
+    [
+      filteredReports,
+      focusedReportId,
+      activeRouteMenuId,
+      routeNotification,
+      toastLeaving,
+      dispatchingId,
+      reducedMotion,
+      selectedTeam,
+      selectedCategory,
+      minSeverity,
+      activeStatuses,
+      categoriesList,
+      lockedTeam,
+      readOnly,
+      activeTeamMeta,
+      handleRouteToTeam,
+      handleToggleStatus,
+    ],
+  );
 
   return (
     <div className="h-dvh w-full relative overflow-hidden flex bg-black select-none">
@@ -738,7 +788,6 @@ export function FullscreenMapOrchestrator({
         shadowIntensity="none"
         glowIntensity="xs"
       >
-
         {/* Panel header */}
         <div className="flex items-center justify-between shrink-0 mb-3">
           <h2 className="text-[15px] font-semibold text-white">
@@ -750,12 +799,8 @@ export function FullscreenMapOrchestrator({
         </div>
 
         {/* Shared dispatch content — same content as mobile bottom-sheet */}
-        <div className="flex-1 overflow-hidden">
-          {dispatchPanelContent}
-        </div>
-
+        <div className="flex-1 overflow-hidden">{dispatchPanelContent}</div>
       </LiquidGlassCard>
-
     </div>
   );
 }

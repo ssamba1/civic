@@ -209,7 +209,9 @@ export default function ReportPage() {
       } catch (e) {
         // Network/unexpected error — stay on preview, allow retry.
         setError(
-          e instanceof Error ? e.message : "Unexpected error. Please try again.",
+          e instanceof Error
+            ? e.message
+            : "Unexpected error. Please try again.",
         );
         setStep({ name: "preview", photo });
       }

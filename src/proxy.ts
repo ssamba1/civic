@@ -6,7 +6,10 @@ import { type NextRequest, NextResponse } from "next/server";
 const OPEN311_JSON_REWRITES: [RegExp, string][] = [
   [/^\/api\/open311\/v2\/services\.json$/, "/api/open311/v2/services"],
   [/^\/api\/open311\/v2\/requests\.json$/, "/api/open311/v2/requests"],
-  [/^\/api\/open311\/v2\/requests\/([^/]+)\.json$/, "/api/open311/v2/requests/$1"],
+  [
+    /^\/api\/open311\/v2\/requests\/([^/]+)\.json$/,
+    "/api/open311/v2/requests/$1",
+  ],
 ];
 
 const PUBLIC_ROUTES = ["/", "/login", "/report", "/offline"];

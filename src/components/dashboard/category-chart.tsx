@@ -1,10 +1,10 @@
 "use client";
 
+import { BarChart2, X } from "lucide-react";
 import { memo } from "react";
 import type { CategoryCount } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import type { ReportCategory } from "@/lib/types";
-import { BarChart2, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 interface CategoryChartProps {
@@ -22,8 +22,7 @@ function CategoryChartInner({
   // zero in the bar-width math below.
   const maxCount = Math.max(1, ...data.map((d) => d.count));
 
-  const panelClass =
-    "rounded-xl bg-[#1c1c1e] border border-white/[0.06]";
+  const panelClass = "rounded-xl bg-[#1c1c1e] border border-white/[0.06]";
 
   if (data.length === 0) {
     return (
@@ -36,7 +35,9 @@ function CategoryChartInner({
             aria-hidden
           />
           <p className="mt-3 text-sm text-zinc-400">No data yet.</p>
-          <p className="mt-1 text-[13px] text-zinc-500">Try adjusting filters.</p>
+          <p className="mt-1 text-[13px] text-zinc-500">
+            Try adjusting filters.
+          </p>
         </div>
       </div>
     );

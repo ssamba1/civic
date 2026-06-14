@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
 import { Keyboard } from "lucide-react";
+import { useCallback, useEffect } from "react";
 
 interface KeyboardNavProps {
   totalItems: number;
@@ -79,7 +79,7 @@ export function KeyboardNav({
       onDispatch,
       onClose,
       onReject,
-    ]
+    ],
   );
 
   useEffect(() => {

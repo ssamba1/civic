@@ -1,11 +1,11 @@
 import { CATEGORY_META } from "@/lib/dashboard-data";
-import type { ReportCategory, ReportStatus } from "@/lib/types";
 import {
   type DateRangePreset,
-  type ReportFilter,
   DEFAULT_FILTER,
+  type ReportFilter,
 } from "@/lib/filters/types";
 import { isValidTeamId } from "@/lib/teams";
+import type { ReportCategory, ReportStatus } from "@/lib/types";
 
 const VALID_PRESETS: ReadonlySet<DateRangePreset> = new Set([
   "7d",
@@ -16,7 +16,9 @@ const VALID_PRESETS: ReadonlySet<DateRangePreset> = new Set([
   "custom",
 ]);
 
-const VALID_CATEGORIES = new Set(Object.keys(CATEGORY_META) as ReportCategory[]);
+const VALID_CATEGORIES = new Set(
+  Object.keys(CATEGORY_META) as ReportCategory[],
+);
 
 const VALID_STATUSES = new Set<ReportStatus>([
   "open",
@@ -67,7 +69,9 @@ export function parseFilterFromParams(
   const categories = (get("cat") ?? "")
     .split(",")
     .map((s) => s.trim())
-    .filter((s): s is ReportCategory => VALID_CATEGORIES.has(s as ReportCategory));
+    .filter((s): s is ReportCategory =>
+      VALID_CATEGORIES.has(s as ReportCategory),
+    );
 
   const rawSev = Number.parseInt(get("minSev") ?? "", 10);
   const minSeverity = (
@@ -80,7 +84,8 @@ export function parseFilterFromParams(
     .filter((s): s is ReportStatus => VALID_STATUSES.has(s as ReportStatus));
 
   const rawTeam = get("team");
-  const team = rawTeam && isValidTeamId(rawTeam) ? rawTeam : DEFAULT_FILTER.team;
+  const team =
+    rawTeam && isValidTeamId(rawTeam) ? rawTeam : DEFAULT_FILTER.team;
 
   return { preset, from, to, categories, minSeverity, statuses, team };
 }

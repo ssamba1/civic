@@ -26,7 +26,8 @@ export default function Loading() {
             Analytics
           </h1>
           <p className="mt-1.5 text-sm text-zinc-400">
-            Operational signal — what&apos;s shipping, what&apos;s stuck, where it&apos;s happening.
+            Operational signal — what&apos;s shipping, what&apos;s stuck, where
+            it&apos;s happening.
           </p>
         </section>
 

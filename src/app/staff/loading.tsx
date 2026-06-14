@@ -47,23 +47,37 @@ export default function StaffInboxLoading() {
         <table className="w-full min-w-[800px]">
           <thead>
             <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/50">
-              {["Category", "Sev", "Address", "Submitted", "Est", "Materials", "Status", "Photo", ""].map(
-                (h, i) => (
-                  <th key={i} className="px-4 py-3">
-                    {h}
-                  </th>
-                ),
-              )}
+              {[
+                "Category",
+                "Sev",
+                "Address",
+                "Submitted",
+                "Est",
+                "Materials",
+                "Status",
+                "Photo",
+                "",
+              ].map((h, i) => (
+                <th key={i} className="px-4 py-3">
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {Array.from({ length: 8 }).map((_, r) => (
-              <tr key={r} className="border-b border-zinc-100 dark:border-zinc-800/60">
+              <tr
+                key={r}
+                className="border-b border-zinc-100 dark:border-zinc-800/60"
+              >
                 {Array.from({ length: 9 }).map((_, c) => (
                   <td key={c} className="px-4 py-4">
                     <div
                       className="h-4 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800"
-                      style={{ width: c === 2 ? "10rem" : c === 8 ? "1.5rem" : "3.5rem" }}
+                      style={{
+                        width:
+                          c === 2 ? "10rem" : c === 8 ? "1.5rem" : "3.5rem",
+                      }}
                     />
                   </td>
                 ))}

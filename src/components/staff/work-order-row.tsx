@@ -1,32 +1,32 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
 import {
   type AlertTriangle,
-  Zap,
-  Construction,
-  Paintbrush,
-  Trash2,
-  Droplets,
-  TreePine,
-  Wind,
-  Signpost,
+  ChevronRight,
   CircleDot,
+  Clock,
+  Construction,
+  Droplets,
   HelpCircle,
   Lamp,
-  Clock,
-  ChevronRight,
+  Paintbrush,
+  Signpost,
+  Trash2,
+  TreePine,
+  Wind,
+  Zap,
 } from "lucide-react";
-import { cn } from "@/lib/utils/cn";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import { DEMO_REPORTER_ID, isDemoId } from "@/lib/demo-reports";
 import type {
-  Report,
   Classification,
-  WorkOrder,
+  Report,
   ReportCategory,
   ReportStatus,
+  WorkOrder,
 } from "@/lib/types";
+import { cn } from "@/lib/utils/cn";
 import { WorkOrderDetail } from "./work-order-detail";
 
 /**
@@ -85,8 +85,7 @@ const STATUS_STYLES: Record<ReportStatus, string> = {
     "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400",
   closed:
     "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400",
-  merged:
-    "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+  merged: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
   rejected: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400",
 };
 
@@ -152,7 +151,7 @@ export function WorkOrderRow({
         className={cn(
           "cursor-pointer border-b border-zinc-100 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50",
           isSelected && "bg-blue-50/70 dark:bg-blue-900/10",
-          isDemo && "demo-glow"
+          isDemo && "demo-glow",
         )}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
@@ -183,7 +182,7 @@ export function WorkOrderRow({
           <span
             className={cn(
               "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold",
-              sevColor
+              sevColor,
             )}
           >
             {classification.severity}
@@ -226,7 +225,7 @@ export function WorkOrderRow({
           <span
             className={cn(
               "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize",
-              statusStyle
+              statusStyle,
             )}
           >
             {report.status.replace("_", " ")}
@@ -311,7 +310,7 @@ export function WorkOrderCard({
         isSelected
           ? "border-blue-300 bg-blue-50/60 dark:border-blue-700 dark:bg-blue-900/20"
           : "hover:bg-zinc-50 dark:hover:bg-zinc-800/60",
-        isDemo && "demo-glow"
+        isDemo && "demo-glow",
       )}
     >
       {/* Thumbnail */}
@@ -341,7 +340,7 @@ export function WorkOrderCard({
           <span
             className={cn(
               "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-              sevColor
+              sevColor,
             )}
           >
             S{classification.severity}
@@ -349,7 +348,7 @@ export function WorkOrderCard({
           <span
             className={cn(
               "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium capitalize",
-              statusStyle
+              statusStyle,
             )}
           >
             {report.status.replace(/_/g, " ")}
@@ -420,7 +419,7 @@ export function WorkOrderRowControlled({
           "cursor-pointer border-b border-zinc-100 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50",
           isNew && "animate-in fade-in slide-in-from-top-2 duration-300",
           isSelected && "bg-blue-50/70 dark:bg-blue-900/10",
-          isDemo && "demo-glow"
+          isDemo && "demo-glow",
         )}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
@@ -451,7 +450,7 @@ export function WorkOrderRowControlled({
           <span
             className={cn(
               "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold",
-              sevColor
+              sevColor,
             )}
           >
             {classification.severity}
@@ -494,7 +493,7 @@ export function WorkOrderRowControlled({
           <span
             className={cn(
               "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize",
-              statusStyle
+              statusStyle,
             )}
           >
             {report.status.replace("_", " ")}

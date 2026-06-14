@@ -25,8 +25,8 @@ interface Window {
 }
 
 const minuteWindow: Window = { timestamps: [], maxMs: 60_000 };
-const hourWindow: Window   = { timestamps: [], maxMs: 3_600_000 };
-const dayWindow: Window    = { timestamps: [], maxMs: 86_400_000 };
+const hourWindow: Window = { timestamps: [], maxMs: 3_600_000 };
+const dayWindow: Window = { timestamps: [], maxMs: 86_400_000 };
 
 function limit(envKey: string, fallback: number): number {
   const raw = process.env[envKey];
@@ -64,15 +64,27 @@ export function checkAndRecordGeminiCall(): RateLimitResult {
 
   if (minuteWindow.timestamps.length >= rpm) {
     const retryAfterMs = minuteWindow.timestamps[0] + minuteWindow.maxMs - now;
-    return { allowed: false, retryAfterMs, reason: `per-minute limit (${rpm} rpm) exceeded` };
+    return {
+      allowed: false,
+      retryAfterMs,
+      reason: `per-minute limit (${rpm} rpm) exceeded`,
+    };
   }
   if (hourWindow.timestamps.length >= rph) {
     const retryAfterMs = hourWindow.timestamps[0] + hourWindow.maxMs - now;
-    return { allowed: false, retryAfterMs, reason: `per-hour limit (${rph} rph) exceeded` };
+    return {
+      allowed: false,
+      retryAfterMs,
+      reason: `per-hour limit (${rph} rph) exceeded`,
+    };
   }
   if (dayWindow.timestamps.length >= rpd) {
     const retryAfterMs = dayWindow.timestamps[0] + dayWindow.maxMs - now;
-    return { allowed: false, retryAfterMs, reason: `daily limit (${rpd} rpd) exceeded` };
+    return {
+      allowed: false,
+      retryAfterMs,
+      reason: `daily limit (${rpd} rpd) exceeded`,
+    };
   }
 
   minuteWindow.timestamps.push(now);
@@ -89,11 +101,11 @@ export function getGeminiRateLimitStats() {
   prune(hourWindow);
   prune(dayWindow);
   return {
-    callsLastMinute:  minuteWindow.timestamps.length,
-    callsLastHour:    hourWindow.timestamps.length,
-    callsLastDay:     dayWindow.timestamps.length,
-    limitPerMinute:   limit("GEMINI_RPM", 40),
-    limitPerHour:     limit("GEMINI_RPH", 300),
-    limitPerDay:      limit("GEMINI_RPD", 1500),
+    callsLastMinute: minuteWindow.timestamps.length,
+    callsLastHour: hourWindow.timestamps.length,
+    callsLastDay: dayWindow.timestamps.length,
+    limitPerMinute: limit("GEMINI_RPM", 40),
+    limitPerHour: limit("GEMINI_RPH", 300),
+    limitPerDay: limit("GEMINI_RPD", 1500),
   };
 }

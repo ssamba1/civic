@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createLogger } from "@/lib/logger";
 import { createSSRClient } from "@/lib/db/ssr-client";
+import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("[logout-api]");
 

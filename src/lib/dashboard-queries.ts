@@ -122,13 +122,31 @@ interface ViewRow {
 
 const ViewRowSchema = z.object({
   id: z.string(),
-  category: z.enum([
-    "pothole", "streetlight", "downed_sign", "graffiti",
-    "illegal_dump", "water_leak", "sidewalk_damage", "tree_down",
-    "debris", "drainage", "faded_signage", "other"
-  ] as const).nullable(),
+  category: z
+    .enum([
+      "pothole",
+      "streetlight",
+      "downed_sign",
+      "graffiti",
+      "illegal_dump",
+      "water_leak",
+      "sidewalk_damage",
+      "tree_down",
+      "debris",
+      "drainage",
+      "faded_signage",
+      "other",
+    ] as const)
+    .nullable(),
   severity: z.number().nullable(),
-  status: z.enum(["open", "dispatched", "in_progress", "closed", "merged", "rejected"] as const),
+  status: z.enum([
+    "open",
+    "dispatched",
+    "in_progress",
+    "closed",
+    "merged",
+    "rejected",
+  ] as const),
   address: z.string().nullable(),
   lng: z.number().nullable(),
   lat: z.number().nullable(),
