@@ -1,6 +1,6 @@
 # Dead Code Audit Report
 
-**Summary:** Found **14 P0 dead exports** (functions/types exported but never imported), **3 P0 dead files** (complete files with no imports), **3 P1 privacy/infrastructure functions** (exported but unused), and **stray repo-root artifacts** (build files, backup CSVs, untracked documentation). Most critical: privacy operations (`upload`, `signed-url`, `audit`) are exported but unreachable, creating a false sense of functionality. Recommend: remove dead exports (1-2 min), delete orphaned files (5 min), and clean up repo-root artifacts (2 min).
+**Summary:** Found **15 P0 dead exports** (functions/types exported but never imported), **3 P0 dead files** (complete files with no imports), **3 P1 privacy/infrastructure functions** (exported but unused), and **stray repo-root artifacts** (build files, backup CSVs, untracked documentation). Most critical: privacy operations (`upload`, `signed-url`, `audit`) are exported but unreachable, creating a false sense of functionality. Recommend: remove dead exports (1-2 min), delete orphaned files (5 min), and clean up repo-root artifacts (2 min).
 
 ## Findings
 
@@ -20,6 +20,37 @@
 | F012 | src/components/analytics/bento-primitives.tsx | P0 | `useBentoMotionStyles` exported, never imported outside component. Hook exported but not reused. | Make private (remove export); only used internally. |
 | F013 | src/components/landing/civic-globe.tsx:36 | P0 | `CivicGlobe` component exported, never imported. Orphaned globe visualization. | Delete export or file entirely if not used on landing page. |
 | F014 | src/components/landing/shader-hero.tsx:52 | P0 | `ShaderHero` component exported, never imported. Dead hero component. | Delete export or file entirely; replace with active WaveHero if needed. |
+| F015 | src/lib/dashboard-data.ts:78 | P0 | `Municipality` interface exported, never imported. Type used only for internal MUNICIPALITIES array. | Delete export; internal use only. |
+
+## Additional Findings
+
+### Duplicate Constants (P2 Code Duplication)
+
+**Bucket names duplicated across 4 files:**
+```
+PUBLIC_BUCKET = "photos-public"
+RAW_BUCKET = "photos-raw"
+```
+
+Defined in:
+- src/lib/privacy/audit.ts (DEAD)
+- src/lib/privacy/signed-url.ts (DEAD)
+- src/lib/privacy/upload.ts (DEAD)
+- src/app/report/actions.ts (LIVE)
+
+**Why:** Privacy module exports are orphaned, so their bucket constants are never used. The canonical definitions are in actions.ts. After deleting dead privacy files, consider consolidating bucket names to a shared constant (e.g., `src/lib/storage-buckets.ts`) to avoid redefinition.
+
+### Test Coverage Gap (P2 Quality)
+
+**Coverage by file count:** 13 test files for 132 source files (~10% coverage by file count).
+
+Test breakdown:
+- src/lib/ai/: 4 test files (classify-pipeline, gemini, reasoning-ai, retry, work-order-rules)
+- src/lib/: 4 test files (dashboard-queries, demo-auth, task-completion, rate-limit)
+- src/lib/image/: 1 test file (sniff-mime)
+- No test files for: components/, privacy/, filters/, teams, categories, delegations, notifications, upvotes, CSAT, resident-data, analytics-data, dashboard-data, open311, etc.
+
+**Risk:** Changes to untest ed business logic (team routing, category overrides, resident data transformations) may break silently.
 
 ## Details
 
@@ -159,11 +190,12 @@ export async function uploadReportPhotos(
 
 | Category | Count | Severity |
 |----------|-------|----------|
-| Dead exports (src/lib) | 8 | P0 |
+| Dead exports (src/lib) | 9 | P0 |
 | Dead exports (src/components) | 3 | P0 |
+| Dead exports (types) | 3 | P0 |
 | Dead privacy functions | 3 | P1 |
 | Stray repo artifacts | 7 | P2 |
-| **Total** | **21** | — |
+| **Total** | **25** | — |
 
 ## Verified Clean (No Dead Code Found)
 

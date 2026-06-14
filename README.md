@@ -13,17 +13,20 @@ Residents photograph broken infrastructure — potholes, downed trees, graffiti,
 | Feature | Status |
 |---|---|
 | Photo capture + client-side face/plate blur | ✅ |
-| AI classification (Gemini 2.5 Flash, structured JSON) | ✅ |
+| AI classification (Gemini 2.5 Flash, structured JSON, sync/async modes) | ✅ |
 | Work order generation + department routing | ✅ |
 | Staff inbox with keyboard nav | ✅ |
-| Open311 GeoReport v2 API | ✅ |
+| Open311 GeoReport v2 API (GET + POST) | ✅ |
 | City dashboard (stats, category chart, map) | ✅ |
 | Browse + filter reports | ✅ |
 | Anonymous submit → upgrade to account | ✅ |
 | AI reasoning endpoint (anon-accessible) | ✅ |
-| Upvote persistence + triggers | 🟠 migration pending |
-| Cost + SLA in staff detail | 🟠 wired, not persisted |
-| Scoreboard / neighborhood equity view | 🔴 not built |
+| Citizen verification (confirmed/disputed votes) | ✅ |
+| Upvote/like persistence | 🔴 not built |
+| SLA targets + cost estimation | ✅ |
+| Neighborhood equity view (top neighborhoods, by-neighborhood stats) | ✅ |
+| Scoreboard (city benchmarks, trend comparison) | 🔴 not built |
+| Email status notifications (via Resend) | ✅ |
 | Web push notifications | 🔴 not built |
 | Offline submit (IndexedDB + Background Sync) | 🔴 not built |
 
@@ -62,7 +65,16 @@ SUPABASE_SERVICE_ROLE_KEY=
 GEMINI_API_KEY=
 ```
 
-Optional: `INTERNAL_CLASSIFY_SECRET`, `SENTRY_DSN`
+**Optional env vars**:
+- `INTERNAL_CLASSIFY_SECRET` — auth for internal AI classification calls
+- `SENTRY_DSN` — error reporting
+- `OPEN311_API_KEY` — auth for external Open311 POST requests
+- `OPEN311_SYSTEM_USER_ID` — system user UUID for Open311-created reports
+- `NEXT_PUBLIC_ASYNC_CLASSIFY` — set to `"1"` to defer classification to client subscription (default: sync)
+- `RESEND_API_KEY`, `NOTIFY_FROM_EMAIL`, `NOTIFY_DISABLE` — email notifications
+- `NEXT_PUBLIC_DEMO_MODE`, `NEXT_PUBLIC_DEMO_SITE_URL`, `NEXT_PUBLIC_TESTING_SITE_URL` — demo/live mode
+- `NEXT_PUBLIC_SITE_URL` — site origin for email deep-links
+- `DEV_AUTH_BYPASS` — dev-only auth bypass (never set in production)
 
 ---
 
@@ -86,12 +98,18 @@ Optional: `INTERNAL_CLASSIFY_SECRET`, `SENTRY_DSN`
 | `GET /api/open311/v2/services` | Public | Report categories (Open311) |
 | `GET /api/open311/v2/requests` | Public | List/filter reports (GeoReport v2) |
 | `GET /api/open311/v2/requests/[id]` | Public | Single report (Open311) |
+| `POST /api/open311/v2/requests` | Open311 API key | Create service request from external Open311 client |
+| `GET /api/auth/logout` | Session | Sign out current user |
 
 ---
 
 ## Data Model
 
-Core tables: `cities`, `users`, `reports`, `classifications`, `work_orders`, `assets`, `verifications`, `audit_log`
+**User-facing tables**: `cities`, `users`, `reports`, `classifications`, `work_orders`, `notifications`
+
+**Supporting tables**: `assets`, `verifications`, `merges`, `work_order_comments`, `classification_feedback`, `error_log`, `audit_log`
+
+**Fields**: `reports.tags` (array) for categorization; `classifications` includes severity (1–5), confidence, hazard radius, cost estimate reasoning
 
 Report categories: `pothole · streetlight · downed_sign · graffiti · illegal_dump · water_leak · sidewalk_damage · tree_down · debris · drainage · faded_signage · other`
 

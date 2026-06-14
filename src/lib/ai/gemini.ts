@@ -98,13 +98,13 @@ export async function classifyPhoto(
     if (!validation.success) {
       return {
         ok: false,
-        error: `Classification validation failed: ${JSON.stringify(validation.error.issues)}`,
+        error: `Classification validation failed: ${JSON.stringify(validation.error.issues)} (received: ${typeof parsed === "object" ? JSON.stringify(parsed).slice(0, 300) : String(parsed).slice(0, 300)})`,
       };
     }
 
     return {
       ok: true,
-      data: { classification: validation.data as Classification, rawText },
+      data: { classification: validation.data, rawText },
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

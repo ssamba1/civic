@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from "node:crypto";
-import { type NextRequest, NextResponse } from "next/server";
+import { after, type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
@@ -278,11 +278,15 @@ export async function POST(request: NextRequest) {
     if (process.env.INTERNAL_CLASSIFY_SECRET) {
       classifyHeaders["x-internal-key"] = process.env.INTERNAL_CLASSIFY_SECRET;
     }
-    fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/api/ai/classify`, {
-      method: "POST",
-      headers: classifyHeaders,
-      body: JSON.stringify({ report_id: report.id }),
-    });
+    after(() =>
+      fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/api/ai/classify`, {
+        method: "POST",
+        headers: classifyHeaders,
+        body: JSON.stringify({ report_id: report.id }),
+      }).catch((err) => {
+        logger.error("Classify trigger failed", err, { reportId: report.id });
+      }),
+    );
 
     // Return Open311 POST response — token = service_request_id for simplicity
     const responseBody = [

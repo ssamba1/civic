@@ -1,6 +1,6 @@
 # Magic Values Audit
 
-**Summary:** 38 total findings across 18 files. Critical issues: 5 values duplicated 2+ files (city coords, slug, bucket names, fallback severity—drift risk); priority score weights unextracted; status colors hardcoded as bare RGB tuples; time constants scattered 8+ files. Single most important: consolidate city config (Cumming coords/slug appear 4+ times).
+**Summary:** 43 total findings across 21 files. Critical: 8 values duplicated 2+ files (city coords 4×, slug 3×, buckets 2×, status colors 3×, time constants 3×, rate limits 2×, TTR formula 2×, storage keys 3×—drift risk). P0/P1: priority weights unextracted, status colors scattered (RGB + hex + hardcoded), SLA/repair costs/MTTR hardcoded, confidence thresholds in prompt, synthetic TTR scattered. Single most important: 4-part consolidation (city, time, colors, policies) + extract all business logic formulas (priority, SLA, TTR, costs, MTTR target).
 
 ---
 
@@ -36,6 +36,21 @@
 | M26 | `src/lib/privacy/blur.ts:29, 38-40` | ✓ | BLUR_RADIUS=24, MAX_OUTPUT_EDGE=1280, quality=0.8 already named | No action needed |
 | M27 | `src/lib/privacy/retention.ts:13, 16` | ✓ | RAW_PHOTO_TTL_DAYS=30, RETENTION_CRON_SCHEDULE="0 3 *" already named | No action needed |
 | M28 | `src/app/report/page.tsx:42` | ✓ | CLASSIFY_PENDING_TIMEOUT_MS=20000 already named | Reference in other files if using same timeout |
+| M29 | `src/lib/delegation-history.ts:17-18` | P1 | HOUR_MS=3_600_000 duplicated (also in derive.ts); DISPATCH_OFFSET_MS named but pattern shows time duplication | Extract HOUR_MS from here; use TIME_MS.HOUR from centralized module |
+| M30 | `src/app/api/open311/v2/requests/[id]/route.ts:34-35` | P1 | Rate limit duplicate: windowMs=60_000, max=60 (same as list endpoint M8) | Consolidate both endpoints to shared OPEN311_RATE_LIMIT config |
+| M31 | `src/lib/ai/prompt.ts:46-49` | P1 | Confidence thresholds hardcoded in text: 0.90, 0.70, 0.50, <0.50 (semantic but unextracted) | Extract `CONFIDENCE_THRESHOLDS = { clear: 0.90, visible: 0.70, inferred: 0.50 }` to config |
+| M32 | `src/lib/delegation-history.ts:45` | P1 | Synthetic TTR formula `12 + severity * 18` hardcoded (same as dashboard-data, but unextracted) | Extract `SYNTHETIC_TTR_BASE=12`, `SYNTHETIC_TTR_MULTIPLIER=18` to shared config |
+| M33 | `src/components/analytics/analytics-interactive.tsx:82, 83` | P2 | Animation: opacity=0.6, transition=200ms, easing=cubic-bezier(0.22,1,0.36,1) hardcoded | Extract to `DEFERRED_UPDATE_CONFIG` with semantic names |
+| M34 | `src/components/analytics/analytics-interactive.tsx:111` | P2 | Slice(0, 20) hardcoded for recent reports; no constant | Extract `RECENT_REPORTS_LIMIT = 20` or check if duplicate of M8 pagination |
+| M35 | `src/components/map/map-popup.tsx:19-26` | P1 | STATUS_TONE colors as hex duplicates M6 (blue #0a84ff, green #30d158, etc.) — 3rd copy scattered | Consolidate all STATUS_COLORS to single config module |
+| M36 | `src/components/map/map-popup.tsx:43` | P2 | "Just now" threshold 60_000 ms hardcoded; no constant | Extract `RECENT_ACTIVITY_THRESHOLD_MS = 60_000` to time constants |
+| M37 | `src/components/map/map-popup.tsx:56` | P2 | Cost variance formula: (hash % 40) - 20 — magic numbers 40, 20 for range | Extract `COST_VARIANCE_RANGE = { max: 40, offset: 20 }` to config |
+| M38 | `src/components/map/map-popup.tsx:58-87` | P1 | Hardcoded base repair costs by category (450 water_leak, 350 drainage, 280 sidewalk, 180 pothole, etc.) | Extract `REPAIR_BASE_COSTS: Record<Category, USD>` to config; consider env override for city tuning |
+| M39 | `src/components/map/map-popup.tsx:98-100` | P1 | SLA window thresholds hardcoded: severity≥5→2h, ≥4→12h, ≥3→48h (policy-driven) | Extract `SLA_WINDOWS: Record<Severity, Hours>` to config; document why per-severity |
+| M40 | `src/lib/category-overrides.ts:31-32` | P2 | Storage keys `"civic.routing_overrides.v1"` and `"civic.routing_override_history.v1"` hardcoded | Add to centralized STORAGE_KEYS config (M16) |
+| M41 | `src/components/analytics/analytics-bento.tsx:125` | P1 | MTTR_TARGET_HOURS=48 hardcoded; policy/SLA value should be in config | Extract to `src/lib/config/policies.ts` with SLA_WINDOWS (M39) |
+| M42 | `src/components/analytics/analytics-bento.tsx:480` | P2 | Label spacing: Math.floor(innerW / 70) — hardcoded 70px for label width calculation | Extract `HEATMAP_LABEL_WIDTH_MIN = 70` to UI config |
+| M43 | `src/lib/custom-categories.ts:29` | P2 | Storage key `"civic.custom_categories.v1"` hardcoded | Add to centralized STORAGE_KEYS config (M16) |
 
 ---
 
@@ -240,6 +255,108 @@ gl.uniform3f(uColor1, SHADER_HERO.colors.primary.r, SHADER_HERO.colors.primary.g
 
 ---
 
+### P1: Status Colors Scattered in 3 Locations
+
+Status colors as hex appear in:
+- `src/components/map/report-map.tsx:95-99` → RGB arrays [48,209,88]
+- `src/components/map/map-popup.tsx:19-26` → hex `#ff9f0a`, `#0a84ff`, `#5ac8fa`, `#30d158`
+- `src/app/city/[slug]/analytics/error.tsx:18` → `#0a84ff`, `#0070e0` (error CTA)
+
+**Why critical:** Same colors unidentified in 3 forms (RGB vs hex). WCAG audit impossible. Theming breaks. If design system changes, 3 edits needed.
+
+**Fix:**
+```typescript
+// src/lib/config/colors.ts — consolidate
+export const STATUS_COLORS = {
+  open: { rgb: [255, 159, 10], hex: "#ff9f0a", label: "Orange" },
+  dispatched: { rgb: [10, 132, 255], hex: "#0a84ff", label: "Civic Blue" },
+  in_progress: { rgb: [90, 200, 250], hex: "#5ac8fa", label: "Light Blue" },
+  closed: { rgb: [48, 209, 88], hex: "#30d158", label: "Green" },
+  merged: { rgb: [134, 134, 139], hex: "#86868b", label: "Gray" },
+  rejected: { rgb: [255, 69, 58], hex: "#ff453a", label: "Red" },
+} as const;
+
+// All files import and use STATUS_COLORS[status].hex or .rgb
+```
+
+---
+
+### P1: Repair Costs & SLA Hardcoded by Category
+
+`src/components/map/map-popup.tsx:58-87` (estimateRepairCost):
+- water_leak: 450, drainage: 350, sidewalk: 280, pothole: 180, streetlight: 120, tree: 150, dump: 220, graffiti: 65, debris: 80
+- Variance: (hash % 40) - 20
+
+`src/components/map/map-popup.tsx:98-100` (slaWindow):
+- severity ≥5: <2h, ≥4: <12h, ≥3: <48h
+
+**Why critical:** Repair costs are bid-influenced; SLAs are legal/operational policy. Hardcoded means:
+- City budget review requires code edit
+- Escalation to next city requires manual port
+- Policy change (e.g., "pothole SLA was 48h now 24h") is buried in component
+
+**Fix:**
+```typescript
+// src/lib/config/policies.ts
+export const REPAIR_BASE_COSTS: Record<ReportCategory, number> = {
+  water_leak: 450,
+  drainage: 350,
+  sidewalk_damage: 280,
+  pothole: 180,
+  streetlight: 120,
+  tree_down: 150,
+  illegal_dump: 220,
+  graffiti: 65,
+  debris: 80,
+  downed_sign: 45,    // Missing from popup
+  faded_signage: 90,  // Missing from popup
+  other: 100,
+} as const;
+
+export const SLA_WINDOWS: Record<number, string> = {
+  5: "< 2 hours",
+  4: "< 12 hours",
+  3: "< 48 hours",
+  2: "< 1 week",
+  1: "< 2 weeks",
+} as const;
+
+export const COST_VARIANCE = { max: 40, offset: 20 } as const;
+
+// map-popup.tsx
+const total = REPAIR_BASE_COSTS[category] * severity + variance;
+const sla = SLA_WINDOWS[Math.ceil(severity)] ?? "Contact admin";
+```
+
+---
+
+### P1: Synthetic TTR Formula Duplicated
+
+`12 + severity * 18` appears in:
+- `src/lib/dashboard-data.ts:?` (in demo generation)
+- `src/lib/delegation-history.ts:45` (buildTimeline)
+- Comments in `src/lib/filters/derive.ts:24`
+
+**Why critical:** Formula is opaque (why 12 base? why ×18 severity multiplier?). No single source of truth.
+
+**Fix:**
+```typescript
+// src/lib/config/policies.ts
+export const SYNTHETIC_TTR_CONFIG = {
+  baseHours: 12,      // Minimum time for any repair
+  severityMultiplier: 18, // Hours added per severity point
+} as const;
+
+export function estimateTTRHours(severity: number): number {
+  return SYNTHETIC_TTR_CONFIG.baseHours + severity * SYNTHETIC_TTR_CONFIG.severityMultiplier;
+}
+
+// dashboard-data.ts & delegation-history.ts
+const hours = estimateTTRHours(report.severity);
+```
+
+---
+
 ## Root Causes & Recommendations
 
 ### 1. **Time Constants Duplication** (CRITICAL)
@@ -377,47 +494,77 @@ const SYNTHETIC_TTR_SEVERITY_MULTIPLIER = 18;
 
 ### Critical (unblocks scale)
 
-1. **M12: Time constants** — consolidate DAY_MS duplication across 8 files → `src/lib/time-constants.ts`
-   - Affects: rate-limiter, retention cron, analytics, filters
-   - Effort: 1h (create file, update 8 imports)
-   - Payoff: eliminates drift risk; makes time-related tuning auditable
+1. **M12: Time constants** — consolidate DAY_MS, HOUR_MS duplication across 8+ files → `src/lib/time-constants.ts`
+   - Affects: rate-limiter, retention cron, analytics, filters, delegation-history (M29)
+   - Effort: 1.5h (create file, update 9 imports, verify all usages)
+   - Payoff: eliminates drift risk; makes time-related tuning auditable; foundation for M30 consolidation
 
-2. **M1/M2/M3: City config consolidation** → `src/lib/config/locations.ts`
-   - Coordinates appear 4 times with precision variation; slug 3 times
-   - Effort: 1h (extract + update 5 imports)
-   - Payoff: demo→prod migrations safe; single city source of truth
+2. **M1/M2/M3: City config** → `src/lib/config/locations.ts`
+   - Coordinates 4× with precision variation; slug 3×; storage buckets 2×
+   - Effort: 1h (extract + update 6 imports)
+   - Payoff: demo→prod migrations safe; single city source of truth; unblocks multi-city expansion
 
-3. **M4: Priority weights extraction** → `src/lib/ai/config.ts`
-   - Formula is business policy (severity×2, emergency×50); no comments
+3. **M4: Priority weights** → `src/lib/ai/config.ts`
+   - Business policy: severity×2, traffic×1.5, school×3, emergency×50 (unextracted, no audit trail)
    - Effort: 30m (extract 5 constants, 1 import)
-   - Payoff: audit trail; product can tune without eng; unit testable formula
+   - Payoff: product can tune without eng; unit-testable formula; compliance-auditable
+
+4. **M38/M39/M32: Business policy consolidation** → `src/lib/config/policies.ts` (NEW)
+   - Repair costs (450 water, 350 drainage, etc.), SLA windows (5→2h, 4→12h), TTR formula (12+sev×18) scattered
+   - Effort: 1h (extract 3 objects, update 4 call sites)
+   - Payoff: city budgets/SLAs tunable without code; compliance-documentable; new-city onboarding single file
 
 ### High (improves readability)
 
-4. **M6/M7: Status colors → config**
-   - [48,209,88] unexplained; precision mismatch vs hex
-   - Effort: 1h (extract, add hex equivalents, WCAG audit)
+5. **M6/M35/M7: Status colors consolidation** → `src/lib/config/colors.ts`
+   - Duplicated in 3 forms: RGB arrays, hex strings, hardcoded in popup (M6/M35)
+   - RGB [48,209,88] unexplained; hex vs RGB mismatch; no WCAG audit
+   - Effort: 1.5h (consolidate, map to semantic names, add hex equivalents)
+   - Payoff: theming enabled, WCAG audit possible, single-file update for design changes
 
-5. **M5: Fallback classification consolidation**
-   - Duplicated in 3 files with slight variations (severity=3, subcategory difference)
+6. **M5: Fallback classification** → `src/lib/ai/fallback.ts`
+   - Duplicated in 3 files with variations (severity=3, subcategory="unclassified" vs "needs review")
    - Effort: 30m (extract function, update 3 call sites)
 
-6. **M9: Shader parameters → config**
-   - 13 magic numbers in GLSL + 2 unidentified RGB colors
-   - Effort: 1.5h (extract, document intent for each param)
+7. **M9: Shader parameters** → `src/lib/config/shader.ts`
+   - 13 magic numbers in GLSL (wave freq, noise params, fade) + 2 RGB colors unidentified
+   - Effort: 1.5h (extract, document intent for each param, map colors to design system)
 
-7. **M23: Seeded RNG deduplication**
-   - Constants (127.1, 311.7, 43758.5453) in dashboard-data, analytics-data, resident-data
-   - Effort: 1h (consolidate to seeded-random.ts, update 3 imports)
+8. **M23: Seeded RNG consolidation** → `src/lib/seeded-random.ts`
+   - Constants (127.1, 311.7, 43758.5453) in 3 files (dashboard-data, analytics-data, resident-data)
+   - Effort: 1h (consolidate, update 3 imports, export shared function)
 
 ### Medium (tech debt)
 
-8. **M8: Open311 pagination & rate limits** → config object
-9. **M10: Map config** (tileSize, maxzoom, fade) → `src/lib/config/map.ts`
-10. **M11: Map center hardcode** — remove fallback overrides, use KNOWN_CITIES only
-11. **M14/M15: Privacy config** (maxDetectedFaces, blur region logic) → privacy config
-12. **M13: Gemini rate limit defaults** — document why 40/300/1500
-13. **M16–M22: Storage keys, tags, chunk size, defaults** — group in config modules
+9. **M8/M30: Open311 rate limit consolidation** → `src/lib/config/api.ts`
+   - Duplicated in list + get endpoints: windowMs=60_000, max=60
+   - Effort: 30m (extract, create shared const, update 2 routes)
+
+10. **M41: MTTR target** → `src/lib/config/policies.ts`
+    - MTTR_TARGET_HOURS=48 hardcoded in analytics card; part of M39 consolidation
+    - Effort: included in M39 (add to policies object)
+
+11. **M10: Map config** → `src/lib/config/map.ts`
+    - tileSize=128, maxzoom=19, raster-fade-duration=100ms
+    - Effort: 1h (extract, update 2 call sites)
+
+12. **M11: Map center hardcode** — remove fallback overrides, use KNOWN_CITIES only
+    - Effort: 30m (grep for fallback, replace with KNOWN_CITIES lookup)
+
+13. **M14/M15: Privacy config** → `src/lib/privacy/config.ts`
+    - maxDetectedFaces=20, blur-region-thirds=3
+    - Effort: 30m (extract, update 2 call sites)
+
+14. **M13: Gemini rate limit defaults** — document why 40/300/1500
+    - Effort: 15m (add comment to rate-limiter.ts explaining rationale)
+
+15. **M16–M22, M40, M43: Storage keys, tags, chunk size** → `src/lib/config/storage.ts`
+    - Consolidate 5 storage keys + preset tags + chunk size
+    - Effort: 1h (create config object, update 6 call sites)
+
+16. **M42: Heatmap label width** → `src/lib/config/ui.ts`
+    - Math.floor(innerW / 70) → extract HEATMAP_LABEL_MIN_WIDTH=70
+    - Effort: 15m (low impact, can batch with other UI constants)
 
 ### Low (one-off cleanups when touching files)
 

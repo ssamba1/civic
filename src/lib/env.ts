@@ -5,11 +5,23 @@ const serverEnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   GEMINI_API_KEY: z.string().min(1),
   SENTRY_DSN: z.string().optional(),
+  INTERNAL_CLASSIFY_SECRET: z.string().optional(),
+  OPEN311_API_KEY: z.string().optional(),
+  OPEN311_SYSTEM_USER_ID: z.string().optional(),
+  RESEND_API_KEY: z.string().optional(),
+  NOTIFY_FROM_EMAIL: z.string().optional(),
+  NOTIFY_DISABLE: z.string().optional(),
+  DEV_AUTH_BYPASS: z.string().optional(),
 });
 
 const clientEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+  NEXT_PUBLIC_DEMO_MODE: z.string().optional(),
+  NEXT_PUBLIC_DEMO_SITE_URL: z.string().optional(),
+  NEXT_PUBLIC_TESTING_SITE_URL: z.string().optional(),
+  NEXT_PUBLIC_SITE_URL: z.string().optional(),
+  NEXT_PUBLIC_ASYNC_CLASSIFY: z.string().optional(),
 });
 
 function parseServerEnv() {
@@ -19,6 +31,13 @@ function parseServerEnv() {
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
       GEMINI_API_KEY: process.env.GEMINI_API_KEY,
       SENTRY_DSN: process.env.SENTRY_DSN,
+      INTERNAL_CLASSIFY_SECRET: process.env.INTERNAL_CLASSIFY_SECRET,
+      OPEN311_API_KEY: process.env.OPEN311_API_KEY,
+      OPEN311_SYSTEM_USER_ID: process.env.OPEN311_SYSTEM_USER_ID,
+      RESEND_API_KEY: process.env.RESEND_API_KEY,
+      NOTIFY_FROM_EMAIL: process.env.NOTIFY_FROM_EMAIL,
+      NOTIFY_DISABLE: process.env.NOTIFY_DISABLE,
+      DEV_AUTH_BYPASS: process.env.DEV_AUTH_BYPASS,
     });
   } catch (err) {
     const issues =
@@ -50,5 +69,10 @@ export function getClientEnv() {
   return clientEnvSchema.parse({
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_DEMO_MODE: process.env.NEXT_PUBLIC_DEMO_MODE,
+    NEXT_PUBLIC_DEMO_SITE_URL: process.env.NEXT_PUBLIC_DEMO_SITE_URL,
+    NEXT_PUBLIC_TESTING_SITE_URL: process.env.NEXT_PUBLIC_TESTING_SITE_URL,
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    NEXT_PUBLIC_ASYNC_CLASSIFY: process.env.NEXT_PUBLIC_ASYNC_CLASSIFY,
   });
 }

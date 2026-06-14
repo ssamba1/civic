@@ -54,6 +54,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // Validate UUID format to prevent malformed IDs from reaching the database
+    const uuidRegex = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
+    if (!uuidRegex.test(reportId)) {
+      return NextResponse.json(
+        { error: "Invalid report_id format" },
+        { status: 400 },
+      );
+    }
+
     // Object-level authorization. The pipeline runs under the service-role
     // client (RLS-bypassing), so an authenticated caller must NOT be allowed to
     // re-classify an arbitrary report. Gate the non-internal path with an

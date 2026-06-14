@@ -5,15 +5,16 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { DemoSignIn } from "@/components/auth/demo-sign-in";
+import { DEMO_MODE } from "@/lib/demo-mode";
 import { createBrowserSupabase } from "@/lib/db/browser-client";
 
 type Mode = "signin" | "signup";
 
-// DEMO ONLY: in dev, prefill a known admin so clicking "Sign in" just works.
-// Never active in production builds.
-const DEV_PREFILL = process.env.NODE_ENV !== "production";
-const DEV_EMAIL = process.env.NODE_ENV !== "production" ? "admin@civicdemo.com" : "";
-const DEV_PASSWORD = process.env.NODE_ENV !== "production" ? "civic-admin-2026" : "";
+// DEMO ONLY: in demo builds, offer demo persona picker (DemoSignIn component).
+// Production builds hide demo credentials entirely.
+const DEV_PREFILL = false;
+const DEV_EMAIL = "";
+const DEV_PASSWORD = "";
 
 export default function LoginForm() {
   const router = useRouter();

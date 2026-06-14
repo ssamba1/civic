@@ -5,9 +5,12 @@ import { after } from "next/server";
 // original 8-item local list (adds debris/drainage/faded_signage/other).
 import { classificationSchema } from "@/lib/ai/classification-schema";
 import { createServerClient } from "@/lib/db/client";
+import { createLogger } from "@/lib/logger";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { notifyReportStatus } from "@/lib/notify/status-notify";
 import type { ReportCategory, Result, WorkOrderWithDetails } from "@/lib/types";
+
+const logger = createLogger("[staff-actions]");
 
 const STAFF_ROLES = ["staff_dispatcher", "staff_supervisor", "admin"] as const;
 
@@ -81,7 +84,13 @@ export async function dispatchWorkOrder(
 
   // Out-of-band notify (acknowledged). Non-blocking: a delivery miss must never
   // fail the dispatch the staffer just made.
-  after(() => notifyReportStatus(wo.report_id, "dispatched"));
+  after(async () => {
+    try {
+      await notifyReportStatus(wo.report_id, "dispatched");
+    } catch (err) {
+      logger.error("Dispatch notification failed", err, { reportId: wo.report_id });
+    }
+  });
 
   return { ok: true, data: undefined };
 }
@@ -112,7 +121,13 @@ export async function dispatchWorkOrderForReport(
     .eq("id", reportId);
   if (reportError) return { ok: false, error: "status_update_failed" };
 
-  after(() => notifyReportStatus(reportId, "dispatched"));
+  after(async () => {
+    try {
+      await notifyReportStatus(reportId, "dispatched");
+    } catch (err) {
+      logger.error("Dispatch notification failed", err, { reportId });
+    }
+  });
 
   return { ok: true, data: undefined };
 }
@@ -150,7 +165,13 @@ export async function closeWorkOrder(
   if (reportError) return { ok: false, error: "status_update_failed" };
 
   // The lever: resolved notification carries the resolution photo. Non-blocking.
-  after(() => notifyReportStatus(wo.report_id, "closed"));
+  after(async () => {
+    try {
+      await notifyReportStatus(wo.report_id, "closed");
+    } catch (err) {
+      logger.error("Close notification failed", err, { reportId: wo.report_id });
+    }
+  });
 
   return { ok: true, data: undefined };
 }
@@ -176,7 +197,13 @@ export async function rejectReport(
 
   if (error) return { ok: false, error: error.message };
 
-  after(() => notifyReportStatus(reportId, "rejected"));
+  after(async () => {
+    try {
+      await notifyReportStatus(reportId, "rejected");
+    } catch (err) {
+      logger.error("Reject notification failed", err, { reportId });
+    }
+  });
 
   return { ok: true, data: undefined };
 }

@@ -1,5 +1,6 @@
 import type { ResponseSchema } from "@google/generative-ai";
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import { z } from "zod/v4";
 import { AI_TIMEOUT_MS, GEMINI_MODEL } from "@/lib/ai/config";
 import { withRetry } from "@/lib/ai/retry";
 import { serverEnv } from "@/lib/env";

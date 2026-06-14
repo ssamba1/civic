@@ -26,6 +26,19 @@ export async function GET(request: Request) {
     return NextResponse.redirect(back);
   }
 
-  const safeNext = next.startsWith("/") ? next : "/";
+  // Validate redirect destination: only allow local paths that don't redirect to another domain.
+  // Reject protocol-relative URLs (//evil.com) and absolute URLs (https://evil.com).
+  let safeNext = "/";
+  if (next.startsWith("/") && !next.startsWith("//")) {
+    try {
+      // Verify the destination stays on the same origin
+      const nextUrl = new URL(next, url.origin);
+      if (nextUrl.origin === url.origin) {
+        safeNext = next;
+      }
+    } catch {
+      // Invalid URL, stay on homepage
+    }
+  }
   return NextResponse.redirect(new URL(safeNext, url.origin));
 }
