@@ -2,9 +2,12 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { createServerClient } from "@/lib/db/client";
+import { createLogger } from "@/lib/logger";
 import { StaffInbox } from "@/components/staff/staff-inbox";
 import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
 import { normalizeLocation, type WorkOrderWithDetails } from "@/lib/types";
+
+const logger = createLogger("[staff-page]");
 
 export { type WorkOrderWithDetails };
 
@@ -50,7 +53,7 @@ async function getWorkOrders(cityId: string): Promise<WorkOrderWithDetails[]> {
     .order("priority_score", { ascending: false });
 
   if (error) {
-    console.error("Failed to fetch work orders:", error.message);
+    logger.error("Work orders fetch failed", error);
     return [];
   }
 

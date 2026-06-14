@@ -1,5 +1,7 @@
 import "server-only";
 
+import { createLogger } from "@/lib/logger";
+
 /* ==================================================================
    Notification delivery — the out-of-band channel.
 
@@ -19,6 +21,7 @@ import "server-only";
    ================================================================== */
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
+const logger = createLogger("[notify-deliver]");
 
 export interface EmailMessage {
   /** Recipient. `null`/empty → skip (e.g. anonymous reporter with no email). */
@@ -73,13 +76,15 @@ function renderHtml(m: EmailMessage): string {
 export async function deliverEmail(m: EmailMessage): Promise<DeliveryResult> {
   if (!m.to) return { sent: false, reason: "no-recipient" };
   if (process.env.NOTIFY_DISABLE === "1") {
-    console.info(`[notify] (disabled) would email ${m.to}: ${m.subject}`);
+    logger.info("Notification delivery disabled by environment");
     return { sent: false, reason: "disabled" };
   }
 
   const key = process.env.RESEND_API_KEY;
   if (!key) {
-    console.info(`[notify] (no key) would email ${m.to}: ${m.subject}`);
+    logger.info("Notification delivery skipped (no API key configured)", {
+      subject: m.subject,
+    });
     return { sent: false, reason: "no-key" };
   }
 
@@ -100,14 +105,15 @@ export async function deliverEmail(m: EmailMessage): Promise<DeliveryResult> {
     });
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
-      console.error(`[notify] resend ${res.status}: ${detail.slice(0, 200)}`);
+      logger.error("Email send failed", new Error(`Resend ${res.status}`), {
+        detail: detail.slice(0, 200),
+        subject: m.subject,
+      });
       return { sent: false, reason: "send-error" };
     }
     return { sent: true, reason: "ok" };
   } catch (err) {
-    console.error(
-      `[notify] send threw: ${err instanceof Error ? err.message : String(err)}`,
-    );
+    logger.error("Email send threw exception", err, { subject: m.subject });
     return { sent: false, reason: "send-error" };
   }
 }

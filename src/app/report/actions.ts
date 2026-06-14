@@ -5,8 +5,11 @@ import { z } from "zod/v4";
 import { runClassifyPipeline } from "@/lib/ai/classify-pipeline";
 import { ASYNC_CLASSIFY } from "@/lib/ai/config";
 import { createServerClient } from "@/lib/db/client";
+import { createLogger } from "@/lib/logger";
 import { createSSRClient } from "@/lib/db/ssr-client";
 import type { Classification, Result } from "@/lib/types";
+
+const logger = createLogger("[submit-report]");
 
 const submitReportSchema = z.object({
   // Both images are base64 (no data-URL prefix). Blurred → public bucket,
@@ -209,11 +212,10 @@ export async function submitReport(
             .eq("id", reportId);
         } catch (logErr) {
           // Last resort: even the backstop writes failed. Surface to server logs.
-          console.error(
-            `submit-report: classify backstop failed for ${reportId}`,
-            message,
-            logErr,
-          );
+          logger.error("Classify backstop failed (could not persist to error_log)", logErr, {
+            reportId,
+            originalError: message,
+          });
         }
       }
     });

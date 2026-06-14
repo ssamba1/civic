@@ -127,6 +127,8 @@ export interface Report {
   updated_at: string;
 }
 
+export type WorkOrderSource = "ai" | "rules";
+
 export interface WorkOrder {
   id: string;
   report_id: string;
@@ -135,6 +137,8 @@ export interface WorkOrder {
   priority_score: number;
   est_minutes: number | null;
   materials: string[] | null;
+  est_cost: number | null;
+  wo_source: WorkOrderSource | null;
   assigned_crew_id: string | null;
   dispatched_at: string | null;
   completed_at: string | null;
@@ -169,6 +173,8 @@ export interface WorkOrderWithDetails {
   priority_score: number;
   est_minutes: number;
   materials: string[];
+  est_cost: number | null;
+  wo_source: string | null;
   assigned_crew_id: string | null;
   dispatched_at: string | null;
   completed_at: string | null;

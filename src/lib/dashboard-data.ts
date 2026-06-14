@@ -1,7 +1,10 @@
 import { cache } from "react";
 import { DEMO_MODE } from "@/lib/demo-mode";
+import { createLogger } from "@/lib/logger";
 import type { TeamId } from "@/lib/teams";
 import type { City, ReportCategory, ReportStatus } from "@/lib/types";
+
+const logger = createLogger("dashboard-data");
 
 /* ------------------------------------------------------------------
    Dashboard-specific types (flattened from Report + Classification)
@@ -240,14 +243,19 @@ export async function fetchCity(slug: string): Promise<City | null> {
       .eq("slug", slug)
       .maybeSingle();
     if (error || !data) {
-      console.warn("dashboard-data: falling back to placeholder city");
+      logger.warn("Falling back to placeholder city (query error or not found)", {
+        slug,
+      });
       return fallback;
     }
     const city: City = { ...(data as Omit<City, "boundary">), boundary: null };
     _cityCache.set(slug, city);
     return city;
-  } catch {
-    console.warn("dashboard-data: falling back to placeholder city");
+  } catch (err) {
+    logger.warn("Falling back to placeholder city (exception)", {
+      slug,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return fallback;
   }
 }

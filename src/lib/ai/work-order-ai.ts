@@ -1,0 +1,131 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { AI_TIMEOUT_MS, GEMINI_MODEL } from "@/lib/ai/config";
+import { withRetry } from "@/lib/ai/retry";
+import { serverEnv } from "@/lib/env";
+import type { Classification, CrewType, Department, Result } from "@/lib/types";
+import { checkAndRecordGeminiCall } from "./rate-limiter";
+import { WORK_ORDER_PROMPT, WORK_ORDER_SYSTEM_PROMPT } from "./prompt";
+import {
+  type AiWorkOrder,
+  aiWorkOrderSchema,
+  GEMINI_WORK_ORDER_SCHEMA,
+} from "./work-order-schema";
+
+/**
+ * Shape the classify pipeline persists. Mirrors the deterministic
+ * GeneratedWorkOrder minus priority_score (priority stays deterministic and
+ * auditable — the AI sizes crew/materials/minutes/cost, not the dispatch
+ * priority math). materials is flattened to display strings ("item ×qty") so
+ * the work_orders.materials jsonb column stays a string[] like the rules path.
+ */
+export interface AiGeneratedWorkOrder {
+  department: Department;
+  crew_type: CrewType | null;
+  est_minutes: number;
+  materials: string[];
+  est_cost: number;
+  rationale: string;
+}
+
+/** Flatten {item, qty} objects to "item" / "item ×qty" display strings. */
+function flattenMaterials(materials: AiWorkOrder["materials"]): string[] {
+  return materials.map((m) => (m.qty > 1 ? `${m.item} ×${m.qty}` : m.item));
+}
+
+function stripCodeFences(raw: string): string {
+  const trimmed = raw.trim();
+  const fencePattern = /^```(?:json)?\s*\n?([\s\S]*?)\n?\s*```$/;
+  const match = trimmed.match(fencePattern);
+  return match ? match[1].trim() : trimmed;
+}
+
+/**
+ * Generate a dispatch-ready work order from a classification with Gemini.
+ *
+ * Same resilience contract as classifyPhoto: rate-limited, per-attempt timeout
+ * + retry, structured output re-validated with zod. Returns ok:false on any
+ * failure so the caller can fall back to the deterministic rules generator —
+ * this call must never throw the pipeline.
+ */
+export async function generateWorkOrderAI(
+  classification: Classification,
+): Promise<Result<AiGeneratedWorkOrder>> {
+  const rateCheck = checkAndRecordGeminiCall();
+  if (!rateCheck.allowed) {
+    return {
+      ok: false,
+      error: `Gemini rate limit: ${rateCheck.reason}. Retry in ${Math.ceil((rateCheck.retryAfterMs ?? 0) / 1000)}s.`,
+    };
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(serverEnv.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({
+      model: GEMINI_MODEL,
+      systemInstruction: WORK_ORDER_SYSTEM_PROMPT,
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: GEMINI_WORK_ORDER_SCHEMA,
+      },
+    });
+
+    // The classification is the entire context — append it as compact JSON.
+    const request = `${WORK_ORDER_PROMPT}
+
+## CLASSIFICATION
+${JSON.stringify(
+  {
+    category: classification.category,
+    subcategory: classification.subcategory,
+    severity: classification.severity,
+    hazard_radius_m: classification.hazard_radius_m,
+    visible_size_estimate: classification.visible_size_estimate,
+    is_emergency: classification.is_emergency,
+  },
+  null,
+  2,
+)}`;
+
+    const result = await withRetry(
+      (signal) =>
+        model.generateContent(request, { signal, timeout: AI_TIMEOUT_MS }),
+      { timeoutMs: AI_TIMEOUT_MS },
+    );
+
+    const cleaned = stripCodeFences(result.response.text());
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch {
+      return {
+        ok: false,
+        error: `Work-order AI returned invalid JSON: ${cleaned.slice(0, 300)}`,
+      };
+    }
+
+    const validation = aiWorkOrderSchema.safeParse(parsed);
+    if (!validation.success) {
+      return {
+        ok: false,
+        error: `Work-order validation failed: ${JSON.stringify(validation.error.issues)}`,
+      };
+    }
+
+    const wo = validation.data;
+    return {
+      ok: true,
+      data: {
+        department: wo.department,
+        crew_type: wo.crew_type,
+        est_minutes: wo.est_minutes,
+        materials: flattenMaterials(wo.materials),
+        est_cost: Math.round(wo.est_cost),
+        rationale: wo.rationale,
+      },
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: `Work-order AI error: ${message}` };
+  }
+}

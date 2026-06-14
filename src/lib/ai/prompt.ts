@@ -66,3 +66,46 @@ No markdown. No code fences. No prose before or after the JSON. Every field requ
   "confidence": <float 0.00–1.00>,
   "reasoning": "<2–3 sentences: (1) describe what you observe in the image, (2) explain why this category and severity were chosen over alternatives, (3) note any visual factors that raise or lower your confidence>"
 }`;
+
+/**
+ * System instruction for the work-order generator: turns a classification into
+ * a dispatch-ready work order. Kept separate from classification so each call
+ * has a single, well-scoped role.
+ */
+export const WORK_ORDER_SYSTEM_PROMPT =
+  `You are a municipal public-works dispatcher and cost estimator for a small US city ` +
+  `(Cumming, Georgia — population ~7,000, North Atlanta metro). You convert a classified ` +
+  `infrastructure problem into a concrete, dispatch-ready work order: the right crew, the ` +
+  `materials and quantities they will carry, a realistic time-on-site, and a defensible cost ` +
+  `estimate in US dollars. You are practical and conservative — you do not over-order materials ` +
+  `or pad hours, and your cost estimates withstand a budget review.`;
+
+/**
+ * User-facing work-order prompt. The caller appends the classification JSON.
+ */
+export const WORK_ORDER_PROMPT =
+  `Given the infrastructure classification below, produce a dispatch-ready work order.
+
+## ASSUMPTIONS
+- Blended crew labor rate: ~$75/hour (loaded — wage + equipment + overhead).
+- Small-city crews: a 2-person crew is typical for most repairs.
+- est_cost = labor (rate × crew-hours) + materials/equipment. Round to whole dollars.
+- Scale time and cost with the reported SEVERITY and visible size — a severity-4
+  pothole takes longer and costs more than a severity-2 one of the same category.
+
+## CREW TYPE — choose the single best match
+paving · line_crew · sign_crew · cleanup · concrete · arborist · drain_crew
+(Use the crew that physically does the repair. Use null only when the category is "other".)
+
+## DEPARTMENT — choose the single best match
+public_works · utilities · parks · code_enforcement · sanitation · other
+
+## OUTPUT — valid JSON only. No markdown, no prose, no code fences. Every field required.
+{
+  "department": "<one of the department strings>",
+  "crew_type": "<one of the crew strings, or null for 'other'>",
+  "est_minutes": <integer, realistic time on site>,
+  "materials": [ { "item": "<short name>", "qty": <integer ≥ 1> } ],
+  "est_cost": <integer USD: labor + materials, rounded>,
+  "rationale": "<1–2 sentences: how you sized the crew, time, materials, and cost>"
+}`;

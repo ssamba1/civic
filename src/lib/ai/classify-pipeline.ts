@@ -1,6 +1,8 @@
-import { ASYNC_CLASSIFY, GEMINI_MODEL } from "@/lib/ai/config";
+import { AI_WORK_ORDER, ASYNC_CLASSIFY, GEMINI_MODEL } from "@/lib/ai/config";
 import { classifyPhoto } from "@/lib/ai/gemini";
+import { generateWorkOrderAI } from "@/lib/ai/work-order-ai";
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
+import type { WorkOrderSource } from "@/lib/types";
 import { createServerClient } from "@/lib/db/client";
 import { sniffImageMime } from "@/lib/image/sniff-mime";
 import { createLogger } from "@/lib/logger";
@@ -47,6 +49,38 @@ async function markClassifyStatus(
     log.error(`classify_status update failed for ${reportId}`, undefined, {
       reportId,
       status,
+      error: error.message,
+    });
+  }
+}
+
+/**
+ * Stamp est_cost + wo_source on a work order. Separate guarded write — these
+ * columns ship in migration 010, which is NOT auto-applied. Mirroring
+ * markClassifyStatus, a missing column logs an error but never throws, so the
+ * core work_orders insert (which omits these columns) still succeeds on an
+ * un-migrated database. The demo thread must never break.
+ */
+async function stampWorkOrderCost(
+  supabase: SupabaseLike,
+  workOrderId: string,
+  estCost: number,
+  source: WorkOrderSource,
+  log: ReturnType<typeof createLogger>,
+): Promise<void> {
+  const patch = { est_cost: estCost, wo_source: source } as Record<
+    string,
+    unknown
+  >;
+  const { error } = await supabase
+    .from("work_orders")
+    .update(patch)
+    .eq("id", workOrderId);
+  if (error) {
+    log.error(`work_order cost stamp failed for ${workOrderId}`, undefined, {
+      workOrderId,
+      estCost,
+      source,
       error: error.message,
     });
   }
@@ -208,21 +242,53 @@ export async function runClassifyPipeline(
     };
   }
 
-  const workOrder = generateWorkOrder(classification, {
+  // Deterministic rules work order: always computed. Provides the auditable
+  // priority_score, an est_cost floor, and the fallback crew/materials/minutes
+  // when the AI generator is disabled or fails.
+  const rulesWorkOrder = generateWorkOrder(classification, {
     isSchoolZone: false,
     footTrafficWeight: 1,
     recurrenceCount: 0,
   });
 
+  // Effective work order fields. Start from rules; override with AI output when
+  // AI_WORK_ORDER is enabled AND the AI call succeeds. priority_score ALWAYS
+  // stays deterministic — the AI sizes crew/materials/minutes/cost, not the
+  // dispatch priority math.
+  let department = rulesWorkOrder.department;
+  let crewType = rulesWorkOrder.crew_type;
+  let estMinutes = rulesWorkOrder.est_minutes;
+  let materials: string[] = rulesWorkOrder.materials;
+  let estCost = rulesWorkOrder.est_cost;
+  let woSource: WorkOrderSource = "rules";
+
+  if (AI_WORK_ORDER) {
+    const aiResult = await generateWorkOrderAI(classification);
+    if (aiResult.ok) {
+      department = aiResult.data.department;
+      crewType = aiResult.data.crew_type;
+      estMinutes = aiResult.data.est_minutes;
+      materials = aiResult.data.materials;
+      estCost = aiResult.data.est_cost;
+      woSource = "ai";
+      log.info("work_order_ai_ok", { reportId, estCost, crewType });
+    } else {
+      log.error("work_order_ai_failed_using_rules", undefined, {
+        reportId,
+        error: aiResult.error,
+      });
+    }
+  }
+
   const { data: insertedWorkOrder, error: woErr } = await supabase
     .from("work_orders")
     .insert({
       report_id: reportId,
-      department: workOrder.department,
-      crew_type: workOrder.crew_type,
-      priority_score: workOrder.priority_score,
-      est_minutes: workOrder.est_minutes,
-      materials: workOrder.materials,
+      department,
+      crew_type: crewType,
+      priority_score: rulesWorkOrder.priority_score,
+      est_minutes: estMinutes,
+      materials,
     })
     .select()
     .single<WorkOrder>();
@@ -239,6 +305,19 @@ export async function runClassifyPipeline(
     await markClassifyStatus(supabase, reportId, "failed", log);
     return { ok: false, error: msg };
   }
+
+  // Persist est_cost + provenance via a separate guarded write (migration 010
+  // columns; no-op-safe on un-migrated DBs). Reflect them on the returned row
+  // so callers/UI see the cost without a re-read.
+  await stampWorkOrderCost(
+    supabase,
+    insertedWorkOrder.id,
+    estCost,
+    woSource,
+    log,
+  );
+  insertedWorkOrder.est_cost = estCost;
+  insertedWorkOrder.wo_source = woSource;
 
   const { error: statusErr } = await supabase
     .from("reports")
@@ -257,6 +336,8 @@ export async function runClassifyPipeline(
     reportId,
     workOrderId: insertedWorkOrder.id,
     priority: insertedWorkOrder.priority_score,
+    estCost,
+    woSource,
   });
   return {
     ok: true,

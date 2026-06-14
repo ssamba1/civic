@@ -1,6 +1,9 @@
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import { DEMO_MODE } from "@/lib/demo-mode";
+import { createLogger } from "@/lib/logger";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
+
+const logger = createLogger("analytics-data");
 
 /* ------------------------------------------------------------------
    Analytics types
@@ -119,7 +122,7 @@ export async function fetchAnalyticsKpis(
       .eq("city_id", cityId);
 
     if (error || !data || data.length === 0) {
-      console.warn("analytics-data: falling back to literals");
+      logger.warn("Falling back to KPI literals (query error or empty result)");
       return kpiFallback();
     }
 
@@ -172,8 +175,10 @@ export async function fetchAnalyticsKpis(
       active_backlog: backlog,
       backlog_delta_pct: round1(pctChange(thisWeek.length, prevWeek.length)),
     };
-  } catch {
-    console.warn("analytics-data: falling back to literals");
+  } catch (err) {
+    logger.warn("Falling back to KPI literals (exception)", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return kpiFallback();
   }
 }

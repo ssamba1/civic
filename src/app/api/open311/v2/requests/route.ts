@@ -1,11 +1,14 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/db/client";
+import { createLogger } from "@/lib/logger";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 import { reportToOpen311, expandStatus } from "@/lib/open311/transform";
 import { toOpen311Xml, toErrorXml } from "@/lib/open311/xml";
 import { getService } from "@/lib/open311/services";
 import { normalizeLocation, type Report, type Classification, type City, type ReportStatus } from "@/lib/types";
+
+const logger = createLogger("[open311-list]");
 
 /**
  * GET /api/open311/v2/requests
@@ -94,7 +97,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      console.error("Open311 requests query error:", error);
+      logger.error("Database query failed", error);
       return errorResponse(500, "Database query failed", wantsXml);
     }
 
@@ -119,7 +122,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(open311Requests);
   } catch (err) {
-    console.error("Open311 GET /requests error:", err);
+    logger.error("GET /requests unhandled error", err);
     return errorResponse(500, "Internal server error", requestWantsXml(request));
   }
 }
@@ -265,7 +268,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertError || !report) {
-      console.error("Open311 POST insert error:", insertError);
+      logger.error("Report insert failed", insertError);
       return errorResponse(500, "Failed to create service request", wantsXml);
     }
 
@@ -310,7 +313,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(responseBody, { status: 201 });
   } catch (err) {
-    console.error("Open311 POST /requests error:", err);
+    logger.error("POST /requests unhandled error", err);
     return errorResponse(500, "Internal server error", wantsXml);
   }
 }

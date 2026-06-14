@@ -1,10 +1,13 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
+import { createLogger } from "@/lib/logger";
 import { redirect } from "next/navigation";
 import { LogOut, Shield } from "lucide-react";
 import { SidebarNav, MobileNav } from "@/components/staff/sidebar-nav";
 import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
+
+const logger = createLogger("[staff-layout]");
 
 export default async function StaffLayout({
   children,
@@ -61,7 +64,7 @@ export default async function StaffLayout({
       .eq("id", user.id)
       .maybeSingle();
     if (error) {
-      console.error("[staff/layout] profile fetch failed:", error.message);
+      logger.error("Profile fetch failed", error);
       return (
         <div className="flex h-screen items-center justify-center text-red-500">
           Failed to load staff profile. Please try again.

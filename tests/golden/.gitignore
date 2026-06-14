@@ -1,0 +1,4 @@
+# Golden-set photos are local ground-truth data, not committed.
+# The manifest (labels) IS committed; the images and results are not.
+images/
+results.json

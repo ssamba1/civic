@@ -1,8 +1,11 @@
 import "server-only";
 
 import { createServerClient } from "@/lib/db/client";
+import { createLogger } from "@/lib/logger";
 import { type DeliveryResult, deliverEmail } from "@/lib/notify/deliver";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
+
+const logger = createLogger("[notify-composer]");
 
 /* ==================================================================
    Status-change → resident notification composer.
@@ -147,9 +150,7 @@ export async function notifyReportStatus(
       reportUrl: reportUrl(reportId),
     });
   } catch (err) {
-    console.error(
-      `[notify] composer threw for ${reportId}: ${err instanceof Error ? err.message : String(err)}`,
-    );
+    logger.error("Notification composer threw", err, { reportId });
     return { sent: false, reason: "send-error" };
   }
 }

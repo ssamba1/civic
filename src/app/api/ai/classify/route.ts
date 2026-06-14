@@ -2,7 +2,10 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { runClassifyPipeline } from "@/lib/ai/classify-pipeline";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
+import { createLogger } from "@/lib/logger";
 import { createSSRClient, getAuthUser } from "@/lib/db/ssr-client";
+
+const logger = createLogger("[classify-api]");
 
 export async function POST(request: Request) {
   try {
@@ -83,7 +86,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result.data, { status: 200 });
   } catch (err) {
-    console.error("[classify] unhandled error:", err);
+    logger.error("Unhandled error", err);
     return NextResponse.json(
       { error: "Internal error" },
       { status: 500 },

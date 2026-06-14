@@ -16,7 +16,10 @@ import {
 } from "@/lib/dashboard-data";
 import { createSSRClient, getAuthUser } from "@/lib/db/ssr-client";
 import { DEMO_MODE } from "@/lib/demo-mode";
+import { createLogger } from "@/lib/logger";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
+
+const logger = createLogger("resident-data");
 
 /* ------------------------------------------------------------------
    Resident-facing types
@@ -292,7 +295,7 @@ export async function getMyReports(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      console.warn("resident-data: falling back to synthetic corpus");
+      logger.warn("Falling back to synthetic corpus (no authenticated user)");
       return myReportsFallback();
     }
 
@@ -307,7 +310,7 @@ export async function getMyReports(
       .order("created_at", { ascending: false });
 
     if (error || !data || data.length === 0) {
-      console.warn("resident-data: falling back to synthetic corpus");
+      logger.warn("Falling back to synthetic corpus (query error or empty result)");
       return myReportsFallback();
     }
 
@@ -336,8 +339,10 @@ export async function getMyReports(
           : {}),
       };
     });
-  } catch {
-    console.warn("resident-data: falling back to synthetic corpus");
+  } catch (err) {
+    logger.warn("Falling back to synthetic corpus (exception)", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return myReportsFallback();
   }
 }
@@ -620,11 +625,12 @@ export async function getResidentNotifications(
         }));
       }
     }
-  } catch {
-    // Fall through to the synthetic path below.
+  } catch (err) {
+    logger.warn("Falling back to synthetic notifications (exception)", {
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 
-  console.warn("resident-data: falling back to synthetic corpus");
   return syntheticNotifications(citySlug);
 }
 

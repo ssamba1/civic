@@ -15,6 +15,7 @@ import {
   Upload,
   AlertTriangle,
   Loader2,
+  DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import type {
@@ -353,6 +354,18 @@ export function WorkOrderDetail({
                 <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   Work Order
                 </h3>
+                {workOrder.wo_source && (
+                  <span
+                    className={cn(
+                      "ml-auto inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                      workOrder.wo_source === "ai"
+                        ? "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300"
+                        : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                    )}
+                  >
+                    {workOrder.wo_source === "ai" ? "AI-generated" : "Rules"}
+                  </span>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4 p-4">
                 <div>
@@ -381,6 +394,19 @@ export function WorkOrderDetail({
                   <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                     {workOrder.priority_score.toFixed(1)}
                   </p>
+                </div>
+                <div>
+                  <p className="text-xs text-zinc-500">Estimated Cost</p>
+                  <div className="flex items-center gap-1">
+                    <DollarSign className="h-3.5 w-3.5 text-emerald-500" />
+                    <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                      {typeof workOrder.est_cost === "number"
+                        ? workOrder.est_cost.toLocaleString("en-US", {
+                            maximumFractionDigits: 0,
+                          })
+                        : "—"}
+                    </p>
+                  </div>
                 </div>
                 <div className="col-span-2">
                   <p className="text-xs text-zinc-500">Materials</p>

@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/db/client";
+import { createLogger } from "@/lib/logger";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 import { reportToOpen311 } from "@/lib/open311/transform";
 import { toOpen311SingleXml, toErrorXml } from "@/lib/open311/xml";
 import { normalizeLocation, type Report, type Classification, type City, type ReportStatus } from "@/lib/types";
+
+const logger = createLogger("[open311-get]");
 
 // UUID v4 regex — reject obviously invalid IDs before hitting the DB
 const UUID_RE =
@@ -71,7 +74,7 @@ export async function GET(
 
     return NextResponse.json([open311Request]);
   } catch (err) {
-    console.error("Open311 GET /requests/[id] error:", err);
+    logger.error("GET /requests/[id] unhandled error", err);
     return errorResponse(500, "Internal server error", wantsXml);
   }
 }

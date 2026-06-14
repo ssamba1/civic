@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
+import { createLogger } from "@/lib/logger";
 import { getReasoning } from "@/lib/ai/reasoning-ai";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import {
@@ -9,6 +10,8 @@ import {
   getReportCorpus,
 } from "@/lib/dashboard-data";
 import { getAuthUser } from "@/lib/db/ssr-client";
+
+const logger = createLogger("[reasoning-api]");
 
 export interface ReasoningSection {
   title: string;
@@ -108,7 +111,7 @@ export async function POST(request: Request) {
       status: 200,
     });
   } catch (err) {
-    console.error("[reasoning] unhandled error:", err);
+    logger.error("Unhandled error", err);
     return NextResponse.json(
       { error: "Internal error" },
       { status: 500 },

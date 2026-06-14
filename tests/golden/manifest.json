@@ -1,0 +1,17 @@
+{
+  "_comment": "Golden-set ground truth for the classification eval (scripts/eval-classify.ts). Drop photos into tests/golden/images/ and add one entry per photo below. severity is the human-labeled ground truth (1-5). is_emergency is the human label. Run: pnpm eval. Real photos are NOT committed (see .gitignore in this dir); the harness scores whatever you add locally.",
+  "samples": [
+    {
+      "image": "pothole-deep-01.jpg",
+      "expected": { "category": "pothole", "severity": 4, "is_emergency": false }
+    },
+    {
+      "image": "water-main-break-01.jpg",
+      "expected": { "category": "water_leak", "severity": 5, "is_emergency": true }
+    },
+    {
+      "image": "graffiti-wall-01.jpg",
+      "expected": { "category": "graffiti", "severity": 1, "is_emergency": false }
+    }
+  ]
+}

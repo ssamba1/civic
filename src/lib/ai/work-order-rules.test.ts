@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import type { Classification, ReportCategory } from "@/lib/types";
-import { generateWorkOrder } from "./work-order-rules";
+import { estimateCost, generateWorkOrder } from "./work-order-rules";
 
 // generateWorkOrder is a pure, deterministic function. It imports only TYPES
 // (erased at compile time) — no network, DB, or env runtime dependencies — so
@@ -296,6 +296,43 @@ describe("generateWorkOrder", () => {
         recurrenceCount: 2,
       });
       expect(generateWorkOrder(c, m)).toEqual(generateWorkOrder(c, m));
+    });
+  });
+
+  describe("est_cost (deterministic floor)", () => {
+    // cost = $75/hr * (est_minutes / 60) + material_cost, rounded.
+    it("computes pothole cost as labor(30min) + materials($60)", () => {
+      // 75 * 0.5 = 37.5 labor + 60 materials = 97.5 -> 98
+      expect(estimateCost("pothole")).toBe(98);
+    });
+
+    it("computes sidewalk_damage cost for a 240-min concrete job", () => {
+      // 75 * 4 = 300 labor + 250 materials = 550
+      expect(estimateCost("sidewalk_damage")).toBe(550);
+    });
+
+    it("returns 0 cost for the 'other' category (no crew, no materials)", () => {
+      expect(estimateCost("other")).toBe(0);
+    });
+
+    it("includes est_cost in the generated work order", () => {
+      const wo = generateWorkOrder(
+        makeClassification({ category: "pothole" }),
+        makeMeta(),
+      );
+      expect(wo.est_cost).toBe(98);
+    });
+
+    it("cost is independent of priority bonuses (depends only on category)", () => {
+      const calm = generateWorkOrder(
+        makeClassification({ category: "tree_down" }),
+        makeMeta(),
+      );
+      const busy = generateWorkOrder(
+        makeClassification({ category: "tree_down" }),
+        makeMeta({ isSchoolZone: true, footTrafficWeight: 5 }),
+      );
+      expect(calm.est_cost).toBe(busy.est_cost);
     });
   });
 });

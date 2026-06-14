@@ -17,6 +17,7 @@
     "test:e2e": "playwright test",
     "db:migrate": "supabase db push",
     "db:seed": "tsx supabase/seed/index.ts",
+    "eval": "tsx scripts/eval-classify.ts",
     "health": "curl http://localhost:3000/api/health"
   },
   "dependencies": {
