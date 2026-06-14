@@ -290,6 +290,20 @@ export async function runClassifyPipeline(
             error: statusErr.message,
           });
         }
+        // Escalate the primary's work-order priority — a repeat report is a
+        // demand signal. Atomic increment via RPC (migration 014); guarded +
+        // best-effort: a missing RPC (un-migrated DB) or primary-without-work-
+        // order (e.g. emergency) is a logged no-op, never a thrown error.
+        const { error: bumpErr } = await supabase.rpc(
+          "bump_work_order_priority",
+          { _report_id: dup.primaryReportId, _delta: 1 },
+        );
+        if (bumpErr) {
+          log.error("priority_bump_failed", undefined, {
+            primary: dup.primaryReportId,
+            error: bumpErr.message,
+          });
+        }
         await markClassifyStatus(supabase, reportId, "done", log);
         log.info("pipeline_done_merged", {
           reportId,

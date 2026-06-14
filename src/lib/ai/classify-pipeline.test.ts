@@ -80,6 +80,7 @@ interface SupabaseSetup {
   classificationsWrite?: WriteResult; // classifications.upsert()
   workOrder?: SingleResult; // work_orders.insert().select().single()
   mergesWrite?: WriteResult; // merges.insert()
+  rpcResult?: { data: unknown; error: { message: string } | null }; // supabase.rpc()
   download?: { data: unknown; error: { message: string } | null };
 }
 
@@ -108,12 +109,25 @@ function makeSupabase(setup: SupabaseSetup) {
 
   const from = vi.fn((t: keyof typeof tables) => tables[t]);
 
+  // rpc() is awaited directly in the pipeline (e.g. bump_work_order_priority on
+  // merge). Resolves to a {error} write-result shape.
+  const rpc = vi.fn(() =>
+    Promise.resolve(setup.rpcResult ?? { data: null, error: null }),
+  );
+
   const client = {
     from,
+    rpc,
     storage: { from: storageFrom },
   };
 
-  return { client, tables, from, storage: { from: storageFrom, download } };
+  return {
+    client,
+    tables,
+    from,
+    rpc,
+    storage: { from: storageFrom, download },
+  };
 }
 
 // A blob whose magic bytes sniff to image/jpeg (FF D8 FF ...).
@@ -393,6 +407,11 @@ describe("runClassifyPipeline", () => {
     });
     // Report marked merged, NOT dispatched.
     expect(tables.reports.update).toHaveBeenCalledWith({ status: "merged" });
+    // Primary's work-order priority escalated (repeat report = demand signal).
+    expect(client.rpc).toHaveBeenCalledWith("bump_work_order_priority", {
+      _report_id: "earlier-report-1",
+      _delta: 1,
+    });
     // No work order created for a duplicate.
     expect(tables.work_orders.insert).not.toHaveBeenCalled();
     expect(result.ok).toBe(true);
