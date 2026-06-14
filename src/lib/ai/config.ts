@@ -38,3 +38,20 @@ export const ASYNC_CLASSIFY = process.env.NEXT_PUBLIC_ASYNC_CLASSIFY === "1";
  * the AI call fails. Server-only flag (no NEXT_PUBLIC_ prefix).
  */
 export const AI_WORK_ORDER = process.env.AI_WORK_ORDER === "1";
+
+/**
+ * When "1", the classify pipeline checks each new (non-emergency) report for a
+ * duplicate of an earlier open report of the same category within DEDUP_RADIUS_M
+ * metres and the last 30 days (via the find_duplicate_report RPC, migration
+ * 011). A match marks the new report 'merged', records a merges row, and skips
+ * the work order. Default OFF so the demo path always produces a work order and
+ * stays predictable. Emergencies are NEVER deduped. Server-only flag.
+ */
+export const DEDUP_REPORTS = process.env.DEDUP_REPORTS === "1";
+
+/** Geographic radius in metres for duplicate detection. */
+export const DEDUP_RADIUS_M = (() => {
+  const raw = process.env.DEDUP_RADIUS_M;
+  const parsed = raw ? Number(raw) : NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 50;
+})();

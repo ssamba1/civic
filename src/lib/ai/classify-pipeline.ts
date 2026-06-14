@@ -1,4 +1,10 @@
-import { AI_WORK_ORDER, ASYNC_CLASSIFY, GEMINI_MODEL } from "@/lib/ai/config";
+import {
+  AI_WORK_ORDER,
+  ASYNC_CLASSIFY,
+  DEDUP_REPORTS,
+  GEMINI_MODEL,
+} from "@/lib/ai/config";
+import { findDuplicate } from "@/lib/ai/dedup";
 import { classifyPhoto } from "@/lib/ai/gemini";
 import { generateWorkOrderAI } from "@/lib/ai/work-order-ai";
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
@@ -16,6 +22,10 @@ export interface ClassifyPipelineResult {
   emergency: boolean;
   classification: Classification;
   work_order: WorkOrder | null;
+  /** True when the report was detected as a duplicate and merged into another. */
+  merged?: boolean;
+  /** The earlier report this one was merged into, when merged. */
+  primary_report_id?: string;
 }
 
 type SupabaseLike = ReturnType<typeof createServerClient>;
@@ -244,6 +254,59 @@ export async function runClassifyPipeline(
       ok: true,
       data: { emergency: true, classification, work_order: null },
     };
+  }
+
+  // Duplicate detection (non-emergency only — emergencies are never suppressed).
+  // A match marks THIS report 'merged', records a merges row, and skips the work
+  // order so duplicate reports don't inflate the dispatch queue. Flag-gated +
+  // no-op-safe: findDuplicate returns null on an un-migrated DB (missing RPC).
+  if (DEDUP_REPORTS) {
+    const dup = await findDuplicate(supabase, reportId, log);
+    if (dup) {
+      const { error: mergeErr } = await supabase.from("merges").insert({
+        primary_report_id: dup.primaryReportId,
+        duplicate_report_id: reportId,
+        similarity_score: dup.similarityScore,
+      });
+      if (mergeErr) {
+        // Could not record the merge — do NOT mark the report merged (that would
+        // orphan it with no link to its primary). Fall through to normal
+        // work-order creation instead.
+        log.error("merge_insert_failed_falling_through", undefined, {
+          reportId,
+          primary: dup.primaryReportId,
+          error: mergeErr.message,
+        });
+      } else {
+        const { error: statusErr } = await supabase
+          .from("reports")
+          .update({ status: "merged" })
+          .eq("id", reportId);
+        if (statusErr) {
+          log.error(`merged status update failed for ${reportId}`, undefined, {
+            reportId,
+            error: statusErr.message,
+          });
+        }
+        await markClassifyStatus(supabase, reportId, "done", log);
+        log.info("pipeline_done_merged", {
+          reportId,
+          primary: dup.primaryReportId,
+          distanceM: dup.distanceM,
+          similarity: dup.similarityScore,
+        });
+        return {
+          ok: true,
+          data: {
+            emergency: false,
+            classification,
+            work_order: null,
+            merged: true,
+            primary_report_id: dup.primaryReportId,
+          },
+        };
+      }
+    }
   }
 
   // Deterministic rules work order: always computed. Provides the auditable

@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { findDuplicate } from "@/lib/ai/dedup";
 import { classifyPhoto } from "@/lib/ai/gemini";
 import { createServerClient } from "@/lib/db/client";
 import type { Classification } from "@/lib/types";
@@ -12,6 +13,14 @@ import { runClassifyPipeline } from "./classify-pipeline";
 // generateWorkOrder + sniffImageMime run for real — they are pure.
 vi.mock("@/lib/db/client", () => ({ createServerClient: vi.fn() }));
 vi.mock("@/lib/ai/gemini", () => ({ classifyPhoto: vi.fn() }));
+vi.mock("@/lib/ai/dedup", () => ({ findDuplicate: vi.fn() }));
+// DEDUP_REPORTS forced ON so the dedup branch is exercisable; findDuplicate is
+// mocked and defaults to undefined (no match), so non-dedup tests fall through
+// to normal work-order creation unchanged. Other config exports preserved.
+vi.mock("@/lib/ai/config", async (orig) => ({
+  ...(await orig<typeof import("@/lib/ai/config")>()),
+  DEDUP_REPORTS: true,
+}));
 vi.mock("@/lib/logger", () => ({
   createLogger: () => ({
     correlationId: "test-correlation-id",
@@ -23,6 +32,7 @@ vi.mock("@/lib/logger", () => ({
 
 const createServerClientMock = vi.mocked(createServerClient);
 const classifyPhotoMock = vi.mocked(classifyPhoto);
+const findDuplicateMock = vi.mocked(findDuplicate);
 
 // --- Supabase test double --------------------------------------------------
 // Per-table query builder. `.eq()` is used two ways in the pipeline:
@@ -69,6 +79,7 @@ interface SupabaseSetup {
   reportsWrite?: WriteResult; // reports.update().eq() (status transitions)
   classificationsWrite?: WriteResult; // classifications.upsert()
   workOrder?: SingleResult; // work_orders.insert().select().single()
+  mergesWrite?: WriteResult; // merges.insert()
   download?: { data: unknown; error: { message: string } | null };
 }
 
@@ -84,8 +95,9 @@ function makeSupabase(setup: SupabaseSetup) {
     single: setup.workOrder ?? { data: null, error: null },
   });
   const error_log = makeBuilder({ write: { error: null } });
+  const merges = makeBuilder({ write: setup.mergesWrite ?? { error: null } });
 
-  const tables = { reports, classifications, work_orders, error_log };
+  const tables = { reports, classifications, work_orders, error_log, merges };
 
   const download = vi
     .fn()
@@ -347,5 +359,123 @@ describe("runClassifyPipeline", () => {
       expect(result.data.emergency).toBe(true);
       expect(result.data.work_order).toBeNull();
     }
+  });
+
+  it("duplicate detected -> records merge, marks merged, NO work order", async () => {
+    const { client, tables } = makeSupabase({
+      report: { data: REPORT_ROW, error: null },
+      download: { data: jpegBlob(), error: null },
+    });
+    createServerClientMock.mockReturnValue(client as never);
+    classifyPhotoMock.mockResolvedValue({
+      ok: true,
+      data: {
+        classification: classification({
+          category: "pothole",
+          is_emergency: false,
+        }),
+        rawText: '{"category":"pothole"}',
+      },
+    });
+    findDuplicateMock.mockResolvedValue({
+      primaryReportId: "earlier-report-1",
+      distanceM: 12.3,
+      similarityScore: 0.75,
+    });
+
+    const result = await runClassifyPipeline(REPORT_ID);
+
+    // Merge recorded with this report as the duplicate of the earlier primary.
+    expect(tables.merges.insert).toHaveBeenCalledWith({
+      primary_report_id: "earlier-report-1",
+      duplicate_report_id: REPORT_ID,
+      similarity_score: 0.75,
+    });
+    // Report marked merged, NOT dispatched.
+    expect(tables.reports.update).toHaveBeenCalledWith({ status: "merged" });
+    // No work order created for a duplicate.
+    expect(tables.work_orders.insert).not.toHaveBeenCalled();
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.merged).toBe(true);
+      expect(result.data.primary_report_id).toBe("earlier-report-1");
+      expect(result.data.work_order).toBeNull();
+    }
+  });
+
+  it("emergency duplicate is NEVER deduped -> dispatched, dedup skipped", async () => {
+    const { client, tables } = makeSupabase({
+      report: { data: REPORT_ROW, error: null },
+      download: { data: jpegBlob(), error: null },
+    });
+    createServerClientMock.mockReturnValue(client as never);
+    classifyPhotoMock.mockResolvedValue({
+      ok: true,
+      data: {
+        classification: classification({
+          category: "water_leak",
+          is_emergency: true,
+          severity: 5,
+        }),
+        rawText: "{}",
+      },
+    });
+    // Even if a dup existed, the emergency short-circuit returns first.
+    findDuplicateMock.mockResolvedValue({
+      primaryReportId: "earlier-report-1",
+      distanceM: 5,
+      similarityScore: 0.9,
+    });
+
+    const result = await runClassifyPipeline(REPORT_ID);
+
+    expect(findDuplicateMock).not.toHaveBeenCalled();
+    expect(tables.merges.insert).not.toHaveBeenCalled();
+    expect(tables.reports.update).toHaveBeenCalledWith({
+      status: "dispatched",
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data.emergency).toBe(true);
+  });
+
+  it("merge insert failure -> falls through to normal work order", async () => {
+    const insertedWorkOrder = {
+      id: "wo-merge-fallback",
+      report_id: REPORT_ID,
+      department: "public_works",
+      crew_type: "paving",
+      priority_score: 7.5,
+      est_minutes: 30,
+      materials: ["cold patch", "tamper"],
+    };
+    const { client, tables } = makeSupabase({
+      report: { data: REPORT_ROW, error: null },
+      download: { data: jpegBlob(), error: null },
+      workOrder: { data: insertedWorkOrder, error: null },
+      mergesWrite: { error: { message: "merges insert failed" } },
+    });
+    createServerClientMock.mockReturnValue(client as never);
+    classifyPhotoMock.mockResolvedValue({
+      ok: true,
+      data: {
+        classification: classification({ category: "pothole" }),
+        rawText: "{}",
+      },
+    });
+    findDuplicateMock.mockResolvedValue({
+      primaryReportId: "earlier-report-1",
+      distanceM: 10,
+      similarityScore: 0.8,
+    });
+
+    const result = await runClassifyPipeline(REPORT_ID);
+
+    // Could not record the merge -> NOT marked merged; normal WO path runs.
+    expect(tables.reports.update).not.toHaveBeenCalledWith({
+      status: "merged",
+    });
+    expect(tables.work_orders.insert).toHaveBeenCalled();
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data.merged).toBeUndefined();
   });
 });
