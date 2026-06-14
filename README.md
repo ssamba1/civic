@@ -22,7 +22,13 @@ Residents photograph broken infrastructure — potholes, downed trees, graffiti,
 | Anonymous submit → upgrade to account | ✅ |
 | AI reasoning endpoint (anon-accessible) | ✅ |
 | Citizen verification (confirmed/disputed votes) | ✅ |
-| Upvote/like persistence | 🔴 not built |
+| Public status tracking (tokenized link, anonymous reporters) | ✅ |
+| Resident CSAT + before/after evidence on resolution | ✅ |
+| Duplicate detection + merge (geo + category + time window) | ✅ |
+| AI work-order rationale (priority/cost/crew, persisted + surfaced) | ✅ |
+| Backlog-age distribution + SLA-risk KPIs | ✅ |
+| Out-of-band status notifications + anonymous profile heal | ✅ |
+| Upvote/like persistence (optimistic client store) | ✅ |
 | SLA targets + cost estimation | ✅ |
 | Neighborhood equity view (top neighborhoods, by-neighborhood stats) | ✅ |
 | Scoreboard (city benchmarks, trend comparison) | 🔴 not built |
@@ -122,8 +128,10 @@ Report statuses: `open → dispatched → in_progress → closed` (also `merged`
 1. Resident submits photo → stored in `photos-raw` bucket (unblurred, private)
 2. Blurred copy stored in `photos-public` bucket
 3. Gemini 2.5 Flash classifies raw image → structured JSON (category, severity 1–5, confidence, hazard radius, cost estimate)
-4. Classification persisted + work order auto-generated with department routing
-5. If Gemini fails → report queued for manual triage (confidence = 0), no crash
+4. Classification persisted + work order auto-generated with department routing — including an AI rationale (priority / cost / crew reasoning) surfaced in the staff inbox
+5. Duplicate detection — a new report within a geo radius + same category + recent time window is flagged against a primary; merged duplicates are excluded from public counts/KPIs and escalate the primary work order's priority
+6. Resident gets a tokenized public status link + email notifications as the report moves open → dispatched → in_progress → closed (CSAT + before/after photo on close)
+7. If Gemini fails → report queued for manual triage (confidence = 0), no crash
 
 ---
 
