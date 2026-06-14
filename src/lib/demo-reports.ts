@@ -120,7 +120,9 @@ function getSnapshot(): DashboardReport[] {
 
 // Referentially-stable frozen server snapshot — matches the Object.freeze({})
 // pattern used by every other store in this codebase.
-const EMPTY: DashboardReport[] = Object.freeze([] as DashboardReport[]) as DashboardReport[];
+const EMPTY: DashboardReport[] = Object.freeze(
+  [] as DashboardReport[],
+) as DashboardReport[];
 function getServerSnapshot(): DashboardReport[] {
   return EMPTY;
 }
@@ -147,7 +149,9 @@ export function resetDemoReports() {
  * Adapt a demo DashboardReport into the staff inbox's WorkOrderWithDetails
  * shape, so clicking Refresh also drops the tree into the inbox list.
  */
-export function demoWorkOrderFromReport(r: DashboardReport): WorkOrderWithDetails {
+export function demoWorkOrderFromReport(
+  r: DashboardReport,
+): WorkOrderWithDetails {
   return {
     id: `demo-wo-${r.id}`,
     report_id: r.id,
@@ -158,6 +162,8 @@ export function demoWorkOrderFromReport(r: DashboardReport): WorkOrderWithDetail
     materials: ["chainsaw", "wood chipper", "hazard cones"],
     est_cost: 285,
     wo_source: "ai",
+    wo_rationale:
+      "Two-person forestry crew with chainsaw and chipper, ~1h on site; cost is labor plus haul-away of the downed limbs.",
     assigned_crew_id: null,
     dispatched_at: null,
     completed_at: null,

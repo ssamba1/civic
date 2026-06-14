@@ -438,6 +438,15 @@ export function WorkOrderDetail({
                 </div>
               </div>
             </div>
+            {/* AI cost/crew rationale — only when the AI generated the order */}
+            {workOrder.wo_rationale && (
+              <div className="border-t border-zinc-200 px-4 py-3 dark:border-zinc-700">
+                <p className="text-xs text-zinc-500">AI Rationale</p>
+                <p className="mt-0.5 text-sm italic text-zinc-600 dark:text-zinc-400">
+                  "{workOrder.wo_rationale}"
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Override category */}

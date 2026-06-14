@@ -69,23 +69,25 @@ async function markClassifyStatus(
 }
 
 /**
- * Stamp est_cost + wo_source on a work order. Separate guarded write — these
- * columns ship in migration 010, which is NOT auto-applied. Mirroring
- * markClassifyStatus, a missing column logs an error but never throws, so the
- * core work_orders insert (which omits these columns) still succeeds on an
- * un-migrated database. The demo thread must never break.
+ * Stamp est_cost + wo_source (+ AI rationale) on a work order. Separate guarded
+ * write — these columns ship in migrations 010/013, which are NOT auto-applied.
+ * Mirroring markClassifyStatus, a missing column logs an error but never throws,
+ * so the core work_orders insert (which omits these columns) still succeeds on
+ * an un-migrated database. The demo thread must never break.
  */
 async function stampWorkOrderCost(
   supabase: SupabaseLike,
   workOrderId: string,
   estCost: number,
   source: WorkOrderSource,
+  rationale: string | null,
   log: ReturnType<typeof createLogger>,
 ): Promise<void> {
-  const patch = { est_cost: estCost, wo_source: source } as Record<
-    string,
-    unknown
-  >;
+  const patch = {
+    est_cost: estCost,
+    wo_source: source,
+    wo_rationale: rationale,
+  } as Record<string, unknown>;
   const { error } = await supabase
     .from("work_orders")
     .update(patch)
@@ -328,6 +330,8 @@ export async function runClassifyPipeline(
   let materials: string[] = rulesWorkOrder.materials;
   let estCost = rulesWorkOrder.est_cost;
   let woSource: WorkOrderSource = "rules";
+  // AI rationale explaining crew/time/materials/cost sizing; null on rules path.
+  let woRationale: string | null = null;
 
   if (AI_WORK_ORDER) {
     const aiResult = await generateWorkOrderAI(classification);
@@ -337,6 +341,7 @@ export async function runClassifyPipeline(
       estMinutes = aiResult.data.est_minutes;
       materials = aiResult.data.materials;
       estCost = aiResult.data.est_cost;
+      woRationale = aiResult.data.rationale;
       woSource = "ai";
       log.info("work_order_ai_ok", { reportId, estCost, crewType });
     } else {
@@ -381,10 +386,12 @@ export async function runClassifyPipeline(
     insertedWorkOrder.id,
     estCost,
     woSource,
+    woRationale,
     log,
   );
   insertedWorkOrder.est_cost = estCost;
   insertedWorkOrder.wo_source = woSource;
+  insertedWorkOrder.wo_rationale = woRationale;
 
   const { error: statusErr } = await supabase
     .from("reports")
