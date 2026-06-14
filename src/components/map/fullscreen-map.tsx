@@ -96,7 +96,6 @@ export function FullscreenMapOrchestrator({
   reports: initialReports,
   center,
   zoom,
-  cityName,
   lockedTeam,
   readOnly = false,
 }: FullscreenMapOrchestratorProps) {
@@ -377,12 +376,16 @@ export function FullscreenMapOrchestrator({
             resident community view (no team concept). */}
           {!lockedTeam && !readOnly && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-[12px] text-zinc-300 flex items-center gap-1.5">
+              <label
+                htmlFor="map-team-select"
+                className="text-[12px] text-zinc-300 flex items-center gap-1.5"
+              >
                 <Shield className="w-3 h-3" strokeWidth={1.75} />
                 Team view
               </label>
               <div className="relative">
                 <select
+                  id="map-team-select"
                   value={selectedTeam}
                   onChange={(e) => setSelectedTeam(e.target.value as TeamId)}
                   className="w-full bg-black/40 border border-white/[0.08] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:border-white/20 cursor-pointer appearance-none pr-8 transition-colors lg:py-1.5 lg:text-[13px]"
@@ -408,9 +411,15 @@ export function FullscreenMapOrchestrator({
           <div
             className={`flex flex-col gap-1.5 ${lockedTeam || readOnly ? "" : "border-t border-white/[0.06] pt-3"}`}
           >
-            <label className="text-[12px] text-zinc-300">Category</label>
+            <label
+              htmlFor="map-category-select"
+              className="text-[12px] text-zinc-300"
+            >
+              Category
+            </label>
             <div className="relative">
               <select
+                id="map-category-select"
                 value={selectedCategory || ""}
                 onChange={(e) =>
                   setSelectedCategory(
