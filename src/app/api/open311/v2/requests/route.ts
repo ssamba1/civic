@@ -232,7 +232,7 @@ export async function POST(request: NextRequest) {
 
     const lat = parseFloat(body.lat);
     const lng = parseFloat(body.long);
-    if (isNaN(lat) || isNaN(lng)) {
+    if (Number.isNaN(lat) || Number.isNaN(lng)) {
       return errorResponse(
         400,
         "lat and long are required numeric fields",

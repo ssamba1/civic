@@ -71,7 +71,7 @@ export function normalizeLocation(raw: unknown): GeoPoint | null {
     const coords = (raw as Record<string, unknown>)["coordinates"] as unknown[];
     const lng = Number(coords[0]);
     const lat = Number(coords[1]);
-    if (!isNaN(lng) && !isNaN(lat)) return { lng, lat };
+    if (!Number.isNaN(lng) && !Number.isNaN(lat)) return { lng, lat };
     return null;
   }
   // Plain {lng, lat} object
@@ -79,7 +79,7 @@ export function normalizeLocation(raw: unknown): GeoPoint | null {
     const obj = raw as Record<string, unknown>;
     const lng = Number(obj["lng"]);
     const lat = Number(obj["lat"]);
-    if (!isNaN(lng) && !isNaN(lat)) return { lng, lat };
+    if (!Number.isNaN(lng) && !Number.isNaN(lat)) return { lng, lat };
   }
   // WKT string: "POINT(lng lat)"
   if (typeof raw === "string") {
@@ -87,7 +87,7 @@ export function normalizeLocation(raw: unknown): GeoPoint | null {
     if (m) {
       const lng = Number(m[1]);
       const lat = Number(m[2]);
-      if (!isNaN(lng) && !isNaN(lat)) return { lng, lat };
+      if (!Number.isNaN(lng) && !Number.isNaN(lat)) return { lng, lat };
     }
     // Hex EWKB (what PostgREST returns for geography columns), e.g.
     // "0101000020E6100000...": byte-order, geom type (+SRID flag), [SRID], X, Y.
@@ -105,7 +105,7 @@ export function normalizeLocation(raw: unknown): GeoPoint | null {
         if (bytes.length >= offset + 16) {
           const lng = view.getFloat64(offset, little);
           const lat = view.getFloat64(offset + 8, little);
-          if (!isNaN(lng) && !isNaN(lat)) return { lng, lat };
+          if (!Number.isNaN(lng) && !Number.isNaN(lat)) return { lng, lat };
         }
       }
     }

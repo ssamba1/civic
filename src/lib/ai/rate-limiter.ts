@@ -31,7 +31,7 @@ const dayWindow: Window = { timestamps: [], maxMs: 86_400_000 };
 function limit(envKey: string, fallback: number): number {
   const raw = process.env[envKey];
   const parsed = raw ? parseInt(raw, 10) : NaN;
-  return isNaN(parsed) || parsed <= 0 ? fallback : parsed;
+  return Number.isNaN(parsed) || parsed <= 0 ? fallback : parsed;
 }
 
 function prune(w: Window): void {
