@@ -102,6 +102,11 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
     },
   ];
 
+  // Sliding-pill hook must run unconditionally (rules of hooks) — compute it
+  // before the mobile-slot early returns. Mobile branches don't use it.
+  const activeHref = items.find((i) => i.active)?.href;
+  const { trackRef, pill } = useSlidingPill(activeHref);
+
   // ── Mobile slot: full-width 4-up segmented tabs ────────────────────────
   if (mobileSlot === "tabs") {
     // Equal-width (flex-1) tabs → a sliding pill can translate by index×100% of
@@ -193,8 +198,6 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
   }
 
   // ── Desktop inline row (md+ default, no mobileSlot) ───────────────────
-  const activeHref = items.find((i) => i.active)?.href;
-  const { trackRef, pill } = useSlidingPill(activeHref);
   return (
     <nav
       className="flex min-w-0 shrink items-center gap-2"

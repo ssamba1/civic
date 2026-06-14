@@ -36,6 +36,11 @@ export function TeamNav({ team, city, mobileSlot }: TeamNavProps) {
     },
   ];
 
+  // Sliding-pill hook must run unconditionally (rules of hooks) — compute it
+  // before the mobile-slot early return. The mobile branch doesn't use it.
+  const activeHref = items.find((i) => i.active)?.href;
+  const { trackRef, pill } = useSlidingPill(activeHref);
+
   // ── Mobile slot: full-width segmented tabs ──────────────────────────────
   if (mobileSlot === "tabs") {
     return (
@@ -77,8 +82,6 @@ export function TeamNav({ team, city, mobileSlot }: TeamNavProps) {
   }
 
   // ── Desktop inline row (md+) ────────────────────────────────────────────
-  const activeHref = items.find((i) => i.active)?.href;
-  const { trackRef, pill } = useSlidingPill(activeHref);
   return (
     <nav
       className="flex min-w-0 shrink items-center gap-2"

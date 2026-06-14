@@ -74,6 +74,7 @@ export function ShaderHero({ className = "" }: { className?: string }) {
     gl.attachShader(program, compile(gl.VERTEX_SHADER, VERT));
     gl.attachShader(program, compile(gl.FRAGMENT_SHADER, FRAG));
     gl.linkProgram(program);
+    // biome-ignore lint/correctness/useHookAtTopLevel: WebGL gl.useProgram(), not a React hook
     gl.useProgram(program);
 
     // Fullscreen triangle.

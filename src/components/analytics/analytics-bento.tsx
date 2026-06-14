@@ -847,6 +847,10 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
     [data, days],
   );
 
+  // Tracks last pointer type (mouse vs touch). Must run unconditionally,
+  // before the early return below (rules of hooks).
+  const lastPtrType = useRef<string>("mouse");
+
   if (data.length === 0) {
     return (
       <Tile title="Reports over time" className="lg:col-span-8 lg:row-span-2">
@@ -943,7 +947,6 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
     };
   };
 
-  const lastPtrType = useRef<string>("mouse");
   const bindDay = (i: number) => ({
     onPointerEnter: (e: React.PointerEvent) => {
       lastPtrType.current = e.pointerType;
