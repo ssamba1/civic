@@ -1,7 +1,8 @@
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft, CheckCircle2, MapPin } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ReportCsat } from "@/components/resident/report-csat";
 import {
   ReportPhoto,
   ReportTimeline,
@@ -69,6 +70,18 @@ export default async function ReportDetailPage({ params }: PageProps) {
   const meta = CATEGORY_META[report.category];
   const { lat, lng } = report.location;
   const isResolved = report.status === "closed";
+
+  // Close-out details for the resolved card: the "what was done" note and when.
+  const resolvedStep = steps.find((s) => s.stage === "resolved" && s.done);
+  const resolutionNote = resolvedStep?.note;
+  const completedAt = report.completed_at ?? resolvedStep?.at ?? null;
+  const completedLabel = completedAt
+    ? new Date(completedAt).toLocaleDateString(undefined, {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })
+    : null;
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pt-24 pb-[calc(5.5rem_+_env(safe-area-inset-bottom))] sm:px-6 md:pb-10">
@@ -147,6 +160,34 @@ export default async function ReportDetailPage({ params }: PageProps) {
           />
         )}
       </div>
+
+      {/* Resolved card — the close-the-loop payoff. Shows WHAT was done and
+          when, then asks the resident to confirm the fix (CSAT). Only when
+          closed. */}
+      {isResolved && (
+        <section className="mb-7 rounded-[14px] border border-[#30d158]/25 bg-[#30d158]/[0.06] p-5">
+          <div className="flex items-start gap-3">
+            <CheckCircle2
+              className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#30d158]"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+            <div className="min-w-0">
+              <h2 className="text-[15px] font-semibold tracking-tight text-white">
+                Resolved{completedLabel ? ` · ${completedLabel}` : ""}
+              </h2>
+              {resolutionNote && (
+                <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-300">
+                  {resolutionNote}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="mt-4 border-t border-white/[0.06] pt-4">
+            <ReportCsat reportId={report.id} />
+          </div>
+        </section>
+      )}
 
       {/* Timeline */}
       <section className="rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.4)]">

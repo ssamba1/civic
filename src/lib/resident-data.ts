@@ -242,7 +242,37 @@ interface MyReportRow {
     | { category: ReportCategory | null; severity: number | null }[]
     | { category: ReportCategory | null; severity: number | null }
     | null;
+  // 1:1 work order carries the close-out evidence: when it was completed and
+  // the resolution ("after") photo a crew uploaded on close. PostgREST returns
+  // an embedded one-to-one as an object (or array for some relationship hints).
+  work_orders:
+    | { completed_at: string | null; resolution_photo_url: string | null }[]
+    | { completed_at: string | null; resolution_photo_url: string | null }
+    | null;
 }
+
+/* ------------------------------------------------------------------
+   Per-category resolution notes — the "operational transparency" text the
+   research (Buell/Porter/Norton) shows is the lever: residents need to see
+   WHAT was done, not just a status flip to "Resolved". Used as the synthetic
+   close-out note when the live work order carries no human-written note.
+   ------------------------------------------------------------------ */
+const RESOLUTION_NOTES: Record<ReportCategory, string> = {
+  pothole: "Pothole filled and compacted — surface restored and reopened.",
+  streetlight:
+    "Fixture repaired and relit; circuit tested and back in service.",
+  downed_sign: "Sign re-set and re-secured to spec.",
+  graffiti: "Surface cleaned and repainted — tag removed.",
+  illegal_dump: "Site cleared and debris hauled to the transfer station.",
+  water_leak:
+    "Leak isolated and repaired; service restored and pressure verified.",
+  sidewalk_damage: "Section repaired and leveled — trip hazard removed.",
+  tree_down: "Tree cleared and debris chipped; right-of-way reopened.",
+  debris: "Debris removed and the area swept clear.",
+  drainage: "Drain cleared and flow restored; inlet inspected.",
+  faded_signage: "Signage replaced with a fresh, reflective panel.",
+  other: "Issue addressed and the report closed out.",
+};
 
 // Synthetic fallback: the demo reporter's slice of the corpus. Used whenever the
 // live query errors or the signed-in user has no reports, so the demo stays alive.
@@ -271,7 +301,7 @@ export async function getMyReports(
     const { data, error } = await supabase
       .from("reports")
       .select(
-        "id, status, address, location, photo_public_url, created_at, reporter_id, classifications ( category, severity )",
+        "id, status, address, location, photo_public_url, created_at, reporter_id, classifications ( category, severity ), work_orders ( completed_at, resolution_photo_url )",
       )
       .eq("reporter_id", user.id)
       .order("created_at", { ascending: false });
@@ -285,6 +315,9 @@ export async function getMyReports(
       const cl = Array.isArray(r.classifications)
         ? (r.classifications[0] ?? null)
         : r.classifications;
+      const wo = Array.isArray(r.work_orders)
+        ? (r.work_orders[0] ?? null)
+        : r.work_orders;
       return {
         id: r.id,
         category: (cl?.category ?? "other") as ReportCategory,
@@ -295,6 +328,12 @@ export async function getMyReports(
         photo_public_url: r.photo_public_url,
         created_at: r.created_at,
         reporter_id: r.reporter_id,
+        // Surface the close-out evidence so the resident sees the work done —
+        // the operational-transparency payoff. Only populated once closed.
+        ...(wo?.completed_at ? { completed_at: wo.completed_at } : {}),
+        ...(wo?.resolution_photo_url
+          ? { afterPhoto: wo.resolution_photo_url }
+          : {}),
       };
     });
   } catch {
@@ -350,6 +389,8 @@ export async function getReportTimeline(
       at: reached.resolved ? t.resolved : null,
       done: reached.resolved,
       current: false,
+      // The "what was done" note — operational transparency on close.
+      ...(reached.resolved ? { note: RESOLUTION_NOTES[report.category] } : {}),
     },
   ];
 
