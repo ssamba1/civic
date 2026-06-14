@@ -302,3 +302,61 @@ export function deriveReporterVelocity(
     spark,
   };
 }
+
+/* --------------------- Backlog age + SLA risk --------------------- */
+
+/**
+ * Aging profile of the OPEN backlog (open/dispatched/in_progress), bucketed by
+ * how long each has been waiting. A growing tail in the older buckets is the
+ * leading indicator of trouble — it shows up before SLA breaches do. Reuses the
+ * resolution-distribution buckets, but measured on age-since-filed, not
+ * time-to-close. Closed/merged/rejected are excluded.
+ */
+export function deriveBacklogAgeDistribution(
+  reports: DashboardReport[],
+  now = Date.now(),
+): ResolutionBucket[] {
+  const counts = BUCKETS.map(() => 0);
+  for (const r of reports) {
+    if (!BACKLOG_STATUSES.has(r.status)) continue;
+    const ageH = Math.max(0, (now - Date.parse(r.created_at)) / HOUR_MS);
+    const idx = BUCKETS.findIndex((b) => ageH <= b.hours_max);
+    counts[idx === -1 ? BUCKETS.length - 1 : idx]++;
+  }
+  return BUCKETS.map((b, i) => ({ ...b, count: counts[i] }));
+}
+
+export interface SlaRisk {
+  /** Backlog items comfortably within their category SLA window. */
+  on_track: number;
+  /** Backlog items past 80% of their window but not yet breached. */
+  at_risk: number;
+  /** Backlog items already past their category SLA window. */
+  breached: number;
+}
+
+const SLA_RISK_THRESHOLD = 0.8;
+
+/**
+ * Classify the OPEN backlog against each report's per-category SLA target
+ * (CATEGORY_SLA_TARGETS, in hours). Pure — no due_at column needed; the target
+ * is derived from category, age from created_at. Lets an operator see what's
+ * about to breach, not just what already has.
+ */
+export function deriveSlaRisk(
+  reports: DashboardReport[],
+  now = Date.now(),
+): SlaRisk {
+  let on_track = 0;
+  let at_risk = 0;
+  let breached = 0;
+  for (const r of reports) {
+    if (!BACKLOG_STATUSES.has(r.status)) continue;
+    const ageH = Math.max(0, (now - Date.parse(r.created_at)) / HOUR_MS);
+    const target = CATEGORY_SLA_TARGETS[r.category];
+    if (ageH >= target) breached++;
+    else if (ageH >= target * SLA_RISK_THRESHOLD) at_risk++;
+    else on_track++;
+  }
+  return { on_track, at_risk, breached };
+}
