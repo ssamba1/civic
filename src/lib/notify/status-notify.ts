@@ -3,6 +3,7 @@ import "server-only";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
 import { type DeliveryResult, deliverEmail } from "@/lib/notify/deliver";
+import { publicToken } from "@/lib/public-report";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 
 const logger = createLogger("[notify-composer]");
@@ -68,7 +69,9 @@ interface NotifyRow {
 
 function reportUrl(reportId: string): string | null {
   const base = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-  return base ? `${base}/user/my-reports/${reportId}` : null;
+  // Link to the account-less public status page (opaque token) — it works from
+  // an inbox with no session, unlike the auth-scoped /user/my-reports view.
+  return base ? `${base}/r/${publicToken(reportId)}` : null;
 }
 
 /**

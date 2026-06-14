@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCircle2, MapPin } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Link2, MapPin } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,6 +8,7 @@ import {
   ReportTimeline,
 } from "@/components/resident/report-timeline";
 import { CATEGORY_META, KNOWN_CITIES } from "@/lib/dashboard-data";
+import { publicToken } from "@/lib/public-report";
 import {
   getCurrentResident,
   getMyReport,
@@ -196,6 +197,17 @@ export default async function ReportDetailPage({ params }: PageProps) {
         </h2>
         <ReportTimeline steps={steps} />
       </section>
+
+      {/* Public status link — an account-less, shareable view (opaque token, no
+          PII). Lets a resident share progress, or check back without signing
+          in. Opens the /r/[token] page. */}
+      <Link
+        href={`/r/${publicToken(report.id)}`}
+        className="mt-6 inline-flex h-10 items-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.03] px-4 text-[13px] font-medium text-zinc-300 outline-none transition-colors hover:border-white/20 hover:text-white focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
+      >
+        <Link2 className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+        Public status link
+      </Link>
     </div>
   );
 }
