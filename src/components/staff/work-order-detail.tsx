@@ -200,6 +200,7 @@ export function WorkOrderDetail({
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
             aria-label="Close"
             className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
@@ -460,6 +461,7 @@ export function WorkOrderDetail({
                   (c) => c !== classification.category,
                 ).map((cat) => (
                   <button
+                    type="button"
                     key={cat}
                     onClick={() => handleOverride(cat)}
                     disabled={isPending}
@@ -487,6 +489,7 @@ export function WorkOrderDetail({
               />
               <div className="mt-2 flex gap-2">
                 <button
+                  type="button"
                   onClick={handleReject}
                   disabled={isPending || !rejectReason.trim()}
                   className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50 md:min-h-0"
@@ -497,6 +500,7 @@ export function WorkOrderDetail({
                   Confirm Reject
                 </button>
                 <button
+                  type="button"
                   onClick={() => setShowRejectInput(false)}
                   className="flex min-h-11 items-center justify-center rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-400 md:min-h-0"
                 >
@@ -539,6 +543,7 @@ export function WorkOrderDetail({
       {/* Action bar */}
       <div className="pb-safe flex flex-wrap items-center gap-2 border-t border-zinc-200 bg-white px-4 py-3 md:px-6 md:py-4 dark:border-zinc-700 dark:bg-zinc-900">
         <button
+          type="button"
           onClick={handleDispatch}
           disabled={isPending}
           className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50 sm:flex-none"
@@ -551,6 +556,7 @@ export function WorkOrderDetail({
           Dispatch
         </button>
         <button
+          type="button"
           onClick={handleClose}
           disabled={isPending}
           className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50 sm:flex-none"
@@ -563,6 +569,7 @@ export function WorkOrderDetail({
           Close
         </button>
         <button
+          type="button"
           onClick={() => setShowRejectInput(!showRejectInput)}
           disabled={isPending}
           className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 sm:flex-none"
@@ -571,6 +578,7 @@ export function WorkOrderDetail({
           Reject
         </button>
         <button
+          type="button"
           onClick={() => setShowOverride(!showOverride)}
           disabled={isPending}
           className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800 sm:flex-none"

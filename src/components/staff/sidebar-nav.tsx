@@ -1,13 +1,13 @@
 "use client";
 
-import { BarChart3, Inbox, Map, Settings } from "lucide-react";
+import { BarChart3, Inbox, Map as MapIcon, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
 
 const navItems = [
   { href: "/staff", label: "Inbox", icon: Inbox },
-  { href: "/staff/map", label: "Map View", icon: Map },
+  { href: "/staff/map", label: "Map View", icon: MapIcon },
   { href: "/staff/stats", label: "Stats", icon: BarChart3 },
   { href: "/staff/settings", label: "Settings", icon: Settings },
 ] as const;

@@ -16,6 +16,7 @@ export default function AnalyticsError({
         <p className="text-xs text-zinc-600">Ref: {error.digest}</p>
       )}
       <button
+        type="button"
         onClick={reset}
         className="rounded-full bg-[#0a84ff] px-5 py-2 text-[14px] font-medium text-white transition-colors hover:bg-[#0070e0]"
       >

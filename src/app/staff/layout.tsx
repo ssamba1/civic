@@ -36,7 +36,10 @@ export default async function StaffLayout({
   // Use service-role client to read users table (RLS may block anon key)
   const supabase = createServerClient();
 
-  let profile;
+  let profile:
+    | { id: string; role: string; display_name: string | null; email: string | null }
+    | null
+    | undefined;
 
   if (demoAccount) {
     // Any demo persona opens the console (synthetic admin profile for the chrome).

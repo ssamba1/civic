@@ -88,7 +88,7 @@ export function ReportsExplorer({
   };
 
   const reportListContent = (
-    <ul role="list" className="flex flex-col p-2">
+    <ul className="flex flex-col p-2">
       {reports.map((report) => {
         const meta = CATEGORY_META[report.category];
         const isSelected = report.id === selectedId;

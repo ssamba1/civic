@@ -174,6 +174,7 @@ export function WorkOrderComments({ workOrderId }: WorkOrderCommentsProps) {
       />
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
       <button
+        type="button"
         onClick={handleSubmit}
         disabled={isPending || !draft.trim()}
         className="mt-2 flex min-h-11 items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 md:min-h-0"

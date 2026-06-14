@@ -125,6 +125,8 @@ export default function SubmissionConfirmation({
         >
           <svg
             className="h-12 w-12 text-green-600"
+            aria-hidden="true"
+            focusable="false"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={2.5}

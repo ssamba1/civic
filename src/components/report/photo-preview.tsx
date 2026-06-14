@@ -96,7 +96,7 @@ export default function PhotoPreview({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={previewUrl}
-            alt="Captured photo preview"
+            alt="The issue you captured"
             className="w-full h-full object-cover"
           />
         )}

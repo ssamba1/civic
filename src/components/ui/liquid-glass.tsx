@@ -48,7 +48,7 @@ const glowStyles: Record<GlowIntensity, string> = {
 
 function LiquidGlassFilter() {
   return (
-    <svg className="hidden" aria-hidden>
+    <svg className="hidden" aria-hidden="true" focusable="false">
       <defs>
         <filter
           id="liquid-glass-blur"

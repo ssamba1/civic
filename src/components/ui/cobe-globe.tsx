@@ -427,7 +427,9 @@ export function Globe({
         animationId = requestAnimationFrame(animate);
       }
       animate();
-      setTimeout(() => canvas && (canvas.style.opacity = "1"));
+      setTimeout(() => {
+        if (canvas) canvas.style.opacity = "1";
+      });
     }
 
     let ro: ResizeObserver | null = null;

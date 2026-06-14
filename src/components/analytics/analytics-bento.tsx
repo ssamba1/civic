@@ -2328,7 +2328,9 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
   const cellRankMap = useMemo(() => {
     const sorted = [...data].sort((a, b) => b.count - a.count);
     const m = new Map<string, number>();
-    sorted.forEach((c, i) => m.set(`${c.day}-${c.hour}`, i + 1));
+    sorted.forEach((c, i) => {
+      m.set(`${c.day}-${c.hour}`, i + 1);
+    });
     return m;
   }, [data]);
 

@@ -295,6 +295,7 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
           {/* Refresh button – injects the live demo report (and flushes any
               queued incoming reports) into the inbox + every other surface. */}
           <button
+            type="button"
             onClick={handleRefresh}
             className={cn(
               "relative flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-all",
@@ -348,6 +349,7 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
           <div className="flex gap-1 overflow-x-auto rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800 scrollbar-none">
             {TABS.map((tab) => (
               <button
+                type="button"
                 key={tab.value}
                 onClick={() => {
                   setActiveTab(tab.value);

@@ -1,6 +1,12 @@
 "use client";
 
-import { BarChart3, Camera, Map, RefreshCw, UsersRound } from "lucide-react";
+import {
+  BarChart3,
+  Camera,
+  Map as MapIcon,
+  RefreshCw,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -91,7 +97,7 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
     {
       label: "Map",
       href: `/city/${slug}/map`,
-      icon: Map,
+      icon: MapIcon,
       active: pathname === `/city/${slug}/map`,
     },
     {
