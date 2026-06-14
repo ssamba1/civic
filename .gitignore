@@ -24,6 +24,10 @@
 .DS_Store
 *.pem
 
+# CSV backups and data exports
+civic_outreach*.csv
+*_review*.csv
+
 # debug
 npm-debug.log*
 yarn-debug.log*
