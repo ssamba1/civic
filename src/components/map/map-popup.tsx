@@ -122,7 +122,7 @@ export function renderPopupHTML(report: DashboardReport): string {
       <div class="popup-img-shimmer" style="position:relative;width:100%;height:140px;border-radius:12px 12px 0 0;overflow:hidden;background:linear-gradient(110deg,#1c1c1e 30%,#2c2c2e 50%,#1c1c1e 70%);background-size:200% 100%;animation:popupShimmer 1.4s linear infinite;">
         <img
           src="${esc(report.photo_public_url)}"
-          alt="${esc(meta.label)} report"
+          alt="${esc(meta.label)} at ${esc(report.address)}, severity ${esc(String(report.severity))} of 5"
           style="width:100%;height:100%;object-fit:cover;"
           onerror="this.style.display='none'"
         />

@@ -209,6 +209,7 @@ export default function PhotoPreview({
                   key={t}
                   type="button"
                   onClick={() => toggleTag(t)}
+                  aria-pressed={active}
                   className={`rounded-full px-3 py-2 text-xs font-medium transition-[color,background-color,border-color,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] motion-safe:active:scale-95 min-h-[44px] flex items-center ${
                     active
                       ? "bg-blue-600 text-white"
