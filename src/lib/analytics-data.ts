@@ -116,10 +116,14 @@ export async function fetchAnalyticsKpis(
   try {
     const { createServerClient } = await import("@/lib/db/client");
     const db = createServerClient();
+    // Exclude rejected + merged: rejected reports aren't real issues, and merged
+    // ones are duplicates folded into a primary (migrations 011/012). Counting
+    // either would dilute the resolution-rate denominator.
     const { data, error } = await db
       .from("reports")
       .select("status, created_at")
-      .eq("city_id", cityId);
+      .eq("city_id", cityId)
+      .not("status", "in", "(rejected,merged)");
 
     if (error || !data || data.length === 0) {
       logger.warn("Falling back to KPI literals (query error or empty result)");
