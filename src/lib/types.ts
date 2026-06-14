@@ -145,6 +145,10 @@ export interface WorkOrder {
   completed_at: string | null;
   resolution_photo_url: string | null;
   resolution_ai_score: number | null;
+  fix_cost_estimate: number | null;
+  fix_time_estimate_days: number | null;
+  fix_note: string | null;
+  marked_under_fix_at: string | null;
 }
 
 export interface City {
@@ -182,6 +186,10 @@ export interface WorkOrderWithDetails {
   completed_at: string | null;
   resolution_photo_url: string | null;
   resolution_ai_score: number | null;
+  fix_cost_estimate: number | null;
+  fix_time_estimate_days: number | null;
+  fix_note: string | null;
+  marked_under_fix_at: string | null;
   report: {
     id: string;
     city_id: string;

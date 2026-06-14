@@ -7,6 +7,7 @@ import {
   Clock,
   DollarSign,
   Edit3,
+  HardHat,
   Loader2,
   MapPin,
   Send,
@@ -20,6 +21,7 @@ import { useEffect, useState, useTransition } from "react";
 import {
   closeWorkOrder,
   dispatchWorkOrder,
+  markUnderFix,
   overrideClassification,
   rejectReport,
 } from "@/app/staff/actions";
@@ -98,11 +100,23 @@ export function WorkOrderDetail({
 }: WorkOrderDetailProps) {
   const [isPending, startTransition] = useTransition();
   const [pendingAction, setPendingAction] = useState<
-    "dispatch" | "close" | "reject" | "override" | null
+    "dispatch" | "close" | "reject" | "override" | "underfix" | null
   >(null);
   const [showRejectInput, setShowRejectInput] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [showOverride, setShowOverride] = useState(false);
+  const [showUnderFixInput, setShowUnderFixInput] = useState(false);
+  const [fixCost, setFixCost] = useState(
+    workOrder.fix_cost_estimate != null
+      ? String(workOrder.fix_cost_estimate)
+      : "",
+  );
+  const [fixDays, setFixDays] = useState(
+    workOrder.fix_time_estimate_days != null
+      ? String(workOrder.fix_time_estimate_days)
+      : "",
+  );
+  const [fixNote, setFixNote] = useState(workOrder.fix_note ?? "");
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   // Confidence bar fills from 0 on mount so the CSS transition fires visibly.
@@ -179,6 +193,32 @@ export function WorkOrderDetail({
       if (result.ok) {
         setActionSuccess(`Category overridden to ${newCategory}`);
         setShowOverride(false);
+      } else {
+        setActionError(result.error);
+      }
+    });
+  }
+
+  function handleUnderFix() {
+    setActionError(null);
+    setPendingAction("underfix");
+    const cost = fixCost.trim() ? Number(fixCost) : null;
+    const days = fixDays.trim() ? Number(fixDays) : null;
+    if ((fixCost.trim() && Number.isNaN(cost)) || (fixDays.trim() && Number.isNaN(days))) {
+      setActionError("Cost and days must be valid numbers");
+      setPendingAction(null);
+      return;
+    }
+    startTransition(async () => {
+      const result = await markUnderFix(
+        workOrder.id,
+        cost,
+        days,
+        fixNote || null,
+      );
+      if (result.ok) {
+        setActionSuccess("Marked as under fix");
+        setShowUnderFixInput(false);
       } else {
         setActionError(result.error);
       }
@@ -511,6 +551,84 @@ export function WorkOrderDetail({
             </div>
           )}
 
+          {/* Under Fix form */}
+          {showUnderFixInput && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+              <p className="mb-3 text-sm font-medium text-blue-800 dark:text-blue-300">
+                Mark as Under Fix
+              </p>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-blue-700 dark:text-blue-400">
+                      Cost Estimate (USD)
+                    </label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400">
+                        $
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={fixCost}
+                        onChange={(e) => setFixCost(e.target.value)}
+                        placeholder="e.g. 4500"
+                        className="w-full rounded-lg border border-blue-200 bg-white py-2 pl-7 pr-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:border-blue-700 dark:bg-zinc-800 dark:text-zinc-100"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-blue-700 dark:text-blue-400">
+                      Timeline (days)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={fixDays}
+                      onChange={(e) => setFixDays(e.target.value)}
+                      placeholder="e.g. 7"
+                      className="w-full rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:border-blue-700 dark:bg-zinc-800 dark:text-zinc-100"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-blue-700 dark:text-blue-400">
+                    Public Note <span className="font-normal opacity-60">(optional)</span>
+                  </label>
+                  <textarea
+                    value={fixNote}
+                    onChange={(e) => setFixNote(e.target.value)}
+                    placeholder="e.g. Crew scheduled to begin paving next Tuesday."
+                    className="w-full rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:border-blue-700 dark:bg-zinc-800 dark:text-zinc-100"
+                    rows={2}
+                  />
+                </div>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleUnderFix}
+                  disabled={isPending}
+                  className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50 md:min-h-0"
+                >
+                  {pendingAction === "underfix" && (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  )}
+                  Confirm
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowUnderFixInput(false)}
+                  className="flex min-h-11 items-center justify-center rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-400 md:min-h-0"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Staff comments (Realtime) */}
           <WorkOrderComments workOrderId={workOrder.id} />
 
@@ -586,6 +704,15 @@ export function WorkOrderDetail({
         >
           <Edit3 className="h-4 w-4" />
           Override
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowUnderFixInput(!showUnderFixInput)}
+          disabled={isPending}
+          className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-blue-200 px-4 py-2.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 disabled:opacity-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20 sm:flex-none"
+        >
+          <HardHat className="h-4 w-4" />
+          Under Fix
         </button>
       </div>
     </>

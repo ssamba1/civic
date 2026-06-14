@@ -169,6 +169,10 @@ export function demoWorkOrderFromReport(
     completed_at: null,
     resolution_photo_url: null,
     resolution_ai_score: null,
+    fix_cost_estimate: null,
+    fix_time_estimate_days: null,
+    fix_note: null,
+    marked_under_fix_at: null,
     report: {
       id: r.id,
       city_id: "cumming",

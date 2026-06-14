@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCircle2, Link2, MapPin } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, DollarSign, HardHat, Link2, MapPin } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -71,6 +71,11 @@ export default async function ReportDetailPage({ params }: PageProps) {
   const meta = CATEGORY_META[report.category];
   const { lat, lng } = report.location;
   const isResolved = report.status === "closed";
+  const isUnderFix =
+    report.status === "in_progress" &&
+    (report.fix_cost_estimate != null ||
+      report.fix_time_estimate_days != null ||
+      report.fix_note);
 
   // Close-out details for the resolved card: the "what was done" note and when.
   const resolvedStep = steps.find((s) => s.stage === "resolved" && s.done);
@@ -161,6 +166,72 @@ export default async function ReportDetailPage({ params }: PageProps) {
           />
         )}
       </div>
+
+      {/* Under Fix card — shown when staff has marked the report in_progress
+          and provided public-facing cost/timeline context. */}
+      {isUnderFix && (
+        <section className="mb-7 rounded-[14px] border border-[#0a84ff]/25 bg-[#0a84ff]/[0.06] p-5">
+          <div className="flex items-start gap-3">
+            <HardHat
+              className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#0a84ff]"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+            <div className="min-w-0 flex-1">
+              <h2 className="text-[15px] font-semibold tracking-tight text-white">
+                Work in progress
+              </h2>
+              <p className="mt-0.5 text-[13px] text-zinc-400">
+                A crew is actively working on this issue.
+              </p>
+              {(report.fix_cost_estimate != null ||
+                report.fix_time_estimate_days != null) && (
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {report.fix_cost_estimate != null && (
+                    <div className="flex items-center gap-1.5 rounded-lg border border-[#0a84ff]/20 bg-[#0a84ff]/10 px-3 py-2">
+                      <DollarSign
+                        className="h-3.5 w-3.5 text-[#0a84ff]"
+                        strokeWidth={2}
+                        aria-hidden="true"
+                      />
+                      <span className="text-[13px] font-medium text-white">
+                        Est. cost:{" "}
+                        <span className="text-[#5ac8fa]">
+                          $
+                          {report.fix_cost_estimate.toLocaleString("en-US", {
+                            maximumFractionDigits: 0,
+                          })}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+                  {report.fix_time_estimate_days != null && (
+                    <div className="flex items-center gap-1.5 rounded-lg border border-[#0a84ff]/20 bg-[#0a84ff]/10 px-3 py-2">
+                      <Clock
+                        className="h-3.5 w-3.5 text-[#0a84ff]"
+                        strokeWidth={2}
+                        aria-hidden="true"
+                      />
+                      <span className="text-[13px] font-medium text-white">
+                        Est. timeline:{" "}
+                        <span className="text-[#5ac8fa]">
+                          {report.fix_time_estimate_days}{" "}
+                          {report.fix_time_estimate_days === 1 ? "day" : "days"}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+              {report.fix_note && (
+                <p className="mt-3 text-[13px] leading-relaxed text-zinc-300">
+                  {report.fix_note}
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Resolved card — the close-the-loop payoff. Shows WHAT was done and
           when, then asks the resident to confirm the fix (CSAT). Only when

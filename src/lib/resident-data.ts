@@ -249,8 +249,22 @@ interface MyReportRow {
   // the resolution ("after") photo a crew uploaded on close. PostgREST returns
   // an embedded one-to-one as an object (or array for some relationship hints).
   work_orders:
-    | { completed_at: string | null; resolution_photo_url: string | null }[]
-    | { completed_at: string | null; resolution_photo_url: string | null }
+    | {
+        completed_at: string | null;
+        resolution_photo_url: string | null;
+        fix_cost_estimate: number | null;
+        fix_time_estimate_days: number | null;
+        fix_note: string | null;
+        marked_under_fix_at: string | null;
+      }[]
+    | {
+        completed_at: string | null;
+        resolution_photo_url: string | null;
+        fix_cost_estimate: number | null;
+        fix_time_estimate_days: number | null;
+        fix_note: string | null;
+        marked_under_fix_at: string | null;
+      }
     | null;
 }
 
@@ -304,7 +318,7 @@ export async function getMyReports(
     const { data, error } = await supabase
       .from("reports")
       .select(
-        "id, status, address, location, photo_public_url, created_at, reporter_id, classifications ( category, severity ), work_orders ( completed_at, resolution_photo_url )",
+        "id, status, address, location, photo_public_url, created_at, reporter_id, classifications ( category, severity ), work_orders ( completed_at, resolution_photo_url, fix_cost_estimate, fix_time_estimate_days, fix_note, marked_under_fix_at )",
       )
       .eq("reporter_id", user.id)
       .order("created_at", { ascending: false });
@@ -338,6 +352,17 @@ export async function getMyReports(
         ...(wo?.completed_at ? { completed_at: wo.completed_at } : {}),
         ...(wo?.resolution_photo_url
           ? { afterPhoto: wo.resolution_photo_url }
+          : {}),
+        // Admin-set public fix estimates — shown when status is in_progress.
+        ...(wo?.fix_cost_estimate != null
+          ? { fix_cost_estimate: wo.fix_cost_estimate }
+          : {}),
+        ...(wo?.fix_time_estimate_days != null
+          ? { fix_time_estimate_days: wo.fix_time_estimate_days }
+          : {}),
+        ...(wo?.fix_note ? { fix_note: wo.fix_note } : {}),
+        ...(wo?.marked_under_fix_at
+          ? { marked_under_fix_at: wo.marked_under_fix_at }
           : {}),
       };
     });

@@ -253,6 +253,50 @@ export async function overrideClassification(
   return { ok: true, data: undefined };
 }
 
+export async function markUnderFix(
+  workOrderId: string,
+  costEstimate: number | null,
+  timeDays: number | null,
+  note: string | null,
+): Promise<Result<void>> {
+  const staff = await getStaffUser();
+  if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
+
+  const supabase = createServerClient();
+
+  const { data: wo, error: woError } = await supabase
+    .from("work_orders")
+    .update({
+      fix_cost_estimate: costEstimate,
+      fix_time_estimate_days: timeDays,
+      fix_note: note?.trim() || null,
+      marked_under_fix_at: new Date().toISOString(),
+    })
+    .eq("id", workOrderId)
+    .select("report_id")
+    .single();
+
+  if (woError) return { ok: false, error: "work_order_not_found" };
+
+  const { error: reportError } = await supabase
+    .from("reports")
+    .update({ status: "in_progress", updated_at: new Date().toISOString() })
+    .eq("id", wo.report_id);
+  if (reportError) return { ok: false, error: "status_update_failed" };
+
+  after(async () => {
+    try {
+      await notifyReportStatus(wo.report_id, "in_progress");
+    } catch (err) {
+      logger.error("Under-fix notification failed", err, {
+        reportId: wo.report_id,
+      });
+    }
+  });
+
+  return { ok: true, data: undefined };
+}
+
 export async function addWorkOrderComment(
   workOrderId: string,
   body: string,
