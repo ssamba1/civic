@@ -65,10 +65,10 @@ export function normalizeLocation(raw: unknown): GeoPoint | null {
   // PostGIS GeoJSON: { type: "Point", coordinates: [lng, lat] }
   if (
     typeof raw === "object" &&
-    (raw as Record<string, unknown>)["type"] === "Point" &&
-    Array.isArray((raw as Record<string, unknown>)["coordinates"])
+    (raw as Record<string, unknown>).type === "Point" &&
+    Array.isArray((raw as Record<string, unknown>).coordinates)
   ) {
-    const coords = (raw as Record<string, unknown>)["coordinates"] as unknown[];
+    const coords = (raw as Record<string, unknown>).coordinates as unknown[];
     const lng = Number(coords[0]);
     const lat = Number(coords[1]);
     if (!Number.isNaN(lng) && !Number.isNaN(lat)) return { lng, lat };
@@ -77,8 +77,8 @@ export function normalizeLocation(raw: unknown): GeoPoint | null {
   // Plain {lng, lat} object
   if (typeof raw === "object") {
     const obj = raw as Record<string, unknown>;
-    const lng = Number(obj["lng"]);
-    const lat = Number(obj["lat"]);
+    const lng = Number(obj.lng);
+    const lat = Number(obj.lat);
     if (!Number.isNaN(lng) && !Number.isNaN(lat)) return { lng, lat };
   }
   // WKT string: "POINT(lng lat)"

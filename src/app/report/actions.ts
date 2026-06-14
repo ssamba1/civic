@@ -22,9 +22,25 @@ const submitReportSchema = z.object({
       lat: z.number().min(-90).max(90),
     })
     .nullable(),
-  address: z.string().nullable(),
-  description: z.string().max(500).nullable(),
-  tags: z.array(z.string().max(40)).max(8).default([]),
+  // Trim then coerce empty/whitespace-only to null so "   " can't land in the
+  // DB as a phantom address/description that pollutes lists and filters.
+  address: z
+    .string()
+    .transform((s) => s.trim())
+    .transform((s) => (s.length > 0 ? s : null))
+    .nullable(),
+  description: z
+    .string()
+    .max(500)
+    .transform((s) => s.trim())
+    .transform((s) => (s.length > 0 ? s : null))
+    .nullable(),
+  // Trim each tag and drop blanks so empty-string tags don't enter the corpus.
+  tags: z
+    .array(z.string().max(40))
+    .max(8)
+    .default([])
+    .transform((arr) => arr.map((t) => t.trim()).filter((t) => t.length > 0)),
 });
 
 type SubmitReportInput = z.infer<typeof submitReportSchema>;

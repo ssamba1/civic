@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     // Rate limit non-internal callers (browser users, anonymous). The internal
     // x-internal-key path (server actions + Open311) is exempt.
     if (!isInternal) {
-      const rl = checkRateLimit("classify:" + clientIp(request));
+      const rl = checkRateLimit(`classify:${clientIp(request)}`);
       if (!rl.allowed) {
         return NextResponse.json(
           { error: "Rate limited" },

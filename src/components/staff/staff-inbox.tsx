@@ -19,7 +19,6 @@ import {
 import type {
   Classification,
   Report,
-  ReportStatus,
   WorkOrder,
   WorkOrderWithDetails,
 } from "@/lib/types";

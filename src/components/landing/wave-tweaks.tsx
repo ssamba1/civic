@@ -3,7 +3,7 @@
 import { Pause, Play, RotateCcw, SlidersHorizontal, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils/cn";
-import { DEFAULT_WAVE, type WaveParams } from "./wave-hero";
+import type { WaveParams } from "./wave-hero";
 
 type Patch = Partial<WaveParams>;
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import CameraCapture from "@/components/report/camera-capture";
 import EmergencyInterstitial from "@/components/report/emergency-interstitial";
 import PhotoPreview from "@/components/report/photo-preview";

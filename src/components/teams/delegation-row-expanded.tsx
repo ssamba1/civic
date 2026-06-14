@@ -80,7 +80,7 @@ function TeamChip({ teamId }: { teamId: TeamId }) {
   return (
     <span
       className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px]"
-      style={{ background: meta.color + "22", color: meta.color }}
+      style={{ background: `${meta.color}22`, color: meta.color }}
     >
       {meta.shortLabel}
     </span>
@@ -304,7 +304,7 @@ function DelegationRowExpandedInner({
             — {dutyFirstSentence}.
           </p>
 
-          {!loading && !error && data && data.scoringExplanation[0] && (
+          {!loading && !error && data?.scoringExplanation[0] && (
             <p className="text-[11px] text-zinc-500">
               {data.scoringExplanation[0].title}:{" "}
               <span className="text-zinc-400">

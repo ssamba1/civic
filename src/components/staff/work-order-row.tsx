@@ -14,7 +14,6 @@ import {
   Trash2,
   TreePine,
   Wind,
-  Zap,
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";

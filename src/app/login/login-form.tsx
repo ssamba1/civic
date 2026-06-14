@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { DemoSignIn } from "@/components/auth/demo-sign-in";
 import { createBrowserSupabase } from "@/lib/db/browser-client";
-import { DEMO_MODE } from "@/lib/demo-mode";
 
 type Mode = "signin" | "signup";
 

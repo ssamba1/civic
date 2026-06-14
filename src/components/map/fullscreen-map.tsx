@@ -444,7 +444,7 @@ export function FullscreenMapOrchestrator({
               max="5"
               step="1"
               value={minSeverity}
-              onChange={(e) => setMinSeverity(parseInt(e.target.value))}
+              onChange={(e) => setMinSeverity(parseInt(e.target.value, 10))}
               className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
             />
           </div>

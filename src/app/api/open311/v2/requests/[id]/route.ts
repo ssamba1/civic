@@ -36,7 +36,7 @@ export async function GET(
 
   try {
     // Rate limit: 60 requests/min per IP
-    const rl = checkRateLimit("open311_get:" + clientIp(request), {
+    const rl = checkRateLimit(`open311_get:${clientIp(request)}`, {
       windowMs: 60_000,
       max: 60,
     });

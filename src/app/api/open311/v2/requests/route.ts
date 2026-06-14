@@ -35,10 +35,22 @@ const logger = createLogger("[open311-list]");
 const PUBLIC_REPORT_SELECT =
   "id, city_id, location, photo_public_url, status, address, created_at, updated_at, classifications(category, severity, confidence, reasoning, is_emergency), cities!inner(id, name, open311_jurisdiction_id)";
 
+/**
+ * Same columns, but with classifications joined as INNER so a
+ * `classifications.category` filter actually constrains the parent reports.
+ * A plain (left) embed would filter only the embedded rows and still return
+ * every report — breaking `?service_code=` (H-bug: service_code returned all
+ * categories). Used only when service_code is present.
+ */
+const PUBLIC_REPORT_SELECT_INNER_CLASS = PUBLIC_REPORT_SELECT.replace(
+  "classifications(",
+  "classifications!inner(",
+);
+
 export async function GET(request: NextRequest) {
   try {
     // Rate limit: 60 requests/min per IP (generous for public spec clients)
-    const rl = checkRateLimit("open311_list:" + clientIp(request), {
+    const rl = checkRateLimit(`open311_list:${clientIp(request)}`, {
       windowMs: 60_000,
       max: 60,
     });
@@ -81,15 +93,23 @@ export async function GET(request: NextRequest) {
 
     const db = createServerClient();
 
-    // Select only safe public columns — no description, no photo_raw_url, no reporter PII
-    let query = db.from("reports").select(PUBLIC_REPORT_SELECT);
+    // Select only safe public columns — no description, no photo_raw_url, no
+    // reporter PII. When service_code is set we must INNER-join classifications
+    // so the category filter constrains the parent reports; a left embed would
+    // filter only the embedded rows and still return every report.
+    let query = db
+      .from("reports")
+      .select(
+        serviceCode ? PUBLIC_REPORT_SELECT_INNER_CLASS : PUBLIC_REPORT_SELECT,
+      );
 
     // Filter by jurisdiction if provided
     if (jurisdictionId) {
       query = query.eq("cities.open311_jurisdiction_id", jurisdictionId);
     }
 
-    // Filter by service_code (= category on classifications)
+    // Filter by service_code (= category on classifications). The inner join
+    // selected above makes this exclude reports without a matching category.
     if (serviceCode) {
       query = query.eq("classifications.category", serviceCode);
     }
