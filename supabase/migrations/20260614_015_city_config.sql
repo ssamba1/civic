@@ -94,6 +94,65 @@ BEGIN
   END IF;
 END $$;
 
+-- 2.1 provision_city() — idempotent upsert called by src/lib/onboarding/
+--     provision-city.ts (F4). Converts GeoJSON → geography, normalizes single
+--     Polygon → MULTIPOLYGON, derives center from the boundary centroid when no
+--     internal point is supplied, and always lands active=false. SECURITY DEFINER
+--     + service-role-only (cities has no public write path).
+CREATE OR REPLACE FUNCTION public.provision_city(
+  _slug         text,
+  _name         text,
+  _state        text,
+  _boundary     jsonb,
+  _center_lng   double precision DEFAULT NULL,
+  _center_lat   double precision DEFAULT NULL,
+  _zoom         int DEFAULT NULL,
+  _jurisdiction text DEFAULT NULL
+)
+RETURNS TABLE (id uuid, created boolean)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  _existing uuid;
+  _geog     geography(MULTIPOLYGON, 4326);
+  _center   geography(POINT, 4326);
+  _result   uuid;
+BEGIN
+  _geog := ST_Multi(ST_GeomFromGeoJSON(_boundary::text))::geography;
+  IF _center_lng IS NULL OR _center_lat IS NULL THEN
+    _center := ST_Centroid(_geog::geometry)::geography;
+  ELSE
+    _center := ST_SetSRID(ST_MakePoint(_center_lng, _center_lat), 4326)::geography;
+  END IF;
+
+  SELECT c.id INTO _existing FROM cities c WHERE c.slug = _slug;
+
+  INSERT INTO cities (
+    slug, name, state, boundary, center, default_zoom,
+    open311_jurisdiction_id, active
+  )
+  VALUES (_slug, _name, _state, _geog, _center, _zoom, _jurisdiction, false)
+  ON CONFLICT (slug) DO UPDATE SET
+    boundary     = EXCLUDED.boundary,
+    center       = EXCLUDED.center,
+    default_zoom = EXCLUDED.default_zoom,
+    open311_jurisdiction_id =
+      COALESCE(EXCLUDED.open311_jurisdiction_id, cities.open311_jurisdiction_id)
+  RETURNING cities.id INTO _result;
+
+  RETURN QUERY SELECT _result, (_existing IS NULL);
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.provision_city(
+  text, text, text, jsonb, double precision, double precision, int, text
+) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.provision_city(
+  text, text, text, jsonb, double precision, double precision, int, text
+) TO service_role;
+
 -- ---------------------------------------------------------------------------
 -- 3. Per-city config tables (F3) — seeded from teams.ts defaults at provision.
 --    team_id is the app-level TeamId (text), not the work_order_department enum.
