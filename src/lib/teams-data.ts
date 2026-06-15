@@ -1,4 +1,4 @@
-import type { DashboardReport } from "@/lib/dashboard-data";
+import type { CityStats, DashboardReport } from "@/lib/dashboard-data";
 import { TEAM_LIST, type TeamId } from "@/lib/teams";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 
@@ -132,6 +132,41 @@ export function aggregateByTeam(
   }
 
   return result;
+}
+
+/**
+ * Per-team CityStats, derived from one team's reports using the same
+ * synthetic formulas fetchCityStats applies to the city aggregate, so the
+ * team dashboard's stat cards read consistently with the city view. `now`
+ * is threaded in (server-seeded) so week buckets don't drift across renders.
+ */
+export function computeTeamStats(
+  reports: ReadonlyArray<DashboardReport>,
+  now = Date.now(),
+): CityStats {
+  let open = 0;
+  let resolved = 0;
+  let this_week = 0;
+  let prev_week = 0;
+  let mttrSum = 0;
+  for (const r of reports) {
+    if (r.status === "open") open += 1;
+    if (r.status === "closed") {
+      resolved += 1;
+      mttrSum += 12 + r.severity * 18;
+    }
+    const ageDays = (now - Date.parse(r.created_at)) / 86_400_000;
+    if (ageDays <= 7) this_week += 1;
+    else if (ageDays <= 14) prev_week += 1;
+  }
+  return {
+    total: reports.length,
+    open,
+    resolved,
+    avg_resolution_hours: resolved === 0 ? 0 : Math.round(mttrSum / resolved),
+    this_week,
+    prev_week,
+  };
 }
 
 /**

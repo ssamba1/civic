@@ -20,6 +20,9 @@ interface WorkloadBarsProps {
   workloads: TeamWorkload[];
   selectedTeam: TeamId;
   onSelectTeam: (teamId: TeamId) => void;
+  // When false (scoped single-team dashboard), rows render as informational:
+  // no scope-toggle semantics, no stuck-selected fill, no hover-as-selection.
+  selectable?: boolean;
 }
 
 const STATUS_PALETTE = {
@@ -44,6 +47,7 @@ function WorkloadBarsInner({
   workloads,
   selectedTeam,
   onSelectTeam,
+  selectable = true,
 }: WorkloadBarsProps) {
   const tip = useHoverTip();
   const maxTotal = Math.max(1, ...workloads.map((w) => w.total));
@@ -77,14 +81,18 @@ function WorkloadBarsInner({
   return (
     <Tile
       title="Workload distribution"
-      subtitle={`${rows.length} teams · scaled to busiest`}
+      subtitle={
+        rows.length === 1
+          ? "1 team"
+          : `${rows.length} teams · scaled to busiest`
+      }
     >
       <ul ref={listRef} className="flex flex-col gap-2">
         {rows.map((w) => {
           const team = TEAMS[w.teamId];
           const widthPct = (w.total / maxTotal) * 100;
-          const isSelected = selectedTeam === w.teamId;
-          const isDimmed = selectedTeam !== "all" && !isSelected;
+          const isSelected = selectable && selectedTeam === w.teamId;
+          const isDimmed = selectable && selectedTeam !== "all" && !isSelected;
           const { onClick: tipOnClick, ...tipRest } = tip.bindTarget(() =>
             buildTip(w),
           );
@@ -94,16 +102,22 @@ function WorkloadBarsInner({
                 type="button"
                 onClick={(e) => {
                   tipOnClick?.(e);
-                  onSelectTeam(w.teamId);
+                  if (selectable) onSelectTeam(w.teamId);
                 }}
-                aria-pressed={isSelected}
-                aria-label={`Scope view to ${team.label}`}
+                aria-pressed={selectable ? isSelected : undefined}
+                aria-label={
+                  selectable ? `Scope view to ${team.label}` : team.label
+                }
                 className={cn(
                   "grid w-full grid-cols-[minmax(0,1fr)_56px] items-center gap-2",
                   "sm:grid-cols-[140px_minmax(0,1fr)_56px] sm:gap-3",
                   "rounded-md px-2 py-2.5 -mx-2 text-left transition-colors min-h-[44px]",
                   "outline-none focus-visible:bg-white/[0.04] focus-visible:ring-1 focus-visible:ring-white/20",
-                  isSelected ? "bg-white/[0.05]" : "hover:bg-white/[0.03]",
+                  isSelected
+                    ? "bg-white/[0.05]"
+                    : selectable
+                      ? "hover:bg-white/[0.03]"
+                      : "",
                   isDimmed && "opacity-50",
                 )}
                 {...tipRest}

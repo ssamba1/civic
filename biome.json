@@ -24,5 +24,16 @@
       "!scripts",
       "!src/app/globals.css"
     ]
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/components/landing/riven/*.css"],
+      "linter": {
+        "rules": {
+          "complexity": { "noImportantStyles": "off" },
+          "style": { "noDescendingSpecificity": "off" }
+        }
+      }
+    }
+  ]
 }

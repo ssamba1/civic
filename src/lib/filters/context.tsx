@@ -32,6 +32,10 @@ interface FilterContextValue {
   corpus: DashboardReport[];
   filtered: DashboardReport[];
   previousWindow: DashboardReport[];
+  // Server-seeded reference time (stable for the provider's lifetime). Exposed
+  // so client consumers computing time-bucketed derives (e.g. team stat cards)
+  // use the SAME `now` as SSR — no Date.now() drift, no hydration mismatch.
+  now: number;
 }
 
 const FilterContext = createContext<FilterContextValue | null>(null);
@@ -168,6 +172,7 @@ export function FilterProvider({
       corpus,
       filtered,
       previousWindow,
+      now,
     }),
     [
       filter,
@@ -178,6 +183,7 @@ export function FilterProvider({
       corpus,
       filtered,
       previousWindow,
+      now,
     ],
   );
 
@@ -209,4 +215,9 @@ export function usePreviousWindowReports(): DashboardReport[] {
 
 export function useReportCorpus(): DashboardReport[] {
   return useFilterContext().corpus;
+}
+
+/** Server-seeded reference time shared by all consumers of this provider. */
+export function useServerNow(): number {
+  return useFilterContext().now;
 }

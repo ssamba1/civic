@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, ListChecks, Map as MapIcon } from "lucide-react";
+import { BarChart3, LayoutDashboard, Map as MapIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSlidingPill } from "@/lib/hooks/use-sliding-pill";
@@ -21,7 +21,12 @@ export function TeamNav({ team, city, mobileSlot }: TeamNavProps) {
   const base = `/${team}/${city}`;
 
   const items = [
-    { label: "Tasks", href: base, icon: ListChecks, active: pathname === base },
+    {
+      label: "Overview",
+      href: base,
+      icon: LayoutDashboard,
+      active: pathname === base,
+    },
     {
       label: "Map",
       href: `${base}/map`,

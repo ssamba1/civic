@@ -1,0 +1,1033 @@
+/* ─────────────────────────────────────────────────────────────
+   Riven V2 waitlist landing — ported VERBATIM into Civic.
+   Only three changes vs. the Riven source:
+     1. emerald accent → Civic blue (#0a84ff / rgb 10 132 255)
+        + light mint → light sky (#BCDCFF), deep emerald → deep blue
+        (#123A66), page bg deep forest → deep navy (#06121F)
+     2. wordmark / copy → Civic product
+     3. product-specific assets / links
+   Scoped under `.riven-root` (was `.waitlist-root`). Page bg lives on the
+   root div, NOT on <body>, so it cannot leak to other routes.
+   ───────────────────────────────────────────────────────────── */
+
+/* ── Scoped Riven tokens (was .waitlist-root) ─────────────────── */
+.riven-root {
+  --wl-bg-rgb: 10 10 11; /* #0A0A0B — match app */
+  --wl-surface-rgb: 17 17 19; /* #111113 elevated panels */
+  --wl-ink-rgb: 237 237 238; /* #EDEDEE primary text */
+  --wl-ink-soft-rgb: 122 122 128; /* #7A7A80 secondary text */
+  --wl-border-rgb: 58 58 64; /* #3A3A40 hairlines */
+  --wl-emerald-rgb: 10 132 255; /* #0a84ff Civic blue (was #10B981) */
+  --wl-emerald-deep-rgb: 18 58 102; /* #123A66 deep blue rest (was #1A4D44) */
+  --wl-emerald-soft-rgb: 188 220 255; /* #BCDCFF light sky (was 46 200 150) */
+  --wl-amber-rgb: var(--wl-emerald-rgb); /* alias so sibling code still works */
+  --wl-hairline-rgb: var(--wl-border-rgb); /* alias */
+  --wl-navy-rgb: var(--wl-bg-rgb); /* alias for "dark navy" usages */
+  --wl-navy-dark-rgb: 6 6 7; /* deepest near-black for sections */
+  --wl-paper-rgb: 22 22 24; /* slightly elevated paper bg */
+  --wl-page-bg: #06121f; /* solid page backdrop — deep navy (was #07211e) */
+
+  --wl-bg: rgb(var(--wl-bg-rgb));
+  --wl-surface: rgb(var(--wl-surface-rgb));
+  --wl-ink: rgb(var(--wl-ink-rgb));
+  --wl-ink-soft: rgb(var(--wl-ink-soft-rgb));
+  --wl-border: rgb(var(--wl-border-rgb));
+  --wl-emerald: rgb(var(--wl-emerald-rgb));
+  --wl-emerald-deep: rgb(var(--wl-emerald-deep-rgb));
+  --wl-amber: rgb(var(--wl-emerald-rgb)); /* alias */
+  --wl-hairline: rgb(var(--wl-border-rgb)); /* alias */
+  --wl-navy: rgb(var(--wl-bg-rgb));
+  --wl-navy-dark: rgb(var(--wl-navy-dark-rgb));
+  --wl-paper: rgb(var(--wl-paper-rgb));
+
+  --wl-font-display:
+    "Fraunces", "Playfair Display", "Newsreader", Georgia, serif;
+  --wl-font-body: "Manrope", "Inter", system-ui, -apple-system, sans-serif;
+  --wl-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --wl-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --wl-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.5);
+  --wl-shadow-lift:
+    0 2px 4px rgba(0, 0, 0, 0.4), 0 24px 60px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+  --wl-noise-opacity: 0.04;
+
+  --wl-section-py: clamp(64px, 8vh, 104px);
+  --wl-content-max: 1100px;
+  --wl-chapter-eyebrow-gap: 24px;
+  --wl-chapter-headline-gap: 24px;
+  --wl-chapter-sub-gap: 56px;
+  --wl-chapter-head-mb: 48px;
+  --wl-h2-size: clamp(40px, 4.6vw, 64px);
+  --wl-snippet-tilt: 6deg;
+  --wl-bloom: 0.55;
+
+  /* -- Hero layout ----------------------------------------- */
+  --wl-hero-pt: 96px;
+  --wl-hero-pb: 0px;
+  --wl-hero-min-h: 100vh;
+  --wl-hero-content-max: 820px;
+
+  /* -- Pitch rhythm ---------------------------------------- */
+  --wl-pitch-gap-preamble: 44px;
+  --wl-pitch-gap-headline: 48px;
+  --wl-pitch-gap-cta: 20px;
+  --wl-pitch-gap-form: 64px;
+
+  /* -- Typography ------------------------------------------ */
+  --wl-headline-size: clamp(48px, 6vw, 88px);
+  --wl-headline-lh: 1.08;
+  --wl-headline-tracking: -0.035em;
+  --wl-preamble-size: clamp(13px, 1.1vw, 16px);
+  --wl-preamble-lh: 1.75;
+  --wl-eyebrow-size: 11px;
+  --wl-eyebrow-tracking: 0.18em;
+  --wl-caption-size: 11px;
+  --wl-caption-tracking: 0.06em;
+
+  /* -- Pill CTA -------------------------------------------- */
+  --wl-pill-radius: 9999px;
+  --wl-pill-py: 14px;
+  --wl-pill-px: 28px;
+  --wl-pill-size: 14px;
+
+  /* -- Showcase mockup ------------------------------------- */
+  --wl-showcase-mt: -4vh;
+  --wl-showcase-mb: 0px;
+  --wl-showcase-max-w: 1280px;
+  --wl-showcase-radius: 20px;
+  --wl-showcase-tilt: 18deg;
+  --wl-showcase-aspect: 19 / 10;
+  --wl-showcase-object-fit: contain;
+  --wl-showcase-object-pos: center center;
+
+  /* Page backdrop lives here (NOT on body) so it can't leak to other routes. */
+  background: var(--wl-page-bg);
+  color: var(--wl-ink);
+  font-family: var(--wl-font-body);
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.6;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100dvh;
+  width: 100%;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.riven-root h1,
+.riven-root h2,
+.riven-root h3,
+.riven-root .wl-display {
+  font-family: var(--wl-font-display);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  color: var(--wl-ink);
+}
+
+.riven-root .wl-eyebrow {
+  font-family: var(--wl-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--wl-emerald);
+}
+
+@media (max-width: 768px) {
+  .riven-root {
+    font-size: 15px;
+  }
+  .riven-root {
+    --wl-section-py: 80px;
+  }
+}
+
+.riven-root ::selection {
+  background: rgba(10, 132, 255, 0.25);
+  color: var(--wl-ink);
+}
+
+.riven-root .wl-hairline {
+  border-color: rgb(var(--wl-border-rgb) / 0.6);
+}
+.riven-root .wl-hairline-dark {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.riven-root *:focus-visible {
+  outline: 2px solid rgb(var(--wl-emerald-rgb));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Peregryne-style typography ─────────────────────────── */
+.riven-root .wl-display {
+  font-family: var(--wl-font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 144;
+  letter-spacing: -0.035em;
+  line-height: 0.96;
+  font-weight: 200;
+  font-style: normal;
+}
+.riven-root .wl-display-italic {
+  font-family: var(--wl-font-display);
+  font-style: italic;
+  font-variation-settings: "opsz" 144;
+  letter-spacing: -0.02em;
+  line-height: 0.98;
+  font-weight: 200;
+}
+
+/* ── Pill button — 3D, layered shadows, hover-glow halo ─────
+   Reads as a physical extruded chip. Copied VERBATIM; only the
+   emerald glow tokens resolve to Civic blue via the var swap above. */
+.riven-root .wl-pill-btn {
+  position: relative;
+  background: linear-gradient(180deg, #ffffff 0%, #f4f4f4 55%, #d8d8d8 100%);
+  color: #0a0a0b;
+  font-family: var(--wl-font-body);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.005em;
+  padding: 14px 28px;
+  border-radius: 9999px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  isolation: isolate;
+  text-decoration: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.06),
+    0 2px 0 rgba(0, 0, 0, 0.55),
+    0 6px 14px -4px rgba(0, 0, 0, 0.55),
+    0 14px 28px -10px rgba(0, 0, 0, 0.6);
+  transform: translateZ(0);
+  transition:
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.riven-root .wl-pill-btn::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  background: radial-gradient(
+    ellipse at center,
+    rgb(var(--wl-emerald-rgb) / 0.55) 0%,
+    rgb(var(--wl-emerald-rgb) / 0) 70%
+  );
+  filter: blur(14px);
+  opacity: 0;
+  z-index: -1;
+  pointer-events: none;
+  transition: opacity 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.riven-root .wl-pill-btn:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 55%, #ececec 100%);
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.08),
+    0 4px 0 rgba(0, 0, 0, 0.55),
+    0 12px 24px -4px rgba(0, 0, 0, 0.55),
+    0 24px 48px -10px rgba(0, 0, 0, 0.55),
+    0 0 60px -6px rgb(var(--wl-emerald-rgb) / 0.65);
+  filter: drop-shadow(0 0 28px rgb(var(--wl-emerald-rgb) / 0.35));
+}
+.riven-root .wl-pill-btn:hover::before {
+  opacity: 1;
+}
+.riven-root .wl-pill-btn:active {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 1px 0 rgba(255, 255, 255, 0.04),
+    0 2px 0 rgba(0, 0, 0, 0.55),
+    0 4px 10px -2px rgba(0, 0, 0, 0.5),
+    0 0 32px -6px rgb(var(--wl-emerald-rgb) / 0.45);
+}
+.riven-root .wl-pill-btn--ghost {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.01) 100%
+  );
+  color: rgb(var(--wl-ink-rgb) / 0.85);
+  border: 1px solid rgb(var(--wl-border-rgb) / 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 1px 0 rgba(255, 255, 255, 0.04),
+    0 2px 0 rgba(0, 0, 0, 0.55),
+    0 8px 18px -6px rgba(0, 0, 0, 0.6);
+}
+.riven-root .wl-pill-btn--ghost::before {
+  background: radial-gradient(
+    ellipse at center,
+    rgb(var(--wl-emerald-rgb) / 0.4) 0%,
+    rgb(var(--wl-emerald-rgb) / 0) 70%
+  );
+}
+.riven-root .wl-pill-btn--ghost:hover {
+  background: linear-gradient(
+    180deg,
+    rgb(var(--wl-emerald-rgb) / 0.12) 0%,
+    rgb(var(--wl-emerald-rgb) / 0.04) 100%
+  );
+  color: rgb(var(--wl-ink-rgb));
+  border-color: rgb(var(--wl-emerald-rgb) / 0.55);
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 1px 0 rgb(var(--wl-emerald-rgb) / 0.15),
+    0 4px 0 rgba(0, 0, 0, 0.55),
+    0 12px 24px -4px rgba(0, 0, 0, 0.55),
+    0 0 50px -8px rgb(var(--wl-emerald-rgb) / 0.5);
+  filter: drop-shadow(0 0 22px rgb(var(--wl-emerald-rgb) / 0.3));
+}
+
+/* ── Narrow shell — Peregryne lp-shell-narrow ────────────── */
+.riven-root .wl-lp-narrow {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(1.65rem, 5.5vw, 6.6rem);
+  padding-right: clamp(1.65rem, 5.5vw, 6.6rem);
+  max-width: min(1560px, 86vw);
+}
+
+/* ── Nav top state (no-bg) ───────────────────────────────── */
+.riven-root .wl-nav--top {
+  background: transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   V2 below-fold sections — token-driven (from v2/styles.css)
+   ═══════════════════════════════════════════════════════════ */
+
+.v2-scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  transform-origin: 0% 50%;
+  background: rgb(var(--wl-emerald-rgb));
+  z-index: 100;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.v2-main {
+  position: relative;
+  z-index: 1;
+}
+
+.v2-section--hero {
+  display: block;
+  padding: 0;
+  min-height: 100vh;
+  overflow: hidden;
+}
+.v2-section--hero > * {
+  height: 100%;
+}
+
+/* Base section frame — variant-neutral. */
+.v2x {
+  position: relative;
+  width: 100%;
+  padding: clamp(96px, 14vh, 160px) clamp(40px, 8vw, 140px);
+  box-sizing: border-box;
+  background: rgb(var(--wl-bg-rgb));
+}
+
+/* Soft white-to-dark transition at top of first content section. */
+.v2x--stats::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 140px;
+  background: linear-gradient(
+    to bottom,
+    #ffffff 0%,
+    rgb(var(--wl-bg-rgb)) 100%
+  );
+  pointer-events: none;
+}
+
+.v2x-eyebrow {
+  font-family: var(--wl-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgb(var(--wl-emerald-rgb));
+  margin: 0 0 18px 0;
+}
+.v2x-eyebrow--centered {
+  text-align: center;
+}
+.v2x-eyebrow--rail {
+  margin: 0;
+  writing-mode: horizontal-tb;
+}
+
+.v2x-italic {
+  font-family: var(--wl-font-display);
+  font-style: italic;
+  font-weight: 350;
+  color: rgb(var(--wl-emerald-rgb));
+}
+
+.v2x-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--wl-font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  color: rgb(var(--wl-emerald-rgb));
+  text-decoration: none;
+  border-bottom: 1px solid rgb(var(--wl-emerald-rgb) / 0.4);
+  padding-bottom: 4px;
+  transition:
+    border-color 200ms ease,
+    transform 200ms ease;
+}
+.v2x-link:hover {
+  border-color: rgb(var(--wl-emerald-rgb));
+  transform: translateY(-1px);
+}
+.v2x-link svg {
+  transition: transform 200ms ease;
+}
+.v2x-link:hover svg {
+  transform: translateX(3px);
+}
+
+/* ── Section A · stats ───────────────────────────────────────── */
+.v2x--stats {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(48px, 7vh, 88px);
+  max-width: 1480px;
+  margin: 0 auto;
+}
+.v2x-stats__head {
+  max-width: 720px;
+}
+.v2x-problem {
+  font-family: var(--wl-font-display);
+  font-size: clamp(22px, 2.4vw, 32px);
+  line-height: 1.2;
+  letter-spacing: -0.022em;
+  font-weight: 400;
+  color: rgb(var(--wl-ink-rgb));
+  margin: 0;
+  max-width: 28ch;
+}
+.v2x-problem__lead {
+  font-style: italic;
+  font-weight: 500;
+  color: rgb(var(--wl-emerald-rgb));
+}
+.v2x-stats__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(20px, 2.5vw, 40px);
+}
+.v2x-stat-card {
+  position: relative;
+  padding: clamp(36px, 4vw, 56px) clamp(28px, 3vw, 44px);
+  border: 1px solid rgb(var(--wl-ink-rgb) / 0.12);
+  border-radius: 24px;
+  background: rgb(var(--wl-ink-rgb) / 0.015);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow: hidden;
+}
+.v2x-stat-card--inverse {
+  background:
+    radial-gradient(
+      120% 80% at 100% 0%,
+      rgb(var(--wl-emerald-rgb) / 0.08),
+      transparent 70%
+    ),
+    rgb(var(--wl-ink-rgb) / 0.02);
+  border-color: rgb(var(--wl-emerald-rgb) / 0.22);
+}
+.v2x-stat-num {
+  font-family: var(--wl-font-display);
+  font-size: clamp(120px, 14vw, 240px);
+  font-weight: 500;
+  line-height: 0.92;
+  letter-spacing: -0.05em;
+  color: rgb(var(--wl-ink-rgb));
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: baseline;
+}
+.v2x-stat-card--inverse .v2x-stat-num {
+  color: rgb(var(--wl-emerald-rgb));
+}
+.v2x-stat-num__unit {
+  font-size: 0.42em;
+  font-weight: 400;
+  margin-left: 4px;
+  letter-spacing: -0.02em;
+  color: rgb(var(--wl-ink-rgb) / 0.7);
+}
+.v2x-stat-body {
+  font-family: var(--wl-font-display);
+  font-size: clamp(17px, 1.4vw, 22px);
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  font-weight: 350;
+  color: rgb(var(--wl-ink-rgb));
+  margin: 0;
+  max-width: 32ch;
+}
+.v2x-stat-source {
+  font-family: var(--wl-font-mono);
+  font-size: 10.5px;
+  line-height: 1.5;
+  letter-spacing: 0.06em;
+  color: rgb(var(--wl-ink-rgb) / 0.5);
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid rgb(var(--wl-ink-rgb) / 0.1);
+}
+.v2x-stat-chip {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  border: 1px solid rgb(var(--wl-emerald-rgb) / 0.35);
+  background: rgb(var(--wl-emerald-rgb) / 0.08);
+  color: rgb(var(--wl-emerald-rgb));
+  font-family: var(--wl-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.v2x-stat-chip__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgb(var(--wl-emerald-rgb));
+  box-shadow: 0 0 8px rgb(var(--wl-emerald-rgb) / 0.55);
+}
+
+/* ── Section B · how it works ───────────────────────────────── */
+.v2x--how {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(40px, 6vh, 72px);
+  max-width: 1600px;
+  margin: 0 auto;
+}
+.v2x-how__head {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.v2x-how__head .v2x-eyebrow {
+  text-align: center;
+}
+.v2x-how__title {
+  font-family: var(--wl-font-display);
+  font-size: clamp(28px, 3.2vw, 44px);
+  line-height: 1.1;
+  letter-spacing: -0.028em;
+  font-weight: 300;
+  color: rgb(var(--wl-ink-rgb));
+  margin: 0;
+}
+.v2x-how__strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+.v2x-how__step {
+  position: relative;
+  padding: 28px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.v2x-how__step + .v2x-how__step {
+  border-left: 1px solid rgb(var(--wl-ink-rgb) / 0.12);
+}
+.v2x-how__num {
+  font-family: var(--wl-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  color: rgb(var(--wl-emerald-rgb));
+}
+.v2x-how__label {
+  font-family: var(--wl-font-display);
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: 350;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  color: rgb(var(--wl-ink-rgb));
+}
+.v2x-how__body {
+  font-family: var(--wl-font-body);
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgb(var(--wl-ink-rgb) / 0.6);
+  margin: 0;
+  max-width: 38ch;
+}
+.v2x-how__connector {
+  display: none;
+}
+
+.v2x-how__shot {
+  margin: 0;
+  width: 100%;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+  transform: rotate(-0.6deg);
+  transform-origin: 50% 50%;
+}
+.v2x-how__shot img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 14px;
+  box-shadow:
+    0 1px 0 rgb(var(--wl-ink-rgb) / 0.06) inset,
+    0 18px 40px -22px rgb(var(--wl-ink-rgb) / 0.4),
+    0 60px 100px -40px rgb(var(--wl-ink-rgb) / 0.25);
+}
+/* ── Section C · founding cohort ─────────────────────────────── */
+.v2x--cohort {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: clamp(40px, 6vw, 88px);
+  max-width: 1480px;
+  margin: 0 auto;
+  align-items: start;
+}
+.v2x-cohort__rail {
+  position: sticky;
+  top: 96px;
+  align-self: start;
+  padding-top: 8px;
+}
+.v2x-cohort__body {
+  max-width: 880px;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 2.5vh, 32px);
+}
+.v2x-cohort__title {
+  font-family: var(--wl-font-display);
+  font-size: clamp(36px, 4.8vw, 64px);
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  font-weight: 300;
+  color: rgb(var(--wl-ink-rgb));
+  margin: 0;
+  max-width: 22ch;
+}
+.v2x-cohort__sub {
+  font-family: var(--wl-font-body);
+  font-size: clamp(15px, 1.1vw, 18px);
+  line-height: 1.55;
+  font-weight: 350;
+  color: rgb(var(--wl-ink-rgb) / 0.68);
+  margin: 0;
+  max-width: 56ch;
+}
+.v2x-cohort__progress {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 480px;
+  margin-top: 8px;
+}
+.v2x-cohort__bar {
+  height: 6px;
+  border-radius: 9999px;
+  background: rgb(var(--wl-ink-rgb) / 0.08);
+  overflow: hidden;
+  position: relative;
+}
+.v2x-cohort__bar-fill {
+  height: 100%;
+  background: rgb(var(--wl-emerald-rgb));
+  border-radius: inherit;
+  box-shadow: 0 0 12px rgb(var(--wl-emerald-rgb) / 0.4);
+}
+.v2x-cohort__progress-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.v2x-cohort__progress-num {
+  font-family: var(--wl-font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: rgb(var(--wl-ink-rgb));
+  font-variant-numeric: tabular-nums;
+}
+.v2x-cohort__progress-label {
+  font-family: var(--wl-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgb(var(--wl-ink-rgb) / 0.5);
+}
+.v2x-cohort__pills {
+  list-style: none;
+  margin: 12px 0 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-width: 760px;
+}
+.v2x-cohort__pill {
+  padding: 10px 18px;
+  border: 1px solid rgb(var(--wl-emerald-rgb) / 0.35);
+  background: rgb(var(--wl-emerald-rgb) / 0.06);
+  color: rgb(var(--wl-emerald-rgb));
+  border-radius: 999px;
+  font-family: var(--wl-font-body);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    transform 200ms ease;
+}
+.v2x-cohort__pill:hover {
+  background: rgb(var(--wl-emerald-rgb) / 0.12);
+  border-color: rgb(var(--wl-emerald-rgb) / 0.55);
+  transform: translateY(-1px);
+}
+.v2x-cohort__foot {
+  margin-top: 12px;
+}
+
+/* ── Section D · FAQ ─────────────────────────────────────────── */
+.v2x--faq {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(28px, 5vh, 56px);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.v2x-faq__manifesto {
+  text-align: center;
+  max-width: 880px;
+  margin: 0 auto;
+}
+.v2x-faq__q {
+  font-family: var(--wl-font-display);
+  font-size: clamp(30px, 4.2vw, 52px);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-weight: 300;
+  color: rgb(var(--wl-ink-rgb));
+  margin: 0 0 12px 0;
+}
+.v2x-faq__a-lead {
+  font-family: var(--wl-font-display);
+  font-style: italic;
+  font-size: clamp(16px, 2vw, 24px);
+  line-height: 1.3;
+  letter-spacing: -0.022em;
+  font-weight: 350;
+  color: rgb(var(--wl-emerald-rgb));
+  margin: 0;
+}
+.v2x-faq__list {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: clamp(32px, 5vw, 64px);
+  grid-auto-rows: min-content;
+  border-bottom: 1px solid rgb(var(--wl-ink-rgb) / 0.12);
+}
+.v2x-faq__row {
+  border-top: 1px solid rgb(var(--wl-ink-rgb) / 0.12);
+}
+.v2x-faq__row-q {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 4px;
+  font-family: var(--wl-font-display);
+  font-size: clamp(16px, 1.25vw, 19px);
+  font-weight: 450;
+  letter-spacing: -0.015em;
+  line-height: 1.35;
+  color: rgb(var(--wl-ink-rgb));
+  transition: color 180ms ease;
+}
+.v2x-faq__row-q::-webkit-details-marker {
+  display: none;
+}
+.v2x-faq__row-q::marker {
+  content: "";
+}
+.v2x-faq__row-q:hover {
+  color: rgb(var(--wl-emerald-rgb));
+}
+.v2x-faq__row-icon {
+  color: rgb(var(--wl-emerald-rgb));
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+.v2x-faq__row[open] .v2x-faq__row-icon {
+  transform: rotate(45deg);
+}
+.v2x-faq__row-a {
+  font-family: var(--wl-font-body);
+  font-size: 14.5px;
+  line-height: 1.6;
+  font-weight: 400;
+  color: rgb(var(--wl-ink-rgb) / 0.78);
+  margin: 0;
+  padding: 0 36px 18px 4px;
+  max-width: 56ch;
+}
+
+/* ── Section E · footer monolith ─────────────────────────────── */
+.v2x-footer {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: clamp(72px, 10vh, 120px) 0 clamp(40px, 6vh, 64px) 0;
+  background: rgb(var(--wl-bg-rgb));
+  border-top: 1px solid rgb(var(--wl-ink-rgb) / 0.08);
+}
+.v2x-footer__cta {
+  position: relative;
+  z-index: 2;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 clamp(24px, 4vw, 48px);
+  text-align: center;
+}
+.v2x-footer__cta-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.v2x-footer__cta-title {
+  font-family: var(--wl-font-display);
+  font-size: clamp(28px, 3.4vw, 44px);
+  line-height: 1.1;
+  letter-spacing: -0.028em;
+  font-weight: 300;
+  color: rgb(var(--wl-ink-rgb));
+  margin: 0;
+  max-width: 22ch;
+}
+.v2x-footer__form {
+  width: 100%;
+  max-width: 520px;
+  margin: 12px auto 0 auto;
+  display: flex;
+  justify-content: center;
+}
+.v2x-footer__cta-sub {
+  font-family: var(--wl-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgb(var(--wl-ink-rgb) / 0.42);
+  margin: 4px 0 0 0;
+}
+.v2x-footer__mono {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  text-align: center;
+  margin-top: clamp(-40px, -3vw, -20px);
+  pointer-events: none;
+  line-height: 0.82;
+}
+.v2x-footer__wordmark {
+  font-family: var(--wl-font-display);
+  font-weight: 600;
+  font-size: clamp(160px, 28vw, 460px);
+  letter-spacing: -0.045em;
+  line-height: 0.82;
+  color: rgb(var(--wl-ink-rgb));
+  display: inline-block;
+  white-space: nowrap;
+}
+.v2x-footer__base {
+  position: relative;
+  z-index: 2;
+  margin-top: clamp(20px, 3vh, 40px);
+  padding: 0 clamp(24px, 4vw, 48px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+}
+.v2x-footer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+}
+.v2x-footer__link {
+  font-family: var(--wl-font-body);
+  font-size: 13px;
+  font-weight: 450;
+  color: rgb(var(--wl-ink-rgb) / 0.6);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 1px;
+  transition:
+    color 200ms ease,
+    border-color 200ms ease;
+}
+.v2x-footer__link:hover {
+  color: rgb(var(--wl-emerald-rgb));
+  border-bottom-color: rgb(var(--wl-emerald-rgb) / 0.5);
+}
+.v2x-footer__link--inline {
+  color: rgb(var(--wl-emerald-rgb));
+}
+.v2x-footer__credit {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--wl-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgb(var(--wl-ink-rgb) / 0.42);
+}
+.v2x-footer__sep {
+  opacity: 0.5;
+}
+
+/* ── Mobile ──────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .v2x {
+    padding: 72px 24px;
+  }
+
+  .v2x-stats__grid {
+    grid-template-columns: 1fr;
+  }
+  .v2x-stat-num {
+    font-size: clamp(96px, 22vw, 140px);
+  }
+  .v2x-stat-chip {
+    top: 18px;
+    right: 18px;
+  }
+
+  .v2x-how__strip {
+    grid-template-columns: 1fr;
+  }
+  .v2x-how__step + .v2x-how__step {
+    border-left: none;
+    border-top: 1px solid rgb(var(--wl-ink-rgb) / 0.12);
+  }
+  .v2x-how__step {
+    padding: 22px 0;
+  }
+  .v2x-how__shot {
+    transform: none;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .v2x--cohort {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .v2x-cohort__rail {
+    position: static;
+  }
+  .v2x-cohort__title {
+    font-size: clamp(30px, 8vw, 44px);
+  }
+
+  .v2x-faq__q {
+    font-size: clamp(26px, 6.5vw, 36px);
+  }
+  .v2x-faq__a-lead {
+    font-size: clamp(15px, 4.4vw, 20px);
+  }
+  .v2x-faq__list {
+    grid-template-columns: 1fr;
+  }
+  .v2x-faq__row-a {
+    padding-right: 16px;
+  }
+
+  .v2x-footer__wordmark {
+    font-size: clamp(96px, 30vw, 180px);
+  }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .v2-scroll-progress,
+  .v2x-cohort__bar-fill,
+  .v2x-stat-chip__dot {
+    animation: none !important;
+  }
+}
+
+/* Riven citation pill, used inside ResearchWorkspace. Ported VERBATIM from
+   Riven waitlist.css; deep emerald bg (26,77,68 / #1A4D44) → deep blue
+   (18,58,102 / #123A66). The Pill component also sets these inline. */
+.riven-root .wl-citation {
+  background: rgba(18, 58, 102, 0.25);
+  color: rgb(var(--wl-emerald-rgb));
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 0.88em;
+  font-weight: 500;
+  display: inline;
+}
