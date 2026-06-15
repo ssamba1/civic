@@ -1,6 +1,13 @@
 import { Suspense } from "react";
 import { CityHeader } from "@/components/city-header";
+import type { DashboardReport } from "@/lib/dashboard-data";
 import { getReportCorpus } from "@/lib/dashboard-data";
+import {
+  fetchCity,
+  fetchCorpus,
+  PREVIEW_SOURCES,
+} from "@/lib/dashboard-queries";
+import { DEMO_MODE } from "@/lib/demo-mode";
 import { FilterProvider } from "@/lib/filters/context";
 
 export default async function CityDashboardLayout({
@@ -11,8 +18,20 @@ export default async function CityDashboardLayout({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const corpus = getReportCorpus();
   const now = Date.now();
+
+  // Demo deploy keeps the synthetic Cumming corpus (unchanged). Real deploy reads
+  // the city's own reports from the DB per city_id (F1) — a preview (not-yet-live)
+  // city includes synthetic/imported sources so its dashboard looks alive.
+  let corpus: DashboardReport[];
+  if (DEMO_MODE) {
+    corpus = getReportCorpus();
+  } else {
+    const city = await fetchCity(slug);
+    corpus = city
+      ? await fetchCorpus(city.id, city.active ? undefined : PREVIEW_SOURCES)
+      : [];
+  }
 
   return (
     <div className="flex min-h-dvh flex-col bg-black text-zinc-100">

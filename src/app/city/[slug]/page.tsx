@@ -8,7 +8,11 @@ import { fetchCity as fetchCityMock, KNOWN_CITIES } from "@/lib/dashboard-data";
 import {
   fetchCity as fetchCityFromDb,
   fetchCityStats,
+  PREVIEW_SOURCES,
 } from "@/lib/dashboard-queries";
+
+// Pre-render known cities; provisioned cities render on demand (no redeploy).
+export const dynamicParams = true;
 
 export function generateStaticParams() {
   return Object.keys(KNOWN_CITIES).map((slug) => ({ slug }));
@@ -67,7 +71,12 @@ export default async function CityDashboardPage({ params }: PageProps) {
   }
   if (!city) notFound();
 
-  const stats = await fetchCityStats(city.id);
+  // A not-yet-live city is in preview: include synthetic/imported in its KPIs so
+  // the dashboard looks alive. Live cities default to resident-only (clean KPIs).
+  const stats = await fetchCityStats(
+    city.id,
+    city.active ? undefined : PREVIEW_SOURCES,
+  );
 
   return (
     <div className="flex flex-col min-h-dvh">
