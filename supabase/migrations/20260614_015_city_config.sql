@@ -153,6 +153,34 @@ GRANT EXECUTE ON FUNCTION public.provision_city(
   text, text, text, jsonb, double precision, double precision, int, text
 ) TO service_role;
 
+-- 2.2 city_for_point() — resolve a coordinate to the SMALLEST-area city whose
+--     boundary contains it (§6 containment: city beats county). Used by resident
+--     city resolution to replace the hardcoded 'cumming' (fixes the multi-tenant
+--     bug where every resident joined Cumming). Returns NULL when no boundary
+--     contains the point (caller falls back).
+CREATE OR REPLACE FUNCTION public.city_for_point(
+  _lng double precision,
+  _lat double precision
+)
+RETURNS uuid
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT c.id
+  FROM cities c
+  WHERE c.boundary IS NOT NULL
+    AND ST_Contains(
+      c.boundary::geometry,
+      ST_SetSRID(ST_MakePoint(_lng, _lat), 4326)
+    )
+  ORDER BY ST_Area(c.boundary) ASC
+  LIMIT 1;
+$$;
+GRANT EXECUTE ON FUNCTION public.city_for_point(double precision, double precision)
+  TO anon, authenticated;
+
 -- ---------------------------------------------------------------------------
 -- 3. Per-city config tables (F3) — seeded from teams.ts defaults at provision.
 --    team_id is the app-level TeamId (text), not the work_order_department enum.
