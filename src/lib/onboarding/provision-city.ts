@@ -11,6 +11,7 @@ import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
 import type { Result } from "@/lib/types";
 import {
+  type BoundaryGeometry,
   type CityCandidate,
   fetchCityBoundary,
   resolveCityCandidates,
@@ -29,6 +30,8 @@ export interface ProvisionResult {
   /** false when an existing city with this slug was updated instead of created. */
   created: boolean;
   candidate: CityCandidate;
+  /** The fetched boundary — reused by cold-start so it isn't fetched twice. */
+  boundary: BoundaryGeometry;
 }
 
 export interface ProvisionInput {
@@ -114,6 +117,12 @@ export async function provisionCity(
   });
   return {
     ok: true,
-    data: { cityId: data.id, slug, created: data.created, candidate },
+    data: {
+      cityId: data.id,
+      slug,
+      created: data.created,
+      candidate,
+      boundary: boundary.data,
+    },
   };
 }

@@ -131,3 +131,12 @@ export function normalizeState(input: string): NormalizedState | null {
 export function toStateFips(input: string): string | null {
   return normalizeState(input)?.fips ?? null;
 }
+
+/** Title-cased {abbr, name} list for state pickers, sorted by name. */
+export const US_STATES: ReadonlyArray<{ abbr: string; name: string }> =
+  Object.entries(NAME_TO_ABBR)
+    .map(([name, abbr]) => ({
+      abbr,
+      name: name.replace(/\b\w/g, (c) => c.toUpperCase()),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
