@@ -6,6 +6,7 @@ import { z } from "zod/v4";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
+import { applyConfigTemplate } from "@/lib/onboarding/config-template";
 import { coldStart } from "@/lib/onboarding/ingest/cold-start";
 import { provisionCity } from "@/lib/onboarding/provision-city";
 import {
@@ -86,6 +87,11 @@ export async function provisionAndSeedAction(input: {
   if (!provisioned.ok) return provisioned;
 
   const db = createServerClient();
+
+  // Seed per-city config from the defaults (F3). Best-effort: a failure (e.g.
+  // un-migrated config tables) must not block cold-start — the app falls back to
+  // the static teams.ts config.
+  await applyConfigTemplate(db, provisioned.data.cityId);
   const { data: job } = await db
     .from("provision_jobs")
     .insert({ city_id: provisioned.data.cityId, status: "pending" })
