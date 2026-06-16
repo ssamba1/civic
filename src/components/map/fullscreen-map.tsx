@@ -748,7 +748,7 @@ export function FullscreenMapOrchestrator({
   );
 
   return (
-    <div className="h-dvh w-full relative overflow-hidden flex bg-black select-none">
+    <div className="h-full w-full relative overflow-hidden flex bg-black select-none">
       <style>{`@keyframes fmPanelIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}`}</style>
 
       {/* Full-viewport map */}
