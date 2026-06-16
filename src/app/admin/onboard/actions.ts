@@ -9,7 +9,9 @@ import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
 import { coldStart } from "@/lib/onboarding/ingest/cold-start";
 import { provisionCity } from "@/lib/onboarding/provision-city";
 import {
+  type BoundaryGeometry,
   type CityCandidate,
+  fetchCityBoundary,
   resolveCityCandidates,
 } from "@/lib/onboarding/tiger";
 import type { Result } from "@/lib/types";
@@ -51,6 +53,13 @@ export async function resolveCityAction(input: {
   const parsed = resolveSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Invalid city or state" };
   return resolveCityCandidates(parsed.data);
+}
+
+export async function fetchBoundaryAction(
+  candidate: CityCandidate,
+): Promise<Result<BoundaryGeometry>> {
+  if (!(await requireAdmin())) return { ok: false, error: "unauthorized" };
+  return fetchCityBoundary(candidate);
 }
 
 export interface ProvisionSeedResult {

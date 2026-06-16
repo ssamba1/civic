@@ -3,13 +3,15 @@
 import { ArrowLeft, ArrowRight, ExternalLink, Rocket } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
+  fetchBoundaryAction,
   goLiveAction,
   type ProvisionSeedResult,
   provisionAndSeedAction,
   resolveCityAction,
 } from "@/app/admin/onboard/actions";
+import { BoundaryMap } from "@/components/admin/boundary-map";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -19,7 +21,7 @@ import { Select } from "@/components/ui/select";
 import { Stepper } from "@/components/ui/stepper";
 import { useToast } from "@/components/ui/toast";
 import { US_STATES } from "@/lib/onboarding/state-fips";
-import type { CityCandidate } from "@/lib/onboarding/tiger";
+import type { BoundaryGeometry, CityCandidate } from "@/lib/onboarding/tiger";
 
 const STEPS = [
   { id: "identify", label: "Identify" },
@@ -46,8 +48,24 @@ export function OnboardWizard() {
   const [selectedGeoid, setSelectedGeoid] = useState<string | null>(null);
   const [result, setResult] = useState<ProvisionSeedResult | null>(null);
   const [confirmLive, setConfirmLive] = useState(false);
+  const [boundary, setBoundary] = useState<BoundaryGeometry | null>(null);
 
   const selected = candidates.find((c) => c.geoid === selectedGeoid) ?? null;
+
+  // Fetch + preview the selected candidate's boundary on the map (Step 2).
+  useEffect(() => {
+    if (step !== 1 || !selectedGeoid) return;
+    const candidate = candidates.find((c) => c.geoid === selectedGeoid);
+    if (!candidate) return;
+    setBoundary(null);
+    let cancelled = false;
+    fetchBoundaryAction(candidate).then((r) => {
+      if (!cancelled && r.ok) setBoundary(r.data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [step, selectedGeoid, candidates]);
 
   function find() {
     setError(null);
@@ -177,6 +195,18 @@ export function OnboardWizard() {
                   ? "Multiple Census matches — pick the right one."
                   : "Confirm the Census match."}
               </p>
+              <div className="h-56 overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)]">
+                {boundary ? (
+                  <BoundaryMap boundary={boundary} />
+                ) : (
+                  <div
+                    className="skeleton h-full w-full"
+                    role="status"
+                    aria-busy="true"
+                    aria-label="Loading boundary preview"
+                  />
+                )}
+              </div>
               <fieldset className="flex flex-col gap-2">
                 <legend className="sr-only">Boundary candidate</legend>
                 {candidates.map((c) => (
