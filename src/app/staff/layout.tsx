@@ -2,6 +2,7 @@ import { LogOut, Shield } from "lucide-react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { MobileNav, SidebarNav } from "@/components/staff/sidebar-nav";
+import { StormAdvisoryBanner } from "@/components/staff/storm-advisory-banner";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
@@ -142,7 +143,10 @@ export default async function StaffLayout({
         </header>
 
         {/* Main content */}
-        <main className="flex-1 overflow-auto">{children}</main>
+        <main className="flex-1 overflow-auto">
+          <StormAdvisoryBanner />
+          {children}
+        </main>
       </div>
     </div>
   );
