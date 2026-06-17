@@ -41,6 +41,8 @@ const CLASSIFICATION: Classification = {
   is_emergency: false,
   confidence: 0.88,
   reasoning: "Deep pavement break.",
+  no_issue_detected: false,
+  alternate_categories: [],
 };
 
 const VALID_WO = {

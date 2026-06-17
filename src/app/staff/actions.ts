@@ -365,7 +365,9 @@ export async function fetchQueuedWorkOrders(
           visible_size_estimate,
           is_emergency,
           confidence,
-          reasoning
+          reasoning,
+          no_issue_detected,
+          alternate_categories
         )
       )
     `,

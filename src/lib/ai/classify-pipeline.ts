@@ -22,6 +22,10 @@ export interface ClassifyPipelineResult {
   emergency: boolean;
   classification: Classification;
   work_order: WorkOrder | null;
+  /** True when the report was held for human review instead of auto-dispatched. */
+  needs_manual_review?: boolean;
+  /** Why it was flagged, when needs_manual_review is true. */
+  review_reason?: string | null;
   /** True when the report was detected as a duplicate and merged into another. */
   merged?: boolean;
   /** The earlier report this one was merged into, when merged. */
@@ -199,6 +203,8 @@ export async function runClassifyPipeline(
       confidence: 0,
       reasoning:
         "Automatic classification unavailable — queued for manual triage.",
+      no_issue_detected: false,
+      alternate_categories: [],
     };
     modelVersion = "fallback";
     rawResponse = { fallback: true };
@@ -256,6 +262,39 @@ export async function runClassifyPipeline(
       ok: true,
       data: { emergency: true, classification, work_order: null },
     };
+  }
+
+  // Manual-review gate: hold the report at 'open' instead of auto-dispatching
+  // when the AI itself signals it isn't confident enough to route this safely.
+  // Emergencies (handled above) always bypass this — life safety never waits
+  // on a human. A failed/zero-confidence classification is always flagged;
+  // otherwise check the model's own uncertainty signals.
+  const reviewReasons: string[] = [];
+  if (classification.confidence === 0) {
+    reviewReasons.push(
+      "AI classification unavailable or failed — needs manual triage",
+    );
+  } else {
+    if (classification.no_issue_detected) {
+      reviewReasons.push(
+        "AI did not detect any visible damage or issue in the photo",
+      );
+    }
+    if (classification.confidence < 0.5) {
+      reviewReasons.push(
+        "AI is not confident which category/team this belongs to",
+      );
+    }
+    if (classification.alternate_categories.length > 0) {
+      reviewReasons.push(
+        `Could belong to multiple teams: ${[classification.category, ...classification.alternate_categories].join(", ")}`,
+      );
+    }
+  }
+  const needsManualReview = reviewReasons.length > 0;
+  const reviewReason = needsManualReview ? reviewReasons.join("; ") : null;
+  if (needsManualReview) {
+    log.info("flagged_for_manual_review", { reportId, reviewReason });
   }
 
   // Duplicate detection (non-emergency only — emergencies are never suppressed).
@@ -375,6 +414,11 @@ export async function runClassifyPipeline(
       priority_score: rulesWorkOrder.priority_score,
       est_minutes: estMinutes,
       materials,
+      // Set directly on the primary insert (not a best-effort stamp like
+      // est_cost below) — this flag is safety/correctness-critical and must
+      // never silently fail to apply.
+      needs_manual_review: needsManualReview,
+      review_reason: reviewReason,
     })
     .select()
     .single<WorkOrder>();
@@ -407,16 +451,21 @@ export async function runClassifyPipeline(
   insertedWorkOrder.wo_source = woSource;
   insertedWorkOrder.wo_rationale = woRationale;
 
-  const { error: statusErr } = await supabase
-    .from("reports")
-    .update({ status: "dispatched" })
-    .eq("id", reportId);
+  // Flagged reports stay at 'open' — never silently auto-dispatched. Staff
+  // see them in the inbox with a "Needs Review" badge and must explicitly
+  // dispatch (after optionally correcting the category) via existing actions.
+  if (!needsManualReview) {
+    const { error: statusErr } = await supabase
+      .from("reports")
+      .update({ status: "dispatched" })
+      .eq("id", reportId);
 
-  if (statusErr) {
-    log.error(`status update failed for ${reportId}`, undefined, {
-      reportId,
-      error: statusErr.message,
-    });
+    if (statusErr) {
+      log.error(`status update failed for ${reportId}`, undefined, {
+        reportId,
+        error: statusErr.message,
+      });
+    }
   }
 
   await markClassifyStatus(supabase, reportId, "done", log);
@@ -426,9 +475,16 @@ export async function runClassifyPipeline(
     priority: insertedWorkOrder.priority_score,
     estCost,
     woSource,
+    needsManualReview,
   });
   return {
     ok: true,
-    data: { emergency: false, classification, work_order: insertedWorkOrder },
+    data: {
+      emergency: false,
+      classification,
+      work_order: insertedWorkOrder,
+      needs_manual_review: needsManualReview,
+      review_reason: reviewReason,
+    },
   };
 }

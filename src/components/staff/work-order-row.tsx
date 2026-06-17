@@ -7,6 +7,7 @@ import {
   Clock,
   Construction,
   Droplets,
+  Eye,
   HelpCircle,
   Lamp,
   Paintbrush,
@@ -87,6 +88,21 @@ const STATUS_STYLES: Record<ReportStatus, string> = {
   merged: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
   rejected: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400",
 };
+
+function NeedsReviewBadge({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-900/40 dark:text-amber-400",
+        className,
+      )}
+      title="AI flagged this report for manual review"
+    >
+      <Eye className="h-3 w-3" />
+      Needs Review
+    </span>
+  );
+}
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -222,14 +238,17 @@ export function WorkOrderRow({
 
         {/* Status */}
         <td className="px-4 py-3">
-          <span
-            className={cn(
-              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize",
-              statusStyle,
-            )}
-          >
-            {report.status.replace("_", " ")}
-          </span>
+          <div className="flex flex-wrap items-center gap-1">
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize",
+                statusStyle,
+              )}
+            >
+              {report.status.replace("_", " ")}
+            </span>
+            {workOrder.needs_manual_review && <NeedsReviewBadge />}
+          </div>
         </td>
 
         {/* Photo thumbnail */}
@@ -353,6 +372,7 @@ export function WorkOrderCard({
           >
             {report.status.replace(/_/g, " ")}
           </span>
+          {workOrder.needs_manual_review && <NeedsReviewBadge />}
         </div>
 
         {/* Row 2: address */}
@@ -491,14 +511,17 @@ export function WorkOrderRowControlled({
 
         {/* Status */}
         <td className="px-4 py-3">
-          <span
-            className={cn(
-              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize",
-              statusStyle,
-            )}
-          >
-            {report.status.replace("_", " ")}
-          </span>
+          <div className="flex flex-wrap items-center gap-1">
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize",
+                statusStyle,
+              )}
+            >
+              {report.status.replace("_", " ")}
+            </span>
+            {workOrder.needs_manual_review && <NeedsReviewBadge />}
+          </div>
         </td>
 
         {/* Photo */}

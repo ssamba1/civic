@@ -33,6 +33,8 @@ const FALLBACK_CLASSIFICATION: Classification = {
   is_emergency: false,
   confidence: 0,
   reasoning: "",
+  no_issue_detected: false,
+  alternate_categories: [],
 };
 
 // Async-classify path only: if the background job never lands a result (e.g. an
@@ -288,6 +290,8 @@ export default function ReportPage() {
         is_emergency: row.is_emergency ?? false,
         confidence: row.confidence,
         reasoning: row.reasoning ?? "",
+        no_issue_detected: row.no_issue_detected ?? false,
+        alternate_categories: row.alternate_categories ?? [],
       };
       setStep({
         name: "done",

@@ -173,6 +173,8 @@ export function demoWorkOrderFromReport(
     fix_time_estimate_days: null,
     fix_note: null,
     marked_under_fix_at: null,
+    needs_manual_review: false,
+    review_reason: null,
     report: {
       id: r.id,
       city_id: "cumming",

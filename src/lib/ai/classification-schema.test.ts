@@ -14,6 +14,8 @@ const validInput = {
   is_emergency: false,
   confidence: 0.82,
   reasoning: "Visible pavement break with exposed depth.",
+  no_issue_detected: false,
+  alternate_categories: [],
 } as const;
 
 const PROPERTY_KEYS = [
@@ -25,6 +27,8 @@ const PROPERTY_KEYS = [
   "is_emergency",
   "confidence",
   "reasoning",
+  "no_issue_detected",
+  "alternate_categories",
 ] as const;
 
 describe("classificationSchema (zod)", () => {
@@ -113,16 +117,16 @@ describe("GEMINI_CLASSIFICATION_SCHEMA (Gemini responseSchema)", () => {
     expect(GEMINI_CLASSIFICATION_SCHEMA.type).toBe(SchemaType.OBJECT);
   });
 
-  it("declares all 8 properties matching the zod shape", () => {
+  it("declares all 10 properties matching the zod shape", () => {
     const props = GEMINI_CLASSIFICATION_SCHEMA.properties ?? {};
     const keys = Object.keys(props);
-    expect(keys).toHaveLength(8);
+    expect(keys).toHaveLength(10);
     expect(keys.sort()).toEqual([...PROPERTY_KEYS].sort());
   });
 
-  it("lists all 8 properties as required", () => {
+  it("lists all 10 properties as required", () => {
     const required = GEMINI_CLASSIFICATION_SCHEMA.required ?? [];
-    expect(required).toHaveLength(8);
+    expect(required).toHaveLength(10);
     expect([...required].sort()).toEqual([...PROPERTY_KEYS].sort());
   });
 

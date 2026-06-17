@@ -7,6 +7,7 @@ import {
   Clock,
   DollarSign,
   Edit3,
+  Eye,
   HardHat,
   Loader2,
   MapPin,
@@ -276,6 +277,20 @@ export function WorkOrderDetail({
         </div>
 
         <div className="space-y-6 p-6">
+          {/* AI manual-review flag */}
+          {workOrder.needs_manual_review && (
+            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-400">
+              <Eye className="mt-0.5 h-4 w-4 flex-shrink-0" />
+              <div>
+                <p className="font-medium">Flagged for manual review</p>
+                <p className="mt-0.5 text-xs opacity-90">
+                  {workOrder.review_reason ??
+                    "The AI was not confident enough to auto-dispatch this report."}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Status messages */}
           {actionError && (
             <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">

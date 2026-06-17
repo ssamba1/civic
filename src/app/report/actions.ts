@@ -58,6 +58,8 @@ function fallbackClassification(reason: string): Classification {
     is_emergency: false,
     confidence: 0,
     reasoning: reason,
+    no_issue_detected: false,
+    alternate_categories: [],
   };
 }
 

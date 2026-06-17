@@ -31,6 +31,13 @@ export const classificationSchema = z.object({
   is_emergency: z.boolean(),
   confidence: z.number().min(0).max(1),
   reasoning: z.string().min(1),
+  // true only when the photo shows no actual infrastructure damage/hazard at
+  // all — routes the report to manual staff review instead of auto-dispatch.
+  no_issue_detected: z.boolean(),
+  // 0-2 other categories that could also plausibly apply. A non-empty list
+  // means the model itself is unsure which team should own the work order —
+  // also routed to manual review.
+  alternate_categories: z.array(z.enum(CATEGORIES)).max(2),
 });
 
 /**
@@ -55,6 +62,15 @@ export const GEMINI_CLASSIFICATION_SCHEMA: ObjectSchema = {
     is_emergency: { type: SchemaType.BOOLEAN },
     confidence: { type: SchemaType.NUMBER },
     reasoning: { type: SchemaType.STRING },
+    no_issue_detected: { type: SchemaType.BOOLEAN },
+    alternate_categories: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.STRING,
+        format: "enum",
+        enum: [...CATEGORIES],
+      },
+    },
   },
   required: [
     "category",
@@ -65,5 +81,7 @@ export const GEMINI_CLASSIFICATION_SCHEMA: ObjectSchema = {
     "is_emergency",
     "confidence",
     "reasoning",
+    "no_issue_detected",
+    "alternate_categories",
   ],
 };

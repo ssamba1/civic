@@ -19,6 +19,8 @@ function makeClassification(
     is_emergency: false,
     confidence: 0.9,
     reasoning: "test fixture",
+    no_issue_detected: false,
+    alternate_categories: [],
     ...overrides,
   };
 }

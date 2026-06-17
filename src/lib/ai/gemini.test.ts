@@ -49,6 +49,8 @@ const VALID_CLASSIFICATION = {
   is_emergency: false,
   confidence: 0.82,
   reasoning: "Visible pavement break with exposed depth.",
+  no_issue_detected: false,
+  alternate_categories: [],
 } as const;
 
 beforeEach(() => {

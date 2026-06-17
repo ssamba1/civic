@@ -56,6 +56,10 @@ export interface Classification {
   is_emergency: boolean;
   confidence: number;
   reasoning: string;
+  /** True when the AI saw no actual infrastructure damage/hazard in the photo. */
+  no_issue_detected: boolean;
+  /** Other categories the AI thought could also plausibly apply; empty when confident. */
+  alternate_categories: ReportCategory[];
 }
 
 export type GeoPoint = { lng: number; lat: number };
@@ -149,6 +153,10 @@ export interface WorkOrder {
   fix_time_estimate_days: number | null;
   fix_note: string | null;
   marked_under_fix_at: string | null;
+  /** True when the report was queued for human review instead of auto-dispatched. */
+  needs_manual_review: boolean;
+  /** Human-readable reason(s) the AI flagged this report, joined with "; ". Null when not flagged. */
+  review_reason: string | null;
 }
 
 export interface City {
@@ -190,6 +198,8 @@ export interface WorkOrderWithDetails {
   fix_time_estimate_days: number | null;
   fix_note: string | null;
   marked_under_fix_at: string | null;
+  needs_manual_review: boolean;
+  review_reason: string | null;
   report: {
     id: string;
     city_id: string;
@@ -212,5 +222,7 @@ export interface WorkOrderWithDetails {
     is_emergency: boolean;
     confidence: number;
     reasoning: string;
+    no_issue_detected?: boolean;
+    alternate_categories?: string[];
   } | null;
 }

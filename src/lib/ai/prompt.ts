@@ -52,6 +52,19 @@ Estimate the radius in metres actively affected by this issue.
 Use 0 for purely cosmetic issues.
 Typical ranges: pothole 1–3 m · downed tree 10–30 m · water main break 20–100 m.
 
+## NO ISSUE DETECTED (no_issue_detected)
+Set this to true ONLY when the photo shows no actual infrastructure damage or hazard at
+all — e.g. an intact road surface, a working streetlight, a clean wall, an empty lot with
+no dumping. When true, still fill in your best-guess category/severity, but the report will
+be routed to a human for manual review instead of being auto-dispatched to a crew.
+
+## ALTERNATE CATEGORIES — team ambiguity (alternate_categories)
+If the issue could reasonably be routed to more than one team/category (e.g. a pothole next
+to a clogged storm drain could plausibly be "pothole" OR "drainage"), list up to 2 other
+plausible categories here. Leave this an empty array [] when you are confident only one
+category applies. A non-empty list also routes the report to manual review, since the
+system cannot be sure which crew should own it.
+
 ## OUTPUT — valid JSON only
 No markdown. No code fences. No prose before or after the JSON. Every field required.
 
@@ -63,7 +76,9 @@ No markdown. No code fences. No prose before or after the JSON. Every field requ
   "visible_size_estimate": "<measurement or description, e.g. '~30 cm wide × 10 cm deep' or '4 m cracked sidewalk panel'>",
   "is_emergency": <true only when severity is 5 AND there is active, immediate danger to life or traffic>,
   "confidence": <float 0.00–1.00>,
-  "reasoning": "<2–3 sentences: (1) describe what you observe in the image, (2) explain why this category and severity were chosen over alternatives, (3) note any visual factors that raise or lower your confidence>"
+  "reasoning": "<2–3 sentences: (1) describe what you observe in the image, (2) explain why this category and severity were chosen over alternatives, (3) note any visual factors that raise or lower your confidence>",
+  "no_issue_detected": <true only if no actual infrastructure problem is visible in the photo>,
+  "alternate_categories": [<0–2 other category strings that could also plausibly apply; [] if confident in a single category>]
 }`;
 
 /**

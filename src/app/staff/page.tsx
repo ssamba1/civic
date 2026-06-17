@@ -44,7 +44,9 @@ async function getWorkOrders(cityId: string): Promise<WorkOrderWithDetails[]> {
           visible_size_estimate,
           is_emergency,
           confidence,
-          reasoning
+          reasoning,
+          no_issue_detected,
+          alternate_categories
         )
       )
     `,
