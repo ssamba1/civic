@@ -16,6 +16,7 @@ import {
   isDemoId,
   resetDemoReports,
 } from "@/lib/demo-reports";
+import type { CategoryTeamMap } from "@/lib/onboarding/types";
 import type {
   Classification,
   Report,
@@ -56,9 +57,15 @@ interface StaffInboxProps {
   workOrders: WorkOrderWithDetails[];
   /** ISO timestamp of when the page was server-rendered – used as the queue start point. */
   initialFetchedAt?: string;
+  /** Per-city category → owning-team map (resolved server-side from city_teams). */
+  cityRouting?: CategoryTeamMap;
 }
 
-export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
+export function StaffInbox({
+  workOrders,
+  initialFetchedAt,
+  cityRouting,
+}: StaffInboxProps) {
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -423,6 +430,11 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
                     wo.classification as unknown as Classification
                   }
                   workOrder={wo as unknown as WorkOrder}
+                  team={
+                    cityRouting?.[
+                      (wo.classification as unknown as Classification).category
+                    ]
+                  }
                   isSelected={selectedIndex === idx}
                   onSelect={() => setSelectedIndex(idx)}
                   onDetailOpen={() => setMobileDrawerIndex(idx)}
@@ -500,6 +512,11 @@ export function StaffInbox({ workOrders, initialFetchedAt }: StaffInboxProps) {
                       wo.classification as unknown as Classification
                     }
                     workOrder={wo as unknown as WorkOrder}
+                    team={
+                      cityRouting?.[
+                        (wo.classification as unknown as Classification).category
+                      ]
+                    }
                     isSelected={selectedIndex === idx}
                     onSelect={() => setSelectedIndex(idx)}
                     detailOpen={detailOpenIndex === idx}

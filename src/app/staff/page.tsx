@@ -5,6 +5,10 @@ import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
 import { createLogger } from "@/lib/logger";
+import {
+  buildCategoryTeamDisplay,
+  fetchCityTeams,
+} from "@/lib/onboarding/city-teams";
 import { normalizeLocation, type WorkOrderWithDetails } from "@/lib/types";
 
 const logger = createLogger("[staff-page]");
@@ -146,9 +150,18 @@ export default async function StaffPage() {
   const fetchedAt = new Date().toISOString();
   const workOrders = cityId ? await getWorkOrders(cityId) : [];
 
+  // Per-city team routing for the inbox: which team owns each report category.
+  // Falls back to global defaults when the city wasn't onboarded via the wizard.
+  const cityTeams = cityId ? await fetchCityTeams(cityId) : [];
+  const cityRouting = buildCategoryTeamDisplay(cityTeams);
+
   return (
     <div className="flex h-full flex-col">
-      <StaffInbox workOrders={workOrders} initialFetchedAt={fetchedAt} />
+      <StaffInbox
+        workOrders={workOrders}
+        initialFetchedAt={fetchedAt}
+        cityRouting={cityRouting}
+      />
     </div>
   );
 }

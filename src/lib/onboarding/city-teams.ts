@@ -1,4 +1,7 @@
 import { createServerClient } from "@/lib/db/client";
+import { ALL_CATEGORIES } from "@/lib/onboarding/presets";
+import type { CategoryTeamMap } from "@/lib/onboarding/types";
+import { categoryToTeamDefault, TEAMS, type TeamId } from "@/lib/teams";
 import type { ReportCategory } from "@/lib/types";
 
 /* ==================================================================
@@ -44,4 +47,31 @@ export function resolveCategoryTeam(
   category: ReportCategory,
 ): CityTeamConfig | null {
   return config.find((t) => t.categories.includes(category)) ?? null;
+}
+
+/**
+ * Build a category → owning-team display map for the staff console.
+ * Prefers the city's onboarded config; falls back to the global preset default
+ * so every city (including ones never onboarded via the wizard) shows a team.
+ * Color comes from the preset catalog; label honors any per-city rename.
+ */
+export function buildCategoryTeamDisplay(
+  config: CityTeamConfig[],
+): CategoryTeamMap {
+  const map: CategoryTeamMap = {};
+  for (const category of ALL_CATEGORIES) {
+    const owner = config.find((t) => t.categories.includes(category));
+    if (owner) {
+      map[category] = {
+        teamKey: owner.teamKey,
+        label: owner.label,
+        color: TEAMS[owner.teamKey as TeamId]?.color ?? "#737373",
+      };
+      continue;
+    }
+    const teamKey = categoryToTeamDefault(category);
+    const meta = TEAMS[teamKey];
+    map[category] = { teamKey, label: meta.shortLabel, color: meta.color };
+  }
+  return map;
 }

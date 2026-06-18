@@ -19,6 +19,7 @@ import {
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { DEMO_REPORTER_ID, isDemoId } from "@/lib/demo-reports";
+import type { TeamDisplay } from "@/lib/onboarding/types";
 import type {
   Classification,
   Report,
@@ -52,6 +53,22 @@ interface WorkOrderRowProps {
   workOrder: WorkOrder;
   isSelected: boolean;
   onSelect: () => void;
+  /** Owning team for this report's category, resolved from the city's config. */
+  team?: TeamDisplay;
+}
+
+/** Small team-ownership chip rendered in the inbox (dot + label). */
+function TeamChip({ team }: { team: TeamDisplay }) {
+  return (
+    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
+      <span
+        className="h-1.5 w-1.5 shrink-0 rounded-full"
+        style={{ backgroundColor: team.color }}
+        aria-hidden="true"
+      />
+      {team.label}
+    </span>
+  );
 }
 
 const CATEGORY_ICONS: Record<ReportCategory, typeof AlertTriangle> = {
@@ -138,6 +155,7 @@ export function WorkOrderRow({
   workOrder,
   isSelected,
   onSelect,
+  team,
 }: WorkOrderRowProps) {
   const [detailOpen, setDetailOpen] = useState(false);
   const timeLabel = useTimeAgo(report.created_at);
@@ -189,6 +207,7 @@ export function WorkOrderRow({
               <p className="text-xs text-zinc-500">
                 {classification.subcategory}
               </p>
+              {team && <TeamChip team={team} />}
             </div>
           </div>
         </td>
@@ -295,6 +314,8 @@ export interface WorkOrderCardProps {
   isSelected: boolean;
   onSelect: () => void;
   onDetailOpen: () => void;
+  /** Owning team for this report's category, resolved from the city's config. */
+  team?: TeamDisplay;
 }
 
 export function WorkOrderCard({
@@ -304,6 +325,7 @@ export function WorkOrderCard({
   isSelected,
   onSelect,
   onDetailOpen,
+  team,
   isNew = false,
 }: WorkOrderCardProps & { isNew?: boolean }) {
   const timeLabel = useTimeAgo(report.created_at);
@@ -373,6 +395,7 @@ export function WorkOrderCard({
             {report.status.replace(/_/g, " ")}
           </span>
           {workOrder.needs_manual_review && <NeedsReviewBadge />}
+          {team && <TeamChip team={team} />}
         </div>
 
         {/* Row 2: address */}
@@ -403,6 +426,7 @@ export function WorkOrderRowControlled({
   workOrder,
   isSelected,
   onSelect,
+  team,
   detailOpen,
   onDetailOpen,
   onDetailClose,
@@ -462,6 +486,7 @@ export function WorkOrderRowControlled({
               <p className="text-xs text-zinc-500">
                 {classification.subcategory}
               </p>
+              {team && <TeamChip team={team} />}
             </div>
           </div>
         </td>

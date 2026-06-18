@@ -83,3 +83,13 @@ export interface GeocodeResult {
   lng: number;
   displayName: string;
 }
+
+/** Resolved owning-team display for one report category (staff console). */
+export interface TeamDisplay {
+  teamKey: string;
+  label: string;
+  color: string;
+}
+
+/** category → owning-team display map, consumed by the staff inbox. */
+export type CategoryTeamMap = Partial<Record<ReportCategory, TeamDisplay>>;
