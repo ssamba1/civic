@@ -243,7 +243,7 @@ export default function ZampHero() {
                 >
                   See the live dashboard
                 </Link>
-                <p>Live pilot in Cumming, GA · No app store required</p>
+                <p>No app store required</p>
               </motion.div>
             </motion.div>
           </motion.div>
