@@ -243,7 +243,7 @@ export default function ZampHero() {
                 >
                   See the live dashboard
                 </Link>
-                <p>No app store required</p>
+                <p>Live in minutes · no code required</p>
               </motion.div>
             </motion.div>
           </motion.div>
