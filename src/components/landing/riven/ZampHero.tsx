@@ -232,10 +232,10 @@ export default function ZampHero() {
                 className="wl-zamp-hero-form"
               >
                 <Link
-                  href="/report"
+                  href="/onboard"
                   className="wl-zamp-hero-cta wl-zamp-hero-cta--primary"
                 >
-                  Report an issue <ArrowRightIcon />
+                  Set up your city <ArrowRightIcon />
                 </Link>
                 <Link
                   href="/city/cumming"

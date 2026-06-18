@@ -3,8 +3,8 @@
 import Link from "next/link";
 
 // Civic has no waitlist. Replace Riven's email form with two pill CTAs styled
-// EXACTLY like Riven's .wl-pill-btn (3D extruded chip). Primary → /report,
-// ghost → /city/cumming.
+// EXACTLY like Riven's .wl-pill-btn (3D extruded chip). Primary → /onboard
+// (set up your city), ghost → /city/cumming.
 function ArrowRightIcon() {
   return (
     <svg
@@ -38,8 +38,8 @@ export default function CtaPills() {
         width: "100%",
       }}
     >
-      <Link href="/report" className="wl-pill-btn">
-        Report an issue <ArrowRightIcon />
+      <Link href="/onboard" className="wl-pill-btn">
+        Set up your city <ArrowRightIcon />
       </Link>
       <Link href="/city/cumming" className="wl-pill-btn wl-pill-btn--ghost">
         See the live dashboard
