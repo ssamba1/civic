@@ -32,14 +32,14 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
   if (!city) notFound();
 
   return (
-    <div className="relative flex flex-col min-h-dvh bg-black">
+    <div className="relative flex flex-col min-h-dvh bg-background">
       <div className="relative flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-10 sm:px-6 lg:px-8">
         {/* Hero */}
         <section className="mb-6">
-          <h1 className="text-[28px] sm:text-[34px] lg:text-[40px] font-semibold tracking-tight text-white leading-[1.1]">
+          <h1 className="text-[28px] sm:text-[34px] lg:text-[40px] font-semibold tracking-tight text-foreground leading-[1.1]">
             Analytics
           </h1>
-          <p className="mt-1.5 text-sm text-zinc-400">
+          <p className="mt-1.5 text-sm text-subtle">
             Operational signal — what&apos;s shipping, what&apos;s stuck, where
             it&apos;s happening.
           </p>
@@ -48,8 +48,8 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
         <AnalyticsInteractive />
       </div>
 
-      <footer className="border-t border-white/[0.06] mt-10 pb-safe">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-6 text-[13px] text-zinc-500 sm:flex-row sm:px-6 lg:px-8">
+      <footer className="border-t border-hairline mt-10 pb-safe">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-6 text-[13px] text-faint sm:flex-row sm:px-6 lg:px-8">
           <span>Civic</span>
           <span>&copy; {new Date().getFullYear()} · Open311 compatible</span>
         </div>

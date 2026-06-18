@@ -165,7 +165,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
                   muted
                 />
                 <TipBar pct={kpis.resolution_rate_pct} color="#30d158" />
-                <p className="text-[11px] text-zinc-500 leading-snug mt-1">
+                <p className="text-[11px] text-faint leading-snug mt-1">
                   Share of intake that reached closed. 100% means every report
                   was resolved.
                 </p>
@@ -216,7 +216,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
                   muted
                 />
                 <TipBar pct={targetPct} color="#5ac8fa" />
-                <p className="text-[11px] text-zinc-500 leading-snug mt-1">
+                <p className="text-[11px] text-faint leading-snug mt-1">
                   Lower is better. Time from report intake to closed status.
                 </p>
               </div>
@@ -262,7 +262,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
                   muted
                 />
                 <TipBar pct={kpis.sla_compliance_pct} color="#0a84ff" />
-                <p className="text-[11px] text-zinc-500 leading-snug mt-1">
+                <p className="text-[11px] text-faint leading-snug mt-1">
                   Share of reports closed inside their category SLA window.
                 </p>
               </div>
@@ -316,7 +316,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
                   value={`${change >= 0 ? "+" : ""}${change.toLocaleString()}`}
                   muted
                 />
-                <p className="text-[11px] text-zinc-500 leading-snug mt-1">
+                <p className="text-[11px] text-faint leading-snug mt-1">
                   Reports not yet closed. A growing backlog means intake is
                   outpacing resolution.
                 </p>
@@ -350,15 +350,15 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
 
   // Per-index divider classes: 2-col mobile grid → 4-col desktop row
   const BORDER_CLASSES = [
-    "border-r border-b lg:border-b-0 border-white/[0.06]",
-    "border-b lg:border-b-0 lg:border-r border-white/[0.06]",
-    "border-r border-white/[0.06]",
+    "border-r border-b lg:border-b-0 border-hairline",
+    "border-b lg:border-b-0 lg:border-r border-hairline",
+    "border-r border-hairline",
     "",
   ];
 
   return (
     <>
-      <div className="rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
+      <div className="rounded-[14px] border border-hairline bg-surface overflow-hidden shadow-[var(--shadow-card)]">
         <div className="grid grid-cols-2 lg:grid-cols-4">
           {cards.map((c, idx) => {
             const goodDirection =
@@ -381,14 +381,14 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
                   "relative px-4 sm:px-5 py-4 sm:py-5 min-h-[80px] outline-none cursor-default",
                   "transition-[background,opacity] duration-200 ease-out motion-reduce:transition-none",
                   BORDER_CLASSES[idx],
-                  isActive && "bg-white/[0.04]",
+                  isActive && "bg-overlay",
                   isDim ? "opacity-50" : "opacity-100",
-                  "focus-visible:ring-inset focus-visible:ring-2 focus-visible:ring-white/[0.15]",
+                  "focus-visible:ring-inset focus-visible:ring-2 focus-visible:ring-hairline-strong",
                 )}
                 {...bindCard(c)}
               >
                 <div className="flex items-center justify-between gap-2 mb-2.5">
-                  <span className="text-[11px] font-medium uppercase tracking-[0.07em] text-zinc-500 leading-none">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.07em] text-faint leading-none">
                     {c.label}
                   </span>
                   {c.delta !== undefined && (
@@ -407,7 +407,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
                     </span>
                   )}
                   {c.sub && (
-                    <span className="text-[11px] text-zinc-500 tabular-nums">
+                    <span className="text-[11px] text-faint tabular-nums">
                       {c.sub}
                     </span>
                   )}
@@ -466,7 +466,7 @@ function renderTrendChart(
   if (data.length === 0) {
     return (
       <div className="flex items-center justify-center" style={{ height: h }}>
-        <span className="text-[13px] text-zinc-500">No data in range</span>
+        <span className="text-[13px] text-faint">No data in range</span>
       </div>
     );
   }
@@ -906,7 +906,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
           <TipRow label="Throughput" value={`${dayRatio.toFixed(0)}%`} muted />
           {prev && (
             <div className="flex items-center justify-between gap-3 pt-1">
-              <span className="text-zinc-500 text-[11px]">vs prior day</span>
+              <span className="text-faint text-[11px]">vs prior day</span>
               <span className="inline-flex items-center gap-1.5">
                 <TipChip
                   tone={
@@ -1005,7 +1005,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
       accent: color,
       body: (
         <div className="flex flex-col gap-1.5">
-          <p className="text-[11px] text-zinc-500 leading-snug">
+          <p className="text-[11px] text-faint leading-snug">
             {isCreated
               ? "New reports filed by residents on each day."
               : "Reports verified closed by ops crews on each day."}
@@ -1038,7 +1038,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
           <span
             // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y — focus reveals a hover tooltip via tip.bindTarget
             tabIndex={0}
-            className="rounded-md px-1 -mx-1 outline-none focus-visible:bg-white/[0.05] hover:bg-white/[0.04] transition-colors cursor-default"
+            className="rounded-md px-1 -mx-1 outline-none focus-visible:bg-overlay hover:bg-overlay transition-colors cursor-default"
             {...tip.bindTarget(() => legendTip("created"))}
           >
             <Legend color="#0a84ff" label={`Created · ${totalCreated}`} />
@@ -1046,7 +1046,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
           <span
             // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y — focus reveals a hover tooltip via tip.bindTarget
             tabIndex={0}
-            className="rounded-md px-1 -mx-1 outline-none focus-visible:bg-white/[0.05] hover:bg-white/[0.04] transition-colors cursor-default"
+            className="rounded-md px-1 -mx-1 outline-none focus-visible:bg-overlay hover:bg-overlay transition-colors cursor-default"
             {...tip.bindTarget(() => legendTip("closed"))}
           >
             <Legend color="#30d158" label={`Resolved · ${totalClosed}`} />
@@ -1099,7 +1099,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
               ]}
             />
             <div className="flex flex-col gap-2">
-              <p className="text-[12px] text-zinc-400">Series</p>
+              <p className="text-[12px] text-subtle">Series</p>
               <Toggle
                 label="Created"
                 value={showCreated}
@@ -1113,7 +1113,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
                 dotColor="#30d158"
               />
             </div>
-            <div className="flex flex-col gap-2 pt-2 border-t border-white/[0.06]">
+            <div className="flex flex-col gap-2 pt-2 border-t border-hairline">
               <Toggle
                 label="Smooth curves"
                 value={smooth}
@@ -1170,7 +1170,7 @@ export const ReportsTrend = memo(ReportsTrendInner);
 
 function Legend({ color, label }: { color: string; label: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-zinc-400">
+    <span className="inline-flex items-center gap-1.5 text-subtle">
       <span
         className="h-2 w-2 rounded-full"
         style={{ background: color }}
@@ -1314,7 +1314,7 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
           <TipRow label="Reports" value={s.count.toLocaleString()} />
           <TipRow label="Share" value={`${pct.toFixed(1)}%`} />
           <TipBar pct={pct} color={color} />
-          <p className="text-[11px] text-zinc-500 leading-snug mt-1">
+          <p className="text-[11px] text-faint leading-snug mt-1">
             {SEVERITY_DESC[s.severity]}
           </p>
         </div>
@@ -1414,7 +1414,7 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
                     className={cn(
                       "flex flex-col items-center gap-1 rounded-md py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 justify-center transition-colors cursor-default",
                       isActive
-                        ? "bg-white/[0.05]"
+                        ? "bg-overlay"
                         : hovered !== null
                           ? "opacity-50"
                           : "",
@@ -1428,8 +1428,8 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
                       )}
                       style={{ background: SEVERITY_COLORS[s.severity] }}
                     />
-                    <span className="text-zinc-300">Sev {s.severity}</span>
-                    <span className="tabular-nums text-zinc-500">
+                    <span className="text-subtle">Sev {s.severity}</span>
+                    <span className="tabular-nums text-faint">
                       {pct.toFixed(0)}%
                     </span>
                   </li>
@@ -1454,7 +1454,7 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
                 return (
                   <li
                     key={s.severity}
-                    className="flex items-start gap-3 p-3 rounded-lg bg-white/[0.02]"
+                    className="flex items-start gap-3 p-3 rounded-lg bg-overlay"
                   >
                     <span
                       className="mt-1.5 h-2.5 w-2.5 rounded-full flex-shrink-0"
@@ -1462,16 +1462,16 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-3">
-                        <span className="text-[14px] font-medium text-white">
+                        <span className="text-[14px] font-medium text-foreground">
                           Severity {s.severity}
                         </span>
-                        <span className="text-[13px] tabular-nums text-zinc-400">
+                        <span className="text-[13px] tabular-nums text-subtle">
                           {showCounts
                             ? s.count.toLocaleString()
                             : `${pct.toFixed(1)}%`}
                         </span>
                       </div>
-                      <p className="text-[12px] text-zinc-500 mt-0.5">
+                      <p className="text-[12px] text-faint mt-0.5">
                         {SEVERITY_DESC[s.severity]}
                       </p>
                     </div>
@@ -1571,8 +1571,8 @@ function renderFunnelBars(
             className={cn(
               "rounded-md px-1.5 py-1 -mx-1.5 transition-all duration-150 outline-none",
               bind &&
-                "cursor-default focus-visible:ring-1 focus-visible:ring-white/20",
-              isActive && "bg-white/[0.05]",
+                "cursor-default focus-visible:ring-1 focus-visible:ring-hairline-strong",
+              isActive && "bg-overlay",
               isDim && "opacity-45",
             )}
             {...(bind ?? {})}
@@ -1581,19 +1581,19 @@ function renderFunnelBars(
               <span
                 className={cn(
                   "transition-colors",
-                  isActive ? "text-white" : "text-zinc-300",
+                  isActive ? "text-foreground" : "text-subtle",
                 )}
               >
                 {step.label}
               </span>
-              <span className="tabular-nums text-zinc-500 inline-flex items-center gap-2">
+              <span className="tabular-nums text-faint inline-flex items-center gap-2">
                 {showConversion && conv !== null && (
-                  <span className="text-[11px] text-zinc-600">{conv}%</span>
+                  <span className="text-[11px] text-faint">{conv}%</span>
                 )}
                 {step.count}
               </span>
             </div>
-            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.04]">
+            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-overlay">
               {/* biome-ignore lint/a11y/useSemanticElements: role="meter" is correct; native <meter> renders its own non-stylable widget UI and would destroy this custom progress-bar layout */}
               <div
                 className="h-full rounded-full transition-all duration-300"
@@ -1857,14 +1857,14 @@ function renderHistogram(
             }
             className={cn(
               "group relative flex flex-1 flex-col items-center gap-2 h-full justify-end rounded-md outline-none transition-opacity duration-150",
-              bind && "cursor-pointer focus-visible:bg-white/[0.04]",
+              bind && "cursor-pointer focus-visible:bg-overlay",
               isDim && "opacity-40",
             )}
             style={{ outline: "none" }}
             {...(bind ?? {})}
           >
             {isMedian && (
-              <span className="absolute -top-1 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-wider text-zinc-400 px-1.5 py-0.5 rounded bg-white/[0.06] z-10">
+              <span className="absolute -top-1 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-wider text-subtle px-1.5 py-0.5 rounded bg-overlay-strong z-10">
                 median
               </span>
             )}
@@ -1872,8 +1872,8 @@ function renderHistogram(
               className={cn(
                 "text-[11px] tabular-nums transition-colors",
                 isHovered
-                  ? "text-white"
-                  : "text-zinc-500 group-hover:text-zinc-300",
+                  ? "text-foreground"
+                  : "text-faint group-hover:text-subtle",
               )}
             >
               {b.count}
@@ -1914,15 +1914,15 @@ function renderHistogram(
                   isSla
                     ? "text-[#30d158]"
                     : isHovered
-                      ? "text-white"
-                      : "text-zinc-300",
+                      ? "text-foreground"
+                      : "text-subtle",
                 )}
               >
                 {b.label}
                 {isSla && " ✓"}
               </p>
               {showCumulative && (
-                <p className="text-[10px] text-zinc-600 tabular-nums">{cum}%</p>
+                <p className="text-[10px] text-faint tabular-nums">{cum}%</p>
               )}
             </div>
           </div>
@@ -1996,7 +1996,7 @@ function ResolutionHistogramInner({ data }: ResolutionHistogramProps) {
           <TipRow label="Share" value={`${pct.toFixed(1)}%`} />
           <TipBar pct={pct} color="#0a84ff" />
           <TipRow label="Cumulative" value={`${cum.toFixed(0)}%`} muted />
-          <p className="text-[11px] text-zinc-500 leading-snug mt-1">
+          <p className="text-[11px] text-faint leading-snug mt-1">
             {meaning.text}
           </p>
         </div>
@@ -2196,11 +2196,12 @@ function renderHeatmap(
               className={cn(
                 "text-[10px] leading-none text-right pr-1 rounded outline-none cursor-default",
                 isDayActive
-                  ? "text-white font-medium"
+                  ? "text-foreground font-medium"
                   : isDayDim
-                    ? "text-zinc-600"
-                    : "text-zinc-500",
-                dayBind && "focus-visible:ring-1 focus-visible:ring-white/40",
+                    ? "text-faint"
+                    : "text-faint",
+                dayBind &&
+                  "focus-visible:ring-1 focus-visible:ring-hairline-strong",
               )}
               style={{
                 height: cellHeight,
@@ -2220,7 +2221,7 @@ function renderHeatmap(
         })}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex justify-between mb-1 text-[10px] text-zinc-600 tabular-nums">
+        <div className="flex justify-between mb-1 text-[10px] text-faint tabular-nums">
           <span>00</span>
           <span>06</span>
           <span>12</span>
@@ -2274,7 +2275,7 @@ function renderHeatmap(
             </div>
           ))}
         </div>
-        <div className="mt-3 flex items-center justify-end gap-2 text-[10px] text-zinc-500">
+        <div className="mt-3 flex items-center justify-end gap-2 text-[10px] text-faint">
           <span>Less</span>
           <div className="flex gap-[2px]">
             {[0.08, 0.25, 0.45, 0.65, 0.9].map((o, idx) => {
@@ -2287,7 +2288,7 @@ function renderHeatmap(
                   className={cn(
                     "h-[10px] w-[10px] rounded-[2px] outline-none",
                     legendBind &&
-                      "cursor-default focus-visible:ring-1 focus-visible:ring-white/40",
+                      "cursor-default focus-visible:ring-1 focus-visible:ring-hairline-strong",
                   )}
                   style={{
                     background: `rgba(10, 132, 255, ${o})`,
@@ -2450,7 +2451,7 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
             value={`${lowPct.toFixed(0)}% – ${highPct.toFixed(0)}% of peak`}
           />
           <TipBar pct={intensityFrac * 100} color="#0a84ff" />
-          <p className="text-[11px] text-zinc-500 leading-snug mt-1">
+          <p className="text-[11px] text-faint leading-snug mt-1">
             Each cell's color maps its report count to a fraction of the single
             peak slot ({peak.count} reports).
           </p>
@@ -2731,8 +2732,8 @@ function renderNeighborhoods(
             className={cn(
               "rounded-md px-1.5 py-1 -mx-1.5 transition-all duration-150 outline-none",
               bind &&
-                "cursor-default focus-visible:ring-1 focus-visible:ring-white/20",
-              isActive && "bg-white/[0.05]",
+                "cursor-default focus-visible:ring-1 focus-visible:ring-hairline-strong",
+              isActive && "bg-overlay",
               isDim && "opacity-45",
             )}
             {...(bind ?? {})}
@@ -2741,26 +2742,26 @@ function renderNeighborhoods(
               <span
                 className={cn(
                   "inline-flex items-center gap-2 min-w-0 transition-colors",
-                  isActive ? "text-white" : "text-zinc-300",
+                  isActive ? "text-foreground" : "text-subtle",
                 )}
               >
                 <span
                   className={cn(
                     "w-3 text-[11px] tabular-nums transition-colors",
-                    isActive ? "text-zinc-300" : "text-zinc-600",
+                    isActive ? "text-subtle" : "text-faint",
                   )}
                 >
                   {i + 1}
                 </span>
                 <span className="truncate">{n.name}</span>
               </span>
-              <span className="tabular-nums text-zinc-500 flex-shrink-0">
+              <span className="tabular-nums text-faint flex-shrink-0">
                 {n.count}
-                <span className="text-zinc-700 mx-1">·</span>
+                <span className="text-faint mx-1">·</span>
                 <span className="text-[#ff9f0a]">{n.open} open</span>
               </span>
             </div>
-            <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-white/[0.04]">
+            <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-overlay">
               <div
                 className="h-full rounded-full transition-all duration-300"
                 style={{
@@ -3022,8 +3023,8 @@ function renderCategoryBars(
           <li
             key={row.category}
             className={cn(
-              "grid grid-cols-12 items-center gap-3 rounded-md px-1.5 py-1 -mx-1.5 cursor-default focus:outline-none focus-visible:bg-white/[0.05]",
-              isHovered && "bg-white/[0.05]",
+              "grid grid-cols-12 items-center gap-3 rounded-md px-1.5 py-1 -mx-1.5 cursor-default focus:outline-none focus-visible:bg-overlay",
+              isHovered && "bg-overlay",
             )}
             style={{
               opacity: isDim ? 0.5 : 1,
@@ -3046,12 +3047,12 @@ function renderCategoryBars(
                 )}
                 style={{ background: row.color }}
               />
-              <span className="text-[13px] text-zinc-300 truncate">
+              <span className="text-[13px] text-subtle truncate">
                 {row.label}
               </span>
             </div>
             <div className="col-span-7 relative h-2.5">
-              <div className="absolute inset-y-0 left-0 right-0 rounded-full bg-white/[0.04]" />
+              <div className="absolute inset-y-0 left-0 right-0 rounded-full bg-overlay" />
               <div
                 className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
                 style={{
@@ -3061,7 +3062,7 @@ function renderCategoryBars(
                 }}
               />
               <div
-                className="absolute top-[-3px] bottom-[-3px] w-[2px] rounded-sm bg-white/70"
+                className="absolute top-[-3px] bottom-[-3px] w-[2px] rounded-sm bg-foreground/70"
                 style={{ left: `${targetPct}%` }}
                 aria-hidden="true"
               />
@@ -3070,13 +3071,13 @@ function renderCategoryBars(
               <span
                 className={cn(
                   "font-medium",
-                  overSla ? "text-[#ff453a]" : "text-white",
+                  overSla ? "text-[#ff453a]" : "text-foreground",
                 )}
               >
                 {formatHours(row.avg_hours)}
               </span>
-              <span className="text-zinc-600 mx-1">·</span>
-              <span className="text-zinc-500">{row.count}</span>
+              <span className="text-faint mx-1">·</span>
+              <span className="text-faint">{row.count}</span>
             </div>
           </li>
         );
@@ -3146,7 +3147,7 @@ function CategoryResolutionTableInner({ data }: CategoryResolutionTableProps) {
       ),
       footer: (
         <div className="flex items-center justify-between gap-2">
-          <span className="text-zinc-500">
+          <span className="text-faint">
             Vol #{volumeRank(row.category)} · SLA #{slaRank(row.category)} of{" "}
             {data.length}
           </span>
@@ -3452,7 +3453,7 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
         />
         <TipRow label="Recent avg (3d)" value={recent.toFixed(1)} muted />
         <TipRow label="Early avg (3d)" value={earlier.toFixed(1)} muted />
-        <p className="text-[11px] text-zinc-500 leading-snug mt-1">
+        <p className="text-[11px] text-faint leading-snug mt-1">
           Civic-engagement signal — breadth (unique reporters) vs depth (reports
           per reporter).
         </p>
@@ -3525,7 +3526,7 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
           <TipRow label="Reporters" value={v.toLocaleString()} />
           <TipRow label="Window avg" value={sparkAvg.toFixed(1)} muted />
           <TipBar pct={(v / Math.max(peak, 1)) * 100} color="#5ac8fa" />
-          <p className="text-[11px] text-zinc-500 leading-snug mt-1">
+          <p className="text-[11px] text-faint leading-snug mt-1">
             {i === 0
               ? "First day in window."
               : i === data.spark.length - 1
@@ -3620,15 +3621,15 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
             className={cn(
               "rounded-md outline-none cursor-default px-1 -mx-1 py-0.5 -my-0.5",
               "transition-colors duration-200",
-              "focus-visible:ring-2 focus-visible:ring-white/30",
-              "hover:bg-white/[0.03]",
+              "focus-visible:ring-2 focus-visible:ring-hairline-strong",
+              "hover:bg-overlay",
             )}
             {...bindBigNumber}
           >
-            <p className="text-[28px] font-semibold tracking-tight text-white leading-none tabular-nums">
+            <p className="text-[28px] font-semibold tracking-tight text-foreground leading-none tabular-nums">
               {data.unique_reporters}
             </p>
-            <p className="text-[13px] text-zinc-400 mt-2 inline-flex items-center gap-1.5">
+            <p className="text-[13px] text-subtle mt-2 inline-flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5" strokeWidth={1.75} />
               unique · {data.reports_per_reporter.toFixed(2)}/reporter
             </p>
@@ -3640,7 +3641,7 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
                 bindHover: bindSparkPoint,
               })
             ) : (
-              <div className="flex h-full items-center justify-end text-[11px] text-zinc-600">
+              <div className="flex h-full items-center justify-end text-[11px] text-faint">
                 no trend
               </div>
             )}
@@ -3657,10 +3658,10 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
           <div className="flex flex-col gap-6 py-2">
             <div className="flex flex-wrap items-end justify-between gap-6">
               <div>
-                <p className="text-[44px] font-semibold tracking-tight text-white leading-none tabular-nums">
+                <p className="text-[44px] font-semibold tracking-tight text-foreground leading-none tabular-nums">
                   {data.unique_reporters}
                 </p>
-                <p className="text-[13px] text-zinc-400 mt-2 inline-flex items-center gap-1.5">
+                <p className="text-[13px] text-subtle mt-2 inline-flex items-center gap-1.5">
                   <Users className="h-3.5 w-3.5" strokeWidth={1.75} />
                   unique reporters · {data.reports_per_reporter.toFixed(2)}{" "}
                   reports each

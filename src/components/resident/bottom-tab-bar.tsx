@@ -76,8 +76,8 @@ export function BottomTabBar() {
       className={cn(
         "md:hidden", // mobile-only; desktop keeps the existing header nav
         "fixed inset-x-0 bottom-0 z-40 pb-safe",
-        "border-t border-white/[0.08]",
-        "bg-black/70 backdrop-blur-xl supports-[backdrop-filter]:bg-black/55",
+        "border-t border-hairline",
+        "bg-glass backdrop-blur-xl supports-[backdrop-filter]:bg-glass",
       )}
     >
       <ul className="flex h-16 items-stretch justify-around px-1">
@@ -94,10 +94,10 @@ export function BottomTabBar() {
             className={cn(
               "group relative -mt-5 inline-flex h-14 w-14 items-center justify-center rounded-full",
               "bg-[#0a84ff] text-white",
-              "shadow-[0_6px_16px_rgba(10,132,255,0.45)] ring-1 ring-white/15",
+              "shadow-[0_6px_16px_rgba(10,132,255,0.45)] ring-1 ring-hairline-strong",
               "outline-none transition-[transform,background-color] duration-150 ease-out",
               "hover:bg-[#0070e0] active:scale-95",
-              "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+              "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               "motion-reduce:transition-none motion-reduce:active:scale-100",
             )}
           >
@@ -130,7 +130,7 @@ function TabLink({ tab, active }: { tab: TabItem; active: boolean }) {
           "outline-none transition-colors duration-150",
           "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
           "motion-reduce:transition-none",
-          active ? "text-[#0a84ff]" : "text-zinc-400 hover:text-zinc-200",
+          active ? "text-[#0a84ff]" : "text-subtle hover:text-foreground",
         )}
       >
         <Icon

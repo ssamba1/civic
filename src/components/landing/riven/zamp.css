@@ -356,6 +356,32 @@
   }
 }
 
+/* Phones — neater hero card. The full card (tagline + 3 feature bullets + 2
+   CTAs + microcopy) is visually heavy on a narrow viewport, so trim it to the
+   essentials: tagline + the two CTA buttons + the reassurance line. The bullet
+   list is dropped (the same points live in S1/S2 below). The expensive
+   blur(28px) backdrop-filter is also a known mobile jank source — drop it to a
+   light blur. The two CTAs (the hero's primary conversion path) are kept. */
+@media (max-width: 640px) {
+  .riven-root.wl-design-zamp .wl-zamp-glass-card {
+    gap: 16px;
+    padding: 20px;
+    border-radius: 18px;
+    backdrop-filter: blur(10px) saturate(140%);
+    -webkit-backdrop-filter: blur(10px) saturate(140%);
+  }
+  .riven-root.wl-design-zamp .wl-zamp-glass-card .wl-zamp-feature-list {
+    display: none;
+  }
+  .riven-root.wl-design-zamp .wl-zamp-glass-card .wl-zamp-tagline {
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
+  .riven-root.wl-design-zamp .wl-zamp-hero-form > p {
+    font-size: 10px;
+  }
+}
+
 /* Scroll progress bar — hidden on the light zamp page. */
 .riven-root.wl-design-zamp .v2-scroll-progress {
   display: none !important;

@@ -4,9 +4,9 @@
 // bar hints that the viewfinder is loading rather than frozen.
 export default function ReportLoading() {
   return (
-    <div className="fixed inset-0 h-dvh flex flex-col items-center justify-center gap-5 bg-black">
-      <div className="h-8 w-8 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-      <div className="report-loading-shimmer h-2 w-40 overflow-hidden rounded-full bg-white/10" />
+    <div className="fixed inset-0 h-dvh flex flex-col items-center justify-center gap-5 bg-background">
+      <div className="h-8 w-8 rounded-full border-2 border-hairline-strong border-t-white animate-spin" />
+      <div className="report-loading-shimmer h-2 w-40 overflow-hidden rounded-full bg-overlay-strong" />
       <style>{`
         @keyframes report-loading-shimmer-kf {
           0% { transform: translateX(-100%); }

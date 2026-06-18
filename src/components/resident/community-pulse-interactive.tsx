@@ -86,15 +86,12 @@ function MicroStat({
 }) {
   return (
     <div className="flex items-center gap-2.5">
-      <Icon
-        className="h-4 w-4 flex-shrink-0 text-zinc-500"
-        strokeWidth={1.75}
-      />
+      <Icon className="h-4 w-4 flex-shrink-0 text-faint" strokeWidth={1.75} />
       <div className="min-w-0">
-        <p className="text-[15px] font-semibold leading-none text-white tabular-nums">
+        <p className="text-[15px] font-semibold leading-none text-foreground tabular-nums">
           {value}
         </p>
-        <p className="mt-1 text-[11px] leading-none text-zinc-500">{label}</p>
+        <p className="mt-1 text-[11px] leading-none text-faint">{label}</p>
       </div>
     </div>
   );
@@ -148,10 +145,10 @@ function ProgressRing({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[24px] font-semibold leading-none text-white tabular-nums">
+        <span className="text-[24px] font-semibold leading-none text-foreground tabular-nums">
           {pct}%
         </span>
-        <span className="mt-1 text-[10px] uppercase tracking-wide text-zinc-500">
+        <span className="mt-1 text-[10px] uppercase tracking-wide text-faint">
           resolved
         </span>
       </div>
@@ -181,9 +178,9 @@ function DeltaRow({
   const Icon = flat ? ArrowRight : up ? ArrowUpRight : ArrowDownRight;
   const inner = (
     <>
-      <span className="text-[13px] text-zinc-400">{label}</span>
+      <span className="text-[13px] text-subtle">{label}</span>
       <span className="flex items-baseline gap-2">
-        <span className="text-[17px] font-semibold tabular-nums text-white">
+        <span className="text-[17px] font-semibold tabular-nums text-foreground">
           {value.toLocaleString()}
         </span>
         <span
@@ -207,7 +204,7 @@ function DeltaRow({
     <button
       type="button"
       aria-label={hoverLabel}
-      className="-mx-1.5 flex w-full cursor-default items-center justify-between gap-3 rounded-md px-1.5 py-1 text-left outline-none transition-colors hover:bg-white/[0.03] focus-visible:bg-white/[0.04]"
+      className="-mx-1.5 flex w-full cursor-default items-center justify-between gap-3 rounded-md px-1.5 py-1 text-left outline-none transition-colors hover:bg-overlay focus-visible:bg-overlay"
       {...tipBindings}
     >
       {inner}
@@ -249,13 +246,13 @@ function BarRow({
             style={{ background: color }}
             aria-hidden="true"
           />
-          <span className="truncate text-[13px] text-zinc-200">{label}</span>
+          <span className="truncate text-[13px] text-foreground">{label}</span>
         </span>
-        <span className="flex-shrink-0 text-[13px] font-medium tabular-nums text-zinc-400">
+        <span className="flex-shrink-0 text-[13px] font-medium tabular-nums text-subtle">
           {sub ?? count.toLocaleString()}
         </span>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-overlay-strong">
         <div
           className="h-full rounded-full"
           style={{
@@ -279,7 +276,7 @@ function BarRow({
       <button
         type="button"
         aria-label={hoverLabel}
-        className="-mx-1.5 flex w-full cursor-default flex-col gap-1.5 rounded-md px-1.5 py-1 text-left outline-none transition-colors hover:bg-white/[0.03] focus-visible:bg-white/[0.04]"
+        className="-mx-1.5 flex w-full cursor-default flex-col gap-1.5 rounded-md px-1.5 py-1 text-left outline-none transition-colors hover:bg-overlay focus-visible:bg-overlay"
         {...tipBindings}
       >
         {content}
@@ -327,7 +324,7 @@ function severityTip(
         />
         <TipRow label="Share of flags" value={`${share.toFixed(1)}%`} muted />
         <TipBar pct={share} color={color} />
-        <p className="mt-1 text-[11px] leading-snug text-zinc-500">
+        <p className="mt-1 text-[11px] leading-snug text-faint">
           {SEVERITY_DESC[s.severity]}
         </p>
       </div>
@@ -371,7 +368,7 @@ function categoryTip(
         />
         <TipRow label="Share of fixes" value={`${share.toFixed(1)}%`} muted />
         <TipBar pct={share} color={meta.color} />
-        <p className="mt-1 text-[11px] leading-snug text-zinc-500">
+        <p className="mt-1 text-[11px] leading-snug text-faint">
           {meta.label} issues neighbors flagged that the city has already
           closed.
         </p>
@@ -449,7 +446,7 @@ function fixSpeedTip(b: CityMorale["fixSpeed"][number], total: number) {
         />
         <TipRow label="Share of fixes" value={`${share.toFixed(1)}%`} muted />
         <TipBar pct={share} color="#30d158" />
-        <p className="mt-1 text-[11px] leading-snug text-zinc-500">
+        <p className="mt-1 text-[11px] leading-snug text-faint">
           Issues the city closed within {b.label} of being reported.
         </p>
       </div>
@@ -534,10 +531,10 @@ export function CommunityPulseInteractive({
         <Tile title="Fixed together" className="lg:col-span-7">
           <div className="flex h-full flex-col justify-between gap-6">
             <div>
-              <p className="text-[11px] uppercase tracking-wider text-zinc-500">
+              <p className="text-[11px] uppercase tracking-wider text-faint">
                 Issues fixed in {cityName}
               </p>
-              <p className="mt-2 text-[60px] font-semibold leading-none tracking-tight text-white tabular-nums">
+              <p className="mt-2 text-[60px] font-semibold leading-none tracking-tight text-foreground tabular-nums">
                 {morale.resolvedTotal.toLocaleString()}
               </p>
               <p
@@ -547,13 +544,13 @@ export function CommunityPulseInteractive({
                 <m.Icon className="h-4 w-4" strokeWidth={2.25} />
                 {m.label}
               </p>
-              <p className="mt-4 max-w-[46ch] text-[13px] leading-relaxed text-zinc-400">
+              <p className="mt-4 max-w-[46ch] text-[13px] leading-relaxed text-subtle">
                 Every fix started with a neighbor speaking up. {cityName} keeps
                 getting better because people take a minute to report what they
                 see.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-3 border-t border-white/[0.06] pt-4 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 border-t border-hairline pt-4 sm:grid-cols-3">
               <MicroStat
                 value={morale.activeReporters.toLocaleString()}
                 label="active neighbors"
@@ -579,7 +576,7 @@ export function CommunityPulseInteractive({
               <button
                 type="button"
                 aria-label={`${morale.pctResolved}% of this week's reports resolved`}
-                className="cursor-default rounded-full outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-white/30"
+                className="cursor-default rounded-full outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-hairline-strong"
                 {...tip.bindTarget(() => ({
                   title: "This week's progress",
                   accent: "#30d158",
@@ -647,10 +644,8 @@ export function CommunityPulseInteractive({
                   ),
                 )}
               />
-              <div className="flex items-center justify-between gap-3 border-t border-white/[0.06] pt-3">
-                <span className="text-[13px] text-zinc-400">
-                  Being worked on
-                </span>
+              <div className="flex items-center justify-between gap-3 border-t border-hairline pt-3">
+                <span className="text-[13px] text-subtle">Being worked on</span>
                 <span className="text-[17px] font-semibold tabular-nums text-[#5ac8fa]">
                   {morale.inProgressCount.toLocaleString()}
                 </span>
@@ -705,10 +700,10 @@ export function CommunityPulseInteractive({
                   />
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-[15px] font-semibold text-white">
+                  <p className="truncate text-[15px] font-semibold text-foreground">
                     {CATEGORY_META[fastest.category].label}
                   </p>
-                  <p className="mt-0.5 text-[12px] text-zinc-400">
+                  <p className="mt-0.5 text-[12px] text-subtle">
                     fixed in about {formatFixTime(fastest.hours)} on average
                   </p>
                 </div>
@@ -803,18 +798,18 @@ export function CommunityPulseInteractive({
               strokeWidth={2.25}
             />
           </span>
-          <p className="max-w-[70ch] text-[13px] leading-relaxed text-zinc-400">
+          <p className="max-w-[70ch] text-[13px] leading-relaxed text-subtle">
             A reported pothole becomes a smoother drive to school. A fixed
             streetlight becomes a safer walk home. Across {cityName},{" "}
-            <span className="font-medium text-zinc-200">
+            <span className="font-medium text-foreground">
               {morale.activeReporters.toLocaleString()}
             </span>{" "}
             neighbors have filed{" "}
-            <span className="font-medium text-zinc-200">
+            <span className="font-medium text-foreground">
               {morale.totalReports.toLocaleString()}
             </span>{" "}
             reports, and{" "}
-            <span className="font-medium text-zinc-200">
+            <span className="font-medium text-foreground">
               {morale.resolvedTotal.toLocaleString()}
             </span>{" "}
             are already resolved. Thanks for being part of it.

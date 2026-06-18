@@ -112,7 +112,7 @@ function Stat({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-[11px] uppercase tracking-wider text-zinc-500">
+      <span className="text-[11px] uppercase tracking-wider text-faint">
         {label}
       </span>
       {href ? (
@@ -120,17 +120,17 @@ function Stat({
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[15px] font-medium tabular-nums text-white leading-tight underline-offset-2 transition-colors hover:text-sky-400 hover:underline"
+          className="text-[15px] font-medium tabular-nums text-foreground leading-tight underline-offset-2 transition-colors hover:text-sky-400 hover:underline"
           title="Open in Google Maps"
         >
           {value}
         </a>
       ) : (
-        <span className="text-[15px] font-medium tabular-nums text-white leading-tight">
+        <span className="text-[15px] font-medium tabular-nums text-foreground leading-tight">
           {value}
         </span>
       )}
-      {hint && <span className="text-[11px] text-zinc-500">{hint}</span>}
+      {hint && <span className="text-[11px] text-faint">{hint}</span>}
     </div>
   );
 }
@@ -157,18 +157,16 @@ function ReasoningColumn({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <h4 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+      <h4 className="text-[11px] font-semibold uppercase tracking-wider text-faint">
         {heading}
       </h4>
       <div className="flex flex-col gap-3">
         {sections.map((s) => (
           <div key={s.title} className="flex flex-col gap-1">
-            <span className="text-[10.5px] font-semibold uppercase tracking-wider text-zinc-600">
+            <span className="text-[10.5px] font-semibold uppercase tracking-wider text-faint">
               {s.title}
             </span>
-            <p className="text-[12px] leading-relaxed text-zinc-300">
-              {s.value}
-            </p>
+            <p className="text-[12px] leading-relaxed text-subtle">{s.value}</p>
           </div>
         ))}
       </div>
@@ -278,7 +276,7 @@ function ReportImage({ src, alt }: { src: string; alt: string }) {
 
   if (errored) {
     return (
-      <div className="flex aspect-[16/9] w-full flex-col items-center justify-center gap-2 bg-white/[0.02] text-zinc-600">
+      <div className="flex aspect-[16/9] w-full flex-col items-center justify-center gap-2 bg-overlay text-faint">
         <ImageOff className="h-6 w-6" strokeWidth={1.5} aria-hidden />
         <span className="text-[12px]">Image unavailable</span>
       </div>
@@ -304,7 +302,7 @@ export function ReportDetail({ report }: { report: DashboardReport | null }) {
   if (!report) {
     return (
       <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-center">
-        <p className="text-[14px] text-zinc-500">Select a report</p>
+        <p className="text-[14px] text-faint">Select a report</p>
       </div>
     );
   }
@@ -321,7 +319,7 @@ export function ReportDetail({ report }: { report: DashboardReport | null }) {
       className="flex flex-col gap-5 sm:gap-7 animate-in fade-in slide-in-from-bottom-1 duration-200 motion-reduce:animate-none"
     >
       {/* 1. Image with overlaid severity chip + status pill */}
-      <div className="relative overflow-hidden rounded-xl border border-white/[0.06] bg-[#1c1c1e]">
+      <div className="relative overflow-hidden rounded-xl border border-hairline bg-surface">
         <ReportImage
           key={report.id}
           src={report.photo_public_url}
@@ -346,7 +344,7 @@ export function ReportDetail({ report }: { report: DashboardReport | null }) {
       {/* 2. Title row */}
       <div className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-3">
-          <h2 className="flex min-w-0 items-center gap-2.5 text-[20px] font-semibold tracking-tight text-white">
+          <h2 className="flex min-w-0 items-center gap-2.5 text-[20px] font-semibold tracking-tight text-foreground">
             <span
               className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
               style={{ backgroundColor: meta.color }}
@@ -360,7 +358,7 @@ export function ReportDetail({ report }: { report: DashboardReport | null }) {
           href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="group flex items-center gap-1.5 text-[13px] text-zinc-400 transition-colors hover:text-white"
+          className="group flex items-center gap-1.5 text-[13px] text-subtle transition-colors hover:text-foreground"
           title="Open in Google Maps"
         >
           <MapPin className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={1.75} />
@@ -396,12 +394,12 @@ export function ReportDetail({ report }: { report: DashboardReport | null }) {
       </div>
 
       {/* 4. AI reasoning */}
-      <div className="flex flex-col gap-4 border-t border-white/[0.06] pt-6">
+      <div className="flex flex-col gap-4 border-t border-hairline pt-6">
         <div className="flex items-center gap-2">
-          <h3 className="text-[15px] font-semibold tracking-tight text-white">
+          <h3 className="text-[15px] font-semibold tracking-tight text-foreground">
             AI reasoning
           </h3>
-          <span className="rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-zinc-400">
+          <span className="rounded-md bg-overlay-strong px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-subtle">
             AI estimate
           </span>
         </div>
@@ -412,12 +410,12 @@ export function ReportDetail({ report }: { report: DashboardReport | null }) {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {[0, 1].map((col) => (
               <div key={col} className="flex flex-col gap-4">
-                <div className="h-2.5 w-16 rounded bg-white/[0.08] animate-pulse motion-reduce:animate-none" />
+                <div className="h-2.5 w-16 rounded bg-overlay-strong animate-pulse motion-reduce:animate-none" />
                 <div className="flex flex-col gap-3">
                   {[0, 1, 2].map((row) => (
                     <div key={row} className="flex flex-col gap-1.5">
-                      <div className="h-2 w-24 rounded bg-white/[0.05] animate-pulse motion-reduce:animate-none" />
-                      <div className="h-2.5 w-full max-w-[220px] rounded bg-white/[0.04] animate-pulse motion-reduce:animate-none" />
+                      <div className="h-2 w-24 rounded bg-overlay animate-pulse motion-reduce:animate-none" />
+                      <div className="h-2.5 w-full max-w-[220px] rounded bg-overlay animate-pulse motion-reduce:animate-none" />
                     </div>
                   ))}
                 </div>
@@ -427,7 +425,7 @@ export function ReportDetail({ report }: { report: DashboardReport | null }) {
         )}
 
         {reasoning.phase === "error" && (
-          <p className="flex items-center gap-1.5 text-[12px] text-zinc-500">
+          <p className="flex items-center gap-1.5 text-[12px] text-faint">
             <Clock className="h-3.5 w-3.5" strokeWidth={1.75} />
             Reasoning could not be loaded.
           </p>

@@ -26,9 +26,9 @@ export function EnvSwitch() {
       }
       className={[
         "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2 sm:px-2.5 text-[13px] font-medium",
-        "border-white/[0.08] bg-white/[0.04] text-zinc-400",
+        "border-hairline bg-overlay text-subtle",
         "transition-colors duration-150 outline-none",
-        "hover:bg-white/[0.08] hover:text-zinc-100",
+        "hover:bg-overlay-strong hover:text-foreground",
         "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
       ].join(" ")}
     >

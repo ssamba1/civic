@@ -21,7 +21,7 @@ export function ReportCsat({ reportId }: { reportId: string }) {
     const positive = rating === "up";
     return (
       <div
-        className="flex items-center gap-2 text-[13px] text-zinc-300"
+        className="flex items-center gap-2 text-[13px] text-subtle"
         role="status"
       >
         <span
@@ -44,7 +44,7 @@ export function ReportCsat({ reportId }: { reportId: string }) {
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <span className="text-[13px] font-medium text-zinc-300">
+      <span className="text-[13px] font-medium text-subtle">
         Was this fixed?
       </span>
       <div className="flex items-center gap-2">
@@ -52,7 +52,7 @@ export function ReportCsat({ reportId }: { reportId: string }) {
           type="button"
           onClick={() => rate("up")}
           aria-label="Yes, this was fixed"
-          className="inline-flex h-9 min-w-11 items-center justify-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.03] px-3 text-[13px] font-medium text-zinc-200 outline-none transition-colors hover:border-[#30d158]/40 hover:bg-[#30d158]/10 hover:text-[#30d158] focus-visible:ring-2 focus-visible:ring-[#30d158]/50"
+          className="inline-flex h-9 min-w-11 items-center justify-center gap-1.5 rounded-full border border-hairline bg-overlay px-3 text-[13px] font-medium text-foreground outline-none transition-colors hover:border-[#30d158]/40 hover:bg-[#30d158]/10 hover:text-[#30d158] focus-visible:ring-2 focus-visible:ring-[#30d158]/50"
         >
           <ThumbsUp className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
           Yes
@@ -61,7 +61,7 @@ export function ReportCsat({ reportId }: { reportId: string }) {
           type="button"
           onClick={() => rate("down")}
           aria-label="No, this was not fixed"
-          className="inline-flex h-9 min-w-11 items-center justify-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.03] px-3 text-[13px] font-medium text-zinc-200 outline-none transition-colors hover:border-[#ff9f0a]/40 hover:bg-[#ff9f0a]/10 hover:text-[#ff9f0a] focus-visible:ring-2 focus-visible:ring-[#ff9f0a]/50"
+          className="inline-flex h-9 min-w-11 items-center justify-center gap-1.5 rounded-full border border-hairline bg-overlay px-3 text-[13px] font-medium text-foreground outline-none transition-colors hover:border-[#ff9f0a]/40 hover:bg-[#ff9f0a]/10 hover:text-[#ff9f0a] focus-visible:ring-2 focus-visible:ring-[#ff9f0a]/50"
         >
           <ThumbsDown className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
           No

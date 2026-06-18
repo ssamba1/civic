@@ -6,27 +6,27 @@ export default function UpdatesLoading() {
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pt-24 pb-[calc(5.5rem_+_env(safe-area-inset-bottom))] sm:px-6 md:pb-10">
       <section className="mb-6 animate-pulse">
-        <div className="h-3 w-28 rounded-full bg-white/[0.06]" />
-        <div className="mt-3 h-9 w-44 rounded-lg bg-white/[0.06]" />
-        <div className="mt-3 h-4 w-[min(360px,75%)] rounded bg-white/[0.05]" />
+        <div className="h-3 w-28 rounded-full bg-overlay-strong" />
+        <div className="mt-3 h-9 w-44 rounded-lg bg-overlay-strong" />
+        <div className="mt-3 h-4 w-[min(360px,75%)] rounded bg-overlay" />
       </section>
 
-      <section className="rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
-        <header className="flex items-center justify-between gap-3 border-b border-white/[0.06] px-4 py-3">
-          <div className="h-7 w-32 animate-pulse rounded-full bg-white/[0.06]" />
-          <div className="h-4 w-20 animate-pulse rounded bg-white/[0.05]" />
+      <section className="rounded-[14px] border border-hairline bg-surface shadow-[var(--shadow-card)]">
+        <header className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-3">
+          <div className="h-7 w-32 animate-pulse rounded-full bg-overlay-strong" />
+          <div className="h-4 w-20 animate-pulse rounded bg-overlay" />
         </header>
-        <ul className="divide-y divide-white/[0.06]">
+        <ul className="divide-y divide-hairline">
           {[0, 1, 2, 3, 4].map((i) => (
             <li
               key={i}
               className="flex items-start gap-3 px-4 py-3.5"
               style={{ animationDelay: `${i * 60}ms` }}
             >
-              <div className="h-7 w-7 flex-shrink-0 animate-pulse rounded-lg bg-white/[0.06]" />
+              <div className="h-7 w-7 flex-shrink-0 animate-pulse rounded-lg bg-overlay-strong" />
               <div className="min-w-0 flex-1 space-y-2">
-                <div className="h-3.5 w-[60%] animate-pulse rounded bg-white/[0.06]" />
-                <div className="h-3 w-[85%] animate-pulse rounded bg-white/[0.05]" />
+                <div className="h-3.5 w-[60%] animate-pulse rounded bg-overlay-strong" />
+                <div className="h-3 w-[85%] animate-pulse rounded bg-overlay" />
               </div>
             </li>
           ))}

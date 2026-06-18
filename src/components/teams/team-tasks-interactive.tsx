@@ -36,7 +36,7 @@ const STATUS_TONE: Record<ReportStatus, string> = {
   dispatched: "text-[#0a84ff] bg-[#0a84ff]/10",
   in_progress: "text-[#5ac8fa] bg-[#5ac8fa]/10",
   closed: "text-[#30d158] bg-[#30d158]/10",
-  merged: "text-zinc-400 bg-white/[0.06]",
+  merged: "text-subtle bg-overlay-strong",
   rejected: "text-[#ff453a] bg-[#ff453a]/10",
 };
 
@@ -109,7 +109,7 @@ export function TeamTasksInteractive({ teamId }: TeamTasksInteractiveProps) {
       <div
         role="tablist"
         aria-label="Task status"
-        className="flex w-full max-w-sm items-center gap-0.5 rounded-[10px] border border-white/[0.06] bg-white/[0.03] p-0.5"
+        className="flex w-full max-w-sm items-center gap-0.5 rounded-[10px] border border-hairline bg-overlay p-0.5"
       >
         {tabs.map(({ key, label, count }) => (
           <button
@@ -122,14 +122,12 @@ export function TeamTasksInteractive({ teamId }: TeamTasksInteractiveProps) {
               "inline-flex flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors outline-none",
               "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60",
               tab === key
-                ? "bg-white/[0.09] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-                : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-100",
+                ? "bg-overlay-strong text-foreground shadow-[inset_0_0_0_1px_var(--hairline)]"
+                : "text-subtle hover:bg-overlay hover:text-foreground",
             )}
           >
             {label}
-            <span className="text-[11px] tabular-nums text-zinc-500">
-              {count}
-            </span>
+            <span className="text-[11px] tabular-nums text-faint">{count}</span>
           </button>
         ))}
       </div>
@@ -141,8 +139,8 @@ export function TeamTasksInteractive({ teamId }: TeamTasksInteractiveProps) {
         className="gap-1"
         left={
           visible.length === 0 ? (
-            <div className="rounded-xl border border-white/[0.06] bg-[#1c1c1e] p-8 text-center">
-              <p className="text-sm text-zinc-400">
+            <div className="rounded-xl border border-hairline bg-surface p-8 text-center">
+              <p className="text-sm text-subtle">
                 {tab === "todo"
                   ? "No open tasks. Nice — the queue is clear."
                   : tab === "done"
@@ -209,12 +207,12 @@ function TaskRow({
           "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60",
           selected
             ? "border-[#0a84ff]/40 bg-[#0a84ff]/[0.08]"
-            : "border-white/[0.06] bg-[#1c1c1e] hover:bg-white/[0.03]",
+            : "border-hairline bg-surface hover:bg-overlay",
           isDemo && "demo-glow",
         )}
       >
         {/* Thumbnail */}
-        <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-white/[0.06] bg-[#0a0a0b]">
+        <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-hairline bg-surface">
           {/* biome-ignore lint/performance/noImgElement: tiny lazy thumbnail; next/image is overkill for a 48px list cell. */}
           <img
             src={report.photo_public_url || undefined}
@@ -231,7 +229,7 @@ function TaskRow({
 
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="flex items-center justify-between gap-2">
-            <span className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-white">
+            <span className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-foreground">
               <span
                 className="h-2 w-2 shrink-0 rounded-full"
                 style={{ backgroundColor: meta.color }}
@@ -248,7 +246,7 @@ function TaskRow({
               {STATUS_LABEL[report.status]}
             </span>
           </span>
-          <span className="flex items-center justify-between gap-3 text-[12px] text-zinc-500">
+          <span className="flex items-center justify-between gap-3 text-[12px] text-faint">
             <span className="truncate">{report.address}</span>
             <span className="inline-flex shrink-0 items-center gap-1">
               <Clock className="h-3 w-3" strokeWidth={1.75} />
@@ -259,7 +257,7 @@ function TaskRow({
 
         {/* Affordance hint */}
         {report.status !== "closed" && (
-          <span className="hidden shrink-0 items-center text-zinc-600 sm:inline-flex">
+          <span className="hidden shrink-0 items-center text-faint sm:inline-flex">
             <Camera className="h-3.5 w-3.5" strokeWidth={1.75} />
           </span>
         )}

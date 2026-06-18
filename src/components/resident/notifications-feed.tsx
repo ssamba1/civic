@@ -101,8 +101,8 @@ export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
   };
 
   return (
-    <section className="rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
-      <header className="flex items-center justify-between gap-3 px-4 py-3 border-b border-white/[0.06]">
+    <section className="rounded-[14px] border border-hairline bg-surface shadow-[var(--shadow-card)]">
+      <header className="flex items-center justify-between gap-3 px-4 py-3 border-b border-hairline">
         <PillGroup
           options={FILTER_OPTIONS}
           value={filter}
@@ -117,7 +117,7 @@ export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
             marked
               ? "text-[#30d158] cursor-default"
               : unreadCount === 0
-                ? "text-zinc-600 cursor-default"
+                ? "text-faint cursor-default"
                 : "text-[#0a84ff] hover:text-[#3b9dff]",
           )}
         >
@@ -147,7 +147,7 @@ export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
       ) : (
         <ul
           key={filter}
-          className="custom-scrollbar divide-y divide-white/[0.06] animate-in fade-in duration-200 md:max-h-[600px] md:overflow-y-auto"
+          className="custom-scrollbar divide-y divide-hairline animate-in fade-in duration-200 md:max-h-[600px] md:overflow-y-auto"
         >
           {visible.map((item) => {
             const meta = TYPE_META[item.type];
@@ -163,7 +163,7 @@ export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
                   className={cn(
                     "flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors min-h-[44px]",
                     !read && "bg-[#0a84ff]/[0.04]",
-                    clickable ? "hover:bg-white/[0.03]" : "cursor-default",
+                    clickable ? "hover:bg-overlay" : "cursor-default",
                   )}
                 >
                   <span
@@ -179,14 +179,14 @@ export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-3">
-                      <p className="truncate text-[14px] font-medium text-white">
+                      <p className="truncate text-[14px] font-medium text-foreground">
                         {item.title}
                       </p>
-                      <span className="flex-shrink-0 text-[12px] tabular-nums text-zinc-500">
+                      <span className="flex-shrink-0 text-[12px] tabular-nums text-faint">
                         {timeAgo(item.at)}
                       </span>
                     </div>
-                    <p className="mt-0.5 text-[13px] leading-relaxed text-zinc-400">
+                    <p className="mt-0.5 text-[13px] leading-relaxed text-subtle">
                       {item.body}
                     </p>
                   </div>

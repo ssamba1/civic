@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils/cn";
    ================================================================== */
 
 const li =
-  "flex items-center gap-2 rounded-md px-2 py-2 sm:py-1.5 text-[12px] hover:bg-white/[0.03] transition-colors min-h-[44px] sm:min-h-0";
+  "flex items-center gap-2 rounded-md px-2 py-2 sm:py-1.5 text-[12px] hover:bg-overlay transition-colors min-h-[44px] sm:min-h-0";
 
 function RoutingMatrixInner() {
   const { overrides, setCategoryTeam, clearCategoryTeam } =
@@ -71,7 +71,7 @@ function RoutingMatrixInner() {
                   "border-l-2 border-l-[#ff9f0a] bg-[#ff9f0a]/[0.04] pl-1.5",
               )}
             >
-              <span className="inline-flex flex-1 min-w-0 items-center gap-2 text-zinc-300">
+              <span className="inline-flex flex-1 min-w-0 items-center gap-2 text-subtle">
                 <span
                   className="h-2 w-2 flex-shrink-0 rounded-full"
                   style={{ background: meta.color }}
@@ -80,7 +80,7 @@ function RoutingMatrixInner() {
                 <span className="truncate">{meta.label}</span>
               </span>
               <ArrowRight
-                className="h-3 w-3 flex-shrink-0 text-zinc-600"
+                className="h-3 w-3 flex-shrink-0 text-faint"
                 strokeWidth={2}
                 aria-hidden
               />
@@ -106,8 +106,8 @@ function RoutingMatrixInner() {
                   className={cn(
                     "inline-flex h-11 w-11 sm:h-6 sm:w-6 flex-shrink-0 items-center justify-center rounded transition-colors",
                     isOverridden
-                      ? "text-zinc-400 hover:bg-white/[0.06] hover:text-white"
-                      : "text-zinc-800 cursor-default",
+                      ? "text-subtle hover:bg-overlay-strong hover:text-foreground"
+                      : "text-faint cursor-default",
                   )}
                 >
                   <RotateCcw className="h-3 w-3" strokeWidth={2} />
@@ -119,19 +119,19 @@ function RoutingMatrixInner() {
 
         {custom.map((c) => (
           <li key={c.id} className={li}>
-            <span className="inline-flex flex-1 min-w-0 items-center gap-2 text-zinc-300">
+            <span className="inline-flex flex-1 min-w-0 items-center gap-2 text-subtle">
               <span
                 className="h-2 w-2 flex-shrink-0 rounded-full"
                 style={{ background: c.color }}
                 aria-hidden
               />
               <span className="truncate">{c.label}</span>
-              <span className="flex-shrink-0 rounded-sm bg-white/[0.06] px-1 text-[9px] uppercase tracking-wider text-zinc-500">
+              <span className="flex-shrink-0 rounded-sm bg-overlay-strong px-1 text-[9px] uppercase tracking-wider text-faint">
                 custom
               </span>
             </span>
             <ArrowRight
-              className="h-3 w-3 flex-shrink-0 text-zinc-600"
+              className="h-3 w-3 flex-shrink-0 text-faint"
               strokeWidth={2}
               aria-hidden
             />
@@ -150,7 +150,7 @@ function RoutingMatrixInner() {
                 onClick={() => removeCustomCategory(c.id)}
                 title="Remove issue type"
                 aria-label={`Remove ${c.label} issue type`}
-                className="inline-flex h-11 w-11 sm:h-6 sm:w-6 flex-shrink-0 items-center justify-center rounded text-zinc-500 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+                className="inline-flex h-11 w-11 sm:h-6 sm:w-6 flex-shrink-0 items-center justify-center rounded text-faint transition-colors hover:bg-rose-500/10 hover:text-rose-400"
               >
                 <Trash2 className="h-3 w-3" strokeWidth={2} />
               </button>
@@ -163,8 +163,8 @@ function RoutingMatrixInner() {
         type="button"
         onClick={() => setAddOpen(true)}
         className={cn(
-          "mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-white/[0.1] px-2 py-2.5 text-[12px] font-medium text-zinc-500",
-          "transition-colors hover:border-white/[0.22] hover:bg-white/[0.03] hover:text-zinc-300",
+          "mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-hairline px-2 py-2.5 text-[12px] font-medium text-faint",
+          "transition-colors hover:border-hairline-strong hover:bg-overlay hover:text-subtle",
           "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60",
         )}
       >

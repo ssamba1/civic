@@ -114,7 +114,7 @@ export function ReportTimeline({ steps }: { steps: TimelineStep[] }) {
               <Icon
                 className={cn(
                   "h-5 w-5 sm:h-4 sm:w-4",
-                  step.done ? "text-black/80" : "text-zinc-500",
+                  step.done ? "text-black/80" : "text-faint",
                 )}
                 strokeWidth={2}
               />
@@ -125,7 +125,7 @@ export function ReportTimeline({ steps }: { steps: TimelineStep[] }) {
               <span
                 className={cn(
                   "text-[14px] font-medium leading-tight sm:text-[14px]",
-                  step.done || step.current ? "text-white" : "text-zinc-500",
+                  step.done || step.current ? "text-foreground" : "text-faint",
                 )}
               >
                 {step.label}
@@ -139,7 +139,7 @@ export function ReportTimeline({ steps }: { steps: TimelineStep[] }) {
                 {step.at ? absoluteDate(step.at) : "Pending"}
               </span>
               {step.note && (
-                <span className="mt-1.5 text-[13px] leading-relaxed text-zinc-400 sm:mt-1 sm:text-[12px]">
+                <span className="mt-1.5 text-[13px] leading-relaxed text-subtle sm:mt-1 sm:text-[12px]">
                   {step.note}
                 </span>
               )}
@@ -165,7 +165,7 @@ export function ReportPhoto({ src, alt }: { src: string; alt: string }) {
 
   if (errored) {
     return (
-      <div className="flex aspect-[16/9] w-full flex-col items-center justify-center gap-2 bg-white/[0.02] text-zinc-600">
+      <div className="flex aspect-[16/9] w-full flex-col items-center justify-center gap-2 bg-overlay text-faint">
         <ImageOff className="h-6 w-6" strokeWidth={1.5} aria-hidden />
         <span className="text-[12px]">Image unavailable</span>
       </div>

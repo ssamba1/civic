@@ -47,7 +47,7 @@ export function TeamHeader({ team, city, accountLabel }: TeamHeaderProps) {
         type="submit"
         aria-label={accountLabel ? `Sign out (${accountLabel})` : "Sign out"}
         title={accountLabel ? `Sign out · ${accountLabel}` : "Sign out"}
-        className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.03] px-2 sm:px-2.5 text-[13px] font-medium text-zinc-400 outline-none transition-colors hover:bg-white/[0.06] hover:text-zinc-100 focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
+        className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-hairline bg-overlay px-2 sm:px-2.5 text-[13px] font-medium text-subtle outline-none transition-colors hover:bg-overlay-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
       >
         <LogOut
           className="h-3.5 w-3.5 shrink-0"
@@ -65,7 +65,7 @@ export function TeamHeader({ team, city, accountLabel }: TeamHeaderProps) {
         "fixed top-0 inset-x-0 z-40 pt-safe",
         transparent
           ? "bg-transparent"
-          : "border-b border-white/[0.06] bg-black/60 backdrop-blur-xl supports-[backdrop-filter]:bg-black/50",
+          : "border-b border-hairline bg-glass backdrop-blur-xl supports-[backdrop-filter]:bg-glass",
       )}
     >
       {/* ── Mobile: two rows (logo/identity row + segmented nav row) ── */}
@@ -73,7 +73,7 @@ export function TeamHeader({ team, city, accountLabel }: TeamHeaderProps) {
         <div className="flex h-14 w-full items-center justify-between gap-2 px-4">
           <Link
             href="/"
-            className="group inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-white outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
+            className="group inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
           >
             <span
               className="h-2 w-2 rounded-full bg-[#0a84ff] shadow-[0_0_8px_rgba(10,132,255,0.6)]"
@@ -96,7 +96,7 @@ export function TeamHeader({ team, city, accountLabel }: TeamHeaderProps) {
         <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/"
-            className="group inline-flex shrink-0 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-white outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
+            className="group inline-flex shrink-0 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
           >
             <span
               className="h-2 w-2 rounded-full bg-[#0a84ff] shadow-[0_0_8px_rgba(10,132,255,0.6)]"

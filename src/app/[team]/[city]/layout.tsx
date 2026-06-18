@@ -32,7 +32,7 @@ export default async function TeamViewLayout({
   const session = await getDemoSession();
 
   return (
-    <div className="flex min-h-dvh flex-col bg-black text-zinc-100">
+    <div className="flex min-h-dvh flex-col bg-background text-foreground">
       <TeamHeader
         team={team}
         city={city}

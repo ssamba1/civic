@@ -6,13 +6,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Map as MapGL, type MapRef, useControl } from "react-map-gl/maplibre";
 import { useMapPreset } from "./MapPresetContext";
 import {
-  BUILDINGS_3D_LAYER,
   buildHeatLayer,
   buildHexLayer,
   buildMarkerLayers,
-  CUMMING,
-  makePoints,
-} from "./mapPresets";
+} from "./mapLayers";
+import { BUILDINGS_3D_LAYER, CUMMING, makePoints } from "./mapPresets";
 
 /**
  * Zamp hero background — a live, preset-driven MapLibre map of Cumming, GA that
@@ -46,6 +44,7 @@ function DeckGLOverlay(props: MapboxOverlayProps) {
 export default function ZampMapBackdrop() {
   const { preset } = useMapPreset();
   const mapRef = useRef<MapRef | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const pointerRef = useRef({ x: 0, y: 0 });
 
@@ -118,6 +117,14 @@ export default function ZampMapBackdrop() {
     if (!map) return;
 
     let raf = 0;
+    // Visibility gate — the ambient orbit/spin/parallax loop calls setCenter/
+    // setBearing every frame, which repaints the whole GL canvas. Left running
+    // while the hero is scrolled out of view it competes with the rest of the
+    // page for the main thread / GPU and reads as scroll jank. Pause the loop
+    // whenever the hero leaves the viewport; the IntersectionObserver below
+    // restarts it on re-entry. Keyed off visibility ONLY — NOT reduce-motion;
+    // the forced-on motion is a deliberate product decision (see memory).
+    let visible = true;
     const base = preset.camera;
     const setIdle = (v: boolean) => {
       (window as unknown as { __civicMapIdle?: boolean }).__civicMapIdle = v;
@@ -161,12 +168,13 @@ export default function ZampMapBackdrop() {
       cur.bearing += db * LERP;
       map.setCenter([cur.lng, cur.lat]);
       map.setBearing(cur.bearing);
-      raf = requestAnimationFrame(tick);
+      // Stop scheduling frames while offscreen; the observer re-arms on re-entry.
+      raf = visible ? requestAnimationFrame(tick) : 0;
     };
 
     const startLoop = () => {
       setIdle(true);
-      if (!raf) raf = requestAnimationFrame(tick);
+      if (!raf && visible) raf = requestAnimationFrame(tick);
     };
     map.once("idle", startLoop);
     // Fallback: if 'idle' never fires (e.g. easeTo is a no-op because the new
@@ -174,9 +182,24 @@ export default function ZampMapBackdrop() {
     // left permanently static. startLoop() is idempotent (guarded by `if (!raf)`).
     const fallback = setTimeout(startLoop, 1200);
 
+    // Pause the per-frame camera loop when the hero scrolls out of view.
+    let io: IntersectionObserver | null = null;
+    const container = containerRef.current;
+    if (container && typeof IntersectionObserver !== "undefined") {
+      io = new IntersectionObserver(
+        (entries) => {
+          visible = entries[0]?.isIntersecting ?? true;
+          if (visible && !raf) raf = requestAnimationFrame(tick);
+        },
+        { threshold: 0 },
+      );
+      io.observe(container);
+    }
+
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(fallback);
+      io?.disconnect();
       map.off("idle", startLoop);
       setIdle(false);
     };
@@ -184,6 +207,7 @@ export default function ZampMapBackdrop() {
 
   return (
     <div
+      ref={containerRef}
       aria-hidden="true"
       data-hero-bg="map"
       className="pointer-events-none absolute inset-0 z-0 overflow-hidden"

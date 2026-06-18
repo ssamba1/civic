@@ -255,9 +255,9 @@ export function useHoverTip(): UseHoverTipReturn {
         aria-hidden={!state.visible}
         className={cn(
           "pointer-events-none fixed z-[60] select-none",
-          "text-zinc-100 text-[12px] leading-snug",
-          "rounded-xl border border-white/[0.08]",
-          "bg-[rgba(18,18,22,0.92)] backdrop-blur-xl",
+          "text-foreground text-[12px] leading-snug",
+          "rounded-xl border border-hairline",
+          "bg-glass backdrop-blur-xl",
           "shadow-[0_8px_32px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.04)_inset]",
           !noMotion && "transition-[opacity,transform] duration-150 ease-out",
           state.visible
@@ -280,7 +280,7 @@ export function useHoverTip(): UseHoverTipReturn {
         )}
         <div className="px-3.5 py-2.5">
           {state.title && (
-            <div className="flex items-center gap-2 text-[12px] font-semibold text-white tracking-tight">
+            <div className="flex items-center gap-2 text-[12px] font-semibold text-foreground tracking-tight">
               {state.accent && (
                 <span
                   className="h-1.5 w-1.5 rounded-full"
@@ -293,14 +293,14 @@ export function useHoverTip(): UseHoverTipReturn {
           )}
           <div
             className={cn(
-              "text-[12px] text-zinc-300",
+              "text-[12px] text-subtle",
               state.title ? "mt-1.5" : "",
             )}
           >
             {state.body}
           </div>
           {state.footer && (
-            <div className="mt-2 pt-2 border-t border-white/[0.06] text-[11px] text-zinc-500">
+            <div className="mt-2 pt-2 border-t border-hairline text-[11px] text-faint">
               {state.footer}
             </div>
           )}
@@ -334,7 +334,7 @@ export function TipRow({
       <span
         className={cn(
           "inline-flex items-center gap-1.5",
-          muted ? "text-zinc-500" : "text-zinc-400",
+          muted ? "text-faint" : "text-subtle",
         )}
       >
         {accent && (
@@ -349,7 +349,7 @@ export function TipRow({
       <span
         className={cn(
           "tabular-nums",
-          muted ? "text-zinc-400" : "text-white font-medium",
+          muted ? "text-subtle" : "text-foreground font-medium",
         )}
       >
         {value}
@@ -376,7 +376,7 @@ export function TipBar({
     return () => cancelAnimationFrame(id);
   }, [drawn]);
   return (
-    <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.05]">
+    <div className="h-1 w-full overflow-hidden rounded-full bg-overlay">
       <div
         className="h-full rounded-full transition-[width] duration-300 ease-out motion-reduce:transition-none"
         style={{ width: drawn ? `${w}%` : 0, background: color, opacity: 0.85 }}
@@ -393,7 +393,7 @@ export function TipChip({
   tone?: "neutral" | "good" | "bad" | "warn";
 }) {
   const toneClass = {
-    neutral: "bg-white/[0.06] text-zinc-300",
+    neutral: "bg-overlay-strong text-subtle",
     good: "bg-[#30d158]/15 text-[#30d158]",
     bad: "bg-[#ff453a]/15 text-[#ff453a]",
     warn: "bg-[#ff9f0a]/15 text-[#ff9f0a]",

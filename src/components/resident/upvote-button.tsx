@@ -43,7 +43,7 @@ export function UpvoteButton({
         size === "sm" ? "h-11 w-9 text-[11px]" : "h-12 w-10 text-xs",
         active
           ? "border-[#0a84ff]/40 bg-[#0a84ff]/15 text-[#0a84ff]"
-          : "border-white/10 bg-white/[0.04] text-zinc-400 hover:text-zinc-200",
+          : "border-hairline bg-overlay text-subtle hover:text-foreground",
         className,
       )}
     >

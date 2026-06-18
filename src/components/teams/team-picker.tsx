@@ -70,8 +70,8 @@ export function TeamPicker({
           "inline-flex h-11 sm:h-7 items-center gap-1.5 rounded-md border px-2 text-[12px] transition-colors",
           "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60",
           isOverridden
-            ? "border-white/[0.16] bg-white/[0.06] text-white"
-            : "border-white/[0.06] bg-white/[0.03] text-zinc-300 hover:bg-white/[0.06] hover:border-white/[0.1]",
+            ? "border-hairline-strong bg-overlay-strong text-foreground"
+            : "border-hairline bg-overlay text-subtle hover:bg-overlay-strong hover:border-hairline",
         )}
       >
         <span
@@ -86,7 +86,7 @@ export function TeamPicker({
         >
           {team.shortLabel}
         </span>
-        <ChevronDown className="h-3 w-3 text-zinc-500" strokeWidth={2} />
+        <ChevronDown className="h-3 w-3 text-faint" strokeWidth={2} />
       </button>
 
       {open && (
@@ -97,8 +97,8 @@ export function TeamPicker({
             transformOrigin: align === "right" ? "top right" : "top left",
           }}
           className={cn(
-            "absolute z-30 mt-1.5 overflow-hidden rounded-lg border border-white/[0.08]",
-            "bg-[#1c1c1e] shadow-[0_12px_32px_-12px_rgba(0,0,0,0.7)]",
+            "absolute z-30 mt-1.5 overflow-hidden rounded-lg border border-hairline",
+            "bg-surface shadow-[var(--shadow-pop)]",
             "max-w-[min(92vw,240px)]",
             "origin-top animate-[city-pop_120ms_ease-out]",
             align === "right" ? "right-0" : "left-0",
@@ -121,10 +121,10 @@ export function TeamPicker({
                     }}
                     className={cn(
                       "flex w-full items-center gap-2 px-3 py-3 sm:py-1.5 min-h-[44px] sm:min-h-0 text-left text-[12px] transition-colors",
-                      "outline-none focus-visible:bg-white/[0.06]",
+                      "outline-none focus-visible:bg-overlay-strong",
                       isCurrent
-                        ? "bg-white/[0.06] text-white"
-                        : "text-zinc-300 hover:bg-white/[0.04]",
+                        ? "bg-overlay-strong text-foreground"
+                        : "text-subtle hover:bg-overlay",
                     )}
                   >
                     <span
@@ -135,7 +135,7 @@ export function TeamPicker({
                     </span>
                     <span className="flex-1 truncate">{t.shortLabel}</span>
                     {isDefault && (
-                      <span className="text-[10px] uppercase tracking-wider text-zinc-500">
+                      <span className="text-[10px] uppercase tracking-wider text-faint">
                         default
                       </span>
                     )}

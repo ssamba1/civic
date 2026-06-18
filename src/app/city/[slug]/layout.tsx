@@ -15,7 +15,7 @@ export default async function CityDashboardLayout({
   const now = Date.now();
 
   return (
-    <div className="flex min-h-dvh flex-col bg-black text-zinc-100">
+    <div className="flex min-h-dvh flex-col bg-background text-foreground">
       <CityHeader slug={slug} />
 
       <Suspense fallback={null}>

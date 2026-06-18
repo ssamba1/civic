@@ -346,7 +346,7 @@ export default function ReportPage() {
   }, [pendingReportId]);
 
   return (
-    <div className="fixed inset-0 h-dvh flex flex-col bg-black">
+    <div className="fixed inset-0 h-dvh flex flex-col bg-background">
       {/* Error toast — clears notch via pt-safe. Slides down on mount so it
           doesn't hard-pop at the top of the screen mid-submit. */}
       {error && (
@@ -414,7 +414,7 @@ export default function ReportPage() {
               value={address ?? ""}
               onChange={(e) => setAddress(e.target.value || null)}
               placeholder="Enter address or intersection..."
-              className="w-full mt-3 rounded-xl border border-zinc-700 bg-zinc-900/90 backdrop-blur-sm px-4 py-3 text-base text-white placeholder:text-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full mt-3 rounded-xl border border-hairline bg-glass backdrop-blur-sm px-4 py-3 text-base text-foreground placeholder:text-faint focus:outline-none focus:border-[#0a84ff]"
             />
           </div>
         )}

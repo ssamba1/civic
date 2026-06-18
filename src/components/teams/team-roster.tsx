@@ -1,6 +1,8 @@
 "use client";
 
-import { Clock, Plus, Timer } from "lucide-react";
+import { ArrowUpRight, Clock, Plus, Timer } from "lucide-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { memo, useState } from "react";
 import { useReveal } from "@/components/analytics/bento-primitives";
 import { TipChip, TipRow, useHoverTip } from "@/components/analytics/hover-tip";
@@ -42,6 +44,9 @@ function TeamRosterInner({
   const tip = useHoverTip();
   const ref = useReveal<HTMLDivElement>();
   const [setupOpen, setSetupOpen] = useState(false);
+  // Current city slug from the /city/[slug] route — feeds the per-card
+  // "View team" link that drills into /[team]/[city].
+  const { slug } = useParams<{ slug: string }>();
 
   return (
     <>
@@ -54,6 +59,7 @@ function TeamRosterInner({
           <TeamCard
             key={w.teamId}
             workload={w}
+            citySlug={slug}
             isSelected={selectedTeam === w.teamId}
             isDimmed={selectedTeam !== "all" && selectedTeam !== w.teamId}
             onSelect={() => onSelectTeam(w.teamId)}
@@ -78,7 +84,7 @@ function buildTip(w: TeamWorkload) {
     accent: team.color,
     body: (
       <div className="flex flex-col gap-1.5">
-        <p className="text-[11px] text-zinc-500 leading-snug">{team.duties}</p>
+        <p className="text-[11px] text-faint leading-snug">{team.duties}</p>
         <TipRow
           label="Open backlog"
           value={w.openCount.toLocaleString()}
@@ -112,6 +118,7 @@ function buildTip(w: TeamWorkload) {
 
 interface TeamCardProps {
   workload: TeamWorkload;
+  citySlug: string;
   isSelected: boolean;
   isDimmed: boolean;
   onSelect: () => void;
@@ -120,6 +127,7 @@ interface TeamCardProps {
 
 function TeamCard({
   workload,
+  citySlug,
   isSelected,
   isDimmed,
   onSelect,
@@ -134,22 +142,18 @@ function TeamCard({
       : "—";
 
   const { onClick: tipOnClick, ...tipRest } = tipBindings;
+  // Two interactive children, never nested: a full-bleed button (scope toggle)
+  // beneath the content, and a "View team" link on top (z-10) that drills into
+  // the dedicated /[team]/[city] dashboard. The container div stays inert so
+  // biome's a11y rules don't demand a role/keyboard handler on it.
   return (
-    <button
-      type="button"
-      onClick={(e) => {
-        tipOnClick?.(e);
-        onSelect();
-      }}
-      aria-pressed={isSelected}
-      aria-label={`Scope view to ${team.label}`}
+    <div
       className={cn(
-        "group relative flex flex-col gap-3 rounded-[14px] border bg-[#1c1c1e] p-4 text-left",
-        "shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-150 will-change-transform active:scale-[0.97] motion-reduce:active:scale-100",
-        "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+        "group relative flex flex-col gap-3 rounded-[14px] border bg-surface p-4 text-left",
+        "shadow-[var(--shadow-card)] transition-all duration-150 will-change-transform active:scale-[0.97] motion-reduce:active:scale-100",
         isSelected
-          ? "border-white/[0.18] scale-[1.01] motion-reduce:scale-100"
-          : "border-white/[0.06] hover:border-white/[0.12]",
+          ? "border-hairline-strong scale-[1.01] motion-reduce:scale-100"
+          : "border-hairline hover:border-hairline-strong",
         isDimmed && "opacity-55",
       )}
       style={
@@ -159,9 +163,24 @@ function TeamCard({
             }
           : undefined
       }
-      {...tipRest}
     >
-      <header className="flex items-center justify-between gap-2">
+      {/* Primary action — scope the page to this team (local highlight +
+          delegation narrowing). Full-bleed and underneath, so any click that
+          isn't the View link toggles scope. Carries the hover-tip handlers. */}
+      <button
+        type="button"
+        onClick={(e) => {
+          tipOnClick?.(e);
+          onSelect();
+        }}
+        aria-pressed={isSelected}
+        aria-label={`Scope view to ${team.label}`}
+        className="absolute inset-0 z-0 rounded-[14px] outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        {...tipRest}
+      />
+
+      {/* Content — non-interactive so clicks fall through to the scope button. */}
+      <header className="pointer-events-none relative z-0 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <span
             className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md"
@@ -169,33 +188,35 @@ function TeamCard({
           >
             <Icon className="h-3.5 w-3.5" strokeWidth={2} />
           </span>
-          <span className="truncate text-[13px] font-medium text-white">
+          <span className="truncate text-[13px] font-medium text-foreground">
             {team.shortLabel}
           </span>
         </div>
-        <span className="text-[24px] font-semibold tracking-tight text-white tabular-nums leading-none">
+        <span className="text-[24px] font-semibold tracking-tight text-foreground tabular-nums leading-none">
           {workload.total}
         </span>
       </header>
 
-      <StatusMiniBar
-        segments={[
-          { value: open, color: STATUS_COLORS.open, label: "open" },
-          {
-            value: dispatched,
-            color: STATUS_COLORS.dispatched,
-            label: "dispatched",
-          },
-          {
-            value: in_progress,
-            color: STATUS_COLORS.in_progress,
-            label: "in progress",
-          },
-          { value: closed, color: STATUS_COLORS.closed, label: "closed" },
-        ]}
-      />
+      <div className="pointer-events-none relative z-0">
+        <StatusMiniBar
+          segments={[
+            { value: open, color: STATUS_COLORS.open, label: "open" },
+            {
+              value: dispatched,
+              color: STATUS_COLORS.dispatched,
+              label: "dispatched",
+            },
+            {
+              value: in_progress,
+              color: STATUS_COLORS.in_progress,
+              label: "in progress",
+            },
+            { value: closed, color: STATUS_COLORS.closed, label: "closed" },
+          ]}
+        />
+      </div>
 
-      <footer className="flex items-center justify-between gap-2 text-[11px] text-zinc-500">
+      <footer className="pointer-events-none relative z-0 flex items-center justify-between gap-2 text-[11px] text-faint">
         <span className="inline-flex items-center gap-1">
           <Clock className="h-3 w-3" strokeWidth={1.75} />
           oldest {oldestLabel}
@@ -205,7 +226,26 @@ function TeamCard({
           MTTR {workload.mttrHours !== null ? `${workload.mttrHours}h` : "—"}
         </span>
       </footer>
-    </button>
+
+      {/* Drill into the team's own dashboard. Above the scope button (z-10)
+          with its own pointer events, so it intercepts the click. */}
+      <Link
+        href={`/${workload.teamId}/${citySlug}`}
+        aria-label={`View ${team.label} dashboard`}
+        className={cn(
+          "relative z-10 mt-0.5 flex w-full items-center justify-between gap-1 rounded-lg px-2.5 py-1.5",
+          "border border-hairline bg-overlay text-[11px] font-medium text-subtle",
+          "outline-none transition-colors hover:border-hairline-strong hover:bg-overlay-strong hover:text-foreground",
+          "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        )}
+      >
+        <span>View team</span>
+        <ArrowUpRight
+          className="h-3.5 w-3.5 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+          strokeWidth={2}
+        />
+      </Link>
+    </div>
   );
 }
 
@@ -216,17 +256,17 @@ function AddTeamCard({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       className={cn(
         "group relative flex flex-col items-center justify-center gap-3 rounded-[14px] border border-dashed p-4 text-left",
-        "border-white/[0.1] bg-[#1c1c1e] shadow-[0_1px_2px_rgba(0,0,0,0.4)]",
-        "transition-all duration-150 hover:border-white/[0.22] hover:bg-white/[0.03]",
-        "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+        "border-hairline bg-surface shadow-[var(--shadow-card)]",
+        "transition-all duration-150 hover:border-hairline-strong hover:bg-overlay",
+        "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "min-h-[108px]",
       )}
       aria-label="Set up a new team"
     >
-      <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.04] text-zinc-400 transition-colors group-hover:border-white/[0.22] group-hover:text-white">
+      <span className="flex h-8 w-8 items-center justify-center rounded-full border border-hairline-strong bg-overlay text-subtle transition-colors group-hover:border-hairline-strong group-hover:text-foreground">
         <Plus className="h-4 w-4" strokeWidth={2} />
       </span>
-      <span className="text-[12px] font-medium text-zinc-500 transition-colors group-hover:text-zinc-300">
+      <span className="text-[12px] font-medium text-faint transition-colors group-hover:text-subtle">
         Add Team
       </span>
     </button>
@@ -240,7 +280,7 @@ interface StatusMiniBarProps {
 function StatusMiniBar({ segments }: StatusMiniBarProps) {
   const layers = stackedBarLayers(segments);
   if (layers.length === 0) {
-    return <div className="h-1.5 w-full rounded-full bg-white/[0.05]" />;
+    return <div className="h-1.5 w-full rounded-full bg-overlay" />;
   }
   return (
     <div

@@ -18,7 +18,7 @@ export default async function UserLayout({
   const { citySlug } = await getCurrentResident();
 
   return (
-    <div className="flex min-h-dvh flex-col bg-black text-zinc-100">
+    <div className="flex min-h-dvh flex-col bg-background text-foreground">
       <AnonBootstrap />
       <UserNav citySlug={citySlug} />
 

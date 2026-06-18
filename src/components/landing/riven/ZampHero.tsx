@@ -8,7 +8,7 @@ import {
 } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import ZampMapBackdrop from "./ZampMapBackdrop";
+import ZampMapBackdropLazy, { ZampMapFallback } from "./ZampMapBackdropLazy";
 
 // Zamp hero — colossal per-letter "Civic" wordmark anchored bottom-left, with
 // a black glass sign-up card on the right. The full-bleed ZampShader fills the
@@ -52,11 +52,20 @@ export default function ZampHero() {
 
   // Mobile: skip per-letter stagger (the 100vh rise reads as jank on narrow
   // viewports). Plain text renders instantly.
+  //
+  // showMap also gates the heavy live map: it starts false (so the server and
+  // first client render are identical — gradient only, no hydration mismatch)
+  // and is set true ONLY on non-mobile, after first paint. Phones therefore
+  // never mount the lazy wrapper and never download maplibre-gl / deck.gl.
   const [isMobile, setIsMobile] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
     const mq = window.matchMedia("(max-width: 768px)");
-    const update = () => setIsMobile(mq.matches);
+    const update = () => {
+      setIsMobile(mq.matches);
+      setShowMap(!mq.matches);
+    };
     update();
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);
@@ -103,8 +112,11 @@ export default function ZampHero() {
         overflow: "hidden",
       }}
     >
-      {/* Full-bleed live map of Cumming behind the hero content. */}
-      <ZampMapBackdrop />
+      {/* Full-bleed backdrop behind the hero content. The gradient paints
+          immediately (and is the FINAL backdrop on mobile); the live map of
+          Cumming streams in over it on desktop only, after first paint. */}
+      <ZampMapFallback />
+      {showMap && <ZampMapBackdropLazy />}
 
       <div
         className="wl-lp-narrow"

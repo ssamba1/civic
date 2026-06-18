@@ -1,9 +1,50 @@
 @import "tailwindcss";
 
-/* ── Palette: Apple-inspired neutrals + single accent ── */
+/* Class-based dark mode. `dark:` utilities apply when `.dark` is present on
+   <html> (or any ancestor) instead of keying off the OS `prefers-color-scheme`.
+   :where() holds specificity at 0 so normal source order still wins. The whole
+   app themes off this one class, toggled by src/lib/theme.ts. Replaces v3's
+   darkMode:'class'. NOTE: the pre-existing `dark:` utilities in /staff/* (a
+   light-first admin section) now follow this class too — intended. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Semantic palette ──────────────────────────────────────────────────────
+   :root holds the LIGHT theme; `.dark` overrides give the DARK theme. App
+   surfaces use the SEMANTIC utilities registered in `@theme inline` below
+   (bg-surface, text-foreground/subtle/faint, border-hairline[-strong],
+   bg-overlay[-strong], bg-elevated, bg-glass). Because those utilities inline
+   `var(--token)`, ONE set of classes renders correctly in BOTH themes — no
+   per-element `dark:` duplication, and a shared component looks right on every
+   page regardless of that page's own migration state.
+
+   Accent + status colours (primary blue, the category hues) are deliberately
+   identical in both themes, so they are NOT part of the light/dark swap. */
 :root {
+  color-scheme: light;
+  /* page + text */
   --background: #ffffff;
-  --foreground: #1d1d1f;
+  --foreground: #1d1d1f; /* primary text  (was text-white / zinc-100) */
+  --subtle: #52525b; /* secondary text (was zinc-300 / zinc-400) */
+  --faint: #8a8a8f; /* tertiary text  (was zinc-500 / zinc-600) */
+
+  /* surfaces */
+  --surface: #ffffff; /* cards / panels (was #1c1c1e / zinc-900)   */
+  --elevated: #ececef; /* raised chips / avatars (was zinc-800)     */
+  --glass: rgba(255, 255, 255, 0.72); /* sticky header / popover casing */
+
+  /* translucent washes — hover fills + faint raises */
+  --overlay: rgba(0, 0, 0, 0.04); /* was bg-white/[0.02–0.05] */
+  --overlay-strong: rgba(0, 0, 0, 0.07); /* was bg-white/[0.06–0.10] */
+
+  /* hairline borders — very soft in light so card edges barely whisper */
+  --hairline: rgba(0, 0, 0, 0.04); /* was border-white/[0.04–0.10] */
+  --hairline-strong: rgba(0, 0, 0, 0.08); /* was border-white/[0.12+]      */
+
+  /* elevation — flat cards on light (no drop shadow); popovers/modals still
+     float. Deep shadows on dark (see .dark). Used via shadow-[var(--shadow-*)]. */
+  --shadow-card: none;
+  --shadow-pop: 0 12px 32px -8px rgba(0, 0, 0, 0.16),
+    0 4px 12px rgba(0, 0, 0, 0.08);
 
   --color-primary: #0a84ff;
   --color-primary-hover: #0066cc;
@@ -14,8 +55,10 @@
   --color-danger: #ff453a;
 
   --color-muted: #86868b;
-  --color-border: #d2d2d7;
-  --color-surface: #f5f5f7;
+  /* Kept emitted for legacy var(--color-*) refs (login loading, skeleton);
+     pointed at the new sources so they track the theme too. */
+  --color-border: var(--hairline);
+  --color-surface: var(--surface);
 
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -31,9 +74,44 @@
   --fg-cyan-burst: #5ac8fa;
 }
 
+/* DARK theme — overrides only the values that flip. */
+.dark {
+  color-scheme: dark;
+  --background: #000000;
+  --foreground: #f5f5f7;
+  --subtle: #a1a1aa; /* zinc-400 */
+  --faint: #71717a; /* zinc-500 */
+
+  --surface: #1c1c1e;
+  --elevated: #2c2c2e;
+  --glass: rgba(0, 0, 0, 0.55);
+
+  --overlay: rgba(255, 255, 255, 0.04);
+  --overlay-strong: rgba(255, 255, 255, 0.08);
+
+  --hairline: rgba(255, 255, 255, 0.08);
+  --hairline-strong: rgba(255, 255, 255, 0.16);
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-pop: 0 20px 48px -12px rgba(0, 0, 0, 0.75);
+
+  --color-primary-light: rgba(10, 132, 255, 0.18);
+  --color-muted: #86868b;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-subtle: var(--subtle);
+  --color-faint: var(--faint);
+  --color-surface: var(--surface);
+  --color-elevated: var(--elevated);
+  --color-glass: var(--glass);
+  --color-overlay: var(--overlay);
+  --color-overlay-strong: var(--overlay-strong);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-display: var(--font-display);
@@ -45,17 +123,6 @@
   --color-emerald-glow: var(--fg-emerald-glow);
   --color-amber-pulse: var(--fg-amber-pulse);
   --color-cyan-burst: var(--fg-cyan-burst);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #000000;
-    --foreground: #f5f5f7;
-    --color-primary-light: rgba(10, 132, 255, 0.18);
-    --color-border: rgba(255, 255, 255, 0.1);
-    --color-surface: #1d1d1f;
-    --color-muted: #86868b;
-  }
 }
 
 /* ── Accordion (radix) ── */
@@ -214,11 +281,11 @@
 }
 .skeleton {
   border-radius: inherit;
-  background-color: var(--color-surface);
+  background-color: var(--elevated);
   background-image: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.06) 50%,
+    var(--overlay-strong) 50%,
     transparent 100%
   );
   background-size: 200% 100%;
@@ -565,10 +632,10 @@ video::-webkit-media-controls-overlay-play-button {
 
 /* ── Quiet glass surface — replaces the old neon glass-panel ── */
 .glass-panel {
-  background-color: rgba(28, 28, 30, 0.6);
+  background-color: var(--glass);
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--hairline);
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -579,11 +646,11 @@ video::-webkit-media-controls-overlay-play-button {
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--hairline-strong);
   border-radius: 999px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--faint);
 }
 
 /* Maplibre popup — quiet dark skin */

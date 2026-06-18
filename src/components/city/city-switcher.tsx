@@ -83,18 +83,18 @@ export function CitySwitcher({
           "inline-flex min-w-0 max-w-full items-center gap-2 rounded-full border text-[13px] font-medium transition-colors",
           compact ? "h-8 px-3" : "min-h-11 px-3.5",
           open
-            ? "border-[#0a84ff]/40 bg-[#0a84ff]/10 text-white"
-            : "border-white/[0.08] bg-white/[0.02] text-zinc-200 hover:border-white/15 hover:text-white",
+            ? "border-[#0a84ff]/40 bg-[#0a84ff]/10 text-foreground"
+            : "border-hairline bg-overlay text-foreground hover:border-hairline-strong hover:text-foreground",
         )}
       >
         <MapPin className="h-4 w-4 shrink-0 text-[#0a84ff]" aria-hidden />
         <span className="truncate">
           {current.name}
-          <span className="text-zinc-500">, {current.state}</span>
+          <span className="text-faint">, {current.state}</span>
         </span>
         <ChevronDown
           className={cn(
-            "h-3.5 w-3.5 shrink-0 text-zinc-500 transition-transform",
+            "h-3.5 w-3.5 shrink-0 text-faint transition-transform",
             open && "rotate-180",
           )}
         />
@@ -107,27 +107,27 @@ export function CitySwitcher({
           aria-label="Switch municipality"
           className={cn(
             "absolute left-0 top-[calc(100%+8px)] z-50 w-[20rem] origin-top",
-            "rounded-[16px] border border-white/[0.08] bg-[#1c1c1e] p-2",
-            "shadow-[0_20px_48px_-12px_rgba(0,0,0,0.75)] ring-1 ring-black/40",
+            "rounded-[16px] border border-hairline bg-surface p-2",
+            "shadow-[var(--shadow-pop)] ring-1 ring-hairline",
             "animate-[city-pop_120ms_ease-out]",
           )}
         >
           {/* Search */}
-          <div className="mb-2 flex items-center gap-2 rounded-[10px] border border-white/[0.08] bg-black/30 px-2.5">
-            <Search className="h-4 w-4 shrink-0 text-zinc-500" aria-hidden />
+          <div className="mb-2 flex items-center gap-2 rounded-[10px] border border-hairline bg-overlay px-2.5">
+            <Search className="h-4 w-4 shrink-0 text-faint" aria-hidden />
             <input
               ref={inputRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search municipalities"
-              className="min-h-10 w-full bg-transparent text-[14px] text-zinc-100 outline-none placeholder:text-zinc-600"
+              className="min-h-10 w-full bg-transparent text-[14px] text-foreground outline-none placeholder:text-faint"
             />
           </div>
 
           <div className="max-h-[18rem] overflow-y-auto">
             {results.length === 0 ? (
-              <p className="px-2 py-6 text-center text-[13px] text-zinc-500">
+              <p className="px-2 py-6 text-center text-[13px] text-faint">
                 No municipalities match &ldquo;{query}&rdquo;.
               </p>
             ) : (
@@ -143,9 +143,9 @@ export function CitySwitcher({
                     className={cn(
                       "flex w-full items-center gap-2.5 rounded-[10px] px-2 py-2 text-left transition-colors",
                       m.live
-                        ? "hover:bg-white/[0.05]"
+                        ? "hover:bg-overlay"
                         : "cursor-not-allowed opacity-55",
-                      selected && "bg-white/[0.06]",
+                      selected && "bg-overlay-strong",
                     )}
                   >
                     <span
@@ -153,7 +153,7 @@ export function CitySwitcher({
                         "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors",
                         selected
                           ? "border-[#0a84ff] bg-[#0a84ff] text-white"
-                          : "border-white/15 text-transparent",
+                          : "border-hairline-strong text-transparent",
                       )}
                     >
                       <Check className="h-3 w-3" strokeWidth={3} />
@@ -162,12 +162,12 @@ export function CitySwitcher({
                       <span
                         className={cn(
                           "truncate text-[14px] font-medium",
-                          selected ? "text-white" : "text-zinc-200",
+                          selected ? "text-foreground" : "text-subtle",
                         )}
                       >
                         {m.name}, {m.state}
                       </span>
-                      <span className="truncate text-[11px] text-zinc-500">
+                      <span className="truncate text-[11px] text-faint">
                         {m.county}
                       </span>
                     </span>
@@ -177,7 +177,7 @@ export function CitySwitcher({
                         Live
                       </span>
                     ) : (
-                      <span className="rounded-full border border-white/[0.08] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+                      <span className="rounded-full border border-hairline px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-faint">
                         Soon
                       </span>
                     )}

@@ -230,7 +230,7 @@ function HowSection() {
       >
         {/* biome-ignore lint/performance/noImgElement: flattened screenshot ported verbatim from Riven v2/index.jsx */}
         <img
-          src="/landing-shots/editor-overview.png"
+          src="/landing-shots/editor-overview.webp"
           alt="Civic console — left sidebar with report queue, center work order for a Cumming pothole, right AI routing panel with Open311 dispatch"
           loading="lazy"
           width={1600}

@@ -108,12 +108,12 @@ export function ReportsExplorer({
                 "transition-[background-color,transform] duration-100 active:scale-[0.98] active:duration-75 motion-reduce:active:scale-100",
                 "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1c1c1e]",
                 isSelected
-                  ? "bg-white/[0.06]"
-                  : "hover:bg-white/[0.03] active:bg-white/[0.05]",
+                  ? "bg-overlay-strong"
+                  : "hover:bg-overlay active:bg-overlay",
               )}
             >
               <div className="flex items-center justify-between gap-2">
-                <p className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-white leading-tight">
+                <p className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-foreground leading-tight">
                   <span
                     className="h-2 w-2 flex-shrink-0 rounded-full"
                     style={{ backgroundColor: meta.color }}
@@ -130,7 +130,7 @@ export function ReportsExplorer({
                   {STATUS_LABEL[report.status]}
                 </span>
               </div>
-              <div className="flex items-center justify-between gap-3 text-[12px] text-zinc-500 leading-tight">
+              <div className="flex items-center justify-between gap-3 text-[12px] text-faint leading-tight">
                 <span className="truncate">{report.address}</span>
                 <span className="inline-flex items-center gap-1 flex-shrink-0">
                   <Clock className="h-3 w-3" strokeWidth={1.75} />
@@ -158,18 +158,18 @@ export function ReportsExplorer({
           aria-modal="true"
           aria-label="Reports explorer"
           className={cn(
-            "absolute inset-2 sm:inset-4 lg:inset-6 flex flex-col overflow-hidden text-zinc-100",
-            "rounded-2xl border border-white/[0.06] bg-[#1c1c1e]",
-            "shadow-[0_24px_64px_-12px_rgba(0,0,0,0.7)]",
+            "absolute inset-2 sm:inset-4 lg:inset-6 flex flex-col overflow-hidden text-foreground",
+            "rounded-2xl border border-hairline bg-surface",
+            "shadow-[var(--shadow-pop)]",
             "origin-top-right animate-in fade-in zoom-in-95 duration-300 motion-reduce:animate-none",
           )}
         >
-          <header className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-white/[0.06]">
+          <header className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-hairline">
             <div className="flex items-baseline gap-2">
-              <h2 className="text-[16px] sm:text-[17px] font-semibold text-white">
+              <h2 className="text-[16px] sm:text-[17px] font-semibold text-foreground">
                 Reports
               </h2>
-              <span className="text-[13px] text-zinc-500 tabular-nums">
+              <span className="text-[13px] text-faint tabular-nums">
                 {reports.length}
               </span>
             </div>
@@ -177,7 +177,7 @@ export function ReportsExplorer({
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="flex-shrink-0 -m-1.5 inline-flex h-11 w-11 items-center justify-center text-zinc-400 hover:text-white rounded-md transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]"
+              className="flex-shrink-0 -m-1.5 inline-flex h-11 w-11 items-center justify-center text-subtle hover:text-foreground rounded-md transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]"
             >
               <X className="h-5 w-5" strokeWidth={1.75} />
             </button>
@@ -185,7 +185,7 @@ export function ReportsExplorer({
 
           <div className="flex flex-1 min-h-0">
             {/* List — full width on mobile, fixed sidebar on md+ */}
-            <div className="w-full md:w-[340px] lg:w-[380px] flex-shrink-0 md:border-r md:border-white/[0.06] overflow-y-auto custom-scrollbar pb-safe">
+            <div className="w-full md:w-[340px] lg:w-[380px] flex-shrink-0 md:border-r md:border-hairline overflow-y-auto custom-scrollbar pb-safe">
               {reportListContent}
             </div>
 

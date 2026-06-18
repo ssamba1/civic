@@ -61,16 +61,14 @@ function ColoredStat({
 }) {
   return (
     <div>
-      <p className="text-[11px] text-zinc-500 uppercase tracking-wider">
-        {label}
-      </p>
+      <p className="text-[11px] text-faint uppercase tracking-wider">{label}</p>
       <p
         className="text-[22px] font-semibold tracking-tight tabular-nums mt-1 leading-none"
         style={{ color: valueColor ?? "#ffffff" }}
       >
         {value}
       </p>
-      {hint && <p className="text-[12px] text-zinc-500 mt-1.5">{hint}</p>}
+      {hint && <p className="text-[12px] text-faint mt-1.5">{hint}</p>}
     </div>
   );
 }
@@ -128,8 +126,8 @@ function renderEventBody(event: TimelineEvent) {
     case "created":
       return (
         <span>
-          <span className="font-medium text-white">Created</span>{" "}
-          <span className="text-zinc-400">
+          <span className="font-medium text-foreground">Created</span>{" "}
+          <span className="text-subtle">
             — Auto-routed to <TeamChip teamId={event.defaultTeam} />
           </span>
         </span>
@@ -137,8 +135,8 @@ function renderEventBody(event: TimelineEvent) {
     case "dispatched":
       return (
         <span>
-          <span className="font-medium text-white">Dispatched</span>{" "}
-          <span className="text-zinc-400">
+          <span className="font-medium text-foreground">Dispatched</span>{" "}
+          <span className="text-subtle">
             to <TeamChip teamId={event.team} />
           </span>
         </span>
@@ -146,22 +144,22 @@ function renderEventBody(event: TimelineEvent) {
     case "reassigned":
       return (
         <span>
-          <span className="font-medium text-white">Reassigned</span>{" "}
-          <span className="text-zinc-400 inline-flex items-center gap-1">
+          <span className="font-medium text-foreground">Reassigned</span>{" "}
+          <span className="text-subtle inline-flex items-center gap-1">
             <TeamChip teamId={event.from} />
-            <span className="text-zinc-500">{"→"}</span>
+            <span className="text-faint">{"→"}</span>
             <TeamChip teamId={event.to} />
           </span>
         </span>
       );
     case "in_progress":
-      return <span className="font-medium text-white">In progress</span>;
+      return <span className="font-medium text-foreground">In progress</span>;
     case "resolved":
-      return <span className="font-medium text-white">Resolved</span>;
+      return <span className="font-medium text-foreground">Resolved</span>;
     case "merged":
-      return <span className="font-medium text-white">Merged</span>;
+      return <span className="font-medium text-foreground">Merged</span>;
     case "rejected":
-      return <span className="font-medium text-white">Rejected</span>;
+      return <span className="font-medium text-foreground">Rejected</span>;
   }
 }
 
@@ -258,7 +256,7 @@ function DelegationRowExpandedInner({
   const dutyFirstSentence = effectiveMeta.duties.split(".")[0];
 
   return (
-    <div className="px-4 pb-4 pt-3 bg-white/[0.015] border-t border-white/[0.04]">
+    <div className="px-4 pb-4 pt-3 bg-overlay border-t border-hairline">
       {/* Section A: photo + reasoning */}
       {/* Mobile: photo full-width then reasoning below. sm+: side-by-side */}
       <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-4">
@@ -269,11 +267,11 @@ function DelegationRowExpandedInner({
             alt={report.address}
             loading="lazy"
             decoding="async"
-            className="h-[180px] w-full rounded-lg object-cover border border-white/[0.06] sm:h-[120px] sm:w-[160px]"
+            className="h-[180px] w-full rounded-lg object-cover border border-hairline sm:h-[120px] sm:w-[160px]"
           />
         ) : (
-          <div className="h-[100px] w-full rounded-lg border border-white/[0.06] bg-white/[0.02] flex items-center justify-center sm:h-[120px] sm:w-[160px]">
-            <ImageOff className="h-5 w-5 text-zinc-600" />
+          <div className="h-[100px] w-full rounded-lg border border-hairline bg-overlay flex items-center justify-center sm:h-[120px] sm:w-[160px]">
+            <ImageOff className="h-5 w-5 text-faint" />
           </div>
         )}
 
@@ -294,20 +292,21 @@ function DelegationRowExpandedInner({
           )}
 
           {!loading && !error && data && (
-            <p className="text-[12px] font-medium text-white">
+            <p className="text-[12px] font-medium text-foreground">
               {data.reasoning}
             </p>
           )}
 
-          <p className="text-[12px] text-zinc-400">
-            Routed to <span className="text-white">{effectiveMeta.label}</span>{" "}
-            — {dutyFirstSentence}.
+          <p className="text-[12px] text-subtle">
+            Routed to{" "}
+            <span className="text-foreground">{effectiveMeta.label}</span> —{" "}
+            {dutyFirstSentence}.
           </p>
 
           {!loading && !error && data?.scoringExplanation[0] && (
-            <p className="text-[11px] text-zinc-500">
+            <p className="text-[11px] text-faint">
               {data.scoringExplanation[0].title}:{" "}
-              <span className="text-zinc-400">
+              <span className="text-subtle">
                 {data.scoringExplanation[0].value}
               </span>
             </p>
@@ -344,10 +343,10 @@ function DelegationRowExpandedInner({
 
       {/* Section C: history timeline */}
       <div className="mt-4">
-        <p className="text-[11px] uppercase tracking-wider text-zinc-500 mb-2">
+        <p className="text-[11px] uppercase tracking-wider text-faint mb-2">
           History
         </p>
-        <ol className="flex flex-col gap-2 pl-3 border-l border-white/[0.06]">
+        <ol className="flex flex-col gap-2 pl-3 border-l border-hairline">
           {events.map((event, idx) => (
             <li
               // biome-ignore lint/suspicious/noArrayIndexKey: derived append-only timeline from buildTimeline that never reorders; TimelineEvent has no stable id, idx only disambiguates same kind+ts
@@ -358,11 +357,11 @@ function DelegationRowExpandedInner({
                 className="absolute -left-[7px] top-1.5 h-2 w-2 rounded-full"
                 style={{ background: EVENT_DOT_COLOR[event.kind] }}
               />
-              <span className="text-zinc-400 mt-0.5">
+              <span className="text-subtle mt-0.5">
                 <EventIcon kind={event.kind} />
               </span>
-              <span className="text-zinc-300">{renderEventBody(event)}</span>
-              <span className="ml-auto text-zinc-500 text-[11px]">
+              <span className="text-subtle">{renderEventBody(event)}</span>
+              <span className="ml-auto text-faint text-[11px]">
                 {formatEventTimestamp(event.ts)}
               </span>
             </li>

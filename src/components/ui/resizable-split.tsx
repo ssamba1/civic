@@ -124,8 +124,8 @@ export function ResizableSplit({
       >
         <span
           className={cn(
-            "h-10 w-[3px] rounded-full bg-white/[0.14] transition-colors",
-            "group-hover:bg-white/30 group-focus-visible:bg-[#0a84ff]/80",
+            "h-10 w-[3px] rounded-full bg-overlay-strong transition-colors",
+            "group-hover:bg-overlay-strong group-focus-visible:bg-[#0a84ff]/80",
             dragging && "bg-[#0a84ff]",
           )}
         />

@@ -11,6 +11,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useState } from "react";
 import { EnvSwitch } from "@/components/env-switch";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { useDemoReports } from "@/lib/demo-reports";
 import { useSlidingPill } from "@/lib/hooks/use-sliding-pill";
@@ -123,7 +124,7 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
     );
     return (
       <nav
-        className="relative flex items-center rounded-[10px] border border-white/[0.06] bg-white/[0.03] p-0.5 w-full"
+        className="relative flex items-center rounded-[10px] border border-hairline bg-overlay p-0.5 w-full"
         aria-label="City views"
         style={
           {
@@ -136,7 +137,7 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
             p-0.5 (2px) inset on each side, so the track is the nav inner box. */}
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute left-0.5 top-0.5 bottom-0.5 z-0 rounded-[8px] bg-white/[0.09] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] transition-transform duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
+          className="pointer-events-none absolute left-0.5 top-0.5 bottom-0.5 z-0 rounded-[8px] bg-overlay-strong shadow-[inset_0_0_0_1px_var(--hairline)] transition-transform duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
           style={{
             width: "calc((100% - 0.25rem) / var(--tab-count))",
             transform: "translateX(calc(var(--tab-index) * 100%))",
@@ -152,7 +153,7 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
               "group relative z-10 flex flex-1 flex-col items-center justify-center gap-1 min-h-11 rounded-[8px] px-1 py-2",
               "transition-colors duration-150 outline-none",
               "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
-              active ? "text-white" : "text-zinc-400 hover:text-zinc-100",
+              active ? "text-foreground" : "text-subtle hover:text-foreground",
             ].join(" ")}
           >
             <Icon
@@ -160,7 +161,7 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
                 "h-4 w-4 shrink-0 transition-colors duration-150",
                 active
                   ? "text-[#0a84ff]"
-                  : "text-zinc-500 group-hover:text-zinc-300",
+                  : "text-faint group-hover:text-subtle",
               ].join(" ")}
               strokeWidth={2}
               aria-hidden="true"
@@ -180,6 +181,7 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
     return (
       <div className="flex items-center gap-2">
         <EnvSwitch />
+        <ThemeToggle />
         <Link
           href="/report"
           aria-label="Report"
@@ -189,7 +191,7 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
             "inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-[#0a84ff] px-3 text-[13px] font-medium text-white",
             "transition-colors duration-150 outline-none",
             "hover:bg-[#0070e0]",
-            "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+            "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           ].join(" ")}
         >
           <Camera
@@ -211,6 +213,8 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
     >
       {/* Demo ⇄ Testing deployment switch — leftmost action */}
       <EnvSwitch />
+      {/* Light ⇄ dark theme toggle */}
+      <ThemeToggle />
       {/* Demo Refresh — left of the Teams tab. Demo deployments only: the
           injected tree report is sample data, not for the live site. */}
       {DEMO_MODE && <NavRefreshButton />}
@@ -218,12 +222,12 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
       {/* Segmented control track */}
       <div
         ref={trackRef}
-        className="relative flex min-w-0 items-center gap-0.5 rounded-[10px] border border-white/[0.06] bg-white/[0.03] p-0.5"
+        className="relative flex min-w-0 items-center gap-0.5 rounded-[10px] border border-hairline bg-overlay p-0.5"
       >
         {/* Sliding active pill — measured to the active tab, eases between them. */}
         <span
           aria-hidden="true"
-          className="pill-slide pointer-events-none absolute top-0.5 bottom-0.5 left-0 z-0 rounded-md bg-white/[0.09] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+          className="pill-slide pointer-events-none absolute top-0.5 bottom-0.5 left-0 z-0 rounded-md bg-overlay-strong shadow-[inset_0_0_0_1px_var(--hairline)]"
           style={{
             width: pill.width,
             transform: `translateX(${pill.left}px)`,
@@ -243,8 +247,8 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
               "transition-colors duration-150 outline-none",
               "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
               active
-                ? "text-white"
-                : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-100",
+                ? "text-foreground"
+                : "text-subtle hover:bg-overlay hover:text-foreground",
             ].join(" ")}
           >
             <Icon
@@ -252,7 +256,7 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
                 "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
                 active
                   ? "text-[#0a84ff]"
-                  : "text-zinc-500 group-hover:text-zinc-300",
+                  : "text-faint group-hover:text-subtle",
               ].join(" ")}
               strokeWidth={2}
               aria-hidden="true"
@@ -270,7 +274,7 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
           "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] bg-[#0a84ff] px-2.5 sm:px-3 text-[13px] font-medium text-white",
           "transition-colors duration-150 outline-none",
           "hover:bg-[#0070e0]",
-          "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+          "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         ].join(" ")}
       >
         <Camera

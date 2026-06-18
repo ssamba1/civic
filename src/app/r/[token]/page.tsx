@@ -26,7 +26,7 @@ export async function generateMetadata({
 const STATUS_TONE: Record<PublicStatus, string> = {
   in_progress: "text-[#5ac8fa] bg-[#5ac8fa]/10 ring-[#5ac8fa]/30",
   resolved: "text-[#30d158] bg-[#30d158]/10 ring-[#30d158]/30",
-  closed: "text-zinc-300 bg-white/[0.06] ring-white/10",
+  closed: "text-subtle bg-overlay-strong ring-hairline-strong",
 };
 
 function fmtDate(iso: string): string {
@@ -45,7 +45,7 @@ export default async function PublicReportPage({ params }: PageProps) {
   const isResolved = report.publicStatus === "resolved";
 
   return (
-    <main className="min-h-dvh bg-black text-zinc-100">
+    <main className="min-h-dvh bg-background text-foreground">
       <div className="mx-auto w-full max-w-2xl px-4 py-12 sm:px-6">
         {/* Brand */}
         <div className="mb-8 flex items-center gap-2">
@@ -53,7 +53,7 @@ export default async function PublicReportPage({ params }: PageProps) {
             className="h-2 w-2 rounded-full bg-[#0a84ff] shadow-[0_0_8px_rgba(10,132,255,0.6)]"
             aria-hidden="true"
           />
-          <span className="text-[15px] font-semibold tracking-tight text-white">
+          <span className="text-[15px] font-semibold tracking-tight text-foreground">
             Civic
           </span>
         </div>
@@ -61,7 +61,7 @@ export default async function PublicReportPage({ params }: PageProps) {
         {/* Header */}
         <section className="mb-6">
           <div className="flex items-start justify-between gap-3">
-            <h1 className="flex min-w-0 items-center gap-2.5 text-[28px] sm:text-[34px] font-semibold tracking-tight text-white leading-[1.1]">
+            <h1 className="flex min-w-0 items-center gap-2.5 text-[28px] sm:text-[34px] font-semibold tracking-tight text-foreground leading-[1.1]">
               <span
                 className="h-3 w-3 flex-shrink-0 rounded-full"
                 style={{ backgroundColor: report.categoryColor }}
@@ -75,16 +75,16 @@ export default async function PublicReportPage({ params }: PageProps) {
               {report.statusLabel}
             </span>
           </div>
-          <p className="mt-2 text-[13px] text-zinc-400">
+          <p className="mt-2 text-[13px] text-subtle">
             {report.address} · Reported {fmtDate(report.filedAt)}
           </p>
         </section>
 
         {/* Photo(s) */}
-        <div className="mb-6 overflow-hidden rounded-xl border border-white/[0.06] bg-[#1c1c1e]">
+        <div className="mb-6 overflow-hidden rounded-xl border border-hairline bg-surface">
           {isResolved && report.resolutionPhotoUrl ? (
             <div className="grid grid-cols-1 sm:grid-cols-2">
-              <figure className="relative border-b border-white/[0.06] sm:border-b-0 sm:border-r">
+              <figure className="relative border-b border-hairline sm:border-b-0 sm:border-r">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 {/* biome-ignore lint/performance/noImgElement: dynamic external resident-uploaded photo URL, not optimizable by next/image */}
                 <img
@@ -123,18 +123,18 @@ export default async function PublicReportPage({ params }: PageProps) {
         {/* Resolved confirmation */}
         {isResolved && (
           <section className="rounded-[14px] border border-[#30d158]/25 bg-[#30d158]/[0.06] p-5">
-            <h2 className="text-[15px] font-semibold tracking-tight text-white">
+            <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
               Resolved
               {report.resolvedAt ? ` · ${fmtDate(report.resolvedAt)}` : ""}
             </h2>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-300">
+            <p className="mt-1.5 text-[13px] leading-relaxed text-subtle">
               This issue has been fixed. Thanks for reporting it — reports like
               this keep the city running.
             </p>
           </section>
         )}
 
-        <p className="mt-8 text-[12px] text-zinc-500">
+        <p className="mt-8 text-[12px] text-faint">
           This is a public status page. No account needed — bookmark this link
           to check back anytime.
         </p>

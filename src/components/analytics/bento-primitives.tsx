@@ -139,8 +139,8 @@ export function Tile({
       {...(tilt ? { "data-tilt-id": tiltHover["data-tilt-id"] } : {})}
       data-bento-reveal
       className={cn(
-        "flex flex-col rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] p-4 sm:p-5 text-zinc-100",
-        "shadow-[0_1px_2px_rgba(0,0,0,0.4)]",
+        "flex flex-col rounded-[14px] border border-hairline bg-surface p-4 sm:p-5 text-foreground",
+        "shadow-[var(--shadow-card)]",
         className,
       )}
     >
@@ -148,12 +148,12 @@ export function Tile({
         <header className="flex items-center justify-between gap-3 mb-3 sm:mb-4 min-h-[20px]">
           <div className="flex items-baseline gap-2 sm:gap-3 min-w-0">
             {title && (
-              <h2 className="text-[14px] sm:text-[15px] font-semibold text-white truncate">
+              <h2 className="text-[14px] sm:text-[15px] font-semibold text-foreground truncate">
                 {title}
               </h2>
             )}
             {subtitle && (
-              <span className="text-[11px] sm:text-[12px] text-zinc-400 truncate">
+              <span className="text-[11px] sm:text-[12px] text-subtle truncate">
                 {subtitle}
               </span>
             )}
@@ -164,7 +164,7 @@ export function Tile({
               type="button"
               onClick={onExpand}
               aria-label="Expand chart"
-              className="flex-shrink-0 -m-2 inline-flex h-11 w-11 items-center justify-center text-zinc-500 hover:text-white rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-[#0a84ff]"
+              className="flex-shrink-0 -m-2 inline-flex h-11 w-11 items-center justify-center text-faint hover:text-foreground rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-[#0a84ff]"
             >
               <Maximize2 className="h-3.5 w-3.5" strokeWidth={2} />
             </button>
@@ -259,21 +259,21 @@ export function ExpandModal({
         data-state={closing ? "closed" : "open"}
         className={cn(
           /* Mobile: full-width bottom sheet, max 90dvh */
-          "relative w-full sm:max-w-[min(92vw,1400px)] flex flex-col text-zinc-100 overflow-hidden",
+          "relative w-full sm:max-w-[min(92vw,1400px)] flex flex-col text-foreground overflow-hidden",
           "max-h-[90dvh] sm:max-h-[92vh]",
-          "rounded-t-[18px] sm:rounded-[18px] border border-white/[0.06] bg-[#1c1c1e]",
-          "shadow-[0_24px_64px_-12px_rgba(0,0,0,0.7)]",
+          "rounded-t-[18px] sm:rounded-[18px] border border-hairline bg-surface",
+          "shadow-[var(--shadow-pop)]",
           "animate-in zoom-in-95 slide-in-from-bottom-2 sm:slide-in-from-bottom-0 duration-200",
           "data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=closed]:fade-out data-[state=closed]:slide-out-to-bottom-2 sm:data-[state=closed]:slide-out-to-bottom-0 data-[state=closed]:duration-150",
         )}
       >
-        <header className="flex items-center justify-between gap-3 px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 border-b border-white/[0.06]">
+        <header className="flex items-center justify-between gap-3 px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 border-b border-hairline">
           <div className="flex items-baseline gap-2 sm:gap-3 min-w-0 flex-wrap">
-            <h2 className="text-[18px] sm:text-[22px] font-semibold text-white tracking-tight">
+            <h2 className="text-[18px] sm:text-[22px] font-semibold text-foreground tracking-tight">
               {title}
             </h2>
             {subtitle && (
-              <span className="text-[12px] sm:text-[13px] text-zinc-400">
+              <span className="text-[12px] sm:text-[13px] text-subtle">
                 {subtitle}
               </span>
             )}
@@ -282,7 +282,7 @@ export function ExpandModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex-shrink-0 -m-1.5 inline-flex h-11 w-11 items-center justify-center text-zinc-400 hover:text-white rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-[#0a84ff]"
+            className="flex-shrink-0 -m-1.5 inline-flex h-11 w-11 items-center justify-center text-subtle hover:text-foreground rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-[#0a84ff]"
           >
             <X className="h-5 w-5" strokeWidth={1.75} />
           </button>
@@ -292,8 +292,8 @@ export function ExpandModal({
           <div className="grid lg:grid-cols-[minmax(0,1fr)_280px] gap-4 sm:gap-6 p-4 sm:p-6">
             <div className="min-w-0">{chart}</div>
             {controls && (
-              <aside className="flex flex-col gap-4 lg:border-l lg:border-white/[0.06] lg:pl-6">
-                <p className="text-[11px] uppercase tracking-wider text-zinc-500">
+              <aside className="flex flex-col gap-4 lg:border-l lg:border-hairline lg:pl-6">
+                <p className="text-[11px] uppercase tracking-wider text-faint">
                   Controls
                 </p>
                 {controls}
@@ -301,8 +301,8 @@ export function ExpandModal({
             )}
           </div>
           {info && (
-            <div className="border-t border-white/[0.06] px-4 sm:px-6 py-4 sm:py-5">
-              <p className="text-[11px] uppercase tracking-wider text-zinc-500 mb-3">
+            <div className="border-t border-hairline px-4 sm:px-6 py-4 sm:py-5">
+              <p className="text-[11px] uppercase tracking-wider text-faint mb-3">
                 About this chart
               </p>
               {info}
@@ -332,8 +332,8 @@ export function PillGroup<T extends string | number>({
 }) {
   return (
     <div>
-      {label && <p className="text-[12px] text-zinc-400 mb-1.5">{label}</p>}
-      <div className="inline-flex rounded-lg bg-white/[0.04] p-0.5">
+      {label && <p className="text-[12px] text-subtle mb-1.5">{label}</p>}
+      <div className="inline-flex rounded-lg bg-overlay p-0.5">
         {options.map((opt) => (
           <button
             key={String(opt.value)}
@@ -343,8 +343,8 @@ export function PillGroup<T extends string | number>({
               /* min 44px tap target on mobile */
               "min-h-[44px] sm:min-h-0 px-3 sm:px-2.5 py-1.5 sm:py-1 text-[13px] sm:text-[12px] rounded-md transition-colors",
               value === opt.value
-                ? "bg-white/[0.1] text-white"
-                : "text-zinc-400 hover:text-zinc-200",
+                ? "bg-overlay-strong text-foreground"
+                : "text-subtle hover:text-foreground",
             )}
           >
             {opt.label}
@@ -370,7 +370,7 @@ export function Toggle({
     <button
       type="button"
       onClick={() => onChange(!value)}
-      className="flex min-h-[44px] sm:min-h-0 items-center justify-between gap-3 text-[13px] text-zinc-300 hover:text-white transition-colors w-full"
+      className="flex min-h-[44px] sm:min-h-0 items-center justify-between gap-3 text-[13px] text-subtle hover:text-foreground transition-colors w-full"
     >
       <span className="inline-flex items-center gap-2">
         {dotColor && (
@@ -384,7 +384,7 @@ export function Toggle({
       <span
         className={cn(
           "h-4 w-7 rounded-full transition-colors flex items-center px-0.5",
-          value ? "bg-[#0a84ff]" : "bg-white/[0.1]",
+          value ? "bg-[#0a84ff]" : "bg-overlay-strong",
         )}
       >
         <span
@@ -410,13 +410,11 @@ export function Stat({
 }) {
   return (
     <div>
-      <p className="text-[11px] text-zinc-500 uppercase tracking-wider">
-        {label}
-      </p>
-      <p className="text-[22px] font-semibold tracking-tight text-white tabular-nums mt-1 leading-none">
+      <p className="text-[11px] text-faint uppercase tracking-wider">{label}</p>
+      <p className="text-[22px] font-semibold tracking-tight text-foreground tabular-nums mt-1 leading-none">
         {value}
       </p>
-      {hint && <p className="text-[12px] text-zinc-500 mt-1.5">{hint}</p>}
+      {hint && <p className="text-[12px] text-faint mt-1.5">{hint}</p>}
     </div>
   );
 }
@@ -429,7 +427,7 @@ export function StatGrid({ children }: { children: React.ReactNode }) {
 
 export function Prose({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[13px] leading-relaxed text-zinc-400 max-w-prose">
+    <p className="text-[13px] leading-relaxed text-subtle max-w-prose">
       {children}
     </p>
   );
@@ -442,7 +440,7 @@ export function EmptyState({
 }) {
   return (
     <div className="flex h-full min-h-[120px] flex-1 items-center justify-center">
-      <p className="text-[13px] text-zinc-500">{message}</p>
+      <p className="text-[13px] text-faint">{message}</p>
     </div>
   );
 }

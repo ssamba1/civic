@@ -8,8 +8,8 @@ function Panel({ className = "" }: { className?: string }) {
   return (
     <div
       className={
-        "rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] " +
-        "shadow-[0_1px_2px_rgba(0,0,0,0.4)] animate-pulse motion-reduce:animate-none " +
+        "rounded-[14px] border border-hairline bg-surface " +
+        "shadow-[var(--shadow-card)] animate-pulse motion-reduce:animate-none " +
         className
       }
     />
@@ -18,14 +18,14 @@ function Panel({ className = "" }: { className?: string }) {
 
 export default function Loading() {
   return (
-    <div className="relative flex flex-col min-h-dvh bg-black">
+    <div className="relative flex flex-col min-h-dvh bg-background">
       <div className="relative flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-10 sm:px-6 lg:px-8">
         {/* Hero — static text, no shimmer (matches real page header weight) */}
         <section className="mb-6">
-          <h1 className="text-[28px] sm:text-[34px] lg:text-[40px] font-semibold tracking-tight text-white leading-[1.1]">
+          <h1 className="text-[28px] sm:text-[34px] lg:text-[40px] font-semibold tracking-tight text-foreground leading-[1.1]">
             Analytics
           </h1>
-          <p className="mt-1.5 text-sm text-zinc-400">
+          <p className="mt-1.5 text-sm text-subtle">
             Operational signal — what&apos;s shipping, what&apos;s stuck, where
             it&apos;s happening.
           </p>
@@ -36,15 +36,15 @@ export default function Loading() {
           <Panel className="h-12" />
 
           {/* KPI row — single panel, 4 cells on lg */}
-          <div className="rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
+          <div className="rounded-[14px] border border-hairline bg-surface overflow-hidden shadow-[var(--shadow-card)]">
             <div className="grid grid-cols-2 lg:grid-cols-4">
               {["k1", "k2", "k3", "k4"].map((k) => (
                 <div
                   key={k}
-                  className="px-4 sm:px-5 py-4 sm:py-5 min-h-[80px] border-b border-white/[0.06] lg:border-b-0 [&:not(:last-child)]:border-r"
+                  className="px-4 sm:px-5 py-4 sm:py-5 min-h-[80px] border-b border-hairline lg:border-b-0 [&:not(:last-child)]:border-r"
                 >
-                  <div className="h-3 w-24 rounded bg-white/[0.06] animate-pulse motion-reduce:animate-none" />
-                  <div className="mt-3 h-7 w-20 rounded bg-white/[0.05] animate-pulse motion-reduce:animate-none" />
+                  <div className="h-3 w-24 rounded bg-overlay-strong animate-pulse motion-reduce:animate-none" />
+                  <div className="mt-3 h-7 w-20 rounded bg-overlay animate-pulse motion-reduce:animate-none" />
                 </div>
               ))}
             </div>

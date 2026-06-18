@@ -55,7 +55,7 @@ export function MyReportsInteractive({
           On mobile the stats stack 2×2 naturally via StatGrid; padding
           tightened slightly so the card breathes without eating too much
           vertical real-estate on small screens. */}
-      <div className="rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] p-4 shadow-[0_1px_2px_rgba(0,0,0,0.4)] sm:p-5">
+      <div className="rounded-[14px] border border-hairline bg-surface p-4 shadow-[var(--shadow-card)] sm:p-5">
         <StatGrid>
           <Stat
             label="Total filed"
@@ -115,7 +115,7 @@ export function MyReportsInteractive({
           (notably the jump to/from the empty Resolved view). */}
       <div key={filter} className="animate-in fade-in duration-300">
         {visible.length === 0 ? (
-          <div className="rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
+          <div className="rounded-[14px] border border-hairline bg-surface p-5 shadow-[var(--shadow-card)]">
             <EmptyState
               message={
                 reports.length === 0

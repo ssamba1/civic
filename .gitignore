@@ -57,3 +57,6 @@ certificates
 graphify-out/
 .graphify_python
 .graphify_uncached.txt
+# local QA screenshot artifacts + stray captures (kept out of the public repo)
+scripts/shots/
+/IMG_4622.jpg

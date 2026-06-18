@@ -1,4 +1,12 @@
-import { ArrowLeft, CheckCircle2, Clock, DollarSign, HardHat, Link2, MapPin } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  HardHat,
+  Link2,
+  MapPin,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -36,7 +44,7 @@ const STATUS_TONE: Record<ReportStatus, string> = {
   dispatched: "text-[#0a84ff] bg-[#0a84ff]/10",
   in_progress: "text-[#5ac8fa] bg-[#5ac8fa]/10",
   closed: "text-[#30d158] bg-[#30d158]/10",
-  merged: "text-zinc-400 bg-white/[0.06]",
+  merged: "text-subtle bg-overlay-strong",
   rejected: "text-[#ff453a] bg-[#ff453a]/10",
 };
 
@@ -93,7 +101,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
     <div className="mx-auto w-full max-w-3xl px-4 pt-24 pb-[calc(5.5rem_+_env(safe-area-inset-bottom))] sm:px-6 md:pb-10">
       <Link
         href="/user/my-reports"
-        className="mb-5 inline-flex h-9 items-center gap-1.5 rounded-full px-2 -ml-2 text-[13px] font-medium text-zinc-400 outline-none transition-colors hover:text-white focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
+        className="mb-5 inline-flex h-9 items-center gap-1.5 rounded-full px-2 -ml-2 text-[13px] font-medium text-subtle outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
       >
         <ArrowLeft className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         All reports
@@ -102,7 +110,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
       {/* Hero — category + status + location */}
       <section className="mb-6">
         <div className="flex items-start justify-between gap-3">
-          <h1 className="flex min-w-0 items-center gap-2.5 text-[28px] sm:text-[34px] font-semibold tracking-tight text-white leading-[1.1]">
+          <h1 className="flex min-w-0 items-center gap-2.5 text-[28px] sm:text-[34px] font-semibold tracking-tight text-foreground leading-[1.1]">
             <span
               className="h-3 w-3 flex-shrink-0 rounded-full"
               style={{ backgroundColor: meta.color }}
@@ -120,7 +128,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
           href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="group mt-2.5 inline-flex items-center gap-1.5 text-[13px] text-zinc-400 transition-colors hover:text-white"
+          className="group mt-2.5 inline-flex items-center gap-1.5 text-[13px] text-subtle transition-colors hover:text-foreground"
           title="Open in Google Maps"
         >
           <MapPin
@@ -137,10 +145,10 @@ export default async function ReportDetailPage({ params }: PageProps) {
       {/* Photo(s) — show before/after when a resolution photo exists, else the
           single report photo. The resolution photo is the operational-
           transparency payoff: residents see the work that was done. */}
-      <div className="mb-7 overflow-hidden rounded-xl border border-white/[0.06] bg-[#1c1c1e]">
+      <div className="mb-7 overflow-hidden rounded-xl border border-hairline bg-surface">
         {isResolved && report.afterPhoto ? (
           <div className="grid grid-cols-1 sm:grid-cols-2">
-            <figure className="relative border-b border-white/[0.06] sm:border-b-0 sm:border-r">
+            <figure className="relative border-b border-hairline sm:border-b-0 sm:border-r">
               <ReportPhoto
                 src={report.photo_public_url}
                 alt={`${meta.label} — reported`}
@@ -178,10 +186,10 @@ export default async function ReportDetailPage({ params }: PageProps) {
               aria-hidden="true"
             />
             <div className="min-w-0 flex-1">
-              <h2 className="text-[15px] font-semibold tracking-tight text-white">
+              <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
                 Work in progress
               </h2>
-              <p className="mt-0.5 text-[13px] text-zinc-400">
+              <p className="mt-0.5 text-[13px] text-subtle">
                 A crew is actively working on this issue.
               </p>
               {(report.fix_cost_estimate != null ||
@@ -224,7 +232,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
                 </div>
               )}
               {report.fix_note && (
-                <p className="mt-3 text-[13px] leading-relaxed text-zinc-300">
+                <p className="mt-3 text-[13px] leading-relaxed text-subtle">
                   {report.fix_note}
                 </p>
               )}
@@ -245,25 +253,25 @@ export default async function ReportDetailPage({ params }: PageProps) {
               aria-hidden="true"
             />
             <div className="min-w-0">
-              <h2 className="text-[15px] font-semibold tracking-tight text-white">
+              <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
                 Resolved{completedLabel ? ` · ${completedLabel}` : ""}
               </h2>
               {resolutionNote && (
-                <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-300">
+                <p className="mt-1.5 text-[13px] leading-relaxed text-subtle">
                   {resolutionNote}
                 </p>
               )}
             </div>
           </div>
-          <div className="mt-4 border-t border-white/[0.06] pt-4">
+          <div className="mt-4 border-t border-hairline pt-4">
             <ReportCsat reportId={report.id} />
           </div>
         </section>
       )}
 
       {/* Timeline */}
-      <section className="rounded-[14px] border border-white/[0.06] bg-[#1c1c1e] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
-        <h2 className="mb-5 text-[15px] font-semibold tracking-tight text-white">
+      <section className="rounded-[14px] border border-hairline bg-surface p-5 shadow-[var(--shadow-card)]">
+        <h2 className="mb-5 text-[15px] font-semibold tracking-tight text-foreground">
           Progress
         </h2>
         <ReportTimeline steps={steps} />
@@ -274,7 +282,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
           in. Opens the /r/[token] page. */}
       <Link
         href={`/r/${publicToken(report.id)}`}
-        className="mt-6 inline-flex h-10 items-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.03] px-4 text-[13px] font-medium text-zinc-300 outline-none transition-colors hover:border-white/20 hover:text-white focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
+        className="mt-6 inline-flex h-10 items-center gap-2 rounded-full border border-hairline bg-overlay px-4 text-[13px] font-medium text-subtle outline-none transition-colors hover:border-hairline-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
       >
         <Link2 className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         Public status link

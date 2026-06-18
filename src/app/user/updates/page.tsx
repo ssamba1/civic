@@ -22,17 +22,17 @@ export default async function UpdatesPage() {
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pt-24 pb-[calc(5.5rem_+_env(safe-area-inset-bottom))] sm:px-6 md:pb-10">
       <section className="mb-6">
-        <p className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.08em] text-zinc-500">
+        <p className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.08em] text-faint">
           <span
             className="h-1.5 w-1.5 rounded-full bg-[#0a84ff] shadow-[0_0_6px_rgba(10,132,255,0.6)]"
             aria-hidden="true"
           />
           {CITY_NAME}
         </p>
-        <h1 className="mt-2 text-[34px] sm:text-[40px] font-semibold tracking-tight text-white leading-[1.1]">
+        <h1 className="mt-2 text-[34px] sm:text-[40px] font-semibold tracking-tight text-foreground leading-[1.1]">
           Updates
         </h1>
-        <p className="mt-3 text-sm text-zinc-400">
+        <p className="mt-3 text-sm text-subtle">
           Progress on your reports and what&apos;s happening across the city.
         </p>
       </section>

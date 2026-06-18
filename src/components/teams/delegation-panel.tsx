@@ -67,7 +67,7 @@ const STATUS_TONE: Record<ReportStatus, string> = {
   dispatched: "text-[#0a84ff] bg-[#0a84ff]/10",
   in_progress: "text-[#5ac8fa] bg-[#5ac8fa]/10",
   closed: "text-[#30d158] bg-[#30d158]/10",
-  merged: "text-zinc-400 bg-white/[0.06]",
+  merged: "text-subtle bg-overlay-strong",
   rejected: "text-[#ff453a] bg-[#ff453a]/10",
 };
 
@@ -158,12 +158,12 @@ function DelegationPanelInner({
       }
     >
       {sliced.length === 0 ? (
-        <p className="text-[13px] text-zinc-500">
+        <p className="text-[13px] text-faint">
           No reports match the current filters.
         </p>
       ) : (
         <>
-          <ul className="flex flex-col divide-y divide-white/[0.04]">
+          <ul className="flex flex-col divide-y divide-hairline">
             {headRows.map((r) => (
               <DelegationRow
                 key={r.id}
@@ -181,7 +181,7 @@ function DelegationPanelInner({
           </ul>
           {tailRows.length > 0 && (
             <div ref={tailRef} className="overflow-hidden">
-              <ul className="flex flex-col divide-y divide-white/[0.04] border-t border-white/[0.04]">
+              <ul className="flex flex-col divide-y divide-hairline border-t border-hairline">
                 {tailRows.map((r) => (
                   <DelegationRow
                     key={r.id}
@@ -203,7 +203,7 @@ function DelegationPanelInner({
             <button
               type="button"
               onClick={() => setShowAll(true)}
-              className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-lg border border-white/[0.08] text-[13px] font-medium text-zinc-300 transition-colors hover:bg-white/[0.03] hover:text-white"
+              className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-lg border border-hairline text-[13px] font-medium text-subtle transition-colors hover:bg-overlay hover:text-foreground"
             >
               Show {hiddenCount} more
               <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} />
@@ -308,7 +308,7 @@ function DelegationRow({
             setExpanded((v) => !v);
           }
         }}
-        className="-mx-2 grid cursor-pointer grid-cols-1 items-center gap-2 rounded-md px-2 py-3 transition-colors hover:bg-white/[0.015] sm:grid-cols-[minmax(0,1fr)_auto_auto_auto] sm:gap-3 min-h-[44px]"
+        className="-mx-2 grid cursor-pointer grid-cols-1 items-center gap-2 rounded-md px-2 py-3 transition-colors hover:bg-overlay sm:grid-cols-[minmax(0,1fr)_auto_auto_auto] sm:gap-3 min-h-[44px]"
       >
         <div className="flex min-w-0 items-center gap-3">
           <span
@@ -317,13 +317,13 @@ function DelegationRow({
             aria-hidden
           />
           <div className="flex min-w-0 flex-col">
-            <p className="truncate text-[13px] font-medium text-white">
+            <p className="truncate text-[13px] font-medium text-foreground">
               {meta.label}
-              <span className="ml-2 text-[12px] font-normal text-zinc-500">
+              <span className="ml-2 text-[12px] font-normal text-faint">
                 {report.address}
               </span>
             </p>
-            <p className="mt-0.5 flex items-center gap-2 text-[11px] text-zinc-500">
+            <p className="mt-0.5 flex items-center gap-2 text-[11px] text-faint">
               <span
                 className={cn(
                   "rounded px-1.5 py-0.5 text-[10px] font-medium",
@@ -368,8 +368,8 @@ function DelegationRow({
               className={cn(
                 "inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md transition-colors",
                 isOverridden
-                  ? "text-zinc-400 hover:bg-white/[0.06] hover:text-white"
-                  : "text-zinc-700",
+                  ? "text-subtle hover:bg-overlay-strong hover:text-foreground"
+                  : "text-faint",
               )}
             >
               <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} />
@@ -379,7 +379,7 @@ function DelegationRow({
           <span
             aria-hidden
             className={cn(
-              "inline-flex h-11 w-11 items-center justify-center text-zinc-500 transition-transform duration-300",
+              "inline-flex h-11 w-11 items-center justify-center text-faint transition-transform duration-300",
               expanded && "rotate-180",
             )}
           >
@@ -419,8 +419,8 @@ function DelegationRow({
             className={cn(
               "inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-colors",
               isOverridden
-                ? "text-zinc-400 hover:bg-white/[0.06] hover:text-white"
-                : "text-zinc-700",
+                ? "text-subtle hover:bg-overlay-strong hover:text-foreground"
+                : "text-faint",
             )}
           >
             <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} />
@@ -430,7 +430,7 @@ function DelegationRow({
         <span
           aria-hidden
           className={cn(
-            "hidden sm:inline-flex h-6 w-6 items-center justify-center text-zinc-500 transition-transform duration-300",
+            "hidden sm:inline-flex h-6 w-6 items-center justify-center text-faint transition-transform duration-300",
             expanded && "rotate-180",
           )}
         >

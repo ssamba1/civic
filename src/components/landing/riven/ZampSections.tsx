@@ -8,8 +8,8 @@
 //   · S2 anime.js breathing loop → GSAP yoyo tween (animejs is not a Civic dep;
 //     gsap + @gsap/react are). Same visual: a slow scale pulse composed on top
 //     of the GSAP sway via a separate quickTo-free tween target.
-//   · S3 supabase signup-count RPC + TiltCard primitive → hardcoded pilot count
-//     (1 / 5) and an inline TiltCard built on Civic's existing useMouseTilt hook.
+//   · S3 supabase signup-count RPC → qualitative "cohort open" copy (no fabricated
+//     slots-claimed count), plus an inline TiltCard built on Civic's useMouseTilt hook.
 
 import { useGSAP } from "@gsap/react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -24,13 +24,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import {
-  AnimatedBar,
-  CountUp,
-  Reveal,
-  StaggerGroup,
-  StaggerItem,
-} from "./anim";
+import { CountUp, Reveal, StaggerGroup, StaggerItem } from "./anim";
 import useMouseTilt from "./useMouseTilt";
 
 gsap.registerPlugin(useGSAP);
@@ -263,7 +257,7 @@ function CardHeader({
 function SnapMock() {
   return (
     <ScreenshotMock
-      src="/landing-shots/shot-map.png"
+      src="/landing-shots/shot-map.webp"
       alt="Civic map — resident reports pinned across Cumming with dispatch panel"
       objectPos="center top"
     />
@@ -294,21 +288,21 @@ function ScreenshotMock({
 
 const ClassifyMock = () => (
   <ScreenshotMock
-    src="/landing-shots/shot-reports.png"
+    src="/landing-shots/shot-reports.webp"
     alt="Civic reports panel — AI reasoning, severity classification, and SLA scoring"
     objectPos="left top"
   />
 );
 const RouteMock = () => (
   <ScreenshotMock
-    src="/landing-shots/shot-routing.png"
+    src="/landing-shots/shot-routing.webp"
     alt="Civic workload distribution and default routing matrix by issue category"
     objectPos="left top"
   />
 );
 const TrackMock = () => (
   <ScreenshotMock
-    src="/landing-shots/shot-analytics.png"
+    src="/landing-shots/shot-analytics.webp"
     alt="Civic city analytics — 831 fixed, reports over time, severity breakdown"
     objectPos="center top"
   />
@@ -551,7 +545,7 @@ function EditorMock() {
       role="img"
       aria-label="Civic teams console — 11 municipal divisions, workload and queue depth"
       style={{
-        backgroundImage: "url('/landing-shots/shot-teams.png')",
+        backgroundImage: "url('/landing-shots/shot-teams.webp')",
         backgroundPosition: "center top",
       }}
     />
@@ -715,7 +709,7 @@ function EditorCenterpiece({ onExpand }: { onExpand: () => void }) {
             role="img"
             aria-label="Civic teams console — municipal divisions, queue depth, and MTTR"
             style={{
-              backgroundImage: "url('/landing-shots/shot-teams.png')",
+              backgroundImage: "url('/landing-shots/shot-teams.webp')",
             }}
           />
           <div
@@ -900,9 +894,6 @@ export function ZampSection2() {
    SECTION 3 — Wave 1 open — 60/30/10 row + benefit ticker
    ════════════════════════════════════════════════════════════════ */
 
-const CAP = 5;
-const FILLED = 1;
-
 const BENEFITS = [
   "Vote on the roadmap",
   "Founding-city badge",
@@ -999,7 +990,6 @@ function TiltCard({
 }
 
 export function ZampSection3() {
-  const pct = Math.min(100, Math.round((FILLED / CAP) * 100));
   const tickerItems = [...BENEFITS, ...BENEFITS];
 
   return (
@@ -1033,29 +1023,15 @@ export function ZampSection3() {
             </div>
 
             <div className="wl-zamp-s3-big-stat">
-              <span className="wl-zamp-s3-big-num">
-                <CountUp to={FILLED} duration={1.6} />
-                <span className="wl-zamp-s3-big-num-sep">
-                  &nbsp;/&nbsp;{CAP}
-                </span>
-              </span>
+              <span className="wl-zamp-s3-big-num">Open</span>
               <span className="wl-zamp-s3-big-stat-label">
-                pilot slots claimed
+                Founding cohort &middot; five pilot cities
               </span>
             </div>
 
-            <div className="wl-zamp-s3-bar" aria-hidden="true">
-              <AnimatedBar pct={pct} className="wl-zamp-s3-bar-fill" />
-            </div>
             <div className="wl-zamp-s3-bar-meta">
-              <span>
-                <CountUp to={CAP - FILLED} duration={1.4} delay={0.3} /> slots
-                left
-              </span>
-              <span>
-                <CountUp to={pct} duration={1.4} delay={0.3} suffix="%" />{" "}
-                filled
-              </span>
+              <span>Cohort open</span>
+              <span>Apply to join</span>
             </div>
 
             <ul className="wl-zamp-s3-card-bullets">

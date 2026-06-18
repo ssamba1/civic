@@ -45,7 +45,7 @@ export function ViewSwitch({
       role="group"
       aria-label="Switch view"
       className={cn(
-        "flex shrink-0 items-center gap-0.5 rounded-[10px] border border-white/[0.06] bg-white/[0.03] p-0.5",
+        "flex shrink-0 items-center gap-0.5 rounded-[10px] border border-hairline bg-overlay p-0.5",
         className,
       )}
     >
@@ -61,16 +61,14 @@ export function ViewSwitch({
             "transition-colors duration-150 outline-none",
             "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
             active
-              ? "bg-white/[0.09] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-              : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-100",
+              ? "bg-overlay-strong text-foreground shadow-[inset_0_0_0_1px_var(--hairline)]"
+              : "text-subtle hover:bg-overlay hover:text-foreground",
           )}
         >
           <Icon
             className={cn(
               "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
-              active
-                ? "text-[#0a84ff]"
-                : "text-zinc-500 group-hover:text-zinc-300",
+              active ? "text-[#0a84ff]" : "text-faint group-hover:text-subtle",
             )}
             strokeWidth={2}
             aria-hidden="true"

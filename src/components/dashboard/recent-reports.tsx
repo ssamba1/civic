@@ -43,7 +43,7 @@ const STATUS_TONE: Record<ReportStatus, string> = {
   dispatched: "text-[#0a84ff] bg-[#0a84ff]/10",
   in_progress: "text-[#5ac8fa] bg-[#5ac8fa]/10",
   closed: "text-[#30d158] bg-[#30d158]/10",
-  merged: "text-zinc-400 bg-white/[0.06]",
+  merged: "text-subtle bg-overlay-strong",
   rejected: "text-[#ff453a] bg-[#ff453a]/10",
 };
 
@@ -66,7 +66,7 @@ function RecentReportsInner({
     }
   }, [focusedId]);
 
-  const panelClass = "rounded-xl bg-[#1c1c1e] border border-white/[0.06]";
+  const panelClass = "rounded-xl bg-surface border border-hairline";
 
   if (reports.length === 0) {
     return (
@@ -77,22 +77,22 @@ function RecentReportsInner({
 @media (prefers-reduced-motion:reduce){.rr-empty{animation:none}}
 `}</style>
         <div className="flex items-center justify-between">
-          <h2 className="text-[15px] font-semibold text-white">Reports</h2>
+          <h2 className="text-[15px] font-semibold text-foreground">Reports</h2>
           <div className="flex items-center gap-2">
-            <span className="text-[13px] text-zinc-500">0</span>
+            <span className="text-[13px] text-faint">0</span>
             {onExpand && (
               <button
                 type="button"
                 onClick={onExpand}
                 aria-label="Expand reports"
-                className="flex-shrink-0 inline-flex items-center justify-center h-11 w-11 -mr-2 text-zinc-500 hover:text-white rounded-md transition-colors"
+                className="flex-shrink-0 inline-flex items-center justify-center h-11 w-11 -mr-2 text-faint hover:text-foreground rounded-md transition-colors"
               >
                 <Maximize2 className="h-3.5 w-3.5" strokeWidth={1.75} />
               </button>
             )}
           </div>
         </div>
-        <p className="mt-3 text-sm text-zinc-400">No matching reports.</p>
+        <p className="mt-3 text-sm text-subtle">No matching reports.</p>
       </section>
     );
   }
@@ -105,10 +105,10 @@ function RecentReportsInner({
         maxHeightClass,
       )}
     >
-      <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-        <h2 className="text-[15px] font-semibold text-white">Reports</h2>
+      <div className="flex items-center justify-between pb-3 border-b border-hairline">
+        <h2 className="text-[15px] font-semibold text-foreground">Reports</h2>
         <div className="flex items-center gap-2">
-          <span className="text-[13px] text-zinc-500 tabular-nums">
+          <span className="text-[13px] text-faint tabular-nums">
             {reports.length}
           </span>
           {onExpand && (
@@ -116,7 +116,7 @@ function RecentReportsInner({
               type="button"
               onClick={onExpand}
               aria-label="Expand reports"
-              className="flex-shrink-0 inline-flex items-center justify-center h-11 w-11 -mr-2 text-zinc-500 hover:text-white rounded-md transition-colors"
+              className="flex-shrink-0 inline-flex items-center justify-center h-11 w-11 -mr-2 text-faint hover:text-foreground rounded-md transition-colors"
             >
               <Maximize2 className="h-3.5 w-3.5" strokeWidth={1.75} />
             </button>
@@ -161,12 +161,12 @@ function RecentReportsInner({
                 className={cn(
                   "w-full text-left flex flex-col gap-1 py-3 sm:py-2.5 px-2 min-h-11 rounded-md transition-colors",
                   "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1c1c1e]",
-                  isFocused ? "bg-white/[0.06]" : "hover:bg-white/[0.03]",
+                  isFocused ? "bg-overlay-strong" : "hover:bg-overlay",
                   isDemo && "demo-glow",
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <p className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-white leading-tight">
+                  <p className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-foreground leading-tight">
                     <span
                       className="h-2 w-2 flex-shrink-0 rounded-full"
                       style={{ backgroundColor: meta.color }}
@@ -183,7 +183,7 @@ function RecentReportsInner({
                     {STATUS_LABEL[report.status]}
                   </span>
                 </div>
-                <div className="flex items-center justify-between gap-3 text-[12px] text-zinc-500 leading-tight">
+                <div className="flex items-center justify-between gap-3 text-[12px] text-faint leading-tight">
                   <span className="truncate">{report.address}</span>
                   <span className="inline-flex items-center gap-1 flex-shrink-0">
                     <Clock className="h-3 w-3" strokeWidth={1.75} />

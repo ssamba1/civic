@@ -389,9 +389,9 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
   // ── Neutral first paint (also the SSR tree) until the client decides ──
   if (!decided) {
     return (
-      <div className="flex items-center justify-center h-full bg-black">
+      <div className="flex items-center justify-center h-full bg-background">
         {hiddenFileInputs}
-        <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-hairline-strong border-t-white rounded-full animate-spin" />
       </div>
     );
   }
@@ -399,16 +399,18 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
   // ── Fallback: no getUserMedia, or the live viewfinder failed/stalled ──
   if (useNative || camFailed) {
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-black px-6 text-center gap-6">
+      <div className="flex flex-col items-center justify-center h-full bg-background px-6 text-center gap-6">
         {hiddenFileInputs}
 
         <div className="flex flex-col items-center gap-3">
-          <span className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white/15 bg-white/[0.06]">
-            <CameraIcon className="w-9 h-9 text-white" />
+          <span className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-hairline-strong bg-overlay-strong">
+            <CameraIcon className="w-9 h-9 text-foreground" />
           </span>
           <div>
-            <p className="text-white text-lg font-semibold">Report an issue</p>
-            <p className="text-zinc-400 text-sm mt-1">
+            <p className="text-foreground text-lg font-semibold">
+              Report an issue
+            </p>
+            <p className="text-subtle text-sm mt-1">
               Take a photo of the problem to get started.
             </p>
           </div>
@@ -426,7 +428,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
           <button
             type="button"
             onClick={openLibraryPicker}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-600 px-6 py-3 min-h-[56px] text-base font-semibold text-white active:scale-95 active:bg-zinc-800 transition-transform"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-600 px-6 py-3 min-h-[56px] text-base font-semibold text-foreground active:scale-95 active:bg-elevated transition-transform"
           >
             <ImageIcon className="w-5 h-5" />
             Upload from library
@@ -439,10 +441,10 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
   // ── Camera permission denied / not found: clear message + recovery paths ──
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-black px-6 text-center gap-4">
+      <div className="flex flex-col items-center justify-center h-full bg-background px-6 text-center gap-4">
         {hiddenFileInputs}
         <svg
-          className="w-16 h-16 text-zinc-500"
+          className="w-16 h-16 text-faint"
           fill="none"
           viewBox="0 0 24 24"
           strokeWidth={1.5}
@@ -461,7 +463,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
           />
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18" />
         </svg>
-        <p className="text-white text-lg font-medium">{error}</p>
+        <p className="text-foreground text-lg font-medium">{error}</p>
         <button
           type="button"
           onClick={openCameraPicker}
@@ -473,7 +475,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
         <button
           type="button"
           onClick={openLibraryPicker}
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-600 px-6 py-3 min-h-[44px] text-sm font-semibold text-white active:scale-95 transition-transform"
+          className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-600 px-6 py-3 min-h-[44px] text-sm font-semibold text-foreground active:scale-95 transition-transform"
         >
           <ImageIcon className="w-5 h-5" />
           Upload from library
@@ -487,7 +489,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
             // Increment retryCount to re-trigger the camera effect.
             setRetryCount((c) => c + 1);
           }}
-          className="rounded-full border border-zinc-600 px-6 py-3 min-h-[44px] text-sm font-semibold text-white active:scale-95 transition-transform"
+          className="rounded-full border border-zinc-600 px-6 py-3 min-h-[44px] text-sm font-semibold text-foreground active:scale-95 transition-transform"
         >
           Try Again
         </button>
@@ -516,7 +518,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
 
   // ── Live in-page viewfinder (mobile + desktop): opens on mount ──
   return (
-    <div className="relative flex flex-col items-center justify-end h-full bg-black overflow-hidden">
+    <div className="relative flex flex-col items-center justify-end h-full bg-background overflow-hidden">
       {hiddenFileInputs}
 
       {/* Live viewfinder — front camera is mirrored to match user expectation.
@@ -685,8 +687,8 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
 
       {/* Loading state */}
       {!ready && !error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black">
-          <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center bg-background">
+          <div className="w-8 h-8 border-2 border-hairline-strong border-t-white rounded-full animate-spin" />
         </div>
       )}
     </div>

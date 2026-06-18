@@ -88,13 +88,13 @@ function RoutingChangesLogInner() {
     >
       {entries.length === 0 ? (
         <div className="flex h-full min-h-[180px] flex-col items-center justify-center gap-2 px-4 text-center">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.04] text-zinc-600">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-overlay text-faint">
             <History className="h-4 w-4" strokeWidth={1.75} aria-hidden />
           </span>
-          <p className="text-[13px] font-medium text-zinc-400">
+          <p className="text-[13px] font-medium text-subtle">
             No routing changes yet
           </p>
-          <p className="max-w-[34ch] text-[12px] leading-snug text-zinc-600">
+          <p className="max-w-[34ch] text-[12px] leading-snug text-faint">
             Re-route a category above or reassign a report — every change shows
             up here with a timestamp.
           </p>
@@ -108,10 +108,10 @@ function RoutingChangesLogInner() {
               return (
                 <li
                   key={e.id}
-                  className="flex flex-col gap-1 border-b border-white/[0.04] py-2.5 last:border-b-0"
+                  className="flex flex-col gap-1 border-b border-hairline py-2.5 last:border-b-0"
                 >
                   <div className="flex items-baseline justify-between gap-3">
-                    <span className="flex min-w-0 items-center gap-2 text-[13px] text-zinc-200">
+                    <span className="flex min-w-0 items-center gap-2 text-[13px] text-foreground">
                       <span
                         className="h-2 w-2 flex-shrink-0 rounded-full"
                         style={{ background: e.subjectColor }}
@@ -119,16 +119,16 @@ function RoutingChangesLogInner() {
                       />
                       <span className="truncate">{e.subject}</span>
                       {e.badge === "report" && (
-                        <span className="flex-shrink-0 rounded-sm bg-white/[0.06] px-1 text-[9px] uppercase tracking-wider text-zinc-500">
+                        <span className="flex-shrink-0 rounded-sm bg-overlay-strong px-1 text-[9px] uppercase tracking-wider text-faint">
                           report
                         </span>
                       )}
                     </span>
-                    <span className="flex-shrink-0 text-[11px] tabular-nums text-zinc-500">
+                    <span className="flex-shrink-0 text-[11px] tabular-nums text-faint">
                       {timeAgo(e.ts)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 pl-4 text-[11px] text-zinc-500">
+                  <div className="flex items-center gap-1.5 pl-4 text-[11px] text-faint">
                     <span className="inline-flex min-w-0 items-center gap-1">
                       <span
                         className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
@@ -140,11 +140,11 @@ function RoutingChangesLogInner() {
                       </span>
                     </span>
                     <ArrowRight
-                      className="h-3 w-3 flex-shrink-0 text-zinc-600"
+                      className="h-3 w-3 flex-shrink-0 text-faint"
                       strokeWidth={2}
                       aria-hidden
                     />
-                    <span className="inline-flex min-w-0 items-center gap-1 text-zinc-300">
+                    <span className="inline-flex min-w-0 items-center gap-1 text-subtle">
                       <span
                         className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
                         style={{ background: toTeam?.color ?? "#737373" }}
@@ -160,7 +160,7 @@ function RoutingChangesLogInner() {
             })}
           </ul>
           {overflow > 0 && (
-            <p className="mt-auto pt-2 text-[11px] text-zinc-600">
+            <p className="mt-auto pt-2 text-[11px] text-faint">
               +{overflow} earlier change{overflow === 1 ? "" : "s"}
             </p>
           )}

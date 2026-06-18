@@ -105,14 +105,14 @@ export function AddCategoryModal({
         aria-label="New issue type"
         className={cn(
           "absolute inset-2 sm:inset-x-0 sm:inset-y-auto sm:top-1/2 sm:-translate-y-1/2 sm:mx-auto sm:max-w-md",
-          "flex max-h-[92dvh] flex-col overflow-hidden text-zinc-100",
-          "rounded-2xl border border-white/[0.06] bg-[#1c1c1e]",
-          "shadow-[0_24px_64px_-12px_rgba(0,0,0,0.7)]",
+          "flex max-h-[92dvh] flex-col overflow-hidden text-foreground",
+          "rounded-2xl border border-hairline bg-surface",
+          "shadow-[var(--shadow-pop)]",
           "animate-in fade-in zoom-in-95 duration-300 motion-reduce:animate-none",
         )}
       >
         {/* Header */}
-        <header className="flex flex-shrink-0 items-center justify-between border-b border-white/[0.06] px-5 py-4">
+        <header className="flex flex-shrink-0 items-center justify-between border-b border-hairline px-5 py-4">
           <div className="flex items-center gap-3">
             <span
               className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
@@ -120,10 +120,10 @@ export function AddCategoryModal({
               aria-hidden
             />
             <div>
-              <h2 className="text-[16px] font-semibold text-white leading-tight">
+              <h2 className="text-[16px] font-semibold text-foreground leading-tight">
                 New Issue Type
               </h2>
-              <p className="text-[12px] text-zinc-500 leading-tight">
+              <p className="text-[12px] text-faint leading-tight">
                 Name it &amp; pick where its reports route
               </p>
             </div>
@@ -132,7 +132,7 @@ export function AddCategoryModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="-m-1.5 inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:text-white outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]"
+            className="-m-1.5 inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md text-subtle transition-colors hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]"
           >
             <X className="h-5 w-5" strokeWidth={1.75} />
           </button>
@@ -150,10 +150,10 @@ export function AddCategoryModal({
               <Check className="h-4 w-4" strokeWidth={2.5} />
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-white">
+              <h3 className="text-xl font-semibold text-foreground">
                 {label.trim()} added
               </h3>
-              <p className="mt-1 text-sm text-zinc-400">
+              <p className="mt-1 text-sm text-subtle">
                 Reports route to {TEAMS[team].shortLabel}.
               </p>
             </div>
@@ -173,7 +173,7 @@ export function AddCategoryModal({
             <div className="flex-1 space-y-5 overflow-y-auto custom-scrollbar p-5 pb-safe">
               {/* Label */}
               <label className="flex flex-col gap-1.5">
-                <span className="text-[12px] font-medium text-zinc-400">
+                <span className="text-[12px] font-medium text-subtle">
                   Issue type name
                 </span>
                 <input
@@ -182,13 +182,13 @@ export function AddCategoryModal({
                   placeholder="Abandoned Vehicle"
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
-                  className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-[#0a84ff]/60 focus:ring-1 focus:ring-[#0a84ff]/40"
+                  className="rounded-lg border border-hairline bg-overlay px-3 py-2 text-sm text-foreground placeholder:text-faint outline-none focus:border-[#0a84ff]/60 focus:ring-1 focus:ring-[#0a84ff]/40"
                 />
               </label>
 
               {/* Color */}
               <div className="flex flex-col gap-2">
-                <span className="text-[12px] font-medium text-zinc-400">
+                <span className="text-[12px] font-medium text-subtle">
                   Color
                 </span>
                 <div className="flex flex-wrap items-center gap-2">
@@ -199,7 +199,9 @@ export function AddCategoryModal({
                       onClick={() => setColor(c)}
                       className={cn(
                         "h-7 w-7 rounded-full border-2 transition-transform hover:scale-110",
-                        color === c ? "border-white" : "border-transparent",
+                        color === c
+                          ? "border-hairline-strong"
+                          : "border-transparent",
                       )}
                       style={{ background: c }}
                       aria-label={c}
@@ -213,26 +215,26 @@ export function AddCategoryModal({
                       className="h-7 w-7 cursor-pointer rounded border-0 bg-transparent p-0"
                       title="Custom color"
                     />
-                    <span className="text-[11px] text-zinc-500">Custom</span>
+                    <span className="text-[11px] text-faint">Custom</span>
                   </label>
                 </div>
               </div>
 
               {/* Routing */}
               <div className="flex flex-col gap-2">
-                <span className="text-[12px] font-medium text-zinc-400">
+                <span className="text-[12px] font-medium text-subtle">
                   Routes to
                 </span>
-                <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2">
+                <div className="flex items-center gap-2 rounded-lg border border-hairline bg-overlay px-3 py-2">
                   <span
                     className="h-2 w-2 flex-shrink-0 rounded-full"
                     style={{ background: color }}
                     aria-hidden
                   />
-                  <span className="flex-1 truncate text-sm text-zinc-300">
+                  <span className="flex-1 truncate text-sm text-subtle">
                     {label.trim() || "This issue type"}
                   </span>
-                  <span className="text-zinc-600" aria-hidden>
+                  <span className="text-faint" aria-hidden>
                     →
                   </span>
                   <TeamPicker
@@ -245,7 +247,7 @@ export function AddCategoryModal({
                     menuWidth={240}
                   />
                 </div>
-                <p className="text-[11px] leading-relaxed text-zinc-500">
+                <p className="text-[11px] leading-relaxed text-faint">
                   Sets the routing rule for this issue type. You can change it
                   any time from the routing matrix.
                 </p>
@@ -253,11 +255,11 @@ export function AddCategoryModal({
             </div>
 
             {/* Footer actions */}
-            <div className="flex flex-shrink-0 items-center justify-end gap-3 border-t border-white/[0.06] px-5 py-4">
+            <div className="flex flex-shrink-0 items-center justify-end gap-3 border-t border-hairline px-5 py-4">
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg border border-white/[0.1] bg-white/[0.03] px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-white/[0.06]"
+                className="rounded-lg border border-hairline bg-overlay px-4 py-2 text-sm font-medium text-subtle transition-colors hover:bg-overlay-strong"
               >
                 Cancel
               </button>

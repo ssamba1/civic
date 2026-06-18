@@ -89,7 +89,7 @@ export default function PhotoPreview({
   const gps = gpsIndicator[gpsStatus];
 
   return (
-    <div className="flex flex-col h-full bg-black">
+    <div className="flex flex-col h-full bg-background">
       {/* Photo preview */}
       <div className="relative flex-1 min-h-0">
         {previewUrl && (
@@ -146,17 +146,17 @@ export default function PhotoPreview({
       </div>
 
       {/* Bottom controls — pb-safe clears home indicator */}
-      <div className="shrink-0 bg-zinc-950 px-4 pt-4 pb-safe">
+      <div className="shrink-0 bg-surface px-4 pt-4 pb-safe">
         <div className="pb-8 space-y-3">
           {/* Issue type — optional manual pick. Skipping it lets the AI
               classify; picking one (incl. custom types) routes by that rule. */}
           <div className="space-y-1.5">
             <label
               htmlFor="issue-type"
-              className="block text-xs font-medium text-zinc-400"
+              className="block text-xs font-medium text-subtle"
             >
               Issue type{" "}
-              <span className="text-zinc-600">
+              <span className="text-faint">
                 (optional — AI decides if skipped)
               </span>
             </label>
@@ -164,7 +164,7 @@ export default function PhotoPreview({
               id="issue-type"
               value={issueType ?? ""}
               onChange={(e) => setIssueType(e.target.value || null)}
-              className="w-full min-h-[44px] rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base text-white focus:outline-none focus:border-zinc-500"
+              className="w-full min-h-[44px] rounded-lg border border-zinc-700 bg-surface px-3 py-2.5 text-base text-foreground focus:outline-none focus:border-zinc-500"
             >
               <option value="">Let AI decide</option>
               <optgroup label="Standard">
@@ -185,7 +185,7 @@ export default function PhotoPreview({
               )}
             </select>
             {routedTeam && RoutedTeamIcon && (
-              <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+              <div className="flex items-center gap-1.5 text-xs text-faint">
                 <span>Routes to</span>
                 <span
                   className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-medium"
@@ -214,7 +214,7 @@ export default function PhotoPreview({
                   className={`rounded-full px-3 py-2 text-xs font-medium transition-[color,background-color,border-color,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] motion-safe:active:scale-95 min-h-[44px] flex items-center ${
                     active
                       ? "bg-blue-600 text-white"
-                      : "border border-zinc-700 text-zinc-300 active:bg-zinc-800"
+                      : "border border-zinc-700 text-subtle active:bg-elevated"
                   }`}
                 >
                   {t}
@@ -229,7 +229,7 @@ export default function PhotoPreview({
             <button
               type="button"
               onClick={() => setShowDescription(true)}
-              className="w-full text-left text-sm text-zinc-400 min-h-[44px] px-3 rounded-lg border border-zinc-800 active:bg-zinc-800 transition-colors flex items-center"
+              className="w-full text-left text-sm text-subtle min-h-[44px] px-3 rounded-lg border border-zinc-800 active:bg-elevated transition-colors flex items-center"
             >
               + Add description (optional)
             </button>
@@ -249,7 +249,7 @@ export default function PhotoPreview({
                 maxLength={500}
                 tabIndex={showDescription ? 0 : -1}
                 aria-hidden={!showDescription}
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-500 resize-none"
+                className="w-full rounded-lg border border-zinc-700 bg-surface px-3 py-2.5 text-base text-foreground placeholder:text-faint focus:outline-none focus:border-zinc-500 resize-none"
               />
             </div>
           </div>
@@ -260,7 +260,7 @@ export default function PhotoPreview({
               type="button"
               onClick={onRetake}
               disabled={submitting}
-              className="flex-1 rounded-full border border-zinc-700 min-h-[56px] text-sm font-semibold text-white active:bg-zinc-800 transition-colors disabled:opacity-40"
+              className="flex-1 rounded-full border border-zinc-700 min-h-[56px] text-sm font-semibold text-foreground active:bg-elevated transition-colors disabled:opacity-40"
             >
               Retake
             </button>

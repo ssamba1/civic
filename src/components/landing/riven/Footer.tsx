@@ -9,7 +9,7 @@ import CtaPills from "./CtaPills";
 const FOOTER_LINKS = [
   { label: "Dashboard", href: "/city/cumming" },
   { label: "Report", href: "/report" },
-  { label: "For cities", href: "/staff" },
+  { label: "For cities", href: "/streets_roads/cumming" },
   { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
 ];

@@ -87,24 +87,24 @@ function CardBody({ data }: { data: ReasoningResponse }) {
   return (
     <div className="flex flex-col gap-3 px-4 py-3">
       <div className="flex flex-col gap-0.5">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-faint">
           Cost
         </span>
-        <p className="text-[12px] leading-snug text-zinc-200">{costLine}</p>
+        <p className="text-[12px] leading-snug text-foreground">{costLine}</p>
       </div>
       <ul className="flex flex-col gap-1.5">
         {bullets.map((b) => (
           <li
             key={b.title}
-            className="flex gap-2 text-[12px] leading-snug text-zinc-300"
+            className="flex gap-2 text-[12px] leading-snug text-subtle"
           >
             <span
               aria-hidden
               className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-zinc-500"
             />
             <span>
-              <span className="text-zinc-100">{b.title}:</span>{" "}
-              <span className="text-zinc-400">{firstSentence(b.value)}</span>
+              <span className="text-foreground">{b.title}:</span>{" "}
+              <span className="text-subtle">{firstSentence(b.value)}</span>
             </span>
           </li>
         ))}
@@ -345,8 +345,8 @@ export function useReasoningHover(): UseReasoningHoverReturn {
         aria-hidden={!visible}
         className={cn(
           "pointer-events-none fixed z-[60] select-none",
-          "rounded-2xl border border-white/[0.08]",
-          "bg-[rgba(18,18,22,0.94)] backdrop-blur-xl",
+          "rounded-2xl border border-hairline",
+          "bg-glass backdrop-blur-xl",
           "shadow-[0_16px_48px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.04)_inset]",
           !noMotion && "transition-[opacity,transform] duration-150 ease-out",
           visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1",
@@ -362,16 +362,16 @@ export function useReasoningHover(): UseReasoningHoverReturn {
       >
         {target && (
           <>
-            <header className="flex items-baseline justify-between gap-3 border-b border-white/[0.06] px-4 py-3">
+            <header className="flex items-baseline justify-between gap-3 border-b border-hairline px-4 py-3">
               <div className="flex items-baseline gap-2 min-w-0">
-                <h3 className="text-[14px] font-semibold tracking-tight text-white">
+                <h3 className="text-[14px] font-semibold tracking-tight text-foreground">
                   Reasoning
                 </h3>
-                <span className="truncate text-[12px] text-zinc-400">
+                <span className="truncate text-[12px] text-subtle">
                   {target.label}
                 </span>
               </div>
-              <span className="flex-shrink-0 rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-zinc-400">
+              <span className="flex-shrink-0 rounded-md bg-overlay-strong px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-subtle">
                 AI estimate
               </span>
             </header>
@@ -379,12 +379,12 @@ export function useReasoningHover(): UseReasoningHoverReturn {
               <CardBody data={data} />
             ) : hasFetchError ? (
               <div className="flex flex-col h-24 items-center justify-center gap-2 px-4">
-                <p className="text-[12px] text-zinc-400">
+                <p className="text-[12px] text-subtle">
                   Failed to load reasoning.
                 </p>
                 <button
                   type="button"
-                  className="pointer-events-auto text-[11px] text-zinc-300 underline underline-offset-2 hover:text-white"
+                  className="pointer-events-auto text-[11px] text-subtle underline underline-offset-2 hover:text-foreground"
                   onClick={() => {
                     const t = targetRef.current;
                     if (t) ensureData(t.id);
@@ -395,7 +395,7 @@ export function useReasoningHover(): UseReasoningHoverReturn {
               </div>
             ) : (
               <div className="flex h-24 items-center justify-center">
-                <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+                <Loader2 className="h-5 w-5 animate-spin text-subtle" />
               </div>
             )}
           </>

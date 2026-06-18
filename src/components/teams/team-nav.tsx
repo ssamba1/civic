@@ -50,7 +50,7 @@ export function TeamNav({ team, city, mobileSlot }: TeamNavProps) {
   if (mobileSlot === "tabs") {
     return (
       <nav
-        className="flex items-center gap-0.5 rounded-[10px] border border-white/[0.06] bg-white/[0.03] p-0.5 w-full"
+        className="flex items-center gap-0.5 rounded-[10px] border border-hairline bg-overlay p-0.5 w-full"
         aria-label="Team views"
       >
         {items.map(({ label, href, icon: Icon, active }) => (
@@ -63,8 +63,8 @@ export function TeamNav({ team, city, mobileSlot }: TeamNavProps) {
               "transition-colors duration-150 outline-none",
               "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
               active
-                ? "bg-white/[0.09] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-                : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-100",
+                ? "bg-overlay-strong text-foreground shadow-[inset_0_0_0_1px_var(--hairline)]"
+                : "text-subtle hover:bg-overlay hover:text-foreground",
             ].join(" ")}
           >
             <Icon
@@ -72,7 +72,7 @@ export function TeamNav({ team, city, mobileSlot }: TeamNavProps) {
                 "h-4 w-4 shrink-0 transition-colors duration-150",
                 active
                   ? "text-[#0a84ff]"
-                  : "text-zinc-500 group-hover:text-zinc-300",
+                  : "text-faint group-hover:text-subtle",
               ].join(" ")}
               strokeWidth={2}
               aria-hidden="true"
@@ -94,12 +94,12 @@ export function TeamNav({ team, city, mobileSlot }: TeamNavProps) {
     >
       <div
         ref={trackRef}
-        className="relative flex min-w-0 items-center gap-0.5 rounded-[10px] border border-white/[0.06] bg-white/[0.03] p-0.5"
+        className="relative flex min-w-0 items-center gap-0.5 rounded-[10px] border border-hairline bg-overlay p-0.5"
       >
         {/* Sliding active pill — measured to the active tab, eases between them. */}
         <span
           aria-hidden="true"
-          className="pill-slide pointer-events-none absolute top-0.5 bottom-0.5 left-0 z-0 rounded-md bg-white/[0.09] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+          className="pill-slide pointer-events-none absolute top-0.5 bottom-0.5 left-0 z-0 rounded-md bg-overlay-strong shadow-[inset_0_0_0_1px_var(--hairline)]"
           style={{
             width: pill.width,
             transform: `translateX(${pill.left}px)`,
@@ -119,8 +119,8 @@ export function TeamNav({ team, city, mobileSlot }: TeamNavProps) {
               "transition-colors duration-150 outline-none",
               "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
               active
-                ? "text-white"
-                : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-100",
+                ? "text-foreground"
+                : "text-subtle hover:bg-overlay hover:text-foreground",
             ].join(" ")}
           >
             <Icon
@@ -128,7 +128,7 @@ export function TeamNav({ team, city, mobileSlot }: TeamNavProps) {
                 "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
                 active
                   ? "text-[#0a84ff]"
-                  : "text-zinc-500 group-hover:text-zinc-300",
+                  : "text-faint group-hover:text-subtle",
               ].join(" ")}
               strokeWidth={2}
               aria-hidden="true"

@@ -21,13 +21,13 @@ export default async function BrowsePage({ params }: PageProps) {
   return (
     <div className="flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-[calc(2.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8">
       <section className="mb-6 sm:mb-8">
-        <p className="text-[13px] text-zinc-500">
+        <p className="text-[13px] text-faint">
           {city.name}, {city.state}
         </p>
-        <h1 className="mt-1 text-[28px] sm:text-[34px] lg:text-[40px] font-semibold tracking-tight text-white leading-[1.1]">
+        <h1 className="mt-1 text-[28px] sm:text-[34px] lg:text-[40px] font-semibold tracking-tight text-foreground leading-[1.1]">
           Browse local issues
         </h1>
-        <p className="mt-2 sm:mt-3 text-sm text-zinc-400">
+        <p className="mt-2 sm:mt-3 text-sm text-subtle">
           See what's happening in your neighborhood.
         </p>
       </section>

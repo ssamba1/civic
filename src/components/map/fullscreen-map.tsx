@@ -16,7 +16,6 @@ import { dispatchWorkOrderForReport } from "@/app/staff/actions";
 import { type MapTheme, ReportMap } from "@/components/map/report-map";
 import { UpvoteButton } from "@/components/resident/upvote-button";
 import BottomSheet from "@/components/ui/bottom-sheet";
-import { LiquidGlassCard } from "@/components/ui/liquid-glass";
 import { useCategoryOverrides } from "@/lib/category-overrides";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
@@ -54,10 +53,10 @@ const STATUS_LABEL: Record<string, string> = {
   closed: "Resolved",
 };
 const STATUS_TONE: Record<string, string> = {
-  open: "text-[#ff9f0a]",
-  dispatched: "text-[#0a84ff]",
-  in_progress: "text-[#5ac8fa]",
-  closed: "text-[#30d158]",
+  open: "text-[#ffb340]",
+  dispatched: "text-[#4da6ff]",
+  in_progress: "text-[#7ad4ff]",
+  closed: "text-[#3ee06b]",
 };
 // Hoisted from the status-filter .map() — was rebuilt on every render inside the callback.
 const STATUS_DISPLAY_NAMES: Record<string, string> = {
@@ -131,7 +130,6 @@ export function FullscreenMapOrchestrator({
 
   // --- Map theme (lifted from ReportMap so Dispatch panel can react) ---
   const [mapTheme, setMapTheme] = useState<MapTheme>("dark");
-  const isLightBasemap = mapTheme === "light";
 
   // --- Active Filters State ---
   // Team view seeds + locks the team scope; city view starts at "all".
@@ -316,8 +314,8 @@ export function FullscreenMapOrchestrator({
           <div
             className="flex items-center gap-2 rounded-md border px-2.5 py-1.5 shrink-0"
             style={{
-              borderColor: `${activeTeamMeta.color}55`,
-              backgroundColor: `${activeTeamMeta.color}15`,
+              borderColor: `${activeTeamMeta.color}99`,
+              backgroundColor: `${activeTeamMeta.color}2e`,
             }}
           >
             <Shield
@@ -326,7 +324,7 @@ export function FullscreenMapOrchestrator({
               strokeWidth={1.75}
             />
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] uppercase tracking-wide text-zinc-400">
+              <p className="text-[11px] uppercase tracking-wide text-white/80">
                 Viewing as
               </p>
               <p className="text-[12px] font-medium text-white leading-tight truncate">
@@ -337,7 +335,7 @@ export function FullscreenMapOrchestrator({
               <button
                 type="button"
                 onClick={() => setSelectedTeam("all")}
-                className="text-zinc-400 hover:text-white p-0.5 rounded min-h-[44px] min-w-[44px] flex items-center justify-center lg:min-h-0 lg:min-w-0"
+                className="text-white/80 hover:text-white p-0.5 rounded min-h-[44px] min-w-[44px] flex items-center justify-center lg:min-h-0 lg:min-w-0"
                 title="Switch back to All Teams"
                 aria-label="Switch back to All Teams"
               >
@@ -350,7 +348,7 @@ export function FullscreenMapOrchestrator({
         {/* Route confirmation toast */}
         {routeNotification && (
           <div
-            className="bg-[#30d158]/10 border border-[#30d158]/20 rounded-lg p-3 flex items-center gap-2 shrink-0"
+            className="bg-[#3ee06b]/15 border border-[#3ee06b]/30 rounded-lg p-3 flex items-center gap-2 shrink-0"
             style={
               reducedMotion
                 ? undefined
@@ -362,7 +360,7 @@ export function FullscreenMapOrchestrator({
             }
           >
             <CheckCircle2
-              className="w-4 h-4 text-[#30d158] shrink-0"
+              className="w-4 h-4 text-[#3ee06b] shrink-0"
               strokeWidth={1.75}
             />
             <p className="text-[13px] text-white/90 leading-tight">
@@ -372,14 +370,14 @@ export function FullscreenMapOrchestrator({
         )}
 
         {/* Quick filters */}
-        <div className="rounded-lg bg-white/[0.025] border border-white/[0.05] p-3 flex flex-col gap-3">
+        <div className="rounded-lg bg-[#3c3c42] p-3 flex flex-col gap-3">
           {/* Team — primary scoping. Hidden in the team view (locked) and the
             resident community view (no team concept). */}
           {!lockedTeam && !readOnly && (
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="map-team-select"
-                className="text-[12px] text-zinc-300 flex items-center gap-1.5"
+                className="text-[12px] text-white flex items-center gap-1.5"
               >
                 <Shield className="w-3 h-3" strokeWidth={1.75} />
                 Team view
@@ -389,7 +387,7 @@ export function FullscreenMapOrchestrator({
                   id="map-team-select"
                   value={selectedTeam}
                   onChange={(e) => setSelectedTeam(e.target.value as TeamId)}
-                  className="w-full bg-black/40 border border-white/[0.08] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:border-white/20 cursor-pointer appearance-none pr-8 transition-colors lg:py-1.5 lg:text-[13px]"
+                  className="w-full bg-[#232327] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:ring-2 focus:ring-[#4da6ff]/50 cursor-pointer appearance-none pr-8 transition-shadow lg:py-1.5 lg:text-[13px]"
                 >
                   {TEAM_LIST.map((team) => (
                     <option key={team.id} value={team.id}>
@@ -398,11 +396,11 @@ export function FullscreenMapOrchestrator({
                   ))}
                 </select>
                 <ChevronDown
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/60 pointer-events-none"
                   strokeWidth={1.75}
                 />
               </div>
-              <p className="text-[11px] text-zinc-500 leading-snug">
+              <p className="text-[11px] text-white/60 leading-snug">
                 {activeTeamMeta.duties}
               </p>
             </div>
@@ -414,7 +412,7 @@ export function FullscreenMapOrchestrator({
           >
             <label
               htmlFor="map-category-select"
-              className="text-[12px] text-zinc-300"
+              className="text-[12px] text-white"
             >
               Category
             </label>
@@ -427,7 +425,7 @@ export function FullscreenMapOrchestrator({
                     (e.target.value as ReportCategory) || null,
                   )
                 }
-                className="w-full bg-black/40 border border-white/[0.08] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:border-white/20 cursor-pointer appearance-none pr-8 transition-colors lg:py-1.5 lg:text-[13px]"
+                className="w-full bg-[#232327] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:ring-2 focus:ring-[#4da6ff]/50 cursor-pointer appearance-none pr-8 transition-shadow lg:py-1.5 lg:text-[13px]"
               >
                 <option value="">All categories</option>
                 {categoriesList.map((c) => (
@@ -437,7 +435,7 @@ export function FullscreenMapOrchestrator({
                 ))}
               </select>
               <ChevronDown
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/60 pointer-events-none"
                 strokeWidth={1.75}
               />
             </div>
@@ -445,7 +443,7 @@ export function FullscreenMapOrchestrator({
 
           {/* Severity */}
           <div className="flex flex-col gap-1.5">
-            <div className="flex justify-between text-[12px] text-zinc-300">
+            <div className="flex justify-between text-[12px] text-white">
               <span>Min severity</span>
               <span className="text-white tabular-nums">{minSeverity}+</span>
             </div>
@@ -462,7 +460,7 @@ export function FullscreenMapOrchestrator({
 
           {/* Status */}
           <div className="flex flex-col gap-1.5 border-t border-white/[0.06] pt-3">
-            <span className="text-[12px] text-zinc-300">Status</span>
+            <span className="text-[12px] text-white">Status</span>
             <div className="grid grid-cols-2 gap-1">
               {(["open", "dispatched", "in_progress", "closed"] as const).map(
                 (s) => {
@@ -475,7 +473,7 @@ export function FullscreenMapOrchestrator({
                       className={`rounded px-2 py-2 text-[12px] text-left transition-colors min-h-[44px] flex items-center lg:py-1 lg:min-h-0 ${
                         isChecked
                           ? "bg-white/[0.08] text-white"
-                          : "bg-transparent text-zinc-400 hover:text-white hover:bg-white/[0.03]"
+                          : "bg-transparent text-white/80 hover:text-white hover:bg-white/[0.03]"
                       }`}
                     >
                       {STATUS_DISPLAY_NAMES[s]}
@@ -494,7 +492,7 @@ export function FullscreenMapOrchestrator({
         <div className="space-y-2">
           {filteredReports.length === 0 ? (
             <div
-              className="flex flex-col items-center justify-center text-center p-6 text-zinc-500"
+              className="flex flex-col items-center justify-center text-center p-6 text-white/60"
               style={
                 reducedMotion
                   ? undefined
@@ -509,8 +507,8 @@ export function FullscreenMapOrchestrator({
                     : { animation: "emptyBob 3s ease-in-out infinite" }
                 }
               />
-              <p className="text-sm text-zinc-300">No matching reports</p>
-              <p className="text-xs text-zinc-500 mt-1">
+              <p className="text-sm text-white">No matching reports</p>
+              <p className="text-xs text-white/60 mt-1">
                 Adjust filters to see more.
               </p>
             </div>
@@ -546,10 +544,10 @@ export function FullscreenMapOrchestrator({
                           animationDelay: `${Math.min(index * 30, 300)}ms`,
                         }
                   }
-                  className={`p-3 rounded-lg border transition-[background-color,border-color,transform] cursor-pointer flex items-stretch gap-2 min-h-[44px] lg:min-h-0 active:scale-[0.98] ${
+                  className={`p-3 rounded-lg transition-[background-color,transform] cursor-pointer flex items-stretch gap-2 min-h-[44px] lg:min-h-0 active:scale-[0.98] ${
                     isSelected
-                      ? "bg-white/[0.08] border-white/[0.12]"
-                      : "bg-transparent border-transparent hover:bg-white/[0.03]"
+                      ? "bg-[#3c3c42]"
+                      : "bg-transparent hover:bg-white/[0.06]"
                   }`}
                 >
                   <div className="flex-1 min-w-0 flex flex-col gap-1.5">
@@ -558,13 +556,13 @@ export function FullscreenMapOrchestrator({
                         {meta.label}
                       </span>
                       <span
-                        className={`text-[12px] ${STATUS_TONE[report.status] ?? "text-zinc-400"}`}
+                        className={`text-[12px] ${STATUS_TONE[report.status] ?? "text-white/80"}`}
                       >
                         {STATUS_LABEL[report.status] ?? report.status}
                       </span>
                     </div>
 
-                    <p className="text-[12px] text-zinc-300 leading-tight line-clamp-1">
+                    <p className="text-[12px] text-white leading-tight line-clamp-1">
                       {report.address}
                     </p>
 
@@ -573,8 +571,8 @@ export function FullscreenMapOrchestrator({
                       <div
                         className="inline-flex self-start items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium"
                         style={{
-                          borderColor: `${ownerTeam.color}66`,
-                          backgroundColor: `${ownerTeam.color}1f`,
+                          borderColor: `${ownerTeam.color}aa`,
+                          backgroundColor: `${ownerTeam.color}33`,
                           color: ownerTeam.color,
                         }}
                       >
@@ -582,7 +580,7 @@ export function FullscreenMapOrchestrator({
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between text-[12px] text-zinc-400">
+                    <div className="flex items-center justify-between text-[12px] text-white/80">
                       <span
                         className="inline-flex items-center gap-1"
                         suppressHydrationWarning
@@ -619,7 +617,7 @@ export function FullscreenMapOrchestrator({
                                 report.status === "closed" ||
                                 dispatchingId === report.id
                               }
-                              className="flex-1 py-2.5 bg-[#0a84ff] hover:bg-[#0070e0] text-white rounded-md text-[12px] flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] lg:py-1.5 lg:min-h-0"
+                              className="flex-1 py-2.5 bg-[#2a9dff] hover:bg-[#0a84ff] text-white rounded-md text-[12px] flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] lg:py-1.5 lg:min-h-0"
                             >
                               {dispatchingId === report.id ? (
                                 <>
@@ -646,7 +644,7 @@ export function FullscreenMapOrchestrator({
                                 report.status === "closed" ||
                                 dispatchingId === report.id
                               }
-                              className="px-3 py-2.5 bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 rounded-md text-[12px] flex items-center justify-center gap-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] lg:py-1.5 lg:px-2 lg:min-h-0"
+                              className="px-3 py-2.5 bg-white/[0.1] hover:bg-white/[0.18] text-white rounded-md text-[12px] flex items-center justify-center gap-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] lg:py-1.5 lg:px-2 lg:min-h-0"
                               aria-label="Override target team"
                             >
                               Override
@@ -654,14 +652,14 @@ export function FullscreenMapOrchestrator({
                           </div>
                         ) : (
                           <div
-                            className="flex flex-col gap-1 bg-black/40 border border-white/[0.08] rounded-md p-2 pointer-events-auto"
+                            className="flex flex-col gap-1 bg-[#232327] rounded-md p-2 pointer-events-auto"
                             style={
                               reducedMotion
                                 ? undefined
                                 : { animation: "fmFadeIn 100ms ease-out" }
                             }
                           >
-                            <div className="flex justify-between items-center pb-1 mb-1 text-[12px] text-zinc-400">
+                            <div className="flex justify-between items-center pb-1 mb-1 text-[12px] text-white/80">
                               <span>Override target team</span>
                               <button
                                 type="button"
@@ -669,7 +667,7 @@ export function FullscreenMapOrchestrator({
                                   e.stopPropagation();
                                   setActiveRouteMenuId(null);
                                 }}
-                                className="p-2 hover:bg-white/[0.06] rounded text-zinc-400 hover:text-white min-h-[44px] min-w-[44px] flex items-center justify-center lg:p-0.5 lg:min-h-0 lg:min-w-0"
+                                className="p-2 hover:bg-white/[0.06] rounded text-white/80 hover:text-white min-h-[44px] min-w-[44px] flex items-center justify-center lg:p-0.5 lg:min-h-0 lg:min-w-0"
                                 aria-label="Close override menu"
                               >
                                 <X className="w-3 h-3" strokeWidth={1.75} />
@@ -687,7 +685,7 @@ export function FullscreenMapOrchestrator({
                                         e.stopPropagation();
                                         handleRouteToTeam(report.id, team.id);
                                       }}
-                                      className="flex items-center gap-2 px-2 py-3 text-left text-[12px] text-zinc-300 hover:bg-white/[0.06] hover:text-white rounded transition-colors min-h-[44px] lg:py-1.5 lg:min-h-0"
+                                      className="flex items-center gap-2 px-2 py-3 text-left text-[12px] text-white hover:bg-white/[0.06] hover:text-white rounded transition-colors min-h-[44px] lg:py-1.5 lg:min-h-0"
                                     >
                                       <span
                                         className="h-2 w-2 shrink-0 rounded-full"
@@ -697,7 +695,7 @@ export function FullscreenMapOrchestrator({
                                         {team.shortLabel}
                                       </span>
                                       {isOwner && (
-                                        <span className="text-[10px] text-[#0a84ff] uppercase tracking-wide">
+                                        <span className="text-[10px] text-[#4da6ff] uppercase tracking-wide">
                                           Default
                                         </span>
                                       )}
@@ -777,12 +775,12 @@ export function FullscreenMapOrchestrator({
       <button
         type="button"
         onClick={() => setIsDispatchSheetOpen(true)}
-        className="lg:hidden absolute bottom-[calc(env(safe-area-inset-bottom,0px)+3.5rem)] left-4 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-[#1c1c1e] border border-white/[0.12] text-white shadow-lg active:scale-95 transition-transform pointer-events-auto"
+        className="lg:hidden absolute bottom-[calc(env(safe-area-inset-bottom,0px)+3.5rem)] left-4 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-[#2e2e33] text-white shadow-lg active:scale-95 transition-transform pointer-events-auto"
         aria-label="Open dispatch panel"
       >
         <ListFilter className="h-5 w-5" strokeWidth={1.75} />
         {filteredReports.length > 0 && (
-          <span className="absolute -top-1 -right-1 h-4 min-w-[1rem] rounded-full bg-[#0a84ff] text-white text-[9px] font-bold flex items-center justify-center px-0.5 tabular-nums">
+          <span className="absolute -top-1 -right-1 h-4 min-w-[1rem] rounded-full bg-[#2a9dff] text-white text-[9px] font-bold flex items-center justify-center px-0.5 tabular-nums">
             {filteredReports.length > 99 ? "99+" : filteredReports.length}
           </span>
         )}
@@ -793,40 +791,34 @@ export function FullscreenMapOrchestrator({
         open={isDispatchSheetOpen}
         onClose={() => setIsDispatchSheetOpen(false)}
         title={`${readOnly ? "Nearby" : lockedTeam ? "Reports" : "Dispatch"} · ${filteredReports.length} reports`}
-        className="bg-[#0a0a0b] text-white border-t border-white/[0.08]"
+        className="bg-[#2e2e33] text-white"
       >
         {dispatchPanelContent}
       </BottomSheet>
 
-      {/* Desktop side panel — Dispatch (hidden on mobile) */}
-      <LiquidGlassCard
-        className="hidden lg:flex absolute top-16 left-4 bottom-4 w-[280px] pointer-events-auto z-10 overflow-hidden"
+      {/* Desktop side panel — Dispatch (hidden on mobile). Solid dark-grey
+          surface — no liquid glass, no border. Soft shadow lifts it off the map. */}
+      <div
+        className="hidden lg:flex flex-col absolute top-16 left-4 bottom-4 w-[280px] pointer-events-auto z-10 overflow-hidden rounded-[20px] bg-[#2e2e33] p-4 text-white shadow-[0_8px_40px_rgba(0,0,0,0.45)]"
         style={
           reducedMotion
             ? undefined
             : { animation: "fmPanelIn 300ms cubic-bezier(0.16,1,0.3,1)" }
         }
-        contentClassName={`${
-          isLightBasemap ? "bg-black/55" : "bg-black/10"
-        } p-4 text-white flex flex-col overflow-hidden`}
-        borderRadius="20px"
-        blurIntensity="xl"
-        shadowIntensity="none"
-        glowIntensity="xs"
       >
         {/* Panel header */}
         <div className="flex items-center justify-between shrink-0 mb-3">
           <h2 className="text-[15px] font-semibold text-white">
             {readOnly ? "Nearby" : lockedTeam ? "Reports" : "Dispatch"}
           </h2>
-          <span className="text-[13px] text-zinc-300 tabular-nums">
+          <span className="text-[13px] text-white tabular-nums">
             {filteredReports.length} reports
           </span>
         </div>
 
         {/* Shared dispatch content — same content as mobile bottom-sheet */}
         <div className="flex-1 overflow-hidden">{dispatchPanelContent}</div>
-      </LiquidGlassCard>
+      </div>
     </div>
   );
 }

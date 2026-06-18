@@ -22,22 +22,22 @@ function CategoryChartInner({
   // zero in the bar-width math below.
   const maxCount = Math.max(1, ...data.map((d) => d.count));
 
-  const panelClass = "rounded-xl bg-[#1c1c1e] border border-white/[0.06]";
+  const panelClass = "rounded-xl bg-surface border border-hairline";
 
   if (data.length === 0) {
     return (
       <div className={`${panelClass} p-5`}>
-        <h2 className="text-[15px] font-semibold text-white">Categories</h2>
+        <h2 className="text-[15px] font-semibold text-foreground">
+          Categories
+        </h2>
         <div className="flex flex-col items-center justify-center py-10 text-center">
           <BarChart2
-            className="h-8 w-8 text-zinc-700"
+            className="h-8 w-8 text-faint"
             strokeWidth={1.5}
             aria-hidden
           />
-          <p className="mt-3 text-sm text-zinc-400">No data yet.</p>
-          <p className="mt-1 text-[13px] text-zinc-500">
-            Try adjusting filters.
-          </p>
+          <p className="mt-3 text-sm text-subtle">No data yet.</p>
+          <p className="mt-1 text-[13px] text-faint">Try adjusting filters.</p>
         </div>
       </div>
     );
@@ -47,13 +47,15 @@ function CategoryChartInner({
     <section
       className={`${panelClass} p-4 sm:p-5 flex flex-col h-full max-h-[60vh] sm:max-h-[480px]`}
     >
-      <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
-        <h2 className="text-[15px] font-semibold text-white">Categories</h2>
+      <div className="flex items-center justify-between pb-4 border-b border-hairline">
+        <h2 className="text-[15px] font-semibold text-foreground">
+          Categories
+        </h2>
         {selectedCategory && onSelectCategory && (
           <button
             type="button"
             onClick={() => onSelectCategory(null)}
-            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 min-h-11 text-[13px] text-zinc-400 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 min-h-11 text-[13px] text-subtle hover:text-foreground transition-colors"
           >
             <X className="h-3 w-3" strokeWidth={2} />
             Clear
@@ -79,7 +81,7 @@ function CategoryChartInner({
               className={cn(
                 "w-full text-left px-2 py-2.5 sm:py-2 min-h-11 rounded-md transition-[background-color,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-pointer",
                 "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1c1c1e]",
-                isSelected ? "bg-white/[0.06]" : "hover:bg-white/[0.03]",
+                isSelected ? "bg-overlay-strong" : "hover:bg-overlay",
                 isDimmed ? "opacity-40" : "opacity-100",
               )}
             >
@@ -87,7 +89,7 @@ function CategoryChartInner({
                 <span
                   className={cn(
                     "inline-flex items-center gap-2 truncate",
-                    isSelected ? "text-white" : "text-zinc-300",
+                    isSelected ? "text-foreground" : "text-subtle",
                   )}
                 >
                   <span
@@ -97,11 +99,11 @@ function CategoryChartInner({
                   />
                   <span className="truncate">{meta.label}</span>
                 </span>
-                <span className="tabular-nums text-zinc-500 flex-shrink-0 pl-2">
+                <span className="tabular-nums text-faint flex-shrink-0 pl-2">
                   {count}
                 </span>
               </div>
-              <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/[0.04]">
+              <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-overlay">
                 {/* biome-ignore lint/a11y/useSemanticElements: role="meter" intentional — native <meter> renders a UA-styled gauge that cannot reproduce this custom gradient progress bar */}
                 <div
                   className="h-full rounded-full transition-all duration-500"

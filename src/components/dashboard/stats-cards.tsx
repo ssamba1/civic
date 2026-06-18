@@ -16,9 +16,9 @@ interface CardDef {
 
 // 2-col mobile grid → 4-col desktop row. Hairline dividers between cells.
 const BORDER_CLASSES = [
-  "border-r border-b lg:border-b-0 border-white/[0.06]",
-  "border-b lg:border-b-0 lg:border-r border-white/[0.06]",
-  "border-r border-white/[0.06]",
+  "border-r border-b lg:border-b-0 border-hairline",
+  "border-b lg:border-b-0 lg:border-r border-hairline",
+  "border-r border-hairline",
   "",
 ];
 
@@ -68,7 +68,7 @@ function StatsCardsInner({ stats }: StatsCardsProps) {
   ];
 
   return (
-    <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-[#1c1c1e] shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
+    <div className="overflow-hidden rounded-xl border border-hairline bg-surface shadow-[var(--shadow-card)]">
       <style>{`
 @keyframes stat-roll{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .stat-val{animation:stat-roll 260ms cubic-bezier(0.22,1,0.36,1) both}
@@ -79,12 +79,12 @@ function StatsCardsInner({ stats }: StatsCardsProps) {
           <div
             key={card.label}
             className={cn(
-              "px-4 py-4 sm:px-5 sm:py-5 transition-colors hover:bg-white/[0.02]",
+              "px-4 py-4 sm:px-5 sm:py-5 transition-colors hover:bg-overlay",
               BORDER_CLASSES[idx],
             )}
           >
             <div className="flex items-center justify-between gap-2 mb-2.5">
-              <span className="text-[11px] font-medium uppercase tracking-[0.07em] text-zinc-500 leading-none">
+              <span className="text-[11px] font-medium uppercase tracking-[0.07em] text-faint leading-none">
                 {card.label}
               </span>
               {card.trend && (

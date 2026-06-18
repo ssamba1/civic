@@ -20,12 +20,12 @@ export default function CityDashboardLoading() {
               <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5">
                 <div className="skeleton h-4 w-24 rounded-md" />
                 <span
-                  className="h-3 w-px bg-white/[0.08] hidden sm:block"
+                  className="h-3 w-px bg-overlay-strong hidden sm:block"
                   aria-hidden="true"
                 />
                 <div className="skeleton h-4 w-16 rounded-md" />
                 <span
-                  className="h-3 w-px bg-white/[0.08] hidden sm:block"
+                  className="h-3 w-px bg-overlay-strong hidden sm:block"
                   aria-hidden="true"
                 />
                 <div className="skeleton h-4 w-20 rounded-md" />
@@ -45,7 +45,7 @@ export default function CityDashboardLoading() {
           {["t1", "t2", "t3", "t4", "t5", "t6"].map((k) => (
             <div
               key={k}
-              className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6"
+              className="rounded-2xl border border-hairline bg-overlay p-6"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="skeleton h-5 w-32 rounded-md" />

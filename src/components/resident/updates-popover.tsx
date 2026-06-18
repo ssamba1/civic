@@ -45,7 +45,7 @@ const STATUS_TONE: Record<string, string> = {
   dispatched: "text-[#0a84ff] bg-[#0a84ff]/10",
   in_progress: "text-[#5ac8fa] bg-[#5ac8fa]/10",
   closed: "text-[#30d158] bg-[#30d158]/10",
-  merged: "text-zinc-400 bg-white/[0.06]",
+  merged: "text-subtle bg-overlay-strong",
   rejected: "text-[#ff453a] bg-[#ff453a]/10",
 };
 
@@ -218,8 +218,8 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
           "transition-colors duration-150 outline-none",
           "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
           active || open
-            ? "bg-white/[0.09] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-            : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-100",
+            ? "bg-overlay-strong text-foreground shadow-[inset_0_0_0_1px_var(--hairline)]"
+            : "text-subtle hover:bg-overlay hover:text-foreground",
         )}
       >
         <span className="relative inline-flex">
@@ -228,7 +228,7 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
               "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
               active || open
                 ? "text-[#0a84ff]"
-                : "text-zinc-500 group-hover:text-zinc-300",
+                : "text-faint group-hover:text-subtle",
             )}
             strokeWidth={2}
             aria-hidden="true"
@@ -283,8 +283,8 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
             // hidden below sm, present on sm+
             "hidden sm:block",
             "fixed right-3 sm:right-6 top-[60px] z-50 w-[min(420px,calc(100vw-1.5rem))]",
-            "rounded-[14px] border border-white/[0.06] bg-[#1c1c1e]/95 backdrop-blur-xl",
-            "shadow-[0_24px_60px_rgba(0,0,0,0.55)]",
+            "rounded-[14px] border border-hairline bg-glass backdrop-blur-xl",
+            "shadow-[var(--shadow-pop)]",
             "duration-150",
             "data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-top-1",
             "data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:slide-out-to-top-1",
@@ -337,9 +337,9 @@ function UpdatesFeedHeader({
 }) {
   return (
     <>
-      <header className="flex items-center justify-between gap-3 border-b border-white/[0.06] px-4 py-3">
+      <header className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-3">
         <div className="flex items-center gap-2.5">
-          <p className="text-[14px] font-semibold tracking-tight text-white">
+          <p className="text-[14px] font-semibold tracking-tight text-foreground">
             Updates
           </p>
           {unreadCount > 0 && (
@@ -352,7 +352,7 @@ function UpdatesFeedHeader({
           type="button"
           onClick={onClose}
           aria-label="Close updates"
-          className="rounded-md p-1 text-zinc-500 transition-colors hover:bg-white/[0.04] hover:text-zinc-200"
+          className="rounded-md p-1 text-faint transition-colors hover:bg-overlay hover:text-foreground"
         >
           <X className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
         </button>
@@ -371,7 +371,7 @@ function UpdatesFeedHeader({
           className={cn(
             "text-[12px] transition-colors",
             unreadCount === 0
-              ? "cursor-default text-zinc-600"
+              ? "cursor-default text-faint"
               : "text-[#0a84ff] hover:text-[#3b9dff]",
           )}
         >
@@ -401,7 +401,7 @@ function UpdatesFeedBody({
 }) {
   if (loading && items === null) {
     return (
-      <div className="flex items-center justify-center gap-2 px-4 py-10 text-[13px] text-zinc-500">
+      <div className="flex items-center justify-center gap-2 px-4 py-10 text-[13px] text-faint">
         <Loader2
           className="h-3.5 w-3.5 animate-spin"
           strokeWidth={2}
@@ -413,14 +413,14 @@ function UpdatesFeedBody({
   }
   if (error) {
     return (
-      <div className="px-4 py-8 text-center text-[13px] text-zinc-500">
+      <div className="px-4 py-8 text-center text-[13px] text-faint">
         {error}
       </div>
     );
   }
   if (visible.length === 0) {
     return (
-      <div className="px-4 py-10 text-center text-[13px] text-zinc-500">
+      <div className="px-4 py-10 text-center text-[13px] text-faint">
         {filter === "unread"
           ? "You're all caught up."
           : "No updates yet — file a report to start tracking it here."}
@@ -428,7 +428,7 @@ function UpdatesFeedBody({
     );
   }
   return (
-    <ul className="custom-scrollbar max-h-[60vh] overflow-y-auto divide-y divide-white/[0.06]">
+    <ul className="custom-scrollbar max-h-[60vh] overflow-y-auto divide-y divide-hairline">
       {visible.map((item) => {
         const meta = TYPE_META[item.type];
         const Icon = meta.icon;
@@ -442,7 +442,7 @@ function UpdatesFeedBody({
               className={cn(
                 "flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors",
                 !read && "bg-[#0a84ff]/[0.04]",
-                "hover:bg-white/[0.03]",
+                "hover:bg-overlay",
               )}
             >
               <span
@@ -458,14 +458,14 @@ function UpdatesFeedBody({
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between gap-3">
-                  <p className="truncate text-[14px] font-medium text-white">
+                  <p className="truncate text-[14px] font-medium text-foreground">
                     {item.title}
                   </p>
-                  <span className="flex-shrink-0 text-[12px] tabular-nums text-zinc-500">
+                  <span className="flex-shrink-0 text-[12px] tabular-nums text-faint">
                     {timeAgo(item.at)}
                   </span>
                 </div>
-                <p className="mt-0.5 line-clamp-2 text-[13px] leading-relaxed text-zinc-400">
+                <p className="mt-0.5 line-clamp-2 text-[13px] leading-relaxed text-subtle">
                   {item.body}
                 </p>
               </div>
@@ -542,7 +542,7 @@ function MobileUpdatesSheet({
     <BottomSheet open={open} onClose={onClose} title="Updates">
       <div className="-mx-5">
         {/* Reuse the filter bar (without the close button — sheet header handles it) */}
-        <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-white/[0.06]">
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-hairline">
           <PillGroup
             options={FILTER_OPTIONS}
             value={filter}
@@ -555,7 +555,7 @@ function MobileUpdatesSheet({
             className={cn(
               "min-h-[44px] px-2 text-[12px] transition-colors",
               unreadCount === 0
-                ? "cursor-default text-zinc-600"
+                ? "cursor-default text-faint"
                 : "text-[#0a84ff] hover:text-[#3b9dff]",
             )}
           >
@@ -621,7 +621,7 @@ function DetailModal({
           // sm+: centered card with full rounded corners, max-w-lg.
           "relative w-full max-w-[min(100%,32rem)] overflow-hidden",
           "rounded-t-[20px] sm:rounded-[16px]",
-          "border border-white/[0.08] bg-[#1c1c1e] shadow-[0_30px_80px_rgba(0,0,0,0.65)]",
+          "border border-hairline-strong bg-surface shadow-[0_30px_80px_rgba(0,0,0,0.65)]",
           "duration-150",
           "data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-bottom-4 sm:data-[state=open]:zoom-in-95",
           "data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:slide-out-to-bottom-4 sm:data-[state=closed]:zoom-out-95",
@@ -633,7 +633,7 @@ function DetailModal({
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="absolute right-3 top-3 z-10 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+          className="absolute right-3 top-3 z-10 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-subtle transition-colors hover:bg-overlay-strong hover:text-foreground"
         >
           <X className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         </button>
@@ -665,23 +665,23 @@ function DetailModal({
                 aria-hidden="true"
               />
             </span>
-            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-zinc-500">
+            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-faint">
               {meta.label}
             </span>
-            <span className="ml-auto text-[12px] tabular-nums text-zinc-500">
+            <span className="ml-auto text-[12px] tabular-nums text-faint">
               {timeAgo(item.at)}
             </span>
           </div>
 
-          <h2 className="mt-3 text-[20px] font-semibold tracking-tight text-white leading-snug">
+          <h2 className="mt-3 text-[20px] font-semibold tracking-tight text-foreground leading-snug">
             {item.title}
           </h2>
-          <p className="mt-2 text-[14px] leading-relaxed text-zinc-300">
+          <p className="mt-2 text-[14px] leading-relaxed text-subtle">
             {item.body}
           </p>
 
           {snap && (
-            <div className="mt-4 rounded-[12px] border border-white/[0.06] bg-black/30 p-4">
+            <div className="mt-4 rounded-[12px] border border-hairline bg-overlay p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2">
                   <span
@@ -689,23 +689,23 @@ function DetailModal({
                     style={{ backgroundColor: snap.categoryColor }}
                     aria-hidden="true"
                   />
-                  <p className="truncate text-[14px] font-medium text-white">
+                  <p className="truncate text-[14px] font-medium text-foreground">
                     {snap.categoryLabel}
                   </p>
                 </div>
                 <span
                   className={cn(
                     "flex-shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium",
-                    STATUS_TONE[snap.status] ?? "text-zinc-400 bg-white/[0.06]",
+                    STATUS_TONE[snap.status] ?? "text-subtle bg-overlay-strong",
                   )}
                 >
                   {snap.statusLabel}
                 </span>
               </div>
-              <dl className="mt-3 space-y-1.5 text-[12.5px] text-zinc-400">
+              <dl className="mt-3 space-y-1.5 text-[12.5px] text-subtle">
                 <div className="flex items-start gap-2">
                   <MapPin
-                    className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-zinc-500"
+                    className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-faint"
                     strokeWidth={1.75}
                     aria-hidden="true"
                   />
@@ -713,7 +713,7 @@ function DetailModal({
                 </div>
                 <div className="flex items-start gap-2">
                   <Clock
-                    className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-zinc-500"
+                    className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-faint"
                     strokeWidth={1.75}
                     aria-hidden="true"
                   />
@@ -735,7 +735,7 @@ function DetailModal({
             <button
               type="button"
               onClick={onClose}
-              className="min-h-[44px] rounded-md px-3 py-1.5 text-[13px] font-medium text-zinc-300 transition-colors hover:bg-white/[0.04] hover:text-white"
+              className="min-h-[44px] rounded-md px-3 py-1.5 text-[13px] font-medium text-subtle transition-colors hover:bg-overlay hover:text-foreground"
             >
               Close
             </button>

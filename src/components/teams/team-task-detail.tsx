@@ -37,7 +37,7 @@ const STATUS_TONE: Record<ReportStatus, string> = {
   dispatched: "text-[#0a84ff] bg-[#0a84ff]/10",
   in_progress: "text-[#5ac8fa] bg-[#5ac8fa]/10",
   closed: "text-[#30d158] bg-[#30d158]/10",
-  merged: "text-zinc-400 bg-white/[0.06]",
+  merged: "text-subtle bg-overlay-strong",
   rejected: "text-[#ff453a] bg-[#ff453a]/10",
 };
 
@@ -51,7 +51,7 @@ function DetailTitle({ report }: { report: DashboardReport }) {
         style={{ backgroundColor: meta.color }}
         aria-hidden
       />
-      <h2 className="truncate text-[15px] font-semibold text-white">
+      <h2 className="truncate text-[15px] font-semibold text-foreground">
         {meta.label}
       </h2>
       <span
@@ -111,7 +111,7 @@ export function TeamTaskDetail({ report, open, onClose }: TeamTaskDetailProps) {
         aria-modal="true"
         aria-label={`${CATEGORY_META[report.category].label} task`}
         className={cn(
-          "relative flex w-full flex-col overflow-y-auto border-white/[0.06] bg-[#101012] text-zinc-100 shadow-[0_8px_60px_rgba(0,0,0,0.6)] custom-scrollbar pb-safe",
+          "relative flex w-full flex-col overflow-y-auto border-hairline bg-surface text-foreground shadow-[0_8px_60px_rgba(0,0,0,0.6)] custom-scrollbar pb-safe",
           // Mobile: bottom sheet. sm+: right drawer.
           "mt-auto max-h-[88dvh] rounded-t-2xl border-t",
           "sm:mt-0 sm:ml-auto sm:h-full sm:max-h-none sm:w-[min(92vw,440px)] sm:rounded-none sm:rounded-l-2xl sm:border-l sm:border-t-0",
@@ -119,13 +119,13 @@ export function TeamTaskDetail({ report, open, onClose }: TeamTaskDetailProps) {
         )}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/[0.06] bg-[#101012]/90 px-4 py-3 backdrop-blur-md">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-hairline bg-glass px-4 py-3 backdrop-blur-md">
           <DetailTitle report={report} />
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="-mr-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+            className="-mr-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-subtle transition-colors hover:bg-overlay-strong hover:text-foreground"
           >
             <X className="h-5 w-5" />
           </button>
@@ -158,14 +158,14 @@ export function TaskDetailPane({ report, onClose }: TaskDetailPaneProps) {
   }, [onClose]);
 
   return (
-    <div className="sticky top-20 max-h-[calc(100dvh-6rem)] overflow-y-auto rounded-2xl border border-white/[0.06] bg-[#101012] text-zinc-100 shadow-[0_8px_40px_rgba(0,0,0,0.35)] custom-scrollbar motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-2 motion-safe:duration-200">
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/[0.06] bg-[#101012]/90 px-4 py-3 backdrop-blur-md">
+    <div className="sticky top-20 max-h-[calc(100dvh-6rem)] overflow-y-auto rounded-2xl border border-hairline bg-surface text-foreground shadow-[0_8px_40px_rgba(0,0,0,0.35)] custom-scrollbar motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-2 motion-safe:duration-200">
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-hairline bg-glass px-4 py-3 backdrop-blur-md">
         <DetailTitle report={report} />
         <button
           type="button"
           onClick={onClose}
           aria-label="Close detail"
-          className="-mr-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+          className="-mr-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-subtle transition-colors hover:bg-overlay-strong hover:text-foreground"
         >
           <X className="h-5 w-5" />
         </button>
@@ -221,16 +221,16 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
   return (
     <div className="flex flex-col gap-5 px-4 py-4">
       {/* Meta */}
-      <div className="flex flex-col gap-1.5 text-[13px] text-zinc-400">
+      <div className="flex flex-col gap-1.5 text-[13px] text-subtle">
         <a
           href={`https://www.google.com/maps/search/?api=1&query=${report.location.lat},${report.location.lng}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="group inline-flex items-center gap-2 transition-colors hover:text-white"
+          className="group inline-flex items-center gap-2 transition-colors hover:text-foreground"
           title="Open in Google Maps"
         >
           <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-          <span className="text-zinc-200 underline-offset-2 group-hover:underline">
+          <span className="text-foreground underline-offset-2 group-hover:underline">
             {report.address}
           </span>
         </a>
@@ -251,7 +251,7 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
       </div>
 
       {report.ai_reasoning && (
-        <p className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3 text-[13px] leading-relaxed text-zinc-300">
+        <p className="rounded-lg border border-hairline bg-overlay p-3 text-[13px] leading-relaxed text-subtle">
           {report.ai_reasoning}
         </p>
       )}
@@ -276,7 +276,7 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
         <button
           type="button"
           onClick={handleReopen}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.03] px-5 text-[14px] font-medium text-zinc-200 transition-colors hover:bg-white/[0.06]"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-hairline bg-overlay px-5 text-[14px] font-medium text-foreground transition-colors hover:bg-overlay-strong"
         >
           <RotateCcw className="h-4 w-4" />
           Reopen task
@@ -288,7 +288,7 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
               "inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-dashed px-5 text-[14px] font-medium transition-colors",
               pendingPhoto
                 ? "border-[#30d158]/40 bg-[#30d158]/10 text-[#30d158] hover:bg-[#30d158]/15"
-                : "border-white/[0.14] bg-white/[0.03] text-zinc-200 hover:border-[#0a84ff]/50 hover:bg-[#0a84ff]/10",
+                : "border-hairline-strong bg-overlay text-foreground hover:border-[#0a84ff]/50 hover:bg-[#0a84ff]/10",
             )}
           >
             {busy ? (
@@ -320,7 +320,7 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
             <CheckCircle2 className="h-4 w-4" />
             Mark done
           </button>
-          <p className="text-center text-[12px] text-zinc-500">
+          <p className="text-center text-[12px] text-faint">
             Photo optional — adds a before/after record.
           </p>
         </div>
@@ -344,7 +344,7 @@ function PhotoBlock({
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between">
-        <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500">
+        <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-faint">
           {label}
         </span>
         {pending && (
@@ -355,8 +355,8 @@ function PhotoBlock({
       </div>
       <div
         className={cn(
-          "relative aspect-video w-full overflow-hidden rounded-lg border bg-[#0a0a0b]",
-          accent ? "border-[#30d158]/30" : "border-white/[0.06]",
+          "relative aspect-video w-full overflow-hidden rounded-lg border bg-surface",
+          accent ? "border-[#30d158]/30" : "border-hairline",
         )}
       >
         {/* Data URLs (after-photo) and remote seed photos differ; next/image
