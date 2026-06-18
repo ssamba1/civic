@@ -1,6 +1,6 @@
 -- =============================================================================
 -- Civic – City Onboarding
--- Migration: 20260618_015_city_onboarding.sql
+-- Migration: 20260618_019_city_onboarding.sql
 --
 -- Adds the schema needed for self-serve city onboarding:
 --   * cities.center      – geocoded center point (map centering; boundary deferred)

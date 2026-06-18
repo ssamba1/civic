@@ -104,7 +104,7 @@ This makes the routing step genuinely real via a small additive change to the in
 **Built on branch `feat/city-onboarding`.** Verified: `tsc --noEmit` ✓, `biome lint` ✓, `next build` ✓.
 
 Files:
-- `supabase/migrations/20260618_015_city_onboarding.sql` — `city_teams` table; `users.team_key` + `users.is_shared`; `cities.center` + `cities.created_by`; RLS select policy. **Must be applied** (`npm run db:migrate` / `supabase db push`) before the feature works against a real DB.
+- `supabase/migrations/20260618_019_city_onboarding.sql` — `city_teams` table; `users.team_key` + `users.is_shared`; `cities.center` + `cities.created_by`; RLS select policy. **Must be applied** (`npm run db:migrate` / `supabase db push`) before the feature works against a real DB.
 - `src/lib/onboarding/{types,presets,city-teams}.ts` — data contract, team presets + routing helpers, per-city team reader.
 - `src/app/onboard/actions.ts` — `geocodeCity` (Nominatim) + `provisionCity` (service-role, saga-style compensation).
 - `src/app/onboard/{page.tsx,onboard-wizard.tsx}` — auth-gated 6-step wizard + result screen (CSV export).
