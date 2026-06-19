@@ -50,6 +50,87 @@ export const fetchCity = cache(
     }),
 );
 
+// Cross-request, in-process memo of resolved centers (keyed by slug). Until
+// migration 020 is applied the city_center RPC 404s and every map SSR falls to
+// a live geocode; this cache collapses repeat renders of the same city on a warm
+// instance to a single Nominatim hit, easing the public endpoint's rate limit.
+// Serverless cold starts reset it (low downside); applying the migration removes
+// the geocode path entirely.
+const _centerCache = new Map<string, [number, number]>();
+
+/**
+ * Resolve a city's map center as [lng, lat]. Tries the stored geocoded point
+ * first (city_center RPC, migration 020); if that's unavailable — the migration
+ * isn't applied yet, or the city has no stored center — falls back to a live
+ * name/state geocode (memoized per slug above). Returns null only when both
+ * fail, leaving the caller to use its own default.
+ */
+export const fetchCityCenter = cache(
+  async (
+    slug: string,
+    name: string,
+    state: string,
+  ): Promise<[number, number] | null> =>
+    safeQuery("fetchCityCenter", null as [number, number] | null, async () => {
+      const cached = _centerCache.get(slug);
+      if (cached) return cached;
+
+      const db = createServerClient();
+      const { data, error } = await db
+        .rpc("city_center", { _slug: slug })
+        .maybeSingle<{ lng: number; lat: number }>();
+      // Distinguish "row of nulls" from a real point: Number(null) === 0 would
+      // otherwise pass isFinite and center the map on null island [0,0].
+      if (!error && data?.lng != null && data?.lat != null) {
+        const lng = Number(data.lng);
+        const lat = Number(data.lat);
+        if (Number.isFinite(lng) && Number.isFinite(lat)) {
+          const point: [number, number] = [lng, lat];
+          _centerCache.set(slug, point);
+          return point;
+        }
+      }
+      // RPC missing (migration unapplied) or no stored point → live geocode.
+      const geocoded = await geocodeByName(name, state);
+      if (geocoded) _centerCache.set(slug, geocoded);
+      return geocoded;
+    }),
+);
+
+/** Last-resort center lookup: geocode "Name, State, USA" via Nominatim. */
+async function geocodeByName(
+  name: string,
+  state: string,
+): Promise<[number, number] | null> {
+  // Guard on real inputs (an empty name/state would geocode the country centroid).
+  if (!name.trim() || !state.trim()) return null;
+  const q = `${name.trim()}, ${state.trim()}, USA`;
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=${encodeURIComponent(q)}`,
+      {
+        headers: {
+          // Nominatim requires an identifying User-Agent.
+          "User-Agent":
+            "civic-app/1.0 (+https://civic-social-impact.vercel.app)",
+          Accept: "application/json",
+        },
+        cache: "no-store",
+      },
+    );
+    if (!res.ok) return null;
+    const rows = (await res.json()) as Array<{ lat?: string; lon?: string }>;
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    const lat = Number(rows[0].lat);
+    const lng = Number(rows[0].lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    return [lng, lat];
+  } catch (err) {
+    log.error("geocodeByName failed", err);
+    return null;
+  }
+}
+
 const EMPTY_STATS: CityStats = {
   total: 0,
   open: 0,

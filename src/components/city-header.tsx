@@ -9,9 +9,13 @@ import { cn } from "@/lib/utils/cn";
 
 interface CityHeaderProps {
   slug: string;
+  /** Real city identity (DB-resolved) so onboarded cities not in the hardcoded
+   *  municipality list still render their own name in the switcher. */
+  cityName?: string | null;
+  cityState?: string | null;
 }
 
-export function CityHeader({ slug }: CityHeaderProps) {
+export function CityHeader({ slug, cityName, cityState }: CityHeaderProps) {
   const pathname = usePathname();
   // On the fullscreen map, drop the black casing so the map reads edge-to-edge.
   const transparent = pathname?.endsWith("/map") ?? false;
@@ -40,7 +44,13 @@ export function CityHeader({ slug }: CityHeaderProps) {
               />
               Civic
             </Link>
-            <CitySwitcher currentSlug={slug} compact className="min-w-0" />
+            <CitySwitcher
+              currentSlug={slug}
+              currentName={cityName}
+              currentState={cityState}
+              compact
+              className="min-w-0"
+            />
           </div>
           {/* Action buttons — mobile only slot */}
           <div className="flex shrink-0 items-center gap-2">
@@ -67,7 +77,13 @@ export function CityHeader({ slug }: CityHeaderProps) {
             />
             Civic
           </Link>
-          <CitySwitcher currentSlug={slug} compact className="min-w-0" />
+          <CitySwitcher
+            currentSlug={slug}
+            currentName={cityName}
+            currentState={cityState}
+            compact
+            className="min-w-0"
+          />
         </div>
         <div className="flex min-w-0 items-center gap-2">
           <CityNav slug={slug} />

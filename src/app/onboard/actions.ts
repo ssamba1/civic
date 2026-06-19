@@ -6,7 +6,7 @@ import { getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
 import { slugify } from "@/lib/onboarding/presets";
 import type {
-  GeocodeResult,
+  CitySuggestion,
   OnboardCityInput,
   ProvisionedAccount,
   ProvisionResult,
@@ -18,48 +18,148 @@ const logger = createLogger("[onboard]");
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const SLUG_RE = /^[a-z0-9-]+$/;
 
+// Nominatim returns full state names ("Georgia"); ship-with cities store USPS
+// abbreviations ("GA"). Normalize on ingest so every city — onboarded or
+// shipped — displays consistently (e.g. "Atlanta, GA", not "Atlanta, Georgia").
+const US_STATE_ABBR: Record<string, string> = {
+  alabama: "AL",
+  alaska: "AK",
+  arizona: "AZ",
+  arkansas: "AR",
+  california: "CA",
+  colorado: "CO",
+  connecticut: "CT",
+  delaware: "DE",
+  "district of columbia": "DC",
+  florida: "FL",
+  georgia: "GA",
+  hawaii: "HI",
+  idaho: "ID",
+  illinois: "IL",
+  indiana: "IN",
+  iowa: "IA",
+  kansas: "KS",
+  kentucky: "KY",
+  louisiana: "LA",
+  maine: "ME",
+  maryland: "MD",
+  massachusetts: "MA",
+  michigan: "MI",
+  minnesota: "MN",
+  mississippi: "MS",
+  missouri: "MO",
+  montana: "MT",
+  nebraska: "NE",
+  nevada: "NV",
+  "new hampshire": "NH",
+  "new jersey": "NJ",
+  "new mexico": "NM",
+  "new york": "NY",
+  "north carolina": "NC",
+  "north dakota": "ND",
+  ohio: "OH",
+  oklahoma: "OK",
+  oregon: "OR",
+  pennsylvania: "PA",
+  "rhode island": "RI",
+  "south carolina": "SC",
+  "south dakota": "SD",
+  tennessee: "TN",
+  texas: "TX",
+  utah: "UT",
+  vermont: "VT",
+  virginia: "VA",
+  washington: "WA",
+  "west virginia": "WV",
+  wisconsin: "WI",
+  wyoming: "WY",
+  "puerto rico": "PR",
+  guam: "GU",
+  "u.s. virgin islands": "VI",
+  "united states virgin islands": "VI",
+  "american samoa": "AS",
+  "northern mariana islands": "MP",
+};
+
+/** Map a Nominatim state string to its USPS abbreviation; pass through if unknown. */
+function toStateAbbr(state: string): string {
+  return US_STATE_ABBR[state.trim().toLowerCase()] ?? state.trim();
+}
+
 function genPassword(): string {
   // base64url is URL-safe and contains no ambiguous quoting chars.
   return randomBytes(12).toString("base64url");
 }
 
 /**
- * Geocode "City, State" to a center point via OpenStreetMap Nominatim.
- * Free, no API key. Returns null on any failure — geography is deferred,
- * so onboarding never blocks on this.
+ * Search US localities by free-text query via OpenStreetMap Nominatim and
+ * return up to 6 ranked suggestions. Each suggestion carries its own center
+ * point, so the onboarding wizard sets the map center directly from the
+ * selection and never needs a second geocode round-trip.
+ *
+ * Free, no API key. Returns [] on any failure — search is best-effort and
+ * never blocks onboarding. The client debounces keystrokes and drops stale
+ * responses, which cuts per-client volume; note that OSM's public endpoint
+ * rate-limits autocomplete (≤1 req/s aggregate, single egress IP here), so a
+ * dedicated geocoder or self-hosted Nominatim is the right move at real scale.
  */
-export async function geocodeCity(
-  name: string,
-  state: string,
-): Promise<GeocodeResult | null> {
-  const q = `${name.trim()}, ${state.trim()}, USA`;
+export async function searchCities(query: string): Promise<CitySuggestion[]> {
+  const q = query.trim();
+  // Below 3 chars the result set is too broad to be a useful locality match.
+  if (q.length < 3) return [];
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`,
+      `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&countrycodes=us&q=${encodeURIComponent(q)}`,
       {
         headers: {
           // Nominatim requires an identifying User-Agent.
-          "User-Agent": "civic-app-onboarding/1.0 (+https://civic.app)",
+          "User-Agent":
+            "civic-app/1.0 (+https://civic-social-impact.vercel.app)",
           Accept: "application/json",
         },
         cache: "no-store",
       },
     );
-    if (!res.ok) return null;
+    if (!res.ok) return [];
     const data = (await res.json()) as Array<{
       lat?: string;
       lon?: string;
       display_name?: string;
+      address?: Record<string, string | undefined>;
     }>;
-    if (!Array.isArray(data) || data.length === 0) return null;
-    const top = data[0];
-    const lat = Number(top.lat);
-    const lng = Number(top.lon);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-    return { lat, lng, displayName: String(top.display_name ?? q) };
+    if (!Array.isArray(data)) return [];
+
+    const seen = new Set<string>();
+    const out: CitySuggestion[] = [];
+    for (const row of data) {
+      const a = row.address ?? {};
+      // Prefer the most specific locality type, fall back to county.
+      const name =
+        a.city ?? a.town ?? a.village ?? a.municipality ?? a.hamlet ?? a.county;
+      const state = a.state;
+      const lat = Number(row.lat);
+      const lng = Number(row.lon);
+      // Skip rows with no resolvable locality/state or invalid coordinates,
+      // rather than surfacing a raw display_name the wizard can't structure.
+      if (!name || !state || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+        continue;
+      }
+      const abbr = toStateAbbr(state);
+      const key = `${name.toLowerCase()}|${abbr.toLowerCase()}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        name,
+        state: abbr,
+        lat,
+        lng,
+        displayName: String(row.display_name ?? `${name}, ${abbr}`),
+      });
+    }
+    return out;
   } catch (err) {
-    logger.error("geocode failed", err);
-    return null;
+    logger.error("city search failed", err);
+    return [];
   }
 }
 
@@ -96,14 +196,19 @@ export async function provisionCity(
   const state = input.city.state?.trim();
   let slug = (input.city.slug || "").trim().toLowerCase();
   if (!name || !state) {
-    return { ok: false, accounts: [], error: "City name and state are required." };
+    return {
+      ok: false,
+      accounts: [],
+      error: "City name and state are required.",
+    };
   }
   if (!slug) slug = slugify(name);
   if (!SLUG_RE.test(slug)) {
     return {
       ok: false,
       accounts: [],
-      error: "City URL can only contain lowercase letters, numbers, and dashes.",
+      error:
+        "City URL can only contain lowercase letters, numbers, and dashes.",
     };
   }
   if (input.teams.length === 0) {
@@ -262,7 +367,11 @@ export async function provisionCity(
     const base = { email, label: w.label, teamKey: w.teamKey, role: w.role };
 
     if (!EMAIL_RE.test(email)) {
-      accounts.push({ ...base, status: "error", message: "Invalid email address." });
+      accounts.push({
+        ...base,
+        status: "error",
+        message: "Invalid email address.",
+      });
       continue;
     }
     if (seen.has(key)) {

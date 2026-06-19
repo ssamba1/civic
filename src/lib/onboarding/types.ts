@@ -77,10 +77,15 @@ export interface ProvisionResult {
   warnings?: string[];
 }
 
-/** Result of geocoding a "City, State" string. */
-export interface GeocodeResult {
+/** One autocomplete result from the onboarding city search (Nominatim-backed). */
+export interface CitySuggestion {
+  /** Resolved locality name, e.g. "Atlanta". */
+  name: string;
+  /** Resolved state, normalized to its USPS abbreviation, e.g. "GA". */
+  state: string;
   lat: number;
   lng: number;
+  /** Full Nominatim display string, shown as the suggestion subtitle. */
   displayName: string;
 }
 

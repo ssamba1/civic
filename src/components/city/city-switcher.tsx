@@ -4,7 +4,7 @@ import { Check, ChevronDown, MapPin, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
-import { MUNICIPALITIES } from "@/lib/dashboard-data";
+import { MUNICIPALITIES, type Municipality } from "@/lib/dashboard-data";
 import { cn } from "@/lib/utils/cn";
 
 /**
@@ -15,10 +15,16 @@ import { cn } from "@/lib/utils/cn";
  */
 export function CitySwitcher({
   currentSlug,
+  currentName,
+  currentState,
   compact = false,
   className,
 }: {
   currentSlug: string;
+  /** DB-resolved identity for the active city when it isn't one of the
+   *  hardcoded municipalities (e.g. a freshly-onboarded city). */
+  currentName?: string | null;
+  currentState?: string | null;
   /** Aligns the trigger to nav-control height (h-8) when nested in the header. */
   compact?: boolean;
   className?: string;
@@ -30,19 +36,36 @@ export function CitySwitcher({
   const inputRef = useRef<HTMLInputElement>(null);
   const panelId = useId();
 
-  const current =
-    MUNICIPALITIES.find((m) => m.slug === currentSlug) ?? MUNICIPALITIES[0];
+  // The directory includes onboarded cities that aren't in the hardcoded list:
+  // when the active slug isn't found, synthesize a live entry from the
+  // DB-resolved name/state so the header shows the real city, not Cumming.
+  const directory = useMemo<Municipality[]>(() => {
+    if (MUNICIPALITIES.some((m) => m.slug === currentSlug))
+      return MUNICIPALITIES;
+    return [
+      {
+        slug: currentSlug,
+        name: currentName?.trim() || currentSlug,
+        state: currentState?.trim() || "",
+        county: "",
+        live: true,
+      },
+      ...MUNICIPALITIES,
+    ];
+  }, [currentSlug, currentName, currentState]);
+
+  const current = directory.find((m) => m.slug === currentSlug) ?? directory[0];
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return MUNICIPALITIES;
-    return MUNICIPALITIES.filter(
+    if (!q) return directory;
+    return directory.filter(
       (m) =>
         m.name.toLowerCase().includes(q) ||
         m.county.toLowerCase().includes(q) ||
         m.state.toLowerCase().includes(q),
     );
-  }, [query]);
+  }, [query, directory]);
 
   useEffect(() => {
     if (!open) return;
@@ -90,7 +113,9 @@ export function CitySwitcher({
         <MapPin className="h-4 w-4 shrink-0 text-[#0a84ff]" aria-hidden />
         <span className="truncate">
           {current.name}
-          <span className="text-faint">, {current.state}</span>
+          {current.state && (
+            <span className="text-faint">, {current.state}</span>
+          )}
         </span>
         <ChevronDown
           className={cn(
@@ -165,7 +190,8 @@ export function CitySwitcher({
                           selected ? "text-foreground" : "text-subtle",
                         )}
                       >
-                        {m.name}, {m.state}
+                        {m.name}
+                        {m.state ? `, ${m.state}` : ""}
                       </span>
                       <span className="truncate text-[11px] text-faint">
                         {m.county}
