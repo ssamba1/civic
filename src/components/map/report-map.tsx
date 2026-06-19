@@ -26,6 +26,7 @@ import {
 import { renderPopupHTML } from "@/components/map/map-popup";
 import { LiquidGlassCard } from "@/components/ui/liquid-glass";
 import type { DashboardReport } from "@/lib/dashboard-data";
+import { STATUS_LABEL } from "@/lib/status";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 
 export type MapTheme = "dark" | "light" | "satellite";
@@ -96,14 +97,6 @@ function statusColor(
   if (status === "in_progress") return [90, 200, 250];
   if (severity >= 4) return [255, 69, 58];
   return [255, 159, 10];
-}
-
-function statusLabel(status: ReportStatus): string {
-  if (status === "closed") return "Resolved";
-  if (status === "dispatched") return "Dispatched";
-  if (status === "in_progress") return "In Progress";
-  if (status === "open") return "Open";
-  return status;
 }
 
 /* ------------------------------------------------------------------
@@ -697,7 +690,7 @@ function ReportMapInner({
                                 isChecked ? "bg-electric-indigo" : "bg-zinc-700"
                               }`}
                             />
-                            {statusLabel(s)}
+                            {STATUS_LABEL[s]}
                           </button>
                         );
                       })}

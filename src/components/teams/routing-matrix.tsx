@@ -67,8 +67,7 @@ function RoutingMatrixInner() {
               key={category}
               className={cn(
                 li,
-                isOverridden &&
-                  "border-l-2 border-l-[#ff9f0a] bg-[#ff9f0a]/[0.04] pl-1.5",
+                isOverridden && "bg-[var(--status-warning-fg)]/[0.06]",
               )}
             >
               <span className="inline-flex flex-1 min-w-0 items-center gap-2 text-subtle">
@@ -78,6 +77,11 @@ function RoutingMatrixInner() {
                   aria-hidden
                 />
                 <span className="truncate">{meta.label}</span>
+                {isOverridden && (
+                  <span className="flex-shrink-0 rounded-sm bg-[var(--status-warning-fg)]/15 px-1 text-[9px] uppercase tracking-wider text-[var(--status-warning-fg)]">
+                    re-routed
+                  </span>
+                )}
               </span>
               <ArrowRight
                 className="h-3 w-3 flex-shrink-0 text-faint"

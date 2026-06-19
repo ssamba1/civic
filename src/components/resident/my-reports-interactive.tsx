@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -115,7 +116,7 @@ export function MyReportsInteractive({
           (notably the jump to/from the empty Resolved view). */}
       <div key={filter} className="animate-in fade-in duration-300">
         {visible.length === 0 ? (
-          <div className="rounded-[14px] border border-hairline bg-surface p-5 shadow-[var(--shadow-card)]">
+          <div className="flex flex-col items-center gap-4 rounded-[14px] border border-hairline bg-surface p-5 shadow-[var(--shadow-card)]">
             <EmptyState
               message={
                 reports.length === 0
@@ -125,6 +126,17 @@ export function MyReportsInteractive({
                     : "Nothing active right now — you're all caught up."
               }
             />
+            {/* True zero-state gets a primary CTA so the resident never
+                dead-ends; the "no active"/"no resolved" sub-filters do not
+                (they have reports, just none in that view). */}
+            {reports.length === 0 && (
+              <Link
+                href="/report"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[var(--color-primary)] px-5 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--color-primary-hover)]"
+              >
+                Report your first issue
+              </Link>
+            )}
           </div>
         ) : (
           <RecentReports

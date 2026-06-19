@@ -362,7 +362,7 @@ export default function ReportPage() {
               }
             }
           `}</style>
-          <div className="report-toast mt-3 rounded-xl bg-red-500/90 backdrop-blur-sm px-4 py-3 text-sm text-white font-medium shadow-lg relative">
+          <div className="report-toast mt-3 rounded-xl bg-[var(--color-danger)]/90 backdrop-blur-sm px-4 py-3 text-sm text-white font-medium shadow-lg relative">
             {error}
             <button
               type="button"
@@ -414,7 +414,7 @@ export default function ReportPage() {
               value={address ?? ""}
               onChange={(e) => setAddress(e.target.value || null)}
               placeholder="Enter address or intersection..."
-              className="w-full mt-3 rounded-xl border border-hairline bg-glass backdrop-blur-sm px-4 py-3 text-base text-foreground placeholder:text-faint focus:outline-none focus:border-[#0a84ff]"
+              className="w-full mt-3 rounded-xl border border-hairline bg-glass backdrop-blur-sm px-4 py-3 text-base text-foreground placeholder:text-faint focus:outline-none focus:border-[var(--color-primary)]"
             />
           </div>
         )}

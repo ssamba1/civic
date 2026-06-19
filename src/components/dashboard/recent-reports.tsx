@@ -4,7 +4,7 @@ import { Clock, Maximize2 } from "lucide-react";
 import { memo, useEffect, useRef } from "react";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
-import type { ReportStatus } from "@/lib/types";
+import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import { cn } from "@/lib/utils/cn";
 import { timeAgo } from "@/lib/utils/time-ago";
 
@@ -26,26 +26,6 @@ interface RecentReportsProps {
     onBlur: () => void;
   };
 }
-
-const STATUS_LABEL: Record<ReportStatus, string> = {
-  open: "Open",
-  dispatched: "Dispatched",
-  in_progress: "In progress",
-  closed: "Resolved",
-  merged: "Merged",
-  rejected: "Rejected",
-};
-
-// Pill tone: text color paired with a low-alpha wash of the same hue so the
-// status reads as a chip, not loose colored text on the card.
-const STATUS_TONE: Record<ReportStatus, string> = {
-  open: "text-[#ff9f0a] bg-[#ff9f0a]/10",
-  dispatched: "text-[#0a84ff] bg-[#0a84ff]/10",
-  in_progress: "text-[#5ac8fa] bg-[#5ac8fa]/10",
-  closed: "text-[#30d158] bg-[#30d158]/10",
-  merged: "text-subtle bg-overlay-strong",
-  rejected: "text-[#ff453a] bg-[#ff453a]/10",
-};
 
 function RecentReportsInner({
   reports,
@@ -160,7 +140,7 @@ function RecentReportsInner({
                 aria-current={isFocused ? "true" : undefined}
                 className={cn(
                   "w-full text-left flex flex-col gap-1 py-3 sm:py-2.5 px-2 min-h-11 rounded-md transition-colors",
-                  "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1c1c1e]",
+                  "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
                   isFocused ? "bg-overlay-strong" : "hover:bg-overlay",
                   isDemo && "demo-glow",
                 )}
@@ -177,7 +157,7 @@ function RecentReportsInner({
                   <span
                     className={cn(
                       "flex-shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-medium",
-                      STATUS_TONE[report.status],
+                      statusChipClass(report.status),
                     )}
                   >
                     {STATUS_LABEL[report.status]}

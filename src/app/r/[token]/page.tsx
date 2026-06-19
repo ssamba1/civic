@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublicReport, type PublicStatus } from "@/lib/public-report";
+import { ShareActions } from "./share-actions";
 
 // Public, account-less status page — resolved per request from an opaque token.
 export const dynamic = "force-dynamic";
@@ -138,6 +139,8 @@ export default async function PublicReportPage({ params }: PageProps) {
           This is a public status page. No account needed — bookmark this link
           to check back anytime.
         </p>
+
+        <ShareActions />
       </div>
     </main>
   );

@@ -7,27 +7,9 @@ import { ReportDetail } from "@/components/analytics/report-detail";
 import { Drawer } from "@/components/ui/drawer";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
-import type { ReportStatus } from "@/lib/types";
+import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import { cn } from "@/lib/utils/cn";
 import { lockBodyScroll } from "@/lib/utils/scroll-lock";
-
-const STATUS_LABEL: Record<ReportStatus, string> = {
-  open: "Open",
-  dispatched: "Dispatched",
-  in_progress: "In progress",
-  closed: "Resolved",
-  merged: "Merged",
-  rejected: "Rejected",
-};
-
-const STATUS_TONE: Record<ReportStatus, string> = {
-  open: "text-[#ff9f0a] bg-[#ff9f0a]/10",
-  dispatched: "text-[#0a84ff] bg-[#0a84ff]/10",
-  in_progress: "text-[#5ac8fa] bg-[#5ac8fa]/10",
-  closed: "text-[#30d158] bg-[#30d158]/10",
-  merged: "text-zinc-400 bg-white/[0.06]",
-  rejected: "text-[#ff453a] bg-[#ff453a]/10",
-};
 
 export function ReportsExplorer({
   open,
@@ -106,7 +88,7 @@ export function ReportsExplorer({
                    clobber each other's transition-property. */
                 "w-full text-left flex flex-col gap-1 min-h-[56px] py-3 px-3 rounded-md",
                 "transition-[background-color,transform] duration-100 active:scale-[0.98] active:duration-75 motion-reduce:active:scale-100",
-                "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1c1c1e]",
+                "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
                 isSelected
                   ? "bg-overlay-strong"
                   : "hover:bg-overlay active:bg-overlay",
@@ -124,7 +106,7 @@ export function ReportsExplorer({
                 <span
                   className={cn(
                     "flex-shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-medium",
-                    STATUS_TONE[report.status],
+                    statusChipClass(report.status),
                   )}
                 >
                   {STATUS_LABEL[report.status]}

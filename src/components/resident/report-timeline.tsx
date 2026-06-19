@@ -89,7 +89,7 @@ export function ReportTimeline({ steps }: { steps: TimelineStep[] }) {
                 style={{
                   backgroundColor: connectorLit
                     ? connectorColor
-                    : "rgba(255,255,255,0.10)",
+                    : "var(--hairline-strong)",
                 }}
               />
             )}
@@ -99,13 +99,11 @@ export function ReportTimeline({ steps }: { steps: TimelineStep[] }) {
               aria-hidden
               className={cn(
                 "relative z-10 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border transition-colors sm:h-8 sm:w-8",
-                step.current && "ring-2 ring-offset-2 ring-offset-[#1c1c1e]",
+                step.current && "ring-2 ring-offset-2 ring-offset-surface",
               )}
               style={{
-                backgroundColor: step.done
-                  ? nodeColor
-                  : "rgba(255,255,255,0.04)",
-                borderColor: step.done ? nodeColor : "rgba(255,255,255,0.10)",
+                backgroundColor: step.done ? nodeColor : "var(--overlay)",
+                borderColor: step.done ? nodeColor : "var(--hairline-strong)",
                 ...(step.current
                   ? ({ "--tw-ring-color": nodeColor } as CSSProperties)
                   : {}),
@@ -131,10 +129,10 @@ export function ReportTimeline({ steps }: { steps: TimelineStep[] }) {
                 {step.label}
               </span>
               <span
-                className="text-[13px] leading-tight tabular-nums sm:text-[12px]"
-                style={{
-                  color: step.at ? "rgb(161 161 170)" : "rgb(113 113 122)",
-                }}
+                className={cn(
+                  "text-[13px] leading-tight tabular-nums sm:text-[12px]",
+                  step.at ? "text-subtle" : "text-faint",
+                )}
               >
                 {step.at ? absoluteDate(step.at) : "Pending"}
               </span>

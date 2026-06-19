@@ -54,6 +54,19 @@
   --color-warning: #ff9f0a;
   --color-danger: #ff453a;
 
+  /* Status TEXT tokens — kept SEPARATE from the bright FILL hues above. On a
+     near-white surface the saturated fills (#30d158 etc.) only reach ~1.7:1 as
+     text, far under the 4.5:1 AA floor, so the small status label switches to
+     these darkened variants while the dot/bar/pill-fill keep the bright hue.
+     Light values verified ≥4.5:1 against the pill's hue-tint over #fff (worst
+     case warning at 12% tint = 5.71:1). Flipped per-theme in .dark below.
+     in_progress (cyan fill) has no separate text tone and reads as -info. */
+  --status-success-fg: #1a7f37;
+  --status-warning-fg: #7a5c00;
+  --status-danger-fg: #b42318;
+  --status-info-fg: #0a66c2;
+  --status-neutral-fg: #475467;
+
   --color-muted: #86868b;
   /* Kept emitted for legacy var(--color-*) refs (login loading, skeleton);
      pointed at the new sources so they track the theme too. */
@@ -96,6 +109,20 @@
   --shadow-pop: 0 20px 48px -12px rgba(0, 0, 0, 0.75);
 
   --color-primary-light: rgba(10, 132, 255, 0.18);
+
+  /* Dark theme: the bright system hues clear AA as text on the dark surface,
+     but two sat below 4.5:1 on the 10–12% pill-tint the chips actually use:
+     the brand blue #0a84ff (4.18) and the system red #ff453a (4.39 at badge's
+     12%). Both are lifted slightly here — info → #3a97f5 (≈5.0:1), danger →
+     #ff5347 (≈4.7:1) — so every status chip clears AA in both themes. The
+     brand primary / fill hues (--color-primary, the /10 pill fills) are
+     untouched; only the small chip TEXT shifts. */
+  --status-success-fg: #30d158;
+  --status-warning-fg: #ff9f0a;
+  --status-danger-fg: #ff5347;
+  --status-info-fg: #3a97f5;
+  --status-neutral-fg: #98989f;
+
   --color-muted: #86868b;
 }
 

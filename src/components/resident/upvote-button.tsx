@@ -37,7 +37,9 @@ export function UpvoteButton({
         toggle(reportId);
       }}
       aria-pressed={active}
-      aria-label={active ? "Remove upvote" : "Upvote this report"}
+      aria-label={`${active ? "Remove your upvote, " : "Upvote, "}${n} ${
+        n === 1 ? "upvote" : "upvotes"
+      } — saved on this device`}
       className={cn(
         "inline-flex flex-col items-center justify-center rounded-lg border transition-colors active:scale-90 motion-reduce:active:scale-100 motion-reduce:transition-none tabular-nums",
         size === "sm" ? "h-11 w-9 text-[11px]" : "h-12 w-10 text-xs",

@@ -8,6 +8,8 @@ import {
 } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useMapPreset } from "./MapPresetContext";
+import StaticHeroMap from "./StaticHeroMap";
 import ZampMapBackdropLazy, { ZampMapFallback } from "./ZampMapBackdropLazy";
 
 // Zamp hero — colossal per-letter "Civic" wordmark anchored bottom-left, with
@@ -46,6 +48,12 @@ const glassChild = {
 };
 
 export default function ZampHero() {
+  // tweaksVisible (?tweaks=1, dev only) swaps the static plate back for the
+  // LIVE maplibre/deck.gl map — the studio used to retune presets and re-run
+  // scripts/capture-hero-map.mjs. Public visitors never mount it, so the
+  // ~1.85MB map chunk never enters the route.
+  const { tweaksVisible } = useMapPreset();
+
   const [skipEntrance] = useState(
     () => typeof window !== "undefined" && window.scrollY > 100,
   );
@@ -113,10 +121,11 @@ export default function ZampHero() {
       }}
     >
       {/* Full-bleed backdrop behind the hero content. The gradient paints
-          immediately (and is the FINAL backdrop on mobile); the live map of
-          Cumming streams in over it on desktop only, after first paint. */}
+          immediately (and is the FINAL backdrop on mobile); on desktop a static
+          captured plate of the Cumming map layers over it (one JPEG fetch, no
+          map JS) with cursor parallax. ?tweaks=1 swaps in the live map. */}
       <ZampMapFallback />
-      {showMap && <ZampMapBackdropLazy />}
+      {showMap && (tweaksVisible ? <ZampMapBackdropLazy /> : <StaticHeroMap />)}
 
       <div
         className="wl-lp-narrow"

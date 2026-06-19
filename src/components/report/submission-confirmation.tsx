@@ -252,7 +252,20 @@ export default function SubmissionConfirmation({
           </div>
         )}
 
-        {/* Actions — min-h-[56px] for thumb-reachable targets */}
+        {/* On the offline/fallback branch there's no trackable AI result yet, so
+            reassure the resident the report is saved and will be followed up —
+            otherwise this branch has no next step at all. */}
+        {!hasAiResult && (
+          <div className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 p-4 mb-6 text-left">
+            <p className="text-sm text-zinc-600 leading-relaxed">
+              Saved. Our team will review this report and update its status —
+              you&apos;ll be notified when it&apos;s on its way to a fix.
+            </p>
+          </div>
+        )}
+
+        {/* Actions — Track is the single visual primary (filled); the rest are
+            quieter secondary links. min-h-[56px] for thumb-reachable targets. */}
         <div className="w-full space-y-3">
           {hasAiResult && (
             <Link
@@ -262,18 +275,20 @@ export default function SubmissionConfirmation({
               Track this report
             </Link>
           )}
-          <a
-            href="/report"
-            className="w-full rounded-full border border-zinc-300 min-h-[56px] flex items-center justify-center text-center text-sm font-semibold text-zinc-700 active:bg-zinc-100 transition-colors"
-          >
-            Submit Another Report
-          </a>
-          <a
-            href="/city/cumming/browse"
-            className="w-full rounded-full border border-zinc-300 min-h-[56px] flex items-center justify-center text-center text-sm font-semibold text-zinc-700 active:bg-zinc-100 transition-colors"
-          >
-            View Dashboard
-          </a>
+          <div className="flex gap-3">
+            <a
+              href="/report"
+              className="flex-1 rounded-full border border-zinc-200 min-h-[52px] flex items-center justify-center text-center text-sm font-medium text-zinc-600 active:bg-zinc-100 transition-colors"
+            >
+              Report another
+            </a>
+            <Link
+              href="/user/my-reports"
+              className="flex-1 rounded-full border border-zinc-200 min-h-[52px] flex items-center justify-center text-center text-sm font-medium text-zinc-600 active:bg-zinc-100 transition-colors"
+            >
+              View all my reports
+            </Link>
+          </div>
         </div>
       </div>
     </div>

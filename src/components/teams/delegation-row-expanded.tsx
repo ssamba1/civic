@@ -288,7 +288,9 @@ function DelegationRowExpandedInner({
           )}
 
           {!loading && error && (
-            <p className="text-[12px] text-[#ff453a]">Reasoning unavailable.</p>
+            <p className="text-[12px] text-[var(--status-danger-fg)]">
+              Reasoning unavailable.
+            </p>
           )}
 
           {!loading && !error && data && (

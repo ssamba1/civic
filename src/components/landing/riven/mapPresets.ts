@@ -213,7 +213,7 @@ export const BUILDINGS_3D_LAYER = {
   },
 } as const;
 
-const LIGHT_SCRIM = [
+export const LIGHT_SCRIM = [
   "radial-gradient(120% 95% at 50% 36%, rgba(10,132,255,0.14) 0%, transparent 60%)",
   "linear-gradient(to top, rgba(239,239,239,0.86) 0%, rgba(239,239,239,0.22) 30%, rgba(239,239,239,0) 50%)",
 ].join(", ");

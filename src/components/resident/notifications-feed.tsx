@@ -6,6 +6,7 @@ import {
   type LucideIcon,
   Megaphone,
   MessageSquare,
+  RotateCw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -39,8 +40,17 @@ const TYPE_META: Record<
   comment: { icon: MessageSquare, color: "#5ac8fa" },
 };
 
-export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
+export function NotificationsFeed({
+  items,
+}: {
+  // `undefined` is the load-failure sentinel (the server parent passes it when
+  // the feed couldn't be fetched) — distinct from `[]`, which is a legit empty
+  // feed. Rendered as an error state with Retry rather than "all caught up".
+  items?: NotificationItem[];
+}) {
   const router = useRouter();
+  const loadFailed = items === undefined;
+  const safeItems = items ?? [];
   const [filter, setFilter] = useState<FeedFilter>("all");
   // Brief confirmation window after "Mark all read" — flips the label to a
   // checkmark for ~1.2s so the bulk action gets visible acknowledgement.
@@ -48,14 +58,14 @@ export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
   // Track ids the resident has read this session, layered over the
   // server-provided `read` flag.
   const [readIds, setReadIds] = useState<Set<string>>(
-    () => new Set(items.filter((i) => i.read).map((i) => i.id)),
+    () => new Set(safeItems.filter((i) => i.read).map((i) => i.id)),
   );
 
   // Merge server-side reads from refreshed `items` while preserving reads
   // the resident made locally this session.
   useEffect(() => {
     setReadIds((prev) => {
-      const serverRead = items.filter((i) => i.read && !prev.has(i.id));
+      const serverRead = safeItems.filter((i) => i.read && !prev.has(i.id));
       if (serverRead.length === 0) return prev;
       const next = new Set(prev);
       serverRead.forEach((i) => {
@@ -63,19 +73,21 @@ export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
       });
       return next;
     });
-  }, [items]);
+  }, [safeItems]);
 
   const isRead = (i: NotificationItem) => readIds.has(i.id);
 
   const unreadCount = useMemo(
-    () => items.filter((i) => !readIds.has(i.id)).length,
-    [items, readIds],
+    () => safeItems.filter((i) => !readIds.has(i.id)).length,
+    [safeItems, readIds],
   );
 
   const visible = useMemo(
     () =>
-      filter === "unread" ? items.filter((i) => !readIds.has(i.id)) : items,
-    [items, filter, readIds],
+      filter === "unread"
+        ? safeItems.filter((i) => !readIds.has(i.id))
+        : safeItems,
+    [safeItems, filter, readIds],
   );
 
   const markRead = (id: string) => {
@@ -88,7 +100,7 @@ export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
   };
 
   const markAllRead = () => {
-    setReadIds(new Set(items.map((i) => i.id)));
+    setReadIds(new Set(safeItems.map((i) => i.id)));
     setMarked(true);
     setTimeout(() => setMarked(false), 1200);
   };
@@ -99,6 +111,33 @@ export function NotificationsFeed({ items }: { items: NotificationItem[] }) {
       router.push(`/user/my-reports/${item.reportId}`);
     }
   };
+
+  // Load failure (items === undefined) reads distinctly from a legit empty feed
+  // so a fetch error doesn't masquerade as "all caught up". router.refresh()
+  // re-runs the server parent's data fetch. NOTE: this only triggers if the
+  // (non-owned) server parent actually passes `undefined` on failure — today it
+  // may always pass an array, in which case this branch is dormant.
+  if (loadFailed) {
+    return (
+      <section className="rounded-[14px] border border-hairline bg-surface shadow-[var(--shadow-card)]">
+        <div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
+          <p className="text-[13px] text-subtle">Couldn&apos;t load updates.</p>
+          <button
+            type="button"
+            onClick={() => router.refresh()}
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-hairline bg-overlay px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-overlay-strong"
+          >
+            <RotateCw
+              className="h-3.5 w-3.5"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+            Retry
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="rounded-[14px] border border-hairline bg-surface shadow-[var(--shadow-card)]">

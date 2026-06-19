@@ -84,7 +84,12 @@ function StatsCardsInner({ stats }: StatsCardsProps) {
             )}
           >
             <div className="flex items-center justify-between gap-2 mb-2.5">
-              <span className="text-[11px] font-medium uppercase tracking-[0.07em] text-faint leading-none">
+              <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.07em] text-faint leading-none">
+                <span
+                  className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
+                  style={{ backgroundColor: card.accent }}
+                  aria-hidden
+                />
                 {card.label}
               </span>
               {card.trend && (
@@ -96,8 +101,8 @@ function StatsCardsInner({ stats }: StatsCardsProps) {
                   className={cn(
                     "inline-flex items-center gap-0.5 text-[11px] font-medium tabular-nums",
                     card.trend.tone === "bad"
-                      ? "text-[#ff453a]"
-                      : "text-[#30d158]",
+                      ? "text-[var(--status-danger-fg)]"
+                      : "text-[var(--status-success-fg)]",
                   )}
                   aria-label={`${card.trend.direction === "up" ? "Up" : "Down"} ${card.trend.label} versus last week`}
                 >
@@ -122,8 +127,7 @@ function StatsCardsInner({ stats }: StatsCardsProps) {
               // key on the value re-mounts the node when the number changes,
               // re-firing the brief rise animation; static between filter swaps.
               key={card.value}
-              className="stat-val text-[26px] sm:text-[30px] font-semibold tracking-tight tabular-nums leading-none"
-              style={{ color: `${card.accent}cc` }}
+              className="stat-val text-[26px] sm:text-[30px] font-semibold tracking-tight tabular-nums leading-none text-foreground"
             >
               {card.value}
             </p>

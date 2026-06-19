@@ -34,6 +34,7 @@ import type {
   WorkOrder,
 } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
+import { lockBodyScroll } from "@/lib/utils/scroll-lock";
 import { WorkOrderComments } from "./work-order-comments";
 
 interface WorkOrderDetailProps {
@@ -44,6 +45,9 @@ interface WorkOrderDetailProps {
   /** When false, renders only the panel content without the fixed overlay wrapper.
    *  Use this when embedding inside a Drawer (which provides its own overlay). */
   standalone?: boolean;
+  /** When true, opens the reject-reason input on mount. Used by the inbox's
+   *  keyboard `r` shortcut so the styled reject flow replaces the native prompt. */
+  autoOpenReject?: boolean;
 }
 
 const SEVERITY_CONFIG: Record<
@@ -98,6 +102,7 @@ export function WorkOrderDetail({
   workOrder,
   onClose,
   standalone = true,
+  autoOpenReject = false,
 }: WorkOrderDetailProps) {
   const [isPending, startTransition] = useTransition();
   const [pendingAction, setPendingAction] = useState<
@@ -144,6 +149,29 @@ export function WorkOrderDetail({
   useEffect(() => {
     if (!isPending) setPendingAction(null);
   }, [isPending]);
+
+  // Open the reject input when the inbox requests it (keyboard `r`). The panel
+  // is already mounted when this fires, so an effect — not a state initializer —
+  // is what actually surfaces the input.
+  useEffect(() => {
+    if (autoOpenReject) setShowRejectInput(true);
+  }, [autoOpenReject]);
+
+  // Standalone overlay parity with the portal modals: Escape closes it and body
+  // scroll is locked while it's open. Drawer mode supplies its own overlay, so
+  // skip both there.
+  useEffect(() => {
+    if (!standalone) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    const unlock = lockBodyScroll();
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      unlock();
+    };
+  }, [standalone, onClose]);
 
   function handleDispatch() {
     setActionError(null);
@@ -244,7 +272,7 @@ export function WorkOrderDetail({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-zinc-400 outline-none transition-colors hover:bg-zinc-100 hover:text-zinc-600 focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] dark:hover:bg-zinc-800"
           >
             <X className="h-5 w-5" />
           </button>
@@ -310,7 +338,7 @@ export function WorkOrderDetail({
             href={`https://www.google.com/maps/search/?api=1&query=${report.location?.lat ?? 0},${report.location?.lng ?? 0}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-start gap-3"
+            className="group flex items-start gap-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
             title="Open in Google Maps"
           >
             <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-zinc-400 group-hover:text-sky-500" />
@@ -336,11 +364,11 @@ export function WorkOrderDetail({
                 {(classification.confidence * 100).toFixed(0)}% confidence
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-4 p-4">
+            <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
               <div>
                 <p className="text-xs text-zinc-500">Category</p>
                 <p className="text-sm font-medium capitalize text-zinc-900 dark:text-zinc-100">
-                  {classification.category.replace("_", " ")}
+                  {classification.category.replace(/_/g, " ")}
                 </p>
               </div>
               <div>
@@ -423,17 +451,17 @@ export function WorkOrderDetail({
                 </span>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-4 p-4">
+            <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
               <div>
                 <p className="text-xs text-zinc-500">Department</p>
                 <p className="text-sm font-medium capitalize text-zinc-900 dark:text-zinc-100">
-                  {workOrder.department.replace("_", " ")}
+                  {workOrder.department.replace(/_/g, " ")}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-zinc-500">Crew Type</p>
                 <p className="text-sm capitalize text-zinc-700 dark:text-zinc-300">
-                  {workOrder.crew_type?.replace("_", " ") ?? "TBD"}
+                  {workOrder.crew_type?.replace(/_/g, " ") ?? "TBD"}
                 </p>
               </div>
               <div>
@@ -521,9 +549,9 @@ export function WorkOrderDetail({
                     key={cat}
                     onClick={() => handleOverride(cat)}
                     disabled={isPending}
-                    className="flex min-h-11 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-medium capitalize text-zinc-700 transition-[transform,colors] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-blue-300 hover:bg-blue-50 active:scale-95 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-blue-600 md:min-h-0"
+                    className="flex min-h-11 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-medium capitalize text-zinc-700 outline-none transition-[transform,colors] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-blue-300 hover:bg-blue-50 focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] active:scale-95 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-blue-600 md:min-h-0"
                   >
-                    {cat.replace("_", " ")}
+                    {cat.replace(/_/g, " ")}
                   </button>
                 ))}
               </div>
@@ -548,7 +576,7 @@ export function WorkOrderDetail({
                   type="button"
                   onClick={handleReject}
                   disabled={isPending || !rejectReason.trim()}
-                  className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50 md:min-h-0"
+                  className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white outline-none transition-colors hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50 md:min-h-0"
                 >
                   {pendingAction === "reject" && (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -558,7 +586,7 @@ export function WorkOrderDetail({
                 <button
                   type="button"
                   onClick={() => setShowRejectInput(false)}
-                  className="flex min-h-11 items-center justify-center rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-400 md:min-h-0"
+                  className="flex min-h-11 items-center justify-center rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-600 outline-none transition-colors hover:bg-zinc-50 focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] dark:border-zinc-600 dark:text-zinc-400 md:min-h-0"
                 >
                   Cancel
                 </button>
@@ -626,7 +654,7 @@ export function WorkOrderDetail({
                   type="button"
                   onClick={handleUnderFix}
                   disabled={isPending}
-                  className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50 md:min-h-0"
+                  className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white outline-none transition-colors hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50 md:min-h-0"
                 >
                   {pendingAction === "underfix" && (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -636,7 +664,7 @@ export function WorkOrderDetail({
                 <button
                   type="button"
                   onClick={() => setShowUnderFixInput(false)}
-                  className="flex min-h-11 items-center justify-center rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-400 md:min-h-0"
+                  className="flex min-h-11 items-center justify-center rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-600 outline-none transition-colors hover:bg-zinc-50 focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] dark:border-zinc-600 dark:text-zinc-400 md:min-h-0"
                 >
                   Cancel
                 </button>
@@ -650,7 +678,8 @@ export function WorkOrderDetail({
           {/* Resolution photo upload placeholder */}
           <div>
             <p className="mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-100">
-              Resolution Photo
+              Resolution photo{" "}
+              <span className="font-normal text-zinc-400">(optional)</span>
             </p>
             {workOrder.resolution_photo_url ? (
               <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
@@ -662,10 +691,10 @@ export function WorkOrderDetail({
                 />
               </div>
             ) : (
-              <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-zinc-300 p-6 transition-colors hover:border-blue-400 hover:bg-blue-50/50 dark:border-zinc-600 dark:hover:border-blue-600 dark:hover:bg-blue-900/10">
+              <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-zinc-300 p-6 transition-colors hover:border-blue-400 hover:bg-blue-50/50 focus-within:ring-2 focus-within:ring-[var(--color-primary)] dark:border-zinc-600 dark:hover:border-blue-600 dark:hover:bg-blue-900/10">
                 <Upload className="h-8 w-8 text-zinc-400" />
                 <span className="text-sm text-zinc-500">
-                  Upload resolution photo to close
+                  Attach a photo of the completed fix
                 </span>
                 <input type="file" accept="image/*" className="hidden" />
               </label>
@@ -680,7 +709,7 @@ export function WorkOrderDetail({
           type="button"
           onClick={handleDispatch}
           disabled={isPending}
-          className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50 sm:flex-none"
+          className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50 sm:flex-none"
         >
           {pendingAction === "dispatch" ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -693,7 +722,7 @@ export function WorkOrderDetail({
           type="button"
           onClick={handleClose}
           disabled={isPending}
-          className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50 sm:flex-none"
+          className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50 sm:flex-none"
         >
           {pendingAction === "close" ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -706,7 +735,7 @@ export function WorkOrderDetail({
           type="button"
           onClick={() => setShowRejectInput(!showRejectInput)}
           disabled={isPending}
-          className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 sm:flex-none"
+          className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 sm:flex-none"
         >
           <XCircle className="h-4 w-4" />
           Reject
@@ -715,7 +744,7 @@ export function WorkOrderDetail({
           type="button"
           onClick={() => setShowOverride(!showOverride)}
           disabled={isPending}
-          className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800 sm:flex-none"
+          className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800 sm:flex-none"
         >
           <Edit3 className="h-4 w-4" />
           Override
@@ -724,7 +753,7 @@ export function WorkOrderDetail({
           type="button"
           onClick={() => setShowUnderFixInput(!showUnderFixInput)}
           disabled={isPending}
-          className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-blue-200 px-4 py-2.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 disabled:opacity-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20 sm:flex-none"
+          className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] border border-blue-200 px-4 py-2.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 disabled:opacity-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20 sm:flex-none"
         >
           <HardHat className="h-4 w-4" />
           Under Fix

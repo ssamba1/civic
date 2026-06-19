@@ -10,6 +10,7 @@ import {
   MapPin,
   Megaphone,
   MessageSquare,
+  RotateCw,
   X,
 } from "lucide-react";
 import Image from "next/image";
@@ -95,14 +96,25 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
-  // Lazy-fetch on first open. `loading` is intentionally omitted from deps:
-  // including it re-runs the effect when setLoading(true) fires, cancelling the
-  // in-flight fetch before it resolves.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: loading is a re-entrancy guard; including it would cancel the in-flight fetch
+  // Fetch the feed. Shared by the lazy first-open effect and the error-state
+  // Retry button. `loadTick` bumps to force a re-fetch after a failure (the
+  // open-effect alone won't re-fire — its deps don't change on retry).
+  const [loadTick, setLoadTick] = useState(0);
+  const retry = useCallback(() => {
+    setError(null);
+    setItems(null);
+    setLoadTick((t) => t + 1);
+  }, []);
+
+  // Lazy-fetch on first open (and on each retry). `loading` is intentionally
+  // omitted from deps: including it re-runs the effect when setLoading(true)
+  // fires, cancelling the in-flight fetch before it resolves.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: loading is a re-entrancy guard; loadTick forces an intentional re-fetch on retry
   useEffect(() => {
     if (!open || items !== null || loading) return;
     let cancelled = false;
     setLoading(true);
+    setError(null);
     fetchResidentNotifications()
       .then((data) => {
         if (cancelled) return;
@@ -119,7 +131,7 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
     return () => {
       cancelled = true;
     };
-  }, [open, items]);
+  }, [open, items, loadTick]);
 
   // Click outside + Escape.
   useEffect(() => {
@@ -267,6 +279,7 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
         markAllRead={markAllRead}
         readIds={readIds}
         openDetail={openDetail}
+        onRetry={retry}
       />
 
       {/* Desktop dropdown — hidden on mobile, shown on sm+. Stays mounted
@@ -305,6 +318,7 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
             visible={visible}
             readIds={readIds}
             openDetail={openDetail}
+            onRetry={retry}
           />
         </div>
       )}
@@ -390,6 +404,7 @@ function UpdatesFeedBody({
   visible,
   readIds,
   openDetail,
+  onRetry,
 }: {
   loading: boolean;
   items: NotificationItem[] | null;
@@ -398,6 +413,7 @@ function UpdatesFeedBody({
   visible: NotificationItem[];
   readIds: Set<string>;
   openDetail: (item: NotificationItem) => void;
+  onRetry: () => void;
 }) {
   if (loading && items === null) {
     return (
@@ -413,8 +429,20 @@ function UpdatesFeedBody({
   }
   if (error) {
     return (
-      <div className="px-4 py-8 text-center text-[13px] text-faint">
-        {error}
+      <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
+        <p className="text-[13px] text-subtle">{error}</p>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-hairline bg-overlay px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-overlay-strong"
+        >
+          <RotateCw
+            className="h-3.5 w-3.5"
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+          Retry
+        </button>
       </div>
     );
   }
@@ -499,6 +527,7 @@ function MobileUpdatesSheet({
   markAllRead,
   readIds,
   openDetail,
+  onRetry,
 }: {
   open: boolean;
   onClose: () => void;
@@ -512,6 +541,7 @@ function MobileUpdatesSheet({
   markAllRead: () => void;
   readIds: Set<string>;
   openDetail: (item: NotificationItem) => void;
+  onRetry: () => void;
 }) {
   // We only render the sheet on the client (BottomSheet portals to body).
   // On sm+, the CSS on BottomSheet's outer wrapper won't matter because the
@@ -570,6 +600,7 @@ function MobileUpdatesSheet({
           visible={visible}
           readIds={readIds}
           openDetail={openDetail}
+          onRetry={onRetry}
         />
       </div>
     </BottomSheet>

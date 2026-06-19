@@ -164,7 +164,7 @@ export default function PhotoPreview({
               id="issue-type"
               value={issueType ?? ""}
               onChange={(e) => setIssueType(e.target.value || null)}
-              className="w-full min-h-[44px] rounded-lg border border-zinc-700 bg-surface px-3 py-2.5 text-base text-foreground focus:outline-none focus:border-zinc-500"
+              className="w-full min-h-[44px] rounded-lg border border-hairline-strong bg-surface px-3 py-2.5 text-base text-foreground focus:outline-none focus:border-[var(--color-primary)]"
             >
               <option value="">Let AI decide</option>
               <optgroup label="Standard">
@@ -213,8 +213,8 @@ export default function PhotoPreview({
                   aria-pressed={active}
                   className={`rounded-full px-3 py-2 text-xs font-medium transition-[color,background-color,border-color,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] motion-safe:active:scale-95 min-h-[44px] flex items-center ${
                     active
-                      ? "bg-blue-600 text-white"
-                      : "border border-zinc-700 text-subtle active:bg-elevated"
+                      ? "bg-[var(--color-primary)] text-white"
+                      : "border border-hairline-strong text-subtle active:bg-elevated"
                   }`}
                 >
                   {t}
@@ -229,7 +229,7 @@ export default function PhotoPreview({
             <button
               type="button"
               onClick={() => setShowDescription(true)}
-              className="w-full text-left text-sm text-subtle min-h-[44px] px-3 rounded-lg border border-zinc-800 active:bg-elevated transition-colors flex items-center"
+              className="w-full text-left text-sm text-subtle min-h-[44px] px-3 rounded-lg border border-hairline-strong active:bg-elevated transition-colors flex items-center"
             >
               + Add description (optional)
             </button>
@@ -249,7 +249,7 @@ export default function PhotoPreview({
                 maxLength={500}
                 tabIndex={showDescription ? 0 : -1}
                 aria-hidden={!showDescription}
-                className="w-full rounded-lg border border-zinc-700 bg-surface px-3 py-2.5 text-base text-foreground placeholder:text-faint focus:outline-none focus:border-zinc-500 resize-none"
+                className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2.5 text-base text-foreground placeholder:text-faint focus:outline-none focus:border-[var(--color-primary)] resize-none"
               />
             </div>
           </div>
@@ -260,7 +260,7 @@ export default function PhotoPreview({
               type="button"
               onClick={onRetake}
               disabled={submitting}
-              className="flex-1 rounded-full border border-zinc-700 min-h-[56px] text-sm font-semibold text-foreground active:bg-elevated transition-colors disabled:opacity-40"
+              className="flex-1 rounded-full border border-hairline-strong min-h-[56px] text-sm font-semibold text-foreground active:bg-elevated transition-colors disabled:opacity-40"
             >
               Retake
             </button>
@@ -271,7 +271,7 @@ export default function PhotoPreview({
                 onSubmit(description.trim() || null, tags, issueType);
               }}
               disabled={submitting}
-              className="flex-1 rounded-full bg-blue-600 min-h-[56px] text-sm font-semibold text-white active:bg-blue-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              className="flex-1 rounded-full bg-[var(--color-primary)] min-h-[56px] text-sm font-semibold text-white active:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <>

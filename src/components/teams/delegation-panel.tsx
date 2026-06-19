@@ -14,9 +14,9 @@ import { useCategoryOverrides } from "@/lib/category-overrides";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import type { OverrideEvent } from "@/lib/delegation-history";
+import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import { categoryToTeam, type TeamId } from "@/lib/teams";
 import type { TeamWorkload } from "@/lib/teams-data";
-import type { ReportStatus } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 import { timeAgo } from "@/lib/utils/time-ago";
 
@@ -52,24 +52,6 @@ interface DelegationPanelProps {
 
 /** Rows shown before the "Show N more" expander — keeps the phone scroll sane. */
 const INITIAL_VISIBLE = 8;
-
-const STATUS_LABEL: Record<ReportStatus, string> = {
-  open: "Open",
-  dispatched: "Dispatched",
-  in_progress: "In progress",
-  closed: "Resolved",
-  merged: "Merged",
-  rejected: "Rejected",
-};
-
-const STATUS_TONE: Record<ReportStatus, string> = {
-  open: "text-[#ff9f0a] bg-[#ff9f0a]/10",
-  dispatched: "text-[#0a84ff] bg-[#0a84ff]/10",
-  in_progress: "text-[#5ac8fa] bg-[#5ac8fa]/10",
-  closed: "text-[#30d158] bg-[#30d158]/10",
-  merged: "text-subtle bg-overlay-strong",
-  rejected: "text-[#ff453a] bg-[#ff453a]/10",
-};
 
 function DelegationPanelInner({
   reports,
@@ -327,7 +309,7 @@ function DelegationRow({
               <span
                 className={cn(
                   "rounded px-1.5 py-0.5 text-[10px] font-medium",
-                  STATUS_TONE[report.status],
+                  statusChipClass(report.status),
                 )}
               >
                 {STATUS_LABEL[report.status]}

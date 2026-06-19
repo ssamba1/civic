@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { DelegationPanel } from "@/components/teams/delegation-panel";
 import { RoutingChangesLog } from "@/components/teams/routing-changes-log";
@@ -14,7 +14,7 @@ import {
   useReportCorpus,
 } from "@/lib/filters/context";
 import { filterReports } from "@/lib/filters/filter-reports";
-import type { TeamId } from "@/lib/teams";
+import { isValidTeamId, type TeamId } from "@/lib/teams";
 import { aggregateByTeam, sortTeamsByLoad } from "@/lib/teams-data";
 import { getReportTeam, useTeamOverrides } from "@/lib/teams-overrides";
 
@@ -33,6 +33,8 @@ interface TeamsInteractiveProps {
   initialStats: CityStats;
 }
 
+const SELECTED_TEAM_STORAGE_KEY = "teams-selected-team";
+
 export function TeamsInteractive({ initialStats }: TeamsInteractiveProps) {
   const { filter } = useFilters();
   const corpus = useReportCorpus();
@@ -45,6 +47,26 @@ export function TeamsInteractive({ initialStats }: TeamsInteractiveProps) {
   // filter.team globally — surface it as initial selection so the two
   // views stay in sync when the user did set a global scope.
   const [selectedTeam, setSelectedTeam] = useState<TeamId>(filter.team);
+
+  // Persist the local team highlight across navigation. Hydrate from
+  // sessionStorage *after* mount (never in a useState initializer) so SSR and
+  // the first client render agree; a saved selection wins over filter.team.
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(SELECTED_TEAM_STORAGE_KEY);
+      if (saved && isValidTeamId(saved)) setSelectedTeam(saved);
+    } catch {
+      // sessionStorage unavailable — keep the filter-derived default.
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(SELECTED_TEAM_STORAGE_KEY, selectedTeam);
+    } catch {
+      // Storage write blocked (private mode / quota) — non-fatal.
+    }
+  }, [selectedTeam]);
 
   const handleSelectTeam = useCallback((teamId: TeamId) => {
     setSelectedTeam((prev) => (prev === teamId ? "all" : teamId));

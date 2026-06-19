@@ -6,7 +6,6 @@ import {
   closeWorkOrder,
   dispatchWorkOrder,
   fetchQueuedWorkOrders,
-  rejectReport,
 } from "@/app/staff/actions";
 import { Drawer } from "@/components/ui/drawer";
 import {
@@ -61,6 +60,9 @@ interface StaffInboxProps {
   cityRouting?: CategoryTeamMap;
 }
 
+const TAB_VALUES = new Set<FilterTab>(TABS.map((t) => t.value));
+const FILTER_STORAGE_KEY = "staff-inbox-filter";
+
 export function StaffInbox({
   workOrders,
   initialFetchedAt,
@@ -70,6 +72,38 @@ export function StaffInbox({
   const [search, setSearch] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [detailOpenIndex, setDetailOpenIndex] = useState<number | null>(null);
+  // When set, the open detail panel auto-surfaces its reject input. Used by the
+  // keyboard `r` shortcut so the styled flow replaces the native window.prompt.
+  const [pendingReject, setPendingReject] = useState(false);
+
+  // Persist the active tab + search across navigation. Hydrate from
+  // sessionStorage *after* mount (never in a useState initializer) so SSR and
+  // first client render agree — reading sessionStorage during render would
+  // desync hydration.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(FILTER_STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as { tab?: string; search?: string };
+      if (saved.tab && TAB_VALUES.has(saved.tab as FilterTab)) {
+        setActiveTab(saved.tab as FilterTab);
+      }
+      if (typeof saved.search === "string") setSearch(saved.search);
+    } catch {
+      // Corrupt/unavailable storage — fall back to defaults silently.
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        FILTER_STORAGE_KEY,
+        JSON.stringify({ tab: activeTab, search }),
+      );
+    } catch {
+      // Storage write blocked (private mode / quota) — non-fatal.
+    }
+  }, [activeTab, search]);
   // Mobile drawer state — tracks which work order is open in the Drawer
   const [mobileDrawerIndex, setMobileDrawerIndex] = useState<number | null>(
     null,
@@ -78,7 +112,6 @@ export function StaffInbox({
   // --- Queue state ---
   const [displayedOrders, setDisplayedOrders] =
     useState<WorkOrderWithDetails[]>(workOrders);
-  const [pendingQueue, setPendingQueue] = useState<WorkOrderWithDetails[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const lastFetchedAtRef = useRef<string>(
     initialFetchedAt ?? new Date().toISOString(),
@@ -125,12 +158,12 @@ export function StaffInbox({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Refresh toggles the live demo data point (the fallen tree). First click
-  // injects it — into the inbox here, and via the shared overlay store into
-  // every other surface (map, delegation, analytics, dashboard) at once, also
-  // flushing any queued items. A second click removes it everywhere. Same
-  // button is the on/off switch — there is no separate reset control.
-  const handleRefresh = useCallback(() => {
+  // "Add live report" toggles the live demo data point (the fallen tree). First
+  // click injects it — into the inbox here, and via the shared overlay store
+  // into every other surface (map, delegation, analytics, dashboard) at once. A
+  // second click removes it everywhere. Same button is the on/off switch —
+  // there is no separate reset control.
+  const handleAddLiveReport = useCallback(() => {
     setIsRefreshing(true);
     if (getDemoReportsSnapshot().length > 0) {
       resetDemoReports();
@@ -138,15 +171,14 @@ export function StaffInbox({
     } else {
       const demoReport = addDemoReport();
       const demoOrder = demoWorkOrderFromReport(demoReport);
-      setDisplayedOrders((prev) => [demoOrder, ...pendingQueue, ...prev]);
-      setPendingQueue([]);
+      setDisplayedOrders((prev) => [demoOrder, ...prev]);
       setSelectedIndex(0);
     }
     // Brief spinner flash. Track the timer so rapid clicks don't queue
     // overlapping timers that flip the spinner off prematurely.
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     refreshTimerRef.current = setTimeout(() => setIsRefreshing(false), 600);
-  }, [pendingQueue]);
+  }, []);
 
   // Cancel any pending spinner timer on unmount.
   useEffect(() => {
@@ -255,6 +287,7 @@ export function StaffInbox({
 
   const handleCloseDetail = useCallback(() => {
     setDetailOpenIndex(null);
+    setPendingReject(false);
   }, []);
 
   const handleDispatch = useCallback(async () => {
@@ -271,17 +304,15 @@ export function StaffInbox({
     setDetailOpenIndex(null);
   }, [filtered, selectedIndex]);
 
-  const handleReject = useCallback(async () => {
+  const handleReject = useCallback(() => {
     const wo = filtered[selectedIndex];
     if (!wo?.report) return;
-    // Route through the same prompt flow used by the detail panel so the reason
-    // is never silently hardcoded — the browser prompt is intentionally minimal
-    // for the keyboard shortcut path; the detail panel has a richer UI.
-    const reason = window.prompt("Rejection reason:");
-    if (reason === null) return; // user cancelled
-    if (!reason.trim()) return; // empty — server would reject anyway
-    await rejectReport(wo.report.id, reason.trim());
-    setDetailOpenIndex(null);
+    // Open the detail panel's styled reject flow instead of a native prompt, so
+    // the reason is captured in the same textarea used elsewhere. The `r`
+    // shortcut only fires while the detail is open (see KeyboardNav), but set
+    // the index too as a harmless safety.
+    setDetailOpenIndex(selectedIndex);
+    setPendingReject(true);
   }, [filtered, selectedIndex]);
 
   return (
@@ -299,26 +330,22 @@ export function StaffInbox({
             </p>
           </div>
 
-          {/* Refresh button – injects the live demo report (and flushes any
-              queued incoming reports) into the inbox + every other surface. */}
+          {/* Demo control — injects (or removes) the live demo report into the
+              inbox + every other surface. Clearly labeled so it reads as a demo
+              action, not a data refresh. */}
           <button
             type="button"
-            onClick={handleRefresh}
+            onClick={handleAddLiveReport}
             className={cn(
-              "relative flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-all",
+              "relative flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium outline-none transition-all focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]",
               "border-blue-400 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30",
             )}
-            title="Add a live report (demo)"
+            title="Inject a sample report across every surface (demo)"
           >
             <RefreshCw
               className={cn("h-4 w-4", isRefreshing && "animate-spin")}
             />
-            <span>Refresh</span>
-            {pendingQueue.length > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-600 px-1.5 text-[11px] font-bold text-white shadow">
-                {pendingQueue.length}
-              </span>
-            )}
+            <span>Add live report</span>
           </button>
         </div>
 
@@ -464,7 +491,13 @@ export function StaffInbox({
               workOrder={wo as unknown as WorkOrder}
               onClose={() => setMobileDrawerIndex(null)}
               standalone={false}
+              autoOpenReject={pendingReject}
             />
+            {/* autoOpenReject is inert on mobile (the `r` shortcut lives in the
+                desktop-only KeyboardNav, so pendingReject stays false here). The
+                desktop detail renders through WorkOrderRowControlled, which must
+                forward autoOpenReject to its child WorkOrderDetail for the `r`
+                flow to surface the reject input there. */}
           </Drawer>
         );
       })()}
@@ -521,7 +554,8 @@ export function StaffInbox({
                     onSelect={() => setSelectedIndex(idx)}
                     detailOpen={detailOpenIndex === idx}
                     onDetailOpen={() => setDetailOpenIndex(idx)}
-                    onDetailClose={() => setDetailOpenIndex(null)}
+                    onDetailClose={handleCloseDetail}
+                    autoOpenReject={detailOpenIndex === idx && pendingReject}
                     isNew={newIds.has(wo.id)}
                   />
                 );

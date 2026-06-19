@@ -8,6 +8,7 @@ import type {
 } from "@/app/api/ai/reasoning/route";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
+import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import type { ReportStatus } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 
@@ -24,26 +25,6 @@ import { cn } from "@/lib/utils/cn";
    sibling components but are re-implemented locally — the originals
    are module-private and not exported.
    ================================================================== */
-
-// Mirrors recent-reports.tsx STATUS_LABEL.
-const STATUS_LABEL: Record<ReportStatus, string> = {
-  open: "Open",
-  dispatched: "Dispatched",
-  in_progress: "In progress",
-  closed: "Resolved",
-  merged: "Merged",
-  rejected: "Rejected",
-};
-
-// Mirrors recent-reports.tsx STATUS_TONE — text color + /10 hue wash.
-const STATUS_TONE: Record<ReportStatus, string> = {
-  open: "text-[#ff9f0a] bg-[#ff9f0a]/10",
-  dispatched: "text-[#0a84ff] bg-[#0a84ff]/10",
-  in_progress: "text-[#5ac8fa] bg-[#5ac8fa]/10",
-  closed: "text-[#30d158] bg-[#30d158]/10",
-  merged: "text-zinc-400 bg-white/[0.06]",
-  rejected: "text-[#ff453a] bg-[#ff453a]/10",
-};
 
 // Mirrors analytics-bento.tsx SEVERITY_COLORS.
 const SEVERITY_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {
@@ -140,7 +121,7 @@ function StatusPill({ status }: { status: ReportStatus }) {
     <span
       className={cn(
         "flex-shrink-0 rounded-md px-2 py-0.5 text-[12px] font-medium",
-        STATUS_TONE[status],
+        statusChipClass(status),
       )}
     >
       {STATUS_LABEL[status]}

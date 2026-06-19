@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, ThumbsDown, ThumbsUp } from "lucide-react";
+import { ArrowRight, Check, ThumbsDown, ThumbsUp } from "lucide-react";
+import Link from "next/link";
 import { useRateReport, useReportRating } from "@/lib/resident-csat";
 import { cn } from "@/lib/utils/cn";
 
@@ -20,24 +21,38 @@ export function ReportCsat({ reportId }: { reportId: string }) {
   if (rating) {
     const positive = rating === "up";
     return (
-      <div
-        className="flex items-center gap-2 text-[13px] text-subtle"
-        role="status"
-      >
-        <span
-          className={cn(
-            "inline-flex h-6 w-6 items-center justify-center rounded-full",
-            positive
-              ? "bg-[#30d158]/15 text-[#30d158]"
-              : "bg-[#ff9f0a]/15 text-[#ff9f0a]",
-          )}
-          aria-hidden="true"
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div
+          className="flex items-center gap-2 text-[13px] text-subtle"
+          role="status"
         >
-          <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-        </span>
-        {positive
-          ? "Thanks — glad we got it right."
-          : "Thanks for the flag — we'll take another look."}
+          <span
+            className={cn(
+              "inline-flex h-6 w-6 items-center justify-center rounded-full",
+              positive
+                ? "bg-[#30d158]/15 text-[#30d158]"
+                : "bg-[#ff9f0a]/15 text-[#ff9f0a]",
+            )}
+            aria-hidden="true"
+          >
+            <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+          </span>
+          {positive
+            ? "Thanks — glad we got it right."
+            : "Thanks for the flag — we'll take another look."}
+        </div>
+        {/* Persistent next action so a resolved+rated report doesn't dead-end. */}
+        <Link
+          href="/report"
+          className="inline-flex min-h-[44px] items-center gap-1 text-[13px] font-medium text-[var(--color-primary)] transition-colors hover:underline"
+        >
+          Report another issue
+          <ArrowRight
+            className="h-3.5 w-3.5"
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+        </Link>
       </div>
     );
   }

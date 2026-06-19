@@ -430,11 +430,15 @@ export function WorkOrderRowControlled({
   detailOpen,
   onDetailOpen,
   onDetailClose,
+  autoOpenReject = false,
   isNew = false,
 }: WorkOrderRowProps & {
   detailOpen: boolean;
   onDetailOpen: () => void;
   onDetailClose: () => void;
+  /** When the detail opens via the keyboard `r` shortcut, auto-surface its
+   *  styled reject input (replaces the old native window.prompt flow). */
+  autoOpenReject?: boolean;
   isNew?: boolean;
 }) {
   const timeLabel = useTimeAgo(report.created_at);
@@ -578,6 +582,7 @@ export function WorkOrderRowControlled({
           classification={classification}
           workOrder={workOrder}
           onClose={onDetailClose}
+          autoOpenReject={autoOpenReject}
         />
       )}
     </>

@@ -1,6 +1,13 @@
 "use client";
 
-import { AlertCircle, ArrowRight, Lock, Mail, MapPin } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowRight,
+  Lock,
+  Mail,
+  MailCheck,
+  MapPin,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -27,11 +34,15 @@ export default function LoginForm() {
   const [email, setEmail] = useState(DEV_PREFILL ? DEV_EMAIL : "");
   const [password, setPassword] = useState(DEV_PREFILL ? DEV_PASSWORD : "");
   const [error, setError] = useState<string | null>(initialError);
+  // Positive/neutral notice (e.g. signup confirmation) — kept separate from
+  // `error` so a success outcome doesn't render in the red danger box.
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState<"google" | "email" | "guest" | null>(null);
 
   async function handleGoogle() {
     setBusy("google");
     setError(null);
+    setNotice(null);
     const supabase = createBrowserSupabase();
     const next = encodeURIComponent(redirectTo);
     const { error } = await supabase.auth.signInWithOAuth({
@@ -51,6 +62,7 @@ export default function LoginForm() {
     e.preventDefault();
     setBusy("email");
     setError(null);
+    setNotice(null);
     const supabase = createBrowserSupabase();
     if (mode === "signin") {
       const { error } = await supabase.auth.signInWithPassword({
@@ -73,7 +85,7 @@ export default function LoginForm() {
         setBusy(null);
         return;
       }
-      setError("Check your email for a confirmation link.");
+      setNotice("Check your email for a confirmation link.");
       setBusy(null);
       return;
     }
@@ -84,6 +96,7 @@ export default function LoginForm() {
   async function handleGuest() {
     setBusy("guest");
     setError(null);
+    setNotice(null);
     const supabase = createBrowserSupabase();
     const { error } = await supabase.auth.signInAnonymously();
     if (error) {
@@ -164,10 +177,23 @@ export default function LoginForm() {
           {error && (
             <div
               key={error}
-              className="lf-fade-down mt-5 flex items-start gap-2 rounded-xl border border-[var(--color-danger)]/30 bg-[var(--color-danger)]/8 px-3 py-2.5 text-[13px] text-[var(--color-danger)]"
+              id="auth-error"
+              role="alert"
+              className="lf-fade-down mt-5 flex items-start gap-2 rounded-xl border border-[var(--color-danger)]/30 bg-[var(--color-danger)]/8 px-3 py-2.5 text-[13px] text-[var(--status-danger-fg)]"
             >
               <AlertCircle className="mt-[2px] h-4 w-4 flex-shrink-0" />
               <span className="leading-snug">{error}</span>
+            </div>
+          )}
+
+          {notice && (
+            <div
+              key={notice}
+              role="status"
+              className="lf-fade-down mt-5 flex items-start gap-2 rounded-xl border border-[var(--color-success)]/30 bg-[var(--color-success)]/8 px-3 py-2.5 text-[13px] text-[var(--status-success-fg)]"
+            >
+              <MailCheck className="mt-[2px] h-4 w-4 flex-shrink-0" />
+              <span className="leading-snug">{notice}</span>
             </div>
           )}
 
@@ -212,18 +238,27 @@ export default function LoginForm() {
             <div>
               <form onSubmit={handleEmail} className="space-y-3 pt-px">
                 <FieldIcon icon={<Mail className="h-4 w-4" />}>
+                  <label htmlFor="auth-email" className="sr-only">
+                    Email address
+                  </label>
                   <input
+                    id="auth-email"
                     type="email"
                     required
                     autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
+                    aria-describedby={error ? "auth-error" : undefined}
                     className="h-12 w-full bg-transparent pl-10 pr-3 text-base sm:text-[14px] outline-none placeholder:text-[var(--color-muted)]"
                   />
                 </FieldIcon>
                 <FieldIcon icon={<Lock className="h-4 w-4" />}>
+                  <label htmlFor="auth-password" className="sr-only">
+                    Password
+                  </label>
                   <input
+                    id="auth-password"
                     type="password"
                     required
                     minLength={mode === "signup" ? 8 : undefined}
@@ -235,6 +270,7 @@ export default function LoginForm() {
                     placeholder={
                       mode === "signup" ? "At least 8 characters" : "Password"
                     }
+                    aria-describedby={error ? "auth-error" : undefined}
                     className="h-12 w-full bg-transparent pl-10 pr-3 text-base sm:text-[14px] outline-none placeholder:text-[var(--color-muted)]"
                   />
                 </FieldIcon>
@@ -292,6 +328,7 @@ export default function LoginForm() {
                 onClick={() => {
                   setMode("signup");
                   setError(null);
+                  setNotice(null);
                   setShowEmail(false);
                 }}
                 className="inline-flex sm:inline items-center min-h-[44px] sm:min-h-0 font-medium text-[var(--color-primary)] hover:underline"
@@ -307,6 +344,7 @@ export default function LoginForm() {
                 onClick={() => {
                   setMode("signin");
                   setError(null);
+                  setNotice(null);
                   setShowEmail(false);
                 }}
                 className="inline-flex sm:inline items-center min-h-[44px] sm:min-h-0 font-medium text-[var(--color-primary)] hover:underline"

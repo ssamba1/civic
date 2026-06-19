@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CloudLightning } from "lucide-react";
+import { AlertTriangle, CloudLightning, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface StormAdvisoryAlert {
@@ -32,10 +32,34 @@ interface StormAdvisory {
 }
 
 const POLL_MS = 5 * 60_000;
+const DISMISS_STORAGE_KEY = "storm-advisory-dismissed";
 
 export function StormAdvisoryBanner() {
   const [advisory, setAdvisory] = useState<StormAdvisory | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  // Hydrate the dismissed flag after mount (not in a useState initializer) so
+  // SSR and the first client render agree — reading sessionStorage during
+  // render would desync hydration.
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(DISMISS_STORAGE_KEY) === "1") {
+        setDismissed(true);
+      }
+    } catch {
+      // sessionStorage unavailable (private mode) — show the banner.
+    }
+  }, []);
+
+  const dismiss = () => {
+    setDismissed(true);
+    try {
+      sessionStorage.setItem(DISMISS_STORAGE_KEY, "1");
+    } catch {
+      // Non-fatal: the banner still closes for this view.
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -59,31 +83,41 @@ export function StormAdvisoryBanner() {
     };
   }, []);
 
-  if (!advisory || !advisory.hasActiveOrRecentStorm) return null;
+  if (!advisory?.hasActiveOrRecentStorm || dismissed) return null;
 
   const headline = advisory.headlineAlert;
 
   return (
     <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/40 dark:text-amber-300">
-      <button
-        type="button"
-        onClick={() => setExpanded((e) => !e)}
-        className="flex w-full items-start gap-2 text-left"
-      >
-        <CloudLightning className="mt-0.5 h-5 w-5 flex-shrink-0" />
-        <div className="flex-1">
-          <p className="text-sm font-semibold">
-            {headline ? headline.event : "Severe weather in the area"} — expect more reports
-            than usual over the next {advisory.forecastWindowHours}h
-          </p>
-          {headline?.headline && (
-            <p className="mt-0.5 text-xs opacity-90">{headline.headline}</p>
-          )}
-          <p className="mt-1 text-xs underline opacity-75">
-            {expanded ? "Hide breakdown" : "Show predicted impact breakdown"}
-          </p>
-        </div>
-      </button>
+      <div className="flex items-start gap-2">
+        <button
+          type="button"
+          onClick={() => setExpanded((e) => !e)}
+          className="flex flex-1 items-start gap-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
+        >
+          <CloudLightning className="mt-0.5 h-5 w-5 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold">
+              {headline ? headline.event : "Severe weather in the area"} — expect more reports
+              than usual over the next {advisory.forecastWindowHours}h
+            </p>
+            {headline?.headline && (
+              <p className="mt-0.5 text-xs opacity-90">{headline.headline}</p>
+            )}
+            <p className="mt-1 text-xs underline opacity-75">
+              {expanded ? "Hide breakdown" : "Show predicted impact breakdown"}
+            </p>
+          </div>
+        </button>
+        <button
+          type="button"
+          onClick={dismiss}
+          aria-label="Dismiss storm advisory"
+          className="-mr-1 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-amber-700 outline-none transition-colors hover:bg-amber-100 focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] dark:text-amber-300 dark:hover:bg-amber-900/40"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
 
       {expanded && (
         <div className="mt-3 space-y-3 pl-7">

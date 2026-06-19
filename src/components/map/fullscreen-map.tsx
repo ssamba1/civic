@@ -14,7 +14,9 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { dispatchWorkOrderForReport } from "@/app/staff/actions";
 import { type MapTheme, ReportMap } from "@/components/map/report-map";
-import { UpvoteButton } from "@/components/resident/upvote-button";
+// Upvote disabled for now — client-only/no durable backend yet (see
+// lib/upvotes.ts + migration 005). Re-enable with the import below.
+// import { UpvoteButton } from "@/components/resident/upvote-button";
 import BottomSheet from "@/components/ui/bottom-sheet";
 import { useCategoryOverrides } from "@/lib/category-overrides";
 import type { DashboardReport } from "@/lib/dashboard-data";
@@ -709,6 +711,7 @@ export function FullscreenMapOrchestrator({
                       </div>
                     )}
                   </div>
+                  {/* Upvote disabled for now (no durable backend). Re-enable:
                   {readOnly && (
                     <UpvoteButton
                       reportId={report.id}
@@ -716,7 +719,7 @@ export function FullscreenMapOrchestrator({
                       size="sm"
                       className="self-center shrink-0"
                     />
-                  )}
+                  )} */}
                 </div>
               );
             })

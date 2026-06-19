@@ -110,9 +110,9 @@ function DefaultLoader() {
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 backdrop-blur-xs">
       <div className="flex gap-1">
-        <span className="size-1.5 animate-pulse rounded-full bg-muted-foreground/60" />
-        <span className="size-1.5 animate-pulse rounded-full bg-muted-foreground/60 [animation-delay:150ms]" />
-        <span className="size-1.5 animate-pulse rounded-full bg-muted-foreground/60 [animation-delay:300ms]" />
+        <span className="size-1.5 animate-pulse rounded-full bg-faint" />
+        <span className="size-1.5 animate-pulse rounded-full bg-faint [animation-delay:150ms]" />
+        <span className="size-1.5 animate-pulse rounded-full bg-faint [animation-delay:300ms]" />
       </div>
     </div>
   );
@@ -373,7 +373,7 @@ function MarkerContent({ children, className }: MarkerContentProps) {
 
 function DefaultMarkerIcon() {
   return (
-    <div className="relative h-4 w-4 rounded-full border-2 border-white bg-blue-500 shadow-lg" />
+    <div className="relative h-4 w-4 rounded-full bg-[var(--color-primary)] shadow-lg ring-2 ring-[var(--color-background)]" />
   );
 }
 
@@ -427,7 +427,7 @@ function MarkerTooltip({
   return createPortal(
     <div
       className={cn(
-        "pointer-events-none rounded-md bg-foreground px-2 py-1 text-xs text-balance text-background shadow-md animate-in fade-in-0 zoom-in-95 duration-200 ease-out",
+        "pointer-events-none rounded-md bg-foreground px-2 py-1 text-xs text-balance text-background shadow-md animate-[city-pop_120ms_ease-out]",
         className,
       )}
     >
