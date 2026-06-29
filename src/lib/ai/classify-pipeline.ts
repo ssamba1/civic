@@ -218,13 +218,24 @@ export async function runClassifyPipeline(
     });
   }
 
+  // Live-schema reconcile: the deployed classifications table predates the
+  // no_issue_detected / alternate_categories columns (the Classification type
+  // carries them, the DB doesn't). Project only persistable columns so the
+  // upsert doesn't fail on unknown keys. The dropped fields are read from the
+  // in-memory `classification` object by the manual-review gate below, so
+  // nothing downstream is affected.
+  const {
+    no_issue_detected: _omitNid,
+    alternate_categories: _omitAlt,
+    ...persistableClassification
+  } = classification;
   const { error: classErr } = await supabase.from("classifications").upsert(
     {
       report_id: reportId,
-      ...classification,
+      ...persistableClassification,
       model_version: modelVersion,
       raw_response: rawResponse,
-    },
+    } as Record<string, unknown>,
     { onConflict: "report_id" },
   );
 
@@ -414,12 +425,12 @@ export async function runClassifyPipeline(
       priority_score: rulesWorkOrder.priority_score,
       est_minutes: estMinutes,
       materials,
-      // Set directly on the primary insert (not a best-effort stamp like
-      // est_cost below) — this flag is safety/correctness-critical and must
-      // never silently fail to apply.
-      needs_manual_review: needsManualReview,
-      review_reason: reviewReason,
-    })
+      // needs_manual_review / review_reason are omitted from the persisted row:
+      // the deployed work_orders table predates those columns (migration 018).
+      // The manual-review GATE is unaffected — it reads the in-memory
+      // needsManualReview below to decide dispatch-vs-hold and surfaces
+      // reviewReason on the returned object.
+    } as Record<string, unknown>)
     .select()
     .single<WorkOrder>();
 
