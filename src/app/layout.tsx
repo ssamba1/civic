@@ -114,8 +114,15 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col font-sans">
         {/* No-flash theme init — children form (matches the repo's inline
             <style>{`…`}</style> idiom) so no dangerouslySetInnerHTML. THEME_INIT
-            is a static constant; nonce-gated under the prod CSP. */}
-        <script nonce={nonce}>{THEME_INIT}</script>
+            is a static constant; nonce-gated under the prod CSP.
+            suppressHydrationWarning: browsers (Chrome 98+) clear the nonce
+            content attribute after parse for CSP security, so the client reads
+            nonce="" while the server HTML carries the real nonce — a benign
+            mismatch React can't patch. The nonce is already consumed at parse
+            time; nothing runtime depends on it. */}
+        <script nonce={nonce} suppressHydrationWarning>
+          {THEME_INIT}
+        </script>
         <div className="page-enter flex flex-1 flex-col">{children}</div>
         <BottomTabBar />
       </body>

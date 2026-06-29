@@ -1,5 +1,6 @@
 import { AnonBootstrap } from "@/components/resident/anon-bootstrap";
 import { UserNav } from "@/components/resident/user-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { ViewSwitch } from "@/components/view-switch";
 import { getCurrentResident } from "@/lib/resident-data";
 
@@ -25,9 +26,10 @@ export default async function UserLayout({
       {/* Mobile has no top header (BottomTabBar covers nav) — float the
           view switch top-right so User⇄City stays reachable on phones. */}
       <div
-        className="md:hidden fixed right-3 top-0 z-50"
+        className="md:hidden fixed right-3 top-0 z-50 flex items-center gap-2"
         style={{ marginTop: "max(0.5rem, env(safe-area-inset-top))" }}
       >
+        <ThemeToggle />
         <ViewSwitch citySlug={citySlug} />
       </div>
 

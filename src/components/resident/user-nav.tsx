@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { EnvSwitch } from "@/components/env-switch";
 import { UpdatesPopover } from "@/components/resident/updates-popover";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { ViewSwitch } from "@/components/view-switch";
 
 export function UserNav({ citySlug }: { citySlug?: string }) {
@@ -105,6 +106,8 @@ export function UserNav({ citySlug }: { citySlug?: string }) {
 
           <ViewSwitch citySlug={citySlug} />
           <EnvSwitch />
+          {/* Light ⇄ dark theme toggle — mirrors CityNav's placement. */}
+          <ThemeToggle />
         </nav>
       </div>
     </header>

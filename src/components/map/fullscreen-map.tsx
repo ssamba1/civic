@@ -18,6 +18,7 @@ import { type MapTheme, ReportMap } from "@/components/map/report-map";
 // lib/upvotes.ts + migration 005). Re-enable with the import below.
 // import { UpvoteButton } from "@/components/resident/upvote-button";
 import BottomSheet from "@/components/ui/bottom-sheet";
+import { LiquidGlassCard } from "@/components/ui/liquid-glass";
 import { useCategoryOverrides } from "@/lib/category-overrides";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
@@ -132,6 +133,17 @@ export function FullscreenMapOrchestrator({
 
   // --- Map theme (lifted from ReportMap so Dispatch panel can react) ---
   const [mapTheme, setMapTheme] = useState<MapTheme>("dark");
+  // Dispatch glass scrim adapts to the active basemap so the panel reads on each
+  // and lets the map colors bleed through. Dark → faint scrim (most see-through);
+  // satellite → mid (busy imagery); light → denser (white text needs contrast
+  // over a bright basemap). backdrop-blur (LiquidGlassCard, blur-xl) keeps the
+  // text legible even at these low tints.
+  const panelTint =
+    mapTheme === "light"
+      ? "bg-black/40"
+      : mapTheme === "satellite"
+        ? "bg-black/28"
+        : "bg-black/15";
 
   // --- Active Filters State ---
   // Team view seeds + locks the team scope; city view starts at "all".
@@ -372,7 +384,7 @@ export function FullscreenMapOrchestrator({
         )}
 
         {/* Quick filters */}
-        <div className="rounded-lg bg-[#3c3c42] p-3 flex flex-col gap-3">
+        <div className="rounded-lg bg-white/[0.06] border border-white/10 p-3 flex flex-col gap-3">
           {/* Team — primary scoping. Hidden in the team view (locked) and the
             resident community view (no team concept). */}
           {!lockedTeam && !readOnly && (
@@ -749,7 +761,7 @@ export function FullscreenMapOrchestrator({
   );
 
   return (
-    <div className="h-full w-full relative overflow-hidden flex bg-black select-none">
+    <div className="h-full w-full flex-1 min-h-0 relative overflow-hidden flex bg-black select-none">
       <style>{`@keyframes fmPanelIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}`}</style>
 
       {/* Full-viewport map */}
@@ -799,15 +811,21 @@ export function FullscreenMapOrchestrator({
         {dispatchPanelContent}
       </BottomSheet>
 
-      {/* Desktop side panel — Dispatch (hidden on mobile). Solid dark-grey
-          surface — no liquid glass, no border. Soft shadow lifts it off the map. */}
-      <div
-        className="hidden lg:flex flex-col absolute top-16 left-4 bottom-4 w-[280px] pointer-events-auto z-10 overflow-hidden rounded-[20px] bg-[#2e2e33] p-4 text-white shadow-[0_8px_40px_rgba(0,0,0,0.45)]"
+      {/* Desktop side panel — Dispatch (hidden on mobile). Liquid-glass surface
+          so the basemap colors read through; `panelTint` adapts the scrim to the
+          active basemap (light/dark/satellite). */}
+      <LiquidGlassCard
+        className="hidden lg:flex absolute top-16 left-4 bottom-4 w-[280px] pointer-events-auto z-10 overflow-hidden"
         style={
           reducedMotion
             ? undefined
             : { animation: "fmPanelIn 300ms cubic-bezier(0.16,1,0.3,1)" }
         }
+        contentClassName={`${panelTint} p-4 text-white flex flex-col overflow-hidden`}
+        borderRadius="20px"
+        blurIntensity="xl"
+        shadowIntensity="none"
+        glowIntensity="xs"
       >
         {/* Panel header */}
         <div className="flex items-center justify-between shrink-0 mb-3">
@@ -821,7 +839,7 @@ export function FullscreenMapOrchestrator({
 
         {/* Shared dispatch content — same content as mobile bottom-sheet */}
         <div className="flex-1 overflow-hidden">{dispatchPanelContent}</div>
-      </div>
+      </LiquidGlassCard>
     </div>
   );
 }
