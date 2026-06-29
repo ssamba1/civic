@@ -90,6 +90,13 @@ export interface Municipality {
 
 export const MUNICIPALITIES: Municipality[] = [
   {
+    slug: "ahilyanagar",
+    name: "Ahilyanagar",
+    state: "Maharashtra",
+    county: "Ahmednagar District",
+    live: true,
+  },
+  {
     slug: "cumming",
     name: "Cumming",
     state: "GA",

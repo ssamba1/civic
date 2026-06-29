@@ -48,6 +48,14 @@ type SubmitReportInput = z.infer<typeof submitReportSchema>;
 const PUBLIC_BUCKET = "photos-public";
 const RAW_BUCKET = "photos-raw";
 
+// Demo default city. Fresh guest/anon submitters have no public.users row, and
+// no-GPS submits have no coordinate — both fall back to this city. Set to
+// Ahilyanagar, Maharashtra so any report created on the live site routes into
+// the Ahilyanagar civic console (single lever for the demo). Center is the
+// Ahilyanagar (formerly Ahmednagar) city center.
+const DEFAULT_CITY_SLUG = "ahilyanagar";
+const DEFAULT_CITY_CENTER = { lat: 19.0948, lng: 74.748 };
+
 function fallbackClassification(reason: string): Classification {
   return {
     category: "other",
@@ -74,8 +82,8 @@ export async function submitReport(
     parsed.data;
 
   // reports.location is NOT NULL geography(POINT,4326). When GPS is unavailable,
-  // fall back to the demo city center (Cumming, GA) so submission never dead-ends.
-  const coord = location ?? { lat: 34.2073, lng: -84.1402 };
+  // fall back to the demo city center so submission never dead-ends.
+  const coord = location ?? DEFAULT_CITY_CENTER;
 
   // Auth via cookie-aware SSR client.
   const ssr = await createSSRClient();
@@ -89,7 +97,7 @@ export async function submitReport(
   const service = createServerClient();
 
   // Resolve the reporter's city. New anon/guest/OAuth users have no public.users
-  // row (no signup trigger), so self-heal: create one defaulted to Cumming.
+  // row (no signup trigger), so self-heal: create one defaulted to DEFAULT_CITY_SLUG.
   let cityId: string | null = null;
   const { data: profile } = await ssr
     .from("users")
@@ -102,7 +110,7 @@ export async function submitReport(
     const { data: city } = await service
       .from("cities")
       .select("id")
-      .eq("slug", "cumming")
+      .eq("slug", DEFAULT_CITY_SLUG)
       .single<{ id: string }>();
     if (city?.id) {
       await service.from("users").upsert(
