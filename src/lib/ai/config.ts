@@ -3,8 +3,13 @@
  * No side effects, no external imports — safe to import anywhere (client or server).
  */
 
-/** Gemini model used for all classification calls. */
-export const GEMINI_MODEL = "gemini-2.5-flash";
+/**
+ * Gemini model used for all classification calls. flash-lite returns a correct
+ * structured classification in ~3-4s (vs ~6-30s for gemini-2.5-flash), so the
+ * synchronous submit completes well within the timeout and the short in-flight
+ * window sharply reduces rate-limit (429) collisions under load.
+ */
+export const GEMINI_MODEL = "gemini-2.5-flash-lite";
 
 /**
  * Per-attempt abort timeout for AI calls, in milliseconds.
