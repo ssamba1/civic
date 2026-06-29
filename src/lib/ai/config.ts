@@ -12,10 +12,15 @@ export const GEMINI_MODEL = "gemini-2.5-flash";
  * AI_TIMEOUT_MS + backoff. At 20s/1-retry that is ≈ 40s, inside typical
  * serverless function limits — the async path is the real fix for scale.
  */
-export const AI_TIMEOUT_MS = 20000;
+export const AI_TIMEOUT_MS = 30000;
 
-/** Max retry attempts (beyond the first try) for transient AI failures. */
-export const AI_MAX_RETRIES = 1;
+/**
+ * Max retry attempts (beyond the first try) for transient AI failures.
+ * Set to 2 (3 attempts total): live Gemini calls intermittently fast-fail on
+ * cold serverless instances, and retries (cheap — fast-fails back off in
+ * <2s) collapse the per-submit failure rate. Pairs with the route maxDuration.
+ */
+export const AI_MAX_RETRIES = 2;
 
 /** Base backoff delay in milliseconds; grows exponentially per attempt. */
 export const AI_RETRY_BASE_MS = 400;
