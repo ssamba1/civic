@@ -2,7 +2,11 @@ import { notFound } from "next/navigation";
 import { DashboardInteractive } from "@/components/dashboard/dashboard-interactive";
 import { FilterBar } from "@/components/filters/filter-bar";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
-import { fetchCity, fetchCityStats } from "@/lib/dashboard-queries";
+import {
+  fetchCity,
+  fetchCityCenter,
+  fetchCityStats,
+} from "@/lib/dashboard-queries";
 
 export const metadata = { title: "Browse Local Issues | Civic" };
 
@@ -17,6 +21,11 @@ export default async function BrowsePage({ params }: PageProps) {
 
   const known = KNOWN_CITIES[slug];
   const stats = await fetchCityStats(city.id);
+  // Center on the city itself: hardcoded coords for ship-with cities, else the
+  // real geocoded center (city_center RPC / live geocode) so an onboarded city's
+  // dashboard map doesn't fall back to Cumming.
+  const center: [number, number] = known?.center ??
+    (await fetchCityCenter(slug, city.name, city.state)) ?? [-84.14, 34.21];
 
   return (
     <div className="flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-[calc(2.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8">
@@ -38,7 +47,7 @@ export default async function BrowsePage({ params }: PageProps) {
 
       <DashboardInteractive
         initialStats={stats}
-        center={known?.center ?? [-84.14, 34.21]}
+        center={center}
         zoom={known?.zoom ?? 12}
       />
     </div>

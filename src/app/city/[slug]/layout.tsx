@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { CityHeader } from "@/components/city-header";
 import { getReportCorpus, KNOWN_CITIES } from "@/lib/dashboard-data";
-import { fetchCity } from "@/lib/dashboard-queries";
+import { fetchCity, fetchRecentReports } from "@/lib/dashboard-queries";
 import { FilterProvider } from "@/lib/filters/context";
 
 export default async function CityDashboardLayout({
@@ -13,16 +13,21 @@ export default async function CityDashboardLayout({
 }) {
   const { slug } = await params;
 
-  // The demo corpus is synthetic, Cumming-centered, and slug-agnostic. Serve it
-  // only for cities that ship with it (KNOWN_CITIES = Cumming); every onboarded
-  // city gets an empty corpus so its dashboard, workload, and map reflect its
-  // own (real, initially empty) data instead of looking like Cumming.
-  const corpus = slug in KNOWN_CITIES ? getReportCorpus() : [];
-  const now = Date.now();
-
-  // Resolve the real city identity so a freshly-onboarded city's header shows
-  // its own name/state rather than falling back to the first municipality.
+  // Resolve the real city identity first — used for the header and to load the
+  // city's live reports below.
   const city = await fetchCity(slug);
+
+  // Cumming ships with the rich synthetic demo corpus (slug-agnostic). Every
+  // other (onboarded) city loads its OWN live reports from the DB so its
+  // dashboard, workload, and map reflect real data — the live PostGIS point,
+  // AI category/severity, and status — instead of looking empty.
+  const corpus =
+    slug in KNOWN_CITIES
+      ? getReportCorpus()
+      : city
+        ? await fetchRecentReports(city.id, 500)
+        : [];
+  const now = Date.now();
 
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
