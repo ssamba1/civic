@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { CityHeader } from "@/components/city-header";
+import { CitySidebar } from "@/components/city-sidebar";
 import { getReportCorpus, KNOWN_CITIES } from "@/lib/dashboard-data";
 import { fetchCity, fetchRecentReports } from "@/lib/dashboard-queries";
 import { FilterProvider } from "@/lib/filters/context";
@@ -30,8 +31,15 @@ export default async function CityDashboardLayout({
   const now = Date.now();
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background text-foreground">
+    // Column on mobile (fixed CityHeader on top); row on md+ where the
+    // sticky CitySidebar owns the left rail and flexbox owns content width.
+    <div className="flex min-h-dvh flex-col bg-background text-foreground md:flex-row">
       <CityHeader
+        slug={slug}
+        cityName={city?.name ?? null}
+        cityState={city?.state ?? null}
+      />
+      <CitySidebar
         slug={slug}
         cityName={city?.name ?? null}
         cityState={city?.state ?? null}
@@ -40,12 +48,12 @@ export default async function CityDashboardLayout({
       <Suspense fallback={null}>
         <FilterProvider corpus={corpus} now={now}>
           {/*
-           * Top offset for the FIXED CityHeader is owned by each content page
-           * via the `pt-city-content` utility (globals.css), which is
-           * safe-area-aware. The old scheme (h-7 spacer + per-page pt-20) was
-           * not inset-aware and buried content under the notch on iPhones.
+           * Mobile top offset for the FIXED CityHeader is owned by each
+           * content page via the `pt-city-content` utility (globals.css),
+           * which is safe-area-aware. On md+ the header is gone (sidebar
+           * shell instead) so the utility collapses to plain page padding.
            */}
-          <main className="flex-1 flex flex-col">{children}</main>
+          <main className="flex-1 flex flex-col min-w-0">{children}</main>
         </FilterProvider>
       </Suspense>
     </div>

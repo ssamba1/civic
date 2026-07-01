@@ -469,21 +469,20 @@
   padding-right: env(safe-area-inset-right);
 }
 
-/* ── City dashboard content offset (clears the FIXED CityHeader) ──
+/* ── City dashboard content offset (clears the FIXED mobile CityHeader) ──
    Mobile (<md): two-row header measured at 118px tall, PLUS the notch inset.
-   Desktop (md+): single-row 56px header.
    The header is position:fixed and carries pt-safe, so its rendered height is
    `inset-top + rows`. Content below it must add the SAME inset-top term or it
    desyncs on notched iPhones (header grows, offset doesn't → content buried).
-   Centralizes what used to be a per-page pt-16/pt-20 guess + a layout spacer
-   that ignored the inset entirely. Map page opts out (fullscreen, transparent
-   header) by simply not using this class. */
+   Desktop (md+): no fixed header anymore — the sidebar shell owns chrome and
+   sits in normal flex flow — so this collapses to plain page padding.
+   Map page opts out (fullscreen, transparent header) by not using this class. */
 .pt-city-content {
   padding-top: calc(env(safe-area-inset-top) + 8rem);
 }
 @media (min-width: 768px) {
   .pt-city-content {
-    padding-top: 5rem;
+    padding-top: 2rem;
   }
 }
 
@@ -500,6 +499,33 @@
 }
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* ── Work-order grid (AG Grid) polish ──
+   Scoped to .wo-grid so nothing leaks into other AG Grid instances. These are
+   the two looks the Theming API can't express as params: uppercase micro
+   headers and a per-row hover accent (left inset bar + tint transition). */
+.wo-grid .ag-header-cell-text {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.wo-grid .ag-row {
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease;
+}
+.wo-grid .ag-row-hover {
+  box-shadow: inset 2px 0 0 #2563eb;
+}
+.dark .wo-grid .ag-row-hover {
+  box-shadow: inset 2px 0 0 #60a5fa;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wo-grid .ag-row {
+    transition: none;
+  }
 }
 
 /* ── Base ── */

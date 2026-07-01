@@ -60,16 +60,17 @@ export function TeamHeader({ team, city, accountLabel }: TeamHeaderProps) {
   );
 
   return (
+    // Mobile-only since the desktop sidebar shell (TeamSidebar) took over md+.
     <header
       className={cn(
-        "fixed top-0 inset-x-0 z-40 pt-safe",
+        "fixed top-0 inset-x-0 z-40 pt-safe md:hidden",
         transparent
           ? "bg-transparent"
           : "border-b border-hairline bg-glass backdrop-blur-xl supports-[backdrop-filter]:bg-glass",
       )}
     >
       {/* ── Mobile: two rows (logo/identity row + segmented nav row) ── */}
-      <div className="md:hidden">
+      <div>
         <div className="flex h-14 w-full items-center justify-between gap-2 px-4">
           <Link
             href="/"
@@ -88,27 +89,6 @@ export function TeamHeader({ team, city, accountLabel }: TeamHeaderProps) {
         </div>
         <div className="px-2 pb-2">
           <TeamNav team={team} city={city} mobileSlot="tabs" />
-        </div>
-      </div>
-
-      {/* ── Desktop (md+): single row ── */}
-      <div className="hidden md:flex h-14 w-full items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <div className="flex min-w-0 items-center gap-3">
-          <Link
-            href="/"
-            className="group inline-flex shrink-0 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
-          >
-            <span
-              className="h-2 w-2 rounded-full bg-[#0a84ff] shadow-[0_0_8px_rgba(10,132,255,0.6)]"
-              aria-hidden="true"
-            />
-            Civic
-          </Link>
-          {badge}
-        </div>
-        <div className="flex min-w-0 items-center gap-2">
-          <TeamNav team={team} city={city} />
-          {logout}
         </div>
       </div>
     </header>

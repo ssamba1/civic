@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { TeamHeader } from "@/components/teams/team-header";
+import { TeamSidebar } from "@/components/teams/team-sidebar";
 import { getReportCorpus, KNOWN_CITIES } from "@/lib/dashboard-data";
 import { getDemoSession } from "@/lib/demo-session";
 import { FilterProvider } from "@/lib/filters/context";
@@ -32,8 +33,15 @@ export default async function TeamViewLayout({
   const session = await getDemoSession();
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background text-foreground">
+    // Column on mobile (fixed TeamHeader on top); row on md+ where the
+    // sticky TeamSidebar owns the left rail and flexbox owns content width.
+    <div className="flex min-h-dvh flex-col bg-background text-foreground md:flex-row">
       <TeamHeader
+        team={team}
+        city={city}
+        accountLabel={session?.label ?? null}
+      />
+      <TeamSidebar
         team={team}
         city={city}
         accountLabel={session?.label ?? null}
@@ -41,7 +49,7 @@ export default async function TeamViewLayout({
 
       <Suspense fallback={null}>
         <FilterProvider corpus={corpus} now={now} lockedTeam={team}>
-          <main className="flex-1 flex flex-col">{children}</main>
+          <main className="flex-1 flex flex-col min-w-0">{children}</main>
         </FilterProvider>
       </Suspense>
     </div>

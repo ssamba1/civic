@@ -24,7 +24,7 @@ import { useSlidingPill } from "@/lib/hooks/use-sliding-pill";
  * solid; a second click removes it. Sits left of the segmented nav track. No
  * separate reset control — the same button is the on/off switch.
  */
-function NavRefreshButton() {
+export function NavRefreshButton() {
   const { demoReports, add, reset } = useDemoReports();
   const active = demoReports.length > 0;
   const [spinning, setSpinning] = useState(false);
