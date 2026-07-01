@@ -88,20 +88,12 @@ export default async function CityGridPage({ params }: PageProps) {
   if (slug !== DEMO_CITY) await requireStaffFor(slug);
 
   const rows = await getGridRows(city.id);
-  const isGated = slug !== DEMO_CITY;
 
   return (
     <div className="mx-auto flex h-dvh w-full max-w-7xl flex-col px-4 pt-city-content pb-6 sm:px-6 lg:px-8">
-      <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h1 className="text-[22px] font-semibold leading-[1.1] tracking-tight text-foreground sm:text-[26px]">
-          Work Order Grid
-        </h1>
-        <p className="text-sm text-subtle">
-          Every report and its work order — sortable, filterable, editable.
-          {isGated && " Staff view — not on the public dashboard."}
-        </p>
-      </div>
-
+      {/* Visible title chrome removed to give the grid the full viewport;
+          the h1 survives for a11y/SEO. */}
+      <h1 className="sr-only">Work Order Grid</h1>
       <WorkOrderGrid rows={rows} />
     </div>
   );

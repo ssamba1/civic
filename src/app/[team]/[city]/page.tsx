@@ -38,22 +38,21 @@ export default async function TeamOverviewPage({ params }: PageProps) {
   return (
     <div className="flex flex-col min-h-dvh">
       <div className="flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-10 sm:px-6 lg:px-8">
-        <section className="mb-6">
-          <p className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.08em] text-faint">
+        <section className="mb-5">
+          <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.08em] text-faint">
             <span
               className="h-1.5 w-1.5 rounded-full"
-              style={{
-                backgroundColor: meta.color,
-                boxShadow: `0 0 6px ${meta.color}99`,
-              }}
+              style={{ backgroundColor: meta.color }}
               aria-hidden="true"
             />
             {known.name}, {known.state} · {meta.shortLabel}
           </p>
-          <h1 className="mt-2 text-[28px] sm:text-[34px] lg:text-[40px] font-semibold tracking-tight text-foreground leading-[1.1]">
-            Overview
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm text-subtle">{meta.duties}</p>
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
+              Overview
+            </h1>
+            <p className="max-w-2xl text-[13px] text-faint">{meta.duties}</p>
+          </div>
         </section>
 
         <TeamDashboardInteractive teamId={team} />

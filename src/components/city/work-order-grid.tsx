@@ -19,6 +19,7 @@ import {
   HelpCircle,
   Lightbulb,
   type LucideIcon,
+  Search,
   Signpost,
   SprayCan,
   Trash2,
@@ -133,31 +134,38 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 // ── AG-Grid theme (token-free hex; ported from schedule-bot) ────────────────
+// No zebra striping: the hover tint + accent bar (globals.css .wo-grid) is the
+// row-state signal, and zebra fights it. Row separators are near-invisible so
+// the cell content carries the visual rhythm.
 const gridThemeLight = themeQuartz.withParams({
   accentColor: "#2563eb",
   backgroundColor: "#ffffff",
   headerBackgroundColor: "#f8fafc",
   headerTextColor: "#64748b",
+  headerFontWeight: 600,
   foregroundColor: "#0f172a",
   fontFamily: "inherit",
-  rowHoverColor: "#f1f5f9",
+  fontSize: 13,
+  cellHorizontalPadding: 14,
+  rowHoverColor: "#eff6ff",
   selectedRowBackgroundColor: "#e0edfb",
-  oddRowBackgroundColor: "#f8fafc",
-  borderColor: "#e2e8f0",
-  wrapperBorderRadius: "12px",
+  borderColor: "#eef2f7",
+  wrapperBorderRadius: "14px",
 });
 const gridThemeDark = themeQuartz.withParams({
   accentColor: "#3b82f6",
   backgroundColor: "#18181b",
-  headerBackgroundColor: "#0f0f11",
+  headerBackgroundColor: "#101012",
   headerTextColor: "#9a9aa6",
+  headerFontWeight: 600,
   foregroundColor: "#f4f4f5",
   fontFamily: "inherit",
-  rowHoverColor: "#27272a",
+  fontSize: 13,
+  cellHorizontalPadding: 14,
+  rowHoverColor: "#1e2836",
   selectedRowBackgroundColor: "#1e3a5f",
-  oddRowBackgroundColor: "#1c1c1f",
-  borderColor: "#27272a",
-  wrapperBorderRadius: "12px",
+  borderColor: "#232326",
+  wrapperBorderRadius: "14px",
 });
 
 // A soft alpha-tinted tile in the entity's own color — this is the "filled"
@@ -329,19 +337,31 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
-  const filtered = useMemo(() => {
-    let out = data;
-    if (statusFilter) out = out.filter((r) => r.status === statusFilter);
-    if (query) {
-      const q = query.toLowerCase();
-      out = out.filter((r) =>
-        [r.category, r.subcategory, r.address, r.department]
-          .filter(Boolean)
-          .some((s) => String(s).toLowerCase().includes(q)),
-      );
-    }
-    return out;
-  }, [data, statusFilter, query]);
+  // Search first, then status — the chip counts read from the searched set so
+  // they always describe what the current search can actually reach.
+  const searched = useMemo(() => {
+    if (!query) return data;
+    const q = query.toLowerCase();
+    return data.filter((r) =>
+      [r.category, r.subcategory, r.address, r.department]
+        .filter(Boolean)
+        .some((s) => String(s).toLowerCase().includes(q)),
+    );
+  }, [data, query]);
+
+  const filtered = useMemo(
+    () =>
+      statusFilter
+        ? searched.filter((r) => r.status === statusFilter)
+        : searched,
+    [searched, statusFilter],
+  );
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const r of searched) counts[r.status] = (counts[r.status] ?? 0) + 1;
+    return counts;
+  }, [searched]);
 
   const onCellValueChanged = useCallback(
     (e: CellValueChangedEvent<GridReportRow>) => {
@@ -491,51 +511,84 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
     [],
   );
 
+  const chipBase =
+    "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium transition-colors";
+  const chipIdle =
+    "border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200";
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2.5">
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search issue, address, department…"
-          aria-label="Search work orders"
-          className="min-w-[220px] flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-        />
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          aria-label="Filter by status"
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-900 focus:border-blue-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-        >
-          <option value="">All statuses</option>
-          <option value="open">Open</option>
-          <option value="dispatched">Dispatched</option>
-          <option value="in_progress">In progress</option>
-          <option value="closed">Closed</option>
-          <option value="merged">Merged</option>
-          <option value="rejected">Rejected</option>
-        </select>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search issue, address, department…"
+            aria-label="Search work orders"
+            className="w-full rounded-full border border-zinc-200 bg-white py-1.5 pl-9 pr-3 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+          />
+        </div>
+
+        <fieldset className="flex flex-wrap items-center gap-1.5">
+          <legend className="sr-only">Filter by status</legend>
+          <button
+            type="button"
+            onClick={() => setStatusFilter("")}
+            aria-pressed={statusFilter === ""}
+            className={cn(
+              chipBase,
+              statusFilter === ""
+                ? "border-transparent bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                : chipIdle,
+            )}
+          >
+            All
+            <span className="ml-1 tabular-nums opacity-60">
+              {searched.length}
+            </span>
+          </button>
+          {STATUSES.filter(
+            (s) => (statusCounts[s] ?? 0) > 0 || statusFilter === s,
+          ).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setStatusFilter(statusFilter === s ? "" : s)}
+              aria-pressed={statusFilter === s}
+              className={cn(
+                chipBase,
+                statusFilter === s
+                  ? cn("border-transparent", STATUS_STYLES[s])
+                  : chipIdle,
+              )}
+            >
+              {STATUS_REFDATA[s]}
+              <span className="ml-1 tabular-nums opacity-60">
+                {statusCounts[s] ?? 0}
+              </span>
+            </button>
+          ))}
+        </fieldset>
+
         <span
-          className="hidden items-center gap-1 text-[11px] text-zinc-400 sm:inline-flex"
+          className="ml-auto hidden items-center gap-1.5 rounded-full border border-amber-200/70 bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300 sm:inline-flex"
           title="Category, severity, status, department, and crew are editable — click a cell. Changes are not saved to the database."
         >
           <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
           Edits session-only
         </span>
-        <span className="ml-auto text-xs text-zinc-500">
-          {filtered.length} report{filtered.length !== 1 ? "s" : ""}
-        </span>
       </div>
 
-      <div className="min-h-0 flex-1">
+      <div className="wo-grid min-h-0 flex-1">
         <AgGridReact<GridReportRow>
           theme={gridTheme}
           rowData={filtered}
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
           rowHeight={56}
-          headerHeight={46}
+          headerHeight={44}
           getRowId={(p) => p.data.report_id}
           singleClickEdit
           stopEditingWhenCellsLoseFocus

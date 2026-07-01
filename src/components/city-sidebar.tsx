@@ -11,11 +11,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CitySwitcher } from "@/components/city/city-switcher";
 import { NavRefreshButton } from "@/components/city-nav";
-import { SidebarNav, SidebarShell } from "@/components/dashboard/sidebar-shell";
+import {
+  SidebarNav,
+  SidebarShell,
+  SidebarWhenCollapsed,
+  SidebarWhenExpanded,
+} from "@/components/dashboard/sidebar-shell";
 import { EnvSwitch } from "@/components/env-switch";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ViewSwitch } from "@/components/view-switch";
 import { DEMO_MODE } from "@/lib/demo-mode";
+import { TEAM_LIST } from "@/lib/teams";
 
 interface CitySidebarProps {
   slug: string;
@@ -34,6 +40,13 @@ export function CitySidebar({ slug, cityName, cityState }: CitySidebarProps) {
       href: `/city/${slug}`,
       icon: UsersRound,
       active: pathname === `/city/${slug}`,
+      // Drill into a team's workspace directly from the rail.
+      sub: TEAM_LIST.filter((t) => t.id !== "all").map((t) => ({
+        label: t.shortLabel,
+        href: `/${t.id}/${slug}`,
+        active: pathname?.startsWith(`/${t.id}/`) ?? false,
+        dotColor: t.color,
+      })),
     },
     {
       label: "Map",
@@ -55,6 +68,25 @@ export function CitySidebar({ slug, cityName, cityState }: CitySidebarProps) {
     },
   ];
 
+  const reportBtn = (compact: boolean) => (
+    <Link
+      href="/report"
+      aria-label="Report"
+      title="Report"
+      className={[
+        compact
+          ? "inline-flex h-9 w-full items-center justify-center rounded-lg"
+          : "inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-lg px-3",
+        "bg-foreground text-[13px] font-medium text-background",
+        "transition-opacity duration-150 outline-none hover:opacity-85",
+        "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+      ].join(" ")}
+    >
+      <Camera className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />
+      {!compact && "Report"}
+    </Link>
+  );
+
   return (
     <SidebarShell
       context={
@@ -67,30 +99,20 @@ export function CitySidebar({ slug, cityName, cityState }: CitySidebarProps) {
         />
       }
       footer={
-        <div className="flex flex-col gap-2">
-          <Link
-            href="/report"
-            className={[
-              "inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-[10px] bg-[#0a84ff] px-3 text-[13px] font-medium text-white",
-              "transition-colors duration-150 outline-none",
-              "hover:bg-[#0070e0]",
-              "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-            ].join(" ")}
-          >
-            <Camera
-              className="h-3.5 w-3.5 shrink-0"
-              strokeWidth={2}
-              aria-hidden="true"
-            />
-            Report
-          </Link>
-          <div className="flex flex-wrap items-center gap-2">
-            <ViewSwitch citySlug={slug} />
-            <EnvSwitch />
-            <ThemeToggle />
-            {DEMO_MODE && <NavRefreshButton />}
-          </div>
-        </div>
+        <>
+          <SidebarWhenExpanded>
+            <div className="flex flex-col gap-2">
+              {reportBtn(false)}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <ViewSwitch citySlug={slug} />
+                <EnvSwitch />
+                <ThemeToggle />
+                {DEMO_MODE && <NavRefreshButton />}
+              </div>
+            </div>
+          </SidebarWhenExpanded>
+          <SidebarWhenCollapsed>{reportBtn(true)}</SidebarWhenCollapsed>
+        </>
       }
     >
       <SidebarNav heading="City views" items={items} />

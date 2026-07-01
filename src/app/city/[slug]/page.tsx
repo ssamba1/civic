@@ -72,18 +72,19 @@ export default async function CityDashboardPage({ params }: PageProps) {
   return (
     <div className="flex flex-col min-h-dvh">
       <div className="flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-10 sm:px-6 lg:px-8">
-        {/* Hero */}
-        <section className="mb-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h1 className="text-[28px] sm:text-[34px] lg:text-[40px] font-semibold tracking-tight text-foreground leading-[1.1]">
+        {/* Compact page header — the sidebar carries location context on md+,
+            so the title collapses to a single slim row. */}
+        <section className="mb-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
                 Teams
               </h1>
-              <p className="mt-1.5 max-w-xl text-sm text-subtle">
+              <p className="text-[13px] text-faint">
                 Workload, delegation, and queue depth across municipal
                 divisions.
               </p>
-              <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-subtle">
+              <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-subtle">
                 <span>
                   <span className="font-medium text-foreground">
                     {stats.total.toLocaleString()}
@@ -112,9 +113,10 @@ export default async function CityDashboardPage({ params }: PageProps) {
                 </span>
               </div>
             </div>
+            {/* Sidebar owns the Report CTA on md+; keep it for mobile only. */}
             <Link
               href="/report"
-              className="inline-flex h-11 min-w-[44px] self-start sm:self-auto items-center gap-1.5 rounded-full bg-[#0a84ff] px-5 text-[14px] font-medium text-white outline-none transition-colors hover:bg-[#0070e0] focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className="inline-flex h-10 min-w-[44px] self-start items-center gap-1.5 rounded-full bg-foreground px-4 text-[13px] font-medium text-background outline-none transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background md:hidden"
             >
               <Camera className="h-4 w-4" />
               Report an issue

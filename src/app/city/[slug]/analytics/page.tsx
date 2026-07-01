@@ -34,12 +34,12 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
   return (
     <div className="relative flex flex-col min-h-dvh bg-background">
       <div className="relative flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-10 sm:px-6 lg:px-8">
-        {/* Hero */}
-        <section className="mb-6">
-          <h1 className="text-[28px] sm:text-[34px] lg:text-[40px] font-semibold tracking-tight text-foreground leading-[1.1]">
+        {/* Compact page header — single slim row. */}
+        <section className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
             Analytics
           </h1>
-          <p className="mt-1.5 text-sm text-subtle">
+          <p className="text-[13px] text-faint">
             Operational signal — what&apos;s shipping, what&apos;s stuck, where
             it&apos;s happening.
           </p>
