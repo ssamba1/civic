@@ -28,6 +28,7 @@ export function AssistantMessage({ message }: { message: UIMessage }) {
           if (part.type === "text") {
             return (
               <div
+                // biome-ignore lint/suspicious/noArrayIndexKey: message parts stream append-only with no stable id; positional key is correct here
                 key={`${message.id}-t${i}`}
                 className="prose prose-invert prose-sm max-w-none [&_p]:my-1"
               >
@@ -42,6 +43,7 @@ export function AssistantMessage({ message }: { message: UIMessage }) {
             if (!label || done) return null;
             return (
               <div
+                // biome-ignore lint/suspicious/noArrayIndexKey: message parts stream append-only with no stable id; positional key is correct here
                 key={`${message.id}-tool${i}`}
                 className="my-1 text-xs italic text-[var(--color-muted)]"
               >

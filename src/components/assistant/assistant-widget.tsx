@@ -31,6 +31,7 @@ export function AssistantWidget() {
   }, [messages, router]);
 
   // Autoscroll to the latest message.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: effect intentionally re-runs on messages change to autoscroll; body reads only the ref
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages]);
@@ -72,8 +73,8 @@ export function AssistantWidget() {
           >
             {messages.length === 0 ? (
               <p className="text-sm text-[var(--color-muted)]">
-                Ask how Civic works, check your reports, or say “take me to report
-                a problem.”
+                Ask how Civic works, check your reports, or say “take me to
+                report a problem.”
               </p>
             ) : (
               messages.map((m) => <AssistantMessage key={m.id} message={m} />)

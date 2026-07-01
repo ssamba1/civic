@@ -15,7 +15,11 @@ describe("deriveScope", () => {
       role: "resident",
       cities: { slug: "cumming" },
     });
-    expect(scope).toEqual({ userId: "u1", role: "resident", citySlug: "cumming" });
+    expect(scope).toEqual({
+      userId: "u1",
+      role: "resident",
+      citySlug: "cumming",
+    });
   });
   it("maps a staff row and flags staff", () => {
     const scope = deriveScope({

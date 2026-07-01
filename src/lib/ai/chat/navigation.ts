@@ -23,7 +23,11 @@ const STAFF_ROUTES: RegExp[] = [
   /^\/staff\/(map|grid|stats|settings)$/,
 ];
 
-const STAFF_ROLES: ChatRole[] = ["staff_dispatcher", "staff_supervisor", "admin"];
+const STAFF_ROLES: ChatRole[] = [
+  "staff_dispatcher",
+  "staff_supervisor",
+  "admin",
+];
 
 export function isRouteAllowed(route: string, role: ChatRole): boolean {
   // Reject anything with a query string or fragment (no PII in URLs) and any

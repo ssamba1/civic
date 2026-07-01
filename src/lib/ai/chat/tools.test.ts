@@ -4,7 +4,11 @@ import { buildChatTools } from "./tools";
 
 /** Minimal chainable fake of the supabase query builder. */
 function fakeSupabase(rows: unknown[]) {
-  const calls: { table?: string; filters: [string, unknown][]; limit?: number } = {
+  const calls: {
+    table?: string;
+    filters: [string, unknown][];
+    limit?: number;
+  } = {
     filters: [],
   };
   const builder: Record<string, unknown> = {
@@ -18,7 +22,9 @@ function fakeSupabase(rows: unknown[]) {
       calls.limit = n;
       return Promise.resolve({ data: rows, error: null });
     }),
-    maybeSingle: vi.fn(() => Promise.resolve({ data: rows[0] ?? null, error: null })),
+    maybeSingle: vi.fn(() =>
+      Promise.resolve({ data: rows[0] ?? null, error: null }),
+    ),
   };
   const supabase = {
     from: vi.fn((table: string) => {
@@ -29,7 +35,10 @@ function fakeSupabase(rows: unknown[]) {
   return { supabase: supabase as unknown as ChatContext["supabase"], calls };
 }
 
-function ctx(overrides: Partial<ChatContext>, rows: unknown[] = []): {
+function ctx(
+  overrides: Partial<ChatContext>,
+  rows: unknown[] = [],
+): {
   context: ChatContext;
   calls: ReturnType<typeof fakeSupabase>["calls"];
 } {
@@ -72,7 +81,10 @@ describe("buildChatTools", () => {
   it("navigateTo returns the route when allowed for the role", async () => {
     const { context } = ctx({ role: "resident" });
     const tools = buildChatTools(context);
-    const ok = (await tools.navigateTo.execute({ route: "/user/my-reports" }, {} as never)) as {
+    const ok = (await tools.navigateTo.execute(
+      { route: "/user/my-reports" },
+      {} as never,
+    )) as {
       navigate?: string;
     };
     expect(ok.navigate).toBe("/user/my-reports");
@@ -81,7 +93,10 @@ describe("buildChatTools", () => {
   it("navigateTo refuses a staff route for a resident", async () => {
     const { context } = ctx({ role: "resident" });
     const tools = buildChatTools(context);
-    const denied = (await tools.navigateTo.execute({ route: "/staff" }, {} as never)) as {
+    const denied = (await tools.navigateTo.execute(
+      { route: "/staff" },
+      {} as never,
+    )) as {
       error?: string;
     };
     expect(denied.error).toBeTruthy();
@@ -91,7 +106,10 @@ describe("buildChatTools", () => {
   it("searchHelpDocs returns corpus snippets", async () => {
     const { context } = ctx({});
     const tools = buildChatTools(context);
-    const out = (await tools.searchHelpDocs.execute({ query: "blur faces" }, {} as never)) as {
+    const out = (await tools.searchHelpDocs.execute(
+      { query: "blur faces" },
+      {} as never,
+    )) as {
       results: { id: string }[];
     };
     expect(out.results[0]?.id).toBe("privacy-blur");

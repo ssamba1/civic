@@ -1,8 +1,28 @@
 import { HELP_CORPUS, type HelpDoc } from "@/lib/ai/help-corpus";
 
 const STOP = new Set([
-  "the", "a", "an", "is", "are", "do", "does", "how", "what", "my", "i",
-  "in", "to", "of", "and", "or", "for", "on", "it", "me", "can", "you",
+  "the",
+  "a",
+  "an",
+  "is",
+  "are",
+  "do",
+  "does",
+  "how",
+  "what",
+  "my",
+  "i",
+  "in",
+  "to",
+  "of",
+  "and",
+  "or",
+  "for",
+  "on",
+  "it",
+  "me",
+  "can",
+  "you",
 ]);
 
 function tokenize(text: string): string[] {

@@ -66,7 +66,8 @@ export function buildChatTools(ctx: ChatContext) {
           .eq("id", reportId)
           .maybeSingle();
         if (error) return { error: "Could not load that report." };
-        if (!data) return { error: "No report with that id is visible to you." };
+        if (!data)
+          return { error: "No report with that id is visible to you." };
         return { report: data };
       },
     }),

@@ -46,7 +46,9 @@ export async function POST(request: Request) {
     const recent = messages.slice(-CHAT_HISTORY_LIMIT);
 
     const ctx = await resolveChatContext();
-    const google = createGoogleGenerativeAI({ apiKey: serverEnv.GEMINI_API_KEY });
+    const google = createGoogleGenerativeAI({
+      apiKey: serverEnv.GEMINI_API_KEY,
+    });
     const modelMessages = await convertToModelMessages(recent);
 
     const result = streamText({
