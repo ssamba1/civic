@@ -1,8 +1,8 @@
 import {
   ArrowLeft,
+  Banknote,
   CheckCircle2,
   Clock,
-  DollarSign,
   HardHat,
   Link2,
   MapPin,
@@ -15,6 +15,7 @@ import {
   ReportPhoto,
   ReportTimeline,
 } from "@/components/resident/report-timeline";
+import { currencyForCitySlug, formatCost } from "@/lib/currency";
 import { CATEGORY_META, KNOWN_CITIES } from "@/lib/dashboard-data";
 import { publicToken } from "@/lib/public-report";
 import {
@@ -71,6 +72,7 @@ export async function generateMetadata({
 export default async function ReportDetailPage({ params }: PageProps) {
   const { reportId } = await params;
   const { citySlug } = await getCurrentResident();
+  const currency = currencyForCitySlug(citySlug);
 
   const report = await getMyReport(citySlug, reportId);
   if (!report) notFound();
@@ -197,7 +199,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
                 <div className="mt-3 flex flex-wrap gap-3">
                   {report.fix_cost_estimate != null && (
                     <div className="flex items-center gap-1.5 rounded-lg border border-[#0a84ff]/20 bg-[#0a84ff]/10 px-3 py-2">
-                      <DollarSign
+                      <Banknote
                         className="h-3.5 w-3.5 text-[#0a84ff]"
                         strokeWidth={2}
                         aria-hidden="true"
@@ -205,10 +207,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
                       <span className="text-[13px] font-medium text-white">
                         Est. cost:{" "}
                         <span className="text-[#5ac8fa]">
-                          $
-                          {report.fix_cost_estimate.toLocaleString("en-US", {
-                            maximumFractionDigits: 0,
-                          })}
+                          {formatCost(report.fix_cost_estimate, currency)}
                         </span>
                       </span>
                     </div>

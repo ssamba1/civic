@@ -70,7 +70,7 @@ export function Cities() {
 
           <Reveal delay={560}>
             <a
-              href="/staff"
+              href="/teams"
               className="mt-10 inline-block text-[var(--color-primary)] font-medium text-[15px] hover:underline underline-offset-4"
             >
               Talk to a city team →

@@ -55,7 +55,7 @@ export function BottomTabBar() {
 
   // Self-gate: resident surfaces only. Renders on the landing page ("/") and
   // anything under "/user" (which now includes the resident community map at
-  // /user/map). Returns null on /report, all /city pages, /staff, /login.
+  // /user/map). Returns null on /report, all /city pages, /teams, /login.
   if (pathname == null || !(pathname === "/" || pathname.startsWith("/user"))) {
     return null;
   }

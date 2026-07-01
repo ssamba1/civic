@@ -28,8 +28,10 @@ export interface DemoAccount {
 
 export const DEMO_SESSION_COOKIE = "civic_demo_session";
 
-/** The only live city in KNOWN_CITIES — every persona is scoped here. */
-const DEMO_CITY = "cumming";
+/** The only live city in KNOWN_CITIES — every persona is scoped here. Exported
+ *  so surfaces that stay public for the demo city (e.g. the city work-order grid)
+ *  can gate every OTHER city behind staff auth against a single source of truth. */
+export const DEMO_CITY = "cumming";
 
 const STATIC_ACCOUNTS: DemoAccount[] = [
   {

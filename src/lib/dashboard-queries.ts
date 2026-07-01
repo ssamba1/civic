@@ -97,17 +97,22 @@ export const fetchCityCenter = cache(
     }),
 );
 
-/** Last-resort center lookup: geocode "Name, State, USA" via Nominatim. */
+/** Last-resort center lookup: geocode "Name, State" via Nominatim, worldwide. */
 async function geocodeByName(
   name: string,
   state: string,
 ): Promise<[number, number] | null> {
-  // Guard on real inputs (an empty name/state would geocode the country centroid).
-  if (!name.trim() || !state.trim()) return null;
-  const q = `${name.trim()}, ${state.trim()}, USA`;
+  // Need at least a city name; a bare/empty query geocodes a country centroid.
+  if (!name.trim()) return null;
+  // Build "Name, State" from whatever parts exist — no country lock, so this
+  // resolves cities in any country (e.g. "Ahilyanagar, Maharashtra"), not just US.
+  const q = [name, state]
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join(", ");
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=${encodeURIComponent(q)}`,
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`,
       {
         headers: {
           // Nominatim requires an identifying User-Agent.

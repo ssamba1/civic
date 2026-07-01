@@ -15,7 +15,6 @@ import {
   Sliders,
   Star,
 } from "lucide-react";
-import type { StyleSpecification } from "maplibre-gl";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import {
   Map as MapLibreMap,
@@ -24,10 +23,12 @@ import {
   useControl,
 } from "react-map-gl/maplibre";
 import { renderPopupHTML } from "@/components/map/map-popup";
+import { SATELLITE_STYLE } from "@/components/map/satellite-style";
 import { LiquidGlassCard } from "@/components/ui/liquid-glass";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { STATUS_LABEL } from "@/lib/status";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
+import { useCurrency } from "@/lib/use-currency";
 
 export type MapTheme = "dark" | "light" | "satellite";
 
@@ -51,42 +52,14 @@ interface ReportMapProps {
 }
 
 /* ------------------------------------------------------------------
-   Basemap styles — Carto vector (dark/light) + ArcGIS raster (satellite)
+   Basemap styles — Carto vector (dark/light) + ArcGIS raster (satellite).
+   The satellite raster lives in ./satellite-style (shared with the landing
+   hero map) so its Esri maxzoom cap stays in one place.
    ------------------------------------------------------------------ */
 const STYLE_DARK =
   "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 const STYLE_LIGHT =
   "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
-const STYLE_SATELLITE: StyleSpecification = {
-  version: 8,
-  sources: {
-    sat: {
-      type: "raster",
-      tiles: [
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      ],
-      // tileSize: 128 forces maplibre to fetch tiles one zoom level deeper
-      // than the displayed zoom to cover the same area — oversamples the
-      // raster so it stays sharp at HiDPI and when zoomed out. Trade-off:
-      // ~4× tile fetches; cached aggressively by the browser/CDN.
-      tileSize: 128,
-      maxzoom: 19,
-      attribution: "Esri",
-    },
-  },
-  layers: [
-    {
-      id: "sat-layer",
-      type: "raster",
-      source: "sat",
-      paint: {
-        // Snap tiles in fast — default 300ms makes panning feel "blurry then
-        // sharp"; 100ms reads as instant while still hiding raw seams.
-        "raster-fade-duration": 100,
-      },
-    },
-  ],
-};
 
 function statusColor(
   status: ReportStatus,
@@ -127,6 +100,7 @@ function ReportMapInner({
   mapTheme: mapThemeProp,
   onMapThemeChange,
 }: ReportMapProps) {
+  const currency = useCurrency();
   const mapRef = useRef<MapRef | null>(null);
   const [mapThemeLocal, setMapThemeLocal] = useState<MapTheme>("dark");
   const mapTheme = mapThemeProp ?? mapThemeLocal;
@@ -173,7 +147,7 @@ function ReportMapInner({
       ? STYLE_DARK
       : mapTheme === "light"
         ? STYLE_LIGHT
-        : STYLE_SATELLITE;
+        : SATELLITE_STYLE;
 
   const lastFlownIdRef = useRef<string | null>(null);
 
@@ -474,7 +448,7 @@ function ReportMapInner({
             <div
               // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is built by renderPopupHTML, which esc()-escapes every user-controlled field; inputs are a trusted static CATEGORY_META + escaped report fields.
               dangerouslySetInnerHTML={{
-                __html: renderPopupHTML(popupReport),
+                __html: renderPopupHTML(popupReport, currency),
               }}
             />
           </Popup>

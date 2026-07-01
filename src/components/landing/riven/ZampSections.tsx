@@ -1042,7 +1042,7 @@ export function ZampSection3() {
               <li>No procurement maze. Open311 from day one.</li>
             </ul>
 
-            <Link className="wl-zamp-s3-card-cta" href="/staff">
+            <Link className="wl-zamp-s3-card-cta" href="/teams">
               Claim your slot <ArrowIcon />
             </Link>
           </TiltCard>
@@ -1242,7 +1242,7 @@ export function ZampSection4() {
               Yours doesn&rsquo;t fit the seven above. Talk to the team behind
               the pilot &mdash; we read every message and reply within a day.
             </p>
-            <Link className="wl-zamp-s4-cta" href="/staff">
+            <Link className="wl-zamp-s4-cta" href="/teams">
               Talk to a city team
               <span aria-hidden="true" className="wl-zamp-s4-cta-arrow">
                 →
@@ -1319,7 +1319,7 @@ export function ZampSection5() {
 
         <StaggerItem as="p" className="wl-zamp-s5-credit">
           Built in Cumming, GA &middot;{" "}
-          <Link href="/staff">Bring Civic to your city</Link>
+          <Link href="/teams">Bring Civic to your city</Link>
         </StaggerItem>
       </StaggerGroup>
     </section>

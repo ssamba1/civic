@@ -290,7 +290,7 @@ function CohortSection() {
         </StaggerGroup>
 
         <Reveal y={14} delay={0.2} className="v2x-cohort__foot">
-          <a href="/staff" className="v2x-link">
+          <a href="/teams" className="v2x-link">
             Become a founding city <ArrowIcon />
           </a>
         </Reveal>

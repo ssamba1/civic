@@ -29,10 +29,9 @@ self.addEventListener("fetch", (event) => {
   // Skip non-GET requests
   if (request.method !== "GET") return;
 
-  // Never cache API / staff / admin routes — may contain authed user data
+  // Never cache API / admin routes — may contain authed user data
   if (
     url.pathname.startsWith("/api/") ||
-    url.pathname.startsWith("/staff/") ||
     url.pathname.startsWith("/admin/")
   ) {
     event.respondWith(fetch(event.request));

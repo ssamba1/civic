@@ -145,15 +145,6 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  // Protected: /staff/* — require an authenticated user.
-  if (pathname.startsWith("/staff/") && !user) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    const redirect = NextResponse.redirect(loginUrl);
-    redirect.headers.set("Content-Security-Policy", csp);
-    return redirect;
-  }
-
   // Protected: /admin/* — require admin role.
   if (pathname.startsWith("/admin/")) {
     if (!user) {
@@ -169,7 +160,7 @@ export async function proxy(request: NextRequest) {
     // supabase.auth.updateUser() and self-promote to admin.
     const role = user.app_metadata?.role;
     if (role !== "admin") {
-      const redirect = NextResponse.redirect(new URL("/staff", request.url));
+      const redirect = NextResponse.redirect(new URL("/teams", request.url));
       redirect.headers.set("Content-Security-Policy", csp);
       return redirect;
     }

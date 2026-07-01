@@ -13,6 +13,7 @@ import {
 import { memo, useEffect, useState } from "react";
 import type { ReasoningResponse } from "@/app/api/ai/reasoning/route";
 import { Stat, StatGrid } from "@/components/analytics/bento-primitives";
+import { formatCost } from "@/lib/currency";
 import {
   CATEGORY_SLA_TARGETS,
   type DashboardReport,
@@ -25,6 +26,7 @@ import {
 } from "@/lib/delegation-history";
 import { TEAMS, type TeamId } from "@/lib/teams";
 import type { TeamWorkload } from "@/lib/teams-data";
+import { useCurrency } from "@/lib/use-currency";
 import { timeAgo, timeUntil } from "@/lib/utils/time-ago";
 
 /* ------------------------------------------------------------------
@@ -213,7 +215,18 @@ function DelegationRowExpandedInner({
         const res = await fetch("/api/ai/reasoning", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ report_id: report.id }),
+          // Forward report fields: live DB reports aren't in the server-side
+          // static corpus, so the route can't resolve them by id alone.
+          body: JSON.stringify({
+            report_id: report.id,
+            report: {
+              category: report.category,
+              severity: report.severity,
+              status: report.status,
+              address: report.address,
+              created_at: report.created_at,
+            },
+          }),
           signal,
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -244,6 +257,7 @@ function DelegationRowExpandedInner({
   const pct = Math.round((ageHours / target) * 100);
   const slaColor = pct > 100 ? "#ff453a" : pct >= 60 ? "#ff9f0a" : "#30d158";
 
+  const currency = useCurrency();
   const estCost = 12 + report.severity * 18;
 
   /* -------- History -------- */
@@ -337,7 +351,7 @@ function DelegationRowExpandedInner({
           />
           <Stat
             label="Est. cost"
-            value={`$${estCost}`}
+            value={formatCost(estCost, currency)}
             hint={`sev ${report.severity}/5`}
           />
         </StatGrid>

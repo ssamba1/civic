@@ -99,13 +99,14 @@ Civic is a full-stack municipal infrastructure platform with two audiences:
 | `/user/pulse` | Community pulse — fix rate, morale |
 | `/user/updates` | Notification feed — status changes + announcements |
 
-### Staff (role-gated)
+### Teams (role-gated)
 | Route | Description |
 |---|---|
-| `/staff` | Work-order inbox with keyboard navigation |
-| `/staff/map` | Operational map — open work orders, dispatch panel |
-| `/staff/stats` | Analytics dashboard |
-| `/staff/settings` | Department config, cost rules, SLA targets |
+| `/teams` | Department picker — links to each team's dashboard per city |
+| `/[team]/[city]` | Team overview — workload, delegation, queue depth |
+| `/[team]/[city]/map` | Operational map — reports scoped and locked to the team |
+| `/[team]/[city]/analytics` | Team analytics dashboard |
+| `/city/[slug]/grid` | Work-order grid — sortable spreadsheet (staff-gated off the demo city) |
 
 ### API
 | Endpoint | Auth | Description |

@@ -74,8 +74,13 @@ export async function POST(request: Request) {
       );
     }
 
+    // Seed/demo reports live in the static corpus; live DB-backed reports
+    // (resident submissions) do not, so the client forwards the fields it
+    // already holds. Corpus is authoritative when an id exists in both.
     const reports = getReportCorpus();
-    const report = reports.find((r) => r.id === reportId);
+    const report =
+      reports.find((r) => r.id === reportId) ??
+      reportFromBody(reportId, (body as Record<string, unknown>)?.report);
 
     if (!report) {
       return NextResponse.json({ error: "Report not found" }, { status: 404 });
@@ -111,6 +116,55 @@ export async function POST(request: Request) {
     logger.error("Unhandled error", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
+}
+
+function isCategory(v: unknown): v is DashboardReport["category"] {
+  return typeof v === "string" && v in CATEGORY_META;
+}
+
+/**
+ * Build a DashboardReport from client-forwarded fields, used for DB-backed
+ * reports that aren't in the static corpus. Every field is validated: the
+ * template and Gemini paths index CATEGORY_META/CATEGORY_SLA_TARGETS by
+ * category and derive age from created_at, so an unknown category or
+ * unparseable date would 500. An invalid payload returns null (→ 404),
+ * matching the corpus-miss behavior.
+ */
+function reportFromBody(
+  reportId: string,
+  raw: unknown,
+): DashboardReport | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  if (!isCategory(r.category)) return null;
+  if (
+    typeof r.severity !== "number" ||
+    !Number.isInteger(r.severity) ||
+    r.severity < 1 ||
+    r.severity > 5
+  ) {
+    return null;
+  }
+  if (
+    typeof r.created_at !== "string" ||
+    Number.isNaN(Date.parse(r.created_at))
+  ) {
+    return null;
+  }
+
+  return {
+    id: reportId,
+    category: r.category,
+    severity: r.severity as DashboardReport["severity"],
+    status: (typeof r.status === "string"
+      ? r.status
+      : "open") as DashboardReport["status"],
+    address: typeof r.address === "string" ? r.address : "Unknown location",
+    location: { lng: 0, lat: 0 },
+    photo_public_url: "",
+    created_at: r.created_at,
+    reporter_id: "",
+  };
 }
 
 function templateReasoningForReport(

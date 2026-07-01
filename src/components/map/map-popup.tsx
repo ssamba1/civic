@@ -1,3 +1,4 @@
+import { type CurrencyConfig, formatCost, USD } from "@/lib/currency";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import { DEMO_REPORTER_ID } from "@/lib/demo-reports";
@@ -44,11 +45,13 @@ function formatReported(iso: string): string {
   return formatExactDate(iso);
 }
 
+// Returns a USD-denominated estimate; formatCost converts it to the city's
+// currency at render time (see renderPopupHTML).
 function estimateRepairCost(
   reportId: string,
   category: string,
   severity: number,
-): string {
+): number {
   let hash = 0;
   for (let i = 0; i < reportId.length; i++) {
     hash = reportId.charCodeAt(i) + ((hash << 5) - hash);
@@ -86,12 +89,7 @@ function estimateRepairCost(
       break;
   }
 
-  const total = baseCost * severity + variance;
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(total);
+  return baseCost * severity + variance;
 }
 
 function slaWindow(severity: number): string {
@@ -102,13 +100,19 @@ function slaWindow(severity: number): string {
   return "< 14 days";
 }
 
-export function renderPopupHTML(report: DashboardReport): string {
+export function renderPopupHTML(
+  report: DashboardReport,
+  currency: CurrencyConfig = USD,
+): string {
   const meta = CATEGORY_META[report.category];
   const status = STATUS_TONE[report.status] ?? {
     label: report.status,
     color: "#86868b",
   };
-  const cost = estimateRepairCost(report.id, report.category, report.severity);
+  const cost = formatCost(
+    estimateRepairCost(report.id, report.category, report.severity),
+    currency,
+  );
   const sla = slaWindow(report.severity);
   // Presenter-injected demo point: blue glow on the popup container + a "Live"
   // pill so it reads as the freshly-added marker. (cn() N/A — this surface is an

@@ -1,4 +1,5 @@
 import type { StyleSpecification } from "maplibre-gl";
+import { SATELLITE_STYLE } from "@/components/map/satellite-style";
 
 // deck.gl layer builders live in ./mapLayers — kept out of this module so the
 // heavy @deck.gl/* imports don't enter the landing route's critical path
@@ -113,31 +114,10 @@ export function makePoints(count: number): CivicPoint[] {
 }
 
 /* ------------------------------------------------------------------
-   Esri World Imagery raster style — the "satellite" basemap. Copied from
-   report-map.tsx (tileSize 128 oversamples for HiDPI sharpness).
+   Esri World Imagery raster "satellite" basemap is shared from
+   components/map/satellite-style (single source of truth for the Esri
+   maxzoom cap, also used by the dashboard ReportMap).
    ------------------------------------------------------------------ */
-const STYLE_SATELLITE: StyleSpecification = {
-  version: 8,
-  sources: {
-    sat: {
-      type: "raster",
-      tiles: [
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      ],
-      tileSize: 128,
-      maxzoom: 19,
-      attribution: "Esri",
-    },
-  },
-  layers: [
-    {
-      id: "sat-layer",
-      type: "raster",
-      source: "sat",
-      paint: { "raster-fade-duration": 100 },
-    },
-  ],
-};
 
 const STYLE_VOYAGER =
   "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
@@ -310,7 +290,7 @@ export const PRESETS: MapPreset[] = [
     id: "satellite",
     label: "Satellite",
     blurb: "Aerial imagery · bright pins",
-    basemap: STYLE_SATELLITE,
+    basemap: SATELLITE_STYLE,
     ink: "light",
     view: "markers",
     camera: { zoom: 13, bearing: -18, pitch: 50 },

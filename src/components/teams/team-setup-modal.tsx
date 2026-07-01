@@ -105,9 +105,8 @@ import { lockBodyScroll } from "@/lib/utils/scroll-lock";
    New-team setup modal. Opened from the AddTeamCard in the roster.
 
    Lives as an in-place overlay (not a route) so it inherits the dark
-   city-dashboard theme and the FilterProvider tree, and — critically —
-   never crosses into the /staff layout whose server-side auth guard
-   redirects unauthenticated dashboard viewers back to "/".
+   team-dashboard theme and the FilterProvider tree, keeping the current
+   team/city context instead of navigating away.
 
    Selecting auto-route categories calls setCategoryTeam() on submit,
    mutating the module-level routing snapshot consumed live by the

@@ -1175,7 +1175,7 @@ function ResultScreen({
           <Link href={`/city/${result.citySlug}`}>Go to your console</Link>
         </Button>
         <Button asChild variant="ghost">
-          <Link href="/staff">Staff inbox</Link>
+          <Link href="/teams">Team dashboards</Link>
         </Button>
       </div>
     </div>

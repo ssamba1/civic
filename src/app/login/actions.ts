@@ -34,7 +34,7 @@ export async function signInDemo(formData: FormData): Promise<void> {
     maxAge: 60 * 60 * 24 * 7, // 1 week
   });
 
-  // Honor an explicit ?redirect (e.g. arriving from the /staff gate) over the
+  // Honor an explicit ?redirect (e.g. arriving from the /admin gate) over the
   // persona's default home. Only same-origin relative paths — never an absolute
   // or protocol-relative URL — to avoid an open redirect.
   const redirectTo = String(formData.get("redirect") ?? "");

@@ -42,7 +42,7 @@ export function Nav() {
             Dashboard
           </Link>
           <Link
-            href="/staff"
+            href="/teams"
             className="text-sm text-[var(--color-muted)] transition-colors hover:text-[var(--color-foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/60 focus-visible:ring-offset-2 rounded"
           >
             For cities

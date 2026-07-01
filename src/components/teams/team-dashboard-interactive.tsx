@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { StatsCards } from "@/components/dashboard/stats-cards";
-import { DelegationPanel } from "@/components/teams/delegation-panel";
 import { RoutingChangesLog } from "@/components/teams/routing-changes-log";
 import { RoutingMatrix } from "@/components/teams/routing-matrix";
 import { WorkloadBars } from "@/components/teams/workload-bars";
@@ -16,14 +15,13 @@ import { getReportTeam, useTeamOverrides } from "@/lib/teams-overrides";
    Team dashboard — the city/admin Teams view, scoped to one team.
 
    Mounted under the team route's lockedTeam FilterProvider, so it reuses
-   the city dashboard's sub-components (stats, workload, routing,
-   delegation) but every panel reads only this team's reports. The
-   multi-team roster grid is dropped — meaningless for a single team, and
-   its data (totals, status mix, MTTR) is already carried by the stat
-   cards + workload bar.
+   the city dashboard's sub-components (stats, workload, routing) but every
+   panel reads only this team's reports. The multi-team roster grid is
+   dropped — meaningless for a single team, and its data (totals, status
+   mix, MTTR) is already carried by the stat cards + workload bar.
 
    Everything derives from `teamReports`, including the stat cards: a
-   reassign (this view's primary action) or a post-paint override
+   reassign elsewhere (routing matrix, map view) or a post-paint override
    rehydrate must move the cards in lockstep with the panels. `now` is the
    provider's server-seeded reference time so the week buckets match SSR.
    ================================================================== */
@@ -37,8 +35,7 @@ export function TeamDashboardInteractive({
 }: TeamDashboardInteractiveProps) {
   const corpus = useReportCorpus();
   const now = useServerNow();
-  const { overrides, history, setReportTeam, clearReportTeam } =
-    useTeamOverrides();
+  const { overrides } = useTeamOverrides();
 
   // This team's full backlog (all statuses, all time), override-resolved so a
   // reassignment immediately adds/removes a report from this team's view.
@@ -54,8 +51,8 @@ export function TeamDashboardInteractive({
     [teamReports, now],
   );
 
-  // aggregateByTeam seeds every division (the delegation reassign picker still
-  // needs all teams for its workload lookups) but only this team is populated.
+  // aggregateByTeam keys by division, but teamReports holds only this team so
+  // just its bucket is populated — WorkloadBars reads that one entry below.
   const workloadMap = useMemo(
     () => aggregateByTeam(teamReports, (r) => getReportTeam(r, overrides)),
     [teamReports, overrides],
@@ -89,18 +86,6 @@ export function TeamDashboardInteractive({
           <RoutingMatrix />
           <RoutingChangesLog />
         </div>
-      </div>
-
-      <div style={{ "--stagger-index": 2 } as React.CSSProperties}>
-        <DelegationPanel
-          reports={teamReports}
-          overrides={overrides}
-          history={history}
-          corpus={corpus}
-          workloads={workloadMap}
-          setReportTeam={setReportTeam}
-          clearReportTeam={clearReportTeam}
-        />
       </div>
     </div>
   );

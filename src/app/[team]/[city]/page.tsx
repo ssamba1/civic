@@ -18,7 +18,7 @@ export async function generateMetadata({
   const known = KNOWN_CITIES[city];
   return {
     title: `Civic | ${TEAMS[team].shortLabel} — ${known.name} Overview`,
-    description: `Workload, delegation, and queue depth for ${TEAMS[team].label} in ${known.name}, ${known.state}.`,
+    description: `Workload, routing, and queue depth for ${TEAMS[team].label} in ${known.name}, ${known.state}.`,
   };
 }
 

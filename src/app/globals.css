@@ -4,8 +4,7 @@
    <html> (or any ancestor) instead of keying off the OS `prefers-color-scheme`.
    :where() holds specificity at 0 so normal source order still wins. The whole
    app themes off this one class, toggled by src/lib/theme.ts. Replaces v3's
-   darkMode:'class'. NOTE: the pre-existing `dark:` utilities in /staff/* (a
-   light-first admin section) now follow this class too — intended. */
+   darkMode:'class'. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ── Semantic palette ──────────────────────────────────────────────────────

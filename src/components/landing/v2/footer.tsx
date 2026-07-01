@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 const NAV_LINKS = [
   { label: "Dashboard", href: "/city/cumming" },
   { label: "Report", href: "/report" },
-  { label: "For cities", href: "/staff" },
+  { label: "For cities", href: "/teams" },
   { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
 ] as const;
@@ -40,7 +40,7 @@ export function Footer() {
               <Link href="/report">Report an issue</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link href="/staff">Talk to a city team</Link>
+              <Link href="/teams">Talk to a city team</Link>
             </Button>
           </div>
         </Reveal>

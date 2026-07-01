@@ -5,6 +5,7 @@ import {
   Camera,
   Map as MapIcon,
   RefreshCw,
+  Table,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -100,6 +101,12 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
       href: `/city/${slug}/map`,
       icon: MapIcon,
       active: pathname === `/city/${slug}/map`,
+    },
+    {
+      label: "Grid",
+      href: `/city/${slug}/grid`,
+      icon: Table,
+      active: pathname === `/city/${slug}/grid`,
     },
     {
       label: "Analytics",
