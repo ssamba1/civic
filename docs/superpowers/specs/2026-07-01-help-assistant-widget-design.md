@@ -197,7 +197,9 @@ pipeline), an accepted tradeoff.
 - Vitest: `retrieval.ts` scoring; each data tool asserts RLS scoping per role
   (a resident cannot read another user's report *through the bot*); `navigateTo`
   allow-list rejects unlisted / staff-only routes for residents.
-- Route test: unauth → 401, rate-limit path, streamed shape.
+- Route test: disabled flag → 404, rate-limit path, streamed shape. (Anonymous
+  callers are allowed — help + public stats work without login; personal-data
+  tools return a "sign in" message rather than erroring.)
 - Playwright e2e: open widget → ask a help question → ask "take me to my reports" →
   assert navigation.
 - `pnpm typecheck`, `pnpm lint`, `pnpm test` green; RLS tests still pass (no schema
