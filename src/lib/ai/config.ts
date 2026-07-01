@@ -65,3 +65,24 @@ export const DEDUP_RADIUS_M = (() => {
   const parsed = raw ? Number(raw) : NaN;
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 50;
 })();
+
+/**
+ * Model for the help assistant chat. Uses gemini-2.5-flash (not flash-lite):
+ * multi-turn tool-calling benefits from the stronger model, and the chat path
+ * is not on the latency-critical submit flow. Classification stays on
+ * GEMINI_MODEL (flash-lite).
+ */
+export const CHAT_MODEL = "gemini-2.5-flash";
+
+/** Max tool-calling steps per assistant turn (bounds runaway tool loops). */
+export const CHAT_MAX_STEPS = 5;
+
+/** Max prior messages forwarded to the model (bounds token cost). */
+export const CHAT_HISTORY_LIMIT = 12;
+
+/**
+ * When "1", the help assistant widget + /api/ai/chat route are enabled.
+ * Default OFF so the feature ships dark and is turned on deliberately.
+ * NEXT_PUBLIC_ so the client widget can read it too.
+ */
+export const HELP_ASSISTANT = process.env.NEXT_PUBLIC_HELP_ASSISTANT === "1";
