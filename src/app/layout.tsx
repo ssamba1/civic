@@ -7,7 +7,9 @@ import {
 } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
+import { AssistantWidget } from "@/components/assistant/assistant-widget";
 import { BottomTabBar } from "@/components/resident/bottom-tab-bar";
+import { HELP_ASSISTANT } from "@/lib/ai/config";
 
 // No-flash theme init. Runs synchronously before the body paints, so the
 // correct theme class is on <html> from the first frame. Default is dark
@@ -125,6 +127,7 @@ export default async function RootLayout({
         </script>
         <div className="page-enter flex flex-1 flex-col">{children}</div>
         <BottomTabBar />
+        {HELP_ASSISTANT ? <AssistantWidget /> : null}
       </body>
     </html>
   );
