@@ -11,7 +11,9 @@ import {
   DEMO_CITY,
   DEMO_SESSION_COOKIE,
   findDemoAccount,
+  isDemoStaffAccount,
 } from "@/lib/demo-auth";
+import { DEMO_MODE } from "@/lib/demo-mode";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -43,13 +45,21 @@ export async function generateMetadata({
  * No new RBAC concept.
  */
 async function requireStaffFor(slug: string): Promise<void> {
-  const demoAccount = findDemoAccount(
-    (await cookies()).get(DEMO_SESSION_COOKIE)?.value,
-  );
+  // Demo-session acceptance is gated on demo mode being ON: on a live
+  // (non-demo) deployment the civic_demo_session cookie is ignored entirely —
+  // only real Supabase auth below can grant access. Even in demo mode, the
+  // persona must actually be staff (city admin or a team crew); a Resident
+  // persona (role "user") is never operational staff. Without both checks the
+  // baked, public demo cookie would prove staff on live data.
+  const demoStaff =
+    DEMO_MODE &&
+    isDemoStaffAccount(
+      findDemoAccount((await cookies()).get(DEMO_SESSION_COOKIE)?.value),
+    );
   const devBypass =
     process.env.NODE_ENV === "development" &&
     process.env.DEV_AUTH_BYPASS === "1";
-  if (demoAccount || devBypass) return;
+  if (demoStaff || devBypass) return;
 
   const user = await getAuthUser();
   if (user) {

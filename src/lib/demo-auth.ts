@@ -80,10 +80,23 @@ export function authenticateDemo(
   return account;
 }
 
-/** Look up an account by username (for resolving a session cookie). */
+/** Look up an account by username (for resolving a session cookie).
+ *  Not a security gate — resolves the persona for the header label + logout,
+ *  including the Resident. Staff-access checks MUST additionally verify
+ *  isDemoStaffAccount() AND that demo mode is on (see requireStaffFor). */
 export function findDemoAccount(
   username: string | undefined | null,
 ): DemoAccount | null {
   if (!username) return null;
   return DEMO_ACCOUNTS.find((a) => a.username === username) ?? null;
+}
+
+/** True iff the persona is operational staff (city admin or a team crew) — the
+ *  demo analog of a real staff_dispatcher/staff_supervisor/admin role. Residents
+ *  (role "user") are NOT staff and must never pass an operational-access check.
+ *  Single source of truth for "which demo personas count as staff". */
+export function isDemoStaffAccount(
+  account: DemoAccount | null | undefined,
+): boolean {
+  return account?.role === "admin" || account?.role === "team";
 }

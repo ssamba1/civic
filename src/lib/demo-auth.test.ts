@@ -1,7 +1,12 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { TEAM_LIST } from "@/lib/teams";
-import { authenticateDemo, DEMO_ACCOUNTS, findDemoAccount } from "./demo-auth";
+import {
+  authenticateDemo,
+  DEMO_ACCOUNTS,
+  findDemoAccount,
+  isDemoStaffAccount,
+} from "./demo-auth";
 
 const OPERATIONAL_TEAMS = TEAM_LIST.filter((t) => t.id !== "all");
 
@@ -41,5 +46,18 @@ describe("authenticateDemo", () => {
   it("rejects a wrong password or unknown username", () => {
     expect(authenticateDemo("usertest", "nope")).toBeNull();
     expect(authenticateDemo("ghost", "teamtest")).toBeNull();
+  });
+});
+
+describe("isDemoStaffAccount", () => {
+  it("treats admin and team personas as staff", () => {
+    expect(isDemoStaffAccount(findDemoAccount("admintest"))).toBe(true);
+    expect(isDemoStaffAccount(findDemoAccount("teamtest1"))).toBe(true);
+  });
+
+  it("never treats a Resident (or a missing account) as staff", () => {
+    expect(isDemoStaffAccount(findDemoAccount("usertest"))).toBe(false);
+    expect(isDemoStaffAccount(null)).toBe(false);
+    expect(isDemoStaffAccount(findDemoAccount("ghost"))).toBe(false);
   });
 });
