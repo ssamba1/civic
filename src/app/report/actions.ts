@@ -113,6 +113,10 @@ export async function submitReport(
       .eq("slug", DEFAULT_CITY_SLUG)
       .single<{ id: string }>();
     if (city?.id) {
+      // Create the row only if missing (ON CONFLICT DO NOTHING). A plain upsert
+      // here re-writes role="resident" onto an EXISTING staff/admin row whose
+      // city_id merely happens to be null, silently demoting them. ignoreDuplicates
+      // prevents that; role is only ever set on a true insert.
       await service.from("users").upsert(
         {
           id: user.id,
@@ -120,8 +124,15 @@ export async function submitReport(
           role: "resident",
           email: user.email ?? null,
         },
-        { onConflict: "id" },
+        { onConflict: "id", ignoreDuplicates: true },
       );
+      // If the row already existed with a null city_id, backfill ONLY the city so
+      // the report can be scoped — never touch role/email of an existing user.
+      await service
+        .from("users")
+        .update({ city_id: city.id })
+        .eq("id", user.id)
+        .is("city_id", null);
       cityId = city.id;
     }
   }
