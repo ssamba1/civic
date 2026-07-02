@@ -83,10 +83,14 @@ export function TeamSidebar({ team, city, accountLabel }: TeamSidebarProps) {
             : "inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-lg px-2.5",
           "border border-hairline bg-overlay text-[13px] font-medium text-subtle",
           "outline-none transition-colors hover:bg-overlay-strong hover:text-foreground",
-          "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60",
+          "focus-visible:ring-2 focus-visible:ring-accent/60",
         ].join(" ")}
       >
-        <LogOut className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />
+        <LogOut
+          className="h-3.5 w-3.5 shrink-0"
+          strokeWidth={2}
+          aria-hidden="true"
+        />
         {!compact && "Sign out"}
       </button>
     </form>

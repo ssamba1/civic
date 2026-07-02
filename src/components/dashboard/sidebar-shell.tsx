@@ -54,7 +54,7 @@ export function SidebarBrand() {
   return (
     <Link
       href="/"
-      className="group inline-flex shrink-0 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
+      className="group inline-flex shrink-0 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-accent/60"
     >
       <span className="h-2 w-2 rounded-full bg-foreground" aria-hidden="true" />
       Civic
@@ -99,11 +99,11 @@ export function SidebarNav({
                 className={cn(
                   "group relative flex w-full items-center gap-2.5 rounded-lg text-[13px] font-medium",
                   "transition-colors duration-150 outline-none",
-                  "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
+                  "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-0",
                   collapsed && "justify-center px-0 py-2",
                   !collapsed && (sub ? "py-1.5 pl-2.5 pr-8" : "px-2.5 py-1.5"),
                   active
-                    ? "bg-overlay-strong text-foreground shadow-[inset_0_0_0_1px_var(--hairline)]"
+                    ? "bg-accent text-accent-contrast dark:bg-accent-soft dark:text-accent-text"
                     : "text-subtle hover:bg-overlay hover:text-foreground",
                 )}
               >
@@ -111,7 +111,7 @@ export function SidebarNav({
                   className={cn(
                     "h-4 w-4 shrink-0 transition-colors duration-150",
                     active
-                      ? "text-foreground"
+                      ? "text-accent-contrast dark:text-accent-text"
                       : "text-faint group-hover:text-subtle",
                   )}
                   strokeWidth={2}
@@ -125,7 +125,7 @@ export function SidebarNav({
                   onClick={() => setOpen((o) => ({ ...o, [href]: !expanded }))}
                   aria-expanded={expanded}
                   aria-label={`${expanded ? "Hide" : "Show"} ${label} sub-tabs`}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-1 text-faint outline-none transition-colors hover:bg-overlay hover:text-foreground focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-1 text-faint outline-none transition-colors hover:bg-overlay hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60"
                 >
                   <ChevronRight
                     className={cn(
@@ -148,9 +148,9 @@ export function SidebarNav({
                     className={cn(
                       "flex items-center gap-2 truncate rounded-md px-2 py-1.5 text-[12.5px] font-medium",
                       "transition-colors duration-150 outline-none",
-                      "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
+                      "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-0",
                       s.active
-                        ? "bg-overlay-strong text-foreground"
+                        ? "text-accent-text"
                         : "text-subtle hover:bg-overlay hover:text-foreground",
                     )}
                   >
@@ -214,7 +214,7 @@ export function SidebarShell({
         className={cn(
           "sticky top-0 z-30 hidden h-dvh shrink-0 flex-col border-r border-hairline bg-background md:flex",
           "transition-[width] duration-200 ease-out motion-reduce:transition-none",
-          collapsed ? "w-14" : "w-52",
+          collapsed ? "w-14" : "w-56",
         )}
       >
         <div
@@ -229,7 +229,7 @@ export function SidebarShell({
             onClick={toggle}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="rounded-md p-1.5 text-faint outline-none transition-colors hover:bg-overlay hover:text-foreground focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
+            className="rounded-md p-1.5 text-faint outline-none transition-colors hover:bg-overlay hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60"
           >
             {collapsed ? (
               <PanelLeftOpen

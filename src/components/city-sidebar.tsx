@@ -77,12 +77,16 @@ export function CitySidebar({ slug, cityName, cityState }: CitySidebarProps) {
         compact
           ? "inline-flex h-9 w-full items-center justify-center rounded-lg"
           : "inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-lg px-3",
-        "bg-foreground text-[13px] font-medium text-background",
-        "transition-opacity duration-150 outline-none hover:opacity-85",
-        "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "bg-accent text-[13px] font-medium text-accent-contrast",
+        "transition-opacity duration-150 outline-none hover:opacity-90",
+        "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       ].join(" ")}
     >
-      <Camera className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />
+      <Camera
+        className="h-3.5 w-3.5 shrink-0"
+        strokeWidth={2}
+        aria-hidden="true"
+      />
       {!compact && "Report"}
     </Link>
   );
@@ -90,13 +94,15 @@ export function CitySidebar({ slug, cityName, cityState }: CitySidebarProps) {
   return (
     <SidebarShell
       context={
-        <CitySwitcher
-          currentSlug={slug}
-          currentName={cityName}
-          currentState={cityState}
-          compact
-          className="min-w-0"
-        />
+        <div className="rounded-xl border border-hairline bg-overlay p-2">
+          <CitySwitcher
+            currentSlug={slug}
+            currentName={cityName}
+            currentState={cityState}
+            compact
+            className="min-w-0"
+          />
+        </div>
       }
       footer={
         <>
