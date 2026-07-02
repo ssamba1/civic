@@ -20,6 +20,8 @@ Legend — **Impact** H/M/L (blast radius × user value), **Effort** S (<½ day)
 
 ## TIER 1 — High (correctness, security hardening, core UX)
 
+> **STATUS 2026-07-02 — TIER 1 COMPLETE** (branch `feat/sidebar-shell`, commits `dd5290c`→`b16f54e`). All 15 addressed; 3 were already done at audit-refresh time (1.10 landing focus + 1.14 open-redirect were fixed by the parallel theme session; 1.15's `tests/rls/` partly pre-existed). Verified: `tsc --noEmit` clean, 263 vitest pass / 2 pre-existing fails (classify `raw_response` args-drift + chat-404 timeout, both unrelated) / 15 skipped. Note for T2: 1.13's fix is migration `022`; the plan's "migration 006" reference was stale. 1.5 coarsened only public feed coords (address kept — Open311 consumers expect it). 1.3 forged-field vector is closed via authz + content-keyed cache, but the reasoning route still trusts client-forwarded fields for content (reading real DB fields is a future hardening).
+
 | # | Item | Fix | Impact | Effort | Src |
 |---|------|-----|--------|--------|-----|
 | 1.1 | **Re-classify of a processed report always fails.** `work_orders.report_id` UNIQUE + plain insert; 2nd pipeline run (retry, staff re-run, concurrent submit+Open311) errors and stamps `classify_status=failed` while classifications upsert already succeeded → divergent state. | Upsert on conflict; make pipeline idempotent. | M | S | BE#6 |
