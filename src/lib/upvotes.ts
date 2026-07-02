@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { validateUpvotes } from "@/lib/schemas";
+import { createReactiveStore } from "@/lib/utils/reactive-store";
 
 /* ==================================================================
    Optimistic, client-only upvote store.
@@ -23,12 +24,10 @@ const STORAGE_KEY = "civic.upvotes.v1";
 type UpvoteSet = ReadonlySet<string>;
 
 let snapshot: UpvoteSet = new Set();
-const listeners = new Set<() => void>();
 let hydrated = false;
 
-function emit() {
-  for (const l of listeners) l();
-}
+const store = createReactiveStore<UpvoteSet>(() => snapshot, new Set());
+const { subscribe, getSnapshot, getServerSnapshot, emit } = store;
 
 function readStorage(): Set<string> {
   if (typeof window === "undefined") return new Set();
@@ -55,23 +54,6 @@ function hydrateOnce() {
   snapshot = readStorage();
   hydrated = true;
   emit();
-}
-
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-function getSnapshot(): UpvoteSet {
-  return snapshot;
-}
-
-// Referentially-stable empty set for SSR so React doesn't loop.
-const EMPTY: UpvoteSet = new Set();
-function getServerSnapshot(): UpvoteSet {
-  return EMPTY;
 }
 
 /**

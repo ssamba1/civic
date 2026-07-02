@@ -132,7 +132,7 @@ export function AddCategoryModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="-m-1.5 inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md text-subtle transition-colors hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]"
+            className="-m-1.5 inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md text-subtle transition-colors hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
           >
             <X className="h-5 w-5" strokeWidth={1.75} />
           </button>
@@ -160,7 +160,7 @@ export function AddCategoryModal({
             <button
               type="button"
               onClick={onClose}
-              className="mt-2 rounded-lg bg-[#0a84ff] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0070e0]"
+              className="mt-2 rounded-lg bg-[var(--color-primary)] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0070e0]"
             >
               Done
             </button>
@@ -182,7 +182,7 @@ export function AddCategoryModal({
                   placeholder="Abandoned Vehicle"
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
-                  className="rounded-lg border border-hairline bg-overlay px-3 py-2 text-sm text-foreground placeholder:text-faint outline-none focus:border-[#0a84ff]/60 focus:ring-1 focus:ring-[#0a84ff]/40"
+                  className="rounded-lg border border-hairline bg-overlay px-3 py-2 text-sm text-foreground placeholder:text-faint outline-none focus:border-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] focus:ring-1 focus:ring-[color-mix(in_srgb,var(--color-primary)_40%,transparent)]"
                 />
               </label>
 
@@ -266,7 +266,7 @@ export function AddCategoryModal({
               <button
                 type="submit"
                 disabled={!isValid}
-                className="rounded-lg bg-[#0a84ff] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0070e0] disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-lg bg-[var(--color-primary)] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0070e0] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Add Issue Type
               </button>

@@ -29,7 +29,7 @@ interface TeamRosterProps {
 
 const STATUS_COLORS = {
   open: "#ff9f0a",
-  dispatched: "#0a84ff",
+  dispatched: "var(--color-primary)",
   in_progress: "#5ac8fa",
   closed: "#30d158",
   merged: "#86868b",

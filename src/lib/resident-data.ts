@@ -17,7 +17,9 @@ import {
 import { createSSRClient, getAuthUser } from "@/lib/db/ssr-client";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { createLogger } from "@/lib/logger";
+import { STATUS_LABEL } from "@/lib/status";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
+import { DAY_MS, HOUR_MS } from "@/lib/utils/time-constants";
 
 const logger = createLogger("resident-data");
 
@@ -80,18 +82,6 @@ export interface NotificationItem {
 /* ------------------------------------------------------------------
    Shared label/status helpers (mirror recent-reports tones)
    ------------------------------------------------------------------ */
-
-const STATUS_LABEL: Record<ReportStatus, string> = {
-  open: "Open",
-  dispatched: "Dispatched",
-  in_progress: "In progress",
-  closed: "Resolved",
-  merged: "Merged",
-  rejected: "Rejected",
-};
-
-const DAY_MS = 86_400_000;
-const HOUR_MS = 3_600_000;
 
 // Deterministic pseudo-random in [0,1) seeded by a report id string + salt.
 // Mirrors the corpus seeding style so derived data stays stable across SSR/CSR.

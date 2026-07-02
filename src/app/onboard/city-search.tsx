@@ -6,7 +6,7 @@ import type { CitySuggestion } from "@/lib/onboarding/types";
 import { searchCities } from "./actions";
 
 const inputCls =
-  "w-full rounded-lg border border-hairline bg-surface pl-9 pr-9 py-2.5 text-sm text-foreground outline-none transition-shadow placeholder:text-faint focus:ring-2 focus:ring-[#0a84ff]/50";
+  "w-full rounded-lg border border-hairline bg-surface pl-9 pr-9 py-2.5 text-sm text-foreground outline-none transition-shadow placeholder:text-faint focus:ring-2 focus:ring-[color-mix(in_srgb,var(--color-primary)_50%,transparent)]";
 
 /**
  * City autocomplete — one search box that replaces the old name + state
@@ -190,7 +190,7 @@ export function CitySearch({
                 }`}
               >
                 <MapPin
-                  className="h-4 w-4 shrink-0 text-[#0a84ff]"
+                  className="h-4 w-4 shrink-0 text-[var(--color-primary)]"
                   aria-hidden
                 />
                 <span className="flex min-w-0 flex-1 flex-col">

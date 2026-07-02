@@ -5,6 +5,7 @@ import { CATEGORY_META } from "@/lib/dashboard-data";
 import { validateCustomCategories } from "@/lib/schemas";
 import { categoryToTeam, isValidTeamId, type TeamId } from "@/lib/teams";
 import type { ReportCategory } from "@/lib/types";
+import { createReactiveStore } from "@/lib/utils/reactive-store";
 
 /* ==================================================================
    User-defined issue types ("custom categories").
@@ -38,12 +39,10 @@ export interface CustomCategory {
 }
 
 let snapshot: CustomCategory[] = [];
-const listeners = new Set<() => void>();
 let hydrated = false;
 
-function emit() {
-  for (const l of listeners) l();
-}
+const store = createReactiveStore<CustomCategory[]>(() => snapshot, []);
+const { subscribe, getSnapshot, getServerSnapshot, emit } = store;
 
 function readStorage(): CustomCategory[] {
   if (typeof window === "undefined") return [];
@@ -105,24 +104,6 @@ function uniqueId(label: string, existing: CustomCategory[]): string {
 
 export function getCustomCategoriesSnapshot(): CustomCategory[] {
   return snapshot;
-}
-
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-function getSnapshot(): CustomCategory[] {
-  return snapshot;
-}
-
-// Stable reference for SSR — useSyncExternalStore requires getServerSnapshot
-// to return the same value each call to avoid an infinite render loop.
-const EMPTY: CustomCategory[] = [];
-function getServerSnapshot(): CustomCategory[] {
-  return EMPTY;
 }
 
 interface UseCustomCategoriesReturn {

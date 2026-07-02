@@ -1,10 +1,10 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import type { DashboardReport } from "@/lib/dashboard-data";
+import { HOUR_MS } from "@/lib/utils/time-constants";
 import { deriveBacklogAgeDistribution, deriveSlaRisk } from "./derive";
 
 const now = new Date("2026-06-14T12:00:00Z").getTime();
-const HOUR_MS = 3_600_000;
 
 function makeReport(overrides: Partial<DashboardReport> = {}): DashboardReport {
   return {

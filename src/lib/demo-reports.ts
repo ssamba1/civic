@@ -4,6 +4,7 @@ import { useCallback, useSyncExternalStore } from "react";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
 import type { WorkOrderWithDetails } from "@/lib/types";
+import { createReactiveStore } from "@/lib/utils/reactive-store";
 
 /** A report/work-order belongs to the injected demo overlay. Used for the glow. */
 export const DEMO_REPORTER_ID = "demo-reporter";
@@ -57,12 +58,10 @@ function buildDemoTree(n: number): DashboardReport {
 
 let snapshot: DashboardReport[] = [];
 let counter = 0;
-const listeners = new Set<() => void>();
 let hydrated = false;
 
-function emit() {
-  for (const l of listeners) l();
-}
+const store = createReactiveStore<DashboardReport[]>(() => snapshot, []);
+const { subscribe, getSnapshot, getServerSnapshot, emit } = store;
 
 function readStorage(): DashboardReport[] {
   if (typeof window === "undefined") return [];
@@ -105,26 +104,6 @@ hydrateOnce();
 
 export function getDemoReportsSnapshot(): DashboardReport[] {
   return snapshot;
-}
-
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-function getSnapshot(): DashboardReport[] {
-  return snapshot;
-}
-
-// Referentially-stable frozen server snapshot — matches the Object.freeze({})
-// pattern used by every other store in this codebase.
-const EMPTY: DashboardReport[] = Object.freeze(
-  [] as DashboardReport[],
-) as DashboardReport[];
-function getServerSnapshot(): DashboardReport[] {
-  return EMPTY;
 }
 
 /** Add one fresh demo report (newest first). Call from a client event handler. */

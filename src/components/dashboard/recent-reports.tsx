@@ -140,7 +140,7 @@ function RecentReportsInner({
                 aria-current={isFocused ? "true" : undefined}
                 className={cn(
                   "w-full text-left flex flex-col gap-1 py-3 sm:py-2.5 px-2 min-h-11 rounded-md transition-colors",
-                  "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+                  "outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
                   isFocused ? "bg-overlay-strong" : "hover:bg-overlay",
                   isDemo && "demo-glow",
                 )}

@@ -169,7 +169,7 @@ function RoutingMatrixInner() {
         className={cn(
           "mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-hairline px-2 py-2.5 text-[12px] font-medium text-faint",
           "transition-colors hover:border-hairline-strong hover:bg-overlay hover:text-subtle",
-          "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60",
+          "outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]",
         )}
       >
         <Plus className="h-3.5 w-3.5" strokeWidth={2} />

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { validateCategoryOverrides } from "@/lib/schemas";
 import { categoryToTeamDefault, isValidTeamId, type TeamId } from "@/lib/teams";
 import type { ReportCategory } from "@/lib/types";
+import { createListenerHub, frozenSnapshot } from "@/lib/utils/reactive-store";
 
 /* ==================================================================
    Per-category default-routing override store.
@@ -47,12 +48,11 @@ type HistoryMap = Record<string, CategoryOverrideEvent[]>;
 
 let snapshot: OverrideMap = {};
 let historySnapshot: HistoryMap = {};
-const listeners = new Set<() => void>();
 let hydrated = false;
 
-function emit() {
-  for (const l of listeners) l();
-}
+// One shared listener hub — a single `emit()` must notify both the
+// primary-map and history `useSyncExternalStore` subscriptions below.
+const { subscribe, emit } = createListenerHub();
 
 function readStorage(): OverrideMap {
   if (typeof window === "undefined") return {};
@@ -143,13 +143,6 @@ export function getCategoryHistorySnapshot(): HistoryMap {
   return historySnapshot;
 }
 
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
 function getSnapshot(): OverrideMap {
   return snapshot;
 }
@@ -159,14 +152,8 @@ function getHistorySnapshotInternal(): HistoryMap {
 }
 
 // Server snapshots must be referentially stable so React doesn't loop.
-const EMPTY: OverrideMap = Object.freeze({}) as OverrideMap;
-const EMPTY_HISTORY: HistoryMap = Object.freeze({}) as HistoryMap;
-function getServerSnapshot(): OverrideMap {
-  return EMPTY;
-}
-function getServerHistorySnapshot(): HistoryMap {
-  return EMPTY_HISTORY;
-}
+const getServerSnapshot = frozenSnapshot<OverrideMap>({});
+const getServerHistorySnapshot = frozenSnapshot<HistoryMap>({});
 
 function recordEvent(category: ReportCategory, from: TeamId, to: TeamId) {
   if (from === to) return;

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { validateCompletions } from "@/lib/schemas";
 import type { ReportStatus } from "@/lib/types";
+import { createReactiveStore } from "@/lib/utils/reactive-store";
 
 /* ==================================================================
    Task-completion overlay store.
@@ -35,12 +36,10 @@ export interface Completion {
 export type CompletionMap = Record<string, Completion>;
 
 let snapshot: CompletionMap = {};
-const listeners = new Set<() => void>();
 let hydrated = false;
 
-function emit() {
-  for (const l of listeners) l();
-}
+const store = createReactiveStore<CompletionMap>(() => snapshot, {});
+const { subscribe, getSnapshot, getServerSnapshot, emit } = store;
 
 function readStorage(): CompletionMap {
   if (typeof window === "undefined") return {};
@@ -87,23 +86,6 @@ export function resolveReportStatus(
   map: CompletionMap = snapshot,
 ): ReportStatus {
   return map?.[report.id] ? "closed" : report.status;
-}
-
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-function getSnapshot(): CompletionMap {
-  return snapshot;
-}
-
-// Referentially stable server snapshot so SSR + first CSR align.
-const EMPTY: CompletionMap = Object.freeze({}) as CompletionMap;
-function getServerSnapshot(): CompletionMap {
-  return EMPTY;
 }
 
 interface UseTaskCompletionReturn {

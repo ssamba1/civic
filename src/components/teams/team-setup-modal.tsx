@@ -449,7 +449,7 @@ export function TeamSetupModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="-m-1.5 inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md text-subtle transition-colors hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]"
+            className="-m-1.5 inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md text-subtle transition-colors hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
           >
             <X className="h-5 w-5" strokeWidth={1.75} />
           </button>
@@ -489,7 +489,7 @@ export function TeamSetupModal({
             <button
               type="button"
               onClick={onClose}
-              className="mt-2 rounded-lg bg-[#0a84ff] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0070e0]"
+              className="mt-2 rounded-lg bg-[var(--color-primary)] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0070e0]"
             >
               Done
             </button>
@@ -517,7 +517,7 @@ export function TeamSetupModal({
                       placeholder="Environmental Services"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="rounded-lg border border-hairline bg-overlay px-3 py-2 text-sm text-foreground placeholder:text-faint outline-none focus:border-[#0a84ff]/60 focus:ring-1 focus:ring-[#0a84ff]/40"
+                      className="rounded-lg border border-hairline bg-overlay px-3 py-2 text-sm text-foreground placeholder:text-faint outline-none focus:border-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] focus:ring-1 focus:ring-[color-mix(in_srgb,var(--color-primary)_40%,transparent)]"
                     />
                   </label>
                   <label className="flex flex-col gap-1.5">
@@ -530,7 +530,7 @@ export function TeamSetupModal({
                       placeholder="Env. Services"
                       value={shortLabel}
                       onChange={(e) => setShortLabel(e.target.value)}
-                      className="rounded-lg border border-hairline bg-overlay px-3 py-2 text-sm text-foreground placeholder:text-faint outline-none focus:border-[#0a84ff]/60 focus:ring-1 focus:ring-[#0a84ff]/40"
+                      className="rounded-lg border border-hairline bg-overlay px-3 py-2 text-sm text-foreground placeholder:text-faint outline-none focus:border-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] focus:ring-1 focus:ring-[color-mix(in_srgb,var(--color-primary)_40%,transparent)]"
                     />
                   </label>
                 </div>
@@ -601,7 +601,7 @@ export function TeamSetupModal({
                         placeholder="Search icons…"
                         value={iconSearch}
                         onChange={(e) => setIconSearch(e.target.value)}
-                        className="w-full rounded-lg border border-hairline bg-overlay py-1.5 pl-8 pr-3 text-[13px] text-foreground placeholder:text-faint outline-none focus:border-[#0a84ff]/60 focus:ring-1 focus:ring-[#0a84ff]/40"
+                        className="w-full rounded-lg border border-hairline bg-overlay py-1.5 pl-8 pr-3 text-[13px] text-foreground placeholder:text-faint outline-none focus:border-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] focus:ring-1 focus:ring-[color-mix(in_srgb,var(--color-primary)_40%,transparent)]"
                       />
                     </div>
                   )}
@@ -664,7 +664,7 @@ export function TeamSetupModal({
                     placeholder="Describe what this team handles — shown on hover in the dashboard."
                     value={duties}
                     onChange={(e) => setDuties(e.target.value)}
-                    className="resize-none rounded-lg border border-hairline bg-overlay px-3 py-2 text-sm text-foreground placeholder:text-faint outline-none focus:border-[#0a84ff]/60 focus:ring-1 focus:ring-[#0a84ff]/40"
+                    className="resize-none rounded-lg border border-hairline bg-overlay px-3 py-2 text-sm text-foreground placeholder:text-faint outline-none focus:border-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] focus:ring-1 focus:ring-[color-mix(in_srgb,var(--color-primary)_40%,transparent)]"
                   />
                 </label>
               </section>
@@ -676,7 +676,7 @@ export function TeamSetupModal({
                     Auto-Routing Rules
                   </h3>
                   {totalSelected > 0 && (
-                    <span className="text-[12px] font-medium text-[#0a84ff]">
+                    <span className="text-[12px] font-medium text-[var(--color-primary)]">
                       {totalSelected} selected
                     </span>
                   )}
@@ -700,14 +700,14 @@ export function TeamSetupModal({
                           onClick={() => toggleCategory(cat)}
                           className={cn(
                             "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
-                            checked ? "bg-[#0a84ff]/10" : "hover:bg-overlay",
+                            checked ? "bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)]" : "hover:bg-overlay",
                           )}
                         >
                           <span
                             className={cn(
                               "flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition-colors",
                               checked
-                                ? "border-[#0a84ff] bg-[#0a84ff] text-white"
+                                ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
                                 : "border-hairline-strong bg-transparent",
                             )}
                           >
@@ -742,7 +742,7 @@ export function TeamSetupModal({
                         <div
                           className={cn(
                             "flex w-full items-center gap-1 rounded-lg pr-1.5 transition-colors",
-                            checked ? "bg-[#0a84ff]/10" : "hover:bg-overlay",
+                            checked ? "bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)]" : "hover:bg-overlay",
                           )}
                         >
                           <button
@@ -754,7 +754,7 @@ export function TeamSetupModal({
                               className={cn(
                                 "flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition-colors",
                                 checked
-                                  ? "border-[#0a84ff] bg-[#0a84ff] text-white"
+                                  ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
                                   : "border-hairline-strong bg-transparent",
                               )}
                             >
@@ -809,7 +809,7 @@ export function TeamSetupModal({
                           addCustomCategory();
                         }
                       }}
-                      className="w-full rounded-lg border border-hairline bg-overlay px-3 py-2 text-sm text-foreground placeholder:text-faint outline-none focus:border-[#0a84ff]/60 focus:ring-1 focus:ring-[#0a84ff]/40"
+                      className="w-full rounded-lg border border-hairline bg-overlay px-3 py-2 text-sm text-foreground placeholder:text-faint outline-none focus:border-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] focus:ring-1 focus:ring-[color-mix(in_srgb,var(--color-primary)_40%,transparent)]"
                     />
                     <div className="flex flex-wrap items-center gap-2">
                       {COLOR_PRESETS.map((c) => (
@@ -843,7 +843,7 @@ export function TeamSetupModal({
                         type="button"
                         onClick={addCustomCategory}
                         disabled={!draftLabel.trim()}
-                        className="rounded-md bg-[#0a84ff] px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-[#0070e0] disabled:cursor-not-allowed disabled:opacity-40"
+                        className="rounded-md bg-[var(--color-primary)] px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-[#0070e0] disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         Add type
                       </button>
@@ -881,7 +881,7 @@ export function TeamSetupModal({
               <button
                 type="submit"
                 disabled={!isValid}
-                className="rounded-lg bg-[#0a84ff] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0070e0] disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-lg bg-[var(--color-primary)] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0070e0] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Create Team
               </button>

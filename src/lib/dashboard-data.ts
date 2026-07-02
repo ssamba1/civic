@@ -3,6 +3,7 @@ import { DEMO_MODE } from "@/lib/demo-mode";
 import { createLogger } from "@/lib/logger";
 import type { TeamId } from "@/lib/teams";
 import type { City, ReportCategory, ReportStatus } from "@/lib/types";
+import { DAY_MS } from "@/lib/utils/time-constants";
 
 const logger = createLogger("dashboard-data");
 
@@ -412,7 +413,6 @@ function buildCorpus(): CorpusReport[] {
   const N = 1100;
   const SPAN_DAYS = 180; // ~6 months
   const RECENCY = 1.6; // >1 front-loads activity toward the present (dense recent window)
-  const DAY_MS = 86_400_000;
   const now = Date.now();
   const center = KNOWN_CITIES.cumming.center;
   const lngSpread = 0.048;

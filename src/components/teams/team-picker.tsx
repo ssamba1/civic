@@ -68,7 +68,7 @@ export function TeamPicker({
         aria-expanded={open}
         className={cn(
           "inline-flex h-11 sm:h-7 items-center gap-1.5 rounded-md border px-2 text-[12px] transition-colors",
-          "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60",
+          "outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]",
           isOverridden
             ? "border-hairline-strong bg-overlay-strong text-foreground"
             : "border-hairline bg-overlay text-subtle hover:bg-overlay-strong hover:border-hairline",

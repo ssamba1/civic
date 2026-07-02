@@ -394,13 +394,13 @@ function neighborhoodTip(
   const share = total > 0 ? (n.count / total) * 100 : 0;
   return {
     title: n.name,
-    accent: "#0a84ff",
+    accent: "var(--color-primary)",
     body: (
       <div className="flex flex-col gap-1.5">
         <TipRow
           label="Reports"
           value={n.count.toLocaleString()}
-          accent="#0a84ff"
+          accent="var(--color-primary)"
         />
         <TipRow label="Resolved" value={`${n.resolvedPct}%`} accent="#30d158" />
         <TipBar pct={n.resolvedPct} color="#30d158" />
@@ -590,7 +590,7 @@ export function CommunityPulseInteractive({
                       <TipRow
                         label="New reports"
                         value={morale.reportedThisWeek.toLocaleString()}
-                        accent="#0a84ff"
+                        accent="var(--color-primary)"
                       />
                       <TipRow
                         label="Being worked on"
@@ -752,7 +752,7 @@ export function CommunityPulseInteractive({
                 label={n.name}
                 count={n.count}
                 pct={Math.round((n.count / maxHood) * 100)}
-                color="#0a84ff"
+                color="var(--color-primary)"
                 sub={`${n.resolvedPct}% done`}
                 hoverLabel={`${n.name}: ${n.count} reports, ${n.resolvedPct}% resolved`}
                 tipBindings={tip.bindTarget(() =>

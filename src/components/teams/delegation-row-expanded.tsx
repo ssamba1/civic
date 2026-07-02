@@ -88,7 +88,7 @@ function TeamChip({ teamId }: { teamId: TeamId }) {
 }
 
 const EVENT_DOT_COLOR: Record<TimelineEvent["kind"], string> = {
-  created: "#0a84ff",
+  created: "var(--color-primary)",
   dispatched: "#5ac8fa",
   reassigned: "#ff9f0a",
   in_progress: "#5ac8fa",

@@ -15,9 +15,7 @@ import {
   type DashboardReport,
 } from "@/lib/dashboard-data";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
-
-const DAY_MS = 86_400_000;
-const HOUR_MS = 3_600_000;
+import { DAY_MS, HOUR_MS } from "@/lib/utils/time-constants";
 
 // Synthetic time-to-resolution. The corpus has no closed_at; this mirrors the
 // formula in fetchCityStats so MTTR is consistent across surfaces.

@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import type { DashboardReport } from "@/lib/dashboard-data";
+import { DAY_MS } from "@/lib/utils/time-constants";
 import {
   deriveCategoryResolution,
   deriveHourlyHeatmap,
@@ -14,7 +15,6 @@ import {
 } from "./derive";
 
 const now = new Date("2026-06-13T12:00:00Z").getTime();
-const DAY_MS = 86_400_000;
 
 function makeReport(overrides: Partial<DashboardReport> = {}): DashboardReport {
   return {

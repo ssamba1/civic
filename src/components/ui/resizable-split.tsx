@@ -119,14 +119,14 @@ export function ResizableSplit({
         onKeyDown={onKeyDown}
         className={cn(
           "group relative flex w-3 shrink-0 cursor-col-resize touch-none select-none items-center justify-center self-stretch rounded-full outline-none",
-          "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60",
+          "focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]",
         )}
       >
         <span
           className={cn(
             "h-10 w-[3px] rounded-full bg-overlay-strong transition-colors",
-            "group-hover:bg-overlay-strong group-focus-visible:bg-[#0a84ff]/80",
-            dragging && "bg-[#0a84ff]",
+            "group-hover:bg-overlay-strong group-focus-visible:bg-[color-mix(in_srgb,var(--color-primary)_80%,transparent)]",
+            dragging && "bg-[var(--color-primary)]",
           )}
         />
       </div>

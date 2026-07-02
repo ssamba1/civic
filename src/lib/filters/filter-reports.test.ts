@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import type { ReportFilter } from "@/lib/filters/types";
+import { DAY_MS } from "@/lib/utils/time-constants";
 import {
   filterPreviousWindow,
   filterReports,
@@ -9,7 +10,6 @@ import {
 } from "./filter-reports";
 
 const now = new Date("2026-06-13T12:00:00Z").getTime();
-const DAY_MS = 86_400_000;
 
 function makeReport(overrides: Partial<DashboardReport> = {}): DashboardReport {
   return {

@@ -2,8 +2,7 @@ import type { DashboardReport } from "@/lib/dashboard-data";
 import { PRESET_DAYS, type ReportFilter } from "@/lib/filters/types";
 import type { TeamId } from "@/lib/teams";
 import { getOverridesSnapshot, getReportTeam } from "@/lib/teams-overrides";
-
-const DAY_MS = 86_400_000;
+import { DAY_MS } from "@/lib/utils/time-constants";
 
 // Resolves a filter's date window to [lowerMs, upperMs] epoch bounds.
 // Returns null bounds where unconstrained (e.g. "all" has no lower bound).

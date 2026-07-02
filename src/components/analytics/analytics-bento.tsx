@@ -46,6 +46,7 @@ import type {
   TrendPoint,
 } from "@/lib/analytics-data";
 import { cn } from "@/lib/utils/cn";
+import { formatHours } from "@/lib/utils/time-ago";
 
 /* ------------------------------------------------------------------
    Touch-tip helper — builds pointer-enter/leave + onClick handlers
@@ -3722,14 +3723,3 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
 }
 
 export const ReporterVelocityCard = memo(ReporterVelocityCardInner);
-
-/* ==================================================================
-   Helpers
-   ================================================================== */
-
-function formatHours(h: number): string {
-  if (h < 24) return `${h}h`;
-  const days = h / 24;
-  if (days < 10) return `${days.toFixed(1)}d`;
-  return `${Math.round(days)}d`;
-}

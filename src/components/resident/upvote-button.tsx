@@ -44,7 +44,7 @@ export function UpvoteButton({
         "inline-flex flex-col items-center justify-center rounded-lg border transition-colors active:scale-90 motion-reduce:active:scale-100 motion-reduce:transition-none tabular-nums",
         size === "sm" ? "h-11 w-9 text-[11px]" : "h-12 w-10 text-xs",
         active
-          ? "border-[#0a84ff]/40 bg-[#0a84ff]/15 text-[#0a84ff]"
+          ? "border-[color-mix(in_srgb,var(--color-primary)_40%,transparent)] bg-[color-mix(in_srgb,var(--color-primary)_15%,transparent)] text-[var(--color-primary)]"
           : "border-hairline bg-overlay text-subtle hover:text-foreground",
         className,
       )}

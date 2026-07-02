@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
+import { createReactiveStore } from "@/lib/utils/reactive-store";
 
 /* ==================================================================
    Theme store — light ⇄ dark, class-driven.
@@ -22,8 +23,12 @@ const STORAGE_KEY = "civic.theme";
 const DEFAULT_THEME: Theme = "dark";
 
 let theme: Theme = DEFAULT_THEME;
-const listeners = new Set<() => void>();
 let hydrated = false;
+
+// Server always renders the default so SSR markup matches the <html class>
+// the layout stamps; the client snapshot takes over after hydration.
+const store = createReactiveStore<Theme>(() => theme, DEFAULT_THEME);
+const { subscribe, getSnapshot, getServerSnapshot, emit } = store;
 
 function readStorage(): Theme {
   if (typeof window === "undefined") return DEFAULT_THEME;
@@ -38,10 +43,6 @@ function readStorage(): Theme {
 function applyClass(next: Theme) {
   if (typeof document === "undefined") return;
   document.documentElement.classList.toggle("dark", next === "dark");
-}
-
-function emit() {
-  for (const l of listeners) l();
 }
 
 // Sync the in-memory snapshot to whatever the no-flash init script already
@@ -72,23 +73,6 @@ export function setTheme(next: Theme) {
 
 export function toggleTheme() {
   setTheme(theme === "dark" ? "light" : "dark");
-}
-
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-function getSnapshot(): Theme {
-  return theme;
-}
-
-// Server always renders the default so SSR markup matches the <html class>
-// the layout stamps; the client snapshot takes over after hydration.
-function getServerSnapshot(): Theme {
-  return DEFAULT_THEME;
 }
 
 interface UseThemeReturn {

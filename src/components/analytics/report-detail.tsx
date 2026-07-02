@@ -11,6 +11,7 @@ import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import type { ReportStatus } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
+import { timeAgo } from "@/lib/utils/time-ago";
 
 /* ==================================================================
    Report detail pane — right-hand column of the reports explorer.
@@ -42,18 +43,6 @@ const SEVERITY_DESC: Record<1 | 2 | 3 | 4 | 5, string> = {
   4: "Major",
   5: "Emergency",
 };
-
-// Mirrors recent-reports.tsx timeAgo.
-function timeAgo(iso: string): string {
-  const diff = Math.max(0, Date.now() - new Date(iso).getTime());
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d`;
-}
 
 function ageDays(iso: string): number {
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());

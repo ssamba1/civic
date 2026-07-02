@@ -23,31 +23,11 @@ import {
   getMyReport,
   getReportTimeline,
 } from "@/lib/resident-data";
-import type { ReportStatus } from "@/lib/types";
+import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 
 // Anon-first: the resident's reports are session-scoped, so this can't be
 // statically prerendered. Resolve per-request.
 export const dynamic = "force-dynamic";
-
-// Resident-facing status copy — mirrors recent-reports/report-detail tones but
-// reads "Resolved" rather than the internal "closed".
-const STATUS_LABEL: Record<ReportStatus, string> = {
-  open: "Open",
-  dispatched: "Dispatched",
-  in_progress: "In progress",
-  closed: "Resolved",
-  merged: "Merged",
-  rejected: "Closed",
-};
-
-const STATUS_TONE: Record<ReportStatus, string> = {
-  open: "text-[#ff9f0a] bg-[#ff9f0a]/10",
-  dispatched: "text-[#0a84ff] bg-[#0a84ff]/10",
-  in_progress: "text-[#5ac8fa] bg-[#5ac8fa]/10",
-  closed: "text-[#30d158] bg-[#30d158]/10",
-  merged: "text-subtle bg-overlay-strong",
-  rejected: "text-[#ff453a] bg-[#ff453a]/10",
-};
 
 interface PageProps {
   params: Promise<{ reportId: string }>;
@@ -103,7 +83,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
     <div className="mx-auto w-full max-w-3xl px-4 pt-24 pb-[calc(5.5rem_+_env(safe-area-inset-bottom))] sm:px-6 md:pb-10">
       <Link
         href="/user/my-reports"
-        className="mb-5 inline-flex h-9 items-center gap-1.5 rounded-full px-2 -ml-2 text-[13px] font-medium text-subtle outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
+        className="mb-5 inline-flex h-9 items-center gap-1.5 rounded-full px-2 -ml-2 text-[13px] font-medium text-subtle outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
       >
         <ArrowLeft className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         All reports
@@ -121,7 +101,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
             <span className="truncate">{meta.label}</span>
           </h1>
           <span
-            className={`mt-1 flex-shrink-0 rounded-md px-2 py-0.5 text-[12px] font-medium ${STATUS_TONE[report.status]}`}
+            className={`mt-1 flex-shrink-0 rounded-md px-2 py-0.5 text-[12px] font-medium ${statusChipClass(report.status)}`}
           >
             {STATUS_LABEL[report.status]}
           </span>
@@ -180,10 +160,10 @@ export default async function ReportDetailPage({ params }: PageProps) {
       {/* Under Fix card — shown when staff has marked the report in_progress
           and provided public-facing cost/timeline context. */}
       {isUnderFix && (
-        <section className="mb-7 rounded-[14px] border border-[#0a84ff]/25 bg-[#0a84ff]/[0.06] p-5">
+        <section className="mb-7 rounded-[14px] border border-[color-mix(in_srgb,var(--color-primary)_25%,transparent)] bg-[color-mix(in_srgb,var(--color-primary)_6%,transparent)] p-5">
           <div className="flex items-start gap-3">
             <HardHat
-              className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#0a84ff]"
+              className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--color-primary)]"
               strokeWidth={2}
               aria-hidden="true"
             />
@@ -198,9 +178,9 @@ export default async function ReportDetailPage({ params }: PageProps) {
                 report.fix_time_estimate_days != null) && (
                 <div className="mt-3 flex flex-wrap gap-3">
                   {report.fix_cost_estimate != null && (
-                    <div className="flex items-center gap-1.5 rounded-lg border border-[#0a84ff]/20 bg-[#0a84ff]/10 px-3 py-2">
+                    <div className="flex items-center gap-1.5 rounded-lg border border-[color-mix(in_srgb,var(--color-primary)_20%,transparent)] bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)] px-3 py-2">
                       <Banknote
-                        className="h-3.5 w-3.5 text-[#0a84ff]"
+                        className="h-3.5 w-3.5 text-[var(--color-primary)]"
                         strokeWidth={2}
                         aria-hidden="true"
                       />
@@ -213,9 +193,9 @@ export default async function ReportDetailPage({ params }: PageProps) {
                     </div>
                   )}
                   {report.fix_time_estimate_days != null && (
-                    <div className="flex items-center gap-1.5 rounded-lg border border-[#0a84ff]/20 bg-[#0a84ff]/10 px-3 py-2">
+                    <div className="flex items-center gap-1.5 rounded-lg border border-[color-mix(in_srgb,var(--color-primary)_20%,transparent)] bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)] px-3 py-2">
                       <Clock
-                        className="h-3.5 w-3.5 text-[#0a84ff]"
+                        className="h-3.5 w-3.5 text-[var(--color-primary)]"
                         strokeWidth={2}
                         aria-hidden="true"
                       />
@@ -281,7 +261,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
           in. Opens the /r/[token] page. */}
       <Link
         href={`/r/${publicToken(report.id)}`}
-        className="mt-6 inline-flex h-10 items-center gap-2 rounded-full border border-hairline bg-overlay px-4 text-[13px] font-medium text-subtle outline-none transition-colors hover:border-hairline-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
+        className="mt-6 inline-flex h-10 items-center gap-2 rounded-full border border-hairline bg-overlay px-4 text-[13px] font-medium text-subtle outline-none transition-colors hover:border-hairline-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
       >
         <Link2 className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         Public status link

@@ -10,6 +10,7 @@ import { CATEGORY_META } from "@/lib/dashboard-data";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import { cn } from "@/lib/utils/cn";
 import { lockBodyScroll } from "@/lib/utils/scroll-lock";
+import { timeAgo } from "@/lib/utils/time-ago";
 
 export function ReportsExplorer({
   open,
@@ -88,7 +89,7 @@ export function ReportsExplorer({
                    clobber each other's transition-property. */
                 "w-full text-left flex flex-col gap-1 min-h-[56px] py-3 px-3 rounded-md",
                 "transition-[background-color,transform] duration-100 active:scale-[0.98] active:duration-75 motion-reduce:active:scale-100",
-                "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+                "outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
                 isSelected
                   ? "bg-overlay-strong"
                   : "hover:bg-overlay active:bg-overlay",
@@ -159,7 +160,7 @@ export function ReportsExplorer({
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="flex-shrink-0 -m-1.5 inline-flex h-11 w-11 items-center justify-center text-subtle hover:text-foreground rounded-md transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]"
+              className="flex-shrink-0 -m-1.5 inline-flex h-11 w-11 items-center justify-center text-subtle hover:text-foreground rounded-md transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
             >
               <X className="h-5 w-5" strokeWidth={1.75} />
             </button>
@@ -197,15 +198,4 @@ export function ReportsExplorer({
     </>,
     document.body,
   );
-}
-
-function timeAgo(iso: string): string {
-  const diff = Math.max(0, Date.now() - new Date(iso).getTime());
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d`;
 }

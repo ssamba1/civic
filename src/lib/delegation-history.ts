@@ -13,8 +13,8 @@
 
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { categoryToTeam, type TeamId } from "@/lib/teams";
+import { HOUR_MS } from "@/lib/utils/time-constants";
 
-const HOUR_MS = 3_600_000;
 const DISPATCH_OFFSET_MS = 30 * 60_000; // 30 minutes after creation
 
 /* -------- Types -------- */

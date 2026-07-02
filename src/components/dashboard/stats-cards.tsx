@@ -9,6 +9,7 @@ import {
 import { memo } from "react";
 import type { CityStats } from "@/lib/dashboard-data";
 import { cn } from "@/lib/utils/cn";
+import { formatHours } from "@/lib/utils/time-ago";
 
 interface StatsCardsProps {
   stats: CityStats;
@@ -135,9 +136,3 @@ function StatsCardsInner({ stats }: StatsCardsProps) {
 }
 
 export const StatsCards = memo(StatsCardsInner);
-
-function formatHours(h: number): string {
-  if (h < 24) return `${h}h`;
-  const days = Math.round(h / 24);
-  return `${days}d`;
-}

@@ -35,10 +35,10 @@ export function UserNav({ citySlug }: { citySlug?: string }) {
       <div className="flex h-14 w-full items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link
           href="/user/pulse"
-          className="group inline-flex items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
+          className="group inline-flex items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
         >
           <span
-            className="h-2 w-2 rounded-full bg-[#0a84ff] shadow-[0_0_8px_rgba(10,132,255,0.6)]"
+            className="h-2 w-2 rounded-full bg-[var(--color-primary)] shadow-[0_0_8px_rgba(10,132,255,0.6)]"
             aria-hidden="true"
           />
           Civic
@@ -62,7 +62,7 @@ export function UserNav({ citySlug }: { citySlug?: string }) {
                   className={[
                     "group relative inline-flex h-7 items-center gap-1.5 rounded-md px-2 sm:px-2.5 text-[13px] font-medium",
                     "transition-colors duration-150 outline-none",
-                    "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
+                    "focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] focus-visible:ring-offset-0",
                     active
                       ? "bg-overlay-strong text-foreground shadow-[inset_0_0_0_1px_var(--hairline)]"
                       : "text-subtle hover:bg-overlay hover:text-foreground",
@@ -72,7 +72,7 @@ export function UserNav({ citySlug }: { citySlug?: string }) {
                     className={[
                       "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
                       active
-                        ? "text-[#0a84ff]"
+                        ? "text-[var(--color-primary)]"
                         : "text-faint group-hover:text-subtle",
                     ].join(" ")}
                     strokeWidth={2}
@@ -90,10 +90,10 @@ export function UserNav({ citySlug }: { citySlug?: string }) {
             aria-label="Report an issue"
             title="Report an issue"
             className={[
-              "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] bg-[#0a84ff] px-2.5 sm:px-3 text-[13px] font-medium text-white",
+              "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] bg-[var(--color-primary)] px-2.5 sm:px-3 text-[13px] font-medium text-white",
               "transition-colors duration-150 outline-none",
               "hover:bg-[#0070e0]",
-              "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              "focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-background",
             ].join(" ")}
           >
             <Camera

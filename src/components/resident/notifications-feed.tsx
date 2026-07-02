@@ -157,7 +157,7 @@ export function NotificationsFeed({
               ? "text-[#30d158] cursor-default"
               : unreadCount === 0
                 ? "text-faint cursor-default"
-                : "text-[#0a84ff] hover:text-[#3b9dff]",
+                : "text-[var(--color-primary)] hover:text-[#3b9dff]",
           )}
         >
           {marked ? (
@@ -201,7 +201,7 @@ export function NotificationsFeed({
                   onClick={() => handleClick(item)}
                   className={cn(
                     "flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors min-h-[44px]",
-                    !read && "bg-[#0a84ff]/[0.04]",
+                    !read && "bg-[color-mix(in_srgb,var(--color-primary)_4%,transparent)]",
                     clickable ? "hover:bg-overlay" : "cursor-default",
                   )}
                 >
@@ -236,7 +236,7 @@ export function NotificationsFeed({
                     // status graphic to screen readers.
                     <span
                       role="img"
-                      className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-[#0a84ff]"
+                      className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-[var(--color-primary)]"
                       aria-label="Unread"
                     />
                   )}

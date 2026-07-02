@@ -709,7 +709,7 @@ function ReportMapInner({
             <div role="listitem" className="flex items-center gap-2">
               <span
                 aria-hidden="true"
-                className="w-1.5 h-1.5 rounded-full bg-[#0a84ff]"
+                className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)]"
               />
               Dispatched
             </div>
@@ -748,7 +748,7 @@ function ReportMapInner({
               {viewMode === "hex" ? "Reports per hex" : "Density"}
             </div>
             <div className="flex items-center gap-2">
-              <span className="inline-block h-2 w-20 rounded-sm bg-gradient-to-r from-[#0a84ff] via-[#bf5af2] via-[#ff9f0a] to-[#ffd700]" />
+              <span className="inline-block h-2 w-20 rounded-sm bg-gradient-to-r from-[var(--color-primary)] via-[#bf5af2] via-[#ff9f0a] to-[#ffd700]" />
             </div>
             <div className="flex items-center justify-between text-[10.5px] text-zinc-400 -mt-0.5">
               <span>Low</span>

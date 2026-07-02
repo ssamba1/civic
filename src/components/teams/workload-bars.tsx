@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { memo, useRef } from "react";
 import { Tile } from "@/components/analytics/bento-primitives";
 import { TipChip, TipRow, useHoverTip } from "@/components/analytics/hover-tip";
+import { STATUS_LABEL } from "@/lib/status";
 import { TEAMS, type TeamId } from "@/lib/teams";
 import type { TeamWorkload } from "@/lib/teams-data";
 import { cn } from "@/lib/utils/cn";
@@ -27,20 +28,11 @@ interface WorkloadBarsProps {
 
 const STATUS_PALETTE = {
   open: "#ff9f0a",
-  dispatched: "#0a84ff",
+  dispatched: "var(--color-primary)",
   in_progress: "#5ac8fa",
   closed: "#30d158",
   merged: "#86868b",
   rejected: "#ff453a",
-} as const;
-
-const STATUS_LABEL = {
-  open: "Open",
-  dispatched: "Dispatched",
-  in_progress: "In progress",
-  closed: "Closed",
-  merged: "Merged",
-  rejected: "Rejected",
 } as const;
 
 function WorkloadBarsInner({

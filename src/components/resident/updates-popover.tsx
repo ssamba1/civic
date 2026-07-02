@@ -20,6 +20,7 @@ import { PillGroup } from "@/components/analytics/bento-primitives";
 import BottomSheet from "@/components/ui/bottom-sheet";
 import { fetchResidentNotifications } from "@/lib/notifications-actions";
 import type { NotificationItem } from "@/lib/resident-data";
+import { statusChipClass } from "@/lib/status";
 import { cn } from "@/lib/utils/cn";
 import { lockBodyScroll } from "@/lib/utils/scroll-lock";
 import { timeAgo } from "@/lib/utils/time-ago";
@@ -39,15 +40,6 @@ const TYPE_META: Record<
   status: { icon: Activity, color: "#0a84ff", label: "Status update" },
   announcement: { icon: Megaphone, color: "#ff9f0a", label: "Announcement" },
   comment: { icon: MessageSquare, color: "#5ac8fa", label: "Comment" },
-};
-
-const STATUS_TONE: Record<string, string> = {
-  open: "text-[#ff9f0a] bg-[#ff9f0a]/10",
-  dispatched: "text-[#0a84ff] bg-[#0a84ff]/10",
-  in_progress: "text-[#5ac8fa] bg-[#5ac8fa]/10",
-  closed: "text-[#30d158] bg-[#30d158]/10",
-  merged: "text-subtle bg-overlay-strong",
-  rejected: "text-[#ff453a] bg-[#ff453a]/10",
 };
 
 // Exit-animation duration (ms) — kept in sync with the `duration-150` enter so
@@ -228,7 +220,7 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
         className={cn(
           "group relative inline-flex h-7 items-center gap-1.5 rounded-md px-2 sm:px-2.5 text-[13px] font-medium",
           "transition-colors duration-150 outline-none",
-          "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
+          "focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] focus-visible:ring-offset-0",
           active || open
             ? "bg-overlay-strong text-foreground shadow-[inset_0_0_0_1px_var(--hairline)]"
             : "text-subtle hover:bg-overlay hover:text-foreground",
@@ -239,7 +231,7 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
             className={cn(
               "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
               active || open
-                ? "text-[#0a84ff]"
+                ? "text-[var(--color-primary)]"
                 : "text-faint group-hover:text-subtle",
             )}
             strokeWidth={2}
@@ -357,7 +349,7 @@ function UpdatesFeedHeader({
             Updates
           </p>
           {unreadCount > 0 && (
-            <span className="rounded-full bg-[#0a84ff]/15 px-1.5 py-0.5 text-[11px] font-medium text-[#0a84ff]">
+            <span className="rounded-full bg-[color-mix(in_srgb,var(--color-primary)_15%,transparent)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--color-primary)]">
               {unreadCount} new
             </span>
           )}
@@ -386,7 +378,7 @@ function UpdatesFeedHeader({
             "text-[12px] transition-colors",
             unreadCount === 0
               ? "cursor-default text-faint"
-              : "text-[#0a84ff] hover:text-[#3b9dff]",
+              : "text-[var(--color-primary)] hover:text-[#3b9dff]",
           )}
         >
           Mark all read
@@ -469,7 +461,7 @@ function UpdatesFeedBody({
               onClick={() => openDetail(item)}
               className={cn(
                 "flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors",
-                !read && "bg-[#0a84ff]/[0.04]",
+                !read && "bg-[color-mix(in_srgb,var(--color-primary)_4%,transparent)]",
                 "hover:bg-overlay",
               )}
             >
@@ -500,7 +492,7 @@ function UpdatesFeedBody({
               {!read && (
                 <span
                   role="img"
-                  className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-[#0a84ff]"
+                  className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-[var(--color-primary)]"
                   aria-label="Unread"
                 />
               )}
@@ -586,7 +578,7 @@ function MobileUpdatesSheet({
               "min-h-[44px] px-2 text-[12px] transition-colors",
               unreadCount === 0
                 ? "cursor-default text-faint"
-                : "text-[#0a84ff] hover:text-[#3b9dff]",
+                : "text-[var(--color-primary)] hover:text-[#3b9dff]",
             )}
           >
             Mark all read
@@ -727,7 +719,7 @@ function DetailModal({
                 <span
                   className={cn(
                     "flex-shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium",
-                    STATUS_TONE[snap.status] ?? "text-subtle bg-overlay-strong",
+                    statusChipClass(snap.status),
                   )}
                 >
                   {snap.statusLabel}
@@ -775,7 +767,7 @@ function DetailModal({
                 href={`/user/my-reports/${item.reportId}`}
                 onClick={onClose}
                 className={cn(
-                  "inline-flex min-h-[44px] items-center gap-1.5 rounded-md bg-[#0a84ff] px-3 py-1.5 text-[13px] font-medium text-white",
+                  "inline-flex min-h-[44px] items-center gap-1.5 rounded-md bg-[var(--color-primary)] px-3 py-1.5 text-[13px] font-medium text-white",
                   "transition-colors duration-150 hover:bg-[#0070e0]",
                 )}
               >

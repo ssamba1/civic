@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils/cn";
    components (those helpers are module-private and not exported).
    ================================================================== */
 
-const ACCENT = "#0a84ff";
+const ACCENT = "var(--color-primary)";
 const RESOLVED = "#30d158";
 
 const STAGE_ICON: Record<TimelineStep["stage"], LucideIcon> = {

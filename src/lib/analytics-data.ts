@@ -2,6 +2,7 @@ import { CATEGORY_META } from "@/lib/dashboard-data";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { createLogger } from "@/lib/logger";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
+import { DAY_MS } from "@/lib/utils/time-constants";
 
 const logger = createLogger("analytics-data");
 
@@ -106,8 +107,6 @@ const KPI_EMPTY: AnalyticsKpis = {
 };
 
 const kpiFallback = () => (DEMO_MODE ? KPI_FALLBACK : KPI_EMPTY);
-
-const DAY_MS = 86_400_000;
 
 export async function fetchAnalyticsKpis(
   cityId: string,

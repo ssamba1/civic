@@ -80,7 +80,7 @@ function CategoryChartInner({
               aria-pressed={isSelected}
               className={cn(
                 "w-full text-left px-2 py-2.5 sm:py-2 min-h-11 rounded-md transition-[background-color,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-pointer",
-                "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+                "outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
                 isSelected ? "bg-overlay-strong" : "hover:bg-overlay",
                 isDimmed ? "opacity-40" : "opacity-100",
               )}

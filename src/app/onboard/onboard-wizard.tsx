@@ -357,7 +357,7 @@ function Stepper({ current }: { current: number }) {
             <span
               className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
                 active
-                  ? "bg-[#0a84ff] text-white"
+                  ? "bg-[var(--color-primary)] text-white"
                   : done
                     ? "bg-foreground text-background"
                     : "bg-surface text-faint border border-hairline"
@@ -404,7 +404,7 @@ function Field({
 }
 
 const inputCls =
-  "w-full rounded-lg border border-hairline bg-surface px-3 py-2 text-sm text-foreground outline-none transition-shadow placeholder:text-faint focus:ring-2 focus:ring-[#0a84ff]/50";
+  "w-full rounded-lg border border-hairline bg-surface px-3 py-2 text-sm text-foreground outline-none transition-shadow placeholder:text-faint focus:ring-2 focus:ring-[color-mix(in_srgb,var(--color-primary)_50%,transparent)]";
 
 function StepHeading({ title, sub }: { title: string; sub: string }) {
   return (
@@ -544,7 +544,7 @@ function TeamsStep({
         <button
           type="button"
           onClick={toggleAll}
-          className="rounded text-xs font-medium text-[#0a84ff] outline-none transition-opacity hover:opacity-70 focus-visible:ring-2 focus-visible:ring-[#0a84ff]/50"
+          className="rounded text-xs font-medium text-[var(--color-primary)] outline-none transition-opacity hover:opacity-70 focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_50%,transparent)]"
         >
           {allOn ? "Disable all" : "Enable all"}
         </button>
@@ -579,7 +579,7 @@ function TeamsStep({
                   <div className="flex items-center gap-1.5">
                     <input
                       aria-label={`Rename ${t.label}`}
-                      className="-mx-1 w-full min-w-0 rounded-md bg-transparent px-1 py-0.5 text-sm font-medium text-foreground outline-none transition-colors placeholder:text-faint hover:bg-overlay-strong focus:bg-overlay-strong focus:shadow-[inset_0_0_0_1px_#0a84ff]"
+                      className="-mx-1 w-full min-w-0 rounded-md bg-transparent px-1 py-0.5 text-sm font-medium text-foreground outline-none transition-colors placeholder:text-faint hover:bg-overlay-strong focus:bg-overlay-strong focus:shadow-[inset_0_0_0_1px_var(--color-primary)]"
                       value={labels[t.id] ?? t.label}
                       onChange={(e) =>
                         setLabels((l) => ({ ...l, [t.id]: e.target.value }))
@@ -611,8 +611,8 @@ function TeamsStep({
                 aria-checked={on}
                 aria-label={`${on ? "Disable" : "Enable"} ${t.label}`}
                 onClick={() => setEnabled((e) => ({ ...e, [t.id]: !e[t.id] }))}
-                className={`relative h-5 w-9 shrink-0 rounded-full outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 ${
-                  on ? "bg-[#0a84ff]" : "bg-overlay-strong"
+                className={`relative h-5 w-9 shrink-0 rounded-full outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] ${
+                  on ? "bg-[var(--color-primary)]" : "bg-overlay-strong"
                 }`}
               >
                 <span
@@ -658,7 +658,7 @@ function RoutingStep({
               {categoryLabel(cat)}
             </span>
             <select
-              className="rounded-md border border-hairline bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-[#0a84ff]/50"
+              className="rounded-md border border-hairline bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--color-primary)_50%,transparent)]"
               value={routing[cat] ?? ""}
               onChange={(e) =>
                 setRouting((r) => ({ ...r, [cat]: e.target.value }))
@@ -960,7 +960,7 @@ function ModeCard({
       onClick={onClick}
       className={`rounded-lg border p-3 text-left transition-colors ${
         active
-          ? "border-[#0a84ff] bg-[#0a84ff]/5"
+          ? "border-[var(--color-primary)] bg-[color-mix(in_srgb,var(--color-primary)_5%,transparent)]"
           : "border-hairline bg-surface hover:border-overlay-strong"
       }`}
     >
@@ -985,7 +985,7 @@ function ChoiceChip({
       onClick={onClick}
       className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
         active
-          ? "border-[#0a84ff] bg-[#0a84ff] text-white"
+          ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
           : "border-hairline bg-surface text-foreground hover:border-overlay-strong"
       }`}
     >
@@ -1102,8 +1102,8 @@ function ResultScreen({
 
   return (
     <div className="mx-auto w-full max-w-2xl px-5 py-12">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#0a84ff]/10">
-        <Check className="h-6 w-6 text-[#0a84ff]" />
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)]">
+        <Check className="h-6 w-6 text-[var(--color-primary)]" />
       </div>
       <h1 className="mt-4 text-2xl font-semibold tracking-tight text-foreground">
         Your city is live

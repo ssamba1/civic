@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { DashboardReport } from "@/lib/dashboard-data";
+import { DAY_MS } from "@/lib/utils/time-constants";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/logger", () => ({
@@ -12,7 +13,6 @@ vi.mock("@/lib/db/ssr-client", () => ({
   createSSRClient: vi.fn(),
 }));
 
-const DAY_MS = 86_400_000;
 const now = Date.now();
 const ago = (days: number) => new Date(now - days * DAY_MS).toISOString();
 

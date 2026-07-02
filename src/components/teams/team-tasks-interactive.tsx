@@ -10,6 +10,7 @@ import { ResizableSplit } from "@/components/ui/resizable-split";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import { useReportCorpus } from "@/lib/filters/context";
+import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import type { TeamId } from "@/lib/teams";
 import { getReportTeam } from "@/lib/teams-overrides";
 import type { ReportStatus } from "@/lib/types";
@@ -21,24 +22,6 @@ const ACTIVE_STATUSES = new Set<ReportStatus>([
   "dispatched",
   "in_progress",
 ]);
-
-const STATUS_LABEL: Record<ReportStatus, string> = {
-  open: "Open",
-  dispatched: "Dispatched",
-  in_progress: "In progress",
-  closed: "Resolved",
-  merged: "Merged",
-  rejected: "Rejected",
-};
-
-const STATUS_TONE: Record<ReportStatus, string> = {
-  open: "text-[#ff9f0a] bg-[#ff9f0a]/10",
-  dispatched: "text-[#0a84ff] bg-[#0a84ff]/10",
-  in_progress: "text-[#5ac8fa] bg-[#5ac8fa]/10",
-  closed: "text-[#30d158] bg-[#30d158]/10",
-  merged: "text-subtle bg-overlay-strong",
-  rejected: "text-[#ff453a] bg-[#ff453a]/10",
-};
 
 type Tab = "todo" | "done" | "all";
 
@@ -120,7 +103,7 @@ export function TeamTasksInteractive({ teamId }: TeamTasksInteractiveProps) {
             onClick={() => setTab(key)}
             className={cn(
               "inline-flex flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors outline-none",
-              "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60",
+              "focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]",
               tab === key
                 ? "bg-overlay-strong text-foreground shadow-[inset_0_0_0_1px_var(--hairline)]"
                 : "text-subtle hover:bg-overlay hover:text-foreground",
@@ -204,9 +187,9 @@ function TaskRow({
         aria-current={selected}
         className={cn(
           "group flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors",
-          "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60",
+          "outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]",
           selected
-            ? "border-[#0a84ff]/40 bg-[#0a84ff]/[0.08]"
+            ? "border-[color-mix(in_srgb,var(--color-primary)_40%,transparent)] bg-[color-mix(in_srgb,var(--color-primary)_8%,transparent)]"
             : "border-hairline bg-surface hover:bg-overlay",
           isDemo && "demo-glow",
         )}
@@ -216,7 +199,7 @@ function TaskRow({
           {/* biome-ignore lint/performance/noImgElement: tiny lazy thumbnail; next/image is overkill for a 48px list cell. */}
           <img
             src={report.photo_public_url || undefined}
-            alt=""
+            alt={`${meta.label} report photo, ${report.address}`}
             className="h-full w-full object-cover"
             loading="lazy"
           />
@@ -240,7 +223,7 @@ function TaskRow({
             <span
               className={cn(
                 "shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-medium",
-                STATUS_TONE[report.status],
+                statusChipClass(report.status),
               )}
             >
               {STATUS_LABEL[report.status]}

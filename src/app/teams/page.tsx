@@ -24,10 +24,10 @@ export default function TeamsIndexPage() {
         <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <Link
             href="/"
-            className="group inline-flex shrink-0 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
+            className="group inline-flex shrink-0 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
           >
             <span
-              className="h-2 w-2 rounded-full bg-[#0a84ff] shadow-[0_0_8px_rgba(10,132,255,0.6)]"
+              className="h-2 w-2 rounded-full bg-[var(--color-primary)] shadow-[0_0_8px_rgba(10,132,255,0.6)]"
               aria-hidden="true"
             />
             Civic
@@ -54,7 +54,7 @@ export default function TeamsIndexPage() {
             <section key={slug} className="mb-12">
               <div className="mb-4 flex items-center gap-2">
                 <span
-                  className="h-1.5 w-1.5 rounded-full bg-[#0a84ff]"
+                  className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]"
                   aria-hidden="true"
                 />
                 <h2 className="text-[13px] font-medium uppercase tracking-[0.08em] text-subtle">
@@ -69,7 +69,7 @@ export default function TeamsIndexPage() {
                     <li key={team.id}>
                       <Link
                         href={`/${team.id}/${slug}`}
-                        className="group relative flex h-full flex-col gap-3 rounded-xl border border-hairline bg-overlay p-4 outline-none transition-colors hover:bg-overlay-strong focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
+                        className="group relative flex h-full flex-col gap-3 rounded-xl border border-hairline bg-overlay p-4 outline-none transition-colors hover:bg-overlay-strong focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
                       >
                         <div className="flex items-center gap-2.5">
                           <span

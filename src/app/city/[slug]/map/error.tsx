@@ -16,7 +16,7 @@ export default function MapError({
       <button
         type="button"
         onClick={reset}
-        className="rounded-full bg-[#0a84ff] px-5 py-2 text-[14px] font-medium text-white transition-colors hover:bg-[#0070e0]"
+        className="rounded-full bg-[var(--color-primary)] px-5 py-2 text-[14px] font-medium text-white transition-colors hover:bg-[#0070e0]"
       >
         Try again
       </button>

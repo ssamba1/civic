@@ -51,7 +51,7 @@ export default async function PublicReportPage({ params }: PageProps) {
         {/* Brand */}
         <div className="mb-8 flex items-center gap-2">
           <span
-            className="h-2 w-2 rounded-full bg-[#0a84ff] shadow-[0_0_8px_rgba(10,132,255,0.6)]"
+            className="h-2 w-2 rounded-full bg-[var(--color-primary)] shadow-[0_0_8px_rgba(10,132,255,0.6)]"
             aria-hidden="true"
           />
           <span className="text-[15px] font-semibold tracking-tight text-foreground">

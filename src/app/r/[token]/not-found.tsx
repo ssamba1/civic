@@ -8,7 +8,7 @@ export default function PublicReportNotFound() {
     <main className="flex min-h-dvh flex-col items-center justify-center bg-background px-6 text-center text-foreground">
       <div className="mb-8 flex items-center gap-2">
         <span
-          className="h-2 w-2 rounded-full bg-[#0a84ff] shadow-[0_0_8px_rgba(10,132,255,0.6)]"
+          className="h-2 w-2 rounded-full bg-[var(--color-primary)] shadow-[0_0_8px_rgba(10,132,255,0.6)]"
           aria-hidden="true"
         />
         <span className="text-[15px] font-semibold tracking-tight text-foreground">
@@ -31,7 +31,7 @@ export default function PublicReportNotFound() {
 
       <Link
         href="/"
-        className="mt-6 inline-flex h-10 items-center rounded-full bg-[#0a84ff] px-5 text-[14px] font-medium text-white outline-none transition-colors hover:bg-[#0070e0] focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="mt-6 inline-flex h-10 items-center rounded-full bg-[var(--color-primary)] px-5 text-[14px] font-medium text-white outline-none transition-colors hover:bg-[#0070e0] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         Go home
       </Link>

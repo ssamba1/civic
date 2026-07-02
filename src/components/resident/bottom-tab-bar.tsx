@@ -93,11 +93,11 @@ export function BottomTabBar() {
             aria-current={fabActive ? "page" : undefined}
             className={cn(
               "group relative -mt-5 inline-flex h-14 w-14 items-center justify-center rounded-full",
-              "bg-[#0a84ff] text-white",
+              "bg-[var(--color-primary)] text-white",
               "shadow-[0_6px_16px_rgba(10,132,255,0.45)] ring-1 ring-hairline-strong",
               "outline-none transition-[transform,background-color] duration-150 ease-out",
               "hover:bg-[#0070e0] active:scale-95",
-              "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              "focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_70%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               "motion-reduce:transition-none motion-reduce:active:scale-100",
             )}
           >
@@ -128,9 +128,9 @@ function TabLink({ tab, active }: { tab: TabItem; active: boolean }) {
           "group flex min-h-11 w-full flex-col items-center justify-center gap-1 rounded-[10px] px-1 py-1.5",
           "text-[11px] font-medium leading-none",
           "outline-none transition-colors duration-150",
-          "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
+          "focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] focus-visible:ring-offset-0",
           "motion-reduce:transition-none",
-          active ? "text-[#0a84ff]" : "text-subtle hover:text-foreground",
+          active ? "text-[var(--color-primary)]" : "text-subtle hover:text-foreground",
         )}
       >
         <Icon

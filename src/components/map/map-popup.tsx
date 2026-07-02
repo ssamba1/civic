@@ -2,6 +2,8 @@ import { type CurrencyConfig, formatCost, USD } from "@/lib/currency";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import { DEMO_REPORTER_ID } from "@/lib/demo-reports";
+import { STATUS_LABEL } from "@/lib/status";
+import type { ReportStatus } from "@/lib/types";
 
 interface MapPopupProps {
   report: DashboardReport;
@@ -17,13 +19,16 @@ function esc(str: string | null | undefined): string {
     .replace(/'/g, "&#39;");
 }
 
-const STATUS_TONE: Record<string, { label: string; color: string }> = {
-  open: { label: "Open", color: "#ff9f0a" },
-  dispatched: { label: "Dispatched", color: "#0a84ff" },
-  in_progress: { label: "In progress", color: "#5ac8fa" },
-  closed: { label: "Resolved", color: "#30d158" },
-  merged: { label: "Merged", color: "#86868b" },
-  rejected: { label: "Rejected", color: "#ff453a" },
+// Raw hex per status — this popup is a static HTML string (innerHTML, not
+// JSX), so it can't use Tailwind chip classes; canonical @/lib/status only
+// exports class strings, not hex values, so the color map stays local.
+const STATUS_COLOR: Record<ReportStatus, string> = {
+  open: "#ff9f0a",
+  dispatched: "var(--color-primary)",
+  in_progress: "#5ac8fa",
+  closed: "#30d158",
+  merged: "#86868b",
+  rejected: "#ff453a",
 };
 
 function formatExactDate(iso: string): string {
@@ -105,10 +110,8 @@ export function renderPopupHTML(
   currency: CurrencyConfig = USD,
 ): string {
   const meta = CATEGORY_META[report.category];
-  const status = STATUS_TONE[report.status] ?? {
-    label: report.status,
-    color: "#86868b",
-  };
+  const statusLabel = STATUS_LABEL[report.status];
+  const statusColor = STATUS_COLOR[report.status];
   const cost = formatCost(
     estimateRepairCost(report.id, report.category, report.severity),
     currency,
@@ -139,9 +142,9 @@ export function renderPopupHTML(
       <div style="padding:14px 16px 16px;">
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;">
           <strong style="font-size:15px;color:#ffffff;letter-spacing:-0.01em;font-weight:600;">${esc(meta.label)}</strong>
-          <span style="font-size:12px;color:${esc(status.color)};">${esc(status.label)}</span>
+          <span style="font-size:12px;color:${esc(statusColor)};">${esc(statusLabel)}</span>
         </div>
-        <a href="https://www.google.com/maps/search/?api=1&query=${report.location.lat},${report.location.lng}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin:4px 0 0;font-size:13px;color:#a1a1aa;line-height:1.35;text-decoration:none;" onmouseover="this.style.color='#0a84ff';this.style.textDecoration='underline';" onmouseout="this.style.color='#a1a1aa';this.style.textDecoration='none';">${esc(report.address)}</a>
+        <a href="https://www.google.com/maps/search/?api=1&query=${report.location.lat},${report.location.lng}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin:4px 0 0;font-size:13px;color:#a1a1aa;line-height:1.35;text-decoration:none;" onmouseover="this.style.color='var(--color-primary)';this.style.textDecoration='underline';" onmouseout="this.style.color='#a1a1aa';this.style.textDecoration='none';">${esc(report.address)}</a>
 
         <div style="margin:14px 0 0;display:flex;flex-direction:column;gap:7px;font-size:13px;">
           <div style="display:flex;justify-content:space-between;color:#86868b;">
