@@ -1,0 +1,62 @@
+name: test
+
+# CI gate: type-check, unit + RLS test collection, and a production build must
+# all pass on every PR and push. The RLS integration tests only *exercise* a
+# live database when SUPABASE_TEST_URL (+ keys) are provided as repo secrets;
+# without them the suite collects and passes-as-skipped, so this workflow is
+# green out of the box with no secrets configured.
+on:
+  pull_request:
+  push:
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check
+        run: pnpm typecheck
+
+      - name: Unit + RLS tests
+        run: pnpm test
+        env:
+          # RLS integration tests (tests/rls/*) skip unless these are set.
+          # When the secrets are absent GitHub substitutes empty strings, the
+          # skipIf guards fire, and the suite passes-as-skipped. Populate the
+          # secrets to actually exercise the policies against a real project.
+          SUPABASE_TEST_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          SUPABASE_TEST_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_TEST_SERVICE_ROLE_KEY }}
+          # Legacy gate + var names still honoured by the pre-existing rls.test.ts.
+          RUN_RLS_TESTS: ${{ secrets.SUPABASE_TEST_URL != '' && '1' || '' }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
+
+      - name: Production build
+        run: pnpm build
+        env:
+          # next build strictly parses NEXT_PUBLIC_* client env (lib/env.ts uses
+          # z.url()). Provide harmless placeholders so a build without secrets
+          # still succeeds; these never reach a deployed artifact from CI.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL || 'https://placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY || 'placeholder-anon-key' }}
