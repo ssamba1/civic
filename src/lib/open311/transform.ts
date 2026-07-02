@@ -58,6 +58,15 @@ export function expandStatus(open311Status: "open" | "closed"): ReportStatus[] {
   return ["closed", "merged", "rejected"];
 }
 
+// Coarsen coordinates to ~3 decimal places (~110 m) for the PUBLIC,
+// unauthenticated Open311 feed: precise enough to place an issue on a block,
+// coarse enough not to pinpoint a reporter's home. The app's own map reads the
+// DB directly and is unaffected — only external Open311 consumers see this.
+const COORD_PRECISION = 1000;
+function coarsenCoord(n: number): number {
+  return Math.round(n * COORD_PRECISION) / COORD_PRECISION;
+}
+
 /** Service name from category (title-cased, underscores removed) */
 function serviceName(category: string): string {
   return category
@@ -89,8 +98,8 @@ export function reportToOpen311(
     updated_datetime: report.updated_at,
     expected_datetime: null,
     address: report.address ?? "",
-    lat: report.location.lat,
-    long: report.location.lng,
+    lat: coarsenCoord(report.location.lat),
+    long: coarsenCoord(report.location.lng),
     media_url: report.photo_public_url,
     zipcode: "",
   };

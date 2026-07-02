@@ -1,6 +1,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { after, type NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { runClassifyPipeline } from "@/lib/ai/classify-pipeline";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
@@ -219,6 +220,17 @@ export async function POST(request: NextRequest) {
   const wantsXml = requestWantsXml(request);
 
   try {
+    // Rate limit early, before body parsing or the API-key check, so a leaked
+    // key (or key-guessing) can't drive unbounded report inserts + Gemini spend.
+    // 30 POSTs/min per IP is generous for a spec-conformant integration.
+    const rl = checkRateLimit(`open311_post:${clientIp(request)}`, {
+      windowMs: 60_000,
+      max: 30,
+    });
+    if (!rl.allowed) {
+      return errorResponse(429, "Rate limit exceeded", wantsXml);
+    }
+
     // Parse body (supports both JSON and form-encoded)
     let body: Record<string, string>;
     const contentType = request.headers.get("content-type") ?? "";
@@ -304,10 +316,16 @@ export async function POST(request: NextRequest) {
       }
       city = data as City;
     } else {
+      // Deterministic "first active city": without an ORDER BY, Postgres can
+      // return a different row across calls, so an Open311 POST with no
+      // jurisdiction_id could land in different cities run-to-run. Order by
+      // created_at (then id, to break ties) for a stable canonical city.
       const { data, error } = await db
         .from("cities")
         .select("*")
         .eq("active", true)
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true })
         .limit(1)
         .single();
 
@@ -362,23 +380,15 @@ export async function POST(request: NextRequest) {
       return errorResponse(500, "Failed to create service request", wantsXml);
     }
 
-    // Trigger AI classification async — fire-and-forget (H2)
-    // x-internal-key allows classify route to accept calls without a user session
-    const classifyHeaders: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    if (process.env.INTERNAL_CLASSIFY_SECRET) {
-      classifyHeaders["x-internal-key"] = process.env.INTERNAL_CLASSIFY_SECRET;
-    }
+    // Trigger AI classification async — fire-and-forget (H2). Call the pipeline
+    // IN-PROCESS rather than HTTP self-calling /api/ai/classify: the old fetch
+    // depended on NEXT_PUBLIC_SITE_URL and silently fell back to
+    // http://localhost:3000, so in production (env unset) externally-submitted
+    // Open311 reports were never classified. runClassifyPipeline is the same
+    // function that route invokes, minus a network hop and its auth (we're
+    // already past api_key validation here).
     after(() =>
-      fetch(
-        `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/api/ai/classify`,
-        {
-          method: "POST",
-          headers: classifyHeaders,
-          body: JSON.stringify({ report_id: report.id }),
-        },
-      ).catch((err) => {
+      runClassifyPipeline(report.id).catch((err) => {
         logger.error("Classify trigger failed", err, { reportId: report.id });
       }),
     );
