@@ -16,6 +16,8 @@ import {
   HELP_ASSISTANT,
 } from "@/lib/ai/config";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
+import { checkAndRecordGeminiCall } from "@/lib/ai/rate-limiter";
+import { getAuthUser } from "@/lib/db/ssr-client";
 import { serverEnv } from "@/lib/env";
 import { createLogger } from "@/lib/logger";
 
@@ -30,6 +32,15 @@ export async function POST(request: Request) {
   }
 
   try {
+    // Require an authenticated session. The help assistant is a browser-only,
+    // user-facing feature (no server-to-server callers), so there is no
+    // internal-key carve-out here — a missing session is always anonymous
+    // abuse. Gating before any Gemini spend closes the cost/DoS surface.
+    const user = await getAuthUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const rl = checkRateLimit(`chat:${clientIp(request)}`);
     if (!rl.allowed) {
       return NextResponse.json(
@@ -37,6 +48,21 @@ export async function POST(request: Request) {
         {
           status: 429,
           headers: { "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)) },
+        },
+      );
+    }
+
+    // Global Gemini budget cap (shared with classify). Bounds total model spend
+    // across all callers, not just this per-IP limiter.
+    const budget = checkAndRecordGeminiCall();
+    if (!budget.allowed) {
+      return NextResponse.json(
+        { error: "Rate limited" },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(Math.ceil((budget.retryAfterMs ?? 0) / 1000)),
+          },
         },
       );
     }

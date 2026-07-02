@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
+import { checkAndRecordGeminiCall } from "@/lib/ai/rate-limiter";
 import { getReasoning } from "@/lib/ai/reasoning-ai";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import {
@@ -27,14 +28,11 @@ export interface ReasoningResponse {
 
 export async function POST(request: Request) {
   try {
-    // The public dashboard (/city/[slug]) is an unauthenticated route, so the
-    // reasoning shown there must be reachable by logged-out visitors. We don't
-    // gate access — the response is read-only explanation text derived from
-    // already-public report fields. Instead we gate the EXPENSIVE path: only an
-    // authenticated user or an internal-secret caller may trigger live Gemini;
-    // anonymous browsers get the deterministic template (free, no model spend).
-    // The internal secret lets server actions and background jobs call this
-    // without forwarding browser cookies.
+    // Require an authenticated session OR the internal secret. The internal
+    // secret lets server actions and background jobs call this without
+    // forwarding browser cookies; everyone else must be a logged-in user.
+    // Truly anonymous external callers get 401 — the live Gemini path is
+    // expensive, so we do not let logged-out visitors trigger model spend.
     const user = await getAuthUser();
     const internalKey = request.headers.get("x-internal-key");
     const expectedKey = process.env.INTERNAL_CLASSIFY_SECRET;
@@ -43,7 +41,9 @@ export async function POST(request: Request) {
       !!internalKey &&
       Buffer.byteLength(internalKey) === Buffer.byteLength(expectedKey) &&
       timingSafeEqual(Buffer.from(internalKey), Buffer.from(expectedKey));
-    const allowLiveModel = !!user || isInternal;
+    if (!user && !isInternal) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // Rate limit non-internal callers (browser users). Internal-key callers
     // (server actions, jobs) bypass — they are trusted and not user-facing.
@@ -86,12 +86,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Report not found" }, { status: 404 });
     }
 
-    // Authenticated / internal callers: hybrid sourcing (cache -> live Gemini ->
-    // deterministic template fallback). getReasoning swallows any Gemini failure
-    // into the template path, so it never dead-ends.
-    // Anonymous browsers: deterministic template only — same shape, zero model
-    // spend, no abuse surface. Either way a 200 with full reasoning is returned.
-    const payload = allowLiveModel
+    // Every caller past the auth gate is an authenticated user or internal, so
+    // all get hybrid sourcing (cache -> live Gemini -> deterministic template
+    // fallback). getReasoning swallows any Gemini failure into the template
+    // path, so it never dead-ends. Before triggering live Gemini we consume the
+    // shared budget cap (same as classify); on exceed we return the template so
+    // the caller still gets a 200 with full reasoning and zero model spend.
+    const budget = checkAndRecordGeminiCall();
+    const payload = budget.allowed
       ? (
           await getReasoning(
             {
