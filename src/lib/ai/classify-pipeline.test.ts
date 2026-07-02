@@ -78,7 +78,7 @@ interface SupabaseSetup {
   report?: SingleResult; // reports.select().eq().single()
   reportsWrite?: WriteResult; // reports.update().eq() (status transitions)
   classificationsWrite?: WriteResult; // classifications.upsert()
-  workOrder?: SingleResult; // work_orders.insert().select().single()
+  workOrder?: SingleResult; // work_orders.upsert().select().single()
   mergesWrite?: WriteResult; // merges.insert()
   rpcResult?: { data: unknown; error: { message: string } | null }; // supabase.rpc()
   download?: { data: unknown; error: { message: string } | null };
@@ -229,7 +229,7 @@ describe("runClassifyPipeline", () => {
       }),
     );
     // Pipeline still proceeds to a work order (fallback category "other" -> not emergency).
-    expect(tables.work_orders.insert).toHaveBeenCalled();
+    expect(tables.work_orders.upsert).toHaveBeenCalled();
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.emergency).toBe(false);
@@ -279,7 +279,7 @@ describe("runClassifyPipeline", () => {
       }),
     );
     // Pipeline continues to a work order.
-    expect(tables.work_orders.insert).toHaveBeenCalled();
+    expect(tables.work_orders.upsert).toHaveBeenCalled();
     expect(result.ok).toBe(true);
   });
 
@@ -322,14 +322,16 @@ describe("runClassifyPipeline", () => {
       }),
       { onConflict: "report_id" },
     );
-    // Work order inserted with the deterministic rule output for "pothole".
-    expect(tables.work_orders.insert).toHaveBeenCalledWith(
+    // Work order upserted (idempotent on report_id) with the deterministic rule
+    // output for "pothole".
+    expect(tables.work_orders.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         report_id: REPORT_ID,
         department: "public_works",
         crew_type: "paving",
         est_minutes: 30,
       }),
+      { onConflict: "report_id" },
     );
     // Status transitioned to dispatched.
     expect(tables.reports.update).toHaveBeenCalledWith({
@@ -365,7 +367,7 @@ describe("runClassifyPipeline", () => {
     // Classification persisted.
     expect(tables.classifications.upsert).toHaveBeenCalled();
     // Emergency short-circuits: NO work order.
-    expect(tables.work_orders.insert).not.toHaveBeenCalled();
+    expect(tables.work_orders.upsert).not.toHaveBeenCalled();
     // Status still transitioned to dispatched.
     expect(tables.reports.update).toHaveBeenCalledWith({
       status: "dispatched",
@@ -415,7 +417,7 @@ describe("runClassifyPipeline", () => {
       _delta: 1,
     });
     // No work order created for a duplicate.
-    expect(tables.work_orders.insert).not.toHaveBeenCalled();
+    expect(tables.work_orders.upsert).not.toHaveBeenCalled();
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.merged).toBe(true);
@@ -495,7 +497,7 @@ describe("runClassifyPipeline", () => {
     expect(tables.reports.update).not.toHaveBeenCalledWith({
       status: "merged",
     });
-    expect(tables.work_orders.insert).toHaveBeenCalled();
+    expect(tables.work_orders.upsert).toHaveBeenCalled();
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.data.merged).toBeUndefined();
   });

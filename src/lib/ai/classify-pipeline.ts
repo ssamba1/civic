@@ -405,21 +405,29 @@ export async function runClassifyPipeline(
     }
   }
 
+  // Upsert (not insert) on the report_id UNIQUE constraint so the pipeline is
+  // idempotent: a 2nd run (staff re-run, retry, or a concurrent submit+Open311
+  // race) updates the existing work order instead of hitting a unique violation
+  // that would stamp classify_status=failed AFTER classifications already
+  // upserted — leaving the report in a divergent half-classified state.
   const { data: insertedWorkOrder, error: woErr } = await supabase
     .from("work_orders")
-    .insert({
-      report_id: reportId,
-      department,
-      crew_type: crewType,
-      priority_score: rulesWorkOrder.priority_score,
-      est_minutes: estMinutes,
-      materials,
-      // Set directly on the primary insert (not a best-effort stamp like
-      // est_cost below) — this flag is safety/correctness-critical and must
-      // never silently fail to apply.
-      needs_manual_review: needsManualReview,
-      review_reason: reviewReason,
-    })
+    .upsert(
+      {
+        report_id: reportId,
+        department,
+        crew_type: crewType,
+        priority_score: rulesWorkOrder.priority_score,
+        est_minutes: estMinutes,
+        materials,
+        // Set directly on the primary write (not a best-effort stamp like
+        // est_cost below) — this flag is safety/correctness-critical and must
+        // never silently fail to apply.
+        needs_manual_review: needsManualReview,
+        review_reason: reviewReason,
+      },
+      { onConflict: "report_id" },
+    )
     .select()
     .single<WorkOrder>();
 

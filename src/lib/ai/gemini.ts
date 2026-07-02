@@ -80,8 +80,15 @@ export async function classifyPhoto(
       { timeoutMs: AI_TIMEOUT_MS },
     );
 
-    // Preserve the raw model text exactly; parse a cleaned copy.
-    const rawText = result.response.text();
+    // Preserve the raw model text exactly; parse a cleaned copy. Guard the
+    // empty/blocked-response case explicitly: `.text()` can return "" (or the
+    // SDK throws, caught below) when Gemini yields no candidates — surface a
+    // clear error so the caller hits its rules fallback instead of a confusing
+    // "invalid JSON" downstream.
+    const rawText = result.response?.text?.() ?? "";
+    if (!rawText.trim()) {
+      return { ok: false, error: "Gemini returned an empty response" };
+    }
     const cleaned = stripCodeFences(rawText);
 
     let parsed: unknown;
