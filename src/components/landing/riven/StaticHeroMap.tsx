@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { LIGHT_SCRIM } from "./mapPresets";
 
@@ -121,20 +122,16 @@ export default function StaticHeroMap() {
       className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
       style={{ perspective: "1200px" }}
     >
-      {/* biome-ignore lint/performance/noImgElement: full-bleed decorative plate; next/image adds no value over an eager fetchpriority=high <img> and complicates the cover-fill transform target. */}
-      <img
+      <Image
         ref={plateRef}
         src="/landing-shots/hero-map.jpg"
         alt=""
-        // LCP-adjacent hero art — load eagerly, hint the preloader. NOT lazy.
-        loading="eager"
-        fetchPriority="high"
+        fill
+        // LCP element — priority = eager load + fetchpriority=high, NOT lazy.
+        priority
         decoding="async"
+        sizes="100vw"
         style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
           objectFit: "cover",
           transformOrigin: "center",
           transform: `scale(${PLATE_SCALE})`,
