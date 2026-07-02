@@ -9,7 +9,7 @@ import {
   CATEGORY_SLA_TARGETS,
   getReportCorpus,
 } from "@/lib/dashboard-data";
-import { getAuthUser } from "@/lib/db/ssr-client";
+import { createSSRClient, getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("[reasoning-api]");
@@ -78,8 +78,33 @@ export async function POST(request: Request) {
     // (resident submissions) do not, so the client forwards the fields it
     // already holds. Corpus is authoritative when an id exists in both.
     const reports = getReportCorpus();
+    const corpusReport = reports.find((r) => r.id === reportId);
+
+    // Object-level authorization for LIVE (DB-backed) reports. Corpus reports are
+    // public demo seed data (no PII) and need no per-object check. A live report
+    // must belong to — or be staffed by — the caller: the SSR client is
+    // RLS-scoped, so reports_select_own (reporter_id = auth.uid()) and
+    // reports_select_staff (is_staff + city) return a row only for an authorized
+    // caller; no row -> 404 (don't disclose existence). Without this any authed
+    // user could trigger live Gemini spend for an arbitrary report id and seed
+    // its reasoning cache. Internal callers (server actions/jobs) stay exempt.
+    if (!corpusReport && !isInternal) {
+      const ssr = await createSSRClient();
+      const { data: owned, error: ownErr } = await ssr
+        .from("reports")
+        .select("id")
+        .eq("id", reportId)
+        .maybeSingle();
+      if (ownErr || !owned) {
+        return NextResponse.json(
+          { error: "Report not found" },
+          { status: 404 },
+        );
+      }
+    }
+
     const report =
-      reports.find((r) => r.id === reportId) ??
+      corpusReport ??
       reportFromBody(reportId, (body as Record<string, unknown>)?.report);
 
     if (!report) {

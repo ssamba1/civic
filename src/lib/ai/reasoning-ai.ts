@@ -150,7 +150,11 @@ export async function geminiReasoning(
   return withRetry(
     async (signal) => {
       const result = await model.generateContent(prompt, { signal });
-      const text = result.response.text();
+      // Guard the empty/blocked-response case: an empty reply must throw so
+      // withRetry/getReasoning fall back to the deterministic template instead
+      // of crashing on JSON.parse("").
+      const text = result.response?.text?.() ?? "";
+      if (!text.trim()) throw new Error("Gemini returned an empty reasoning response");
       const parsed = ReasoningPayloadSchema.parse(JSON.parse(text));
       return parsed;
     },
@@ -163,8 +167,21 @@ export async function geminiReasoning(
 // ---------------------------------------------------------------------------
 
 const CACHE_MAX = 500;
-/** Module-level LRU-ish cache keyed by report id. Insertion order = age. */
+/**
+ * Module-level LRU-ish cache. Keyed by report id + the semantic fields that
+ * determine the output (category|severity|status), NOT id alone. This gives two
+ * properties the id-only key lacked:
+ *   1. Auto-invalidation — when a report's severity/status/category changes, the
+ *      key changes, so stale reasoning is never served.
+ *   2. Anti-poisoning — a caller who forwards forged fields caches under a
+ *      different key and cannot overwrite the entry a legitimate request for the
+ *      same id would read.
+ */
 const cache = new Map<string, ReasoningPayload>();
+
+function reasoningCacheKey(input: ReasoningInput): string {
+  return `${input.id}:${input.category}:${input.severity}:${input.status}`;
+}
 
 function cacheGet(id: string): ReasoningPayload | undefined {
   const hit = cache.get(id);
@@ -203,14 +220,15 @@ export async function getReasoning(
   payload: ReasoningPayload;
   source: "cache" | "gemini" | "template";
 }> {
-  const cached = cacheGet(input.id);
+  const key = reasoningCacheKey(input);
+  const cached = cacheGet(key);
   if (cached !== undefined) {
     return { payload: cached, source: "cache" };
   }
 
   try {
     const payload = await geminiReasoning(input, slaHours, categoryLabel);
-    cacheSet(input.id, payload);
+    cacheSet(key, payload);
     return { payload, source: "gemini" };
   } catch {
     return { payload: templateFallback(), source: "template" };
