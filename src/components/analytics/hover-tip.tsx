@@ -256,9 +256,9 @@ export function useHoverTip(): UseHoverTipReturn {
         className={cn(
           "pointer-events-none fixed z-[60] select-none",
           "text-foreground text-[12px] leading-snug",
-          "rounded-xl border border-hairline",
-          "bg-glass backdrop-blur-xl",
-          "shadow-[0_8px_32px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.04)_inset]",
+          "rounded-lg border border-hairline",
+          "bg-surface",
+          "shadow-[var(--shadow-pop)]",
           !noMotion && "transition-[opacity,transform] duration-150 ease-out",
           state.visible
             ? "opacity-100 translate-y-0"
@@ -360,7 +360,7 @@ export function TipRow({
 
 export function TipBar({
   pct,
-  color = "#0a84ff",
+  color = "var(--accent)",
 }: {
   pct: number;
   color?: string;

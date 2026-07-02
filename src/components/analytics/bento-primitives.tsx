@@ -139,8 +139,8 @@ export function Tile({
       {...(tilt ? { "data-tilt-id": tiltHover["data-tilt-id"] } : {})}
       data-bento-reveal
       className={cn(
-        "flex flex-col rounded-[14px] border border-hairline bg-surface p-4 sm:p-5 text-foreground",
-        "shadow-[var(--shadow-card)]",
+        "flex flex-col rounded-2xl border border-hairline bg-surface p-4 sm:p-5 text-foreground",
+        "shadow-[0_1px_2px_rgba(16,24,40,0.05)]",
         className,
       )}
     >
@@ -164,7 +164,7 @@ export function Tile({
               type="button"
               onClick={onExpand}
               aria-label="Expand chart"
-              className="flex-shrink-0 -m-2 inline-flex h-11 w-11 items-center justify-center text-faint hover:text-foreground rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-[#0a84ff]"
+              className="flex-shrink-0 -m-2 inline-flex h-11 w-11 items-center justify-center text-faint hover:text-foreground rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-accent"
             >
               <Maximize2 className="h-3.5 w-3.5" strokeWidth={2} />
             </button>
@@ -342,7 +342,7 @@ export function ExpandModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex-shrink-0 -m-1.5 inline-flex h-11 w-11 items-center justify-center text-subtle hover:text-foreground rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-[#0a84ff]"
+            className="flex-shrink-0 -m-1.5 inline-flex h-11 w-11 items-center justify-center text-subtle hover:text-foreground rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-accent"
           >
             <X className="h-5 w-5" strokeWidth={1.75} />
           </button>
@@ -444,7 +444,7 @@ export function Toggle({
       <span
         className={cn(
           "h-4 w-7 rounded-full transition-colors flex items-center px-0.5",
-          value ? "bg-[#0a84ff]" : "bg-overlay-strong",
+          value ? "bg-accent" : "bg-overlay-strong",
         )}
       >
         <span
@@ -470,8 +470,8 @@ export function Stat({
 }) {
   return (
     <div>
-      <p className="text-[11px] text-faint uppercase tracking-wider">{label}</p>
-      <p className="text-[22px] font-semibold tracking-tight text-foreground tabular-nums mt-1 leading-none">
+      <p className="text-[13px] text-subtle">{label}</p>
+      <p className="text-2xl font-semibold tracking-tight text-foreground tabular-nums mt-1 leading-none">
         {value}
       </p>
       {hint && <p className="text-[12px] text-faint mt-1.5">{hint}</p>}

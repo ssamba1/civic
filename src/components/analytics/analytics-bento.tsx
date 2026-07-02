@@ -242,14 +242,14 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
         label: "SLA compliance",
         value: `${kpis.sla_compliance_pct.toFixed(1)}%`,
         icon: <ShieldCheck className="h-4 w-4" strokeWidth={1.75} />,
-        accent: "#0a84ff",
+        accent: "var(--accent)",
         sub: `Target ${kpis.sla_target_pct}%`,
         tip: () => {
           const gap = kpis.sla_compliance_pct - kpis.sla_target_pct;
           const passing = kpis.sla_compliance_pct >= kpis.sla_target_pct;
           return {
             title: "SLA compliance",
-            accent: "#0a84ff",
+            accent: "var(--accent)",
             body: (
               <div className="flex flex-col gap-1.5">
                 <TipRow
@@ -261,7 +261,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
                   value={`${kpis.sla_target_pct}%`}
                   muted
                 />
-                <TipBar pct={kpis.sla_compliance_pct} color="#0a84ff" />
+                <TipBar pct={kpis.sla_compliance_pct} color="var(--accent)" />
                 <p className="text-[11px] text-faint leading-snug mt-1">
                   Share of reports closed inside their category SLA window.
                 </p>
@@ -358,7 +358,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
 
   return (
     <>
-      <div className="rounded-[14px] border border-hairline bg-surface overflow-hidden shadow-[var(--shadow-card)]">
+      <div className="rounded-2xl border border-hairline bg-surface overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
         <div className="grid grid-cols-2 lg:grid-cols-4">
           {cards.map((c, idx) => {
             const goodDirection =
@@ -573,8 +573,8 @@ function renderTrendChart(
     >
       <defs>
         <linearGradient id={gCreated} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#0a84ff" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="#0a84ff" stopOpacity="0" />
+          <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
         </linearGradient>
         <linearGradient id={gClosed} x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor="#30d158" stopOpacity="0.25" />
@@ -591,14 +591,14 @@ function renderTrendChart(
               x2={w - pad.r}
               y1={y}
               y2={y}
-              stroke="rgba(255,255,255,0.05)"
+              stroke="var(--hairline)"
               strokeWidth={1}
             />
             <text
               x={pad.l - 6}
               y={y + 3}
               fontSize={10}
-              fill="rgba(255,255,255,0.4)"
+              fill="var(--faint)"
               textAnchor="end"
             >
               {t}
@@ -612,7 +612,7 @@ function renderTrendChart(
           <path
             d={linePath("created")}
             fill="none"
-            stroke="#0a84ff"
+            stroke="var(--accent)"
             strokeWidth={1.75}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -646,7 +646,7 @@ function renderTrendChart(
             x={x}
             y={h - 6}
             fontSize={10}
-            fill="rgba(255,255,255,0.4)"
+            fill="var(--faint)"
             textAnchor="middle"
           >
             {d.date.slice(5)}
@@ -671,7 +671,7 @@ function renderTrendChart(
                 x2={w - pad.r}
                 y1={avgY}
                 y2={avgY}
-                stroke="#0a84ff"
+                stroke="var(--accent)"
                 strokeOpacity={0.3}
                 strokeWidth={1}
                 strokeDasharray="3 3"
@@ -680,15 +680,15 @@ function renderTrendChart(
                 cx={p.x}
                 cy={p.y}
                 r={4}
-                fill="#0a84ff"
-                stroke="#fff"
+                fill="var(--accent)"
+                stroke="var(--surface)"
                 strokeWidth={1.5}
               />
               <text
                 x={p.x}
                 y={p.y - 8}
                 fontSize={9}
-                fill="#fff"
+                fill="var(--foreground)"
                 textAnchor="middle"
                 fontWeight={600}
               >
@@ -723,7 +723,7 @@ function renderTrendChart(
             x2={pad.l + hoveredIdx * xStep}
             y1={pad.t}
             y2={pad.t + innerH}
-            stroke="rgba(255,255,255,0.35)"
+            stroke="var(--hairline-strong)"
             strokeWidth={1}
             strokeDasharray="3 3"
           />
@@ -732,8 +732,8 @@ function renderTrendChart(
               cx={xy(hoveredIdx, data[hoveredIdx].created).x}
               cy={xy(hoveredIdx, data[hoveredIdx].created).y}
               r={3.5}
-              fill="#0a84ff"
-              stroke="rgba(10,10,12,0.9)"
+              fill="var(--accent)"
+              stroke="var(--surface)"
               strokeWidth={1.5}
             />
           )}
@@ -743,7 +743,7 @@ function renderTrendChart(
               cy={xy(hoveredIdx, data[hoveredIdx].closed).y}
               r={3.5}
               fill="#30d158"
-              stroke="rgba(10,10,12,0.9)"
+              stroke="var(--surface)"
               strokeWidth={1.5}
             />
           )}
@@ -890,13 +890,13 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
     const netDelta = deltaCreated - deltaClosed;
     return {
       title: d.date,
-      accent: "#0a84ff",
+      accent: "var(--accent)",
       body: (
         <div className="flex flex-col gap-1.5">
           <TipRow
             label="Created"
             value={d.created.toLocaleString()}
-            accent="#0a84ff"
+            accent="var(--accent)"
           />
           <TipRow
             label="Resolved"
@@ -997,7 +997,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
 
   const legendTip = (series: "created" | "closed") => {
     const isCreated = series === "created";
-    const color = isCreated ? "#0a84ff" : "#30d158";
+    const color = isCreated ? "var(--accent)" : "#30d158";
     const total = isCreated ? totalCreated : totalClosed;
     const avg = isCreated ? dailyAvgCreated : dailyAvgClosed;
     return {
@@ -1041,7 +1041,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
             className="rounded-md px-1 -mx-1 outline-none focus-visible:bg-overlay hover:bg-overlay transition-colors cursor-default"
             {...tip.bindTarget(() => legendTip("created"))}
           >
-            <Legend color="#0a84ff" label={`Created · ${totalCreated}`} />
+            <Legend color="var(--accent)" label={`Created · ${totalCreated}`} />
           </span>
           <span
             // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y — focus reveals a hover tooltip via tip.bindTarget
@@ -1070,7 +1070,10 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
         chart={
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-4 text-[12px]">
-              <Legend color="#0a84ff" label={`Created · ${sliceCreated}`} />
+              <Legend
+                color="var(--accent)"
+                label={`Created · ${sliceCreated}`}
+              />
               <Legend color="#30d158" label={`Resolved · ${sliceClosed}`} />
             </div>
             <TrendChart
@@ -1104,7 +1107,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
                 label="Created"
                 value={showCreated}
                 onChange={setShowCreated}
-                dotColor="#0a84ff"
+                dotColor="var(--accent)"
               />
               <Toggle
                 label="Resolved"
@@ -1125,9 +1128,9 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
         info={
           <div className="flex flex-col gap-5">
             <Prose>
-              Daily count of reports filed (blue) vs. closed (green). The ratio
-              of closed-to-created is the operational throughput — a ratio above
-              100% means crews are eating into the backlog.
+              Daily count of reports filed (primary) vs. closed (green). The
+              ratio of closed-to-created is the operational throughput — a ratio
+              above 100% means crews are eating into the backlog.
             </Prose>
             <StatGrid>
               <Stat
@@ -1242,7 +1245,7 @@ function renderDonut(
         cy={size / 2}
         r={r}
         fill="none"
-        stroke="rgba(255,255,255,0.05)"
+        stroke="var(--hairline)"
         strokeWidth={stroke}
       />
       {data.map((s) => {
@@ -1884,8 +1887,8 @@ function renderHistogram(
               className={cn(
                 "w-full rounded-md bg-gradient-to-t transition-all duration-300",
                 isHovered
-                  ? "from-[#0a84ff]/60 to-[#0a84ff] shadow-[0_0_18px_rgba(10,132,255,0.35)]"
-                  : "from-[#0a84ff]/30 to-[#0a84ff]/70",
+                  ? "from-accent/60 to-accent shadow-[0_0_18px_var(--accent-soft)]"
+                  : "from-accent/30 to-accent/70",
               )}
               style={
                 {
@@ -1989,12 +1992,12 @@ function ResolutionHistogramInner({ data }: ResolutionHistogramProps) {
     const meaning = bucketMeaning(b);
     return {
       title: `${b.label} resolution`,
-      accent: "#0a84ff",
+      accent: "var(--accent)",
       body: (
         <div className="flex flex-col gap-1.5">
           <TipRow label="Reports" value={b.count.toLocaleString()} />
           <TipRow label="Share" value={`${pct.toFixed(1)}%`} />
-          <TipBar pct={pct} color="#0a84ff" />
+          <TipBar pct={pct} color="var(--accent)" />
           <TipRow label="Cumulative" value={`${cum.toFixed(0)}%`} muted />
           <p className="text-[11px] text-faint leading-snug mt-1">
             {meaning.text}
@@ -2252,14 +2255,14 @@ function renderHeatmap(
                     )}
                     style={{
                       height: cellHeight,
-                      background: `rgba(10, 132, 255, ${baseAlpha + intensity * (peakAlpha - baseAlpha)})`,
+                      background: `color-mix(in srgb, var(--accent) ${Math.round((baseAlpha + intensity * (peakAlpha - baseAlpha)) * 100)}%, transparent)`,
                       opacity: isDim ? 0.4 : 1,
                       transform: isCellActive ? "scale(1.18)" : "scale(1)",
                       transformOrigin: "center",
                       boxShadow: isCellActive
-                        ? "0 0 0 1.5px rgba(255,255,255,0.85), 0 2px 10px rgba(10,132,255,0.45)"
+                        ? "0 0 0 1.5px var(--surface), 0 2px 10px var(--accent-soft)"
                         : isPeak
-                          ? "inset 0 0 0 1.5px rgba(255,255,255,0.7)"
+                          ? "inset 0 0 0 1.5px var(--surface)"
                           : "none",
                       zIndex: isCellActive ? 5 : "auto",
                       position: "relative",
@@ -2291,10 +2294,10 @@ function renderHeatmap(
                       "cursor-default focus-visible:ring-1 focus-visible:ring-hairline-strong",
                   )}
                   style={{
-                    background: `rgba(10, 132, 255, ${o})`,
+                    background: `color-mix(in srgb, var(--accent) ${o * 100}%, transparent)`,
                     transform: isLegendActive ? "scale(1.35)" : "scale(1)",
                     boxShadow: isLegendActive
-                      ? "0 0 0 1px rgba(255,255,255,0.6)"
+                      ? "0 0 0 1px var(--surface)"
                       : "none",
                     transition:
                       "transform 140ms ease-out, box-shadow 140ms ease-out",
@@ -2374,12 +2377,12 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
     const intensityPct = (cell.count / max168) * 100;
     return {
       title: `${DAY_LABELS[cell.day]} ${String(cell.hour).padStart(2, "0")}:00`,
-      accent: "#0a84ff",
+      accent: "var(--accent)",
       body: (
         <div className="flex flex-col gap-1.5">
           <TipRow label="Reports" value={cell.count.toLocaleString()} />
           <TipRow label="% of week" value={`${pct.toFixed(2)}%`} />
-          <TipBar pct={intensityPct} color="#0a84ff" />
+          <TipBar pct={intensityPct} color="var(--accent)" />
           <TipRow
             label="Intensity"
             value={`${intensityPct.toFixed(0)}% of peak`}
@@ -2407,12 +2410,12 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
     const isWeekend = day === 0 || day === 6;
     return {
       title: `${DAY_LABELS[day]} — daily summary`,
-      accent: "#0a84ff",
+      accent: "var(--accent)",
       body: (
         <div className="flex flex-col gap-1.5">
           <TipRow label="Reports" value={dayTotal.toLocaleString()} />
           <TipRow label="Share of week" value={`${weekShare.toFixed(1)}%`} />
-          <TipBar pct={weekShare} color="#0a84ff" />
+          <TipBar pct={weekShare} color="var(--accent)" />
           {peakForDay && (
             <TipRow
               label="Peak hour"
@@ -2443,14 +2446,14 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
     const highPct = Math.min(100, intensityFrac * 100 + 12);
     return {
       title: `Intensity bucket ${idx + 1} of 5`,
-      accent: `rgba(10, 132, 255, ${o})`,
+      accent: `color-mix(in srgb, var(--accent) ${o * 100}%, transparent)`,
       body: (
         <div className="flex flex-col gap-1.5">
           <TipRow
             label="Approx range"
             value={`${lowPct.toFixed(0)}% – ${highPct.toFixed(0)}% of peak`}
           />
-          <TipBar pct={intensityFrac * 100} color="#0a84ff" />
+          <TipBar pct={intensityFrac * 100} color="var(--accent)" />
           <p className="text-[11px] text-faint leading-snug mt-1">
             Each cell's color maps its report count to a fraction of the single
             peak slot ({peak.count} reports).
@@ -2766,8 +2769,7 @@ function renderNeighborhoods(
                 className="h-full rounded-full transition-all duration-300"
                 style={{
                   width: `${pct}%`,
-                  background:
-                    sortBy === "open" ? "#ff9f0a" : "rgba(255,255,255,0.7)",
+                  background: sortBy === "open" ? "#ff9f0a" : "var(--subtle)",
                   opacity: isActive
                     ? sortBy === "open"
                       ? 1
