@@ -332,24 +332,33 @@ export async function overrideClassification(
   // utilities/line_crew) and the wrong crew gets dispatched. Deterministic
   // rules-based reroute; priority_score is severity-driven and unchanged, so we
   // leave it. Best-effort: a report with no work order yet matches 0 rows.
+  // Best-effort and fully guarded: the category override above has already
+  // committed, so nothing here may throw and turn a successful override into a
+  // 500. (generateWorkOrder is total over ReportCategory today, but wrap it so a
+  // future RULES/enum drift — or a transient DB error on the update — can't
+  // resurrect the post-commit divergent state T1.1 was about.)
   if (categoryChanged) {
-    const routed = generateWorkOrder(
-      { ...existing, category: parsed.data },
-      { isSchoolZone: false, footTrafficWeight: 1, recurrenceCount: 0 },
-    );
-    const { error: rerouteError } = await supabase
-      .from("work_orders")
-      .update({
-        department: routed.department,
-        crew_type: routed.crew_type,
-        est_minutes: routed.est_minutes,
-        materials: routed.materials,
-      })
-      .eq("report_id", reportId);
-    if (rerouteError)
-      logger.error("work order reroute after override failed", rerouteError, {
-        reportId,
-      });
+    try {
+      const routed = generateWorkOrder(
+        { ...existing, category: parsed.data },
+        { isSchoolZone: false, footTrafficWeight: 1, recurrenceCount: 0 },
+      );
+      const { error: rerouteError } = await supabase
+        .from("work_orders")
+        .update({
+          department: routed.department,
+          crew_type: routed.crew_type,
+          est_minutes: routed.est_minutes,
+          materials: routed.materials,
+        })
+        .eq("report_id", reportId);
+      if (rerouteError)
+        logger.error("work order reroute after override failed", rerouteError, {
+          reportId,
+        });
+    } catch (err) {
+      logger.error("work order reroute threw after override", err, { reportId });
+    }
   }
 
   return { ok: true, data: undefined };
