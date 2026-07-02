@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { dispatchWorkOrderForReport } from "@/app/staff/actions";
-import { type MapTheme, ReportMap } from "@/components/map/report-map";
+import type { MapTheme } from "@/components/map/report-map";
+import { ReportMapLazy as ReportMap } from "@/components/map/report-map-lazy";
 // Upvote disabled for now — client-only/no durable backend yet (see
 // lib/upvotes.ts + migration 005). Re-enable with the import below.
 // import { UpvoteButton } from "@/components/resident/upvote-button";
@@ -23,6 +24,7 @@ import { useCategoryOverrides } from "@/lib/category-overrides";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import { useDemoReports } from "@/lib/demo-reports";
+import { STATUS_LABEL } from "@/lib/status";
 import {
   categoryToTeam,
   TEAM_LIST,
@@ -47,26 +49,17 @@ interface FullscreenMapOrchestratorProps {
   readOnly?: boolean;
 }
 
-// Hoisted to module scope — these were previously rebuilt inside the
-// .map() callback on every render, allocating 4 strings × N reports each frame.
-const STATUS_LABEL: Record<string, string> = {
-  open: "Open",
-  dispatched: "Dispatched",
-  in_progress: "In progress",
-  closed: "Resolved",
-};
-const STATUS_TONE: Record<string, string> = {
+// Text color for the incident-feed status label. This panel (dispatch
+// sidebar/sheet) is structurally forced-dark regardless of the app's
+// light/dark theme setting (bg-black/* scrim, text-white siblings), so it
+// intentionally stays off the canonical --status-*-fg tokens — those are
+// tuned per-theme (dark-on-white in light mode) and would go near-invisible
+// on this always-dark surface. Kept local on purpose.
+const STATUS_TEXT_COLOR: Record<string, string> = {
   open: "text-[#ffb340]",
   dispatched: "text-[#4da6ff]",
   in_progress: "text-[#7ad4ff]",
   closed: "text-[#3ee06b]",
-};
-// Hoisted from the status-filter .map() — was rebuilt on every render inside the callback.
-const STATUS_DISPLAY_NAMES: Record<string, string> = {
-  open: "Open",
-  dispatched: "Dispatched",
-  in_progress: "In progress",
-  closed: "Resolved",
 };
 
 // Lightweight prefers-reduced-motion subscription. Returns true when the OS
@@ -490,7 +483,7 @@ export function FullscreenMapOrchestrator({
                           : "bg-transparent text-white/80 hover:text-white hover:bg-white/[0.03]"
                       }`}
                     >
-                      {STATUS_DISPLAY_NAMES[s]}
+                      {STATUS_LABEL[s]}
                     </button>
                   );
                 },
@@ -570,9 +563,9 @@ export function FullscreenMapOrchestrator({
                         {meta.label}
                       </span>
                       <span
-                        className={`text-[12px] ${STATUS_TONE[report.status] ?? "text-white/80"}`}
+                        className={`text-[12px] ${STATUS_TEXT_COLOR[report.status] ?? "text-white/80"}`}
                       >
-                        {STATUS_LABEL[report.status] ?? report.status}
+                        {STATUS_LABEL[report.status]}
                       </span>
                     </div>
 

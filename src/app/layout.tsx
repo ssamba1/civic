@@ -7,7 +7,7 @@ import {
 } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
-import { AssistantWidget } from "@/components/assistant/assistant-widget";
+import AssistantWidgetMount from "@/components/assistant/assistant-widget-mount";
 import { BottomTabBar } from "@/components/resident/bottom-tab-bar";
 import { HELP_ASSISTANT } from "@/lib/ai/config";
 
@@ -17,6 +17,11 @@ import { HELP_ASSISTANT } from "@/lib/ai/config";
 // only a stored "light" preference removes it. Kept tiny + dependency-free;
 // the React store (lib/theme.ts) takes over after hydration.
 const THEME_INIT = `(function(){try{var t=localStorage.getItem('civic.theme');if(t==='light'){document.documentElement.classList.remove('dark');}else{document.documentElement.classList.add('dark');}}catch(e){}})();`;
+
+// Registers public/sw.js (precache + offline fallback, see that file) once the
+// page has finished loading, so registration never competes with the initial
+// paint. Was written but never registered — silently inert until now.
+const SW_REGISTER = `(function(){if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}})();`;
 
 // Force every route to render per-request. Our CSP (src/proxy.ts) uses a
 // per-request nonce with 'strict-dynamic'; statically prerendered HTML is baked
@@ -125,9 +130,12 @@ export default async function RootLayout({
         <script nonce={nonce} suppressHydrationWarning>
           {THEME_INIT}
         </script>
+        <script nonce={nonce} suppressHydrationWarning>
+          {SW_REGISTER}
+        </script>
         <div className="page-enter flex flex-1 flex-col">{children}</div>
         <BottomTabBar />
-        {HELP_ASSISTANT ? <AssistantWidget /> : null}
+        {HELP_ASSISTANT ? <AssistantWidgetMount /> : null}
       </body>
     </html>
   );
