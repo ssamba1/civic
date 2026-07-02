@@ -232,9 +232,17 @@ export function SidebarShell({
             className="rounded-md p-1.5 text-faint outline-none transition-colors hover:bg-overlay hover:text-foreground focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
           >
             {collapsed ? (
-              <PanelLeftOpen className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+              <PanelLeftOpen
+                className="h-4 w-4"
+                strokeWidth={2}
+                aria-hidden="true"
+              />
             ) : (
-              <PanelLeftClose className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+              <PanelLeftClose
+                className="h-4 w-4"
+                strokeWidth={2}
+                aria-hidden="true"
+              />
             )}
           </button>
         </div>
