@@ -158,14 +158,14 @@ function TriggerPill({
       className={cn(
         "inline-flex h-8 items-center gap-1.5 rounded-[10px] border px-2.5 text-[12px] font-medium transition-colors",
         active || open
-          ? "border-[#0a84ff]/40 bg-[#0a84ff]/10 text-white"
+          ? "border-hairline-strong bg-overlay-strong text-foreground"
           : "border-hairline bg-overlay text-subtle hover:border-hairline-strong hover:text-foreground",
       )}
     >
       <span className="text-subtle">{icon}</span>
       {label}
       {count ? (
-        <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#0a84ff] px-1 text-[10px] font-semibold tabular-nums text-white">
+        <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[10px] font-semibold tabular-nums text-background">
           {count}
         </span>
       ) : null}
@@ -207,7 +207,7 @@ function MenuRow({
         className={cn(
           "flex h-4 w-4 shrink-0 items-center justify-center rounded-[5px] border transition-colors",
           selected
-            ? "border-[#0a84ff] bg-[#0a84ff] text-white"
+            ? "border-foreground bg-foreground text-background"
             : "border-hairline-strong text-transparent",
         )}
       >
@@ -264,7 +264,7 @@ function TeamRow({
       </span>
       {selected && (
         <Check
-          className="mt-1 h-3.5 w-3.5 shrink-0 text-[#0a84ff]"
+          className="mt-1 h-3.5 w-3.5 shrink-0 text-foreground"
           strokeWidth={3}
         />
       )}
@@ -394,7 +394,7 @@ export function FilterBar() {
                         patch({ team: "all" });
                         close();
                       }}
-                      className="text-[11px] text-[#0a84ff] hover:underline"
+                      className="text-[11px] font-medium text-subtle hover:text-foreground hover:underline"
                     >
                       Clear
                     </button>
@@ -427,7 +427,7 @@ export function FilterBar() {
                 className={cn(
                   "relative z-10 rounded-[7px] px-2.5 py-1 text-[12px] font-medium transition-colors",
                   filter.preset === p
-                    ? "bg-[#0a84ff] text-white"
+                    ? "bg-foreground text-background"
                     : "text-subtle hover:text-foreground",
                 )}
               >
@@ -440,7 +440,7 @@ export function FilterBar() {
                   className={cn(
                     "relative z-10 inline-flex items-center gap-1 rounded-[7px] px-2.5 py-1 text-[12px] font-medium transition-colors",
                     filter.preset === "custom"
-                      ? "bg-[#0a84ff] text-white shadow-[var(--shadow-card)]"
+                      ? "bg-foreground text-background shadow-[var(--shadow-card)]"
                       : "text-subtle hover:text-foreground",
                     open && filter.preset !== "custom" && "text-foreground",
                   )}
@@ -468,7 +468,7 @@ export function FilterBar() {
                           from: e.target.value || null,
                         })
                       }
-                      className="w-full rounded-[8px] border border-hairline bg-overlay px-2 py-1.5 text-[12px] text-foreground outline-none focus:border-[#0a84ff]"
+                      className="w-full rounded-[8px] border border-hairline bg-overlay px-2 py-1.5 text-[12px] text-foreground outline-none focus:border-hairline-strong"
                     />
                   </label>
                   <label className="block">
@@ -481,7 +481,7 @@ export function FilterBar() {
                       onChange={(e) =>
                         patch({ preset: "custom", to: e.target.value || null })
                       }
-                      className="w-full rounded-[8px] border border-hairline bg-overlay px-2 py-1.5 text-[12px] text-foreground outline-none focus:border-[#0a84ff]"
+                      className="w-full rounded-[8px] border border-hairline bg-overlay px-2 py-1.5 text-[12px] text-foreground outline-none focus:border-hairline-strong"
                     />
                   </label>
                 </div>
@@ -549,7 +549,7 @@ export function FilterBar() {
                     <button
                       type="button"
                       onClick={() => patch({ statuses: [] })}
-                      className="text-[11px] text-[#0a84ff] hover:underline"
+                      className="text-[11px] font-medium text-subtle hover:text-foreground hover:underline"
                     >
                       Clear
                     </button>
@@ -592,7 +592,7 @@ export function FilterBar() {
                     <button
                       type="button"
                       onClick={() => patch({ categories: [] })}
-                      className="text-[11px] text-[#0a84ff] hover:underline"
+                      className="text-[11px] font-medium text-subtle hover:text-foreground hover:underline"
                     >
                       Clear
                     </button>
@@ -674,14 +674,14 @@ export function FilterBar() {
           className={cn(
             "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[14px] border px-4 py-2.5 text-[14px] font-medium transition-colors",
             activeCount > 0
-              ? "border-[#0a84ff]/40 bg-[#0a84ff]/10 text-white"
+              ? "border-hairline-strong bg-overlay-strong text-foreground"
               : "border-hairline bg-surface text-subtle active:bg-overlay",
           )}
         >
           <SlidersHorizontal className="h-4 w-4 shrink-0" aria-hidden />
           Filters
           {activeCount > 0 && (
-            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0a84ff] px-1.5 text-[11px] font-semibold tabular-nums text-white">
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-foreground px-1.5 text-[11px] font-semibold tabular-nums text-background">
               {activeCount}
             </span>
           )}
@@ -701,7 +701,7 @@ export function FilterBar() {
                 <button
                   type="button"
                   onClick={() => patch({ team: "all" })}
-                  className="min-h-11 px-2 py-1.5 text-[12px] text-[#0a84ff]"
+                  className="min-h-11 px-2 py-1.5 text-[12px] font-medium text-foreground"
                 >
                   Clear
                 </button>
@@ -735,7 +735,7 @@ export function FilterBar() {
                   className={cn(
                     "min-h-11 rounded-[10px] px-2 py-2 text-[13px] font-medium transition-colors",
                     filter.preset === p
-                      ? "bg-[#0a84ff] text-white"
+                      ? "bg-foreground text-background"
                       : "border border-hairline bg-overlay text-subtle",
                   )}
                 >
@@ -748,7 +748,7 @@ export function FilterBar() {
                 className={cn(
                   "col-span-3 min-h-11 rounded-[10px] px-2 py-2 text-[13px] font-medium transition-colors",
                   filter.preset === "custom"
-                    ? "bg-[#0a84ff] text-white"
+                    ? "bg-foreground text-background"
                     : "border border-hairline bg-overlay text-subtle",
                 )}
               >
@@ -767,7 +767,7 @@ export function FilterBar() {
                     onChange={(e) =>
                       patch({ preset: "custom", from: e.target.value || null })
                     }
-                    className="w-full rounded-[10px] border border-hairline bg-overlay px-3 py-2.5 text-base text-foreground outline-none focus:border-[#0a84ff]"
+                    className="w-full rounded-[10px] border border-hairline bg-overlay px-3 py-2.5 text-base text-foreground outline-none focus:border-hairline-strong"
                   />
                 </label>
                 <label className="block">
@@ -780,7 +780,7 @@ export function FilterBar() {
                     onChange={(e) =>
                       patch({ preset: "custom", to: e.target.value || null })
                     }
-                    className="w-full rounded-[10px] border border-hairline bg-overlay px-3 py-2.5 text-base text-foreground outline-none focus:border-[#0a84ff]"
+                    className="w-full rounded-[10px] border border-hairline bg-overlay px-3 py-2.5 text-base text-foreground outline-none focus:border-hairline-strong"
                   />
                 </label>
               </div>
@@ -796,7 +796,7 @@ export function FilterBar() {
                 <button
                   type="button"
                   onClick={() => patch({ minSeverity: 1 })}
-                  className="min-h-11 px-2 py-1.5 text-[12px] text-[#0a84ff]"
+                  className="min-h-11 px-2 py-1.5 text-[12px] font-medium text-foreground"
                 >
                   Clear
                 </button>
@@ -846,7 +846,7 @@ export function FilterBar() {
                 <button
                   type="button"
                   onClick={() => patch({ statuses: [] })}
-                  className="min-h-11 px-2 py-1.5 text-[12px] text-[#0a84ff]"
+                  className="min-h-11 px-2 py-1.5 text-[12px] font-medium text-foreground"
                 >
                   Clear
                 </button>
@@ -877,7 +877,7 @@ export function FilterBar() {
                 <button
                   type="button"
                   onClick={() => patch({ categories: [] })}
-                  className="min-h-11 px-2 py-1.5 text-[12px] text-[#0a84ff]"
+                  className="min-h-11 px-2 py-1.5 text-[12px] font-medium text-foreground"
                 >
                   Clear
                 </button>
@@ -923,7 +923,7 @@ export function FilterBar() {
             <button
               type="button"
               onClick={() => setSheetOpen(false)}
-              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-[14px] bg-[#0a84ff] text-[14px] font-semibold text-white transition-colors active:bg-[#0070e0]"
+              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-[14px] bg-foreground text-[14px] font-semibold text-background transition-opacity active:opacity-80"
             >
               Show results
             </button>

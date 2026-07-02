@@ -50,8 +50,8 @@ export function NavRefreshButton() {
         "transition-colors duration-150 outline-none",
         "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
         active
-          ? "border-[#0a84ff] bg-[#0a84ff] text-white hover:bg-[#0070e0]"
-          : "border-[#0a84ff]/40 bg-[#0a84ff]/10 text-[#5ac8fa] hover:bg-[#0a84ff]/20 hover:text-white",
+          ? "border-foreground bg-foreground text-background hover:opacity-85"
+          : "border-hairline-strong bg-overlay text-subtle hover:bg-overlay-strong hover:text-foreground",
       ].join(" ")}
     >
       <RefreshCw
@@ -167,7 +167,7 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
               className={[
                 "h-4 w-4 shrink-0 transition-colors duration-150",
                 active
-                  ? "text-[#0a84ff]"
+                  ? "text-foreground"
                   : "text-faint group-hover:text-subtle",
               ].join(" ")}
               strokeWidth={2}
@@ -195,9 +195,9 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
           title="Report"
           className={[
             // min-h-11 / min-w-11 = 44px touch target
-            "inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-[#0a84ff] px-3 text-[13px] font-medium text-white",
-            "transition-colors duration-150 outline-none",
-            "hover:bg-[#0070e0]",
+            "inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-foreground px-3 text-[13px] font-medium text-background",
+            "transition-opacity duration-150 outline-none",
+            "hover:opacity-85",
             "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           ].join(" ")}
         >
@@ -262,7 +262,7 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
               className={[
                 "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
                 active
-                  ? "text-[#0a84ff]"
+                  ? "text-foreground"
                   : "text-faint group-hover:text-subtle",
               ].join(" ")}
               strokeWidth={2}
@@ -278,9 +278,9 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
         aria-label="Report"
         title="Report"
         className={[
-          "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] bg-[#0a84ff] px-2.5 sm:px-3 text-[13px] font-medium text-white",
-          "transition-colors duration-150 outline-none",
-          "hover:bg-[#0070e0]",
+          "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] bg-foreground px-2.5 sm:px-3 text-[13px] font-medium text-background",
+          "transition-opacity duration-150 outline-none",
+          "hover:opacity-85",
           "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         ].join(" ")}
       >

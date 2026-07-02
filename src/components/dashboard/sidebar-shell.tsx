@@ -56,10 +56,7 @@ export function SidebarBrand() {
       href="/"
       className="group inline-flex shrink-0 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
     >
-      <span
-        className="h-2 w-2 rounded-full bg-[#0a84ff] shadow-[0_0_8px_rgba(10,132,255,0.6)]"
-        aria-hidden="true"
-      />
+      <span className="h-2 w-2 rounded-full bg-foreground" aria-hidden="true" />
       Civic
     </Link>
   );
@@ -114,7 +111,7 @@ export function SidebarNav({
                   className={cn(
                     "h-4 w-4 shrink-0 transition-colors duration-150",
                     active
-                      ? "text-[#0a84ff]"
+                      ? "text-foreground"
                       : "text-faint group-hover:text-subtle",
                   )}
                   strokeWidth={2}

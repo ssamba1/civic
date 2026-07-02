@@ -71,7 +71,7 @@ export function TeamNav({ team, city, mobileSlot }: TeamNavProps) {
               className={[
                 "h-4 w-4 shrink-0 transition-colors duration-150",
                 active
-                  ? "text-[#0a84ff]"
+                  ? "text-foreground"
                   : "text-faint group-hover:text-subtle",
               ].join(" ")}
               strokeWidth={2}
@@ -127,7 +127,7 @@ export function TeamNav({ team, city, mobileSlot }: TeamNavProps) {
               className={[
                 "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
                 active
-                  ? "text-[#0a84ff]"
+                  ? "text-foreground"
                   : "text-faint group-hover:text-subtle",
               ].join(" ")}
               strokeWidth={2}

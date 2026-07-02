@@ -68,7 +68,7 @@ export function ViewSwitch({
           <Icon
             className={cn(
               "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
-              active ? "text-[#0a84ff]" : "text-faint group-hover:text-subtle",
+              active ? "text-foreground" : "text-faint group-hover:text-subtle",
             )}
             strokeWidth={2}
             aria-hidden="true"
