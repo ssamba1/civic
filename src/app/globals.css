@@ -753,7 +753,7 @@ video::-webkit-media-controls-overlay-play-button {
 }
 
 *:focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -762,7 +762,7 @@ video::-webkit-media-controls-overlay-play-button {
 }
 
 ::selection {
-  background: var(--color-primary-light);
+  background: var(--accent-soft);
   color: var(--foreground);
 }
 

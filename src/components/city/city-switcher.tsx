@@ -106,11 +106,11 @@ export function CitySwitcher({
           "inline-flex min-w-0 max-w-full items-center gap-2 rounded-full border text-[13px] font-medium transition-colors",
           compact ? "h-8 px-3" : "min-h-11 px-3.5",
           open
-            ? "border-[#0a84ff]/40 bg-[#0a84ff]/10 text-foreground"
+            ? "border-accent/40 bg-accent-soft text-foreground"
             : "border-hairline bg-overlay text-foreground hover:border-hairline-strong hover:text-foreground",
         )}
       >
-        <MapPin className="h-4 w-4 shrink-0 text-[#0a84ff]" aria-hidden />
+        <MapPin className="h-4 w-4 shrink-0 text-accent-text" aria-hidden />
         <span className="truncate">
           {current.name}
           {current.state && (
@@ -177,7 +177,7 @@ export function CitySwitcher({
                       className={cn(
                         "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors",
                         selected
-                          ? "border-[#0a84ff] bg-[#0a84ff] text-white"
+                          ? "border-accent bg-accent text-accent-contrast"
                           : "border-hairline-strong text-transparent",
                       )}
                     >
