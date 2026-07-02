@@ -48,7 +48,7 @@ Legend — **Impact** H/M/L (blast radius × user value), **Effort** S (<½ day)
 | 2.2 | **Design system exists in comments, not code.** 208 hardcoded `#0a84ff` across 56 files (token `--color-primary` exists); status colors in 3 forms (RGB/hex/CTA); radius scale wobbles (8/10/14/18/xl/2xl). Rebrand/theming impossible. | Consolidate to CSS tokens + a `STATUS_COLORS`/radius scale; codemod the hexes. | M | M | UI#9/#14, FE#2, dev-audit magic-values |
 | 2.3 | **STATUS_LABEL/STATUS_TONE duplicated in 9 files** (canonical `lib/status.ts` exists, ignored; 3 copies already drifted). | Import canonical; extend it with the `PublicStatus` variant for `r/[token]`. | M | S | FE#2/#15 |
 | 2.4 | **8 twin localStorage stores** re-implement `emit/hydrateOnce/listeners/readStorage` (~1.5k lines; `task-completion.ts` says "Mirrors teams-overrides.ts exactly"). | `createLocalStore<T>(key, validator)` factory (~60% cut). | M | M | FE#3, dev-audit |
-| 2.5 | **Whole site is `force-dynamic`** (per-request CSP nonce) — landing + every route SSR'd per request, zero CDN cache. | Rethink nonce strategy so landing/static routes can be cached. | H | L | PERF |
+| 2.5 | **Whole site is `force-dynamic`** (per-request CSP nonce) — landing + every route SSR'd per request, zero CDN cache. **Investigated 2026-07-02, deliberately deferred — see note below.** | Rethink nonce strategy so landing/static routes can be cached. | H | L | PERF |
 | 2.6 | **AssistantWidget statically imported in root layout** → `ai`+`@ai-sdk/react`+`react-markdown` in first-load JS of every route even when closed/flag-off. | `next/dynamic` on first open. | H | S | PERF |
 | 2.7 | **fullscreen-map statically imports ReportMap** (deck.gl+maplibre ~1.85MB) into `/map` route chunk though `ReportMapLazy` exists; deck.gl/maplibre boot ~400ms every map nav. | Use the lazy variant; defer map init until visible. | M | S | PERF, dev-audit perf P1 |
 | 2.8 | **Dead staff modules.** `components/staff/work-order-grid.tsx` (383 ln, 0 importers) + `lib/staff/grid-data.ts`; live grid uses `components/city/work-order-grid`. Keep `staff/actions.ts` (imported by map) — relocate out of dead dir. | Delete dead pair; move the shared action. | M | S | FE#4, graph |
@@ -79,6 +79,37 @@ Legend — **Impact** H/M/L (blast radius × user value), **Effort** S (<½ day)
 | 3.10 | **AI cost estimates are fabricated.** Static rules table emits confident $ with zero empirical backing (a pilot buyer will not trust it). Cold-start spec exists: show "Unknown — not enough data" until ≥5 accepted actuals, then compute live per city/category with a reliability tier + outlier rejection. | Implement `docs/superpowers/specs/…cost-prediction-cold-start`: capture `actual_cost` at closeWorkOrder as the training signal. | M | M | graph (cost-prediction spec), BE#15 |
 | 3.11 | **Duplicate route trees fragment the app.** Both `/city/[slug]` and `/[team]/[city]` exist; city-switch orphans team context. Loop plan already decided `/city/[slug]` canonical. | Delete `/[team]/[city]`; express team as segment/query. Complements the resident-nav coherence fixes (2.18). | M | M | graph (loop-closure-plan D1), UI |
 | 3.12 | **Ship the classification-accuracy proof.** `verify-classify.mjs` proves the pipeline runs but measures zero accuracy; the golden-set harness (`tests/golden/`) measures the production prompt on labeled photos with buyer-quotable gates (category ≥85%, severity ±1 ≥90%, emergency FNR ≤5%). A missed `is_emergency` auto-dispatches — real liability. | Populate the golden set + run `pnpm eval`; publish the numbers as a sales asset. | M | M | graph (golden eval, research findings) |
+
+---
+
+## 2.5 — force-dynamic / CSP nonce (deferred, with a plan)
+
+Investigated during the T2 pass; not implemented. Root cause is deeper than the
+`export const dynamic = "force-dynamic"` line in `layout.tsx` suggests: `RootLayout`
+itself calls `(await headers()).get("x-nonce")` on every render to thread the
+per-request CSP nonce into the theme-init/SW-register inline `<script>` tags.
+Calling a dynamic API (`headers()`) in a Server Component forces dynamic
+rendering for that render tree regardless of any `dynamic` export — so removing
+the export alone would do nothing; the `headers()` call in the root layout is
+the actual thing forcing every route dynamic.
+
+**Why not fixed live this pass:** a correct fix needs one of —
+1. **Partial Prerendering (PPR)** — cache the static shell, stream only the
+   nonce-bearing scripts dynamically. Needs confirming PPR is stable (not
+   canary-only) on this Next version, and end-to-end verification that hydration
+   still works AND the CSP still blocks what it should.
+2. **Per-route dynamic, opted OUT at the root** — move nonce-reading out of
+   `RootLayout` into only the routes/layouts that actually need it, restoring the
+   default (static-capable) segment config everywhere else.
+
+Either path is genuinely L-effort and the failure mode if done wrong is a
+**production-only, dev-invisible** break: a stale build-time nonce ships in
+static HTML, the prod CSP's `strict-dynamic` blocks it, hydration silently
+fails on whichever route was missed. That can't be caught by `tsc`/vitest/`next
+build` exit codes — it needs a real `next build && next start` + browser check
+per affected route. This session has no way to do that verification reliably,
+so implementing blind was judged worse than deferring with this note. Do this
+one with a live browser in hand, not in a headless batch.
 
 ---
 
