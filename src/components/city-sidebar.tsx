@@ -27,11 +27,19 @@ interface CitySidebarProps {
   slug: string;
   cityName?: string | null;
   cityState?: string | null;
+  /** Server-computed staff status (or demo city) — hides Grid for non-staff so
+   *  the rail never links to a page that just bounces them to /login. */
+  isStaff: boolean;
 }
 
 /** Desktop (md+) enterprise left rail for the city dashboard. Mobile keeps
  *  the fixed two-row CityHeader. */
-export function CitySidebar({ slug, cityName, cityState }: CitySidebarProps) {
+export function CitySidebar({
+  slug,
+  cityName,
+  cityState,
+  isStaff,
+}: CitySidebarProps) {
   const pathname = usePathname();
 
   const items = [
@@ -54,12 +62,16 @@ export function CitySidebar({ slug, cityName, cityState }: CitySidebarProps) {
       icon: MapIcon,
       active: pathname === `/city/${slug}/map`,
     },
-    {
-      label: "Grid",
-      href: `/city/${slug}/grid`,
-      icon: Table,
-      active: pathname === `/city/${slug}/grid`,
-    },
+    ...(isStaff
+      ? [
+          {
+            label: "Grid",
+            href: `/city/${slug}/grid`,
+            icon: Table,
+            active: pathname === `/city/${slug}/grid`,
+          },
+        ]
+      : []),
     {
       label: "Analytics",
       href: `/city/${slug}/analytics`,

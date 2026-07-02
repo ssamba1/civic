@@ -78,9 +78,12 @@ interface CityNavProps {
    *   undefined → full desktop inline row (md+ single-row)
    */
   mobileSlot?: "tabs" | "actions";
+  /** Server-computed staff status (or demo city) — hides Grid for non-staff so
+   *  the nav never links to a page that just bounces them to /login. */
+  isStaff: boolean;
 }
 
-export function CityNav({ slug, mobileSlot }: CityNavProps) {
+export function CityNav({ slug, mobileSlot, isStaff }: CityNavProps) {
   const pathname = usePathname();
 
   const items = [
@@ -102,12 +105,16 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
       icon: MapIcon,
       active: pathname === `/city/${slug}/map`,
     },
-    {
-      label: "Grid",
-      href: `/city/${slug}/grid`,
-      icon: Table,
-      active: pathname === `/city/${slug}/grid`,
-    },
+    ...(isStaff
+      ? [
+          {
+            label: "Grid",
+            href: `/city/${slug}/grid`,
+            icon: Table,
+            active: pathname === `/city/${slug}/grid`,
+          },
+        ]
+      : []),
     {
       label: "Analytics",
       href: `/city/${slug}/analytics`,

@@ -3,7 +3,9 @@ import { CityHeader } from "@/components/city-header";
 import { CitySidebar } from "@/components/city-sidebar";
 import { getReportCorpus, KNOWN_CITIES } from "@/lib/dashboard-data";
 import { fetchCity, fetchRecentReports } from "@/lib/dashboard-queries";
+import { DEMO_CITY } from "@/lib/demo-auth";
 import { FilterProvider } from "@/lib/filters/context";
+import { isStaffForCity } from "@/lib/staff-access";
 
 export default async function CityDashboardLayout({
   children,
@@ -17,6 +19,12 @@ export default async function CityDashboardLayout({
   // Resolve the real city identity first — used for the header and to load the
   // city's live reports below.
   const city = await fetchCity(slug);
+
+  // Nav-visibility only (not a security gate — the grid page enforces its own
+  // requireStaffFor() redirect). Demo city always counts as staff here too,
+  // matching the grid page's own `slug !== DEMO_CITY` bypass, so its Grid tab
+  // stays visible to every visitor.
+  const isStaff = slug === DEMO_CITY || (await isStaffForCity(slug));
 
   // Cumming ships with the rich synthetic demo corpus (slug-agnostic). Every
   // other (onboarded) city loads its OWN live reports from the DB so its
@@ -38,11 +46,13 @@ export default async function CityDashboardLayout({
         slug={slug}
         cityName={city?.name ?? null}
         cityState={city?.state ?? null}
+        isStaff={isStaff}
       />
       <CitySidebar
         slug={slug}
         cityName={city?.name ?? null}
         cityState={city?.state ?? null}
+        isStaff={isStaff}
       />
 
       <Suspense fallback={null}>

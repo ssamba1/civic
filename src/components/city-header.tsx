@@ -13,9 +13,17 @@ interface CityHeaderProps {
    *  municipality list still render their own name in the switcher. */
   cityName?: string | null;
   cityState?: string | null;
+  /** Server-computed staff status (or demo city) — controls whether CityNav
+   *  shows the Grid tab, which is staff-gated server-side. */
+  isStaff: boolean;
 }
 
-export function CityHeader({ slug, cityName, cityState }: CityHeaderProps) {
+export function CityHeader({
+  slug,
+  cityName,
+  cityState,
+  isStaff,
+}: CityHeaderProps) {
   const pathname = usePathname();
   // On the fullscreen map, drop the black casing so the map reads edge-to-edge.
   const transparent = pathname?.endsWith("/map") ?? false;
@@ -56,12 +64,12 @@ export function CityHeader({ slug, cityName, cityState }: CityHeaderProps) {
           {/* Action buttons — mobile only slot */}
           <div className="flex shrink-0 items-center gap-2">
             <ViewSwitch citySlug={slug} />
-            <CityNav slug={slug} mobileSlot="actions" />
+            <CityNav slug={slug} mobileSlot="actions" isStaff={isStaff} />
           </div>
         </div>
         {/* Row 2: Full-width segmented nav */}
         <div className="px-2 pb-2">
-          <CityNav slug={slug} mobileSlot="tabs" />
+          <CityNav slug={slug} mobileSlot="tabs" isStaff={isStaff} />
         </div>
       </div>
     </header>
