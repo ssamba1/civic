@@ -341,7 +341,7 @@ export async function overrideClassification(
     try {
       const routed = generateWorkOrder(
         { ...existing, category: parsed.data },
-        { isSchoolZone: false, footTrafficWeight: 1, recurrenceCount: 0 },
+        { recurrenceCount: 0 },
       );
       const { error: rerouteError } = await supabase
         .from("work_orders")

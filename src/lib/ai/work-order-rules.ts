@@ -120,8 +120,13 @@ export function estimateCost(category: ReportCategory): number {
 }
 
 interface ReportMeta {
-  isSchoolZone: boolean;
-  footTrafficWeight: number;
+  // isSchoolZone/footTrafficWeight were removed: no data source (geofence,
+  // foot-traffic feed) exists anywhere in the schema to populate them — the
+  // pipeline always passed isSchoolZone:false/footTrafficWeight:1, so their
+  // formula terms were dead weight that only implied the score considered
+  // factors it never actually received. recurrenceCount is real: it starts at
+  // 0 here and is bumped atomically via bump_work_order_priority() when a
+  // duplicate report merges into this one (see migration 014).
   recurrenceCount: number;
 }
 
@@ -139,8 +144,6 @@ interface GeneratedWorkOrder {
  * Deterministic work order from classification + report context.
  *
  * priority = (severity * 2)
- *          + (foot_traffic_weight * 1.5)
- *          + (school_zone_bonus * 3)    — 1 if school zone, else 0
  *          + (recurrence_bonus * 1)     — raw recurrence count
  *          + (emergency_override * 50)  — 1 if is_emergency, else 0
  */
@@ -150,13 +153,10 @@ export function generateWorkOrder(
 ): GeneratedWorkOrder {
   const rule = RULES[classification.category];
 
-  const schoolZoneBonus = meta.isSchoolZone ? 1 : 0;
   const emergencyOverride = classification.is_emergency ? 1 : 0;
 
   const priority_score =
     classification.severity * 2 +
-    meta.footTrafficWeight * 1.5 +
-    schoolZoneBonus * 3 +
     meta.recurrenceCount * 1 +
     emergencyOverride * 50;
 

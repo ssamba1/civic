@@ -368,8 +368,6 @@ export async function runClassifyPipeline(
   // priority_score, an est_cost floor, and the fallback crew/materials/minutes
   // when the AI generator is disabled or fails.
   const rulesWorkOrder = generateWorkOrder(classification, {
-    isSchoolZone: false,
-    footTrafficWeight: 1,
     recurrenceCount: 0,
   });
 

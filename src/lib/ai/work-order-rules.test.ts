@@ -27,14 +27,10 @@ function makeClassification(
 
 function makeMeta(
   overrides: Partial<{
-    isSchoolZone: boolean;
-    footTrafficWeight: number;
     recurrenceCount: number;
   }> = {},
 ) {
   return {
-    isSchoolZone: false,
-    footTrafficWeight: 0,
     recurrenceCount: 0,
     ...overrides,
   };
@@ -154,41 +150,13 @@ describe("generateWorkOrder", () => {
   });
 
   describe("priority math", () => {
-    // priority = severity*2 + footTraffic*1.5 + schoolZone*3 + recurrence + emergency*50
-    it("computes the base case (all zero bonuses) as severity*2 only", () => {
+    // priority = severity*2 + recurrence + emergency*50
+    it("computes the base case (zero recurrence) as severity*2 only", () => {
       const wo = generateWorkOrder(
         makeClassification({ severity: 3, is_emergency: false }),
-        makeMeta({
-          isSchoolZone: false,
-          footTrafficWeight: 0,
-          recurrenceCount: 0,
-        }),
+        makeMeta({ recurrenceCount: 0 }),
       );
       expect(wo.priority_score).toBe(6); // 3*2
-    });
-
-    it("adds footTrafficWeight * 1.5", () => {
-      const wo = generateWorkOrder(
-        makeClassification({
-          severity: 0 as unknown as Classification["severity"],
-        }),
-        makeMeta({ footTrafficWeight: 4 }),
-      );
-      expect(wo.priority_score).toBe(6); // 0*2 + 4*1.5
-    });
-
-    it("adds schoolZone bonus of 3 when isSchoolZone is true", () => {
-      const noZone = generateWorkOrder(
-        makeClassification({ severity: 1 }),
-        makeMeta({ isSchoolZone: false }),
-      );
-      const withZone = generateWorkOrder(
-        makeClassification({ severity: 1 }),
-        makeMeta({ isSchoolZone: true }),
-      );
-      expect(noZone.priority_score).toBe(2); // 1*2
-      expect(withZone.priority_score).toBe(5); // 1*2 + 1*3
-      expect(withZone.priority_score - noZone.priority_score).toBe(3);
     });
 
     it("adds recurrenceCount * 1 (raw count)", () => {
@@ -199,26 +167,12 @@ describe("generateWorkOrder", () => {
       expect(wo.priority_score).toBe(9); // 1*2 + 7
     });
 
-    it("combines all weighted terms correctly", () => {
-      // severity 4 -> 8, foot 2 -> 3, schoolZone -> 3, recurrence 5 -> 5, no emergency
+    it("combines severity and recurrence correctly", () => {
       const wo = generateWorkOrder(
         makeClassification({ severity: 4, is_emergency: false }),
-        makeMeta({
-          isSchoolZone: true,
-          footTrafficWeight: 2,
-          recurrenceCount: 5,
-        }),
+        makeMeta({ recurrenceCount: 5 }),
       );
-      expect(wo.priority_score).toBe(19); // 8 + 3 + 3 + 5
-    });
-
-    it("rounds to 2 decimal places", () => {
-      // footTrafficWeight 1.337 * 1.5 = 2.0055 -> rounds to 2.01 (plus severity 1*2)
-      const wo = generateWorkOrder(
-        makeClassification({ severity: 1, is_emergency: false }),
-        makeMeta({ footTrafficWeight: 1.337 }),
-      );
-      expect(wo.priority_score).toBe(4.01); // 2 + 2.0055 = 4.0055 -> 4.01
+      expect(wo.priority_score).toBe(13); // 4*2 + 5
     });
   });
 
@@ -237,25 +191,17 @@ describe("generateWorkOrder", () => {
       expect(emergency.priority_score - calm.priority_score).toBe(50);
     });
 
-    it("dominates: a low-severity emergency outranks a max-severity non-emergency", () => {
+    it("dominates: a low-severity emergency outranks a max-severity, highly-recurring non-emergency", () => {
       const maxedNonEmergency = generateWorkOrder(
         makeClassification({ severity: 5, is_emergency: false }),
-        makeMeta({
-          isSchoolZone: true,
-          footTrafficWeight: 5,
-          recurrenceCount: 10,
-        }),
+        makeMeta({ recurrenceCount: 10 }),
       );
       const lowEmergency = generateWorkOrder(
         makeClassification({ severity: 1, is_emergency: true }),
-        makeMeta({
-          isSchoolZone: false,
-          footTrafficWeight: 0,
-          recurrenceCount: 0,
-        }),
+        makeMeta({ recurrenceCount: 0 }),
       );
-      // non-emergency max: 5*2 + 5*1.5 + 3 + 10 = 30.5
-      expect(maxedNonEmergency.priority_score).toBe(30.5);
+      // non-emergency max: 5*2 + 10 = 20
+      expect(maxedNonEmergency.priority_score).toBe(20);
       // low emergency: 1*2 + 50 = 52
       expect(lowEmergency.priority_score).toBe(52);
       expect(lowEmergency.priority_score).toBeGreaterThan(
@@ -283,20 +229,16 @@ describe("generateWorkOrder", () => {
           severity: 3,
           is_emergency: true,
         }),
-        makeMeta({ footTrafficWeight: 2 }),
+        makeMeta({ recurrenceCount: 2 }),
       );
-      expect(wo.priority_score).toBe(59); // 3*2 + 2*1.5 + 50
+      expect(wo.priority_score).toBe(58); // 3*2 + 2 + 50
     });
   });
 
   describe("determinism", () => {
     it("returns identical output for identical input", () => {
       const c = makeClassification({ category: "tree_down", severity: 4 });
-      const m = makeMeta({
-        isSchoolZone: true,
-        footTrafficWeight: 3,
-        recurrenceCount: 2,
-      });
+      const m = makeMeta({ recurrenceCount: 2 });
       expect(generateWorkOrder(c, m)).toEqual(generateWorkOrder(c, m));
     });
   });
@@ -332,7 +274,7 @@ describe("generateWorkOrder", () => {
       );
       const busy = generateWorkOrder(
         makeClassification({ category: "tree_down" }),
-        makeMeta({ isSchoolZone: true, footTrafficWeight: 5 }),
+        makeMeta({ recurrenceCount: 5 }),
       );
       expect(calm.est_cost).toBe(busy.est_cost);
     });
