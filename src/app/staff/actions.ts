@@ -50,6 +50,47 @@ async function getStaffUser() {
   return profile;
 }
 
+// City-scope guards. Staff may only act on reports/work orders in their own
+// city. The service-role client bypasses RLS, so these SELECT-then-check guards
+// are the only thing stopping a staffer in city A from mutating city B's data.
+// Fails closed when the staffer has no city_id (null) — no city, no access.
+async function reportInStaffCity(
+  db: ReturnType<typeof createServerClient>,
+  reportId: string,
+  cityId: string | null,
+): Promise<boolean> {
+  if (!cityId) return false;
+  const { data } = await db
+    .from("reports")
+    .select("id")
+    .eq("id", reportId)
+    .eq("city_id", cityId)
+    .maybeSingle();
+  return !!data;
+}
+
+async function workOrderInStaffCity(
+  db: ReturnType<typeof createServerClient>,
+  workOrderId: string,
+  cityId: string | null,
+): Promise<boolean> {
+  if (!cityId) return false;
+  // Resolve the work order's parent report city. A dot-filter on the embed
+  // would constrain the embedded rows, not which work_order is selected, so we
+  // fetch then compare in JS.
+  const { data } = await db
+    .from("work_orders")
+    .select("report:reports!report_id(city_id)")
+    .eq("id", workOrderId)
+    .maybeSingle();
+  const rel = (data as { report?: unknown } | null)?.report;
+  const report = (Array.isArray(rel) ? rel[0] : rel) as
+    | { city_id?: string }
+    | null
+    | undefined;
+  return report?.city_id === cityId;
+}
+
 export async function dispatchWorkOrder(
   workOrderId: string,
   crewId?: string,
@@ -58,6 +99,8 @@ export async function dispatchWorkOrder(
   if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
 
   const supabase = createServerClient();
+  if (!(await workOrderInStaffCity(supabase, workOrderId, staff.city_id)))
+    return { ok: false, error: "Unauthorized: work order not in your city" };
 
   const update: Record<string, unknown> = {
     dispatched_at: new Date().toISOString(),
@@ -107,6 +150,8 @@ export async function dispatchWorkOrderForReport(
   if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
 
   const supabase = createServerClient();
+  if (!(await reportInStaffCity(supabase, reportId, staff.city_id)))
+    return { ok: false, error: "Unauthorized: report not in your city" };
 
   const { error: woError } = await supabase
     .from("work_orders")
@@ -142,6 +187,8 @@ export async function closeWorkOrder(
   if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
 
   const supabase = createServerClient();
+  if (!(await workOrderInStaffCity(supabase, workOrderId, staff.city_id)))
+    return { ok: false, error: "Unauthorized: work order not in your city" };
 
   const update: Record<string, unknown> = {
     completed_at: new Date().toISOString(),
@@ -190,6 +237,8 @@ export async function rejectReport(
   if (!reason.trim()) return { ok: false, error: "Rejection reason required" };
 
   const supabase = createServerClient();
+  if (!(await reportInStaffCity(supabase, reportId, staff.city_id)))
+    return { ok: false, error: "Unauthorized: report not in your city" };
 
   const { error } = await supabase
     .from("reports")
@@ -224,6 +273,8 @@ export async function overrideClassification(
   if (!parsed.success) return { ok: false, error: "invalid_category" };
 
   const supabase = createServerClient();
+  if (!(await reportInStaffCity(supabase, reportId, staff.city_id)))
+    return { ok: false, error: "Unauthorized: report not in your city" };
 
   // Fetch the current classification so we can record what was overridden
   const { data: existing } = await supabase
@@ -263,6 +314,8 @@ export async function markUnderFix(
   if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
 
   const supabase = createServerClient();
+  if (!(await workOrderInStaffCity(supabase, workOrderId, staff.city_id)))
+    return { ok: false, error: "Unauthorized: work order not in your city" };
 
   const { data: wo, error: woError } = await supabase
     .from("work_orders")
@@ -309,6 +362,8 @@ export async function addWorkOrderComment(
     return { ok: false, error: "invalid_body" };
 
   const supabase = createServerClient();
+  if (!(await workOrderInStaffCity(supabase, workOrderId, staff.city_id)))
+    return { ok: false, error: "Unauthorized: work order not in your city" };
 
   const { data, error } = await supabase
     .from("work_order_comments")
