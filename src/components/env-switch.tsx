@@ -29,7 +29,7 @@ export function EnvSwitch() {
         "border-hairline bg-overlay text-subtle",
         "transition-colors duration-150 outline-none",
         "hover:bg-overlay-strong hover:text-foreground",
-        "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
+        "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-0",
       ].join(" ")}
     >
       <ArrowLeftRight

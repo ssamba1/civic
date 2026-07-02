@@ -47,7 +47,7 @@ export function TeamHeader({ team, city, accountLabel }: TeamHeaderProps) {
         type="submit"
         aria-label={accountLabel ? `Sign out (${accountLabel})` : "Sign out"}
         title={accountLabel ? `Sign out · ${accountLabel}` : "Sign out"}
-        className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-hairline bg-overlay px-2 sm:px-2.5 text-[13px] font-medium text-subtle outline-none transition-colors hover:bg-overlay-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
+        className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-hairline bg-overlay px-2 sm:px-2.5 text-[13px] font-medium text-subtle outline-none transition-colors hover:bg-overlay-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60"
       >
         <LogOut
           className="h-3.5 w-3.5 shrink-0"
@@ -74,10 +74,10 @@ export function TeamHeader({ team, city, accountLabel }: TeamHeaderProps) {
         <div className="flex h-14 w-full items-center justify-between gap-2 px-4">
           <Link
             href="/"
-            className="group inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
+            className="group inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-accent/60"
           >
             <span
-              className="h-2 w-2 rounded-full bg-foreground"
+              className="h-2 w-2 rounded-full bg-accent"
               aria-hidden="true"
             />
             Civic

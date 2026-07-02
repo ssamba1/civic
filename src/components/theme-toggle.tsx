@@ -25,7 +25,7 @@ export function ThemeToggle({ className }: { className?: string }) {
         "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border text-faint",
         "border-hairline bg-overlay transition-colors duration-150 outline-none",
         "hover:bg-overlay-strong hover:text-foreground",
-        "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
+        "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-0",
         className,
       )}
     >

@@ -88,7 +88,7 @@ export const LiquidGlassCard = React.forwardRef<
     blurIntensity = "xl",
     shadowIntensity = "md",
     glowIntensity = "sm",
-    borderRadius = "20px",
+    borderRadius = "16px",
     style,
     ...props
   },
@@ -99,7 +99,10 @@ export const LiquidGlassCard = React.forwardRef<
       <LiquidGlassFilter />
       <div
         ref={ref}
-        className={cn("relative max-w-full overflow-hidden", className)}
+        className={cn(
+          "relative max-w-full overflow-hidden border border-hairline",
+          className,
+        )}
         style={{ borderRadius, ...style }}
         {...props}
       >

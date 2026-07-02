@@ -37,10 +37,10 @@ export function CityHeader({ slug, cityName, cityState }: CityHeaderProps) {
           <div className="flex min-w-0 items-center gap-2">
             <Link
               href="/"
-              className="group inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60"
+              className="group inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-accent/60"
             >
               <span
-                className="h-2 w-2 rounded-full bg-foreground"
+                className="h-2 w-2 rounded-full bg-accent"
                 aria-hidden="true"
               />
               Civic

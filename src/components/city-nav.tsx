@@ -48,9 +48,9 @@ export function NavRefreshButton() {
       className={[
         "group inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2 sm:px-2.5 text-[13px] font-medium",
         "transition-colors duration-150 outline-none",
-        "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
+        "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-0",
         active
-          ? "border-foreground bg-foreground text-background hover:opacity-85"
+          ? "border-accent bg-accent-soft text-accent-text hover:opacity-85"
           : "border-hairline-strong bg-overlay text-subtle hover:bg-overlay-strong hover:text-foreground",
       ].join(" ")}
     >
@@ -159,7 +159,7 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
               // flex-1 makes all 4 tabs equal width; min-h-11 = 44px touch target
               "group relative z-10 flex flex-1 flex-col items-center justify-center gap-1 min-h-11 rounded-[8px] px-1 py-2",
               "transition-colors duration-150 outline-none",
-              "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
+              "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-0",
               active ? "text-foreground" : "text-subtle hover:text-foreground",
             ].join(" ")}
           >
@@ -195,10 +195,10 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
           title="Report"
           className={[
             // min-h-11 / min-w-11 = 44px touch target
-            "inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-foreground px-3 text-[13px] font-medium text-background",
+            "inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-accent px-3 text-[13px] font-medium text-accent-contrast",
             "transition-opacity duration-150 outline-none",
-            "hover:opacity-85",
-            "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+            "hover:opacity-90",
+            "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           ].join(" ")}
         >
           <Camera
@@ -252,7 +252,7 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
             className={[
               "group relative z-10 inline-flex h-7 items-center gap-1.5 rounded-md px-2 sm:px-2.5 text-[13px] font-medium",
               "transition-colors duration-150 outline-none",
-              "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
+              "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-0",
               active
                 ? "text-foreground"
                 : "text-subtle hover:bg-overlay hover:text-foreground",
@@ -278,10 +278,10 @@ export function CityNav({ slug, mobileSlot }: CityNavProps) {
         aria-label="Report"
         title="Report"
         className={[
-          "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] bg-foreground px-2.5 sm:px-3 text-[13px] font-medium text-background",
+          "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] bg-accent px-2.5 sm:px-3 text-[13px] font-medium text-accent-contrast",
           "transition-opacity duration-150 outline-none",
-          "hover:opacity-85",
-          "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "hover:opacity-90",
+          "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         ].join(" ")}
       >
         <Camera

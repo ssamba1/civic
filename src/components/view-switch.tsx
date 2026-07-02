@@ -59,7 +59,7 @@ export function ViewSwitch({
           className={cn(
             "group relative inline-flex h-7 items-center gap-1.5 rounded-md px-2 sm:px-2.5 text-[13px] font-medium",
             "transition-colors duration-150 outline-none",
-            "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-0",
+            "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-0",
             active
               ? "bg-overlay-strong text-foreground shadow-[inset_0_0_0_1px_var(--hairline)]"
               : "text-subtle hover:bg-overlay hover:text-foreground",

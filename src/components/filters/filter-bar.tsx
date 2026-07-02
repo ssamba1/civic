@@ -165,7 +165,7 @@ function TriggerPill({
       <span className="text-subtle">{icon}</span>
       {label}
       {count ? (
-        <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[10px] font-semibold tabular-nums text-background">
+        <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold tabular-nums text-accent-contrast">
           {count}
         </span>
       ) : null}
@@ -207,7 +207,7 @@ function MenuRow({
         className={cn(
           "flex h-4 w-4 shrink-0 items-center justify-center rounded-[5px] border transition-colors",
           selected
-            ? "border-foreground bg-foreground text-background"
+            ? "border-accent bg-accent text-accent-contrast"
             : "border-hairline-strong text-transparent",
         )}
       >
@@ -264,7 +264,7 @@ function TeamRow({
       </span>
       {selected && (
         <Check
-          className="mt-1 h-3.5 w-3.5 shrink-0 text-foreground"
+          className="mt-1 h-3.5 w-3.5 shrink-0 text-accent-text"
           strokeWidth={3}
         />
       )}
@@ -681,7 +681,7 @@ export function FilterBar() {
           <SlidersHorizontal className="h-4 w-4 shrink-0" aria-hidden />
           Filters
           {activeCount > 0 && (
-            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-foreground px-1.5 text-[11px] font-semibold tabular-nums text-background">
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold tabular-nums text-accent-contrast">
               {activeCount}
             </span>
           )}
@@ -923,7 +923,7 @@ export function FilterBar() {
             <button
               type="button"
               onClick={() => setSheetOpen(false)}
-              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-[14px] bg-foreground text-[14px] font-semibold text-background transition-opacity active:opacity-80"
+              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-[14px] bg-accent text-[14px] font-semibold text-accent-contrast transition-opacity active:opacity-80"
             >
               Show results
             </button>
