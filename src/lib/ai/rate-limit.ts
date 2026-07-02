@@ -23,14 +23,28 @@ interface RateLimitResult {
 const windows = new Map<string, WindowState>();
 
 /**
- * Best-effort client IP. Priority order (spoof-resistant):
- *   1. x-real-ip       — set by nginx/proxy, not user-controllable
- *   2. cf-connecting-ip — Cloudflare's authoritative client IP
- *   3. LAST entry of x-forwarded-for — outermost proxy appends; harder to spoof
- *      than the first entry, which an attacker controls in their own request headers
- *   4. "unknown"
+ * Client IP used as the rate-limit key.
+ *
+ * When RATE_LIMIT_TRUSTED_HEADER is set, ONLY that header is read — point it at
+ * the platform-set header your infra guarantees (e.g. "x-real-ip" on
+ * Vercel/nginx), which the client cannot forge. This is the correct, spoof-safe
+ * mode for production.
+ *
+ * When it is unset (local/dev, or a deploy that hasn't configured it) we fall
+ * back to the previous best-effort order. That fallback is only as trustworthy
+ * as your proxy: a reverse proxy that does NOT strip client-supplied
+ * x-real-ip / x-forwarded-for lets an attacker rotate the key and evade the
+ * limiter — so set RATE_LIMIT_TRUSTED_HEADER in any real deployment.
  */
 export function clientIp(req: Request): string {
+  // Read process.env directly (not the validated serverEnv proxy): this runs on
+  // every AI request and must never throw, and the limiter has no reason to
+  // force full server-env validation. Declared in env.ts for documentation.
+  const trustedHeader = process.env.RATE_LIMIT_TRUSTED_HEADER?.trim();
+  if (trustedHeader) {
+    return req.headers.get(trustedHeader)?.trim() || "unknown";
+  }
+
   const realIp = req.headers.get("x-real-ip")?.trim();
   if (realIp) return realIp;
 
@@ -45,6 +59,26 @@ export function clientIp(req: Request): string {
   }
 
   return "unknown";
+}
+
+// Cap on distinct keys retained in memory. Prevents the windows Map from growing
+// unbounded on a long-lived server (one entry per unique IP forever). A full
+// sweep of expired entries runs when this threshold is crossed; if everything is
+// still live, the oldest-resetting entries are evicted.
+const MAX_TRACKED_KEYS = 10_000;
+
+function pruneWindows(now: number): void {
+  if (windows.size < MAX_TRACKED_KEYS) return;
+  for (const [key, state] of windows) {
+    if (now >= state.resetAt) windows.delete(key);
+  }
+  if (windows.size < MAX_TRACKED_KEYS) return;
+  // Still over budget with all windows live: evict soonest-to-reset entries.
+  const sorted = [...windows.entries()].sort(
+    (a, b) => a[1].resetAt - b[1].resetAt,
+  );
+  const drop = windows.size - MAX_TRACKED_KEYS;
+  for (let i = 0; i < drop; i++) windows.delete(sorted[i][0]);
 }
 
 /**
@@ -62,6 +96,7 @@ export function checkRateLimit(
   const existing = windows.get(key);
 
   if (!existing || now >= existing.resetAt) {
+    pruneWindows(now);
     windows.set(key, { count: 1, resetAt: now + windowMs });
     return { allowed: true, retryAfterMs: 0 };
   }

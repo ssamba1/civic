@@ -12,6 +12,11 @@ const serverEnvSchema = z.object({
   NOTIFY_FROM_EMAIL: z.string().optional(),
   NOTIFY_DISABLE: z.string().optional(),
   DEV_AUTH_BYPASS: z.string().optional(),
+  // The single request header that carries the real client IP for rate
+  // limiting. Set to the platform-set, un-spoofable header for your deploy
+  // (e.g. "x-real-ip" on Vercel/nginx). When set, ONLY this header is trusted,
+  // so a client can't rotate the limiter key by forging x-forwarded-for.
+  RATE_LIMIT_TRUSTED_HEADER: z.string().optional(),
 });
 
 const clientEnvSchema = z.object({
@@ -38,6 +43,7 @@ function parseServerEnv() {
       NOTIFY_FROM_EMAIL: process.env.NOTIFY_FROM_EMAIL,
       NOTIFY_DISABLE: process.env.NOTIFY_DISABLE,
       DEV_AUTH_BYPASS: process.env.DEV_AUTH_BYPASS,
+      RATE_LIMIT_TRUSTED_HEADER: process.env.RATE_LIMIT_TRUSTED_HEADER,
     });
   } catch (err) {
     const issues =
