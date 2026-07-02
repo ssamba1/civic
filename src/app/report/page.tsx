@@ -413,6 +413,7 @@ export default function ReportPage() {
               type="text"
               value={address ?? ""}
               onChange={(e) => setAddress(e.target.value || null)}
+              aria-label="Address or intersection"
               placeholder="Enter address or intersection..."
               className="w-full mt-3 rounded-xl border border-hairline bg-glass backdrop-blur-sm px-4 py-3 text-base text-foreground placeholder:text-faint focus:outline-none focus:border-[var(--color-primary)]"
             />

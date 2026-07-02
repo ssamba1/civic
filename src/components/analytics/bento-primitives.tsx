@@ -1,7 +1,7 @@
 "use client";
 
 import { Maximize2, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTiltHover } from "@/components/analytics/hover-tip";
 import { cn } from "@/lib/utils/cn";
@@ -199,6 +199,11 @@ export function ExpandModal({
   useEffect(() => {
     onCloseRef.current = onClose;
   });
+  // Dialog surface + first-focus target for the focus trap; titleId wires the
+  // panel's accessible name to its <h2> via aria-labelledby.
+  const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   // Portal mount gate: SSR and the first CSR render must both return null so
   // React's hydration tree is identical. createPortal is deferred until after
   // mount, matching the pattern used by every other portal in this codebase.
@@ -238,6 +243,53 @@ export function ExpandModal({
     };
   }, [open]);
 
+  // Focus trap + restore. Keyed on `render` (not `open`) because the panel only
+  // enters the DOM once `render` is true — an `open`-keyed effect would fire a
+  // commit too early, when panelRef is still null. Captures the previously
+  // focused element on enter, moves focus into the dialog, cycles Tab/Shift+Tab
+  // within the panel's focusables, and restores focus on unmount.
+  useEffect(() => {
+    if (!render) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const FOCUSABLE =
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    // Move focus into the dialog: the close button is a stable, always-present
+    // real <button>, so no panel tabIndex is needed.
+    closeButtonRef.current?.focus();
+
+    const onTrapKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const focusables = Array.from(
+        panel.querySelectorAll<HTMLElement>(FOCUSABLE),
+      );
+      if (focusables.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey) {
+        if (active === first || !panel.contains(active)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !panel.contains(active)) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    panel.addEventListener("keydown", onTrapKey);
+    return () => {
+      panel.removeEventListener("keydown", onTrapKey);
+      previouslyFocused?.focus?.();
+    };
+  }, [render]);
+
   if (!mounted || !render) return null;
 
   return createPortal(
@@ -256,6 +308,10 @@ export function ExpandModal({
         className="absolute inset-0 bg-black/75 backdrop-blur-md"
       />
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         data-state={closing ? "closed" : "open"}
         className={cn(
           /* Mobile: full-width bottom sheet, max 90dvh */
@@ -269,7 +325,10 @@ export function ExpandModal({
       >
         <header className="flex items-center justify-between gap-3 px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 border-b border-hairline">
           <div className="flex items-baseline gap-2 sm:gap-3 min-w-0 flex-wrap">
-            <h2 className="text-[18px] sm:text-[22px] font-semibold text-foreground tracking-tight">
+            <h2
+              id={titleId}
+              className="text-[18px] sm:text-[22px] font-semibold text-foreground tracking-tight"
+            >
               {title}
             </h2>
             {subtitle && (
@@ -279,6 +338,7 @@ export function ExpandModal({
             )}
           </div>
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onClose}
             aria-label="Close"

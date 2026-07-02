@@ -24,7 +24,7 @@
   --background: #fafafa;
   --foreground: #1d1d1f; /* primary text  (was text-white / zinc-100) */
   --subtle: #52525b; /* secondary text (was zinc-300 / zinc-400) */
-  --faint: #8a8a8f; /* tertiary text  (was zinc-500 / zinc-600) */
+  --faint: #727276; /* tertiary text — darkened from #8a8a8f to clear WCAG AA (4.5:1) as 11–13px functional copy: 4.59:1 on --background #fafafa, 4.79:1 on --surface #fff */
 
   /* surfaces */
   --surface: #ffffff; /* cards / panels (was #1c1c1e / zinc-900)   */
@@ -95,7 +95,7 @@
   --background: #121216;
   --foreground: #f5f5f7;
   --subtle: #a1a1aa; /* zinc-400 */
-  --faint: #71717a; /* zinc-500 */
+  --faint: #838389; /* tertiary text — lightened from #71717a to clear WCAG AA (4.5:1) as 11–13px functional copy: 4.60:1 on --surface #1a1a1f, 4.96:1 on --background #121216 */
 
   --surface: #1a1a1f;
   --elevated: #2c2c2e;
@@ -506,29 +506,90 @@
 
 /* ── Work-order grid (AG Grid) polish ──
    Scoped to .wo-grid so nothing leaks into other AG Grid instances. These are
-   the two looks the Theming API can't express as params: uppercase micro
-   headers and a per-row hover accent (left inset bar + tint transition). */
+   the looks the Theming API can't express as params: uppercase micro headers,
+   a per-row hover accent (left inset bar + tint transition), true vertical
+   centering for flex cell content, the popup-editor chrome reset (our custom
+   dropdown draws its own card), and thin overlay-style scrollbars. */
 .wo-grid .ag-header-cell-text {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
+
+/* Custom renderers are inline-flex spans; without this they baseline-align
+   against the theme's line-height and sit high in the 64px row. */
+.wo-grid .ag-cell {
+  display: flex;
+  align-items: center;
+}
+.wo-grid .ag-right-aligned-cell {
+  justify-content: flex-end;
+}
+
 .wo-grid .ag-row {
   transition:
     background-color 120ms ease,
     box-shadow 120ms ease;
 }
 .wo-grid .ag-row-hover {
-  box-shadow: inset 2px 0 0 #2563eb;
-}
-.dark .wo-grid .ag-row-hover {
-  box-shadow: inset 2px 0 0 #60a5fa;
+  box-shadow: inset 2px 0 0 var(--color-primary);
 }
 @media (prefers-reduced-motion: reduce) {
   .wo-grid .ag-row {
     transition: none;
   }
+}
+
+/* The custom dropdown editor draws its own rounded card — strip AG Grid's
+   popup-editor frame (background/border) AND the square --ag-popup-shadow the
+   .ag-popup-child wrapper paints behind it, which would otherwise render as a
+   second, square-cornered shadow around the rounded menu. The :has() variant
+   only matches popups containing our listbox, so filter/column menus keep
+   their stock shadow. */
+.wo-grid .ag-popup-editor,
+.wo-grid .ag-popup-child:has([role="listbox"]) {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* The listbox styles its own affordance; without this, the app-wide
+   *:focus-visible outline stacks a third ring around the focused menu. */
+.wo-grid [role="listbox"]:focus-visible {
+  outline: none;
+}
+
+/* Thin, rounded, track-less scrollbars (grid body + the dropdown list). */
+.wo-grid ::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+.wo-grid ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.wo-grid ::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-color: rgba(0, 0, 0, 0.22);
+  background-clip: content-box;
+}
+.wo-grid ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.38);
+}
+.dark .wo-grid ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.22);
+}
+.dark .wo-grid ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.38);
+}
+.wo-grid * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+}
+.dark .wo-grid * {
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
 }
 
 /* ── Base ── */
