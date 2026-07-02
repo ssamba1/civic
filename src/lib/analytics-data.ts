@@ -116,59 +116,64 @@ export async function fetchAnalyticsKpis(
   try {
     const { createServerClient } = await import("@/lib/db/client");
     const db = createServerClient();
+
+    // Count-only queries (head: true → exact count, no row data). Fetching every
+    // row and counting in JS silently undercounts once a city passes the
+    // PostgREST max-rows cap (~1000), so resolution rate + backlog would drift
+    // wrong with zero error signal. Counts are never truncated.
+    //
     // Exclude rejected + merged: rejected reports aren't real issues, and merged
     // ones are duplicates folded into a primary (migrations 011/012). Counting
     // either would dilute the resolution-rate denominator.
-    const { data, error } = await db
-      .from("reports")
-      .select("status, created_at")
-      .eq("city_id", cityId)
-      .not("status", "in", "(rejected,merged)");
+    const base = () =>
+      db
+        .from("reports")
+        .select("*", { count: "exact", head: true })
+        .eq("city_id", cityId)
+        .not("status", "in", "(rejected,merged)");
 
-    if (error || !data || data.length === 0) {
+    const now = Date.now();
+    const weekAgo = new Date(now - 7 * DAY_MS).toISOString();
+    const twoWeeksAgo = new Date(now - 14 * DAY_MS).toISOString();
+
+    const [totalR, closedR, backlogR, twTotalR, twClosedR, pwTotalR, pwClosedR] =
+      await Promise.all([
+        base(),
+        base().eq("status", "closed"),
+        base().in("status", ["open", "dispatched", "in_progress"]),
+        base().gt("created_at", weekAgo),
+        base().eq("status", "closed").gt("created_at", weekAgo),
+        base().gt("created_at", twoWeeksAgo).lte("created_at", weekAgo),
+        base()
+          .eq("status", "closed")
+          .gt("created_at", twoWeeksAgo)
+          .lte("created_at", weekAgo),
+      ]);
+
+    const total = totalR.count ?? 0;
+    if (totalR.error || total === 0) {
       logger.warn("Falling back to KPI literals (query error or empty result)");
       return kpiFallback();
     }
 
-    const rows = data as { status: ReportStatus; created_at: string }[];
-    const now = Date.now();
-    const ageDays = (iso: string) => (now - new Date(iso).getTime()) / DAY_MS;
-
-    const total = rows.length;
-    const closed = rows.filter((r) => r.status === "closed").length;
-    const backlog = rows.filter(
-      (r) =>
-        r.status === "open" ||
-        r.status === "dispatched" ||
-        r.status === "in_progress",
-    ).length;
-
-    // Week-over-week: resolution rate and backlog arrivals.
-    const inWeek = (r: { created_at: string }, lo: number, hi: number) =>
-      ageDays(r.created_at) > lo && ageDays(r.created_at) <= hi;
-    const thisWeek = rows.filter((r) => inWeek(r, 0, 7));
-    const prevWeek = rows.filter((r) => inWeek(r, 7, 14));
+    const closed = closedR.count ?? 0;
+    const backlog = backlogR.count ?? 0;
+    const twTotal = twTotalR.count ?? 0;
+    const twClosed = twClosedR.count ?? 0;
+    const pwTotal = pwTotalR.count ?? 0;
+    const pwClosed = pwClosedR.count ?? 0;
 
     const rate = (closedN: number, totalN: number) =>
       totalN === 0 ? 0 : (closedN / totalN) * 100;
-    const resolutionRate = rate(closed, total);
-    const thisWeekRate = rate(
-      thisWeek.filter((r) => r.status === "closed").length,
-      thisWeek.length,
-    );
-    const prevWeekRate = rate(
-      prevWeek.filter((r) => r.status === "closed").length,
-      prevWeek.length,
-    );
-
     const pctChange = (cur: number, prev: number) =>
       prev === 0 ? (cur > 0 ? 100 : 0) : ((cur - prev) / prev) * 100;
-
     const round1 = (n: number) => Math.round(n * 10) / 10;
 
     return {
-      resolution_rate_pct: round1(resolutionRate),
-      resolution_rate_delta_pct: round1(pctChange(thisWeekRate, prevWeekRate)),
+      resolution_rate_pct: round1(rate(closed, total)),
+      resolution_rate_delta_pct: round1(
+        pctChange(rate(twClosed, twTotal), rate(pwClosed, pwTotal)),
+      ),
       // MTTR + SLA need work-order completion timestamps that the synthetic DB
       // rows don't carry; keep the demo literals for those two signals (zeros
       // in live mode so real deployments never show fabricated numbers).
@@ -177,7 +182,7 @@ export async function fetchAnalyticsKpis(
       sla_compliance_pct: kpiFallback().sla_compliance_pct,
       sla_target_pct: kpiFallback().sla_target_pct,
       active_backlog: backlog,
-      backlog_delta_pct: round1(pctChange(thisWeek.length, prevWeek.length)),
+      backlog_delta_pct: round1(pctChange(twTotal, pwTotal)),
     };
   } catch (err) {
     logger.warn("Falling back to KPI literals (exception)", {
