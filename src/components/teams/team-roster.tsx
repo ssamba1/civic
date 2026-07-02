@@ -149,7 +149,7 @@ function TeamCard({
   return (
     <div
       className={cn(
-        "group relative flex flex-col gap-3 rounded-[14px] border bg-surface p-4 text-left",
+        "group relative flex flex-col gap-3 rounded-2xl border bg-surface p-4 text-left",
         "shadow-[var(--shadow-card)] transition-all duration-150 will-change-transform active:scale-[0.97] motion-reduce:active:scale-100",
         isSelected
           ? "border-hairline-strong scale-[1.01] motion-reduce:scale-100"
@@ -175,7 +175,7 @@ function TeamCard({
         }}
         aria-pressed={isSelected}
         aria-label={`Scope view to ${team.label}`}
-        className="absolute inset-0 z-0 rounded-[14px] outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="absolute inset-0 z-0 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         {...tipRest}
       />
 
@@ -188,7 +188,7 @@ function TeamCard({
           >
             <Icon className="h-3.5 w-3.5" strokeWidth={2} />
           </span>
-          <span className="truncate text-[13px] font-medium text-foreground">
+          <span className="truncate text-[13.5px] font-medium text-foreground">
             {team.shortLabel}
           </span>
         </div>
@@ -236,7 +236,7 @@ function TeamCard({
           "relative z-10 mt-0.5 flex w-full items-center justify-between gap-1 rounded-lg px-2.5 py-1.5",
           "border border-hairline bg-overlay text-[11px] font-medium text-subtle",
           "outline-none transition-colors hover:border-hairline-strong hover:bg-overlay-strong hover:text-foreground",
-          "focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         )}
       >
         <span>View team</span>
@@ -255,10 +255,10 @@ function AddTeamCard({ onClick }: { onClick: () => void }) {
       type="button"
       onClick={onClick}
       className={cn(
-        "group relative flex flex-col items-center justify-center gap-3 rounded-[14px] border border-dashed p-4 text-left",
+        "group relative flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-4 text-left",
         "border-hairline bg-surface shadow-[var(--shadow-card)]",
         "transition-all duration-150 hover:border-hairline-strong hover:bg-overlay",
-        "outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "min-h-[108px]",
       )}
       aria-label="Set up a new team"

@@ -107,7 +107,7 @@ export function TeamsInteractive({ initialStats }: TeamsInteractiveProps) {
   }, [globallyFiltered, selectedTeam, overrides]);
 
   return (
-    <div className="stagger-children space-y-6">
+    <div className="stagger-children flex flex-col gap-4">
       <section
         aria-label="City statistics"
         style={{ "--stagger-index": 0 } as React.CSSProperties}

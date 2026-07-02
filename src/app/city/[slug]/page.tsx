@@ -84,31 +84,23 @@ export default async function CityDashboardPage({ params }: PageProps) {
                 Workload, delegation, and queue depth across municipal
                 divisions.
               </p>
-              <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-subtle">
-                <span>
-                  <span className="font-medium text-foreground">
+              <div className="flex w-full flex-wrap items-center gap-1.5">
+                <span className="inline-flex items-center gap-1 rounded-lg border border-hairline bg-surface px-2.5 py-1 text-[12px] text-subtle">
+                  <span className="font-semibold text-foreground">
                     {stats.total.toLocaleString()}
-                  </span>{" "}
+                  </span>
                   tracked
                 </span>
-                <span
-                  className="h-3 w-px bg-overlay-strong hidden sm:block"
-                  aria-hidden="true"
-                />
-                <span>
-                  <span className="font-medium text-foreground">
+                <span className="inline-flex items-center gap-1 rounded-lg border border-hairline bg-surface px-2.5 py-1 text-[12px] text-subtle">
+                  <span className="font-semibold text-foreground">
                     {stats.open}
-                  </span>{" "}
+                  </span>
                   open
                 </span>
-                <span
-                  className="h-3 w-px bg-overlay-strong hidden sm:block"
-                  aria-hidden="true"
-                />
-                <span>
-                  <span className="font-medium text-foreground">
+                <span className="inline-flex items-center gap-1 rounded-lg border border-hairline bg-surface px-2.5 py-1 text-[12px] text-subtle">
+                  <span className="font-semibold text-foreground">
                     {stats.this_week}
-                  </span>{" "}
+                  </span>
                   this week
                 </span>
               </div>
@@ -116,7 +108,7 @@ export default async function CityDashboardPage({ params }: PageProps) {
             {/* Sidebar owns the Report CTA on md+; keep it for mobile only. */}
             <Link
               href="/report"
-              className="inline-flex h-10 min-w-[44px] self-start items-center gap-1.5 rounded-full bg-foreground px-4 text-[13px] font-medium text-background outline-none transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-[#0a84ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background md:hidden"
+              className="inline-flex h-10 min-w-[44px] self-start items-center gap-1.5 rounded-full bg-accent px-4 text-[13px] font-medium text-accent-contrast outline-none transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background md:hidden"
             >
               <Camera className="h-4 w-4" />
               Report an issue

@@ -1,4 +1,11 @@
-import { TrendingDown, TrendingUp } from "lucide-react";
+import {
+  CheckCircle2,
+  Clock,
+  FileText,
+  TrendingDown,
+  TrendingUp,
+  TriangleAlert,
+} from "lucide-react";
 import { memo } from "react";
 import type { CityStats } from "@/lib/dashboard-data";
 import { cn } from "@/lib/utils/cn";
@@ -10,17 +17,9 @@ interface StatsCardsProps {
 interface CardDef {
   label: string;
   value: string;
-  accent: string;
+  icon: typeof FileText;
   trend?: { direction: "up" | "down"; label: string; tone: "good" | "bad" };
 }
-
-// 2-col mobile grid → 4-col desktop row. Hairline dividers between cells.
-const BORDER_CLASSES = [
-  "border-r border-b lg:border-b-0 border-hairline",
-  "border-b lg:border-b-0 lg:border-r border-hairline",
-  "border-r border-hairline",
-  "",
-];
 
 function StatsCardsInner({ stats }: StatsCardsProps) {
   const weekDelta = stats.this_week - stats.prev_week;
@@ -47,62 +46,67 @@ function StatsCardsInner({ stats }: StatsCardsProps) {
     {
       label: "Total reports",
       value: stats.total.toLocaleString(),
-      accent: "#0a84ff",
+      icon: FileText,
       trend: weekTrend,
     },
     {
       label: "Open",
       value: stats.open.toLocaleString(),
-      accent: "#ff9f0a",
+      icon: TriangleAlert,
     },
     {
       label: "Resolved",
       value: stats.resolved.toLocaleString(),
-      accent: "#30d158",
+      icon: CheckCircle2,
     },
     {
       label: "Avg resolution",
       value: formatHours(stats.avg_resolution_hours),
-      accent: "#5ac8fa",
+      icon: Clock,
     },
   ];
 
   return (
-    <div className="overflow-hidden rounded-xl border border-hairline bg-surface shadow-[var(--shadow-card)]">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       <style>{`
 @keyframes stat-roll{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .stat-val{animation:stat-roll 260ms cubic-bezier(0.22,1,0.36,1) both}
 @media (prefers-reduced-motion:reduce){.stat-val{animation:none}}
 `}</style>
-      <div className="grid grid-cols-2 lg:grid-cols-4">
-        {cards.map((card, idx) => (
+      {cards.map((card) => {
+        const Icon = card.icon;
+        return (
           <div
             key={card.label}
-            className={cn(
-              "px-4 py-4 sm:px-5 sm:py-5 transition-colors hover:bg-overlay",
-              BORDER_CLASSES[idx],
-            )}
+            className="rounded-2xl border border-hairline bg-surface p-4 shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors hover:border-hairline-strong sm:p-5"
           >
-            <div className="flex items-center justify-between gap-2 mb-2.5">
-              <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.07em] text-faint leading-none">
-                <span
-                  className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
-                  style={{ backgroundColor: card.accent }}
-                  aria-hidden
-                />
-                {card.label}
+            <div className="mb-2.5 flex items-center gap-2">
+              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-overlay text-subtle">
+                <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />
               </span>
-              {card.trend && (
+              <span className="text-[13px] text-subtle">{card.label}</span>
+            </div>
+            <p
+              // key on the value re-mounts the node when the number changes,
+              // re-firing the brief rise animation; static between filter swaps.
+              key={card.value}
+              className="stat-val text-2xl font-semibold tracking-tight tabular-nums leading-none text-foreground"
+            >
+              {card.value}
+            </p>
+            {card.trend && (
+              <div className="mt-2.5 flex items-center gap-1.5">
+                <span className="text-[12px] text-faint">vs last week</span>
                 <span
                   // role="img" so the aria-label (generic role drops it) is
                   // honored and replaces the raw "12%" text with the full
                   // "Up 12% versus last week" phrase for screen readers.
                   role="img"
                   className={cn(
-                    "inline-flex items-center gap-0.5 text-[11px] font-medium tabular-nums",
+                    "inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums",
                     card.trend.tone === "bad"
-                      ? "text-[var(--status-danger-fg)]"
-                      : "text-[var(--status-success-fg)]",
+                      ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                      : "bg-accent-soft text-accent-text",
                   )}
                   aria-label={`${card.trend.direction === "up" ? "Up" : "Down"} ${card.trend.label} versus last week`}
                 >
@@ -121,19 +125,11 @@ function StatsCardsInner({ stats }: StatsCardsProps) {
                   )}
                   {card.trend.label}
                 </span>
-              )}
-            </div>
-            <p
-              // key on the value re-mounts the node when the number changes,
-              // re-firing the brief rise animation; static between filter swaps.
-              key={card.value}
-              className="stat-val text-[26px] sm:text-[30px] font-semibold tracking-tight tabular-nums leading-none text-foreground"
-            >
-              {card.value}
-            </p>
+              </div>
+            )}
           </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }
