@@ -412,10 +412,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
                     </span>
                   )}
                 </div>
-                <p
-                  className="text-[28px] sm:text-[30px] font-semibold tracking-tight tabular-nums leading-none transition-colors duration-200"
-                  style={{ color: isActive ? c.accent : `${c.accent}cc` }}
-                >
+                <p className="text-[28px] sm:text-[30px] font-semibold tracking-tight tabular-nums leading-none text-foreground">
                   {c.value}
                 </p>
               </div>
