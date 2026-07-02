@@ -4,11 +4,17 @@ import { after } from "next/server";
 // Reuse the canonical 12-category enum so staff overrides aren't limited to the
 // original 8-item local list (adds debris/drainage/faded_signage/other).
 import { classificationSchema } from "@/lib/ai/classification-schema";
+import { generateWorkOrder } from "@/lib/ai/work-order-rules";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
 import { notifyReportStatus } from "@/lib/notify/status-notify";
-import type { ReportCategory, Result, WorkOrderWithDetails } from "@/lib/types";
+import type {
+  Classification,
+  ReportCategory,
+  Result,
+  WorkOrderWithDetails,
+} from "@/lib/types";
 
 const logger = createLogger("[staff-actions]");
 
@@ -153,14 +159,21 @@ export async function dispatchWorkOrderForReport(
   if (!(await reportInStaffCity(supabase, reportId, staff.city_id)))
     return { ok: false, error: "Unauthorized: report not in your city" };
 
-  const { error: woError } = await supabase
+  // Verify-then-act: `.update().eq()` reports no error when it matches 0 rows,
+  // so without `.select()` a report with no work order would still be flipped
+  // to "dispatched" and fire a notification for a work order that doesn't
+  // exist. Require the update to have touched a row.
+  const { data: updatedWo, error: woError } = await supabase
     .from("work_orders")
     .update({
       dispatched_at: new Date().toISOString(),
       assigned_crew_id: crewId ?? null,
     })
-    .eq("report_id", reportId);
+    .eq("report_id", reportId)
+    .select("id");
   if (woError) return { ok: false, error: "work_order_update_failed" };
+  if (!updatedWo || updatedWo.length === 0)
+    return { ok: false, error: "no_work_order_for_report" };
 
   const { error: reportError } = await supabase
     .from("reports")
@@ -276,22 +289,34 @@ export async function overrideClassification(
   if (!(await reportInStaffCity(supabase, reportId, staff.city_id)))
     return { ok: false, error: "Unauthorized: report not in your city" };
 
-  // Fetch the current classification so we can record what was overridden
+  // Fetch the current classification so we can record what was overridden and
+  // re-derive routing. select("*") gives the full row we can spread into a
+  // Classification for the rules engine below.
   const { data: existing } = await supabase
     .from("classifications")
-    .select("category, confidence")
+    .select("*")
     .eq("report_id", reportId)
-    .single();
+    .single<Classification>();
 
-  // Persist feedback whenever the staff member picks a different category
-  if (existing && existing.category !== parsed.data) {
-    await supabase.from("classification_feedback").insert({
-      report_id: reportId,
-      staff_id: staff.id,
-      original_category: existing.category,
-      corrected_category: parsed.data,
-      original_confidence: existing.confidence,
-    });
+  const categoryChanged = !!existing && existing.category !== parsed.data;
+
+  // Persist feedback whenever the staff member picks a different category.
+  // Check the insert result: a swallowed error silently loses the training
+  // signal the classifier is meant to learn from.
+  if (categoryChanged) {
+    const { error: feedbackError } = await supabase
+      .from("classification_feedback")
+      .insert({
+        report_id: reportId,
+        staff_id: staff.id,
+        original_category: existing.category,
+        corrected_category: parsed.data,
+        original_confidence: existing.confidence,
+      });
+    if (feedbackError)
+      logger.error("classification_feedback insert failed", feedbackError, {
+        reportId,
+      });
   }
 
   const { error } = await supabase
@@ -300,6 +325,32 @@ export async function overrideClassification(
     .eq("report_id", reportId);
 
   if (error) return { ok: false, error: error.message };
+
+  // Re-route the work order to the NEW category's department/crew. Without this
+  // the WO stays routed to the OLD department (e.g. an override from pothole →
+  // water_leak would leave it with public_works/paving instead of
+  // utilities/line_crew) and the wrong crew gets dispatched. Deterministic
+  // rules-based reroute; priority_score is severity-driven and unchanged, so we
+  // leave it. Best-effort: a report with no work order yet matches 0 rows.
+  if (categoryChanged) {
+    const routed = generateWorkOrder(
+      { ...existing, category: parsed.data },
+      { isSchoolZone: false, footTrafficWeight: 1, recurrenceCount: 0 },
+    );
+    const { error: rerouteError } = await supabase
+      .from("work_orders")
+      .update({
+        department: routed.department,
+        crew_type: routed.crew_type,
+        est_minutes: routed.est_minutes,
+        materials: routed.materials,
+      })
+      .eq("report_id", reportId);
+    if (rerouteError)
+      logger.error("work order reroute after override failed", rerouteError, {
+        reportId,
+      });
+  }
 
   return { ok: true, data: undefined };
 }
