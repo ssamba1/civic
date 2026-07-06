@@ -177,22 +177,22 @@ export const CATEGORY_META: Record<
   ReportCategory,
   { label: string; color: string; icon: string }
 > = {
-  pothole: { label: "Pothole", color: "#ef4444", icon: "circle-alert" },
-  streetlight: { label: "Streetlight", color: "#f59e0b", icon: "lightbulb" },
-  downed_sign: { label: "Downed Sign", color: "#8b5cf6", icon: "sign-post" },
-  graffiti: { label: "Graffiti", color: "#ec4899", icon: "spray-can" },
-  illegal_dump: { label: "Illegal Dump", color: "#84cc16", icon: "trash-2" },
-  water_leak: { label: "Water Leak", color: "#06b6d4", icon: "droplets" },
-  sidewalk_damage: { label: "Sidewalk", color: "#f97316", icon: "footprints" },
-  tree_down: { label: "Tree Down", color: "#22c55e", icon: "tree-pine" },
-  debris: { label: "Debris", color: "#a3a3a3", icon: "construction" },
-  drainage: { label: "Drainage", color: "#3b82f6", icon: "waves" },
+  pothole: { label: "Pothole", color: "#b0574c", icon: "circle-alert" },
+  streetlight: { label: "Streetlight", color: "#ad8434", icon: "lightbulb" },
+  downed_sign: { label: "Downed Sign", color: "#7c6f9c", icon: "sign-post" },
+  graffiti: { label: "Graffiti", color: "#a3647e", icon: "spray-can" },
+  illegal_dump: { label: "Illegal Dump", color: "#7f8a45", icon: "trash-2" },
+  water_leak: { label: "Water Leak", color: "#5f8ba6", icon: "droplets" },
+  sidewalk_damage: { label: "Sidewalk", color: "#c07a3c", icon: "footprints" },
+  tree_down: { label: "Tree Down", color: "#4d8a6a", icon: "tree-pine" },
+  debris: { label: "Debris", color: "#8a8a90", icon: "construction" },
+  drainage: { label: "Drainage", color: "#5b6b8c", icon: "waves" },
   faded_signage: {
     label: "Faded Signage",
-    color: "#d4d4d4",
+    color: "#b6b6bc",
     icon: "sign-post",
   },
-  other: { label: "Other", color: "#737373", icon: "help-circle" },
+  other: { label: "Other", color: "#6f6f75", icon: "help-circle" },
 };
 
 /* ------------------------------------------------------------------

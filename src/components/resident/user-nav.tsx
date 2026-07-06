@@ -38,7 +38,7 @@ export function UserNav({ citySlug }: { citySlug?: string }) {
           className="group inline-flex items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
         >
           <span
-            className="h-2 w-2 rounded-full bg-[var(--color-primary)] shadow-[0_0_8px_rgba(10,132,255,0.6)]"
+            className="h-2 w-2 rounded-full bg-[var(--color-primary)]"
             aria-hidden="true"
           />
           Civic
@@ -90,9 +90,9 @@ export function UserNav({ citySlug }: { citySlug?: string }) {
             aria-label="Report an issue"
             title="Report an issue"
             className={[
-              "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] bg-[var(--color-primary)] px-2.5 sm:px-3 text-[13px] font-medium text-white",
+              "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-2.5 sm:px-3 text-[13px] font-medium text-[var(--accent-contrast)]",
               "transition-colors duration-150 outline-none",
-              "hover:bg-[#0070e0]",
+              "hover:bg-[var(--color-primary-hover)]",
               "focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-background",
             ].join(" ")}
           >

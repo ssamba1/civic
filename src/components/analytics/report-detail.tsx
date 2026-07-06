@@ -27,13 +27,14 @@ import { timeAgo } from "@/lib/utils/time-ago";
    are module-private and not exported.
    ================================================================== */
 
-// Mirrors analytics-bento.tsx SEVERITY_COLORS.
+// Mirrors analytics-bento.tsx SEVERITY_COLORS byte-for-byte — same ordinal
+// urgency ramp built from the spec's muted enterprise tokens.
 const SEVERITY_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: "#5ac8fa",
-  2: "#30d158",
-  3: "#ff9f0a",
-  4: "#ff6b3a",
-  5: "#ff453a",
+  1: "var(--fg-cyan-burst)",
+  2: "var(--color-success)",
+  3: "var(--color-warning)",
+  4: "var(--fg-neon-coral)",
+  5: "var(--color-danger)",
 };
 
 const SEVERITY_DESC: Record<1 | 2 | 3 | 4 | 5, string> = {
@@ -90,7 +91,7 @@ function Stat({
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[15px] font-medium tabular-nums text-foreground leading-tight underline-offset-2 transition-colors hover:text-sky-400 hover:underline"
+          className="text-[15px] font-medium tabular-nums text-foreground leading-tight underline-offset-2 hover:underline"
           title="Open in Google Maps"
         >
           {value}
@@ -289,7 +290,7 @@ export function ReportDetail({ report }: { report: DashboardReport | null }) {
       className="flex flex-col gap-5 sm:gap-7 animate-in fade-in slide-in-from-bottom-1 duration-200 motion-reduce:animate-none"
     >
       {/* 1. Image with overlaid severity chip + status pill */}
-      <div className="relative overflow-hidden rounded-xl border border-hairline bg-surface">
+      <div className="relative overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface">
         <ReportImage
           key={report.id}
           src={report.photo_public_url}
@@ -298,7 +299,9 @@ export function ReportDetail({ report }: { report: DashboardReport | null }) {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-3">
           <span
             className="inline-flex items-center gap-1.5 rounded-md bg-black/40 px-2 py-1 text-[12px] font-medium text-white backdrop-blur-sm"
-            style={{ boxShadow: `inset 0 0 0 1px ${sevColor}66` }}
+            style={{
+              boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${sevColor} 40%, transparent)`,
+            }}
           >
             <span
               className="h-2 w-2 rounded-full"

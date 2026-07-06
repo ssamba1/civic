@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublicReport, type PublicStatus } from "@/lib/public-report";
+import { toneChipClass, type StatusTone } from "@/lib/status";
 import { ShareActions } from "./share-actions";
 
 // Public, account-less status page — resolved per request from an opaque token.
@@ -24,10 +25,13 @@ export async function generateMetadata({
   };
 }
 
-const STATUS_TONE: Record<PublicStatus, string> = {
-  in_progress: "text-[#5ac8fa] bg-[#5ac8fa]/10 ring-[#5ac8fa]/30",
-  resolved: "text-[#30d158] bg-[#30d158]/10 ring-[#30d158]/30",
-  closed: "text-subtle bg-overlay-strong ring-hairline-strong",
+// Maps the public-facing status (a simplified view of ReportStatus) onto the
+// shared status tones so this page's chip matches the private report-detail
+// page's statusChipClass exactly, instead of hand-rolling its own bright hues.
+const PUBLIC_STATUS_TONE: Record<PublicStatus, StatusTone> = {
+  in_progress: "info",
+  resolved: "success",
+  closed: "neutral",
 };
 
 function fmtDate(iso: string): string {
@@ -51,7 +55,7 @@ export default async function PublicReportPage({ params }: PageProps) {
         {/* Brand */}
         <div className="mb-8 flex items-center gap-2">
           <span
-            className="h-2 w-2 rounded-full bg-[var(--color-primary)] shadow-[0_0_8px_rgba(10,132,255,0.6)]"
+            className="h-2 w-2 rounded-full bg-[var(--color-primary)]"
             aria-hidden="true"
           />
           <span className="text-[15px] font-semibold tracking-tight text-foreground">
@@ -71,7 +75,7 @@ export default async function PublicReportPage({ params }: PageProps) {
               <span className="truncate">{report.categoryLabel}</span>
             </h1>
             <span
-              className={`mt-1 flex-shrink-0 rounded-full px-2.5 py-0.5 text-[12px] font-medium ring-1 ${STATUS_TONE[report.publicStatus]}`}
+              className={`mt-1 flex-shrink-0 rounded-md px-2.5 py-0.5 text-[12px] font-medium ${toneChipClass(PUBLIC_STATUS_TONE[report.publicStatus])}`}
             >
               {report.statusLabel}
             </span>
@@ -105,7 +109,7 @@ export default async function PublicReportPage({ params }: PageProps) {
                   alt={`${report.categoryLabel} — after the fix`}
                   className="aspect-[16/9] w-full object-cover"
                 />
-                <figcaption className="absolute left-2 top-2 rounded-md bg-[#30d158]/85 px-2 py-0.5 text-[11px] font-medium text-black backdrop-blur-sm">
+                <figcaption className="absolute left-2 top-2 rounded-md bg-[var(--color-success)]/85 px-2 py-0.5 text-[11px] font-medium text-black backdrop-blur-sm">
                   Fixed
                 </figcaption>
               </figure>
@@ -123,7 +127,7 @@ export default async function PublicReportPage({ params }: PageProps) {
 
         {/* Resolved confirmation */}
         {isResolved && (
-          <section className="rounded-[14px] border border-[#30d158]/25 bg-[#30d158]/[0.06] p-5">
+          <section className="rounded-[var(--radius-lg)] border border-[var(--color-success)]/25 bg-[var(--color-success)]/[0.06] p-5">
             <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
               Resolved
               {report.resolvedAt ? ` · ${fmtDate(report.resolvedAt)}` : ""}

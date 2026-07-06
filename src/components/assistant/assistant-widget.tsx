@@ -5,8 +5,8 @@ import { DefaultChatTransport } from "ai";
 import { MessageCircle, Send, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { LiquidGlassCard } from "@/components/ui/liquid-glass";
-import { cn } from "@/lib/utils/cn";
 import { AssistantMessage } from "./assistant-message";
 import { pickPendingNavigation } from "./pick-navigation";
 
@@ -53,18 +53,19 @@ export function AssistantWidget() {
           className="flex h-[28rem] w-[min(22rem,calc(100vw-2rem))] flex-col"
           contentClassName="flex h-full flex-col"
         >
-          <header className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-            <span className="font-mono text-xs uppercase tracking-wide text-[var(--color-muted)]">
+          <header className="flex items-center justify-between border-b border-hairline px-4 py-3">
+            <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-faint">
               Ask Civic
             </span>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               aria-label="Close help"
               onClick={() => setOpen(false)}
-              className="rounded-full p-1 text-[var(--color-muted)] hover:text-[var(--color-foreground)]"
             >
               <X className="size-4" />
-            </button>
+            </Button>
           </header>
 
           <div
@@ -72,7 +73,7 @@ export function AssistantWidget() {
             className="flex-1 space-y-3 overflow-y-auto px-4 py-3"
           >
             {messages.length === 0 ? (
-              <p className="text-sm text-[var(--color-muted)]">
+              <p className="text-sm text-subtle">
                 Ask how Civic works, check your reports, or say “take me to
                 report a problem.”
               </p>
@@ -81,7 +82,7 @@ export function AssistantWidget() {
             )}
           </div>
 
-          <div className="flex items-center gap-2 border-t border-white/10 px-3 py-2">
+          <div className="flex items-center gap-2 border-t border-hairline px-3 py-2">
             <input
               value={input}
               onChange={(e) => setInput(e.currentTarget.value)}
@@ -92,22 +93,17 @@ export function AssistantWidget() {
                 }
               }}
               placeholder="Ask a question…"
-              className="min-w-0 flex-1 bg-transparent px-2 py-1.5 text-sm outline-none placeholder:text-[var(--color-muted)]"
+              className="min-w-0 flex-1 bg-transparent px-2 py-1.5 text-sm outline-none placeholder:text-faint"
             />
-            <button
+            <Button
               type="button"
               aria-label="Send"
+              size="icon"
               onClick={submit}
               disabled={busy || input.trim().length === 0}
-              className={cn(
-                "rounded-full p-2 text-white transition",
-                busy || input.trim().length === 0
-                  ? "bg-white/10 text-[var(--color-muted)]"
-                  : "bg-[var(--color-primary)] active:translate-y-px",
-              )}
             >
               <Send className="size-4" />
-            </button>
+            </Button>
           </div>
         </LiquidGlassCard>
       ) : (
@@ -115,7 +111,7 @@ export function AssistantWidget() {
           type="button"
           aria-label="Open Civic help"
           onClick={() => setOpen(true)}
-          className="flex size-14 items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-lg transition active:translate-y-px"
+          className="flex size-14 items-center justify-center rounded-[var(--radius-lg)] bg-accent text-accent-contrast shadow-[var(--shadow-pop)] transition hover:bg-[var(--color-primary-hover)] active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
         >
           <MessageCircle className="size-6" />
         </button>

@@ -29,7 +29,7 @@ export function ShareActions() {
         type="button"
         onClick={copyLink}
         aria-live="polite"
-        className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-hairline bg-overlay px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-overlay-strong"
+        className="inline-flex min-h-[44px] items-center gap-2 rounded-[var(--radius-md)] border border-hairline bg-overlay px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-overlay-strong"
       >
         {copied ? (
           <>
@@ -45,7 +45,7 @@ export function ShareActions() {
       </button>
       <Link
         href="/report"
-        className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[var(--color-primary)] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[var(--color-primary-hover)]"
+        className="inline-flex min-h-[44px] items-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 text-[13px] font-medium text-[var(--accent-contrast)] transition-colors hover:bg-[var(--color-primary-hover)]"
       >
         <Plus className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         Report another issue

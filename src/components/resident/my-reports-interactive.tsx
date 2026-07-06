@@ -56,7 +56,7 @@ export function MyReportsInteractive({
           On mobile the stats stack 2×2 naturally via StatGrid; padding
           tightened slightly so the card breathes without eating too much
           vertical real-estate on small screens. */}
-      <div className="rounded-[14px] border border-hairline bg-surface p-4 shadow-[var(--shadow-card)] sm:p-5">
+      <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-4 shadow-[var(--shadow-card)] sm:p-5">
         <StatGrid>
           <Stat
             label="Total filed"
@@ -116,7 +116,7 @@ export function MyReportsInteractive({
           (notably the jump to/from the empty Resolved view). */}
       <div key={filter} className="animate-in fade-in duration-300">
         {visible.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 rounded-[14px] border border-hairline bg-surface p-5 shadow-[var(--shadow-card)]">
+          <div className="flex flex-col items-center gap-4 rounded-[var(--radius-lg)] border border-hairline bg-surface p-5 shadow-[var(--shadow-card)]">
             <EmptyState
               message={
                 reports.length === 0
@@ -132,7 +132,7 @@ export function MyReportsInteractive({
             {reports.length === 0 && (
               <Link
                 href="/report"
-                className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[var(--color-primary)] px-5 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--color-primary-hover)]"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 text-[14px] font-semibold text-[var(--accent-contrast)] transition-colors hover:bg-[var(--color-primary-hover)]"
               >
                 Report your first issue
               </Link>

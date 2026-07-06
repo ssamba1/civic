@@ -1,7 +1,4 @@
-"use client";
-
 import Image from "next/image";
-import { useEffect, useRef } from "react";
 import { LIGHT_SCRIM } from "./mapPresets";
 
 /**
@@ -14,125 +11,25 @@ import { LIGHT_SCRIM } from "./mapPresets";
  * The public preset never changes (the chooser is dev-only, gated on ?tweaks),
  * so a single captured plate is pixel-faithful and loads as one fetch.
  *
- * The ONE thing the live map gave that a flat image can't: the camera leaning
- * toward the pointer (cursor parallax). We reproduce it with a 3D transform —
- * an oversized plate in a `perspective` container that translates AND tilts
- * (rotateX/rotateY) toward the pointer, lerped. The rotate is what reads as
- * "leaning over a tilted map" rather than "sliding a photo". A gentle ambient
- * orbit keeps it alive with no mouse (matches the live map's orbit motion).
+ * The plate is deliberately STILL — no orbit, no cursor parallax (product
+ * call, 2026-07: the map is the stage, not the show). The hero's life comes
+ * from MapPinStory instead: report pins plop in one at a time and carry
+ * hover cards. This also means the component needs no client JS at all.
  *
- * Motion is NOT prefers-reduced-motion gated — same deliberate product choice
- * as the live backdrop (memory: s2-motion-forced-no-reduce-gate). The drift is
- * sub-perceptual, not a vestibular trigger.
+ * PLATE_SCALE is kept from the parallax era: every MapPinStory pin position
+ * was hand-tuned against the plate rendered at this scale, so removing it
+ * would silently shift every pin off its street.
  */
-
-// Pointer-lean magnitudes, mapped from the live map's parallax constants:
-//   PARALLAX_LNG/LAT (~camera nudge at z12.4) -> plate translate %
-//   PARALLAX_BEARING 5deg                     -> rotateY
-//   pitch depth (the map sat at pitch 50)     -> rotateX
-const PARALLAX_X = 4.5; // % plate translate, horizontal
-const PARALLAX_Y = 3; // % plate translate, vertical
-const ROT_Y = 5; // deg, yaw toward pointer (was PARALLAX_BEARING)
-const ROT_X = 3.5; // deg, pitch toward pointer
-// Ambient orbit — a tiny translate circle so the scene breathes sans mouse.
-const ORBIT_X = 1.1; // %
-const ORBIT_Y = 0.7; // %
-const ORBIT_PERIOD = 95000; // ms (matches live ORBIT_PERIOD)
-const LERP = 0.05; // matches live camera lerp
-// Oversize so translate+rotate never reveal the plate edge inside the frame.
 const PLATE_SCALE = 1.16;
 
 export default function StaticHeroMap() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const plateRef = useRef<HTMLImageElement>(null);
-  const pointerRef = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const plate = plateRef.current;
-    const container = containerRef.current;
-    if (!plate) return;
-
-    // Cursor parallax source — desktop/hover only, stored in a ref so the rAF
-    // loop reads it without re-subscribing.
-    let onMove: ((e: PointerEvent) => void) | null = null;
-    if (window.matchMedia("(hover: hover)").matches) {
-      onMove = (e: PointerEvent) => {
-        pointerRef.current = {
-          x: (e.clientX / window.innerWidth) * 2 - 1,
-          y: (e.clientY / window.innerHeight) * 2 - 1,
-        };
-      };
-      window.addEventListener("pointermove", onMove, { passive: true });
-    }
-
-    let raf = 0;
-    let visible = true;
-    let start = 0;
-    const cur = { x: 0, y: 0, rx: 0, ry: 0 };
-
-    const tick = (now: number) => {
-      if (!start) start = now;
-      const t = now - start;
-      const a = (t / ORBIT_PERIOD) * Math.PI * 2;
-      const { x: px, y: py } = pointerRef.current;
-
-      // Target = ambient orbit + pointer lean. Pointer leans the plate the same
-      // way the live camera leaned: toward the cursor, with a yaw/pitch tilt.
-      const tx = Math.cos(a) * ORBIT_X + px * PARALLAX_X;
-      const ty = Math.sin(a) * ORBIT_Y + -py * PARALLAX_Y;
-      const trx = -py * ROT_X; // look down/up
-      const tryw = px * ROT_Y; // yaw toward pointer
-
-      cur.x += (tx - cur.x) * LERP;
-      cur.y += (ty - cur.y) * LERP;
-      cur.rx += (trx - cur.rx) * LERP;
-      cur.ry += (tryw - cur.ry) * LERP;
-
-      plate.style.transform = `translate3d(${cur.x}%, ${cur.y}%, 0) rotateX(${cur.rx}deg) rotateY(${cur.ry}deg) scale(${PLATE_SCALE})`;
-      // Publish the lean as unitless CSS vars on the hero section so overlay
-      // layers (MapPinStory pins + glass moment-cards) ride the same camera.
-      const host = container?.parentElement;
-      if (host) {
-        host.style.setProperty("--wl-lean-x", String(cur.x));
-        host.style.setProperty("--wl-lean-y", String(cur.y));
-        host.style.setProperty("--wl-lean-rx", String(cur.rx));
-        host.style.setProperty("--wl-lean-ry", String(cur.ry));
-      }
-      raf = visible ? requestAnimationFrame(tick) : 0;
-    };
-    raf = requestAnimationFrame(tick);
-
-    // Pause the loop when the hero scrolls out of view (matches live backdrop).
-    let io: IntersectionObserver | null = null;
-    if (container && typeof IntersectionObserver !== "undefined") {
-      io = new IntersectionObserver(
-        (entries) => {
-          visible = entries[0]?.isIntersecting ?? true;
-          if (visible && !raf) raf = requestAnimationFrame(tick);
-        },
-        { threshold: 0 },
-      );
-      io.observe(container);
-    }
-
-    return () => {
-      cancelAnimationFrame(raf);
-      io?.disconnect();
-      if (onMove) window.removeEventListener("pointermove", onMove);
-    };
-  }, []);
-
   return (
     <div
-      ref={containerRef}
       aria-hidden="true"
       data-hero-bg="map-static"
       className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
-      style={{ perspective: "1200px" }}
     >
       <Image
-        ref={plateRef}
         src="/landing-shots/hero-map.jpg"
         alt=""
         fill
@@ -144,7 +41,6 @@ export default function StaticHeroMap() {
           objectFit: "cover",
           transformOrigin: "center",
           transform: `scale(${PLATE_SCALE})`,
-          willChange: "transform",
         }}
       />
 

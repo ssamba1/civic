@@ -26,13 +26,26 @@ interface WorkloadBarsProps {
   selectable?: boolean;
 }
 
+// Mirrors STATUS_COLORS in team-roster.tsx (kept byte-identical). Deliberately
+// diverges from lib/status.ts's STATUS_TONE: chips encode status via TEXT
+// (a11y-tuned per-theme fg tokens), this bar encodes status via FILL AREA —
+// different constraint, so a separate local map. Enterprise-gray direction:
+// amber is the only hue (open = the one actionable state); everything else is
+// a gray ramp. dispatched/in_progress are flat, non-theme-adaptive hex rather
+// than var(--subtle)/var(--faint) — those two tokens invert their relative
+// lightness between light and dark (tuned for text contrast against opposite
+// backgrounds, not for fill-vs-fill ordering), so a live var() would render
+// in_progress *darker* than dispatched in dark mode. Flat hex keeps
+// in_progress reliably lighter than dispatched in both themes. closed uses
+// --elevated so resolved work recedes into the surface instead of a "success"
+// color celebrating completion.
 const STATUS_PALETTE = {
-  open: "#ff9f0a",
-  dispatched: "var(--color-primary)",
-  in_progress: "#5ac8fa",
-  closed: "#30d158",
-  merged: "#86868b",
-  rejected: "#ff453a",
+  open: "var(--color-warning)",
+  dispatched: "#52525b",
+  in_progress: "#85858c",
+  closed: "var(--elevated)",
+  merged: "var(--color-muted)",
+  rejected: "var(--color-danger)",
 } as const;
 
 function WorkloadBarsInner({
@@ -117,8 +130,7 @@ function WorkloadBarsInner({
                 {/* Label: hidden on mobile (bar+count only); shown sm+ */}
                 <span className="hidden sm:flex min-w-0 items-center gap-2 text-[12px] text-subtle">
                   <span
-                    className="h-2 w-2 flex-shrink-0 rounded-full"
-                    style={{ background: team.color }}
+                    className="h-2 w-2 flex-shrink-0 rounded-full bg-faint"
                     aria-hidden
                   />
                   <span className="truncate">{team.shortLabel}</span>
@@ -127,8 +139,7 @@ function WorkloadBarsInner({
                 <div className="flex flex-col gap-1 sm:hidden col-span-1">
                   <span className="flex min-w-0 items-center gap-2 text-[12px] text-subtle">
                     <span
-                      className="h-2 w-2 flex-shrink-0 rounded-full"
-                      style={{ background: team.color }}
+                      className="h-2 w-2 flex-shrink-0 rounded-full bg-faint"
                       aria-hidden
                     />
                     <span className="truncate">{team.shortLabel}</span>
@@ -220,14 +231,9 @@ function buildTip(w: TeamWorkload) {
     w.total > 0 ? Math.round((w.closedCount / w.total) * 100) : 0;
   return {
     title: team.shortLabel,
-    accent: team.color,
     body: (
       <div className="flex flex-col gap-1.5">
-        <TipRow
-          label="Total"
-          value={w.total.toLocaleString()}
-          accent={team.color}
-        />
+        <TipRow label="Total" value={w.total.toLocaleString()} />
         <TipRow
           label="Open"
           value={w.openCount.toLocaleString()}

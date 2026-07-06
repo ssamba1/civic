@@ -18,10 +18,10 @@ export function AssistantMessage({ message }: { message: UIMessage }) {
     <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed",
+          "max-w-[85%] rounded-[var(--radius-lg)] px-3 py-2 text-sm leading-relaxed",
           isUser
-            ? "bg-[var(--color-primary)] text-white"
-            : "bg-white/5 text-[var(--color-foreground)]",
+            ? "bg-accent text-accent-contrast"
+            : "bg-overlay text-foreground",
         )}
       >
         {message.parts.map((part, i) => {
@@ -30,7 +30,10 @@ export function AssistantMessage({ message }: { message: UIMessage }) {
               <div
                 // biome-ignore lint/suspicious/noArrayIndexKey: message parts stream append-only with no stable id; positional key is correct here
                 key={`${message.id}-t${i}`}
-                className="prose prose-invert prose-sm max-w-none [&_p]:my-1"
+                // @tailwindcss/typography isn't installed, so `prose`/`prose-invert` were
+                // no-ops that also fought the bubble's own theme-aware text color — the
+                // bubble wrapper's text-foreground/accent-contrast already styles markdown text.
+                className="[&_p]:my-1"
               >
                 <ReactMarkdown>{part.text}</ReactMarkdown>
               </div>
@@ -45,7 +48,7 @@ export function AssistantMessage({ message }: { message: UIMessage }) {
               <div
                 // biome-ignore lint/suspicious/noArrayIndexKey: message parts stream append-only with no stable id; positional key is correct here
                 key={`${message.id}-tool${i}`}
-                className="my-1 text-xs italic text-[var(--color-muted)]"
+                className="my-1 text-xs italic text-faint"
               >
                 {label}
               </div>

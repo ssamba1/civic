@@ -18,7 +18,7 @@ export default function AnalyticsError({
       <button
         type="button"
         onClick={reset}
-        className="rounded-full bg-[var(--color-primary)] px-5 py-2 text-[14px] font-medium text-white transition-colors hover:bg-[#0070e0]"
+        className="rounded-[var(--radius-md)] bg-[var(--accent)] px-5 py-2 text-[14px] font-medium text-[var(--accent-contrast)] transition-colors hover:bg-[var(--color-primary-hover)]"
       >
         Try again
       </button>

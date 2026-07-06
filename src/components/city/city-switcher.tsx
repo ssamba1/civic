@@ -1,11 +1,21 @@
 "use client";
 
-import { Check, ChevronDown, MapPin, Search } from "lucide-react";
+import { Check, ChevronDown, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { MUNICIPALITIES, type Municipality } from "@/lib/dashboard-data";
 import { cn } from "@/lib/utils/cn";
+
+/** First letter of up to the first two words, for the switcher's square
+ *  identity chip (e.g. "Cumming" → "CU", "Forsyth County" → "FC"). */
+function initials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "??";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
 
 /**
  * City switcher — search + toggle between municipalities from the dashboard
@@ -103,14 +113,19 @@ export function CitySwitcher({
         aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "inline-flex min-w-0 max-w-full items-center gap-2 rounded-full border text-[13px] font-medium transition-colors",
-          compact ? "h-8 px-3" : "min-h-11 px-3.5",
+          "inline-flex min-w-0 max-w-full items-center gap-2 rounded-[var(--radius-md)] border text-[13px] font-medium transition-colors",
+          compact ? "h-8 px-2.5" : "min-h-11 px-3",
           open
             ? "border-accent/40 bg-accent-soft text-foreground"
             : "border-hairline bg-overlay text-foreground hover:border-hairline-strong hover:text-foreground",
         )}
       >
-        <MapPin className="h-4 w-4 shrink-0 text-accent-text" aria-hidden />
+        <span
+          aria-hidden="true"
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-elevated font-mono text-[11px] font-semibold text-foreground"
+        >
+          {initials(current.name)}
+        </span>
         <span className="truncate">
           {current.name}
           {current.state && (
@@ -132,7 +147,7 @@ export function CitySwitcher({
           aria-label="Switch municipality"
           className={cn(
             "absolute left-0 top-[calc(100%+8px)] z-50 w-[20rem] origin-top",
-            "rounded-[16px] border border-hairline bg-surface p-2",
+            "rounded-[var(--radius-lg)] border border-hairline bg-surface p-2",
             "shadow-[var(--shadow-pop)] ring-1 ring-hairline",
             "animate-[city-pop_120ms_ease-out]",
           )}
@@ -198,14 +213,11 @@ export function CitySwitcher({
                       </span>
                     </span>
                     {m.live ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-[#34c759]">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#34c759] shadow-[0_0_6px_rgba(52,199,89,0.7)]" />
+                      <Badge variant="success" className="shrink-0">
                         Live
-                      </span>
+                      </Badge>
                     ) : (
-                      <span className="rounded-full border border-hairline px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-faint">
-                        Soon
-                      </span>
+                      <Badge className="shrink-0">Soon</Badge>
                     )}
                   </button>
                 );

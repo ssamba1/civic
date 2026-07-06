@@ -6,8 +6,11 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { signInDemo } from "@/app/login/actions";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { DEMO_ACCOUNTS } from "@/lib/demo-auth";
 import { DEMO_MODE } from "@/lib/demo-mode";
+import { cn } from "@/lib/utils/cn";
 
 /**
  * Demo persona sign-in. DEMO ONLY — credentials are baked in (see demo-auth.ts)
@@ -31,18 +34,16 @@ export function DemoSignIn({ error }: { error?: string | null }) {
   }));
 
   return (
-    <div className="mt-6 rounded-2xl border border-[var(--color-border)] bg-[var(--background)]/40 p-4">
+    <div className="mt-6 rounded-[var(--radius-lg)] border border-hairline bg-surface p-4">
       <div className="flex items-center justify-between">
-        <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[var(--color-muted)]">
+        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-faint">
           Demo accounts
         </p>
-        <span className="rounded-full bg-[var(--color-primary)]/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[var(--color-primary)]">
-          Demo
-        </span>
+        <Badge>Demo</Badge>
       </div>
 
       {error && (
-        <div className="mt-3 flex items-start gap-2 rounded-xl border border-[var(--color-danger)]/30 bg-[var(--color-danger)]/8 px-3 py-2 text-[12px] text-[var(--color-danger)]">
+        <div className="mt-3 flex items-start gap-2 rounded-[var(--radius-md)] border border-[var(--color-danger)]/30 bg-[var(--color-danger)]/8 px-3 py-2 text-[12px] text-[var(--status-danger-fg)]">
           <AlertCircle className="mt-[2px] h-3.5 w-3.5 flex-shrink-0" />
           <span className="leading-snug">{error}</span>
         </div>
@@ -60,7 +61,7 @@ export function DemoSignIn({ error }: { error?: string | null }) {
           autoComplete="username"
           autoCapitalize="none"
           spellCheck={false}
-          className="h-11 w-full rounded-xl border border-[var(--color-border)] bg-[var(--background)] px-3 text-base sm:text-[14px] text-[var(--foreground)] outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+          className="h-11 w-full rounded-[var(--radius-md)] border border-hairline-strong bg-background px-3 text-base text-foreground outline-none transition-colors placeholder:text-faint focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] sm:text-[14px]"
         />
         <input
           name="password"
@@ -69,15 +70,13 @@ export function DemoSignIn({ error }: { error?: string | null }) {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="password"
           autoComplete="current-password"
-          className="h-11 w-full rounded-xl border border-[var(--color-border)] bg-[var(--background)] px-3 text-base sm:text-[14px] text-[var(--foreground)] outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+          className="h-11 w-full rounded-[var(--radius-md)] border border-hairline-strong bg-background px-3 text-base text-foreground outline-none transition-colors placeholder:text-faint focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] sm:text-[14px]"
         />
         <DemoSubmit />
       </form>
 
       <div className="mt-3">
-        <p className="mb-1.5 text-[11px] text-[var(--color-muted)]">
-          Quick fill
-        </p>
+        <p className="mb-1.5 text-[11px] text-faint">Quick fill</p>
         <div className="flex flex-wrap gap-1.5">
           {personas.map((p) => (
             <button
@@ -88,12 +87,12 @@ export function DemoSignIn({ error }: { error?: string | null }) {
                 setPassword(p.password);
               }}
               title={`${p.label} — ${p.username}`}
-              className={[
-                "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors motion-safe:active:scale-95 motion-safe:transition-transform motion-safe:duration-75",
+              className={cn(
+                "rounded-[var(--radius-md)] border px-2.5 py-1 text-[11px] font-medium transition-colors motion-safe:active:scale-95 motion-safe:transition-transform motion-safe:duration-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]",
                 username === p.username
-                  ? "border-[var(--color-primary)] bg-[var(--color-primary)]/12 text-[var(--color-primary)]"
-                  : "border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-primary)]/50 hover:text-[var(--foreground)]",
-              ].join(" ")}
+                  ? "border-[var(--accent)] bg-accent-soft text-accent-text"
+                  : "border-hairline text-subtle hover:border-hairline-strong hover:text-foreground",
+              )}
             >
               {p.role === "team" ? p.username : p.label}
             </button>
@@ -107,40 +106,9 @@ export function DemoSignIn({ error }: { error?: string | null }) {
 function DemoSubmit() {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className={`group flex h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-[var(--color-foreground)] text-[14px] font-semibold text-[var(--background)] transition-all motion-safe:hover:-translate-y-[1px] active:translate-y-0 disabled:hover:translate-y-0 ${
-        pending ? "opacity-60" : ""
-      }`}
-    >
-      {pending ? (
-        <svg
-          viewBox="0 0 24 24"
-          className="h-4 w-4 animate-spin"
-          aria-hidden="true"
-          focusable="false"
-          fill="none"
-        >
-          <circle
-            cx="12"
-            cy="12"
-            r="9"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            opacity="0.25"
-          />
-          <path
-            d="M21 12a9 9 0 0 0-9-9"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          />
-        </svg>
-      ) : (
-        <LogIn className="h-4 w-4" />
-      )}
-      {pending ? "Signing in…" : "Sign in to demo"}
-    </button>
+    <Button type="submit" isPending={pending} size="lg" className="w-full">
+      <LogIn className="h-4 w-4" />
+      Sign in to demo
+    </Button>
   );
 }

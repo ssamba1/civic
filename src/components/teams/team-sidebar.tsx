@@ -66,7 +66,9 @@ export function TeamSidebar({ team, city, accountLabel }: TeamSidebarProps) {
         label: t.shortLabel,
         href: `/${t.id}/${city}`,
         active: t.id === team,
-        dotColor: t.color,
+        // Grayscale by design — department identity is chrome, not state or
+        // map/chart category encoding, so the dot stays neutral everywhere.
+        dotColor: "var(--faint)",
       })),
     },
   ];
@@ -101,8 +103,7 @@ export function TeamSidebar({ team, city, accountLabel }: TeamSidebarProps) {
       context={
         <span className="inline-flex w-full min-w-0 items-center gap-2 text-[13px] font-medium text-foreground">
           <Icon
-            className="h-4 w-4 shrink-0"
-            style={{ color: meta.color }}
+            className="h-4 w-4 shrink-0 text-subtle"
             strokeWidth={2}
             aria-hidden="true"
           />

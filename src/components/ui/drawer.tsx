@@ -91,7 +91,7 @@ export function Drawer({
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="civic-drawer-backdrop absolute inset-0 h-full w-full cursor-default bg-black/50 backdrop-blur-[2px]"
+        className="civic-drawer-backdrop absolute inset-0 h-full w-full cursor-default bg-black/50"
         style={{ animation: "drawer-backdrop-in 220ms ease-out both" }}
       />
 
@@ -104,8 +104,8 @@ export function Drawer({
         className={cn(
           "civic-drawer-panel pt-safe pb-safe absolute top-0 flex h-dvh w-[min(92vw,420px)] flex-col overflow-y-auto bg-[var(--color-background)] shadow-[0_8px_40px_rgba(0,0,0,0.35)] outline-none",
           isRight
-            ? "right-0 rounded-l-[14px] border-l border-[var(--color-border)]"
-            : "left-0 rounded-r-[14px] border-r border-[var(--color-border)]",
+            ? "right-0 rounded-l-[var(--radius-lg)] border-l border-[var(--color-border)]"
+            : "left-0 rounded-r-[var(--radius-lg)] border-r border-[var(--color-border)]",
           className,
         )}
         style={{
@@ -130,7 +130,7 @@ export function Drawer({
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="-mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface)] hover:text-[var(--color-foreground)] active:translate-y-px focus-visible:outline-2 focus-visible:outline-[var(--color-primary)]"
+              className="-mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-muted)] transition-colors hover:bg-overlay hover:text-[var(--color-foreground)] active:translate-y-px focus-visible:outline-2 focus-visible:outline-[var(--color-primary)]"
             >
               <X className="h-5 w-5" />
             </button>
@@ -141,7 +141,7 @@ export function Drawer({
             onClick={onClose}
             aria-label="Close"
             className={cn(
-              "absolute top-3 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-[var(--color-surface)]/80 text-[var(--color-muted)] backdrop-blur-md transition-colors hover:text-[var(--color-foreground)] active:translate-y-px focus-visible:outline-2 focus-visible:outline-[var(--color-primary)]",
+              "absolute top-3 z-10 inline-flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] border border-hairline bg-surface text-[var(--color-muted)] transition-colors hover:text-[var(--color-foreground)] active:translate-y-px focus-visible:outline-2 focus-visible:outline-[var(--color-primary)]",
               isRight ? "right-3" : "left-3",
             )}
           >

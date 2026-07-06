@@ -127,10 +127,10 @@ export default function ZampHero({ pinStory = false }: { pinStory?: boolean }) {
           map JS) with cursor parallax. ?tweaks=1 swaps in the live map. */}
       <ZampMapFallback />
       {showMap && (tweaksVisible ? <ZampMapBackdropLazy /> : <StaticHeroMap />)}
-      {/* Animated report pins + glass moment-cards, glued to the static plate
-          (they ride the exact same lean transform — see MapPinStory). Skipped
-          over the live tweaks map, whose deck.gl layers already render a
-          geo-anchored pin field, and on mobile, where there is no plate. */}
+      {/* Animated report pins + moment-cards over the static plate; pins plop
+          in sequentially and carry hover cards. Skipped over the live tweaks
+          map, whose deck.gl layers already render a geo-anchored pin field,
+          and on mobile, where there is no plate. */}
       {pinStory && showMap && !tweaksVisible && <MapPinStory />}
 
       <div
@@ -140,6 +140,10 @@ export default function ZampHero({ pinStory = false }: { pinStory?: boolean }) {
           zIndex: 10,
           textAlign: "center",
           width: "100%",
+          // Hit-transparent: this full-width wrapper sits ABOVE the pin layer
+          // (z10 vs z5) and would otherwise swallow every hover the pins need
+          // for their info cards. The glass card below opts back in.
+          pointerEvents: "none",
         }}
       >
         {/* Colossal per-letter "Civic" wordmark — the hero IS the wordmark. */}
@@ -191,7 +195,7 @@ export default function ZampHero({ pinStory = false }: { pinStory?: boolean }) {
               ))}
         </motion.h1>
 
-        <aside className="wl-zamp-hero-aside">
+        <aside className="wl-zamp-hero-aside" style={{ pointerEvents: "auto" }}>
           <motion.div
             style={{
               y: cardY,

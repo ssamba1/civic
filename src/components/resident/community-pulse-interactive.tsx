@@ -33,26 +33,38 @@ type TipBindings = ReturnType<ReturnType<typeof useHoverTip>["bindTarget"]>;
    of mixed size so it reads editorial, not like an admin stat wall.
    ================================================================== */
 
+// Momentum is a state (good/neutral/caution), so it's one of the few spots
+// hue is warranted — mapped to the same muted success/info/warning tones the
+// rest of the app uses for state.
 const MOMENTUM_META: Record<
   CityMorale["momentum"],
   { label: string; color: string; Icon: typeof ArrowUpRight }
 > = {
-  up: { label: "Picking up speed", color: "#30d158", Icon: ArrowUpRight },
-  flat: { label: "Holding steady", color: "#5ac8fa", Icon: ArrowRight },
+  up: {
+    label: "Picking up speed",
+    color: "var(--color-success)",
+    Icon: ArrowUpRight,
+  },
+  flat: {
+    label: "Holding steady",
+    color: "var(--fg-electric-indigo)",
+    Icon: ArrowRight,
+  },
   down: {
     label: "Catching our breath",
-    color: "#ff9f0a",
+    color: "var(--color-warning)",
     Icon: ArrowDownRight,
   },
 };
 
-// Severity ramp: cool for minor, hot for critical. Matches the app's tones.
+// Severity ramp: cool for minor, hot for critical — the muted category
+// tokens + danger, since this chart's series IS the category.
 const SEVERITY: Record<1 | 2 | 3 | 4 | 5, { label: string; color: string }> = {
-  1: { label: "Minor", color: "#5ac8fa" },
-  2: { label: "Low", color: "#30d158" },
-  3: { label: "Moderate", color: "#ffd60a" },
-  4: { label: "High", color: "#ff9f0a" },
-  5: { label: "Critical", color: "#ff453a" },
+  1: { label: "Minor", color: "var(--fg-cyan-burst)" },
+  2: { label: "Low", color: "var(--fg-emerald-glow)" },
+  3: { label: "Moderate", color: "var(--fg-amber-pulse)" },
+  4: { label: "High", color: "var(--fg-neon-coral)" },
+  5: { label: "Critical", color: "var(--color-danger)" },
 };
 
 // Plain-language read on each tier, resident-facing (no ops jargon).
@@ -99,7 +111,7 @@ function MicroStat({
 
 function ProgressRing({
   pct,
-  color = "#30d158",
+  color = "var(--color-success)",
 }: {
   pct: number;
   color?: string;
@@ -127,19 +139,19 @@ function ProgressRing({
           cy="50"
           r={r}
           fill="none"
-          stroke="rgba(255,255,255,0.06)"
           strokeWidth="9"
+          style={{ stroke: "var(--hairline-strong)" }}
         />
         <circle
           cx="50"
           cy="50"
           r={r}
           fill="none"
-          stroke={color}
           strokeWidth="9"
           strokeLinecap="round"
           strokeDasharray={`${dash} ${c - dash}`}
           style={{
+            stroke: color,
             transition: "stroke-dasharray 700ms cubic-bezier(0.16,1,0.3,1)",
           }}
         />
@@ -174,7 +186,11 @@ function DeltaRow({
   const up = deltaPct > 0;
   const flat = deltaPct === 0;
   const positive = flat ? false : up === goodWhenUp;
-  const color = flat ? "#86868b" : positive ? "#30d158" : "#ff9f0a";
+  const color = flat
+    ? "var(--color-muted)"
+    : positive
+      ? "var(--color-success)"
+      : "var(--color-warning)";
   const Icon = flat ? ArrowRight : up ? ArrowUpRight : ArrowDownRight;
   const inner = (
     <>
@@ -402,8 +418,12 @@ function neighborhoodTip(
           value={n.count.toLocaleString()}
           accent="var(--color-primary)"
         />
-        <TipRow label="Resolved" value={`${n.resolvedPct}%`} accent="#30d158" />
-        <TipBar pct={n.resolvedPct} color="#30d158" />
+        <TipRow
+          label="Resolved"
+          value={`${n.resolvedPct}%`}
+          accent="var(--color-success)"
+        />
+        <TipBar pct={n.resolvedPct} color="var(--color-success)" />
         <TipRow
           label="Share of activity"
           value={`${share.toFixed(1)}%`}
@@ -436,16 +456,16 @@ function fixSpeedTip(b: CityMorale["fixSpeed"][number], total: number) {
   const share = total > 0 ? (b.count / total) * 100 : 0;
   return {
     title: `Fixed in ${b.label}`,
-    accent: "#30d158",
+    accent: "var(--color-primary)",
     body: (
       <div className="flex flex-col gap-1.5">
         <TipRow
           label="Fixes"
           value={b.count.toLocaleString()}
-          accent="#30d158"
+          accent="var(--color-primary)"
         />
         <TipRow label="Share of fixes" value={`${share.toFixed(1)}%`} muted />
-        <TipBar pct={share} color="#30d158" />
+        <TipBar pct={share} color="var(--color-primary)" />
         <p className="mt-1 text-[11px] leading-snug text-faint">
           Issues the city closed within {b.label} of being reported.
         </p>
@@ -466,7 +486,11 @@ function deltaTip(
   const change = value - prior;
   const flat = deltaPct === 0;
   const positive = flat ? false : deltaPct > 0 === goodWhenUp;
-  const color = flat ? "#86868b" : positive ? "#30d158" : "#ff9f0a";
+  const color = flat
+    ? "var(--color-muted)"
+    : positive
+      ? "var(--color-success)"
+      : "var(--color-warning)";
   return {
     title: label,
     accent: color,
@@ -579,13 +603,13 @@ export function CommunityPulseInteractive({
                 className="cursor-default rounded-full outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-hairline-strong"
                 {...tip.bindTarget(() => ({
                   title: "This week's progress",
-                  accent: "#30d158",
+                  accent: "var(--color-success)",
                   body: (
                     <div className="flex flex-col gap-1.5">
                       <TipRow
                         label="Resolved"
                         value={morale.resolvedThisWeek.toLocaleString()}
-                        accent="#30d158"
+                        accent="var(--color-success)"
                       />
                       <TipRow
                         label="New reports"
@@ -595,9 +619,9 @@ export function CommunityPulseInteractive({
                       <TipRow
                         label="Being worked on"
                         value={morale.inProgressCount.toLocaleString()}
-                        accent="#5ac8fa"
+                        accent="var(--fg-electric-indigo)"
                       />
-                      <TipBar pct={morale.pctResolved} color="#30d158" />
+                      <TipBar pct={morale.pctResolved} color="var(--color-success)" />
                     </div>
                   ),
                   footer: (
@@ -646,7 +670,7 @@ export function CommunityPulseInteractive({
               />
               <div className="flex items-center justify-between gap-3 border-t border-hairline pt-3">
                 <span className="text-[13px] text-subtle">Being worked on</span>
-                <span className="text-[17px] font-semibold tabular-nums text-[#5ac8fa]">
+                <span className="text-[17px] font-semibold tabular-nums text-[var(--status-info-fg)]">
                   {morale.inProgressCount.toLocaleString()}
                 </span>
               </div>
@@ -776,7 +800,7 @@ export function CommunityPulseInteractive({
                 label={b.label}
                 count={b.count}
                 pct={Math.round((b.count / maxSpeed) * 100)}
-                color="#30d158"
+                color="var(--color-primary)"
                 hoverLabel={`Fixed in ${b.label}: ${b.count}`}
                 tipBindings={tip.bindTarget(() => fixSpeedTip(b, speedTotal))}
               />
@@ -788,15 +812,8 @@ export function CommunityPulseInteractive({
       {/* ── Band 4: civic-impact close ─────────────────────────────── */}
       <Tile>
         <div className="flex items-start gap-3">
-          <span
-            className="mt-0.5 inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full"
-            style={{ background: "rgba(48,209,88,0.12)" }}
-          >
-            <MapPin
-              className="h-3.5 w-3.5"
-              style={{ color: "#30d158" }}
-              strokeWidth={2.25}
-            />
+          <span className="mt-0.5 inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-elevated">
+            <MapPin className="h-3.5 w-3.5 text-foreground" strokeWidth={2.25} />
           </span>
           <p className="max-w-[70ch] text-[13px] leading-relaxed text-subtle">
             A reported pothole becomes a smoother drive to school. A fixed

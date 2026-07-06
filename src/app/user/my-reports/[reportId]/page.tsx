@@ -83,7 +83,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
     <div className="mx-auto w-full max-w-3xl px-4 pt-24 pb-[calc(5.5rem_+_env(safe-area-inset-bottom))] sm:px-6 md:pb-10">
       <Link
         href="/user/my-reports"
-        className="mb-5 inline-flex h-9 items-center gap-1.5 rounded-full px-2 -ml-2 text-[13px] font-medium text-subtle outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
+        className="mb-5 inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-md)] px-2 -ml-2 text-[13px] font-medium text-subtle outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
       >
         <ArrowLeft className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         All reports
@@ -144,7 +144,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
                 src={report.afterPhoto}
                 alt={`${meta.label} — after the fix`}
               />
-              <figcaption className="absolute left-2 top-2 rounded-md bg-[#30d158]/85 px-2 py-0.5 text-[11px] font-medium text-black backdrop-blur-sm">
+              <figcaption className="absolute left-2 top-2 rounded-md bg-[var(--color-success)]/85 px-2 py-0.5 text-[11px] font-medium text-black backdrop-blur-sm">
                 Fixed
               </figcaption>
             </figure>
@@ -160,7 +160,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
       {/* Under Fix card — shown when staff has marked the report in_progress
           and provided public-facing cost/timeline context. */}
       {isUnderFix && (
-        <section className="mb-7 rounded-[14px] border border-[color-mix(in_srgb,var(--color-primary)_25%,transparent)] bg-[color-mix(in_srgb,var(--color-primary)_6%,transparent)] p-5">
+        <section className="mb-7 rounded-[var(--radius-lg)] border border-[color-mix(in_srgb,var(--color-primary)_25%,transparent)] bg-[color-mix(in_srgb,var(--color-primary)_6%,transparent)] p-5">
           <div className="flex items-start gap-3">
             <HardHat
               className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--color-primary)]"
@@ -184,9 +184,9 @@ export default async function ReportDetailPage({ params }: PageProps) {
                         strokeWidth={2}
                         aria-hidden="true"
                       />
-                      <span className="text-[13px] font-medium text-white">
+                      <span className="text-[13px] font-medium text-foreground">
                         Est. cost:{" "}
-                        <span className="text-[#5ac8fa]">
+                        <span className="font-semibold">
                           {formatCost(report.fix_cost_estimate, currency)}
                         </span>
                       </span>
@@ -199,9 +199,9 @@ export default async function ReportDetailPage({ params }: PageProps) {
                         strokeWidth={2}
                         aria-hidden="true"
                       />
-                      <span className="text-[13px] font-medium text-white">
+                      <span className="text-[13px] font-medium text-foreground">
                         Est. timeline:{" "}
-                        <span className="text-[#5ac8fa]">
+                        <span className="font-semibold">
                           {report.fix_time_estimate_days}{" "}
                           {report.fix_time_estimate_days === 1 ? "day" : "days"}
                         </span>
@@ -224,10 +224,10 @@ export default async function ReportDetailPage({ params }: PageProps) {
           when, then asks the resident to confirm the fix (CSAT). Only when
           closed. */}
       {isResolved && (
-        <section className="mb-7 rounded-[14px] border border-[#30d158]/25 bg-[#30d158]/[0.06] p-5">
+        <section className="mb-7 rounded-[var(--radius-lg)] border border-[var(--color-success)]/25 bg-[var(--color-success)]/[0.06] p-5">
           <div className="flex items-start gap-3">
             <CheckCircle2
-              className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#30d158]"
+              className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--color-success)]"
               strokeWidth={2}
               aria-hidden="true"
             />
@@ -249,7 +249,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
       )}
 
       {/* Timeline */}
-      <section className="rounded-[14px] border border-hairline bg-surface p-5 shadow-[var(--shadow-card)]">
+      <section className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-5 shadow-[var(--shadow-card)]">
         <h2 className="mb-5 text-[15px] font-semibold tracking-tight text-foreground">
           Progress
         </h2>
@@ -261,7 +261,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
           in. Opens the /r/[token] page. */}
       <Link
         href={`/r/${publicToken(report.id)}`}
-        className="mt-6 inline-flex h-10 items-center gap-2 rounded-full border border-hairline bg-overlay px-4 text-[13px] font-medium text-subtle outline-none transition-colors hover:border-hairline-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
+        className="mt-6 inline-flex h-10 items-center gap-2 rounded-[var(--radius-md)] border border-hairline bg-overlay px-4 text-[13px] font-medium text-subtle outline-none transition-colors hover:border-hairline-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
       >
         <Link2 className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         Public status link

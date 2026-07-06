@@ -17,6 +17,9 @@ interface LiquidGlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
   borderRadius?: string;
 }
 
+// Functional glass only — a backdrop blur so floating overlays (map controls,
+// the assistant panel) stay legible over busy content beneath. The former
+// "liquid" SVG refraction + white-inset highlights + colored glow are gone.
 const blurClasses: Record<BlurIntensity, string> = {
   sm: "backdrop-blur-sm",
   md: "backdrop-blur-md",
@@ -24,58 +27,27 @@ const blurClasses: Record<BlurIntensity, string> = {
   xl: "backdrop-blur-xl",
 };
 
+// Quiet neutral elevation. Kept token-shaped so intensity props stay meaningful
+// for callers, but every value is a plain gray shadow — no color, no glow.
 const shadowStyles: Record<ShadowIntensity, string> = {
-  none: "inset 0 0 0 0 rgba(255, 255, 255, 0)",
-  xs: "inset 1px 1px 1px 0 rgba(255, 255, 255, 0.3), inset -1px -1px 1px 0 rgba(255, 255, 255, 0.3)",
-  sm: "inset 2px 2px 2px 0 rgba(255, 255, 255, 0.35), inset -2px -2px 2px 0 rgba(255, 255, 255, 0.35)",
-  md: "inset 3px 3px 3px 0 rgba(255, 255, 255, 0.45), inset -3px -3px 3px 0 rgba(255, 255, 255, 0.45)",
-  lg: "inset 4px 4px 4px 0 rgba(255, 255, 255, 0.5), inset -4px -4px 4px 0 rgba(255, 255, 255, 0.5)",
-  xl: "inset 6px 6px 6px 0 rgba(255, 255, 255, 0.55), inset -6px -6px 6px 0 rgba(255, 255, 255, 0.55)",
-  "2xl":
-    "inset 8px 8px 8px 0 rgba(255, 255, 255, 0.6), inset -8px -8px 8px 0 rgba(255, 255, 255, 0.6)",
+  none: "none",
+  xs: "0 1px 2px rgba(0, 0, 0, 0.05)",
+  sm: "0 2px 6px rgba(0, 0, 0, 0.07)",
+  md: "0 4px 12px rgba(0, 0, 0, 0.09)",
+  lg: "0 8px 20px rgba(0, 0, 0, 0.11)",
+  xl: "0 12px 28px rgba(0, 0, 0, 0.13)",
+  "2xl": "0 16px 36px rgba(0, 0, 0, 0.15)",
 };
 
 const glowStyles: Record<GlowIntensity, string> = {
-  none: "0 4px 4px rgba(0, 0, 0, 0.05), 0 0 12px rgba(0, 0, 0, 0.05)",
-  xs: "0 4px 4px rgba(0, 0, 0, 0.15), 0 0 12px rgba(0, 0, 0, 0.08), 0 0 16px rgba(255, 255, 255, 0.05)",
-  sm: "0 4px 4px rgba(0, 0, 0, 0.15), 0 0 12px rgba(0, 0, 0, 0.08), 0 0 24px rgba(255, 255, 255, 0.1)",
-  md: "0 4px 4px rgba(0, 0, 0, 0.15), 0 0 12px rgba(0, 0, 0, 0.08), 0 0 32px rgba(255, 255, 255, 0.15)",
-  lg: "0 4px 4px rgba(0, 0, 0, 0.15), 0 0 12px rgba(0, 0, 0, 0.08), 0 0 40px rgba(255, 255, 255, 0.2)",
-  xl: "0 4px 4px rgba(0, 0, 0, 0.15), 0 0 12px rgba(0, 0, 0, 0.08), 0 0 48px rgba(255, 255, 255, 0.25)",
-  "2xl":
-    "0 4px 4px rgba(0, 0, 0, 0.15), 0 0 12px rgba(0, 0, 0, 0.08), 0 0 60px rgba(255, 255, 255, 0.3)",
+  none: "none",
+  xs: "0 0 0 1px rgba(0, 0, 0, 0.02)",
+  sm: "0 1px 2px rgba(0, 0, 0, 0.04)",
+  md: "0 2px 8px rgba(0, 0, 0, 0.06)",
+  lg: "0 4px 16px rgba(0, 0, 0, 0.08)",
+  xl: "0 6px 24px rgba(0, 0, 0, 0.1)",
+  "2xl": "0 8px 32px rgba(0, 0, 0, 0.12)",
 };
-
-function LiquidGlassFilter() {
-  return (
-    <svg className="hidden" aria-hidden="true" focusable="false">
-      <defs>
-        <filter
-          id="liquid-glass-blur"
-          x="0"
-          y="0"
-          width="100%"
-          height="100%"
-          filterUnits="objectBoundingBox"
-        >
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.003 0.007"
-            numOctaves="1"
-            result="turbulence"
-          />
-          <feDisplacementMap
-            in="SourceGraphic"
-            in2="turbulence"
-            scale="200"
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
-      </defs>
-    </svg>
-  );
-}
 
 export const LiquidGlassCard = React.forwardRef<
   HTMLDivElement,
@@ -85,56 +57,33 @@ export const LiquidGlassCard = React.forwardRef<
     children,
     className,
     contentClassName,
-    blurIntensity = "xl",
-    shadowIntensity = "md",
-    glowIntensity = "sm",
-    borderRadius = "16px",
+    blurIntensity = "md",
+    shadowIntensity = "sm",
+    glowIntensity = "none",
+    borderRadius = "var(--radius-lg)",
     style,
     ...props
   },
   ref,
 ) {
+  const boxShadow =
+    [glowStyles[glowIntensity], shadowStyles[shadowIntensity]]
+      .filter((s) => s !== "none")
+      .join(", ") || undefined;
   return (
-    <>
-      <LiquidGlassFilter />
-      <div
-        ref={ref}
-        className={cn(
-          "relative max-w-full overflow-hidden border border-hairline",
-          className,
-        )}
-        style={{ borderRadius, ...style }}
-        {...props}
-      >
-        {/* Bend — refraction */}
-        <div
-          className={cn("absolute inset-0 z-0", blurClasses[blurIntensity])}
-          style={{
-            borderRadius,
-            filter: "url(#liquid-glass-blur)",
-          }}
-        />
-        {/* Face — outer glow */}
-        <div
-          className="absolute inset-0 z-10"
-          style={{
-            borderRadius,
-            boxShadow: glowStyles[glowIntensity],
-          }}
-        />
-        {/* Edge — inner highlight */}
-        <div
-          className="absolute inset-0 z-20"
-          style={{
-            borderRadius,
-            boxShadow: shadowStyles[shadowIntensity],
-          }}
-        />
-        {/* Content */}
-        <div className={cn("relative z-30 h-full w-full", contentClassName)}>
-          {children}
-        </div>
+    <div
+      ref={ref}
+      className={cn(
+        "relative max-w-full overflow-hidden border border-hairline bg-glass",
+        blurClasses[blurIntensity],
+        className,
+      )}
+      style={{ borderRadius, boxShadow, ...style }}
+      {...props}
+    >
+      <div className={cn("relative h-full w-full", contentClassName)}>
+        {children}
       </div>
-    </>
+    </div>
   );
 });

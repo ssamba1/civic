@@ -55,11 +55,22 @@ interface FullscreenMapOrchestratorProps {
 // intentionally stays off the canonical --status-*-fg tokens — those are
 // tuned per-theme (dark-on-white in light mode) and would go near-invisible
 // on this always-dark surface. Kept local on purpose.
+//
+// Hue mapping mirrors report-map.tsx's statusColor() (the marker/legend
+// vocabulary): closed=success, dispatched/in_progress=info slate (same tone
+// per lib/status.ts STATUS_TONE — both read as "routed/active", distinct
+// from open), open=warning. The muted FILL tokens themselves
+// (#3d9a63/#c08a1d/#5b6b8c) sit
+// under 4.5:1 as 12px text on this panel's worst case (selected row
+// #3c3c42: 3.13/3.60/2.05), so these are lightness-lifted text variants of
+// the same hues — the dark-panel analog of the .dark --status-*-fg lift:
+// success #55c081 (4.82:1), warning #d9a83c (5.02:1), slate #9db0d3
+// (5.00:1), all vs #3c3c42; ≥7.5:1 vs the base #1c1c1e panel chrome.
 const STATUS_TEXT_COLOR: Record<string, string> = {
-  open: "text-[#ffb340]",
-  dispatched: "text-[#4da6ff]",
-  in_progress: "text-[#7ad4ff]",
-  closed: "text-[#3ee06b]",
+  open: "text-[#d9a83c]",
+  dispatched: "text-[#9db0d3]",
+  in_progress: "text-[#9db0d3]",
+  closed: "text-[#55c081]",
 };
 
 // Lightweight prefers-reduced-motion subscription. Returns true when the OS
@@ -316,18 +327,12 @@ export function FullscreenMapOrchestrator({
         @keyframes fmToastOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-4px)}}
         @keyframes fmFadeIn{from{opacity:0}to{opacity:1}}
       `}</style>
-        {/* Active team banner */}
+        {/* Active team banner — grayscale chrome (team identity is no longer
+            hue-coded outside the map's own data layers/legend). */}
         {selectedTeam !== "all" && (
-          <div
-            className="flex items-center gap-2 rounded-md border px-2.5 py-1.5 shrink-0"
-            style={{
-              borderColor: `${activeTeamMeta.color}99`,
-              backgroundColor: `${activeTeamMeta.color}2e`,
-            }}
-          >
+          <div className="flex items-center gap-2 rounded-md border border-white/15 bg-white/[0.06] px-2.5 py-1.5 shrink-0">
             <Shield
-              className="h-3.5 w-3.5 shrink-0"
-              style={{ color: activeTeamMeta.color }}
+              className="h-3.5 w-3.5 shrink-0 text-white"
               strokeWidth={1.75}
             />
             <div className="flex-1 min-w-0">
@@ -355,7 +360,7 @@ export function FullscreenMapOrchestrator({
         {/* Route confirmation toast */}
         {routeNotification && (
           <div
-            className="bg-[#3ee06b]/15 border border-[#3ee06b]/30 rounded-lg p-3 flex items-center gap-2 shrink-0"
+            className="bg-[var(--color-success)]/15 border border-[var(--color-success)]/30 rounded-lg p-3 flex items-center gap-2 shrink-0"
             style={
               reducedMotion
                 ? undefined
@@ -367,7 +372,7 @@ export function FullscreenMapOrchestrator({
             }
           >
             <CheckCircle2
-              className="w-4 h-4 text-[#3ee06b] shrink-0"
+              className="w-4 h-4 text-[var(--color-success)] shrink-0"
               strokeWidth={1.75}
             />
             <p className="text-[13px] text-white/90 leading-tight">
@@ -376,8 +381,17 @@ export function FullscreenMapOrchestrator({
           </div>
         )}
 
-        {/* Quick filters */}
-        <div className="rounded-lg bg-white/[0.06] border border-white/10 p-3 flex flex-col gap-3">
+        {/* Divider — separates the filter section from whatever renders
+            above it (team banner / route toast, or the panel header when
+            neither is present). Filters are a flat section now, not a
+            nested card, so this hairline is the only separation. */}
+        <div className="border-t border-white/10" />
+
+        {/* Quick filters — flat section inside the panel. No inner card
+            bg/border/radius: the outer LiquidGlassCard IS the panel's one
+            card, nesting a second elevated surface here reads as a
+            vibecoded double-card. */}
+        <div className="p-3 flex flex-col gap-3">
           {/* Team — primary scoping. Hidden in the team view (locked) and the
             resident community view (no team concept). */}
           {!lockedTeam && !readOnly && (
@@ -394,7 +408,7 @@ export function FullscreenMapOrchestrator({
                   id="map-team-select"
                   value={selectedTeam}
                   onChange={(e) => setSelectedTeam(e.target.value as TeamId)}
-                  className="w-full bg-[#232327] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:ring-2 focus:ring-[#4da6ff]/50 cursor-pointer appearance-none pr-8 transition-shadow lg:py-1.5 lg:text-[13px]"
+                  className="w-full bg-[#232327] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:ring-2 focus:ring-white/30 cursor-pointer appearance-none pr-8 transition-shadow lg:py-1.5 lg:text-[13px]"
                 >
                   {TEAM_LIST.map((team) => (
                     <option key={team.id} value={team.id}>
@@ -432,7 +446,7 @@ export function FullscreenMapOrchestrator({
                     (e.target.value as ReportCategory) || null,
                   )
                 }
-                className="w-full bg-[#232327] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:ring-2 focus:ring-[#4da6ff]/50 cursor-pointer appearance-none pr-8 transition-shadow lg:py-1.5 lg:text-[13px]"
+                className="w-full bg-[#232327] rounded-md px-3 py-2 text-base text-white focus:outline-none focus:ring-2 focus:ring-white/30 cursor-pointer appearance-none pr-8 transition-shadow lg:py-1.5 lg:text-[13px]"
               >
                 <option value="">All categories</option>
                 {categoriesList.map((c) => (
@@ -573,16 +587,12 @@ export function FullscreenMapOrchestrator({
                       {report.address}
                     </p>
 
-                    {/* Auto-assigned team chip — gov only; residents don't route. */}
+                    {/* Auto-assigned team chip — gov only; residents don't route.
+                    Outline chip, no team hue: per spec, category/team tokens
+                    encode color only on map data layers + chart series, not
+                    chips — team identity reads from the label text alone here. */}
                     {!readOnly && (
-                      <div
-                        className="inline-flex self-start items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium"
-                        style={{
-                          borderColor: `${ownerTeam.color}aa`,
-                          backgroundColor: `${ownerTeam.color}33`,
-                          color: ownerTeam.color,
-                        }}
-                      >
+                      <div className="inline-flex self-start items-center rounded-[var(--radius-sm)] border border-white/15 bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-white/80">
                         {ownerTeam.shortLabel}
                       </div>
                     )}
@@ -624,11 +634,11 @@ export function FullscreenMapOrchestrator({
                                 report.status === "closed" ||
                                 dispatchingId === report.id
                               }
-                              className="flex-1 py-2.5 bg-[#2a9dff] hover:bg-[#0a84ff] text-white rounded-md text-[12px] flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] lg:py-1.5 lg:min-h-0"
+                              className="flex-1 py-2.5 bg-[#f4f4f5] hover:bg-[#d4d4d8] text-[#131316] rounded-md text-[12px] font-medium flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] lg:py-1.5 lg:min-h-0"
                             >
                               {dispatchingId === report.id ? (
                                 <>
-                                  <span className="w-3 h-3 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                                  <span className="w-3 h-3 rounded-full border-2 border-[#131316]/20 border-t-[#131316] animate-spin" />
                                   Dispatching
                                 </>
                               ) : (
@@ -695,14 +705,13 @@ export function FullscreenMapOrchestrator({
                                       className="flex items-center gap-2 px-2 py-3 text-left text-[12px] text-white hover:bg-white/[0.06] hover:text-white rounded transition-colors min-h-[44px] lg:py-1.5 lg:min-h-0"
                                     >
                                       <span
-                                        className="h-2 w-2 shrink-0 rounded-full"
-                                        style={{ backgroundColor: team.color }}
+                                        className="h-2 w-2 shrink-0 rounded-full bg-white/40"
                                       />
                                       <span className="flex-1 truncate">
                                         {team.shortLabel}
                                       </span>
                                       {isOwner && (
-                                        <span className="text-[10px] text-[#4da6ff] uppercase tracking-wide">
+                                        <span className="text-[10px] text-white/70 uppercase tracking-wide">
                                           Default
                                         </span>
                                       )}
@@ -788,7 +797,7 @@ export function FullscreenMapOrchestrator({
       >
         <ListFilter className="h-5 w-5" strokeWidth={1.75} />
         {filteredReports.length > 0 && (
-          <span className="absolute -top-1 -right-1 h-4 min-w-[1rem] rounded-full bg-[#2a9dff] text-white text-[9px] font-bold flex items-center justify-center px-0.5 tabular-nums">
+          <span className="absolute -top-1 -right-1 h-4 min-w-[1rem] rounded-full bg-[#f4f4f5] text-[#131316] text-[9px] font-bold flex items-center justify-center px-0.5 tabular-nums">
             {filteredReports.length > 99 ? "99+" : filteredReports.length}
           </span>
         )}

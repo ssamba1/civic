@@ -24,14 +24,7 @@ export function TeamHeader({ team, city, accountLabel }: TeamHeaderProps) {
   const Icon = teamIcon(meta.icon);
 
   const badge = (
-    <span
-      className="inline-flex min-w-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-medium"
-      style={{
-        color: meta.color,
-        borderColor: `${meta.color}55`,
-        backgroundColor: `${meta.color}1a`,
-      }}
-    >
+    <span className="inline-flex min-w-0 items-center gap-1.5 rounded-[var(--radius-sm)] border border-hairline bg-overlay px-2.5 py-1 text-[12px] font-medium text-subtle">
       <Icon
         className="h-3.5 w-3.5 shrink-0"
         strokeWidth={2}

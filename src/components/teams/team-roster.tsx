@@ -27,13 +27,26 @@ interface TeamRosterProps {
   onSelectTeam: (teamId: TeamId) => void;
 }
 
+// Mirrors STATUS_PALETTE in workload-bars.tsx (kept byte-identical). Deliberately
+// diverges from lib/status.ts's STATUS_TONE: chips encode status via TEXT
+// (a11y-tuned per-theme fg tokens), this bar encodes status via FILL AREA —
+// different constraint, so a separate local map. Enterprise-gray direction:
+// amber is the only hue (open = the one actionable state); everything else is
+// a gray ramp. dispatched/in_progress are flat, non-theme-adaptive hex rather
+// than var(--subtle)/var(--faint) — those two tokens invert their relative
+// lightness between light and dark (tuned for text contrast against opposite
+// backgrounds, not for fill-vs-fill ordering), so a live var() would render
+// in_progress *darker* than dispatched in dark mode. Flat hex keeps
+// in_progress reliably lighter than dispatched in both themes. closed uses
+// --elevated so resolved work recedes into the surface instead of a "success"
+// color celebrating completion.
 const STATUS_COLORS = {
-  open: "#ff9f0a",
-  dispatched: "var(--color-primary)",
-  in_progress: "#5ac8fa",
-  closed: "#30d158",
-  merged: "#86868b",
-  rejected: "#ff453a",
+  open: "var(--color-warning)",
+  dispatched: "#52525b",
+  in_progress: "#85858c",
+  closed: "var(--elevated)",
+  merged: "var(--color-muted)",
+  rejected: "var(--color-danger)",
 } as const;
 
 function TeamRosterInner({
@@ -81,7 +94,6 @@ function buildTip(w: TeamWorkload) {
     w.total > 0 ? Math.round((w.closedCount / w.total) * 100) : 0;
   return {
     title: team.label,
-    accent: team.color,
     body: (
       <div className="flex flex-col gap-1.5">
         <p className="text-[11px] text-faint leading-snug">{team.duties}</p>
@@ -149,20 +161,13 @@ function TeamCard({
   return (
     <div
       className={cn(
-        "group relative flex flex-col gap-3 rounded-2xl border bg-surface p-4 text-left",
+        "group relative flex flex-col gap-3 rounded-[var(--radius-lg)] border bg-surface p-4 text-left",
         "shadow-[var(--shadow-card)] transition-all duration-150 will-change-transform active:scale-[0.97] motion-reduce:active:scale-100",
         isSelected
-          ? "border-hairline-strong scale-[1.01] motion-reduce:scale-100"
+          ? "border-hairline-strong bg-elevated scale-[1.01] motion-reduce:scale-100"
           : "border-hairline hover:border-hairline-strong",
         isDimmed && "opacity-55",
       )}
-      style={
-        isSelected
-          ? {
-              boxShadow: `0 0 0 1px ${team.color}66, 0 8px 24px ${team.color}22`,
-            }
-          : undefined
-      }
     >
       {/* Primary action — scope the page to this team (local highlight +
           delegation narrowing). Full-bleed and underneath, so any click that
@@ -175,17 +180,14 @@ function TeamCard({
         }}
         aria-pressed={isSelected}
         aria-label={`Scope view to ${team.label}`}
-        className="absolute inset-0 z-0 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="absolute inset-0 z-0 rounded-[var(--radius-lg)] outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         {...tipRest}
       />
 
       {/* Content — non-interactive so clicks fall through to the scope button. */}
       <header className="pointer-events-none relative z-0 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <span
-            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md"
-            style={{ background: `${team.color}1a`, color: team.color }}
-          >
+          <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-elevated text-subtle">
             <Icon className="h-3.5 w-3.5" strokeWidth={2} />
           </span>
           <span className="truncate text-[13.5px] font-medium text-foreground">
@@ -255,7 +257,7 @@ function AddTeamCard({ onClick }: { onClick: () => void }) {
       type="button"
       onClick={onClick}
       className={cn(
-        "group relative flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-4 text-left",
+        "group relative flex flex-col items-center justify-center gap-3 rounded-[var(--radius-lg)] border border-dashed p-4 text-left",
         "border-hairline bg-surface shadow-[var(--shadow-card)]",
         "transition-all duration-150 hover:border-hairline-strong hover:bg-overlay",
         "outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",

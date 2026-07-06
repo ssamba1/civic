@@ -81,9 +81,15 @@ export default function PhotoPreview({
   }, [photo]);
 
   const gpsIndicator: Record<GpsStatus, { label: string; color: string }> = {
-    acquiring: { label: "Getting location...", color: "bg-yellow-400" },
-    found: { label: "Location attached", color: "bg-green-500" },
-    manual: { label: "Enter address below", color: "bg-orange-400" },
+    acquiring: {
+      label: "Getting location...",
+      color: "bg-[var(--color-warning)]",
+    },
+    found: { label: "Location attached", color: "bg-[var(--color-success)]" },
+    manual: {
+      label: "Enter address below",
+      color: "bg-[var(--fg-electric-indigo)]",
+    },
   };
 
   const gps = gpsIndicator[gpsStatus];
@@ -188,7 +194,7 @@ export default function PhotoPreview({
               <div className="flex items-center gap-1.5 text-xs text-faint">
                 <span>Routes to</span>
                 <span
-                  className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-medium"
+                  className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] px-2 py-1 font-medium"
                   style={{
                     background: `${TEAMS[routedTeam].color}1a`,
                     color: TEAMS[routedTeam].color,
@@ -211,9 +217,9 @@ export default function PhotoPreview({
                   type="button"
                   onClick={() => toggleTag(t)}
                   aria-pressed={active}
-                  className={`rounded-full px-3 py-2 text-xs font-medium transition-[color,background-color,border-color,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] motion-safe:active:scale-95 min-h-[44px] flex items-center ${
+                  className={`rounded-[var(--radius-md)] px-3 py-2 text-xs font-medium transition-[color,background-color,border-color,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] motion-safe:active:scale-95 min-h-[44px] flex items-center ${
                     active
-                      ? "bg-[var(--color-primary)] text-white"
+                      ? "bg-[var(--color-primary)] text-[var(--accent-contrast)]"
                       : "border border-hairline-strong text-subtle active:bg-elevated"
                   }`}
                 >
@@ -260,7 +266,7 @@ export default function PhotoPreview({
               type="button"
               onClick={onRetake}
               disabled={submitting}
-              className="flex-1 rounded-full border border-hairline-strong min-h-[56px] text-sm font-semibold text-foreground active:bg-elevated transition-colors disabled:opacity-40"
+              className="flex-1 rounded-[var(--radius-md)] border border-hairline-strong min-h-[56px] text-sm font-semibold text-foreground active:bg-elevated transition-colors disabled:opacity-40"
             >
               Retake
             </button>
@@ -271,11 +277,11 @@ export default function PhotoPreview({
                 onSubmit(description.trim() || null, tags, issueType);
               }}
               disabled={submitting}
-              className="flex-1 rounded-full bg-[var(--color-primary)] min-h-[56px] text-sm font-semibold text-white active:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              className="flex-1 rounded-[var(--radius-md)] bg-[var(--color-primary)] min-h-[56px] text-sm font-semibold text-[var(--accent-contrast)] active:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <>
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span className="w-4 h-4 border-2 border-[var(--accent-contrast)]/30 border-t-[var(--accent-contrast)] rounded-full animate-spin" />
                   Submitting...
                 </>
               ) : (

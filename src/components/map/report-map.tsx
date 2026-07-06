@@ -61,15 +61,25 @@ const STYLE_DARK =
 const STYLE_LIGHT =
   "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
 
+// Enterprise status palette — muted, matches --color-success/warning/danger
+// and --fg-electric-indigo in globals.css (all theme-invariant, so these
+// literals stay correct across light/dark without a theme hook). deck.gl
+// needs plain RGB tuples (no CSS vars on the GPU), so the values are
+// hand-synced to the token hexes: success #3d9a63, warning #c08a1d, danger
+// #cc4638, info slate #5b6b8c (== --fg-electric-indigo). dispatched AND
+// in_progress share the info slate per lib/status.ts STATUS_TONE — both are
+// "routed/active", distinct from the still-unrouted open (warning). Keep the
+// legend swatches below in lockstep — a color changed only here (or only
+// there) desyncs the legend from the map.
 function statusColor(
   status: ReportStatus,
   severity: number,
 ): [number, number, number] {
-  if (status === "closed") return [48, 209, 88];
-  if (status === "dispatched") return [10, 132, 255];
-  if (status === "in_progress") return [90, 200, 250];
-  if (severity >= 4) return [255, 69, 58];
-  return [255, 159, 10];
+  if (status === "closed") return [61, 154, 99]; // success
+  if (status === "dispatched" || status === "in_progress")
+    return [91, 107, 140]; // info slate
+  if (severity >= 4) return [204, 70, 56]; // danger (critical override)
+  return [192, 138, 29]; // warning (open, not yet critical)
 }
 
 /* ------------------------------------------------------------------
@@ -260,14 +270,17 @@ function ReportMapInner({
         radius: 180, // hex radius in meters; tuned for neighborhood-scale bins
         elevationScale: is3D ? 12 : 0,
         getPosition: (r) => [r.location.lng, r.location.lat],
-        // Viridis-ish ramp: low=cool blue, high=hot magenta. Reads as severity-of-density.
+        // Single-hue intensity ramp (muted amber -> danger red) — replaces the
+        // old blue/purple/gold rainbow. Matched to the heatmap colorRange below
+        // and the shared legend swatch so all three density views read as one
+        // family. Low count = amber, high count = danger.
         colorRange: [
-          [10, 132, 255, 140],
-          [90, 200, 250, 180],
-          [191, 90, 242, 210],
-          [255, 159, 10, 230],
-          [255, 69, 58, 245],
-          [255, 215, 0, 255],
+          [173, 132, 52, 140],
+          [186, 111, 47, 180],
+          [196, 91, 46, 205],
+          [204, 70, 56, 225],
+          [204, 70, 56, 240],
+          [204, 70, 56, 255],
         ],
         coverage: 0.9,
         opacity: 0.78,
@@ -297,14 +310,17 @@ function ReportMapInner({
         threshold: 0.02,
         // Bigger weights texture = smoother gradients, less blocky transitions.
         weightsTextureSize: 1024,
-        // matched palette w/ hex layer so the two views feel like one family
+        // Single-hue intensity ramp — transparent -> muted amber #ad8434 ->
+        // danger #cc4638 for hotspots. Replaces the old blue/purple/gold
+        // rainbow; matched to the hex colorRange above and the shared legend
+        // gradient swatch so density reads as one enterprise-muted family.
         colorRange: [
-          [10, 132, 255, 0],
-          [10, 132, 255, 100],
-          [90, 200, 250, 160],
-          [191, 90, 242, 200],
-          [255, 159, 10, 225],
-          [255, 69, 58, 245],
+          [173, 132, 52, 0],
+          [173, 132, 52, 90],
+          [186, 111, 47, 150],
+          [196, 91, 46, 190],
+          [204, 70, 56, 225],
+          [204, 70, 56, 245],
         ],
       });
       return [heat];
@@ -511,7 +527,7 @@ function ReportMapInner({
                     onClick={() => setViewMode(key)}
                     className={`rounded-md py-3 text-[11px] flex items-center justify-center gap-1 transition-all duration-200 min-h-[44px] lg:py-1.5 lg:min-h-0 ${
                       viewMode === key
-                        ? "bg-electric-indigo/20 text-white"
+                        ? "bg-white/15 text-white"
                         : "text-zinc-300 hover:text-white hover:bg-white/5"
                     }`}
                   >
@@ -543,7 +559,7 @@ function ReportMapInner({
                     onClick={() => setMapTheme(t)}
                     className={`rounded-md py-3 text-xs capitalize transition-all min-h-[44px] lg:py-1.5 lg:min-h-0 ${
                       mapTheme === t
-                        ? "bg-electric-indigo/20 text-white"
+                        ? "bg-white/15 text-white"
                         : "text-zinc-300 hover:text-white hover:bg-white/5"
                     }`}
                   >
@@ -570,7 +586,7 @@ function ReportMapInner({
                     type="button"
                     onClick={() => setIs3D(!is3D)}
                     className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors ${
-                      is3D ? "bg-electric-indigo" : "bg-white/10"
+                      is3D ? "bg-white/35" : "bg-white/10"
                     }`}
                     aria-label="Toggle 3D tilt"
                     aria-pressed={is3D}
@@ -620,8 +636,8 @@ function ReportMapInner({
                   <div className="flex flex-col gap-1.5">
                     <div className="flex justify-between text-xs text-zinc-300">
                       <span>Min severity</span>
-                      <span className="text-amber-pulse flex items-center gap-0.5">
-                        <Star className="h-3 w-3 fill-amber-pulse text-amber-pulse" />
+                      <span className="text-white flex items-center gap-0.5">
+                        <Star className="h-3 w-3 fill-white text-white" />
                         {minSeverity}+
                       </span>
                     </div>
@@ -634,7 +650,7 @@ function ReportMapInner({
                       onChange={(e) =>
                         setMinSeverity(Number.parseInt(e.target.value, 10))
                       }
-                      className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-electric-indigo"
+                      className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
                     />
                   </div>
                 )}
@@ -661,7 +677,7 @@ function ReportMapInner({
                           >
                             <span
                               className={`w-1.5 h-1.5 rounded-full ${
-                                isChecked ? "bg-electric-indigo" : "bg-zinc-700"
+                                isChecked ? "bg-white" : "bg-zinc-700"
                               }`}
                             />
                             {STATUS_LABEL[s]}
@@ -703,13 +719,25 @@ function ReportMapInner({
           // removes the visual-colour-only information barrier.
           // biome-ignore lint/a11y/useSemanticElements: role="list" intentional — <ul> applies UA list-style/margin/padding and disallows the interleaved sr-only <p> section labels; flex/gap layout is custom
           <div role="list" aria-label="Map marker legend">
-            {/* Status group */}
+            {/* Status group — order matches STATUS_LABEL/activeStatuses
+                (open, dispatched, in_progress, closed). Dispatched and
+                In progress intentionally share the same slate dot: they
+                share the info tone in lib/status.ts STATUS_TONE, and the
+                label text is what distinguishes them, not hue. */}
             <p className="sr-only">Status</p>
             {/* biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling */}
             <div role="listitem" className="flex items-center gap-2">
               <span
                 aria-hidden="true"
-                className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)]"
+                className="w-1.5 h-1.5 rounded-full bg-[var(--color-warning)]"
+              />
+              Open
+            </div>
+            {/* biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling */}
+            <div role="listitem" className="flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="w-1.5 h-1.5 rounded-full bg-[var(--fg-electric-indigo)]"
               />
               Dispatched
             </div>
@@ -717,17 +745,17 @@ function ReportMapInner({
             <div role="listitem" className="flex items-center gap-2">
               <span
                 aria-hidden="true"
-                className="w-1.5 h-1.5 rounded-full bg-[#30d158]"
+                className="w-1.5 h-1.5 rounded-full bg-[var(--fg-electric-indigo)]"
               />
-              Resolved
+              In progress
             </div>
             {/* biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling */}
             <div role="listitem" className="flex items-center gap-2">
               <span
                 aria-hidden="true"
-                className="w-1.5 h-1.5 rounded-full bg-[#ff9f0a]"
+                className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)]"
               />
-              In progress
+              Resolved
             </div>
             {/* Severity override — open reports with severity ≥4 render red
                 regardless of status; separate label prevents confusion with
@@ -737,7 +765,7 @@ function ReportMapInner({
             <div role="listitem" className="flex items-center gap-2">
               <span
                 aria-hidden="true"
-                className="w-1.5 h-1.5 rounded-full bg-[#ff453a]"
+                className="w-1.5 h-1.5 rounded-full bg-[var(--color-danger)]"
               />
               Critical (sev 4–5)
             </div>
@@ -748,7 +776,10 @@ function ReportMapInner({
               {viewMode === "hex" ? "Reports per hex" : "Density"}
             </div>
             <div className="flex items-center gap-2">
-              <span className="inline-block h-2 w-20 rounded-sm bg-gradient-to-r from-[var(--color-primary)] via-[#bf5af2] via-[#ff9f0a] to-[#ffd700]" />
+              {/* Same amber -> danger family as the hex/heatmap colorRange
+                  above — low density fades in as faint amber, high density
+                  reads as danger red. */}
+              <span className="inline-block h-2 w-20 rounded-sm bg-gradient-to-r from-[#ad8434]/25 via-[#ad8434] to-[#cc4638]" />
             </div>
             <div className="flex items-center justify-between text-[10.5px] text-zinc-400 -mt-0.5">
               <span>Low</span>

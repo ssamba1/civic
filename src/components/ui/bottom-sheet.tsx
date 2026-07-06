@@ -81,7 +81,7 @@ export default function BottomSheet({
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "relative max-h-[85dvh] w-full overflow-y-auto rounded-t-2xl border-t border-[var(--color-border)] bg-[var(--color-surface)] pb-safe shadow-[0_-8px_40px_rgba(0,0,0,0.25)] outline-none custom-scrollbar",
+          "relative max-h-[85dvh] w-full overflow-y-auto rounded-t-[var(--radius-lg)] border-t border-[var(--color-border)] bg-[var(--color-surface)] pb-safe shadow-[0_-8px_40px_rgba(0,0,0,0.25)] outline-none custom-scrollbar",
           "animate-[sheet-up_0.32s_cubic-bezier(0.16,1,0.3,1)] motion-reduce:animate-none",
           className,
         )}
@@ -104,7 +104,7 @@ export default function BottomSheet({
                 type="button"
                 aria-label="Close"
                 onClick={onClose}
-                className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors active:bg-black/5 dark:active:bg-white/10"
+                className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-muted)] transition-colors hover:text-[var(--color-foreground)] active:bg-overlay"
               >
                 <X className="h-5 w-5" />
               </button>

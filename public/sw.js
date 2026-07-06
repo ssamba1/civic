@@ -1,4 +1,7 @@
-const CACHE_NAME = "civic-v1";
+// v2: purge v1 caches on activate — v1 was installed by dev browsers (dev now
+// unregisters instead of registering, see layout.tsx) and cached non-hashed
+// dev chunks cache-first, freezing those browsers on stale bundles.
+const CACHE_NAME = "civic-v2";
 const STATIC_ASSETS = ["/", "/offline", "/manifest.json"];
 
 // Install: pre-cache shell

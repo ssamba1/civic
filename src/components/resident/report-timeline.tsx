@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils/cn";
    resolved) returned by getReportTimeline. Each step shows its stage
    icon, label, and an absolute timestamp (or "Pending" when the stage
    hasn't happened yet). State styling:
-     done     → filled accent (#0a84ff), resolved step green (#30d158)
+     done     → filled ink accent, resolved step muted success green
      current  → highlighted ring around the node
      future   → muted
    A connector line joins consecutive nodes; it lights up to accent
@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils/cn";
    ================================================================== */
 
 const ACCENT = "var(--color-primary)";
-const RESOLVED = "#30d158";
+const RESOLVED = "var(--color-success)";
 
 const STAGE_ICON: Record<TimelineStep["stage"], LucideIcon> = {
   filed: FileText,
@@ -112,7 +112,11 @@ export function ReportTimeline({ steps }: { steps: TimelineStep[] }) {
               <Icon
                 className={cn(
                   "h-5 w-5 sm:h-4 sm:w-4",
-                  step.done ? "text-black/80" : "text-faint",
+                  step.done
+                    ? isResolved
+                      ? "text-white"
+                      : "text-[var(--accent-contrast)]"
+                    : "text-faint",
                 )}
                 strokeWidth={2}
               />

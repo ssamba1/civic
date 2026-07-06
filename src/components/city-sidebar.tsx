@@ -121,11 +121,21 @@ export function CitySidebar({
           <SidebarWhenExpanded>
             <div className="flex flex-col gap-2">
               {reportBtn(false)}
-              <div className="flex flex-wrap items-center gap-1.5">
-                <ViewSwitch citySlug={slug} />
-                <EnvSwitch />
-                <ThemeToggle />
-                {DEMO_MODE && <NavRefreshButton />}
+              <div className="flex flex-col gap-2 border-t border-hairline pt-2.5">
+                {/* User|City segment — full-width row, segments split evenly */}
+                <div className="flex h-8 w-full items-center [&>div]:h-8 [&>div]:w-full [&_a]:h-full [&_a]:flex-1">
+                  <ViewSwitch citySlug={slug} />
+                </div>
+                {/* Deployment switch + theme toggle — share one row */}
+                <div className="flex h-8 w-full items-center gap-2 [&>a]:h-full [&>a]:flex-1 [&>a]:justify-center">
+                  <EnvSwitch />
+                  <ThemeToggle className="h-8 w-8 shrink-0" />
+                </div>
+                {DEMO_MODE && (
+                  <div className="flex h-8 w-full items-center [&>button]:h-full [&>button]:w-full [&>button]:justify-center">
+                    <NavRefreshButton />
+                  </div>
+                )}
               </div>
             </div>
           </SidebarWhenExpanded>

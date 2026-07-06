@@ -41,8 +41,7 @@ export default async function TeamOverviewPage({ params }: PageProps) {
         <section className="mb-5">
           <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.08em] text-faint">
             <span
-              className="h-1.5 w-1.5 rounded-full"
-              style={{ backgroundColor: meta.color }}
+              className="h-1.5 w-1.5 rounded-full bg-faint"
               aria-hidden="true"
             />
             {known.name}, {known.state} · {meta.shortLabel}

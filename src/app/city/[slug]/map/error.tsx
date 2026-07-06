@@ -9,14 +9,14 @@ export default function MapError({
 }) {
   return (
     <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-center px-4">
-      <p className="text-sm font-medium text-zinc-400">Map failed to load.</p>
+      <p className="text-sm font-medium text-subtle">Map failed to load.</p>
       {error.digest && (
-        <p className="text-xs text-zinc-600">Ref: {error.digest}</p>
+        <p className="text-xs text-faint">Ref: {error.digest}</p>
       )}
       <button
         type="button"
         onClick={reset}
-        className="rounded-full bg-[var(--color-primary)] px-5 py-2 text-[14px] font-medium text-white transition-colors hover:bg-[#0070e0]"
+        className="rounded-[var(--radius-md)] bg-[var(--accent)] px-5 py-2 text-[14px] font-medium text-[var(--accent-contrast)] transition-colors hover:bg-[var(--color-primary-hover)]"
       >
         Try again
       </button>

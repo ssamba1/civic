@@ -66,7 +66,7 @@ function ColoredStat({
       <p className="text-[11px] text-faint uppercase tracking-wider">{label}</p>
       <p
         className="text-[22px] font-semibold tracking-tight tabular-nums mt-1 leading-none"
-        style={{ color: valueColor ?? "#ffffff" }}
+        style={{ color: valueColor ?? "var(--foreground)" }}
       >
         {value}
       </p>
@@ -78,23 +78,23 @@ function ColoredStat({
 function TeamChip({ teamId }: { teamId: TeamId }) {
   const meta = TEAMS[teamId];
   return (
-    <span
-      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px]"
-      style={{ background: `${meta.color}22`, color: meta.color }}
-    >
+    <span className="inline-flex items-center gap-1 rounded bg-overlay px-1.5 py-0.5 text-[10px] text-foreground">
       {meta.shortLabel}
     </span>
   );
 }
 
+// Event *kind* is a state/action encoding (created/dispatched/…), not a
+// team/category identity, so it keeps hue — mirrors lib/status.ts's tone
+// table with the old bright Apple hues swapped for the muted enterprise set.
 const EVENT_DOT_COLOR: Record<TimelineEvent["kind"], string> = {
   created: "var(--color-primary)",
-  dispatched: "#5ac8fa",
-  reassigned: "#ff9f0a",
-  in_progress: "#5ac8fa",
-  resolved: "#30d158",
-  merged: "#a78bfa",
-  rejected: "#ff453a",
+  dispatched: "#5b6b8c",
+  reassigned: "var(--color-warning)",
+  in_progress: "#5b6b8c",
+  resolved: "var(--color-success)",
+  merged: "var(--color-muted)",
+  rejected: "var(--color-danger)",
 };
 
 function EventIcon({ kind }: { kind: TimelineEvent["kind"] }) {
@@ -255,7 +255,12 @@ function DelegationRowExpandedInner({
   const ageHours = (Date.now() - Date.parse(report.created_at)) / 3_600_000;
   const target = CATEGORY_SLA_TARGETS[report.category];
   const pct = Math.round((ageHours / target) * 100);
-  const slaColor = pct > 100 ? "#ff453a" : pct >= 60 ? "#ff9f0a" : "#30d158";
+  const slaColor =
+    pct > 100
+      ? "var(--color-danger)"
+      : pct >= 60
+        ? "var(--color-warning)"
+        : "var(--color-success)";
 
   const currency = useCurrency();
   const estCost = 12 + report.severity * 18;

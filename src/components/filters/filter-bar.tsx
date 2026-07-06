@@ -218,12 +218,16 @@ function MenuRow({
   );
 }
 
-const SEV_COLOR: Record<number, string> = {
-  1: "#34c759",
-  2: "#a3e635",
-  3: "#ff9f0a",
-  4: "#ff6b22",
-  5: "#ff453a",
+// Severity is a filter control here, not a per-record status field — a
+// 5-color rainbow would be decorative. Neutralized to a single foreground
+// hue ramped by opacity, so the row still reads low→high at a glance without
+// inventing a hue vocabulary chrome doesn't otherwise use.
+const SEV_SHADE: Record<number, number> = {
+  1: 0.25,
+  2: 0.4,
+  3: 0.55,
+  4: 0.7,
+  5: 1,
 };
 
 function TeamRow({
@@ -245,10 +249,9 @@ function TeamRow({
         selected ? "bg-overlay-strong" : "hover:bg-overlay",
       )}
     >
-      <span
-        className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-inset ring-hairline-strong"
-        style={{ backgroundColor: team.color }}
-      />
+      {/* Team identity no longer carries hue (chrome is grayscale) — a plain
+          faint bullet keeps the list's scan rhythm. */}
+      <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-faint ring-1 ring-inset ring-hairline-strong" />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span
           className={cn(
@@ -349,24 +352,13 @@ export function FilterBar() {
                 className={cn(
                   "inline-flex h-8 items-center gap-1.5 rounded-[10px] border px-2.5 text-[12px] font-medium transition-colors",
                   teamScoped
-                    ? "border-hairline-strong text-white"
+                    ? "border-hairline-strong bg-overlay-strong text-foreground"
                     : "border-hairline bg-overlay text-subtle hover:border-hairline-strong hover:text-foreground",
                   open && "border-hairline-strong",
                 )}
-                style={
-                  teamScoped
-                    ? {
-                        backgroundColor: `${activeTeam.color}1f`,
-                        borderColor: `${activeTeam.color}66`,
-                      }
-                    : undefined
-                }
               >
                 {teamScoped ? (
-                  <Shield
-                    className="h-3.5 w-3.5"
-                    style={{ color: activeTeam.color }}
-                  />
+                  <Shield className="h-3.5 w-3.5 text-foreground" />
                 ) : (
                   <Users className="h-3.5 w-3.5 text-subtle" />
                 )}
@@ -512,8 +504,8 @@ export function FilterBar() {
                     onClick={() => patch({ minSeverity: s })}
                   >
                     <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: SEV_COLOR[s] }}
+                      className="h-2 w-2 rounded-full bg-foreground"
+                      style={{ opacity: SEV_SHADE[s] }}
                     />
                     <span className="flex-1">
                       {s}+{" "}
@@ -607,10 +599,10 @@ export function FilterBar() {
                         patch({ categories: toggle(filter.categories, cat) })
                       }
                     >
-                      <span
-                        className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-inset ring-hairline-strong"
-                        style={{ backgroundColor: meta.color }}
-                      />
+                      {/* Category dot is grayscale here — chips/menus are
+                          chrome, not a map layer/chart series, so the glyph +
+                          label carry the identity, not hue. */}
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-faint ring-1 ring-inset ring-hairline-strong" />
                       {meta.label}
                     </MenuRow>
                   ))}
@@ -619,7 +611,7 @@ export function FilterBar() {
             )}
           </Popover>
 
-          {/* ---- Active category chips (colored) + reset ---- */}
+          {/* ---- Active category chips + reset ---- */}
           <div className="ml-auto flex flex-wrap items-center gap-1.5">
             {filter.categories.map((cat) => {
               const meta = CATEGORY_META[cat];
@@ -630,19 +622,12 @@ export function FilterBar() {
                   onClick={() =>
                     patch({ categories: toggle(filter.categories, cat) })
                   }
-                  className="group inline-flex h-7 items-center gap-1.5 rounded-full border px-2 text-[11px] font-medium text-white transition-[colors,transform] active:scale-95 active:opacity-70 motion-reduce:active:scale-100"
-                  style={{
-                    borderColor: `${meta.color}66`,
-                    backgroundColor: `${meta.color}1f`,
-                  }}
+                  className="group inline-flex h-7 items-center gap-1.5 rounded-[var(--radius-md)] border border-hairline-strong bg-overlay-strong px-2 text-[11px] font-medium text-foreground transition-[colors,transform] active:scale-95 active:opacity-70 motion-reduce:active:scale-100"
                   title={`Remove ${meta.label}`}
                 >
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: meta.color }}
-                  />
+                  <span className="h-2 w-2 rounded-full bg-faint" />
                   {meta.label}
-                  <X className="h-3 w-3 text-white/60 group-hover:text-white" />
+                  <X className="h-3 w-3 text-faint group-hover:text-foreground" />
                 </button>
               );
             })}
@@ -651,7 +636,7 @@ export function FilterBar() {
               <button
                 type="button"
                 onClick={reset}
-                className="inline-flex h-7 items-center gap-1 rounded-full border border-hairline bg-overlay px-2.5 text-[11px] font-medium text-subtle transition-colors hover:border-[#ff9f0a]/40 hover:text-[#ff9f0a]"
+                className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-md)] border border-hairline bg-overlay px-2.5 text-[11px] font-medium text-subtle transition-colors hover:border-hairline-strong hover:text-foreground"
               >
                 <X className="h-3 w-3" />
                 Reset
@@ -812,23 +797,14 @@ export function FilterBar() {
                   className={cn(
                     "flex min-h-11 flex-col items-center justify-center gap-1 rounded-[10px] border py-2 text-[13px] font-medium transition-colors",
                     filter.minSeverity === s
-                      ? "border-transparent text-white"
+                      ? "border-hairline-strong bg-overlay-strong text-foreground"
                       : "border-hairline bg-overlay text-subtle",
                   )}
-                  style={
-                    filter.minSeverity === s
-                      ? {
-                          backgroundColor: `${SEV_COLOR[s]}30`,
-                          borderColor: `${SEV_COLOR[s]}60`,
-                          color: SEV_COLOR[s],
-                        }
-                      : undefined
-                  }
                   aria-label={`Severity ${s}${s === 1 ? " (all)" : " and above"}`}
                 >
                   <span
-                    className="h-2.5 w-2.5 rounded-full"
-                    style={{ backgroundColor: SEV_COLOR[s] }}
+                    className="h-2.5 w-2.5 rounded-full bg-foreground"
+                    style={{ opacity: SEV_SHADE[s] }}
                     aria-hidden
                   />
                   {s}+
@@ -894,8 +870,7 @@ export function FilterBar() {
                   }
                 >
                   <span
-                    className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-inset ring-hairline-strong"
-                    style={{ backgroundColor: meta.color }}
+                    className="h-2.5 w-2.5 shrink-0 rounded-full bg-faint ring-1 ring-inset ring-hairline-strong"
                     aria-hidden
                   />
                   {meta.label}

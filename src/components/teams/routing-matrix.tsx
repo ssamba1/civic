@@ -60,7 +60,7 @@ function RoutingMatrixInner() {
 
   return (
     <Tile title="Default routing" subtitle={subtitleParts.join(" · ")}>
-      <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+      <ul className="grid grid-cols-1 gap-1">
         {rows.map(
           ({ category, meta, defaultTeam, effectiveTeam, isOverridden }) => (
             <li
@@ -72,11 +72,12 @@ function RoutingMatrixInner() {
             >
               <span className="inline-flex flex-1 min-w-0 items-center gap-2 text-subtle">
                 <span
-                  className="h-2 w-2 flex-shrink-0 rounded-full"
-                  style={{ background: meta.color }}
+                  className="h-2 w-2 flex-shrink-0 rounded-full bg-faint"
                   aria-hidden
                 />
-                <span className="truncate">{meta.label}</span>
+                <span className="truncate" title={meta.label}>
+                  {meta.label}
+                </span>
                 {isOverridden && (
                   <span className="flex-shrink-0 rounded-sm bg-[var(--status-warning-fg)]/15 px-1 text-[9px] uppercase tracking-wider text-[var(--status-warning-fg)]">
                     re-routed
@@ -125,11 +126,12 @@ function RoutingMatrixInner() {
           <li key={c.id} className={li}>
             <span className="inline-flex flex-1 min-w-0 items-center gap-2 text-subtle">
               <span
-                className="h-2 w-2 flex-shrink-0 rounded-full"
-                style={{ background: c.color }}
+                className="h-2 w-2 flex-shrink-0 rounded-full bg-faint"
                 aria-hidden
               />
-              <span className="truncate">{c.label}</span>
+              <span className="truncate" title={c.label}>
+                {c.label}
+              </span>
               <span className="flex-shrink-0 rounded-sm bg-overlay-strong px-1 text-[9px] uppercase tracking-wider text-faint">
                 custom
               </span>
@@ -154,7 +156,7 @@ function RoutingMatrixInner() {
                 onClick={() => removeCustomCategory(c.id)}
                 title="Remove issue type"
                 aria-label={`Remove ${c.label} issue type`}
-                className="inline-flex h-11 w-11 sm:h-6 sm:w-6 flex-shrink-0 items-center justify-center rounded text-faint transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+                className="inline-flex h-11 w-11 sm:h-6 sm:w-6 flex-shrink-0 items-center justify-center rounded text-faint transition-colors hover:bg-[var(--color-danger)]/10 hover:text-[var(--status-danger-fg)]"
               >
                 <Trash2 className="h-3 w-3" strokeWidth={2} />
               </button>

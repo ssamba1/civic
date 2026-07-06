@@ -22,12 +22,10 @@ import { timeAgo } from "@/lib/utils/time-ago";
    ================================================================== */
 
 const MAX_ROWS = 7;
-const REPORT_ACCENT = "#5ac8fa";
 
 interface FeedEntry {
   id: string;
   subject: string;
-  subjectColor: string;
   badge: "category" | "report";
   from: string;
   to: string;
@@ -47,7 +45,6 @@ function RoutingChangesLogInner() {
         out.push({
           id: `c-${e.category}-${e.ts}`,
           subject: meta?.label ?? e.category,
-          subjectColor: meta?.color ?? "#737373",
           badge: "category",
           from: e.from,
           to: e.to,
@@ -61,7 +58,6 @@ function RoutingChangesLogInner() {
         out.push({
           id: `r-${reportId}-${e.ts}`,
           subject: `#${reportId}`,
-          subjectColor: REPORT_ACCENT,
           badge: "report",
           from: e.from,
           to: e.to,
@@ -113,8 +109,7 @@ function RoutingChangesLogInner() {
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="flex min-w-0 items-center gap-2 text-[13px] text-foreground">
                       <span
-                        className="h-2 w-2 flex-shrink-0 rounded-full"
-                        style={{ background: e.subjectColor }}
+                        className="h-2 w-2 flex-shrink-0 rounded-full bg-faint"
                         aria-hidden
                       />
                       <span className="truncate">{e.subject}</span>
@@ -131,8 +126,7 @@ function RoutingChangesLogInner() {
                   <div className="flex items-center gap-1.5 pl-4 text-[11px] text-faint">
                     <span className="inline-flex min-w-0 items-center gap-1">
                       <span
-                        className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
-                        style={{ background: fromTeam?.color ?? "#737373" }}
+                        className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-faint"
                         aria-hidden
                       />
                       <span className="truncate">
@@ -146,8 +140,7 @@ function RoutingChangesLogInner() {
                     />
                     <span className="inline-flex min-w-0 items-center gap-1 text-subtle">
                       <span
-                        className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
-                        style={{ background: toTeam?.color ?? "#737373" }}
+                        className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-faint"
                         aria-hidden
                       />
                       <span className="truncate">

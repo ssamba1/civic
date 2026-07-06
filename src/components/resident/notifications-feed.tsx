@@ -17,10 +17,10 @@ import { timeAgo } from "@/lib/utils/time-ago";
 
 /* ------------------------------------------------------------------
    Resident updates feed — status changes on the resident's own
-   reports plus city-wide announcements. Reuses the Apple-dark tokens
-   (card #1c1c1e, white/[0.06] hairlines, status tones). Unread rows
-   carry an accent dot + a subtle bg wash; tapping a report-linked row
-   marks it read and routes into the report detail.
+   reports plus city-wide announcements. Uses the shared surface/hairline
+   tokens and status tones. Unread rows carry an ink dot + a subtle bg
+   wash; tapping a report-linked row marks it read and routes into the
+   report detail.
    ------------------------------------------------------------------ */
 
 type FeedFilter = "all" | "unread";
@@ -30,14 +30,16 @@ const FILTER_OPTIONS: { value: FeedFilter; label: string }[] = [
   { value: "unread", label: "Unread" },
 ];
 
+// color is set only when the type IS a status (resolved/status update) —
+// the one place hue is warranted here. Announcement/comment stay grayscale.
 const TYPE_META: Record<
   NotificationItem["type"],
-  { icon: LucideIcon; color: string }
+  { icon: LucideIcon; color?: string }
 > = {
-  resolved: { icon: CheckCircle2, color: "#30d158" },
-  status: { icon: Activity, color: "#0a84ff" },
-  announcement: { icon: Megaphone, color: "#ff9f0a" },
-  comment: { icon: MessageSquare, color: "#5ac8fa" },
+  resolved: { icon: CheckCircle2, color: "#3d9a63" },
+  status: { icon: Activity, color: "#5b6b8c" },
+  announcement: { icon: Megaphone },
+  comment: { icon: MessageSquare },
 };
 
 export function NotificationsFeed({
@@ -119,13 +121,13 @@ export function NotificationsFeed({
   // may always pass an array, in which case this branch is dormant.
   if (loadFailed) {
     return (
-      <section className="rounded-[14px] border border-hairline bg-surface shadow-[var(--shadow-card)]">
+      <section className="rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-card)]">
         <div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
           <p className="text-[13px] text-subtle">Couldn&apos;t load updates.</p>
           <button
             type="button"
             onClick={() => router.refresh()}
-            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-hairline bg-overlay px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-overlay-strong"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-[var(--radius-md)] border border-hairline bg-overlay px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-overlay-strong"
           >
             <RotateCw
               className="h-3.5 w-3.5"
@@ -140,7 +142,7 @@ export function NotificationsFeed({
   }
 
   return (
-    <section className="rounded-[14px] border border-hairline bg-surface shadow-[var(--shadow-card)]">
+    <section className="rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-card)]">
       <header className="flex items-center justify-between gap-3 px-4 py-3 border-b border-hairline">
         <PillGroup
           options={FILTER_OPTIONS}
@@ -154,10 +156,10 @@ export function NotificationsFeed({
           className={cn(
             "flex min-h-[44px] items-center gap-1 text-[12px] transition-colors",
             marked
-              ? "text-[#30d158] cursor-default"
+              ? "text-[var(--status-success-fg)] cursor-default"
               : unreadCount === 0
                 ? "text-faint cursor-default"
-                : "text-[var(--color-primary)] hover:text-[#3b9dff]",
+                : "text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]",
           )}
         >
           {marked ? (
@@ -206,13 +208,16 @@ export function NotificationsFeed({
                   )}
                 >
                   <span
-                    className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
-                    style={{ background: `${meta.color}1f` }}
+                    className={cn(
+                      "mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg",
+                      !meta.color && "bg-elevated",
+                    )}
+                    style={meta.color ? { background: `${meta.color}1f` } : undefined}
                   >
                     <Icon
-                      className="h-4 w-4"
+                      className={cn("h-4 w-4", !meta.color && "text-subtle")}
                       strokeWidth={2}
-                      style={{ color: meta.color }}
+                      style={meta.color ? { color: meta.color } : undefined}
                     />
                   </span>
 

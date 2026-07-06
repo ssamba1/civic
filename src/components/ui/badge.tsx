@@ -3,19 +3,18 @@ import type * as React from "react";
 import { cn } from "@/lib/utils/cn";
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-[11px] font-medium uppercase tracking-[0.12em]",
+  "inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-hairline bg-overlay px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.08em]",
   {
     variants: {
-      // Soft-tinted chip pattern: no border, just a quiet fill + theme-aware
-      // text color so each variant clears AA on both light and dark surfaces.
+      // Outline chip: quiet overlay fill + hairline border, in both themes. For
+      // status variants a 6px dot carries the hue while the label stays in the
+      // AA-tuned --status-*-fg token. Replaces the old solid/tinted pill fills.
       variant: {
-        default: "bg-overlay text-subtle",
-        success: "bg-accent-soft text-accent-text",
-        warning:
-          "bg-[color-mix(in_srgb,var(--fg-amber-pulse)_12%,transparent)] text-[var(--status-warning-fg)]",
-        danger:
-          "bg-[color-mix(in_srgb,var(--fg-neon-coral)_12%,transparent)] text-[var(--status-danger-fg)]",
-        info: "bg-[color-mix(in_srgb,var(--fg-electric-indigo)_12%,transparent)] text-[var(--status-info-fg)]",
+        default: "text-subtle",
+        success: "text-[var(--status-success-fg)]",
+        warning: "text-[var(--status-warning-fg)]",
+        danger: "text-[var(--status-danger-fg)]",
+        info: "text-[var(--status-info-fg)]",
       },
     },
     defaultVariants: {
@@ -24,13 +23,30 @@ const badgeVariants = cva(
   },
 );
 
+// Dot fill per status variant — the single spot of hue on an otherwise
+// grayscale chip. success/warning/danger use the muted status FILL tokens;
+// info uses the same slate-blue as the status.ts info tint (a state signal,
+// not Apple blue).
+const DOT_FILL: Record<string, string> = {
+  success: "bg-[var(--color-success)]",
+  warning: "bg-[var(--color-warning)]",
+  danger: "bg-[var(--color-danger)]",
+  info: "bg-[#5b6b8c]",
+};
+
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLSpanElement>,
     VariantProps<typeof badgeVariants> {}
 
-export function Badge({ className, variant, ...props }: BadgeProps) {
+export function Badge({ className, variant, children, ...props }: BadgeProps) {
+  const dot = variant && variant !== "default" ? DOT_FILL[variant] : null;
   return (
-    <span className={cn(badgeVariants({ variant }), className)} {...props} />
+    <span className={cn(badgeVariants({ variant }), className)} {...props}>
+      {dot ? (
+        <span aria-hidden className={cn("size-1.5 rounded-full", dot)} />
+      ) : null}
+      {children}
+    </span>
   );
 }
 

@@ -394,9 +394,9 @@ export function TipChip({
 }) {
   const toneClass = {
     neutral: "bg-overlay-strong text-subtle",
-    good: "bg-[#30d158]/15 text-[#30d158]",
-    bad: "bg-[#ff453a]/15 text-[#ff453a]",
-    warn: "bg-[#ff9f0a]/15 text-[#ff9f0a]",
+    good: "bg-[var(--color-success)]/15 text-[var(--status-success-fg)]",
+    bad: "bg-[var(--color-danger)]/15 text-[var(--status-danger-fg)]",
+    warn: "bg-[var(--color-warning)]/15 text-[var(--status-warning-fg)]",
   }[tone];
   return (
     <span

@@ -142,7 +142,7 @@ export function ReportsExplorer({
           aria-label="Reports explorer"
           className={cn(
             "absolute inset-2 sm:inset-4 lg:inset-6 flex flex-col overflow-hidden text-foreground",
-            "rounded-2xl border border-hairline bg-surface",
+            "rounded-[var(--radius-lg)] border border-hairline bg-surface",
             "shadow-[var(--shadow-pop)]",
             "origin-top-right animate-in fade-in zoom-in-95 duration-300 motion-reduce:animate-none",
           )}

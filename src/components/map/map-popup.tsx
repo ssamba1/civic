@@ -21,14 +21,30 @@ function esc(str: string | null | undefined): string {
 
 // Raw hex per status — this popup is a static HTML string (innerHTML, not
 // JSX), so it can't use Tailwind chip classes; canonical @/lib/status only
-// exports class strings, not hex values, so the color map stays local.
+// exports class strings, not hex values, so the color map stays local. The
+// popup card is a fixed-dark surface (part of the always-dark map canvas,
+// independent of the app's light/dark theme), so these reference the
+// theme-invariant muted status FILL tokens (--color-success/warning —
+// identical in :root and .dark per globals.css) rather than the AA-tuned
+// --status-*-fg text tokens, which are tuned per-theme and would go the
+// wrong direction on this always-dark card.
+//
+// Hue mapping mirrors report-map.tsx's statusColor() (marker/legend
+// vocabulary): closed=success, dispatched/in_progress=info slate (both share
+// the info tone in lib/status.ts STATUS_TONE), open=warning. warning
+// (5.6:1) and success (4.9:1) clear AA as text on the popup's #1c1c1e skin;
+// the slate fill #5b6b8c does not (3.2:1), so dispatched AND in_progress use
+// the lightness-lifted slate #9db0d3 shared with fullscreen-map's
+// STATUS_TEXT_COLOR (7.8:1 here). merged/rejected keep their neutral/danger
+// reads — both statuses are excluded from every map status filter, so they
+// never actually reach this popup.
 const STATUS_COLOR: Record<ReportStatus, string> = {
-  open: "#ff9f0a",
-  dispatched: "var(--color-primary)",
-  in_progress: "#5ac8fa",
-  closed: "#30d158",
+  open: "var(--color-warning)",
+  dispatched: "#9db0d3",
+  in_progress: "#9db0d3",
+  closed: "var(--color-success)",
   merged: "#86868b",
-  rejected: "#ff453a",
+  rejected: "var(--color-danger)",
 };
 
 function formatExactDate(iso: string): string {
@@ -135,7 +151,9 @@ export function renderPopupHTML(
         />
         ${
           isDemo
-            ? `<span style="position:absolute;top:10px;left:10px;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;background:rgba(10,132,255,0.95);color:#ffffff;font-size:11px;font-weight:600;letter-spacing:0.02em;box-shadow:0 1px 6px rgba(10,132,255,0.5);"><span style="width:6px;height:6px;border-radius:999px;background:#ffffff;"></span>Live</span>`
+            ? // Presenter "just injected" marker — neutral (was an Apple-blue
+              // glow pill); it's a decorative highlight, not a status value.
+              `<span style="position:absolute;top:10px;left:10px;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,0.16);color:#ffffff;font-size:11px;font-weight:600;letter-spacing:0.02em;box-shadow:0 1px 4px rgba(0,0,0,0.35);"><span style="width:6px;height:6px;border-radius:999px;background:#ffffff;"></span>Live</span>`
             : ""
         }
       </div>

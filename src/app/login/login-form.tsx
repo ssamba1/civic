@@ -140,27 +140,18 @@ export default function LoginForm() {
           .lf-expand { transition: none; }
         }
       `}</style>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.35]"
-        style={{
-          background:
-            "radial-gradient(800px 500px at 50% -10%, rgba(10,132,255,0.25), transparent 60%), radial-gradient(600px 400px at 10% 110%, rgba(90,200,250,0.18), transparent 60%)",
-        }}
-      />
-
       <Link
         href="/"
         className="lf-logo relative z-10 mb-6 sm:mb-10 flex items-center gap-2 text-2xl font-semibold tracking-tight"
       >
-        <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-primary)] text-white shadow-[0_8px_24px_-8px_rgba(10,132,255,0.6)]">
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] bg-[var(--accent)] text-[var(--accent-contrast)]">
           <MapPin className="h-5 w-5" />
         </span>
         Civic
       </Link>
 
       <div className="relative z-10 w-full max-w-[400px]">
-        <div className="lf-card rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)]/60 p-5 sm:p-7 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+        <div className="lf-card rounded-[var(--radius-lg)] border border-hairline bg-surface p-5 sm:p-7">
           <div className="flex items-center justify-between">
             <div key={mode} className="lf-fade-down">
               <h1 className="text-[22px] font-semibold tracking-tight">
@@ -201,7 +192,7 @@ export default function LoginForm() {
             type="button"
             onClick={handleGoogle}
             disabled={anyBusy}
-            className={`mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-full border border-[var(--color-border)] bg-white px-4 text-[14px] font-medium text-zinc-900 shadow-sm transition-all hover:shadow-md motion-safe:hover:-translate-y-[1px] active:translate-y-0 disabled:hover:translate-y-0 dark:bg-white dark:text-zinc-900 ${
+            className={`mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-[var(--radius-md)] border border-hairline bg-white px-4 text-[14px] font-medium text-zinc-900 shadow-sm transition-all hover:shadow-md motion-safe:hover:-translate-y-[1px] active:translate-y-0 disabled:hover:translate-y-0 dark:bg-white dark:text-zinc-900 ${
               busy === "google" ? "opacity-70" : "disabled:opacity-50"
             }`}
           >
@@ -228,7 +219,7 @@ export default function LoginForm() {
               type="button"
               onClick={() => setShowEmail(true)}
               disabled={anyBusy}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-[var(--color-border)] bg-transparent text-[13.5px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--color-primary-light)] disabled:opacity-50"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-md)] border border-hairline-strong bg-transparent text-[13.5px] font-medium text-foreground transition-colors hover:bg-overlay disabled:opacity-50"
             >
               <Mail className="h-4 w-4" />
               Continue with email
@@ -278,13 +269,13 @@ export default function LoginForm() {
                 <button
                   type="submit"
                   disabled={anyBusy}
-                  className={`group mt-1 flex h-12 w-full items-center justify-center gap-1.5 rounded-full bg-[var(--color-primary)] text-[14px] font-semibold text-white shadow-[0_10px_30px_-10px_rgba(10,132,255,0.7)] transition-all hover:bg-[var(--color-primary-hover)] motion-safe:hover:-translate-y-[1px] active:translate-y-0 disabled:hover:translate-y-0 ${
+                  className={`group mt-1 flex h-12 w-full items-center justify-center gap-1.5 rounded-[var(--radius-md)] bg-[var(--accent)] text-[14px] font-semibold text-[var(--accent-contrast)] transition-all hover:bg-[var(--color-primary-hover)] motion-safe:hover:-translate-y-[1px] active:translate-y-0 disabled:hover:translate-y-0 ${
                     busy === "email" ? "opacity-70" : "disabled:opacity-60"
                   }`}
                 >
                   {busy === "email" ? (
                     <>
-                      <Spinner className="h-4 w-4 text-white" />
+                      <Spinner className="h-4 w-4 text-[var(--accent-contrast)]" />
                       {mode === "signin" ? "Signing in…" : "Creating account…"}
                     </>
                   ) : (
@@ -302,7 +293,7 @@ export default function LoginForm() {
             type="button"
             onClick={handleGuest}
             disabled={anyBusy}
-            className={`mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-full text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--foreground)] ${
+            className={`mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-md)] text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--foreground)] ${
               busy === "guest" ? "opacity-60" : "disabled:opacity-50"
             }`}
           >

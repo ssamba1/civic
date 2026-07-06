@@ -16,19 +16,21 @@
    per-element `dark:` duplication, and a shared component looks right on every
    page regardless of that page's own migration state.
 
-   Accent + status colours (primary blue, the category hues) are deliberately
-   identical in both themes, so they are NOT part of the light/dark swap. */
+   Status FILL hues + the muted category tokens stay identical across themes
+   (semantic encoding shouldn't flip). The ink accent and --color-primary DO
+   flip — near-black on light, near-white on dark — so primary surfaces stay
+   high-contrast in either theme. */
 :root {
   color-scheme: light;
   /* page + text — soft gray canvas, cards sit on it in pure white */
-  --background: #f4f5f4;
-  --foreground: #1d1d1f; /* primary text  (was text-white / zinc-100) */
+  --background: #f7f7f8;
+  --foreground: #141415; /* primary text  (was text-white / zinc-100) */
   --subtle: #52525b; /* secondary text (was zinc-300 / zinc-400) */
-  --faint: #727276; /* tertiary text — darkened from #8a8a8f to clear WCAG AA (4.5:1) as 11–13px functional copy: 4.59:1 on --background #fafafa, 4.79:1 on --surface #fff */
+  --faint: #6f6f76; /* tertiary text — holds WCAG AA (≥4.5:1) as 11–13px functional copy on both --background #f7f7f8 and --surface #fff */
 
   /* surfaces */
   --surface: #ffffff; /* cards / panels (was #1c1c1e / zinc-900)   */
-  --elevated: #ececef; /* raised chips / avatars (was zinc-800)     */
+  --elevated: #ededf0; /* raised chips / avatars (was zinc-800)     */
   --glass: rgba(255, 255, 255, 0.72); /* sticky header / popover casing */
 
   /* translucent washes — hover fills + faint raises */
@@ -37,29 +39,33 @@
 
   /* hairline borders — crisp enough to edge white cards on the paper-white
      page, still whisper-quiet */
-  --hairline: rgba(0, 0, 0, 0.07); /* was border-white/[0.04–0.10] */
-  --hairline-strong: rgba(0, 0, 0, 0.11); /* was border-white/[0.12+]      */
+  --hairline: rgba(0, 0, 0, 0.08); /* was border-white/[0.04–0.10] */
+  --hairline-strong: rgba(0, 0, 0, 0.13); /* was border-white/[0.12+]      */
 
-  /* elevation — flat cards on light (no drop shadow); popovers/modals still
-     float. Deep shadows on dark (see .dark). Used via shadow-[var(--shadow-*)]. */
-  --shadow-card: none;
+  /* elevation — subtle two-layer float on light (pure hairline borders read
+     flat per vision QA); popovers/modals still float harder. Deep shadows on
+     dark (see .dark). Used via shadow-[var(--shadow-*)]. */
+  --shadow-card: 0 1px 2px rgba(16, 17, 20, 0.04), 0 2px 8px -2px rgba(16, 17, 20, 0.06);
   --shadow-pop: 0 12px 32px -8px rgba(0, 0, 0, 0.16),
     0 4px 12px rgba(0, 0, 0, 0.08);
 
-  --color-primary: #0a84ff;
-  --color-primary-hover: #0066cc;
-  --color-primary-light: #e5f1ff;
+  --color-primary: #18181b;
+  --color-primary-hover: #2d2d31;
+  --color-primary-light: rgba(24, 24, 27, 0.08);
 
-  /* Enterprise-card accent (v3) — ONE restrained emerald. Used for active nav,
-     primary CTA, positive deltas, chart primary series, focus rings only. */
-  --accent: #0e9f6e;
+  /* Ink accent — the monochrome enterprise accent (replaces the v3 emerald).
+     Used for active nav, primary CTA, positive deltas, chart primary series,
+     focus rings. Grayscale by design; hue is reserved for state/data only. */
+  --accent: #18181b;
   --accent-contrast: #ffffff;
-  --accent-soft: rgba(14, 159, 110, 0.11);
-  --accent-text: #047857;
+  --accent-soft: rgba(24, 24, 27, 0.07);
+  --accent-text: #18181b;
 
-  --color-success: #30d158;
-  --color-warning: #ff9f0a;
-  --color-danger: #ff453a;
+  /* Status FILL hues — muted enterprise tones (were bright Apple system
+     colors). The AA-tuned --status-*-fg TEXT tokens below are unchanged. */
+  --color-success: #3d9a63;
+  --color-warning: #c08a1d;
+  --color-danger: #cc4638;
 
   /* Status TEXT tokens — kept SEPARATE from the bright FILL hues above. On a
      near-white surface the saturated fills (#30d158 etc.) only reach ~1.7:1 as
@@ -80,18 +86,20 @@
   --color-border: var(--hairline);
   --color-surface: var(--surface);
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
 
-  /* Status/category tokens kept under former names so existing class refs still resolve.
-     Re-tuned to Apple system colors — desaturated, sparing use. */
+  /* Category tokens kept under former names so existing class refs still resolve.
+     Muted enterprise categorical hues — same hue angles, chroma pulled down to
+     mid-lightness. These encode category ONLY on map data layers + chart series;
+     everywhere else the app is grayscale. */
   --fg-deep-void: #000000;
-  --fg-electric-indigo: #0a84ff;
-  --fg-neon-coral: #ff453a;
-  --fg-emerald-glow: #30d158;
-  --fg-amber-pulse: #ff9f0a;
-  --fg-cyan-burst: #5ac8fa;
+  --fg-electric-indigo: #5b6b8c;
+  --fg-neon-coral: #b0574c;
+  --fg-emerald-glow: #4d8a6a;
+  --fg-amber-pulse: #ad8434;
+  --fg-cyan-burst: #5f8ba6;
 }
 
 /* DARK theme — overrides only the values that flip. */
@@ -99,33 +107,35 @@
   color-scheme: dark;
   /* Near-black canvas (not pitch black) — cards sit clearly lighter on it;
      card/canvas contrast is the core of this theme. */
-  --background: #0f1013;
-  --foreground: #f5f5f7;
-  --subtle: #a1a1aa; /* zinc-400 */
-  --faint: #838389; /* tertiary text — lightened from #71717a to clear WCAG AA (4.5:1) as 11–13px functional copy: 4.60:1 on --surface #17181c, 4.96:1 on --background #0f1013 */
+  --background: #0e0e10;
+  --foreground: #f5f5f6;
+  --subtle: #a1a1a8; /* zinc-400 */
+  --faint: #85858c; /* tertiary text — lightened from #71717a to clear WCAG AA (≥4.5:1) as 11–13px functional copy on both --surface #161619 and --background #0e0e10 */
 
-  --surface: #17181c;
-  --elevated: #2c2c2e;
+  --surface: #161619;
+  --elevated: #26262a;
   --glass: rgba(18, 18, 22, 0.6);
 
   --overlay: rgba(255, 255, 255, 0.04);
   --overlay-strong: rgba(255, 255, 255, 0.08);
 
-  --hairline: rgba(255, 255, 255, 0.08);
+  --hairline: rgba(255, 255, 255, 0.09);
   --hairline-strong: rgba(255, 255, 255, 0.16);
 
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-pop: 0 20px 48px -12px rgba(0, 0, 0, 0.75);
 
-  --color-primary-light: rgba(10, 132, 255, 0.18);
+  --color-primary: #f4f4f5;
+  --color-primary-hover: #d4d4d8;
+  --color-primary-light: rgba(255, 255, 255, 0.1);
 
-  /* Enterprise-card accent (v3) — emerald, lifted for the dark canvas. Solid
-     CTA text (--accent-contrast) is a dark green-black that passes on emerald;
-     active nav uses the soft tint + --accent-text. */
-  --accent: #10b981;
-  --accent-contrast: #062b1f;
-  --accent-soft: rgba(16, 185, 129, 0.14);
-  --accent-text: #34d399;
+  /* Ink accent, inverted for the dark canvas — near-white so primary CTAs read
+     as light-on-dark. Solid CTA text (--accent-contrast) is near-black; active
+     nav uses the soft tint + --accent-text. */
+  --accent: #f4f4f5;
+  --accent-contrast: #131316;
+  --accent-soft: rgba(255, 255, 255, 0.09);
+  --accent-text: #f4f4f5;
 
   /* Dark theme: the bright system hues clear AA as text on the dark surface,
      but two sat below 4.5:1 on the 10–12% pill-tint the chips actually use:

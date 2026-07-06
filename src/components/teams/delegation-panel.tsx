@@ -294,8 +294,7 @@ function DelegationRow({
       >
         <div className="flex min-w-0 items-center gap-3">
           <span
-            className="h-2 w-2 flex-shrink-0 rounded-full"
-            style={{ background: meta.color }}
+            className="h-2 w-2 flex-shrink-0 rounded-full bg-faint"
             aria-hidden
           />
           <div className="flex min-w-0 flex-col">

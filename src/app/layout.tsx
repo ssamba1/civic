@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import {
   Cormorant_Garamond,
-  Hanken_Grotesk,
+  Inter,
   JetBrains_Mono,
   Newsreader,
 } from "next/font/google";
@@ -20,8 +20,17 @@ const THEME_INIT = `(function(){try{var t=localStorage.getItem('civic.theme');if
 
 // Registers public/sw.js (precache + offline fallback, see that file) once the
 // page has finished loading, so registration never competes with the initial
-// paint. Was written but never registered — silently inert until now.
+// paint. PRODUCTION ONLY: sw.js serves /_next/static/ and *.js cache-first,
+// which is safe in prod (chunks are content-hashed, immutable) but poison in
+// dev — Turbopack keeps chunk names stable across edits, so a dev browser that
+// ever installed the SW replays its first-cached bundle through every reload
+// and silently ignores all later code changes. Dev therefore injects the
+// inverse: unregister any worker and delete its caches, self-healing browsers
+// that already latched a stale one.
 const SW_REGISTER = `(function(){if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}})();`;
+const SW_CLEANUP = `(function(){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});}).catch(function(){});}if(window.caches&&caches.keys){caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});}).catch(function(){});}})();`;
+const SW_SCRIPT =
+  process.env.NODE_ENV === "production" ? SW_REGISTER : SW_CLEANUP;
 
 // Force every route to render per-request. Our CSP (src/proxy.ts) uses a
 // per-request nonce with 'strict-dynamic'; statically prerendered HTML is baked
@@ -30,12 +39,12 @@ const SW_REGISTER = `(function(){if('serviceWorker' in navigator){window.addEven
 // rendering lets Next stamp the live nonce onto every page's inline scripts.
 export const dynamic = "force-dynamic";
 
-// Body / UI — humanist grotesk, warmer and more characterful than the
-// default Geist/Inter that reads as generic AI output.
-const sans = Hanken_Grotesk({
+// Body / UI — Inter, the enterprise product standard (Linear/Palantir/Stripe
+// register). Carries headings, buttons, labels, body, and data across app chrome.
+const sans = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -96,7 +105,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f1013" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e0e10" },
   ],
 };
 
@@ -131,7 +140,7 @@ export default async function RootLayout({
           {THEME_INIT}
         </script>
         <script nonce={nonce} suppressHydrationWarning>
-          {SW_REGISTER}
+          {SW_SCRIPT}
         </script>
         <div className="page-enter flex flex-1 flex-col">{children}</div>
         <BottomTabBar />

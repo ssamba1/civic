@@ -24,7 +24,7 @@ export default async function MyReportsPage() {
       <section className="mb-6">
         <p className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.08em] text-faint">
           <span
-            className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)] shadow-[0_0_6px_rgba(10,132,255,0.6)]"
+            className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]"
             aria-hidden="true"
           />
           My Reports

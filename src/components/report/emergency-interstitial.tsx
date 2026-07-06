@@ -76,7 +76,7 @@ export default function EmergencyInterstitial({
       aria-modal="true"
       aria-labelledby="emergency-heading"
       onKeyDown={handleKeyDown}
-      className="fixed inset-0 h-dvh z-50 flex flex-col bg-red-600 px-6 text-center overflow-y-auto"
+      className="fixed inset-0 h-dvh z-50 flex flex-col bg-[var(--color-danger)] px-6 text-center overflow-y-auto"
     >
       {/* Scrollable inner — centers content but allows scroll on very small phones */}
       <div
@@ -132,7 +132,7 @@ export default function EmergencyInterstitial({
         <a
           ref={call911Ref}
           href="tel:911"
-          className="w-full max-w-xs rounded-full bg-white min-h-[56px] flex items-center justify-center text-center text-lg font-bold text-red-600 shadow-lg active:scale-95 transition-transform mb-4"
+          className="w-full max-w-xs rounded-full bg-white min-h-[56px] flex items-center justify-center text-center text-lg font-bold text-[var(--color-danger)] shadow-lg active:scale-95 transition-transform mb-4"
         >
           Call 911
         </a>

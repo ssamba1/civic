@@ -51,15 +51,21 @@ const TONE_TEXT: Record<StatusTone, string> = {
   neutral: "text-[var(--status-neutral-fg)]",
 };
 
-// Bright pill fill per tone. Hex /10 wash is theme-agnostic and proven; the
-// neutral tone uses the semantic overlay so it stays visible in light mode
-// (the old `bg-white/[0.06]` was invisible on a white surface).
-const TONE_BG: Record<StatusTone, string> = {
-  success: "bg-[#30d158]/10",
-  warning: "bg-[#ff9f0a]/10",
-  danger: "bg-[#ff453a]/10",
-  info: "bg-[#0a84ff]/10",
-  neutral: "bg-overlay-strong",
+// Outline + dot chip (matches ui/badge.tsx): quiet overlay fill + hairline
+// border in both themes, with a 6px `before:` pseudo-element dot carrying the
+// hue — the pseudo dot means the 19 existing <span> consumers convert without
+// markup changes. Label text stays in the AA-tuned --status-*-fg tokens; the
+// dot uses the muted status FILL tokens (info = the slate-blue shared with
+// badge.tsx, a state signal, not Apple blue).
+const TONE_CHIP_BASE =
+  "inline-flex items-center gap-1.5 border border-hairline bg-overlay before:size-1.5 before:shrink-0 before:rounded-full before:content-['']";
+
+const TONE_DOT: Record<StatusTone, string> = {
+  success: "before:bg-[var(--color-success)]",
+  warning: "before:bg-[var(--color-warning)]",
+  danger: "before:bg-[var(--color-danger)]",
+  info: "before:bg-[#5b6b8c]",
+  neutral: "before:bg-faint",
 };
 
 /** Text color class for a tone (no background). */
@@ -67,9 +73,9 @@ export function toneTextClass(tone: StatusTone): string {
   return TONE_TEXT[tone];
 }
 
-/** Combined chip class (text + fill) for a tone. */
+/** Combined chip class (outline + dot + text) for a tone. */
 export function toneChipClass(tone: StatusTone): string {
-  return `${TONE_TEXT[tone]} ${TONE_BG[tone]}`;
+  return `${TONE_CHIP_BASE} ${TONE_DOT[tone]} ${TONE_TEXT[tone]}`;
 }
 
 /** Combined chip class straight from a status. */

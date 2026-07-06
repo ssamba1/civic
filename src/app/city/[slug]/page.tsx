@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FilterBar } from "@/components/filters/filter-bar";
 import { TeamsInteractive } from "@/components/teams/teams-interactive";
+import { Button } from "@/components/ui/button";
 import { fetchCity as fetchCityMock, KNOWN_CITIES } from "@/lib/dashboard-data";
 import {
   fetchCity as fetchCityFromDb,
@@ -106,13 +107,12 @@ export default async function CityDashboardPage({ params }: PageProps) {
               </div>
             </div>
             {/* Sidebar owns the Report CTA on md+; keep it for mobile only. */}
-            <Link
-              href="/report"
-              className="inline-flex h-10 min-w-[44px] self-start items-center gap-1.5 rounded-full bg-accent px-4 text-[13px] font-medium text-accent-contrast outline-none transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background md:hidden"
-            >
-              <Camera className="h-4 w-4" />
-              Report an issue
-            </Link>
+            <Button asChild className="min-w-[44px] self-start md:hidden">
+              <Link href="/report">
+                <Camera className="h-4 w-4" />
+                Report an issue
+              </Link>
+            </Button>
           </div>
         </section>
 

@@ -2,11 +2,14 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { Check, MapPin } from "lucide-react";
+import { useState } from "react";
 
-// Animated report-pin narrative over the hero map plate: each pin drops onto a
-// street (report filed), pulses once (AI classifying), then flips green with a
-// check (crew fixed it). One-shot storytelling of Snap -> Route -> Fix on the
-// real Cumming basemap. Reduced motion: pins render settled (green) instantly.
+// Animated report-pin narrative over the hero map plate: pins plop onto their
+// streets ONE AT A TIME (the plate itself is still — see StaticHeroMap), and
+// every marker carries a hover card with its report info. The four story pins
+// additionally play the product beat: land (report filed), pulse (AI
+// classifying), flip green with a check (crew fixed it). Reduced motion: pins
+// render settled instantly; hover cards still work.
 
 type Pin = {
   left: string; // % over the map plate
@@ -27,6 +30,10 @@ const PINS: Pin[] = [
 const T_RING = 0.45; // classify pulse starts once the pin lands
 const T_FIX = 1.6; // flips to fixed
 
+// Field plop sequencing — one pin every PLOP_EVERY, starting at PLOP_START.
+const PLOP_START = 0.35;
+const PLOP_EVERY = 0.13;
+
 // Ambient report field — replaces the status dots that used to be baked into
 // the hero-map.jpg plate (capture now runs with ?mapMarkers=0). Same teardrop
 // silhouette as the story pins, miniaturized, category-toned: amber (roads),
@@ -45,6 +52,23 @@ const PIN_TONES = {
   teal: { fill: "#14b8a6", glow: "rgba(13, 148, 136, 0.45)" },
   lime: { fill: "#84cc16", glow: "rgba(101, 163, 13, 0.45)" },
 } as const;
+
+// Hover-card copy per category. Qualitative on purpose — statuses mirror the
+// landing's real pipeline claims (AI triage → routed → crew), no invented
+// metrics.
+const TONE_INFO: Record<
+  keyof typeof PIN_TONES,
+  { label: string; meta: string }
+> = {
+  amber: { label: "Pothole", meta: "Routed to Roads crew" },
+  orange: { label: "Debris in road", meta: "Crew en route" },
+  red: { label: "Road hazard", meta: "High priority · triaged" },
+  violet: { label: "Streetlight out", meta: "Crew scheduled" },
+  sky: { label: "Water leak", meta: "Routed to Water dept" },
+  rose: { label: "Damaged sign", meta: "Awaiting dispatch" },
+  teal: { label: "Blocked drain", meta: "Routed to Drainage" },
+  lime: { label: "Park cleanup", meta: "Routed to Parks" },
+};
 
 type Report = {
   left: string;
@@ -81,6 +105,69 @@ const REPORTS: Report[] = [
   { left: "22%", top: "36%", tone: "rose", size: 13 },
 ];
 
+// Shared hover card — white chip above the pin tip. Rendered always, animated
+// on hover (no AnimatePresence churn); pointer-events off so it never traps
+// the cursor.
+function HoverCard({
+  title,
+  meta,
+  shown,
+}: {
+  title: string;
+  meta: string;
+  shown: boolean;
+}) {
+  return (
+    <motion.span
+      initial={false}
+      animate={
+        shown
+          ? { opacity: 1, y: 0, scale: 1 }
+          : { opacity: 0, y: 5, scale: 0.96 }
+      }
+      transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+      style={{
+        position: "absolute",
+        left: "50%",
+        bottom: "calc(100% + 8px)",
+        transform: "translateX(-50%)",
+        whiteSpace: "nowrap",
+        padding: "6px 10px",
+        borderRadius: 10,
+        background: "rgba(255,255,255,0.96)",
+        border: "1px solid rgba(15, 23, 42, 0.12)",
+        boxShadow: "0 6px 20px rgba(15, 23, 42, 0.16)",
+        pointerEvents: "none",
+        textAlign: "left",
+      }}
+    >
+      <span
+        style={{
+          display: "block",
+          fontSize: 11.5,
+          fontWeight: 650,
+          color: "#0f172a",
+          lineHeight: 1.2,
+        }}
+      >
+        {title}
+      </span>
+      <span
+        style={{
+          display: "block",
+          marginTop: 1,
+          fontSize: 10.5,
+          fontWeight: 500,
+          color: "rgba(15, 23, 42, 0.6)",
+          lineHeight: 1.3,
+        }}
+      >
+        {meta}
+      </span>
+    </motion.span>
+  );
+}
+
 function FieldPin({
   r,
   index,
@@ -91,20 +178,34 @@ function FieldPin({
   reduce: boolean;
 }) {
   const tone = PIN_TONES[r.tone];
+  const info = TONE_INFO[r.tone];
+  const [hovered, setHovered] = useState(false);
   return (
     <motion.span
-      initial={reduce ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0 }}
-      animate={{ opacity: 1, scale: 1 }}
+      // Plop: drop from above the street and settle with a spring, strictly
+      // one pin after another (delay is a pure function of index).
+      initial={
+        reduce
+          ? { opacity: 1, y: 0, scale: 1 }
+          : { opacity: 0, y: -26, scale: 0.5 }
+      }
+      animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={
         reduce
           ? { duration: 0 }
           : {
-              delay: 0.2 + index * 0.055,
+              delay: PLOP_START + index * PLOP_EVERY,
               type: "spring",
-              stiffness: 340,
-              damping: 19,
+              stiffness: 420,
+              damping: 22,
+              opacity: {
+                delay: PLOP_START + index * PLOP_EVERY,
+                duration: 0.12,
+              },
             }
       }
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
       style={{
         position: "absolute",
         left: r.left,
@@ -116,20 +217,29 @@ function FieldPin({
         marginTop: -r.size,
         transformOrigin: "50% 100%",
         willChange: "transform, opacity",
+        pointerEvents: "auto",
+        zIndex: hovered ? 30 : undefined,
       }}
     >
-      <span
+      {/* invisible enlarged hit area — the teardrops are 13-18px, too small a
+          hover target on their own */}
+      <span style={{ position: "absolute", inset: -7 }} />
+      <motion.span
+        animate={{ scale: hovered ? 1.25 : 1 }}
+        transition={{ type: "spring", stiffness: 500, damping: 26 }}
         style={{
           display: "block",
           width: "100%",
           height: "100%",
           borderRadius: "50% 50% 50% 4px",
           transform: "rotate(-45deg)",
+          transformOrigin: "50% 50%",
           background: tone.fill,
           border: "1.5px solid rgba(255,255,255,0.9)",
           boxShadow: `0 4px 10px ${tone.glow}`,
         }}
       />
+      <HoverCard title={info.label} meta={info.meta} shown={hovered} />
     </motion.span>
   );
 }
@@ -225,6 +335,8 @@ function GlassMoment({ m, reduce }: { m: Moment; reduce: boolean }) {
 
 function StoryPin({ pin, reduce }: { pin: Pin; reduce: boolean }) {
   const tone = PIN_TONES[pin.tone];
+  const info = TONE_INFO[pin.tone];
+  const [hovered, setHovered] = useState(false);
   return (
     <div
       style={{
@@ -232,7 +344,11 @@ function StoryPin({ pin, reduce }: { pin: Pin; reduce: boolean }) {
         left: pin.left,
         top: pin.top,
         transform: "translate(-50%, -100%)",
+        pointerEvents: "auto",
+        zIndex: hovered ? 30 : undefined,
       }}
+      onPointerEnter={() => setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
     >
       {/* classify pulse ring */}
       {!reduce && (
@@ -326,6 +442,11 @@ function StoryPin({ pin, reduce }: { pin: Pin; reduce: boolean }) {
             style={{ transform: "rotate(45deg)" }}
           />
         </motion.span>
+        <HoverCard
+          title={info.label}
+          meta={`Fixed · ${info.meta.toLowerCase()}`}
+          shown={hovered}
+        />
       </motion.div>
 
       {/* label chip appears with the fix */}
@@ -370,18 +491,10 @@ export default function MapPinStory() {
         position: "absolute",
         inset: 0,
         zIndex: 5, // over the map plate, under the wordmark/card (z 10)
+        // The layer itself ignores the pointer; individual pins opt back in
+        // for their hover cards. The plate is static now, so no camera
+        // transform — pins sit exactly on their hand-tuned coordinates.
         pointerEvents: "none",
-        // Ride the map's cursor-lean camera (vars published per-frame by
-        // StaticHeroMap onto the hero section) at factor 1.0 — the exact
-        // matrix the plate applies. Pin positions were tuned against the
-        // plate at rest (which includes its 1.16 scale), so translate+rotate
-        // alone keeps every pin glued to its street: overlay point p = S·q,
-        // and T·R·p = T·R·S·q, the plate's own mapping of street point q.
-        // (The old 0.9 factor made pins drift off their streets as the map
-        // leaned.)
-        transform:
-          "perspective(1200px) translate3d(calc(var(--wl-lean-x, 0) * 1%), calc(var(--wl-lean-y, 0) * 1%), 0) rotateX(calc(var(--wl-lean-rx, 0) * 1deg)) rotateY(calc(var(--wl-lean-ry, 0) * 1deg))",
-        willChange: "transform",
       }}
     >
       {REPORTS.map((r, i) => (

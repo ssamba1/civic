@@ -100,7 +100,7 @@ function CardBody({ data }: { data: ReasoningResponse }) {
           >
             <span
               aria-hidden
-              className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-zinc-500"
+              className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-faint"
             />
             <span>
               <span className="text-foreground">{b.title}:</span>{" "}
@@ -345,9 +345,9 @@ export function useReasoningHover(): UseReasoningHoverReturn {
         aria-hidden={!visible}
         className={cn(
           "pointer-events-none fixed z-[60] select-none",
-          "rounded-2xl border border-hairline",
-          "bg-glass backdrop-blur-xl",
-          "shadow-[0_16px_48px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.04)_inset]",
+          "rounded-[var(--radius-lg)] border border-hairline",
+          "bg-surface",
+          "shadow-[var(--shadow-pop)]",
           !noMotion && "transition-[opacity,transform] duration-150 ease-out",
           visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1",
         )}

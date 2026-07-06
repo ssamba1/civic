@@ -113,7 +113,7 @@ export default function SubmissionConfirmation({
     <div
       ref={rootRef}
       data-confirm-root
-      className="flex flex-col items-center justify-center h-full min-h-dvh bg-white px-6 text-center overflow-y-auto pt-safe pb-safe"
+      className="flex flex-col items-center justify-center h-full min-h-dvh bg-background px-6 text-center overflow-y-auto pt-safe pb-safe"
     >
       {/* Safe-area inner wrapper so content doesn't clip on notched phones */}
       <div className="flex flex-col items-center w-full max-w-sm py-12">
@@ -121,10 +121,10 @@ export default function SubmissionConfirmation({
         <div
           data-confirm-check
           data-confirm-fx
-          className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-100"
+          className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-[var(--color-success)]/15"
         >
           <svg
-            className="h-12 w-12 text-green-600"
+            className="h-12 w-12 text-[var(--status-success-fg)]"
             aria-hidden="true"
             focusable="false"
             fill="none"
@@ -140,22 +140,22 @@ export default function SubmissionConfirmation({
           </svg>
         </div>
 
-        <h1 className="text-2xl font-bold text-zinc-900 mb-1">
+        <h1 className="text-2xl font-bold text-foreground mb-1">
           Thanks for submitting!
         </h1>
-        <p className="text-zinc-500 text-sm mb-8">
+        <p className="text-subtle text-sm mb-8">
           We&apos;ll notify you when it&apos;s solved.
         </p>
 
         {/* Manual issue-type card — shown when the resident picked a type,
             making its routing rule visible (bypasses the AI classifier). */}
         {manualMeta && manualTeam && ManualTeamIcon && (
-          <div className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 p-5 mb-4 text-left space-y-3">
+          <div className="w-full rounded-[var(--radius-lg)] border border-hairline bg-surface p-5 mb-4 text-left space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
+              <span className="text-xs font-medium text-faint uppercase tracking-wide">
                 Issue type
               </span>
-              <span className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-900">
+              <span className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
                 <span
                   className="h-2.5 w-2.5 rounded-full"
                   style={{ background: manualMeta.color }}
@@ -163,19 +163,19 @@ export default function SubmissionConfirmation({
                 />
                 {manualMeta.label}
                 {manualMeta.isCustom && (
-                  <span className="rounded-sm bg-zinc-200 px-1 text-[9px] uppercase tracking-wider text-zinc-500">
+                  <span className="rounded-sm bg-elevated px-1 text-[9px] uppercase tracking-wider text-faint">
                     custom
                   </span>
                 )}
               </span>
             </div>
-            <div className="h-px bg-zinc-200" />
+            <div className="h-px bg-hairline" />
             <div className="flex justify-between items-center">
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
+              <span className="text-xs font-medium text-faint uppercase tracking-wide">
                 Routed to
               </span>
               <span
-                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium"
+                className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] px-2.5 py-1 text-sm font-medium"
                 style={{
                   background: `${TEAMS[manualTeam].color}1a`,
                   color: TEAMS[manualTeam].color,
@@ -190,29 +190,29 @@ export default function SubmissionConfirmation({
 
         {/* Report details card — only on a real AI result */}
         {hasAiResult && (
-          <div className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 p-5 mb-8 text-left space-y-3">
+          <div className="w-full rounded-[var(--radius-lg)] border border-hairline bg-surface p-5 mb-8 text-left space-y-3">
             <div
               data-confirm-row
               data-confirm-fx
               className="flex justify-between items-center"
             >
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
+              <span className="text-xs font-medium text-faint uppercase tracking-wide">
                 Report ID
               </span>
-              <span className="text-sm font-mono text-zinc-700">
+              <span className="text-sm font-mono text-subtle">
                 {reportId.slice(0, 8)}
               </span>
             </div>
-            <div className="h-px bg-zinc-200" />
+            <div className="h-px bg-hairline" />
             <div
               data-confirm-row
               data-confirm-fx
               className="flex justify-between items-center"
             >
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
+              <span className="text-xs font-medium text-faint uppercase tracking-wide">
                 Category
               </span>
-              <span className="text-sm font-semibold text-zinc-900">
+              <span className="text-sm font-semibold text-foreground">
                 {categoryLabels[classification.category] ??
                   classification.category}
               </span>
@@ -222,17 +222,17 @@ export default function SubmissionConfirmation({
               data-confirm-fx
               className="flex justify-between items-center"
             >
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
+              <span className="text-xs font-medium text-faint uppercase tracking-wide">
                 Confidence
               </span>
-              <span className="text-sm text-zinc-700">{confidencePct}%</span>
+              <span className="text-sm text-subtle">{confidencePct}%</span>
             </div>
             <div
               data-confirm-row
               data-confirm-fx
               className="flex justify-between items-center"
             >
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
+              <span className="text-xs font-medium text-faint uppercase tracking-wide">
                 Severity
               </span>
               <div className="flex gap-0.5">
@@ -242,8 +242,8 @@ export default function SubmissionConfirmation({
                     key={i}
                     className={`w-2.5 h-2.5 rounded-full ${
                       i < classification.severity
-                        ? "bg-orange-500"
-                        : "bg-zinc-200"
+                        ? "bg-[var(--color-warning)]"
+                        : "bg-elevated"
                     }`}
                   />
                 ))}
@@ -256,8 +256,8 @@ export default function SubmissionConfirmation({
             reassure the resident the report is saved and will be followed up —
             otherwise this branch has no next step at all. */}
         {!hasAiResult && (
-          <div className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 p-4 mb-6 text-left">
-            <p className="text-sm text-zinc-600 leading-relaxed">
+          <div className="w-full rounded-[var(--radius-lg)] border border-hairline bg-surface p-4 mb-6 text-left">
+            <p className="text-sm text-subtle leading-relaxed">
               Saved. Our team will review this report and update its status —
               you&apos;ll be notified when it&apos;s on its way to a fix.
             </p>
@@ -270,7 +270,7 @@ export default function SubmissionConfirmation({
           {hasAiResult && (
             <Link
               href={`/user/my-reports/${reportId}`}
-              className="w-full rounded-full bg-blue-600 min-h-[56px] flex items-center justify-center text-center text-sm font-semibold text-white active:bg-blue-700 transition-colors"
+              className="w-full rounded-[var(--radius-md)] bg-[var(--color-primary)] min-h-[56px] flex items-center justify-center text-center text-sm font-semibold text-[var(--accent-contrast)] active:bg-[var(--color-primary-hover)] transition-colors"
             >
               Track this report
             </Link>
@@ -278,13 +278,13 @@ export default function SubmissionConfirmation({
           <div className="flex gap-3">
             <a
               href="/report"
-              className="flex-1 rounded-full border border-zinc-200 min-h-[52px] flex items-center justify-center text-center text-sm font-medium text-zinc-600 active:bg-zinc-100 transition-colors"
+              className="flex-1 rounded-[var(--radius-md)] border border-hairline-strong min-h-[52px] flex items-center justify-center text-center text-sm font-medium text-subtle active:bg-overlay transition-colors"
             >
               Report another
             </a>
             <Link
               href="/user/my-reports"
-              className="flex-1 rounded-full border border-zinc-200 min-h-[52px] flex items-center justify-center text-center text-sm font-medium text-zinc-600 active:bg-zinc-100 transition-colors"
+              className="flex-1 rounded-[var(--radius-md)] border border-hairline-strong min-h-[52px] flex items-center justify-center text-center text-sm font-medium text-subtle active:bg-overlay transition-colors"
             >
               View all my reports
             </Link>

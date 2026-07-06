@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { teamIcon } from "@/components/teams/team-icon";
 import { TeamPicker } from "@/components/teams/team-picker";
+import { Button } from "@/components/ui/button";
 import { useCustomCategories } from "@/lib/custom-categories";
 import { TEAMS, type TeamId } from "@/lib/teams";
 import { cn } from "@/lib/utils/cn";
@@ -13,9 +14,8 @@ import { lockBodyScroll } from "@/lib/utils/scroll-lock";
 /* ==================================================================
    New issue-type modal. Opened from the "Add issue type" button in
    the routing matrix. Mirror of the TeamSetupModal chrome (portal,
-   #1c1c1e panel, color presets, #0a84ff accent) scoped to the three
-   fields a custom category needs: label, color, and the team its
-   reports route to.
+   surface panel, ink accent) scoped to the three fields a custom
+   category needs: label, color, and the team its reports route to.
 
    Submit calls addCustomCategory(), mutating the module-level
    custom-category snapshot the routing matrix renders live.
@@ -97,7 +97,7 @@ export function AddCategoryModal({
         type="button"
         onClick={onClose}
         aria-label="Close issue-type setup"
-        className="absolute inset-0 bg-black/75 backdrop-blur-md"
+        className="absolute inset-0 bg-black/75"
       />
       <div
         role="dialog"
@@ -106,7 +106,7 @@ export function AddCategoryModal({
         className={cn(
           "absolute inset-2 sm:inset-x-0 sm:inset-y-auto sm:top-1/2 sm:-translate-y-1/2 sm:mx-auto sm:max-w-md",
           "flex max-h-[92dvh] flex-col overflow-hidden text-foreground",
-          "rounded-2xl border border-hairline bg-surface",
+          "rounded-[var(--radius-lg)] border border-hairline bg-surface",
           "shadow-[var(--shadow-pop)]",
           "animate-in fade-in zoom-in-95 duration-300 motion-reduce:animate-none",
         )}
@@ -128,25 +128,26 @@ export function AddCategoryModal({
               </p>
             </div>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
             aria-label="Close"
-            className="-m-1.5 inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md text-subtle transition-colors hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
+            className="-m-1.5"
           >
             <X className="h-5 w-5" strokeWidth={1.75} />
-          </button>
+          </Button>
         </header>
 
         {submitted ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
             <span
-              className="flex h-16 w-16 items-center justify-center rounded-2xl"
+              className="flex h-16 w-16 items-center justify-center rounded-[var(--radius-lg)]"
               style={{ background: `${color}22`, color }}
             >
               <RoutedIcon className="h-7 w-7" strokeWidth={1.75} />
             </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#30d158]/20 text-[#30d158]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-success)]/20 text-[var(--status-success-fg)]">
               <Check className="h-4 w-4" strokeWidth={2.5} />
             </div>
             <div>
@@ -157,13 +158,9 @@ export function AddCategoryModal({
                 Reports route to {TEAMS[team].shortLabel}.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="mt-2 rounded-lg bg-[var(--color-primary)] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0070e0]"
-            >
+            <Button onClick={onClose} className="mt-2">
               Done
-            </button>
+            </Button>
           </div>
         ) : (
           <form
@@ -256,20 +253,12 @@ export function AddCategoryModal({
 
             {/* Footer actions */}
             <div className="flex flex-shrink-0 items-center justify-end gap-3 border-t border-hairline px-5 py-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-lg border border-hairline bg-overlay px-4 py-2 text-sm font-medium text-subtle transition-colors hover:bg-overlay-strong"
-              >
+              <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={!isValid}
-                className="rounded-lg bg-[var(--color-primary)] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0070e0] disabled:cursor-not-allowed disabled:opacity-40"
-              >
+              </Button>
+              <Button type="submit" disabled={!isValid}>
                 Add Issue Type
-              </button>
+              </Button>
             </div>
           </form>
         )}

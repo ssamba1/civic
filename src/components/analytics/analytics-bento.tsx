@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Check,
   CheckCircle2,
   Inbox,
   ShieldCheck,
@@ -145,7 +146,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
         label: "Resolution rate",
         value: `${kpis.resolution_rate_pct.toFixed(1)}%`,
         icon: <CheckCircle2 className="h-4 w-4" strokeWidth={1.75} />,
-        accent: "#30d158",
+        accent: "var(--accent)",
         delta: kpis.resolution_rate_delta_pct,
         betterWhenUp: true,
         tip: () => {
@@ -153,7 +154,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
           const delta = kpis.resolution_rate_delta_pct;
           return {
             title: "Resolution rate",
-            accent: "#30d158",
+            accent: "var(--accent)",
             body: (
               <div className="flex flex-col gap-1.5">
                 <TipRow
@@ -165,7 +166,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
                   value={`${(kpis.resolution_rate_pct - delta).toFixed(1)}%`}
                   muted
                 />
-                <TipBar pct={kpis.resolution_rate_pct} color="#30d158" />
+                <TipBar pct={kpis.resolution_rate_pct} color="var(--accent)" />
                 <p className="text-[11px] text-faint leading-snug mt-1">
                   Share of intake that reached closed. 100% means every report
                   was resolved.
@@ -189,7 +190,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
         label: "Mean time to resolve",
         value: formatHours(kpis.mttr_hours),
         icon: <Timer className="h-4 w-4" strokeWidth={1.75} />,
-        accent: "#5ac8fa",
+        accent: "var(--accent)",
         delta: kpis.mttr_delta_pct,
         betterWhenUp: false,
         tip: () => {
@@ -202,7 +203,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
           );
           return {
             title: "Mean time to resolve",
-            accent: "#5ac8fa",
+            accent: "var(--accent)",
             body: (
               <div className="flex flex-col gap-1.5">
                 <TipRow label="Raw" value={`${kpis.mttr_hours.toFixed(1)}h`} />
@@ -216,7 +217,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
                   value={`${targetPct.toFixed(0)}% headroom`}
                   muted
                 />
-                <TipBar pct={targetPct} color="#5ac8fa" />
+                <TipBar pct={targetPct} color="var(--accent)" />
                 <p className="text-[11px] text-faint leading-snug mt-1">
                   Lower is better. Time from report intake to closed status.
                 </p>
@@ -287,7 +288,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
         label: "Active backlog",
         value: kpis.active_backlog.toLocaleString(),
         icon: <Inbox className="h-4 w-4" strokeWidth={1.75} />,
-        accent: "#ff9f0a",
+        accent: "var(--accent)",
         delta: kpis.backlog_delta_pct,
         betterWhenUp: false,
         tip: () => {
@@ -300,7 +301,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
           const change = kpis.active_backlog - priorEstimate;
           return {
             title: "Active backlog",
-            accent: "#ff9f0a",
+            accent: "var(--accent)",
             body: (
               <div className="flex flex-col gap-1.5">
                 <TipRow
@@ -359,7 +360,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
 
   return (
     <>
-      <div className="rounded-2xl border border-hairline bg-surface overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
+      <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface overflow-hidden shadow-[var(--shadow-card)]">
         <div className="grid grid-cols-2 lg:grid-cols-4">
           {cards.map((c, idx) => {
             const goodDirection =
@@ -396,7 +397,9 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
                     <span
                       className={cn(
                         "inline-flex items-center gap-0.5 text-[11px] tabular-nums",
-                        goodDirection ? "text-[#30d158]" : "text-[#ff453a]",
+                        goodDirection
+                          ? "text-[var(--status-success-fg)]"
+                          : "text-[var(--status-danger-fg)]",
                       )}
                     >
                       {c.delta > 0 ? (
@@ -556,11 +559,11 @@ function renderTrendChart(
     Math.round((max / ticks) * i),
   );
 
-  // Per-instance gradient IDs so the in-tile and expanded charts (mounted
-  // simultaneously) don't share a global id — duplicate ids make the browser
-  // resolve url(#…) to the first match, swapping one chart's area fill.
+  // Per-instance gradient/pattern IDs so the in-tile and expanded charts
+  // (mounted simultaneously) don't share a global id — duplicate ids make the
+  // browser resolve url(#…) to the first match, swapping one chart's fill.
   const gCreated = `g-created-${idPrefix}`;
-  const gClosed = `g-closed-${idPrefix}`;
+  const pClosed = `hatch-closed-${idPrefix}`;
 
   return (
     <svg
@@ -570,14 +573,30 @@ function renderTrendChart(
       aria-label="Reports created vs resolved over time"
     >
       <defs>
+        {/* Created = primary series, ink area fade. */}
         <linearGradient id={gCreated} x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.35" />
           <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
         </linearGradient>
-        <linearGradient id={gClosed} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#30d158" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#30d158" stopOpacity="0" />
-        </linearGradient>
+        {/* Resolved = secondary series — grayscale hatch, not a color fill, so
+           the two series read apart without introducing hue. */}
+        <pattern
+          id={pClosed}
+          width="6"
+          height="6"
+          patternTransform="rotate(45)"
+          patternUnits="userSpaceOnUse"
+        >
+          <line
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="6"
+            stroke="var(--subtle)"
+            strokeWidth="1.5"
+            strokeOpacity="0.4"
+          />
+        </pattern>
       </defs>
       {yTicks.map((t, i) => {
         const y = pad.t + innerH - (t / max) * innerH;
@@ -619,11 +638,11 @@ function renderTrendChart(
       )}
       {showClosed && (
         <>
-          <path d={areaPath("closed")} fill={`url(#${gClosed})`} />
+          <path d={areaPath("closed")} fill={`url(#${pClosed})`} />
           <path
             d={linePath("closed")}
             fill="none"
-            stroke="#30d158"
+            stroke="var(--subtle)"
             strokeWidth={1.75}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -706,8 +725,8 @@ function renderTrendChart(
               x2={w - pad.r}
               y1={avgY}
               y2={avgY}
-              stroke="#30d158"
-              strokeOpacity={0.3}
+              stroke="var(--subtle)"
+              strokeOpacity={0.5}
               strokeWidth={1}
               strokeDasharray="3 3"
               pointerEvents="none"
@@ -740,7 +759,7 @@ function renderTrendChart(
               cx={xy(hoveredIdx, data[hoveredIdx].closed).x}
               cy={xy(hoveredIdx, data[hoveredIdx].closed).y}
               r={3.5}
-              fill="#30d158"
+              fill="var(--subtle)"
               stroke="var(--surface)"
               strokeWidth={1.5}
             />
@@ -899,7 +918,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
           <TipRow
             label="Resolved"
             value={d.closed.toLocaleString()}
-            accent="#30d158"
+            accent="var(--subtle)"
           />
           <TipRow label="Throughput" value={`${dayRatio.toFixed(0)}%`} muted />
           {prev && (
@@ -995,7 +1014,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
 
   const legendTip = (series: "created" | "closed") => {
     const isCreated = series === "created";
-    const color = isCreated ? "var(--accent)" : "#30d158";
+    const color = isCreated ? "var(--accent)" : "var(--subtle)";
     const total = isCreated ? totalCreated : totalClosed;
     const avg = isCreated ? dailyAvgCreated : dailyAvgClosed;
     return {
@@ -1047,7 +1066,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
             className="rounded-md px-1 -mx-1 outline-none focus-visible:bg-overlay hover:bg-overlay transition-colors cursor-default"
             {...tip.bindTarget(() => legendTip("closed"))}
           >
-            <Legend color="#30d158" label={`Resolved · ${totalClosed}`} />
+            <Legend color="var(--subtle)" label={`Resolved · ${totalClosed}`} />
           </span>
         </div>
         <TrendChart
@@ -1072,7 +1091,10 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
                 color="var(--accent)"
                 label={`Created · ${sliceCreated}`}
               />
-              <Legend color="#30d158" label={`Resolved · ${sliceClosed}`} />
+              <Legend
+                color="var(--subtle)"
+                label={`Resolved · ${sliceClosed}`}
+              />
             </div>
             <TrendChart
               data={slice}
@@ -1111,7 +1133,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
                 label="Resolved"
                 value={showClosed}
                 onChange={setShowClosed}
-                dotColor="#30d158"
+                dotColor="var(--subtle)"
               />
             </div>
             <div className="flex flex-col gap-2 pt-2 border-t border-hairline">
@@ -1190,12 +1212,16 @@ interface SeverityDonutProps {
   data: SeveritySlice[];
 }
 
+// Ordinal urgency ramp (cool → alarm) built from the spec's muted enterprise
+// tokens — severity IS a status field, so hue is warranted here, but it
+// stays inside the approved palette rather than the old saturated Apple hues.
+// Mirrored byte-for-byte in report-detail.tsx's SEVERITY_COLORS.
 const SEVERITY_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: "#5ac8fa",
-  2: "#30d158",
-  3: "#ff9f0a",
-  4: "#ff6b3a",
-  5: "#ff453a",
+  1: "var(--fg-cyan-burst)",
+  2: "var(--color-success)",
+  3: "var(--color-warning)",
+  4: "var(--fg-neon-coral)",
+  5: "var(--color-danger)",
 };
 
 const SEVERITY_DESC: Record<1 | 2 | 3 | 4 | 5, string> = {
@@ -1532,11 +1558,15 @@ interface StatusFunnelProps {
   data: StatusFunnelStep[];
 }
 
+// Aligned to lib/status.ts's STATUS_TONE (the single source of truth for
+// status hues) so this funnel never drifts from the chip colors used
+// elsewhere: open=warning, dispatched/in_progress share the info tone
+// (their label is what distinguishes them, not color), closed=success.
 const STATUS_COLOR: Record<string, string> = {
-  open: "#ff9f0a",
-  dispatched: "#0a84ff",
-  in_progress: "#5ac8fa",
-  closed: "#30d158",
+  open: "var(--color-warning)",
+  dispatched: "var(--fg-electric-indigo)",
+  in_progress: "var(--fg-electric-indigo)",
+  closed: "var(--color-success)",
 };
 
 function renderFunnelBars(
@@ -1559,7 +1589,7 @@ function renderFunnelBars(
     <ul className="space-y-3">
       {data.map((step, i) => {
         const pct = (step.count / max) * 100;
-        const color = STATUS_COLOR[step.status] ?? "#86868b";
+        const color = STATUS_COLOR[step.status] ?? "var(--faint)";
         const prev = i > 0 ? data[i - 1].count : null;
         const conv = prev ? Math.round((step.count / prev) * 100) : null;
         const bind = opts?.bindHover?.(step);
@@ -1602,7 +1632,6 @@ function renderFunnelBars(
                   width: `${pct}%`,
                   background: color,
                   opacity: isActive ? 1 : isDim ? 0.55 : 0.85,
-                  boxShadow: isActive ? `0 0 12px ${color}55` : undefined,
                 }}
                 role="meter"
                 aria-valuenow={step.count}
@@ -1647,7 +1676,7 @@ function StatusFunnelInner({ data }: StatusFunnelProps) {
         ? Math.round((step.count / prev.count) * 100)
         : null;
     const pct = (step.count / totalSafe) * 100;
-    const color = STATUS_COLOR[step.status] ?? "#86868b";
+    const color = STATUS_COLOR[step.status] ?? "var(--faint)";
     const interp = STATUS_INTERPRETATION[step.status] ?? {
       label: "Stage",
       tone: "neutral" as const,
@@ -1879,14 +1908,12 @@ function renderHistogram(
             >
               {b.count}
             </span>
-            {/* biome-ignore lint/a11y/useSemanticElements: role="meter" is correct; native <meter> renders its own non-stylable widget and would destroy this gradient bar layout */}
+            {/* biome-ignore lint/a11y/useSemanticElements: role="meter" is correct; native <meter> renders its own non-stylable widget and would destroy this bar layout */}
             <div
               data-bento-bar
               className={cn(
-                "w-full rounded-md bg-gradient-to-t transition-all duration-300",
-                isHovered
-                  ? "from-accent/60 to-accent shadow-[0_0_18px_var(--accent-soft)]"
-                  : "from-accent/30 to-accent/70",
+                "w-full rounded-md transition-colors duration-300",
+                isHovered ? "bg-accent" : "bg-accent/70",
               )}
               style={
                 {
@@ -1894,7 +1921,7 @@ function renderHistogram(
                   minHeight: 4,
                   "--bar-idx": i,
                   boxShadow: isSla
-                    ? "inset 0 0 0 1.5px rgba(48,209,88,0.65)"
+                    ? "inset 0 0 0 1.5px color-mix(in srgb, var(--color-success) 65%, transparent)"
                     : undefined,
                 } as React.CSSProperties
               }
@@ -1911,16 +1938,18 @@ function renderHistogram(
             <div className="text-center">
               <p
                 className={cn(
-                  "text-[12px] tabular-nums transition-colors",
+                  "inline-flex items-center gap-0.5 text-[12px] tabular-nums transition-colors",
                   isSla
-                    ? "text-[#30d158]"
+                    ? "text-[var(--status-success-fg)]"
                     : isHovered
                       ? "text-foreground"
                       : "text-subtle",
                 )}
               >
                 {b.label}
-                {isSla && " ✓"}
+                {isSla && (
+                  <Check className="h-3 w-3" strokeWidth={2.5} aria-hidden />
+                )}
               </p>
               {showCumulative && (
                 <p className="text-[10px] text-faint tabular-nums">{cum}%</p>
@@ -2759,7 +2788,9 @@ function renderNeighborhoods(
               <span className="tabular-nums text-faint flex-shrink-0">
                 {n.count}
                 <span className="text-faint mx-1">·</span>
-                <span className="text-[#ff9f0a]">{n.open} open</span>
+                <span className="text-[var(--status-warning-fg)]">
+                  {n.open} open
+                </span>
               </span>
             </div>
             <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-overlay">
@@ -2767,7 +2798,10 @@ function renderNeighborhoods(
                 className="h-full rounded-full transition-all duration-300"
                 style={{
                   width: `${pct}%`,
-                  background: sortBy === "open" ? "#ff9f0a" : "var(--subtle)",
+                  background:
+                    sortBy === "open"
+                      ? "var(--color-warning)"
+                      : "var(--subtle)",
                   opacity: isActive
                     ? sortBy === "open"
                       ? 1
@@ -2779,10 +2813,6 @@ function renderNeighborhoods(
                       : sortBy === "open"
                         ? 0.75
                         : 0.55,
-                  boxShadow:
-                    isActive && sortBy === "open"
-                      ? "0 0 10px rgba(255,159,10,0.45)"
-                      : undefined,
                 }}
               />
             </div>
@@ -2821,7 +2851,8 @@ function TopNeighborhoodsInner({ data }: TopNeighborhoodsProps) {
     const closedCount = Math.max(n.count - n.open, 0);
     const pctClosed = n.count > 0 ? (closedCount / n.count) * 100 : 0;
     const aboveMedian = n.open > medianOpen;
-    const accent = sortBy === "open" ? "#ff9f0a" : "#5ac8fa";
+    const accent =
+      sortBy === "open" ? "var(--color-warning)" : "var(--accent)";
     return {
       title: n.name,
       accent,
@@ -2831,7 +2862,7 @@ function TopNeighborhoodsInner({ data }: TopNeighborhoodsProps) {
           <TipRow
             label="Open"
             value={n.open.toLocaleString()}
-            accent="#ff9f0a"
+            accent="var(--color-warning)"
           />
           <TipRow label="% closed" value={`${pctClosed.toFixed(0)}%`} />
           <TipRow label="Share of city" value={`${share.toFixed(1)}%`} muted />
@@ -3057,7 +3088,7 @@ function renderCategoryBars(
                 className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
                 style={{
                   width: `${avgPct}%`,
-                  background: overSla ? "#ff453a" : row.color,
+                  background: overSla ? "var(--color-danger)" : row.color,
                   opacity: isHovered ? 1 : overSla ? 0.85 : 0.75,
                 }}
               />
@@ -3071,7 +3102,7 @@ function renderCategoryBars(
               <span
                 className={cn(
                   "font-medium",
-                  overSla ? "text-[#ff453a]" : "text-foreground",
+                  overSla ? "text-[var(--status-danger-fg)]" : "text-foreground",
                 )}
               >
                 {formatHours(row.avg_hours)}
@@ -3133,15 +3164,24 @@ function CategoryResolutionTableInner({ data }: CategoryResolutionTableProps) {
           <TipRow
             label="Avg resolution"
             value={formatHours(row.avg_hours)}
-            accent={overSla ? "#ff453a" : undefined}
+            accent={overSla ? "var(--color-danger)" : undefined}
           />
           <TipRow label="Target SLA" value={formatHours(row.target_hours)} />
           <TipRow
             label="Variance"
             value={`${variancePct >= 0 ? "+" : ""}${variancePct.toFixed(0)}%`}
-            accent={overSla ? "#ff453a" : wellUnder ? "#30d158" : undefined}
+            accent={
+              overSla
+                ? "var(--color-danger)"
+                : wellUnder
+                  ? "var(--color-success)"
+                  : undefined
+            }
           />
-          <TipBar pct={barPct} color={overSla ? "#ff453a" : row.color} />
+          <TipBar
+            pct={barPct}
+            color={overSla ? "var(--color-danger)" : row.color}
+          />
           <TipRow label="Volume" value={row.count.toLocaleString()} muted />
         </div>
       ),
@@ -3260,9 +3300,9 @@ function CategoryResolutionTableInner({ data }: CategoryResolutionTableProps) {
         info={
           <div className="flex flex-col gap-5">
             <Prose>
-              Each bar shows mean resolution time per category; the white
-              vertical mark is the target SLA for that category. Red bars exceed
-              the SLA — these categories are operationally underperforming and
+              Each bar shows mean resolution time per category; the vertical
+              mark is the target SLA for that category. Red bars exceed the
+              SLA — these categories are operationally underperforming and
               should drive crew-assignment changes or vendor reviews.
             </Prose>
             <StatGrid>
@@ -3357,8 +3397,8 @@ function renderSpark(
     >
       <defs>
         <linearGradient id={gVelocity} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#5ac8fa" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="#5ac8fa" stopOpacity="0" />
+          <stop offset="0%" stopColor="var(--subtle)" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="var(--subtle)" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path
@@ -3372,7 +3412,7 @@ function renderSpark(
       <polyline
         points={points}
         fill="none"
-        stroke="#5ac8fa"
+        stroke="var(--subtle)"
         strokeWidth={1.5}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -3395,7 +3435,7 @@ function renderSpark(
                   cx={p.x}
                   cy={p.y}
                   r={isActive ? 3.5 : 2.25}
-                  fill="#5ac8fa"
+                  fill="var(--subtle)"
                   style={{
                     opacity: isDim ? 0.3 : isActive ? 1 : 0.85,
                     transition: "r 140ms ease-out, opacity 140ms ease-out",
@@ -3440,7 +3480,7 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
 
   const bigNumberTip = (): Parameters<typeof tip.show>[0] => ({
     title: "Reporter activity",
-    accent: "#5ac8fa",
+    accent: "var(--subtle)",
     body: (
       <div className="flex flex-col gap-1.5">
         <TipRow
@@ -3520,12 +3560,15 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
     const deltaPct = sparkAvg ? (delta / sparkAvg) * 100 : 0;
     return {
       title: `Day ${i + 1}`,
-      accent: "#5ac8fa",
+      accent: "var(--subtle)",
       body: (
         <div className="flex flex-col gap-1.5">
           <TipRow label="Reporters" value={v.toLocaleString()} />
           <TipRow label="Window avg" value={sparkAvg.toFixed(1)} muted />
-          <TipBar pct={(v / Math.max(peak, 1)) * 100} color="#5ac8fa" />
+          <TipBar
+            pct={(v / Math.max(peak, 1)) * 100}
+            color="var(--subtle)"
+          />
           <p className="text-[11px] text-faint leading-snug mt-1">
             {i === 0
               ? "First day in window."
@@ -3670,7 +3713,9 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
               <div
                 className={cn(
                   "inline-flex items-center gap-1 text-[14px] tabular-nums",
-                  momentumPct >= 0 ? "text-[#30d158]" : "text-[#ff453a]",
+                  momentumPct >= 0
+                    ? "text-[var(--status-success-fg)]"
+                    : "text-[var(--status-danger-fg)]",
                 )}
               >
                 {momentumPct >= 0 ? (

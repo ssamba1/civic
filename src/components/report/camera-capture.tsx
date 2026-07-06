@@ -391,7 +391,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
     return (
       <div className="flex items-center justify-center h-full bg-background">
         {hiddenFileInputs}
-        <div className="w-8 h-8 border-2 border-hairline-strong border-t-white rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-hairline-strong border-t-[var(--foreground)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -420,7 +420,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
           <button
             type="button"
             onClick={openCameraPicker}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-3 min-h-[56px] text-base font-semibold text-white active:scale-95 active:bg-blue-700 transition-transform"
+            className="inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-6 py-3 min-h-[56px] text-base font-semibold text-[var(--accent-contrast)] active:scale-95 active:bg-[var(--color-primary-hover)] transition-transform"
           >
             <CameraIcon className="w-5 h-5" />
             Take a photo
@@ -428,7 +428,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
           <button
             type="button"
             onClick={openLibraryPicker}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-600 px-6 py-3 min-h-[56px] text-base font-semibold text-foreground active:scale-95 active:bg-elevated transition-transform"
+            className="inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] border border-hairline-strong px-6 py-3 min-h-[56px] text-base font-semibold text-foreground active:scale-95 active:bg-elevated transition-transform"
           >
             <ImageIcon className="w-5 h-5" />
             Upload from library
@@ -467,7 +467,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
         <button
           type="button"
           onClick={openCameraPicker}
-          className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-3 min-h-[44px] text-sm font-semibold text-white active:scale-95 transition-transform"
+          className="mt-2 inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-6 py-3 min-h-[44px] text-sm font-semibold text-[var(--accent-contrast)] active:scale-95 transition-transform"
         >
           <CameraIcon className="w-5 h-5" />
           Take a photo instead
@@ -475,7 +475,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
         <button
           type="button"
           onClick={openLibraryPicker}
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-600 px-6 py-3 min-h-[44px] text-sm font-semibold text-foreground active:scale-95 transition-transform"
+          className="inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] border border-hairline-strong px-6 py-3 min-h-[44px] text-sm font-semibold text-foreground active:scale-95 transition-transform"
         >
           <ImageIcon className="w-5 h-5" />
           Upload from library
@@ -489,7 +489,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
             // Increment retryCount to re-trigger the camera effect.
             setRetryCount((c) => c + 1);
           }}
-          className="rounded-full border border-zinc-600 px-6 py-3 min-h-[44px] text-sm font-semibold text-foreground active:scale-95 transition-transform"
+          className="rounded-[var(--radius-md)] border border-hairline-strong px-6 py-3 min-h-[44px] text-sm font-semibold text-foreground active:scale-95 transition-transform"
         >
           Try Again
         </button>
@@ -601,7 +601,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
               aria-pressed={torchOn}
               className={`flex h-11 w-11 items-center justify-center rounded-full backdrop-blur-sm transition-colors active:scale-90 ${
                 torchOn
-                  ? "bg-yellow-400 text-black"
+                  ? "bg-white text-black"
                   : "border border-white/30 bg-black/30 text-white"
               }`}
             >
@@ -688,7 +688,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
       {/* Loading state */}
       {!ready && !error && (
         <div className="absolute inset-0 flex items-center justify-center bg-background">
-          <div className="w-8 h-8 border-2 border-hairline-strong border-t-white rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-hairline-strong border-t-[var(--foreground)] rounded-full animate-spin" />
         </div>
       )}
     </div>

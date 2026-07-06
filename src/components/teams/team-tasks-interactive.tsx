@@ -204,7 +204,7 @@ function TaskRow({
             loading="lazy"
           />
           {hasAfter && (
-            <span className="absolute bottom-0 right-0 inline-flex h-4 w-4 items-center justify-center rounded-tl-md bg-[#30d158] text-black">
+            <span className="absolute bottom-0 right-0 inline-flex h-4 w-4 items-center justify-center rounded-tl-md bg-[var(--color-success)] text-white">
               <CheckCircle2 className="h-3 w-3" strokeWidth={2.5} />
             </span>
           )}
@@ -214,8 +214,7 @@ function TaskRow({
           <span className="flex items-center justify-between gap-2">
             <span className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-foreground">
               <span
-                className="h-2 w-2 shrink-0 rounded-full"
-                style={{ backgroundColor: meta.color }}
+                className="h-2 w-2 shrink-0 rounded-full bg-faint"
                 aria-hidden
               />
               <span className="truncate">{meta.label}</span>

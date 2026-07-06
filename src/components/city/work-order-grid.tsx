@@ -116,78 +116,96 @@ const SEVERITY_LABELS: Record<number, string> = {
   5: "Critical",
 };
 
-const SEVERITY_COLORS: Record<number, string> = {
-  1: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400",
-  2: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-400",
-  3: "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-400",
-  4: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400",
-  5: "bg-red-200 text-red-900 dark:bg-red-900/60 dark:text-red-300",
+// Severity used to run a 5-shade traffic-light ramp (green→red). The number
+// already carries the value, so the chip is neutralized to one outline style
+// everywhere — no rainbow grading by level.
+const SEVERITY_CHIP =
+  "border border-hairline-strong bg-overlay text-foreground";
+
+// Status → semantic vocabulary. open/rejected are the two states that need
+// attention (unclaimed backlog, needs a manual look) so they carry warning;
+// dispatched/in_progress are active work in flight (info); closed is the
+// success terminal state; merged is an administrative/neutral terminal state
+// with no dot. Same mapping drives the dropdown dot, the StatusCell pill, and
+// the toolbar filter chips so the vocabulary reads identically everywhere.
+const STATUS_TEXT: Record<string, string> = {
+  open: "text-[var(--status-warning-fg)]",
+  dispatched: "text-[var(--status-info-fg)]",
+  in_progress: "text-[var(--status-info-fg)]",
+  closed: "text-[var(--status-success-fg)]",
+  merged: "text-subtle",
+  rejected: "text-[var(--status-danger-fg)]",
 };
 
-const STATUS_STYLES: Record<string, string> = {
-  open: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-400",
-  dispatched:
-    "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-400",
-  in_progress:
-    "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400",
-  closed:
-    "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400",
-  merged: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
-  rejected: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400",
-};
-
-// Solid dot per status — used by the dropdown menu options.
+// Solid dot per status — used by the dropdown menu options and StatusCell.
 const STATUS_DOT: Record<string, string> = {
-  open: "bg-blue-500",
-  dispatched: "bg-purple-500",
-  in_progress: "bg-amber-500",
-  closed: "bg-green-500",
-  merged: "bg-zinc-400",
-  rejected: "bg-red-500",
+  open: "bg-[var(--color-warning)]",
+  dispatched: "bg-[#5b6b8c]",
+  in_progress: "bg-[#5b6b8c]",
+  closed: "bg-[var(--color-success)]",
+  merged: "bg-faint",
+  rejected: "bg-[var(--color-danger)]",
+};
+
+// Outline+tint chip for the toolbar status filter buttons — mirrors
+// STATUS_TEXT/STATUS_DOT so the active filter reads the same vocabulary,
+// via the color-mix idiom already used for EditPill's hover border.
+const STATUS_CHIP_ACTIVE: Record<string, string> = {
+  open: "border-[color-mix(in_srgb,var(--color-warning)_45%,transparent)] bg-[color-mix(in_srgb,var(--color-warning)_12%,transparent)] text-[var(--status-warning-fg)]",
+  dispatched:
+    "border-[color-mix(in_srgb,#5b6b8c_45%,transparent)] bg-[color-mix(in_srgb,#5b6b8c_12%,transparent)] text-[var(--status-info-fg)]",
+  in_progress:
+    "border-[color-mix(in_srgb,#5b6b8c_45%,transparent)] bg-[color-mix(in_srgb,#5b6b8c_12%,transparent)] text-[var(--status-info-fg)]",
+  closed:
+    "border-[color-mix(in_srgb,var(--color-success)_45%,transparent)] bg-[color-mix(in_srgb,var(--color-success)_12%,transparent)] text-[var(--status-success-fg)]",
+  merged: "border-hairline-strong bg-overlay-strong text-foreground",
+  rejected:
+    "border-[color-mix(in_srgb,var(--color-danger)_45%,transparent)] bg-[color-mix(in_srgb,var(--color-danger)_12%,transparent)] text-[var(--status-danger-fg)]",
 };
 
 // ── AG-Grid theme ───────────────────────────────────────────────────────────
-// Palette-aligned with the app tokens (globals.css): dark grid sits on the
-// --surface tone (#1c1c1e) with hairline borders so it reads as a card on the
-// black page instead of dissolving into it; accent is the app primary #0a84ff.
-// No zebra — the hover tint + accent bar (globals.css .wo-grid) is the row
-// signal.
+// AG Grid's theming API takes literal color strings (no CSS custom properties),
+// so these are hardcoded to match globals.css's token values exactly rather
+// than referencing var(--token) — accent is the ink token (was the Apple-blue
+// #0a84ff brand primary), hover/selection tints are neutral (was light-blue
+// tints). No zebra — the hover tint + accent bar (globals.css .wo-grid) is the
+// row signal.
 const gridThemeLight = themeQuartz.withParams({
-  accentColor: "#0a84ff",
-  backgroundColor: "#ffffff",
-  headerBackgroundColor: "#f5f5f7",
-  headerTextColor: "#6e6e73",
+  accentColor: "#18181b", // --accent (light)
+  backgroundColor: "#ffffff", // --surface (light)
+  headerBackgroundColor: "#ededf0", // --elevated (light)
+  headerTextColor: "#6f6f76", // --faint (light)
   headerFontWeight: 600,
-  foregroundColor: "#1d1d1f",
+  foregroundColor: "#141415", // --foreground (light)
   fontFamily: "inherit",
   fontSize: 13,
   cellHorizontalPadding: 14,
-  rowHoverColor: "#f2f7ff",
-  selectedRowBackgroundColor: "#e5f1ff",
-  borderColor: "rgba(0, 0, 0, 0.07)",
-  wrapperBorderRadius: "14px",
+  rowHoverColor: "rgba(0, 0, 0, 0.04)", // --overlay (light)
+  selectedRowBackgroundColor: "rgba(24, 24, 27, 0.07)", // --accent-soft (light)
+  borderColor: "rgba(0, 0, 0, 0.08)", // --hairline (light)
+  wrapperBorderRadius: "12px", // --radius-lg
 });
 const gridThemeDark = themeQuartz.withParams({
-  accentColor: "#0a84ff",
-  backgroundColor: "#1c1c1e",
-  headerBackgroundColor: "#232326",
-  headerTextColor: "#98989f",
+  accentColor: "#f4f4f5", // --accent (dark)
+  backgroundColor: "#161619", // --surface (dark)
+  headerBackgroundColor: "#26262a", // --elevated (dark)
+  headerTextColor: "#85858c", // --faint (dark)
   headerFontWeight: 600,
-  foregroundColor: "#f5f5f7",
+  foregroundColor: "#f5f5f6", // --foreground (dark)
   fontFamily: "inherit",
   fontSize: 13,
   cellHorizontalPadding: 14,
-  rowHoverColor: "#232a35",
-  selectedRowBackgroundColor: "rgba(10, 132, 255, 0.16)",
-  borderColor: "rgba(255, 255, 255, 0.08)",
-  wrapperBorderRadius: "14px",
+  rowHoverColor: "rgba(255, 255, 255, 0.04)", // --overlay (dark)
+  selectedRowBackgroundColor: "rgba(255, 255, 255, 0.09)", // --accent-soft (dark)
+  borderColor: "rgba(255, 255, 255, 0.09)", // --hairline (dark)
+  wrapperBorderRadius: "12px", // --radius-lg
 });
 
-// A soft alpha-tinted tile in the entity's own color — this is the "filled"
-// icon read (lucide ships outline-only glyphs, so the fill lives on the tile).
-function iconTileStyle(color: string): React.CSSProperties {
-  return { backgroundColor: `${color}1f`, color };
-}
+// Neutral icon tile — category/team color no longer rides on chrome (only map
+// data layers and chart series carry hue); the glyph + label already identify
+// the type, so a flat --elevated tile is the "filled" icon read (lucide ships
+// outline-only glyphs, so the fill lives on the tile, not the icon color).
+const ICON_TILE = "bg-elevated text-subtle";
 
 // ── Custom dropdown editor ──────────────────────────────────────────────────
 // Replaces agSelectCellEditor: the native <select> popup is OS-drawn chrome
@@ -213,8 +231,10 @@ function OptionGlyph({
     const Icon = CATEGORY_ICON[meta.icon] ?? HelpCircle;
     return (
       <span
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md"
-        style={iconTileStyle(meta.color)}
+        className={cn(
+          "flex h-6 w-6 shrink-0 items-center justify-center rounded-md",
+          ICON_TILE,
+        )}
       >
         <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />
       </span>
@@ -235,7 +255,7 @@ function OptionGlyph({
       <span
         className={cn(
           "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
-          SEVERITY_COLORS[value as number] ?? SEVERITY_COLORS[3],
+          SEVERITY_CHIP,
         )}
       >
         {value}
@@ -306,7 +326,7 @@ function SelectEditor(props: SelectEditorProps) {
       tabIndex={-1}
       onKeyDown={onKeyDown}
       style={{ width: Math.max(props.column.getActualWidth(), 210) }}
-      className="max-h-80 overflow-y-auto rounded-xl border border-zinc-200 bg-white p-1.5 shadow-xl outline-none dark:border-zinc-700 dark:bg-[#232327]"
+      className="max-h-80 overflow-y-auto rounded-[var(--radius-md)] border border-hairline-strong bg-surface p-1.5 shadow-[var(--shadow-pop)] outline-none"
     >
       {options.map((o, i) => {
         const selected = o.value === value;
@@ -320,8 +340,8 @@ function SelectEditor(props: SelectEditorProps) {
             onMouseEnter={() => setActive(i)}
             onClick={() => choose(o.value)}
             className={cn(
-              "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] text-zinc-800 dark:text-zinc-100",
-              i === active && "bg-zinc-100 dark:bg-zinc-700/60",
+              "flex w-full items-center gap-2.5 rounded-[var(--radius-sm)] px-2.5 py-2 text-left text-[13px] text-foreground",
+              i === active && "bg-overlay",
               selected && "font-medium",
             )}
           >
@@ -386,12 +406,12 @@ function EditPill({
   return (
     <span
       className={cn(
-        "inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-lg border border-zinc-200 bg-white py-1 pl-2 pr-1.5 shadow-sm transition-colors hover:border-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] dark:border-zinc-700 dark:bg-zinc-800/70 dark:hover:border-[color-mix(in_srgb,var(--color-primary)_70%,transparent)]",
+        "inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-[var(--radius-md)] border border-hairline-strong bg-surface py-1 pl-2 pr-1.5 shadow-[var(--shadow-card)] transition-colors hover:border-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]",
         className,
       )}
     >
       {children}
-      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500" />
+      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-faint" />
     </span>
   );
 }
@@ -402,19 +422,21 @@ function CategoryCell({ data }: ICellRendererParams<GridReportRow>) {
   const meta = CATEGORY_META[cat] ?? CATEGORY_META.other;
   const Icon = CATEGORY_ICON[meta.icon] ?? HelpCircle;
   return (
-    <EditPill className="h-11 rounded-xl pl-1.5">
+    <EditPill className="h-11 rounded-[var(--radius-lg)] pl-1.5">
       <span
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-        style={iconTileStyle(meta.color)}
+        className={cn(
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-md)]",
+          ICON_TILE,
+        )}
       >
         <Icon className="h-[18px] w-[18px]" strokeWidth={2.25} />
       </span>
       <span className="flex min-w-0 flex-col leading-tight">
-        <span className="truncate text-[13px] font-medium text-zinc-900 dark:text-zinc-100">
+        <span className="truncate text-[13px] font-medium text-foreground">
           {data.category ? meta.label : "Unclassified"}
         </span>
         {data.subcategory && (
-          <span className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+          <span className="truncate text-[11px] text-subtle">
             {data.subcategory}
           </span>
         )}
@@ -434,12 +456,14 @@ function TeamCell({ data }: ICellRendererParams<GridReportRow>) {
   return (
     <span className="flex items-center gap-2">
       <span
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md"
-        style={iconTileStyle(team.color)}
+        className={cn(
+          "flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--radius-md)]",
+          ICON_TILE,
+        )}
       >
         <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />
       </span>
-      <span className="truncate text-[13px] text-zinc-700 dark:text-zinc-300">
+      <span className="truncate text-[13px] text-subtle">
         {team.shortLabel}
       </span>
     </span>
@@ -447,13 +471,13 @@ function TeamCell({ data }: ICellRendererParams<GridReportRow>) {
 }
 
 function SeverityCell({ value }: ICellRendererParams<GridReportRow, number>) {
-  if (value == null) return <span className="text-zinc-400">—</span>;
+  if (value == null) return <span className="text-faint">—</span>;
   return (
     <EditPill className="h-8">
       <span
         className={cn(
           "inline-flex h-[22px] w-[22px] items-center justify-center rounded-full text-[11px] font-semibold",
-          SEVERITY_COLORS[value] ?? SEVERITY_COLORS[3],
+          SEVERITY_CHIP,
         )}
       >
         {value}
@@ -469,26 +493,27 @@ function PriorityCell({ data }: ICellRendererParams<GridReportRow>) {
   if (!data) return null;
   if (data.priority_score == null) {
     return data.is_emergency ? (
-      <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-800 dark:bg-red-900/50 dark:text-red-300">
+      // Safety-critical emergency flag — the one place danger red stays a
+      // solid fill rather than the outline+dot chip, since it must read
+      // instantly against a grid full of neutral cells.
+      <span className="inline-flex items-center rounded-[var(--radius-sm)] bg-[var(--color-danger)] px-2 py-0.5 text-xs font-bold text-white">
         EMERGENCY
       </span>
     ) : (
-      <span className="text-zinc-400">—</span>
+      <span className="text-faint">—</span>
     );
   }
   const score = data.priority_score;
   // Practical non-emergency priorities sit ~3.5–15; clamp the bar domain to 20.
   const pct = Math.max(4, Math.min(100, (score / 20) * 100));
-  const tone =
-    score >= 10 ? "bg-red-500" : score >= 7 ? "bg-orange-500" : "bg-blue-500";
   return (
     <span className="flex items-center gap-2">
-      <span className="tabular-nums text-[13px] font-medium text-zinc-800 dark:text-zinc-200">
+      <span className="tabular-nums text-[13px] font-medium text-foreground">
         {score.toFixed(1)}
       </span>
-      <span className="h-1.5 w-14 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+      <span className="h-1.5 w-14 overflow-hidden rounded-full bg-elevated">
         <span
-          className={cn("block h-full rounded-full", tone)}
+          className="block h-full rounded-full bg-foreground"
           style={{ width: `${pct}%` }}
         />
       </span>
@@ -496,24 +521,13 @@ function PriorityCell({ data }: ICellRendererParams<GridReportRow>) {
   );
 }
 
-// Colored label text per status — pairs with STATUS_DOT inside the dropdown
-// pill (dot + tinted label, not a filled chip).
-const STATUS_TEXT: Record<string, string> = {
-  open: "text-blue-700 dark:text-blue-400",
-  dispatched: "text-purple-700 dark:text-purple-400",
-  in_progress: "text-amber-700 dark:text-amber-400",
-  closed: "text-green-700 dark:text-green-400",
-  merged: "text-zinc-500 dark:text-zinc-400",
-  rejected: "text-red-700 dark:text-red-400",
-};
-
 /** Status is editable — dropdown pill wrapping a solid status dot + tinted
  *  label, so the cell reads like a select control. */
 function StatusCell({ data }: ICellRendererParams<GridReportRow>) {
   if (!data) return null;
   return (
     <span className="flex flex-wrap items-center gap-1">
-      <EditPill className="h-8 rounded-full pl-2.5">
+      <EditPill className="h-8 pl-2.5">
         <span
           className={cn(
             "h-2 w-2 shrink-0 rounded-full",
@@ -530,7 +544,8 @@ function StatusCell({ data }: ICellRendererParams<GridReportRow>) {
         </span>
       </EditPill>
       {data.needs_manual_review && (
-        <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-900/40 dark:text-amber-400">
+        <span className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-hairline bg-overlay px-1.5 py-0.5 text-[10px] font-bold text-[var(--status-warning-fg)]">
+          <span className="size-1.5 rounded-full bg-[var(--color-warning)]" />
           Review
         </span>
       )}
@@ -546,12 +561,7 @@ function LabelPillCell({
   return (
     <EditPill className="h-8">
       <span
-        className={cn(
-          "truncate text-[13px]",
-          value
-            ? "text-zinc-800 dark:text-zinc-200"
-            : "text-zinc-400 dark:text-zinc-500",
-        )}
+        className={cn("truncate text-[13px]", value ? "text-foreground" : "text-faint")}
       >
         {value ? titleize(value) : "—"}
       </span>
@@ -560,14 +570,14 @@ function LabelPillCell({
 }
 
 function SourceCell({ value }: ICellRendererParams<GridReportRow, string>) {
-  if (!value) return <span className="text-zinc-400">—</span>;
+  if (!value) return <span className="text-faint">—</span>;
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium uppercase",
+        "inline-flex items-center rounded-[var(--radius-sm)] border px-2 py-0.5 text-[11px] font-medium uppercase",
         value === "ai"
-          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-          : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+          ? "border-hairline-strong bg-overlay-strong text-foreground"
+          : "border-hairline bg-overlay text-subtle",
       )}
     >
       {value}
@@ -820,22 +830,22 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
   );
 
   const chipBase =
-    "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium transition-colors";
+    "inline-flex items-center rounded-[var(--radius-md)] border px-2.5 py-1 text-xs font-medium transition-colors";
   const chipIdle =
-    "border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200";
+    "border-hairline bg-overlay text-subtle hover:border-hairline-strong hover:text-foreground";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search issue, address, department…"
             aria-label="Search work orders"
-            className="w-full rounded-full border border-zinc-200 bg-white py-1.5 pl-9 pr-3 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-blue-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+            className="w-full rounded-[var(--radius-md)] border border-hairline bg-surface py-1.5 pl-9 pr-3 text-sm text-foreground shadow-[var(--shadow-card)] placeholder:text-faint focus:border-hairline-strong"
           />
         </div>
 
@@ -849,7 +859,7 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
             className={cn(
               chipBase,
               statusFilter === ""
-                ? "border-transparent bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                ? "border-transparent bg-foreground text-background"
                 : chipIdle,
             )}
           >
@@ -877,11 +887,7 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
               aria-pressed={statusFilter === s}
               className={cn(
                 chipBase,
-                statusFilter === s
-                  ? // border-current/30 keeps the pressed state legible even for
-                    // the near-neutral "merged" chip in dark mode.
-                    cn("border-current/30", STATUS_STYLES[s])
-                  : chipIdle,
+                statusFilter === s ? STATUS_CHIP_ACTIVE[s] : chipIdle,
               )}
             >
               {titleize(s)}
@@ -895,10 +901,10 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
         {/* Always visible — the grid is just as editable on mobile, and a
             hidden warning turns unsaved edits into silent data loss. */}
         <span
-          className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-amber-200/70 bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300"
+          className="ml-auto inline-flex items-center gap-1.5 rounded-[var(--radius-md)] border border-hairline bg-overlay px-2.5 py-1 text-[11px] font-medium text-[var(--status-warning-fg)]"
           title="Category, severity, status, department, and crew are editable — click a cell. Changes are not saved to the database."
         >
-          <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-warning)]" />
           Edits not saved to database
         </span>
       </div>

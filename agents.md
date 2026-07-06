@@ -1,6 +1,6 @@
 # AGENTS.md
 
-> This is the cross-tool agent instruction file (Codex, Cursor, Copilot, Amp, Jules, Factory). Claude Code loads it via `CLAUDE.md` (`@agents.md` import — no symlink on Windows). Full product and design context lives in `docs/CONTEXT.md` and `docs/DESIGN.md`. Read those before any substantive work. Keep this file short.
+> This is the cross-tool agent instruction file (Codex, Cursor, Copilot, Amp, Jules, Factory). Claude Code loads it via `CLAUDE.md` (`@agents.md` import — no symlink on Windows). Product/design context: `docs/planning/` + `docs/decisions/` (ADRs) + root `REVAMP_PLAN.md`. Read those before substantive work. Keep this file short.
 
 ## What this is
 

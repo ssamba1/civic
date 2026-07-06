@@ -14,9 +14,9 @@ import { lockBodyScroll } from "@/lib/utils/scroll-lock";
    reused by Teams (and any future bento surface) without duplicating
    the motion/reveal/expand-modal machinery.
 
-   Visual contract: flat Apple-dark panels — #1c1c1e fill,
-   white/[0.06] hairline border, --radius-lg corners. Motion is
-   CSS-driven and gated by `prefers-reduced-motion: no-preference`.
+   Visual contract: flat surface panels — bg-surface fill, hairline
+   border, --radius-lg corners. Motion is CSS-driven and gated by
+   `prefers-reduced-motion: no-preference`.
    ================================================================== */
 
 const BENTO_MOTION_CSS = `
@@ -139,21 +139,25 @@ export function Tile({
       {...(tilt ? { "data-tilt-id": tiltHover["data-tilt-id"] } : {})}
       data-bento-reveal
       className={cn(
-        "flex flex-col rounded-2xl border border-hairline bg-surface p-4 sm:p-5 text-foreground",
-        "shadow-[0_1px_2px_rgba(16,24,40,0.05)]",
+        "flex flex-col rounded-[var(--radius-lg)] border border-hairline bg-surface p-4 sm:p-5 text-foreground",
+        "shadow-[var(--shadow-card)]",
         className,
       )}
     >
       {(title || onExpand) && (
         <header className="flex items-center justify-between gap-3 mb-3 sm:mb-4 min-h-[20px]">
           <div className="flex items-baseline gap-2 sm:gap-3 min-w-0">
+            {/* Title never shrinks/truncates (shrink-0) — the meta count is the
+               one that yields first when the row is tight. Both used to carry
+               `truncate` with default flex-shrink, so they competed and the
+               title clipped mid-word before the shorter meta text did. */}
             {title && (
-              <h2 className="text-[14px] sm:text-[15px] font-semibold text-foreground truncate">
+              <h2 className="text-[13px] font-semibold text-foreground shrink-0">
                 {title}
               </h2>
             )}
             {subtitle && (
-              <span className="text-[11px] sm:text-[12px] text-subtle truncate">
+              <span className="min-w-0 flex-1 truncate text-[12px] text-faint">
                 {subtitle}
               </span>
             )}
@@ -317,7 +321,7 @@ export function ExpandModal({
           /* Mobile: full-width bottom sheet, max 90dvh */
           "relative w-full sm:max-w-[min(92vw,1400px)] flex flex-col text-foreground overflow-hidden",
           "max-h-[90dvh] sm:max-h-[92vh]",
-          "rounded-t-[18px] sm:rounded-[18px] border border-hairline bg-surface",
+          "rounded-t-[var(--radius-lg)] sm:rounded-[var(--radius-lg)] border border-hairline bg-surface",
           "shadow-[var(--shadow-pop)]",
           "animate-in zoom-in-95 slide-in-from-bottom-2 sm:slide-in-from-bottom-0 duration-200",
           "data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=closed]:fade-out data-[state=closed]:slide-out-to-bottom-2 sm:data-[state=closed]:slide-out-to-bottom-0 data-[state=closed]:duration-150",
@@ -449,7 +453,12 @@ export function Toggle({
       >
         <span
           className={cn(
-            "block h-3 w-3 rounded-full bg-white",
+            /* bg-surface (not a hardcoded white) so the knob still reads
+               against an ink track in dark mode, where --accent flips to
+               near-white — a plain white knob would nearly vanish there. The
+               shadow gives it definition against the translucent off-track
+               too. */
+            "block h-3 w-3 rounded-full bg-surface shadow-sm",
             "transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:transition-none",
             value ? "translate-x-3" : "translate-x-0",
           )}

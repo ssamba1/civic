@@ -32,14 +32,18 @@ const FILTER_OPTIONS: { value: FeedFilter; label: string }[] = [
   { value: "unread", label: "Unread" },
 ];
 
+// color is set only when the notification type IS a status (resolved/status
+// update) — that's the one place hue is warranted here (state, not
+// decoration). Announcement/comment stay grayscale, rendered via swatchClass
+// below instead of an inline tint.
 const TYPE_META: Record<
   NotificationItem["type"],
-  { icon: LucideIcon; color: string; label: string }
+  { icon: LucideIcon; color?: string; label: string }
 > = {
-  resolved: { icon: CheckCircle2, color: "#30d158", label: "Resolved" },
-  status: { icon: Activity, color: "#0a84ff", label: "Status update" },
-  announcement: { icon: Megaphone, color: "#ff9f0a", label: "Announcement" },
-  comment: { icon: MessageSquare, color: "#5ac8fa", label: "Comment" },
+  resolved: { icon: CheckCircle2, color: "#3d9a63", label: "Resolved" },
+  status: { icon: Activity, color: "#5b6b8c", label: "Status update" },
+  announcement: { icon: Megaphone, label: "Announcement" },
+  comment: { icon: MessageSquare, label: "Comment" },
 };
 
 // Exit-animation duration (ms) — kept in sync with the `duration-150` enter so
@@ -239,7 +243,7 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
           />
           {unreadCount > 0 && (
             <span
-              className="absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full bg-[#ff453a] shadow-[0_0_6px_rgba(255,69,58,0.6)]"
+              className="absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]"
               aria-hidden="true"
             />
           )}
@@ -288,7 +292,7 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
             // hidden below sm, present on sm+
             "hidden sm:block",
             "fixed right-3 sm:right-6 top-[60px] z-50 w-[min(420px,calc(100vw-1.5rem))]",
-            "rounded-[14px] border border-hairline bg-glass backdrop-blur-xl",
+            "rounded-[var(--radius-lg)] border border-hairline bg-glass backdrop-blur-xl",
             "shadow-[var(--shadow-pop)]",
             "duration-150",
             "data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-top-1",
@@ -349,7 +353,7 @@ function UpdatesFeedHeader({
             Updates
           </p>
           {unreadCount > 0 && (
-            <span className="rounded-full bg-[color-mix(in_srgb,var(--color-primary)_15%,transparent)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--color-primary)]">
+            <span className="rounded-[var(--radius-sm)] bg-[color-mix(in_srgb,var(--color-primary)_15%,transparent)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--color-primary)]">
               {unreadCount} new
             </span>
           )}
@@ -378,7 +382,7 @@ function UpdatesFeedHeader({
             "text-[12px] transition-colors",
             unreadCount === 0
               ? "cursor-default text-faint"
-              : "text-[var(--color-primary)] hover:text-[#3b9dff]",
+              : "text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]",
           )}
         >
           Mark all read
@@ -426,7 +430,7 @@ function UpdatesFeedBody({
         <button
           type="button"
           onClick={onRetry}
-          className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-hairline bg-overlay px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-overlay-strong"
+          className="inline-flex min-h-[44px] items-center gap-1.5 rounded-[var(--radius-md)] border border-hairline bg-overlay px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-overlay-strong"
         >
           <RotateCw
             className="h-3.5 w-3.5"
@@ -466,13 +470,16 @@ function UpdatesFeedBody({
               )}
             >
               <span
-                className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
-                style={{ background: `${meta.color}1f` }}
+                className={cn(
+                  "mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg",
+                  !meta.color && "bg-elevated",
+                )}
+                style={meta.color ? { background: `${meta.color}1f` } : undefined}
               >
                 <Icon
-                  className="h-4 w-4"
+                  className={cn("h-4 w-4", !meta.color && "text-subtle")}
                   strokeWidth={2}
-                  style={{ color: meta.color }}
+                  style={meta.color ? { color: meta.color } : undefined}
                   aria-hidden="true"
                 />
               </span>
@@ -578,7 +585,7 @@ function MobileUpdatesSheet({
               "min-h-[44px] px-2 text-[12px] transition-colors",
               unreadCount === 0
                 ? "cursor-default text-faint"
-                : "text-[var(--color-primary)] hover:text-[#3b9dff]",
+                : "text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]",
             )}
           >
             Mark all read
@@ -643,7 +650,7 @@ function DetailModal({
           // Mobile: full-width, rounded top corners only, slide up from bottom.
           // sm+: centered card with full rounded corners, max-w-lg.
           "relative w-full max-w-[min(100%,32rem)] overflow-hidden",
-          "rounded-t-[20px] sm:rounded-[16px]",
+          "rounded-t-[var(--radius-lg)] sm:rounded-[var(--radius-lg)]",
           "border border-hairline-strong bg-surface shadow-[0_30px_80px_rgba(0,0,0,0.65)]",
           "duration-150",
           "data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-bottom-4 sm:data-[state=open]:zoom-in-95",
@@ -671,20 +678,22 @@ function DetailModal({
               className="object-cover opacity-90"
               unoptimized
             />
-            <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#1c1c1e] to-transparent" />
           </div>
         ) : null}
 
         <div className="px-5 pb-5 pt-5">
           <div className="flex items-center gap-2">
             <span
-              className="inline-flex h-6 w-6 items-center justify-center rounded-md"
-              style={{ background: `${meta.color}1f` }}
+              className={cn(
+                "inline-flex h-6 w-6 items-center justify-center rounded-md",
+                !meta.color && "bg-elevated",
+              )}
+              style={meta.color ? { background: `${meta.color}1f` } : undefined}
             >
               <Icon
-                className="h-3.5 w-3.5"
+                className={cn("h-3.5 w-3.5", !meta.color && "text-subtle")}
                 strokeWidth={2}
-                style={{ color: meta.color }}
+                style={meta.color ? { color: meta.color } : undefined}
                 aria-hidden="true"
               />
             </span>
@@ -704,7 +713,7 @@ function DetailModal({
           </p>
 
           {snap && (
-            <div className="mt-4 rounded-[12px] border border-hairline bg-overlay p-4">
+            <div className="mt-4 rounded-[var(--radius-lg)] border border-hairline bg-overlay p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2">
                   <span
@@ -767,8 +776,8 @@ function DetailModal({
                 href={`/user/my-reports/${item.reportId}`}
                 onClick={onClose}
                 className={cn(
-                  "inline-flex min-h-[44px] items-center gap-1.5 rounded-md bg-[var(--color-primary)] px-3 py-1.5 text-[13px] font-medium text-white",
-                  "transition-colors duration-150 hover:bg-[#0070e0]",
+                  "inline-flex min-h-[44px] items-center gap-1.5 rounded-md bg-[var(--color-primary)] px-3 py-1.5 text-[13px] font-medium text-[var(--accent-contrast)]",
+                  "transition-colors duration-150 hover:bg-[var(--color-primary-hover)]",
                 )}
               >
                 Open full report

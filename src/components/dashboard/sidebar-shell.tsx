@@ -37,7 +37,7 @@ export function SidebarWhenExpanded({
 }: {
   children: React.ReactNode;
 }) {
-  return useSidebarCollapsed() ? null : <>{children}</>;
+  return useSidebarCollapsed() ? null : children;
 }
 
 /** Renders children only while the sidebar is collapsed to the icon rail. */
@@ -46,7 +46,7 @@ export function SidebarWhenCollapsed({
 }: {
   children: React.ReactNode;
 }) {
-  return useSidebarCollapsed() ? <>{children}</> : null;
+  return useSidebarCollapsed() ? children : null;
 }
 
 /** Brand row — Civic dot + wordmark, links home. */
@@ -97,26 +97,39 @@ export function SidebarNav({
                 aria-current={active ? "page" : undefined}
                 title={collapsed ? label : undefined}
                 className={cn(
-                  "group relative flex w-full items-center gap-2.5 rounded-lg text-[13px] font-medium",
+                  "group relative flex h-10 w-full items-center gap-3 rounded-[10px] text-[14px]",
                   "transition-colors duration-150 outline-none",
                   "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-0",
-                  collapsed && "justify-center px-0 py-2",
-                  !collapsed && (sub ? "py-1.5 pl-2.5 pr-8" : "px-2.5 py-1.5"),
+                  collapsed
+                    ? "justify-center px-0"
+                    : sub
+                      ? "pl-2.5 pr-8"
+                      : "px-2.5",
                   active
-                    ? "bg-accent text-accent-contrast dark:bg-accent-soft dark:text-accent-text"
-                    : "text-subtle hover:bg-overlay hover:text-foreground",
+                    ? "bg-elevated font-semibold text-foreground"
+                    : "font-medium text-subtle hover:bg-overlay hover:text-foreground",
                 )}
               >
-                <Icon
-                  className={cn(
-                    "h-4 w-4 shrink-0 transition-colors duration-150",
-                    active
-                      ? "text-accent-contrast dark:text-accent-text"
-                      : "text-faint group-hover:text-subtle",
-                  )}
-                  strokeWidth={2}
-                  aria-hidden="true"
-                />
+                {active ? (
+                  // Inverted-dot look from the sidebar reference: the active
+                  // row's icon sits in a filled --foreground circle with a
+                  // --surface glyph, instead of just recoloring the glyph.
+                  <span
+                    aria-hidden="true"
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground"
+                  >
+                    <Icon
+                      className="h-3.5 w-3.5 text-surface"
+                      strokeWidth={2}
+                    />
+                  </span>
+                ) : (
+                  <Icon
+                    className="h-4 w-4 shrink-0 text-faint transition-colors duration-150 group-hover:text-subtle"
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  />
+                )}
                 {!collapsed && label}
               </Link>
               {sub && !collapsed && (

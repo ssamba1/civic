@@ -14,6 +14,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { Button } from "@/components/ui/button";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
@@ -23,16 +24,12 @@ import { downscaleImageToDataUrl } from "@/lib/utils/downscale-image";
 import { lockBodyScroll } from "@/lib/utils/scroll-lock";
 import { timeAgo } from "@/lib/utils/time-ago";
 
-/** Colored dot + category label + status pill — shared by every shell header. */
+/** Neutral dot + category label + status pill — shared by every shell header. */
 function DetailTitle({ report }: { report: DashboardReport }) {
   const meta = CATEGORY_META[report.category];
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <span
-        className="h-2.5 w-2.5 shrink-0 rounded-full"
-        style={{ backgroundColor: meta.color }}
-        aria-hidden
-      />
+      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-faint" aria-hidden />
       <h2 className="truncate text-[15px] font-semibold text-foreground">
         {meta.label}
       </h2>
@@ -85,7 +82,7 @@ export function TeamTaskDetail({ report, open, onClose }: TeamTaskDetailProps) {
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="absolute inset-0 h-full w-full cursor-default bg-black/60 backdrop-blur-[2px] animate-in fade-in"
+        className="absolute inset-0 h-full w-full cursor-default bg-black/60 animate-in fade-in"
       />
 
       <div
@@ -95,22 +92,23 @@ export function TeamTaskDetail({ report, open, onClose }: TeamTaskDetailProps) {
         className={cn(
           "relative flex w-full flex-col overflow-y-auto border-hairline bg-surface text-foreground shadow-[0_8px_60px_rgba(0,0,0,0.6)] custom-scrollbar pb-safe",
           // Mobile: bottom sheet. sm+: right drawer.
-          "mt-auto max-h-[88dvh] rounded-t-2xl border-t",
-          "sm:mt-0 sm:ml-auto sm:h-full sm:max-h-none sm:w-[min(92vw,440px)] sm:rounded-none sm:rounded-l-2xl sm:border-l sm:border-t-0",
+          "mt-auto max-h-[88dvh] rounded-t-[var(--radius-lg)] border-t",
+          "sm:mt-0 sm:ml-auto sm:h-full sm:max-h-none sm:w-[min(92vw,440px)] sm:rounded-none sm:rounded-l-[var(--radius-lg)] sm:border-l sm:border-t-0",
           "motion-safe:animate-in motion-safe:slide-in-from-bottom sm:motion-safe:slide-in-from-right motion-safe:duration-300",
         )}
       >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-hairline bg-glass px-4 py-3 backdrop-blur-md">
           <DetailTitle report={report} />
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
             aria-label="Close"
-            className="-mr-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-subtle transition-colors hover:bg-overlay-strong hover:text-foreground"
+            className="-mr-1"
           >
             <X className="h-5 w-5" />
-          </button>
+          </Button>
         </div>
 
         <TaskDetailBody key={report.id} report={report} />
@@ -140,17 +138,18 @@ export function TaskDetailPane({ report, onClose }: TaskDetailPaneProps) {
   }, [onClose]);
 
   return (
-    <div className="sticky top-20 max-h-[calc(100dvh-6rem)] overflow-y-auto rounded-2xl border border-hairline bg-surface text-foreground shadow-[0_8px_40px_rgba(0,0,0,0.35)] custom-scrollbar motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-2 motion-safe:duration-200">
+    <div className="sticky top-20 max-h-[calc(100dvh-6rem)] overflow-y-auto rounded-[var(--radius-lg)] border border-hairline bg-surface text-foreground shadow-[0_8px_40px_rgba(0,0,0,0.35)] custom-scrollbar motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-2 motion-safe:duration-200">
       <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-hairline bg-glass px-4 py-3 backdrop-blur-md">
         <DetailTitle report={report} />
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onClose}
           aria-label="Close detail"
-          className="-mr-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-subtle transition-colors hover:bg-overlay-strong hover:text-foreground"
+          className="-mr-1"
         >
           <X className="h-5 w-5" />
-        </button>
+        </Button>
       </div>
 
       <TaskDetailBody key={report.id} report={report} />
@@ -225,7 +224,7 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
           Severity {report.severity}/5
         </span>
         {report.completed_at && (
-          <span className="inline-flex items-center gap-2 text-[#30d158]">
+          <span className="inline-flex items-center gap-2 text-[var(--status-success-fg)]">
             <CheckCircle2 className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
             Completed {timeAgo(report.completed_at)}
           </span>
@@ -251,25 +250,23 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
         )}
       </div>
 
-      {error && <p className="text-[12px] text-[#ff453a]">{error}</p>}
+      {error && (
+        <p className="text-[12px] text-[var(--status-danger-fg)]">{error}</p>
+      )}
 
       {/* Actions */}
       {isDone ? (
-        <button
-          type="button"
-          onClick={handleReopen}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-hairline bg-overlay px-5 text-[14px] font-medium text-foreground transition-colors hover:bg-overlay-strong"
-        >
+        <Button variant="outline" size="lg" onClick={handleReopen}>
           <RotateCcw className="h-4 w-4" />
           Reopen task
-        </button>
+        </Button>
       ) : (
         <div className="flex flex-col gap-2.5">
           <label
             className={cn(
-              "inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-dashed px-5 text-[14px] font-medium transition-colors",
+              "inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-md)] border border-dashed px-5 text-[14px] font-medium transition-colors",
               pendingPhoto
-                ? "border-[#30d158]/40 bg-[#30d158]/10 text-[#30d158] hover:bg-[#30d158]/15"
+                ? "border-[var(--color-success)]/40 bg-[var(--color-success)]/10 text-[var(--status-success-fg)] hover:bg-[var(--color-success)]/15"
                 : "border-hairline-strong bg-overlay text-foreground hover:border-[color-mix(in_srgb,var(--color-primary)_50%,transparent)] hover:bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)]",
             )}
           >
@@ -293,15 +290,14 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
             />
           </label>
 
-          <button
-            type="button"
+          <Button
+            size="lg"
             onClick={handleMarkDone}
             disabled={busy}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#30d158] px-5 text-[14px] font-semibold text-black transition-colors hover:bg-[#28bb4c] disabled:opacity-50"
           >
             <CheckCircle2 className="h-4 w-4" />
             Mark done
-          </button>
+          </Button>
           <p className="text-center text-[12px] text-faint">
             Photo optional — adds a before/after record.
           </p>
@@ -330,7 +326,7 @@ function PhotoBlock({
           {label}
         </span>
         {pending && (
-          <span className="text-[11px] font-medium text-[#30d158]">
+          <span className="text-[11px] font-medium text-[var(--status-success-fg)]">
             Not saved yet
           </span>
         )}
@@ -338,7 +334,7 @@ function PhotoBlock({
       <div
         className={cn(
           "relative aspect-video w-full overflow-hidden rounded-lg border bg-surface",
-          accent ? "border-[#30d158]/30" : "border-hairline",
+          accent ? "border-[var(--color-success)]/30" : "border-hairline",
         )}
       >
         {/* Data URLs (after-photo) and remote seed photos differ; next/image

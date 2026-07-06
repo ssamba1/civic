@@ -169,7 +169,7 @@ export function CitySearch({
           id={listboxId}
           role="listbox"
           aria-label="City results"
-          className="absolute left-0 top-[calc(100%+6px)] z-50 w-full overflow-hidden rounded-[14px] border border-hairline bg-surface p-1.5 shadow-[var(--shadow-pop)] ring-1 ring-hairline"
+          className="absolute left-0 top-[calc(100%+6px)] z-50 w-full overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface p-1.5 shadow-[var(--shadow-pop)] ring-1 ring-hairline"
         >
           {results.length === 0 ? (
             <p className="px-2 py-4 text-center text-[13px] text-faint">

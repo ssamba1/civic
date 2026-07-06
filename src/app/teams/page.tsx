@@ -1,6 +1,6 @@
+import { ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 
 import { teamIcon } from "@/components/teams/team-icon";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
@@ -27,7 +27,7 @@ export default function TeamsIndexPage() {
             className="group inline-flex shrink-0 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
           >
             <span
-              className="h-2 w-2 rounded-full bg-[var(--color-primary)] shadow-[0_0_8px_rgba(10,132,255,0.6)]"
+              className="h-2 w-2 rounded-full bg-[var(--color-primary)]"
               aria-hidden="true"
             />
             Civic
@@ -72,14 +72,7 @@ export default function TeamsIndexPage() {
                         className="group relative flex h-full flex-col gap-3 rounded-xl border border-hairline bg-overlay p-4 outline-none transition-colors hover:bg-overlay-strong focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
                       >
                         <div className="flex items-center gap-2.5">
-                          <span
-                            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                            style={{
-                              color: team.color,
-                              backgroundColor: `${team.color}1a`,
-                              boxShadow: `inset 0 0 0 1px ${team.color}33`,
-                            }}
-                          >
+                          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-elevated text-subtle">
                             <Icon
                               className="h-4 w-4"
                               strokeWidth={2}

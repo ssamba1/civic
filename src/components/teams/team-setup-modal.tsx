@@ -94,6 +94,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { Button } from "@/components/ui/button";
 import { useCategoryOverrides } from "@/lib/category-overrides";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import { TEAMS, type TeamId } from "@/lib/teams";
@@ -411,7 +412,7 @@ export function TeamSetupModal({
         type="button"
         onClick={onClose}
         aria-label="Close team setup"
-        className="absolute inset-0 bg-black/75 backdrop-blur-md"
+        className="absolute inset-0 bg-black/75"
       />
       <div
         ref={dialogRef}
@@ -422,7 +423,7 @@ export function TeamSetupModal({
         className={cn(
           "absolute inset-2 sm:inset-4 lg:inset-x-0 lg:inset-y-6 lg:mx-auto lg:max-w-2xl",
           "flex flex-col overflow-hidden text-foreground",
-          "rounded-2xl border border-hairline bg-surface",
+          "rounded-[var(--radius-lg)] border border-hairline bg-surface",
           "shadow-[var(--shadow-pop)]",
           "origin-center animate-[city-pop_120ms_ease-out]",
         )}
@@ -445,27 +446,28 @@ export function TeamSetupModal({
               </p>
             </div>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
             aria-label="Close"
-            className="-m-1.5 inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md text-subtle transition-colors hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
+            className="-m-1.5"
           >
             <X className="h-5 w-5" strokeWidth={1.75} />
-          </button>
+          </Button>
         </header>
 
         {submitted ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
             <span
-              className="flex h-16 w-16 items-center justify-center rounded-2xl"
+              className="flex h-16 w-16 items-center justify-center rounded-[var(--radius-lg)]"
               style={{ background: `${color}22`, color }}
             >
               <SelectedIcon className="h-7 w-7" strokeWidth={1.75} />
             </span>
             <div
               ref={checkRef}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#30d158]/20 text-[#30d158] will-change-transform"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-success)]/20 text-[var(--status-success-fg)] will-change-transform"
             >
               <Check className="h-4 w-4" strokeWidth={2.5} />
             </div>
@@ -486,13 +488,9 @@ export function TeamSetupModal({
                 </p>
               )}
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="mt-2 rounded-lg bg-[var(--color-primary)] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0070e0]"
-            >
+            <Button onClick={onClose} className="mt-2">
               Done
-            </button>
+            </Button>
           </div>
         ) : (
           <form
@@ -707,7 +705,7 @@ export function TeamSetupModal({
                             className={cn(
                               "flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition-colors",
                               checked
-                                ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
+                                ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--accent-contrast)]"
                                 : "border-hairline-strong bg-transparent",
                             )}
                           >
@@ -716,8 +714,7 @@ export function TeamSetupModal({
                             )}
                           </span>
                           <span
-                            className="h-2 w-2 flex-shrink-0 rounded-full"
-                            style={{ background: meta.color }}
+                            className="h-2 w-2 flex-shrink-0 rounded-full bg-faint"
                             aria-hidden
                           />
                           <span className="min-w-0 flex-1">
@@ -754,7 +751,7 @@ export function TeamSetupModal({
                               className={cn(
                                 "flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition-colors",
                                 checked
-                                  ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
+                                  ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--accent-contrast)]"
                                   : "border-hairline-strong bg-transparent",
                               )}
                             >
@@ -763,8 +760,7 @@ export function TeamSetupModal({
                               )}
                             </span>
                             <span
-                              className="h-2 w-2 flex-shrink-0 rounded-full"
-                              style={{ background: c.color }}
+                              className="h-2 w-2 flex-shrink-0 rounded-full bg-faint"
                               aria-hidden
                             />
                             <span className="min-w-0 flex-1">
@@ -829,24 +825,25 @@ export function TeamSetupModal({
                       ))}
                     </div>
                     <div className="flex justify-end gap-2">
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => {
                           setAddingCategory(false);
                           setDraftLabel("");
                         }}
-                        className="rounded-md px-3 py-1.5 text-[12px] font-medium text-subtle transition-colors hover:text-foreground"
                       >
                         Cancel
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        size="sm"
                         onClick={addCustomCategory}
                         disabled={!draftLabel.trim()}
-                        className="rounded-md bg-[var(--color-primary)] px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-[#0070e0] disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         Add type
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ) : (
@@ -871,20 +868,12 @@ export function TeamSetupModal({
 
             {/* Footer actions */}
             <div className="flex flex-shrink-0 items-center justify-end gap-3 border-t border-hairline px-5 py-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-lg border border-hairline bg-overlay px-4 py-2 text-sm font-medium text-subtle transition-colors hover:bg-overlay-strong"
-              >
+              <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={!isValid}
-                className="rounded-lg bg-[var(--color-primary)] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0070e0] disabled:cursor-not-allowed disabled:opacity-40"
-              >
+              </Button>
+              <Button type="submit" disabled={!isValid}>
                 Create Team
-              </button>
+              </Button>
             </div>
           </form>
         )}

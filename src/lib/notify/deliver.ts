@@ -55,7 +55,7 @@ function renderHtml(m: EmailMessage): string {
     ? `<img src="${escapeHtml(m.photoUrl)}" alt="" style="display:block;width:100%;max-width:520px;border-radius:12px;margin:16px 0;" />`
     : "";
   const cta = m.reportUrl
-    ? `<a href="${escapeHtml(m.reportUrl)}" style="display:inline-block;background:#0a84ff;color:#fff;text-decoration:none;padding:10px 18px;border-radius:999px;font-weight:600;font-size:14px;margin-top:8px;">View your report</a>`
+    ? `<a href="${escapeHtml(m.reportUrl)}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:600;font-size:14px;margin-top:8px;">View your report</a>`
     : "";
   return [
     `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;color:#18181b;">`,

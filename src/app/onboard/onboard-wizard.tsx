@@ -306,7 +306,7 @@ export function OnboardWizard({ adminEmail }: { adminEmail: string | null }) {
       {error && (
         <p
           role="alert"
-          className="mt-6 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-[var(--status-danger-fg)]"
+          className="mt-6 rounded-lg border border-[var(--color-danger)]/30 bg-[var(--color-danger)]/10 px-3 py-2 text-sm text-[var(--status-danger-fg)]"
         >
           {error}
         </p>
@@ -357,7 +357,7 @@ function Stepper({ current }: { current: number }) {
             <span
               className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
                 active
-                  ? "bg-[var(--color-primary)] text-white"
+                  ? "bg-[var(--color-primary)] text-[var(--accent-contrast)]"
                   : done
                     ? "bg-foreground text-background"
                     : "bg-surface text-faint border border-hairline"
@@ -616,8 +616,10 @@ function TeamsStep({
                 }`}
               >
                 <span
-                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
-                    on ? "translate-x-[18px]" : "translate-x-0.5"
+                  className={`absolute top-0.5 h-4 w-4 rounded-full shadow-sm transition-transform ${
+                    on
+                      ? "translate-x-[18px] bg-[var(--accent-contrast)]"
+                      : "translate-x-0.5 bg-white"
                   }`}
                 />
               </button>
@@ -726,7 +728,7 @@ function RosterStep({
       </div>
 
       {granularity === "shared_per_team" && (
-        <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-[var(--status-warning-fg)]">
+        <p className="mt-3 rounded-lg border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/10 px-3 py-2 text-xs text-[var(--status-warning-fg)]">
           Shared logins can't tell who did what — actions attribute to the team,
           not a person, and the password is harder to rotate.
         </p>
@@ -866,7 +868,7 @@ function PerPersonRoster({
                 onClick={() =>
                   setRoster((r) => r.filter((_, idx) => idx !== i))
                 }
-                className="inline-flex items-center gap-1 text-xs text-faint hover:text-red-500"
+                className="inline-flex items-center gap-1 text-xs text-faint hover:text-[var(--color-danger)]"
               >
                 <Trash2 className="h-3.5 w-3.5" /> Remove
               </button>
@@ -983,9 +985,9 @@ function ChoiceChip({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
+      className={`rounded-[var(--radius-md)] border px-3.5 py-1.5 text-sm font-medium transition-colors ${
         active
-          ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
+          ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--accent-contrast)]"
           : "border-hairline bg-surface text-foreground hover:border-overlay-strong"
       }`}
     >
@@ -1116,7 +1118,7 @@ function ResultScreen({
       </p>
 
       {result.warnings && result.warnings.length > 0 && (
-        <ul className="mt-4 space-y-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-[var(--status-warning-fg)]">
+        <ul className="mt-4 space-y-1 rounded-lg border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/10 px-3 py-2 text-xs text-[var(--status-warning-fg)]">
           {result.warnings.map((w) => (
             <li key={w} className="flex items-start gap-1.5">
               <AlertTriangle
@@ -1130,7 +1132,7 @@ function ResultScreen({
       )}
 
       {hasTempPasswords && (
-        <div className="mt-5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+        <div className="mt-5 rounded-lg border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/10 p-3">
           <p className="text-sm font-medium text-[var(--status-warning-fg)]">
             Save these credentials now — temporary passwords are shown once.
           </p>
