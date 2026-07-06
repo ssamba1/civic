@@ -243,34 +243,21 @@ export async function runClassifyPipeline(
 
   log.info("classification_persisted", { reportId });
 
-  if (classification.is_emergency) {
-    const { error: statusErr } = await supabase
-      .from("reports")
-      .update({ status: "dispatched" })
-      .eq("id", reportId);
-
-    if (statusErr) {
-      log.error(`status update failed for ${reportId}`, undefined, {
-        reportId,
-        error: statusErr.message,
-      });
-    }
-
-    await markClassifyStatus(supabase, reportId, "done", log);
-    log.info("pipeline_done_emergency", { reportId });
-    return {
-      ok: true,
-      data: { emergency: true, classification, work_order: null },
-    };
-  }
-
   // Manual-review gate: hold the report at 'open' instead of auto-dispatching
   // when the AI itself signals it isn't confident enough to route this safely.
-  // Emergencies (handled above) always bypass this — life safety never waits
-  // on a human. A failed/zero-confidence classification is always flagged;
+  // Emergencies always bypass this — life safety never waits on a human.
+  // (Previously emergencies short-circuited here and got no work order at all,
+  // making the +50 priority term dead code and preventing cost actuals from
+  // ever being captured for emergencies. Now they fall through to work order
+  // creation with needsManualReview=false and auto-dispatch like normal
+  // high-confidence reports, but carrying the +50 priority boost.)
+  // A failed/zero-confidence classification is always flagged;
   // otherwise check the model's own uncertainty signals.
+  // Emergencies skip the review gate entirely — auto-dispatch immediately.
   const reviewReasons: string[] = [];
-  if (classification.confidence === 0) {
+  if (classification.is_emergency) {
+    // No review reasons; falls through to work order creation + auto-dispatch.
+  } else if (classification.confidence === 0) {
     reviewReasons.push(
       "AI classification unavailable or failed — needs manual triage",
     );
@@ -391,7 +378,9 @@ export async function runClassifyPipeline(
       crewType = aiResult.data.crew_type;
       estMinutes = aiResult.data.est_minutes;
       materials = aiResult.data.materials;
-      estCost = aiResult.data.est_cost;
+      // Math.max preserves the rules floor — a lower AI estimate must not
+      // undercut the deterministic material+labor floor from work-order-rules.ts.
+      estCost = Math.max(rulesWorkOrder.est_cost, aiResult.data.est_cost);
       woRationale = aiResult.data.rationale;
       woSource = "ai";
       log.info("work_order_ai_ok", { reportId, estCost, crewType });
@@ -486,7 +475,7 @@ export async function runClassifyPipeline(
   return {
     ok: true,
     data: {
-      emergency: false,
+      emergency: classification.is_emergency,
       classification,
       work_order: insertedWorkOrder,
       needs_manual_review: needsManualReview,

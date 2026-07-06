@@ -673,7 +673,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       "%",
       period,
       "—",
-      "requires staff to enter fix_cost_estimate when closing; computed as 100 − mean absolute % error",
+      "requires staff to enter actual_cost when closing; computed as 100 − mean absolute % error vs. actual_cost (outliers excluded)",
     ),
 
     row("", "", "", "", "", "", ""),

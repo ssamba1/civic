@@ -104,7 +104,7 @@ export default async function CityGridPage({ params }: PageProps) {
       {/* Visible title chrome removed to give the grid the full viewport;
           the h1 survives for a11y/SEO. */}
       <h1 className="sr-only">Work Order Grid</h1>
-      <WorkOrderGrid rows={rows} />
+      <WorkOrderGrid rows={rows} cityId={city.id} />
     </div>
   );
 }

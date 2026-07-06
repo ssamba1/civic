@@ -5,6 +5,7 @@ import { serverEnv } from "@/lib/env";
 import type { Classification, CrewType, Department, Result } from "@/lib/types";
 import { WORK_ORDER_PROMPT, WORK_ORDER_SYSTEM_PROMPT } from "./prompt";
 import { checkAndRecordGeminiCall } from "./rate-limiter";
+import { estimateCost } from "./work-order-rules";
 import {
   type AiWorkOrder,
   aiWorkOrderSchema,
@@ -113,6 +114,17 @@ ${JSON.stringify(
     }
 
     const wo = validation.data;
+    // Ceiling: cap at 50× the deterministic rules floor for this category,
+    // never above $5M. Prevents a hallucinated/malformed cost from persisting
+    // unchecked — a legitimate AI estimate should never exceed 50× the known
+    // material+labor baseline. (Math.max here would make the ceiling AT LEAST
+    // $5M and the 50× cap dead code.) The Math.max floor is applied again in
+    // classify-pipeline. Guard rulesFloor <= 0 so an unknown category doesn't
+    // zero the ceiling and clamp every estimate to 0.
+    const rulesFloor = estimateCost(classification.category);
+    const costCeiling =
+      rulesFloor > 0 ? Math.min(rulesFloor * 50, 5_000_000) : 5_000_000;
+    const estCost = Math.min(Math.round(wo.est_cost), costCeiling);
     return {
       ok: true,
       data: {
@@ -120,7 +132,7 @@ ${JSON.stringify(
         crew_type: wo.crew_type,
         est_minutes: wo.est_minutes,
         materials: flattenMaterials(wo.materials),
-        est_cost: Math.round(wo.est_cost),
+        est_cost: estCost,
         rationale: wo.rationale,
       },
     };

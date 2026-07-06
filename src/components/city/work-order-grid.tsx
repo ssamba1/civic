@@ -4,6 +4,8 @@ import {
   AllCommunityModule,
   type CellValueChangedEvent,
   type ColDef,
+  type GridApi,
+  type GridReadyEvent,
   type ICellRendererParams,
   ModuleRegistry,
   themeQuartz,
@@ -36,12 +38,18 @@ import {
   useRef,
   useState,
 } from "react";
+import { fetchCategoryCostStats } from "@/app/staff/actions";
 import { teamIcon } from "@/components/teams/team-icon";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import type { GridReportRow } from "@/lib/dashboard-grid-data";
 import { categoryToTeam, TEAMS } from "@/lib/teams";
 import { useTheme } from "@/lib/theme";
-import type { CrewType, Department, ReportCategory } from "@/lib/types";
+import type {
+  CategoryCostStats,
+  CrewType,
+  Department,
+  ReportCategory,
+} from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -588,6 +596,74 @@ function SourceCell({ value }: ICellRendererParams<GridReportRow, string>) {
 const usd = (p: ValueFormatterParams<GridReportRow, number | null>) =>
   p.value == null ? "—" : `$${p.value.toLocaleString()}`;
 
+/* ── Predicted cost (category_cost_stats RPC) ──
+   Cold-start rule from the cost-prediction design: a category needs 5+
+   accepted actuals before a prediction shows; below that the cell reads as an
+   intentional unknown, not a low-confidence guess. Prediction mirrors the
+   RPC's contract: base mean × severity ratio clamped to [0.6, 1.8]. Stats
+   arrive async after mount, so the column's cells are refreshed once the
+   fetch resolves (see the cityId effect in WorkOrderGrid). */
+function predictFromStats(
+  row: GridReportRow | undefined,
+  stats: Map<string, CategoryCostStats>,
+): number | null {
+  const s = row?.category ? stats.get(row.category) : undefined;
+  if (!s || s.n < 5) return null;
+  const ratio =
+    s.avg_severity > 0 && row?.severity != null
+      ? row.severity / s.avg_severity
+      : 1;
+  const mult = Math.min(Math.max(ratio, 0.6), 1.8);
+  return Math.round(s.base * mult);
+}
+
+// Reliability tier as quiet colored TEXT (AA -fg tokens), not a filled pill —
+// hue-as-text matches the grid's status cells; low confidence stays gray.
+const TIER_TEXT: Record<CategoryCostStats["tier"], string> = {
+  high: "text-[var(--status-success-fg)]",
+  medium: "text-[var(--status-warning-fg)]",
+  low: "text-faint",
+};
+
+function PredictedCostCell({
+  data,
+  context,
+}: ICellRendererParams<GridReportRow>) {
+  const statsRef = (
+    context as { costStatsRef: { current: Map<string, CategoryCostStats> } }
+  ).costStatsRef;
+  const s = data?.category ? statsRef.current.get(data.category) : undefined;
+  const predicted = predictFromStats(data, statsRef.current);
+  if (predicted == null) {
+    return (
+      <span
+        className="text-faint"
+        title={
+          s
+            ? `Needs 5+ closed jobs with actual cost (has ${s.n})`
+            : "Needs 5+ closed jobs with actual cost"
+        }
+      >
+        —
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-baseline gap-1.5">
+      <span className="tabular-nums">${predicted.toLocaleString()}</span>
+      <span
+        className={cn(
+          "font-mono text-[10px] uppercase tracking-[0.08em]",
+          TIER_TEXT[s?.tier ?? "low"],
+        )}
+        title={`Prediction reliability: ${s?.tier ?? "low"} (${s?.n ?? 0} samples)`}
+      >
+        {s?.tier === "medium" ? "med" : (s?.tier ?? "low")}
+      </span>
+    </span>
+  );
+}
+
 const dateFmt = (p: ValueFormatterParams<GridReportRow, string>) =>
   p.value
     ? new Date(p.value).toLocaleDateString("en-US", {
@@ -598,9 +674,41 @@ const dateFmt = (p: ValueFormatterParams<GridReportRow, string>) =>
       })
     : "—";
 
-export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
+export function WorkOrderGrid({
+  rows,
+  cityId,
+}: {
+  rows: GridReportRow[];
+  cityId?: string;
+}) {
   const { theme } = useTheme();
   const gridTheme = theme === "dark" ? gridThemeDark : gridThemeLight;
+
+  // Predicted-cost stats live in a ref (not state) so their arrival can't
+  // rebuild columnDefs — AG Grid re-applies colDef sort/width on columnDefs
+  // changes, clobbering user sort + resizes (see deptOptions note below).
+  // Cell renderers reach the ref through the grid `context`; the effect
+  // repaints just the predicted column when the fetch resolves.
+  const gridApiRef = useRef<GridApi<GridReportRow> | null>(null);
+  const costStatsRef = useRef<Map<string, CategoryCostStats>>(new Map());
+  const gridContext = useMemo(() => ({ costStatsRef }), []);
+  useEffect(() => {
+    if (!cityId) return;
+    let cancelled = false;
+    fetchCategoryCostStats(cityId).then((res) => {
+      // Empty data is the normal cold-start state (RPC missing or no actuals
+      // captured yet) — the column simply keeps rendering "—".
+      if (cancelled || !res.ok || res.data.length === 0) return;
+      costStatsRef.current = new Map(res.data.map((s) => [s.category, s]));
+      gridApiRef.current?.refreshCells({
+        columns: ["predicted_cost"],
+        force: true,
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [cityId]);
 
   // Editable cells mutate rows in place; hold them in local state (seeded from
   // the server rows) so in-grid edits survive the search/filter recompute.
@@ -796,6 +904,19 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
         minWidth: 100,
       },
       {
+        colId: "predicted_cost",
+        headerName: "Predicted",
+        // Sort/filter on the same number the cell shows. Reads the stats ref
+        // live, so values appear once the async fetch lands (refreshCells
+        // repaints; a later sort re-runs this getter against fresh stats).
+        valueGetter: (p: ValueGetterParams<GridReportRow>) =>
+          predictFromStats(p.data, costStatsRef.current),
+        cellRenderer: PredictedCostCell,
+        type: "rightAligned",
+        initialWidth: 130,
+        minWidth: 110,
+      },
+      {
         colId: "est_minutes",
         headerName: "Est. Min",
         field: "est_minutes",
@@ -918,6 +1039,10 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
           rowHeight={64}
           headerHeight={44}
           getRowId={(p) => p.data.report_id}
+          context={gridContext}
+          onGridReady={(e: GridReadyEvent<GridReportRow>) => {
+            gridApiRef.current = e.api;
+          }}
           singleClickEdit
           stopEditingWhenCellsLoseFocus
           onCellValueChanged={onCellValueChanged}

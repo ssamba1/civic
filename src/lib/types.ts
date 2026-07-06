@@ -157,6 +157,21 @@ export interface WorkOrder {
   needs_manual_review: boolean;
   /** Human-readable reason(s) the AI flagged this report, joined with "; ". Null when not flagged. */
   review_reason: string | null;
+  /** Actual cost spent (whole dollars) entered by the worker at job close. Null until reported. */
+  actual_cost: number | null;
+  /** True when actual_cost exceeded 5× the category running median at capture — excluded from training, pending supervisor review. */
+  actual_cost_excluded: boolean;
+}
+
+/** One row from category_cost_stats(_city_id) RPC. */
+export interface CategoryCostStats {
+  category: string;
+  base: number;
+  avg_severity: number;
+  stddev: number;
+  n: number;
+  reliability: number;
+  tier: "low" | "medium" | "high";
 }
 
 export interface City {

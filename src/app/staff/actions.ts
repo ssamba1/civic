@@ -10,6 +10,7 @@ import { getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
 import { notifyReportStatus } from "@/lib/notify/status-notify";
 import type {
+  CategoryCostStats,
   Classification,
   ReportCategory,
   Result,
@@ -194,18 +195,93 @@ export async function dispatchWorkOrderForReport(
 
 export async function closeWorkOrder(
   workOrderId: string,
+  actualCost: number,
   resolutionPhotoUrl?: string,
 ): Promise<Result<void>> {
   const staff = await getStaffUser();
   if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
 
+  // Validate actual_cost: whole dollars, > 0, <= $5,000,000, max 2 decimal places.
+  if (
+    !Number.isFinite(actualCost) ||
+    actualCost <= 0 ||
+    actualCost > 5_000_000 ||
+    Math.round(actualCost * 100) !== actualCost * 100
+  ) {
+    return {
+      ok: false,
+      error:
+        "Actual cost must be a positive dollar amount (max $5,000,000) with up to 2 decimal places",
+    };
+  }
+
   const supabase = createServerClient();
   if (!(await workOrderInStaffCity(supabase, workOrderId, staff.city_id)))
     return { ok: false, error: "Unauthorized: work order not in your city" };
 
+  // Compute the outlier flag: reject if actual > 5× the running median for
+  // this city+category. Fetch the work order to get report_id + category, then
+  // compute the median from accepted actuals.
+  const { data: woMeta, error: woMetaErr } = await supabase
+    .from("work_orders")
+    .select("report_id, reports(city_id), classifications(category)")
+    .eq("id", workOrderId)
+    .single();
+
+  if (woMetaErr || !woMeta) return { ok: false, error: "work_order_not_found" };
+
+  // PostgREST returns to-one embeds as objects at runtime, but the untyped
+  // client infers arrays — normalize both shapes instead of asserting one.
+  const rels = woMeta as unknown as {
+    reports: { city_id: string } | { city_id: string }[] | null;
+    classifications: { category: string } | { category: string }[] | null;
+  };
+  const reportRel = Array.isArray(rels.reports) ? rels.reports[0] : rels.reports;
+  const classificationRel = Array.isArray(rels.classifications)
+    ? rels.classifications[0]
+    : rels.classifications;
+  const cityId = reportRel?.city_id;
+  const category = classificationRel?.category;
+
+  let actualCostExcluded = false;
+  if (cityId && category) {
+    // Fetch existing accepted actuals for this city+category to compute median.
+    const { data: existingActuals } = await supabase
+      .from("work_orders")
+      .select("actual_cost, reports!inner(city_id), classifications!inner(category)")
+      .eq("reports.city_id", cityId)
+      .eq("classifications.category", category)
+      .eq("actual_cost_excluded", false)
+      .not("actual_cost", "is", null);
+
+    if (existingActuals && existingActuals.length > 0) {
+      const costs = existingActuals
+        .map((r) => Number(r.actual_cost))
+        .filter((c) => c > 0)
+        .sort((a, b) => a - b);
+      const mid = Math.floor(costs.length / 2);
+      const median =
+        costs.length % 2 === 0
+          ? (costs[mid - 1] + costs[mid]) / 2
+          : costs[mid];
+      if (actualCost > 5 * median) {
+        actualCostExcluded = true;
+        logger.warn("actual_cost_outlier_flagged", {
+          workOrderId,
+          actualCost,
+          median,
+          cityId,
+          category,
+        });
+      }
+    }
+  }
+
   const update: Record<string, unknown> = {
     completed_at: new Date().toISOString(),
     resolution_photo_url: resolutionPhotoUrl ?? null,
+    actual_cost: actualCost,
+    actual_cost_excluded: actualCostExcluded,
   };
 
   // Update and read back report_id in one round-trip so a concurrent
@@ -535,4 +611,19 @@ export async function fetchQueuedWorkOrders(
     .filter(Boolean) as WorkOrderWithDetails[];
 
   return { ok: true, data: result, fetchedAt };
+}
+
+
+export async function fetchCategoryCostStats(
+  cityId: string,
+): Promise<Result<CategoryCostStats[]>> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase.rpc("category_cost_stats", {
+    _city_id: cityId,
+  });
+  if (error) {
+    logger.warn("category_cost_stats RPC failed (un-migrated?)", { error: error.message });
+    return { ok: true, data: [] };
+  }
+  return { ok: true, data: (data ?? []) as CategoryCostStats[] };
 }
