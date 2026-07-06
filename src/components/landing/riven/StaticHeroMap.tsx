@@ -90,6 +90,15 @@ export default function StaticHeroMap() {
       cur.ry += (tryw - cur.ry) * LERP;
 
       plate.style.transform = `translate3d(${cur.x}%, ${cur.y}%, 0) rotateX(${cur.rx}deg) rotateY(${cur.ry}deg) scale(${PLATE_SCALE})`;
+      // Publish the lean as unitless CSS vars on the hero section so overlay
+      // layers (MapPinStory pins + glass moment-cards) ride the same camera.
+      const host = container?.parentElement;
+      if (host) {
+        host.style.setProperty("--wl-lean-x", String(cur.x));
+        host.style.setProperty("--wl-lean-y", String(cur.y));
+        host.style.setProperty("--wl-lean-rx", String(cur.rx));
+        host.style.setProperty("--wl-lean-ry", String(cur.ry));
+      }
       raf = visible ? requestAnimationFrame(tick) : 0;
     };
     raf = requestAnimationFrame(tick);

@@ -10,8 +10,10 @@ import {
   type ValueFormatterParams,
   type ValueGetterParams,
 } from "ag-grid-community";
-import { AgGridReact } from "ag-grid-react";
+import { AgGridReact, type CustomCellEditorProps } from "ag-grid-react";
 import {
+  Check,
+  ChevronDown,
   CircleAlert,
   Construction,
   Droplets,
@@ -26,7 +28,14 @@ import {
   TreePine,
   Waves,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { teamIcon } from "@/components/teams/team-icon";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import type { GridReportRow } from "@/lib/dashboard-grid-data";
@@ -39,10 +48,8 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 // ── Canonical category glyphs ───────────────────────────────────────────────
 // Keyed by the kebab `icon` field on CATEGORY_META (@/lib/dashboard-data) — the
-// SAME source the map, analytics, dashboard, and community-pulse surfaces read.
-// The grid no longer keeps its own hand-rolled category→icon map (which had
-// drifted on 6 of 12 categories); deriving from CATEGORY_META keeps every
-// surface's glyph, label, and color identical by construction.
+// SAME source the map, analytics, dashboard, and community-pulse surfaces read,
+// so every surface's glyph, label, and color stay identical by construction.
 const CATEGORY_ICON: Record<string, LucideIcon> = {
   "circle-alert": CircleAlert,
   lightbulb: Lightbulb,
@@ -98,20 +105,16 @@ const STATUSES = [
   "rejected",
 ];
 
-// enum_value → "Enum Value" for the select-editor option labels (AG Grid's
-// refData maps the stored key to a display label in the dropdown list).
 const titleize = (s: string) =>
   s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-const CATEGORY_REFDATA = Object.fromEntries(
-  CATEGORIES.map((c) => [c, CATEGORY_META[c].label]),
-);
-const DEPT_REFDATA = Object.fromEntries(
-  DEPARTMENTS.map((d) => [d, titleize(d)]),
-);
-const CREW_REFDATA = Object.fromEntries(CREWS.map((c) => [c, titleize(c)]));
-const STATUS_REFDATA = Object.fromEntries(
-  STATUSES.map((s) => [s, titleize(s)]),
-);
+
+const SEVERITY_LABELS: Record<number, string> = {
+  1: "Minor",
+  2: "Low",
+  3: "Moderate",
+  4: "High",
+  5: "Critical",
+};
 
 const SEVERITY_COLORS: Record<number, string> = {
   1: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400",
@@ -133,38 +136,50 @@ const STATUS_STYLES: Record<string, string> = {
   rejected: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400",
 };
 
-// ── AG-Grid theme (token-free hex; ported from schedule-bot) ────────────────
-// No zebra striping: the hover tint + accent bar (globals.css .wo-grid) is the
-// row-state signal, and zebra fights it. Row separators are near-invisible so
-// the cell content carries the visual rhythm.
+// Solid dot per status — used by the dropdown menu options.
+const STATUS_DOT: Record<string, string> = {
+  open: "bg-blue-500",
+  dispatched: "bg-purple-500",
+  in_progress: "bg-amber-500",
+  closed: "bg-green-500",
+  merged: "bg-zinc-400",
+  rejected: "bg-red-500",
+};
+
+// ── AG-Grid theme ───────────────────────────────────────────────────────────
+// Palette-aligned with the app tokens (globals.css): dark grid sits on the
+// --surface tone (#1c1c1e) with hairline borders so it reads as a card on the
+// black page instead of dissolving into it; accent is the app primary #0a84ff.
+// No zebra — the hover tint + accent bar (globals.css .wo-grid) is the row
+// signal.
 const gridThemeLight = themeQuartz.withParams({
-  accentColor: "#2563eb",
+  accentColor: "#0a84ff",
   backgroundColor: "#ffffff",
-  headerBackgroundColor: "#f8fafc",
-  headerTextColor: "#64748b",
+  headerBackgroundColor: "#f5f5f7",
+  headerTextColor: "#6e6e73",
   headerFontWeight: 600,
-  foregroundColor: "#0f172a",
+  foregroundColor: "#1d1d1f",
   fontFamily: "inherit",
   fontSize: 13,
   cellHorizontalPadding: 14,
-  rowHoverColor: "#eff6ff",
-  selectedRowBackgroundColor: "#e0edfb",
-  borderColor: "#eef2f7",
+  rowHoverColor: "#f2f7ff",
+  selectedRowBackgroundColor: "#e5f1ff",
+  borderColor: "rgba(0, 0, 0, 0.07)",
   wrapperBorderRadius: "14px",
 });
 const gridThemeDark = themeQuartz.withParams({
-  accentColor: "#3b82f6",
-  backgroundColor: "#18181b",
-  headerBackgroundColor: "#101012",
-  headerTextColor: "#9a9aa6",
+  accentColor: "#0a84ff",
+  backgroundColor: "#1c1c1e",
+  headerBackgroundColor: "#232326",
+  headerTextColor: "#98989f",
   headerFontWeight: 600,
-  foregroundColor: "#f4f4f5",
+  foregroundColor: "#f5f5f7",
   fontFamily: "inherit",
   fontSize: 13,
   cellHorizontalPadding: 14,
-  rowHoverColor: "#1e2836",
-  selectedRowBackgroundColor: "#1e3a5f",
-  borderColor: "#232326",
+  rowHoverColor: "#232a35",
+  selectedRowBackgroundColor: "rgba(10, 132, 255, 0.16)",
+  borderColor: "rgba(255, 255, 255, 0.08)",
   wrapperBorderRadius: "14px",
 });
 
@@ -174,37 +189,243 @@ function iconTileStyle(color: string): React.CSSProperties {
   return { backgroundColor: `${color}1f`, color };
 }
 
-// ── cell renderers ────────────────────────────────────────────────────────────
+// ── Custom dropdown editor ──────────────────────────────────────────────────
+// Replaces agSelectCellEditor: the native <select> popup is OS-drawn chrome
+// that can't be styled (and clashes hard with the dark theme). This renders a
+// styled listbox in an AG Grid popup UNDER the cell (cellEditorPopup) with
+// keyboard support: arrows move, Enter picks, Escape cancels.
+
+interface SelectOption {
+  value: string | number;
+  label: string;
+}
+type EditorKind = "category" | "status" | "severity" | "plain";
+
+function OptionGlyph({
+  kind,
+  value,
+}: {
+  kind: EditorKind;
+  value: string | number;
+}) {
+  if (kind === "category") {
+    const meta = CATEGORY_META[value as ReportCategory] ?? CATEGORY_META.other;
+    const Icon = CATEGORY_ICON[meta.icon] ?? HelpCircle;
+    return (
+      <span
+        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md"
+        style={iconTileStyle(meta.color)}
+      >
+        <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />
+      </span>
+    );
+  }
+  if (kind === "status") {
+    return (
+      <span
+        className={cn(
+          "h-2.5 w-2.5 shrink-0 rounded-full",
+          STATUS_DOT[value as string] ?? STATUS_DOT.open,
+        )}
+      />
+    );
+  }
+  if (kind === "severity") {
+    return (
+      <span
+        className={cn(
+          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
+          SEVERITY_COLORS[value as number] ?? SEVERITY_COLORS[3],
+        )}
+      >
+        {value}
+      </span>
+    );
+  }
+  return null;
+}
+
+type SelectEditorProps = CustomCellEditorProps<
+  GridReportRow,
+  string | number
+> & {
+  options: SelectOption[];
+  kind: EditorKind;
+};
+
+function SelectEditor(props: SelectEditorProps) {
+  const { value, onValueChange, stopEditing, options, kind } = props;
+  const listRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(() =>
+    Math.max(
+      0,
+      options.findIndex((o) => o.value === value),
+    ),
+  );
+  // Option ids + aria-activedescendant: focus stays on the listbox container,
+  // so without these, arrow-key navigation is silent for screen readers.
+  const listId = `wo-select-${props.column.getColId()}`;
+
+  useEffect(() => {
+    listRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    (
+      listRef.current?.children[active] as HTMLElement | undefined
+    )?.scrollIntoView({ block: "nearest" });
+  }, [active]);
+
+  const choose = (v: string | number) => {
+    onValueChange(v);
+    stopEditing();
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActive((i) => Math.min(options.length - 1, i + 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActive((i) => Math.max(0, i - 1));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      choose(options[active].value);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      stopEditing();
+    }
+  };
+
+  return (
+    <div
+      ref={listRef}
+      role="listbox"
+      aria-label={props.colDef.headerName}
+      aria-activedescendant={`${listId}-opt-${active}`}
+      tabIndex={-1}
+      onKeyDown={onKeyDown}
+      style={{ width: Math.max(props.column.getActualWidth(), 210) }}
+      className="max-h-80 overflow-y-auto rounded-xl border border-zinc-200 bg-white p-1.5 shadow-xl outline-none dark:border-zinc-700 dark:bg-[#232327]"
+    >
+      {options.map((o, i) => {
+        const selected = o.value === value;
+        return (
+          <button
+            key={String(o.value)}
+            id={`${listId}-opt-${i}`}
+            type="button"
+            role="option"
+            aria-selected={selected}
+            onMouseEnter={() => setActive(i)}
+            onClick={() => choose(o.value)}
+            className={cn(
+              "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] text-zinc-800 dark:text-zinc-100",
+              i === active && "bg-zinc-100 dark:bg-zinc-700/60",
+              selected && "font-medium",
+            )}
+          >
+            <OptionGlyph kind={kind} value={o.value} />
+            <span className="min-w-0 flex-1 truncate">{o.label}</span>
+            {selected && (
+              <Check className="h-4 w-4 shrink-0 text-[var(--color-primary)]" />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// Static option lists (dept/crew are built per-render — see WorkOrderGrid —
+// because live rows carry AI-written values outside the enum).
+const CATEGORY_OPTIONS: SelectOption[] = CATEGORIES.map((c) => ({
+  value: c,
+  label: CATEGORY_META[c].label,
+}));
+const STATUS_OPTIONS: SelectOption[] = STATUSES.map((s) => ({
+  value: s,
+  label: titleize(s),
+}));
+const SEVERITY_OPTIONS: SelectOption[] = [1, 2, 3, 4, 5].map((n) => ({
+  value: n,
+  label: SEVERITY_LABELS[n],
+}));
+
+/** Enum values first (canonical order), then any extra values observed in the
+ *  data (AI-written crew/department strings), so the current cell value is
+ *  always present in its own dropdown. */
+function buildOptions(
+  enums: readonly string[],
+  seen: Iterable<string | null>,
+  labelFor: (v: string) => string,
+): SelectOption[] {
+  const known = new Set<string>(enums);
+  const extras: string[] = [];
+  for (const v of seen) {
+    if (v && !known.has(v)) {
+      known.add(v);
+      extras.push(v);
+    }
+  }
+  extras.sort();
+  return [...enums, ...extras].map((v) => ({ value: v, label: labelFor(v) }));
+}
+
+// ── cell renderers ──────────────────────────────────────────────────────────
+
+/** The select-affordance container: bordered pill + chevron, so editable cells
+ *  read as dropdowns instead of static text. */
+function EditPill({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-lg border border-zinc-200 bg-white py-1 pl-2 pr-1.5 shadow-sm transition-colors hover:border-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] dark:border-zinc-700 dark:bg-zinc-800/70 dark:hover:border-[color-mix(in_srgb,var(--color-primary)_70%,transparent)]",
+        className,
+      )}
+    >
+      {children}
+      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500" />
+    </span>
+  );
+}
+
 function CategoryCell({ data }: ICellRendererParams<GridReportRow>) {
   if (!data) return null;
   const cat = (data.category ?? "other") as ReportCategory;
   const meta = CATEGORY_META[cat] ?? CATEGORY_META.other;
   const Icon = CATEGORY_ICON[meta.icon] ?? HelpCircle;
   return (
-    <span className="flex items-center gap-2.5">
+    <EditPill className="h-11 rounded-xl pl-1.5">
       <span
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
         style={iconTileStyle(meta.color)}
       >
-        <Icon className="h-4 w-4" strokeWidth={2.25} />
+        <Icon className="h-[18px] w-[18px]" strokeWidth={2.25} />
       </span>
       <span className="flex min-w-0 flex-col leading-tight">
-        <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+        <span className="truncate text-[13px] font-medium text-zinc-900 dark:text-zinc-100">
           {data.category ? meta.label : "Unclassified"}
         </span>
         {data.subcategory && (
-          <span className="truncate text-xs text-zinc-500">
+          <span className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
             {data.subcategory}
           </span>
         )}
       </span>
-    </span>
+    </EditPill>
   );
 }
 
-/** Owning team — DERIVED from the report's category via categoryToTeam (there is
- *  no per-report team column). Read-only: change the Issue/Category cell and the
- *  team, glyph, and color here re-derive live. */
+/** Owning team — DERIVED from the report's category via categoryToTeam (there
+ *  is no per-report team column). Read-only (no pill/chevron): change the
+ *  Issue cell and the team re-derives live. */
 function TeamCell({ data }: ICellRendererParams<GridReportRow>) {
   if (!data) return null;
   const team =
@@ -218,7 +439,7 @@ function TeamCell({ data }: ICellRendererParams<GridReportRow>) {
       >
         <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />
       </span>
-      <span className="truncate text-sm text-zinc-700 dark:text-zinc-300">
+      <span className="truncate text-[13px] text-zinc-700 dark:text-zinc-300">
         {team.shortLabel}
       </span>
     </span>
@@ -228,14 +449,16 @@ function TeamCell({ data }: ICellRendererParams<GridReportRow>) {
 function SeverityCell({ value }: ICellRendererParams<GridReportRow, number>) {
   if (value == null) return <span className="text-zinc-400">—</span>;
   return (
-    <span
-      className={cn(
-        "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold",
-        SEVERITY_COLORS[value] ?? SEVERITY_COLORS[3],
-      )}
-    >
-      {value}
-    </span>
+    <EditPill className="h-8">
+      <span
+        className={cn(
+          "inline-flex h-[22px] w-[22px] items-center justify-center rounded-full text-[11px] font-semibold",
+          SEVERITY_COLORS[value] ?? SEVERITY_COLORS[3],
+        )}
+      >
+        {value}
+      </span>
+    </EditPill>
   );
 }
 
@@ -260,7 +483,7 @@ function PriorityCell({ data }: ICellRendererParams<GridReportRow>) {
     score >= 10 ? "bg-red-500" : score >= 7 ? "bg-orange-500" : "bg-blue-500";
   return (
     <span className="flex items-center gap-2">
-      <span className="tabular-nums text-sm font-medium text-zinc-800 dark:text-zinc-200">
+      <span className="tabular-nums text-[13px] font-medium text-zinc-800 dark:text-zinc-200">
         {score.toFixed(1)}
       </span>
       <span className="h-1.5 w-14 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
@@ -273,24 +496,66 @@ function PriorityCell({ data }: ICellRendererParams<GridReportRow>) {
   );
 }
 
+// Colored label text per status — pairs with STATUS_DOT inside the dropdown
+// pill (dot + tinted label, not a filled chip).
+const STATUS_TEXT: Record<string, string> = {
+  open: "text-blue-700 dark:text-blue-400",
+  dispatched: "text-purple-700 dark:text-purple-400",
+  in_progress: "text-amber-700 dark:text-amber-400",
+  closed: "text-green-700 dark:text-green-400",
+  merged: "text-zinc-500 dark:text-zinc-400",
+  rejected: "text-red-700 dark:text-red-400",
+};
+
+/** Status is editable — dropdown pill wrapping a solid status dot + tinted
+ *  label, so the cell reads like a select control. */
 function StatusCell({ data }: ICellRendererParams<GridReportRow>) {
   if (!data) return null;
   return (
     <span className="flex flex-wrap items-center gap-1">
-      <span
-        className={cn(
-          "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize",
-          STATUS_STYLES[data.status] ?? STATUS_STYLES.open,
-        )}
-      >
-        {data.status.replace(/_/g, " ")}
-      </span>
+      <EditPill className="h-8 rounded-full pl-2.5">
+        <span
+          className={cn(
+            "h-2 w-2 shrink-0 rounded-full",
+            STATUS_DOT[data.status] ?? STATUS_DOT.open,
+          )}
+        />
+        <span
+          className={cn(
+            "text-[13px] font-medium capitalize",
+            STATUS_TEXT[data.status] ?? STATUS_TEXT.open,
+          )}
+        >
+          {data.status.replace(/_/g, " ")}
+        </span>
+      </EditPill>
       {data.needs_manual_review && (
         <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-900/40 dark:text-amber-400">
           Review
         </span>
       )}
     </span>
+  );
+}
+
+/** Dept + Crew share this: label pill with chevron; null → muted em-dash pill
+ *  (still editable, so it keeps the affordance). */
+function LabelPillCell({
+  value,
+}: ICellRendererParams<GridReportRow, string | null>) {
+  return (
+    <EditPill className="h-8">
+      <span
+        className={cn(
+          "truncate text-[13px]",
+          value
+            ? "text-zinc-800 dark:text-zinc-200"
+            : "text-zinc-400 dark:text-zinc-500",
+        )}
+      >
+        {value ? titleize(value) : "—"}
+      </span>
+    </EditPill>
   );
 }
 
@@ -336,16 +601,22 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
 
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const allChipRef = useRef<HTMLButtonElement>(null);
 
   // Search first, then status — the chip counts read from the searched set so
   // they always describe what the current search can actually reach.
   const searched = useMemo(() => {
     if (!query) return data;
     const q = query.toLowerCase();
+    // Match raw enum values AND their displayed form ("in_progress" is shown
+    // as "In Progress" — a search for either must hit).
     return data.filter((r) =>
-      [r.category, r.subcategory, r.address, r.department]
+      [r.category, r.subcategory, r.address, r.department, r.crew_type]
         .filter(Boolean)
-        .some((s) => String(s).toLowerCase().includes(q)),
+        .some((s) => {
+          const str = String(s).toLowerCase();
+          return str.includes(q) || str.replace(/_/g, " ").includes(q);
+        }),
     );
   }, [data, query]);
 
@@ -362,6 +633,31 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
     for (const r of searched) counts[r.status] = (counts[r.status] ?? 0) + 1;
     return counts;
   }, [searched]);
+
+  // Live rows carry AI-written dept/crew strings beyond the enum — fold them
+  // into the dropdowns so a cell's current value is always selectable.
+  // Derived from the `rows` PROP, not `data` state: edits can only pick values
+  // already in the options, so keying off `data` would rebuild these (and via
+  // them columnDefs) on every edit — and AG Grid re-applies defined sort/width
+  // colDef attrs on columnDefs changes, clobbering user sort + resizes.
+  const deptOptions = useMemo(
+    () =>
+      buildOptions(
+        DEPARTMENTS,
+        rows.map((r) => r.department),
+        titleize,
+      ),
+    [rows],
+  );
+  const crewOptions = useMemo(
+    () =>
+      buildOptions(
+        CREWS,
+        rows.map((r) => r.crew_type),
+        titleize,
+      ),
+    [rows],
+  );
 
   const onCellValueChanged = useCallback(
     (e: CellValueChangedEvent<GridReportRow>) => {
@@ -383,12 +679,18 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
         field: "category",
         cellRenderer: CategoryCell,
         editable: true,
-        cellEditor: "agSelectCellEditor",
-        cellEditorParams: { values: CATEGORIES },
-        refData: CATEGORY_REFDATA,
-        cellClass: "cursor-pointer",
-        flex: 1.4,
-        minWidth: 200,
+        cellEditor: SelectEditor,
+        cellEditorPopup: true,
+        cellEditorPopupPosition: "under",
+        cellEditorParams: { options: CATEGORY_OPTIONS, kind: "category" },
+        // Filter on the displayed label, not the raw enum ("in_progress").
+        filterValueGetter: (p: ValueGetterParams<GridReportRow>) =>
+          p.data?.category
+            ? (CATEGORY_META[p.data.category as ReportCategory]?.label ??
+              titleize(p.data.category))
+            : "Unclassified",
+        initialFlex: 1.4,
+        minWidth: 220,
       },
       {
         colId: "team",
@@ -401,7 +703,7 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
               ].shortLabel
             : "",
         cellRenderer: TeamCell,
-        flex: 1.1,
+        initialFlex: 1.1,
         minWidth: 170,
       },
       {
@@ -410,21 +712,23 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
         field: "severity",
         cellRenderer: SeverityCell,
         editable: true,
-        cellEditor: "agSelectCellEditor",
-        cellEditorParams: { values: [1, 2, 3, 4, 5] },
-        cellClass: "cursor-pointer",
-        width: 90,
-        minWidth: 80,
+        cellEditor: SelectEditor,
+        cellEditorPopup: true,
+        cellEditorPopupPosition: "under",
+        cellEditorParams: { options: SEVERITY_OPTIONS, kind: "severity" },
+        initialWidth: 104,
+        minWidth: 96,
       },
       {
         colId: "priority",
         headerName: "Priority",
         field: "priority_score",
         cellRenderer: PriorityCell,
-        // Nulls (emergencies) sort last on a desc sort.
+        // Nulls (emergencies) sort last on a desc sort. initialSort (not sort)
+        // so a columnDefs rebuild never re-imposes it over the user's sort.
         comparator: (a, b) => (a ?? -1) - (b ?? -1),
-        sort: "desc",
-        width: 150,
+        initialSort: "desc",
+        initialWidth: 150,
         minWidth: 140,
       },
       {
@@ -433,40 +737,44 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
         field: "status",
         cellRenderer: StatusCell,
         editable: true,
-        cellEditor: "agSelectCellEditor",
-        cellEditorParams: { values: STATUSES },
-        refData: STATUS_REFDATA,
-        cellClass: "cursor-pointer",
-        width: 170,
-        minWidth: 140,
+        cellEditor: SelectEditor,
+        cellEditorPopup: true,
+        cellEditorPopupPosition: "under",
+        cellEditorParams: { options: STATUS_OPTIONS, kind: "status" },
+        filterValueGetter: (p: ValueGetterParams<GridReportRow>) =>
+          p.data ? titleize(p.data.status) : "",
+        initialWidth: 180,
+        minWidth: 150,
       },
       {
         colId: "department",
         headerName: "Dept",
         field: "department",
-        valueFormatter: (p) =>
-          p.value ? String(p.value).replace(/_/g, " ") : "—",
+        cellRenderer: LabelPillCell,
         editable: true,
-        cellEditor: "agSelectCellEditor",
-        cellEditorParams: { values: DEPARTMENTS },
-        refData: DEPT_REFDATA,
-        cellClass: "cursor-pointer capitalize",
-        flex: 1,
-        minWidth: 140,
+        cellEditor: SelectEditor,
+        cellEditorPopup: true,
+        cellEditorPopupPosition: "under",
+        cellEditorParams: { options: deptOptions, kind: "plain" },
+        filterValueGetter: (p: ValueGetterParams<GridReportRow>) =>
+          p.data?.department ? titleize(p.data.department) : "",
+        initialFlex: 1,
+        minWidth: 150,
       },
       {
         colId: "crew",
         headerName: "Crew",
         field: "crew_type",
-        valueFormatter: (p) =>
-          p.value ? String(p.value).replace(/_/g, " ") : "—",
+        cellRenderer: LabelPillCell,
         editable: true,
-        cellEditor: "agSelectCellEditor",
-        cellEditorParams: { values: CREWS },
-        refData: CREW_REFDATA,
-        cellClass: "cursor-pointer capitalize",
-        width: 140,
-        minWidth: 120,
+        cellEditor: SelectEditor,
+        cellEditorPopup: true,
+        cellEditorPopupPosition: "under",
+        cellEditorParams: { options: crewOptions, kind: "plain" },
+        filterValueGetter: (p: ValueGetterParams<GridReportRow>) =>
+          p.data?.crew_type ? titleize(p.data.crew_type) : "",
+        initialWidth: 150,
+        minWidth: 130,
       },
       {
         colId: "est_cost",
@@ -474,7 +782,7 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
         field: "est_cost",
         valueFormatter: usd,
         type: "rightAligned",
-        width: 120,
+        initialWidth: 120,
         minWidth: 100,
       },
       {
@@ -483,7 +791,7 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
         field: "est_minutes",
         valueFormatter: (p) => (p.value == null ? "—" : `${p.value}m`),
         type: "rightAligned",
-        width: 110,
+        initialWidth: 110,
         minWidth: 90,
       },
       {
@@ -491,7 +799,7 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
         headerName: "Source",
         field: "wo_source",
         cellRenderer: SourceCell,
-        width: 110,
+        initialWidth: 110,
         minWidth: 90,
       },
       {
@@ -499,11 +807,11 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
         headerName: "Reported",
         field: "created_at",
         valueFormatter: dateFmt,
-        width: 150,
+        initialWidth: 150,
         minWidth: 130,
       },
     ],
-    [],
+    [deptOptions, crewOptions],
   );
 
   const defaultColDef = useMemo<ColDef<GridReportRow>>(
@@ -527,13 +835,14 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search issue, address, department…"
             aria-label="Search work orders"
-            className="w-full rounded-full border border-zinc-200 bg-white py-1.5 pl-9 pr-3 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+            className="w-full rounded-full border border-zinc-200 bg-white py-1.5 pl-9 pr-3 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-blue-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
           />
         </div>
 
         <fieldset className="flex flex-wrap items-center gap-1.5">
           <legend className="sr-only">Filter by status</legend>
           <button
+            ref={allChipRef}
             type="button"
             onClick={() => setStatusFilter("")}
             aria-pressed={statusFilter === ""}
@@ -555,16 +864,27 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
             <button
               key={s}
               type="button"
-              onClick={() => setStatusFilter(statusFilter === s ? "" : s)}
+              onClick={() => {
+                const turningOff = statusFilter === s;
+                setStatusFilter(turningOff ? "" : s);
+                // A zero-count chip only stays mounted while it IS the filter;
+                // toggling it off unmounts it, so park focus on "All" instead
+                // of letting it fall to <body>.
+                if (turningOff && (statusCounts[s] ?? 0) === 0) {
+                  allChipRef.current?.focus();
+                }
+              }}
               aria-pressed={statusFilter === s}
               className={cn(
                 chipBase,
                 statusFilter === s
-                  ? cn("border-transparent", STATUS_STYLES[s])
+                  ? // border-current/30 keeps the pressed state legible even for
+                    // the near-neutral "merged" chip in dark mode.
+                    cn("border-current/30", STATUS_STYLES[s])
                   : chipIdle,
               )}
             >
-              {STATUS_REFDATA[s]}
+              {titleize(s)}
               <span className="ml-1 tabular-nums opacity-60">
                 {statusCounts[s] ?? 0}
               </span>
@@ -572,12 +892,14 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
           ))}
         </fieldset>
 
+        {/* Always visible — the grid is just as editable on mobile, and a
+            hidden warning turns unsaved edits into silent data loss. */}
         <span
-          className="ml-auto hidden items-center gap-1.5 rounded-full border border-amber-200/70 bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300 sm:inline-flex"
+          className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-amber-200/70 bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300"
           title="Category, severity, status, department, and crew are editable — click a cell. Changes are not saved to the database."
         >
           <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-          Edits session-only
+          Edits not saved to database
         </span>
       </div>
 
@@ -587,7 +909,7 @@ export function WorkOrderGrid({ rows }: { rows: GridReportRow[] }) {
           rowData={filtered}
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
-          rowHeight={56}
+          rowHeight={64}
           headerHeight={44}
           getRowId={(p) => p.data.report_id}
           singleClickEdit

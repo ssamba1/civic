@@ -14,7 +14,9 @@
 import { chromium } from "playwright";
 
 const base = process.argv[2] ?? "http://localhost:3100";
-const url = `${base}/?tweaks=1&mapPreset=civic-light`;
+// mapMarkers=0: shoot the bare basemap — the report field is DOM pins now
+// (MapPinStory severity scatter), not pixels baked into the plate.
+const url = `${base}/?tweaks=1&mapPreset=civic-light&mapMarkers=0`;
 const out = "public/landing-shots/hero-map.jpg";
 
 const browser = await chromium.launch();

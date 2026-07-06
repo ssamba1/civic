@@ -209,14 +209,16 @@
 /* Frosted-glass capsule — black glass treatment (the card sits on the blue
    shader wash). */
 .riven-root.wl-design-zamp .wl-zamp-glass-card {
-  --_card-rgb: 0 0 0;
-  --_card-alpha: 0.88;
+  --_card-rgb: 10 12 16;
+  /* Translucent enough that the 28px backdrop blur actually reads — matches
+     the pin-story moment-cards (rgba(10,12,16,0.55) + white hairline). */
+  --_card-alpha: 0.62;
   background: linear-gradient(
     135deg,
     rgb(var(--_card-rgb) / var(--_card-alpha)) 0%,
-    rgb(var(--_card-rgb) / calc(var(--_card-alpha) * 0.5)) 100%
+    rgb(var(--_card-rgb) / calc(var(--_card-alpha) * 0.75)) 100%
   );
-  border: none;
+  border: 1px solid rgb(255 255 255 / 0.14);
   border-radius: 22px;
   padding: clamp(22px, 2.2vw, 36px);
   backdrop-filter: blur(28px) saturate(180%);

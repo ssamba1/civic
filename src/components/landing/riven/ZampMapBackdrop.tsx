@@ -5,11 +5,7 @@ import { MapboxOverlay, type MapboxOverlayProps } from "@deck.gl/mapbox";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Map as MapGL, type MapRef, useControl } from "react-map-gl/maplibre";
 import { useMapPreset } from "./MapPresetContext";
-import {
-  buildHeatLayer,
-  buildHexLayer,
-  buildMarkerLayers,
-} from "./mapLayers";
+import { buildHeatLayer, buildHexLayer, buildMarkerLayers } from "./mapLayers";
 import { BUILDINGS_3D_LAYER, CUMMING, makePoints } from "./mapPresets";
 
 /**
@@ -54,6 +50,14 @@ export default function ZampMapBackdrop() {
   const markerPoints = useMemo(() => points.slice(0, 96), [points]);
 
   const layers = useMemo<DeckGLLayer[]>(() => {
+    // ?mapMarkers=0 — capture-hero-map.mjs shoots a BARE basemap plate. The
+    // report field is no longer baked into the JPEG: the landing renders it as
+    // DOM severity pins (MapPinStory) so it can animate and ride the parallax.
+    if (
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).get("mapMarkers") === "0"
+    )
+      return [];
     if (preset.view === "heatmap") return buildHeatLayer(points);
     if (preset.view === "hex") return buildHexLayer(points, true);
     return buildMarkerLayers(markerPoints, preset.ink);

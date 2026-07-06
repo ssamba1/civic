@@ -8,6 +8,7 @@ import {
 } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import MapPinStory from "./MapPinStory";
 import { useMapPreset } from "./MapPresetContext";
 import StaticHeroMap from "./StaticHeroMap";
 import ZampMapBackdropLazy, { ZampMapFallback } from "./ZampMapBackdropLazy";
@@ -47,7 +48,7 @@ const glassChild = {
   },
 };
 
-export default function ZampHero() {
+export default function ZampHero({ pinStory = false }: { pinStory?: boolean }) {
   // tweaksVisible (?tweaks=1, dev only) swaps the static plate back for the
   // LIVE maplibre/deck.gl map — the studio used to retune presets and re-run
   // scripts/capture-hero-map.mjs. Public visitors never mount it, so the
@@ -126,6 +127,11 @@ export default function ZampHero() {
           map JS) with cursor parallax. ?tweaks=1 swaps in the live map. */}
       <ZampMapFallback />
       {showMap && (tweaksVisible ? <ZampMapBackdropLazy /> : <StaticHeroMap />)}
+      {/* Animated report pins + glass moment-cards, glued to the static plate
+          (they ride the exact same lean transform — see MapPinStory). Skipped
+          over the live tweaks map, whose deck.gl layers already render a
+          geo-anchored pin field, and on mobile, where there is no plate. */}
+      {pinStory && showMap && !tweaksVisible && <MapPinStory />}
 
       <div
         className="wl-lp-narrow"

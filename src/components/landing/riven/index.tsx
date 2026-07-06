@@ -44,14 +44,16 @@ export default function RivenLanding({
 function RivenLandingInner({ fontClassName }: { fontClassName: string }) {
   // ink flips the hero wordmark/nav light over dark basemaps (see zamp.css).
   const { ink, tweaksVisible } = useMapPreset();
-  // ?hero=bento swaps in the clay bento hero (A/B against ZampHero). Read
-  // after mount so server and first client render stay identical.
-  const [bentoHero, setBentoHero] = useState(false);
+  // ?hero=bento → clay bento hero. Default is ZampHero, which now ships the
+  // animated pin story (previously gated behind ?hero=map — the param still
+  // parses but is a no-op alias for the default).
+  // Read after mount so server and first client render stay identical.
+  const [heroVariant, setHeroVariant] = useState<"" | "bento" | "map">("");
   useEffect(() => {
-    setBentoHero(
-      new URLSearchParams(window.location.search).get("hero") === "bento",
-    );
+    const v = new URLSearchParams(window.location.search).get("hero");
+    setHeroVariant(v === "bento" || v === "map" ? v : "");
   }, []);
+  const bentoHero = heroVariant === "bento";
   return (
     <div
       className={`riven-root wl-design-zamp ${fontClassName}`}
@@ -64,7 +66,7 @@ function RivenLandingInner({ fontClassName }: { fontClassName: string }) {
           className={`v2-section v2-section--hero${bentoHero ? " v2-section--hero-bento" : ""}`}
           id="top"
         >
-          {bentoHero ? <BentoHero /> : <ZampHero />}
+          {bentoHero ? <BentoHero /> : <ZampHero pinStory />}
         </section>
         <ZampSection1 />
         <ZampSection2 />
