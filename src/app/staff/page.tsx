@@ -161,6 +161,7 @@ export default async function StaffPage() {
         workOrders={workOrders}
         initialFetchedAt={fetchedAt}
         cityRouting={cityRouting}
+        cityId={cityId ?? undefined}
       />
     </div>
   );

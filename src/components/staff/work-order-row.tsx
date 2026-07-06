@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import { DEMO_REPORTER_ID, isDemoId } from "@/lib/demo-reports";
 import type { TeamDisplay } from "@/lib/onboarding/types";
 import type {
+  CategoryCostStats,
   Classification,
   Report,
   ReportCategory,
@@ -432,6 +433,7 @@ export function WorkOrderRowControlled({
   onDetailClose,
   autoOpenReject = false,
   isNew = false,
+  costStats,
 }: WorkOrderRowProps & {
   detailOpen: boolean;
   onDetailOpen: () => void;
@@ -440,6 +442,7 @@ export function WorkOrderRowControlled({
    *  styled reject input (replaces the old native window.prompt flow). */
   autoOpenReject?: boolean;
   isNew?: boolean;
+  costStats?: CategoryCostStats;
 }) {
   const timeLabel = useTimeAgo(report.created_at);
   const Icon = CATEGORY_ICONS[classification.category] ?? HelpCircle;
@@ -450,6 +453,21 @@ export function WorkOrderRowControlled({
   const materialsList = formatMaterials(workOrder.materials);
   const materialsDisplay = materialsList.slice(0, 3).join(", ");
   const materialsOverflow = materialsList.length > 3;
+
+  // Live cost prediction from category_cost_stats RPC
+  const predictedCost = (() => {
+    if (!costStats || costStats.n < 5) return null;
+    const severityRatio = Math.min(
+      Math.max(classification.severity / Math.max(costStats.avg_severity, 1), 0.6),
+      1.8,
+    );
+    return Math.round(costStats.base * severityRatio);
+  })();
+  const TIER_CHIP: Record<string, string> = {
+    high: "bg-green-100 text-green-700",
+    medium: "bg-yellow-100 text-yellow-700",
+    low: "bg-zinc-100 text-zinc-500",
+  };
 
   const isDemo =
     report.reporter_id === DEMO_REPORTER_ID || isDemoId(workOrder.id);
@@ -527,6 +545,33 @@ export function WorkOrderRowControlled({
           <span className="text-sm text-zinc-700 dark:text-zinc-300">
             {workOrder.est_minutes}m
           </span>
+        </td>
+
+        {/* Live predicted cost */}
+        <td className="hidden px-4 py-3 lg:table-cell">
+          {predictedCost !== null && costStats ? (
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                ${predictedCost.toLocaleString()}
+              </span>
+              <span
+                className={cn(
+                  "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium capitalize",
+                  TIER_CHIP[costStats.tier] ?? TIER_CHIP.low,
+                )}
+              >
+                {costStats.tier === "high"
+                  ? "High"
+                  : costStats.tier === "medium"
+                    ? "Med"
+                    : "Low"}
+              </span>
+            </div>
+          ) : (
+            <span className="text-xs text-zinc-400">
+              {costStats ? `Unknown (${costStats.n}/5)` : "—"}
+            </span>
+          )}
         </td>
 
         {/* Materials */}

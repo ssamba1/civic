@@ -290,14 +290,15 @@ BEGIN
       FROM work_orders WHERE est_cost > 0
     ),
     'cost_accuracy_pct', (
-      -- Only computable once staff close reports with actual cost (fix_cost_estimate)
+      -- Computable once workers close reports with actual_cost captured
       SELECT ROUND(
         100.0 - AVG(
-          ABS(est_cost - fix_cost_estimate) / NULLIF(fix_cost_estimate, 0)
+          ABS(est_cost - actual_cost) / NULLIF(actual_cost, 0)
         ) * 100.0, 1
       )
       FROM work_orders
-      WHERE est_cost IS NOT NULL AND fix_cost_estimate IS NOT NULL AND fix_cost_estimate > 0
+      WHERE est_cost IS NOT NULL AND actual_cost IS NOT NULL AND actual_cost > 0
+        AND actual_cost_excluded = false
     ),
 
     -- ── CATEGORY BREAKDOWN ────────────────────────────────────────────────────

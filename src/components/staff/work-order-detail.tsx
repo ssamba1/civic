@@ -123,6 +123,8 @@ export function WorkOrderDetail({
       : "",
   );
   const [fixNote, setFixNote] = useState(workOrder.fix_note ?? "");
+  const [actualCostInput, setActualCostInput] = useState("");
+  const [actualCostError, setActualCostError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   // Confidence bar fills from 0 on mount so the CSS transition fires visibly.
@@ -187,10 +189,23 @@ export function WorkOrderDetail({
   }
 
   function handleClose() {
+    setActualCostError(null);
     setActionError(null);
+
+    const parsed = Number(actualCostInput.trim());
+    if (
+      !actualCostInput.trim() ||
+      !Number.isFinite(parsed) ||
+      parsed <= 0 ||
+      parsed > 5_000_000
+    ) {
+      setActualCostError("Enter the actual cost spent in dollars (e.g. 125.50)");
+      return;
+    }
+
     setPendingAction("close");
     startTransition(async () => {
-      const result = await closeWorkOrder(workOrder.id);
+      const result = await closeWorkOrder(workOrder.id, parsed);
       if (result.ok) {
         setActionSuccess("Work order closed");
       } else {
@@ -701,6 +716,34 @@ export function WorkOrderDetail({
             )}
           </div>
         </div>
+      </div>
+
+      {/* Actual cost input — shown when work order is being closed */}
+      {workOrder.actual_cost_excluded && (
+        <div className="border-t border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400">
+          Cost flagged as outlier — pending supervisor review before entering training data.
+        </div>
+      )}
+      <div className="border-t border-zinc-200 bg-zinc-50 px-4 py-3 md:px-6 dark:border-zinc-700 dark:bg-zinc-800/50">
+        <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+          Actual cost spent ($) <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="number"
+          min="0.01"
+          max="5000000"
+          step="0.01"
+          placeholder="e.g. 125.50"
+          value={actualCostInput}
+          onChange={(e) => {
+            setActualCostInput(e.target.value);
+            setActualCostError(null);
+          }}
+          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+        />
+        {actualCostError && (
+          <p className="mt-1 text-xs text-red-500">{actualCostError}</p>
+        )}
       </div>
 
       {/* Action bar */}

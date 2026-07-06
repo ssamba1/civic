@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   closeWorkOrder,
   dispatchWorkOrder,
+  fetchCategoryCostStats,
   fetchQueuedWorkOrders,
 } from "@/app/staff/actions";
 import { Drawer } from "@/components/ui/drawer";
@@ -17,6 +18,7 @@ import {
 } from "@/lib/demo-reports";
 import type { CategoryTeamMap } from "@/lib/onboarding/types";
 import type {
+  CategoryCostStats,
   Classification,
   Report,
   WorkOrder,
@@ -58,6 +60,8 @@ interface StaffInboxProps {
   initialFetchedAt?: string;
   /** Per-city category → owning-team map (resolved server-side from city_teams). */
   cityRouting?: CategoryTeamMap;
+  /** City UUID — used to fetch per-city category cost stats for the live predictor. */
+  cityId?: string;
 }
 
 const TAB_VALUES = new Set<FilterTab>(TABS.map((t) => t.value));
@@ -67,6 +71,7 @@ export function StaffInbox({
   workOrders,
   initialFetchedAt,
   cityRouting,
+  cityId,
 }: StaffInboxProps) {
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
@@ -108,6 +113,19 @@ export function StaffInbox({
   const [mobileDrawerIndex, setMobileDrawerIndex] = useState<number | null>(
     null,
   );
+
+  // --- Category cost stats (live predictor) ---
+  const [costStats, setCostStats] = useState<Map<string, CategoryCostStats>>(
+    new Map(),
+  );
+  useEffect(() => {
+    if (!cityId) return;
+    fetchCategoryCostStats(cityId).then((result) => {
+      if (result.ok && result.data.length > 0) {
+        setCostStats(new Map(result.data.map((s) => [s.category, s])));
+      }
+    });
+  }, [cityId]);
 
   // --- Queue state ---
   const [displayedOrders, setDisplayedOrders] =
@@ -528,6 +546,7 @@ export function StaffInbox({
                 <th className="px-4 py-3">Address</th>
                 <th className="px-4 py-3">Submitted</th>
                 <th className="px-4 py-3">Est</th>
+                <th className="hidden px-4 py-3 lg:table-cell">Cost</th>
                 <th className="hidden px-4 py-3 xl:table-cell">Materials</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="hidden px-4 py-3 lg:table-cell">Photo</th>
@@ -549,6 +568,11 @@ export function StaffInbox({
                       cityRouting?.[
                         (wo.classification as unknown as Classification).category
                       ]
+                    }
+                    costStats={
+                      costStats.get(
+                        (wo.classification as unknown as Classification).category,
+                      )
                     }
                     isSelected={selectedIndex === idx}
                     onSelect={() => setSelectedIndex(idx)}

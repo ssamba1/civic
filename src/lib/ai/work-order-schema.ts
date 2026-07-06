@@ -37,7 +37,9 @@ export const aiWorkOrderSchema = z.object({
       }),
     )
     .max(20),
-  est_cost: z.number().min(0),
+  // Upper bound: $5M per job. Prevents a hallucinated astronomical value from
+  // persisting — the pipeline applies a tighter per-category clamp on top.
+  est_cost: z.number().min(0).max(5_000_000),
   rationale: z.string().min(1),
 });
 
