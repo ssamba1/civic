@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { DEMO_MODE } from "@/lib/demo-mode";
 import { validateCategoryOverrides } from "@/lib/schemas";
 import { categoryToTeamDefault, isValidTeamId, type TeamId } from "@/lib/teams";
 import type { ReportCategory } from "@/lib/types";
@@ -32,6 +33,26 @@ import { createListenerHub, frozenSnapshot } from "@/lib/utils/reactive-store";
 
 const STORAGE_KEY = "civic.routing_overrides.v1";
 const HISTORY_STORAGE_KEY = "civic.routing_override_history.v1";
+
+/**
+ * DB leg of a re-route (live deploy only): fire-and-forget update of the
+ * city's city_teams config via the staff-gated server action, so NEW work
+ * orders resolve to the changed team (migration 026). The localStorage
+ * snapshot stays the instant-UI layer for this browser.
+ */
+function persistCategoryRouting(category: ReportCategory, teamId: TeamId): void {
+  if (DEMO_MODE) return;
+  void import("@/app/staff/actions")
+    .then(({ updateCityRouting }) => updateCityRouting(category, teamId))
+    .then((result) => {
+      if (result && !result.ok) {
+        console.warn(`[category-overrides] DB re-route failed: ${result.error}`);
+      }
+    })
+    .catch((err) => {
+      console.warn("[category-overrides] DB re-route threw", err);
+    });
+}
 
 type OverrideMap = Partial<Record<ReportCategory, TeamId>>;
 
@@ -205,6 +226,7 @@ export function useCategoryOverrides(): UseCategoryOverridesReturn {
       writeStorage(snapshot);
       writeHistoryStorage(historySnapshot);
       emit();
+      persistCategoryRouting(category, teamId);
     },
     [],
   );
@@ -220,6 +242,7 @@ export function useCategoryOverrides(): UseCategoryOverridesReturn {
     writeStorage(snapshot);
     writeHistoryStorage(historySnapshot);
     emit();
+    persistCategoryRouting(category, defaultTeam);
   }, []);
 
   const clearAll = useCallback(() => {

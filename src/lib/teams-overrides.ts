@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import type { OverrideEvent } from "@/lib/delegation-history";
+import { DEMO_MODE } from "@/lib/demo-mode";
 import { validateTeamOverrides } from "@/lib/schemas";
 import { categoryToTeam, isValidTeamId, type TeamId } from "@/lib/teams";
 import { createListenerHub, frozenSnapshot } from "@/lib/utils/reactive-store";
@@ -41,6 +42,26 @@ import { createListenerHub, frozenSnapshot } from "@/lib/utils/reactive-store";
 
 const STORAGE_KEY = "civic.team_overrides.v1";
 const HISTORY_STORAGE_KEY = "civic.team_override_history.v1";
+
+/**
+ * DB leg of a reassignment (live deploy only): fire-and-forget write of
+ * work_orders.team_key via the staff-gated server action. The localStorage
+ * snapshot above stays the instant-UI layer; the DB row is what other staff
+ * sessions (and the classify pipeline's inbox) see.
+ */
+function persistReassignment(reportId: string, teamId: TeamId): void {
+  if (DEMO_MODE) return;
+  void import("@/app/staff/actions")
+    .then(({ reassignReportTeam }) => reassignReportTeam(reportId, teamId))
+    .then((result) => {
+      if (result && !result.ok) {
+        console.warn(`[teams-overrides] DB reassign failed: ${result.error}`);
+      }
+    })
+    .catch((err) => {
+      console.warn("[teams-overrides] DB reassign threw", err);
+    });
+}
 
 type OverrideMap = Record<string, TeamId>;
 type HistoryMap = Record<string, OverrideEvent[]>;
@@ -233,6 +254,7 @@ export function useTeamOverrides(): UseTeamOverridesReturn {
       writeStorage(snapshot);
       writeHistoryStorage(historySnapshot);
       emit();
+      persistReassignment(report.id, teamId);
     },
     [],
   );
@@ -259,6 +281,7 @@ export function useTeamOverrides(): UseTeamOverridesReturn {
       writeStorage(snapshot);
       writeHistoryStorage(historySnapshot);
       emit();
+      persistReassignment(report.id, defaultTeam);
     },
     [],
   );

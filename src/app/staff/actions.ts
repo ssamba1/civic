@@ -9,7 +9,9 @@ import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
 import { notifyReportStatus } from "@/lib/notify/status-notify";
+import { resolveTeamKeyForCategory } from "@/lib/onboarding/city-teams";
 import { publicToken } from "@/lib/public-report";
+import { TEAMS, type TeamId } from "@/lib/teams";
 import type {
   CategoryCostStats,
   Classification,
@@ -505,6 +507,10 @@ export async function overrideClassification(
         { ...existing, category: parsed.data },
         { recurrenceCount: 0 },
       );
+      const teamKey = await resolveTeamKeyForCategory(
+        staff.city_id,
+        parsed.data,
+      );
       const { error: rerouteError } = await supabase
         .from("work_orders")
         .update({
@@ -512,6 +518,7 @@ export async function overrideClassification(
           crew_type: routed.crew_type,
           est_minutes: routed.est_minutes,
           materials: routed.materials,
+          team_key: teamKey,
         })
         .eq("report_id", reportId);
       if (rerouteError)
@@ -712,4 +719,90 @@ export async function fetchCategoryCostStats(
     return { ok: true, data: [] };
   }
   return { ok: true, data: (data ?? []) as CategoryCostStats[] };
+}
+
+/**
+ * Reassign one report's work order to another team (the DB leg of the
+ * delegation panel — the localStorage overlay stays as the instant-UI layer).
+ */
+export async function reassignReportTeam(
+  reportId: string,
+  teamKey: TeamId,
+): Promise<Result<void>> {
+  const staff = await getStaffUser();
+  if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
+  if (!(teamKey in TEAMS) || teamKey === "all")
+    return { ok: false, error: "invalid_team" };
+
+  const supabase = createServerClient();
+  if (!(await reportInStaffCity(supabase, reportId, staff.city_id)))
+    return { ok: false, error: "Unauthorized: report not in your city" };
+
+  const { data: wo, error } = await supabase
+    .from("work_orders")
+    .update({ team_key: teamKey })
+    .eq("report_id", reportId)
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!wo) return { ok: false, error: "work_order_not_found" };
+  return { ok: true, data: undefined };
+}
+
+/**
+ * Move a category's default routing to another team for the staff member's
+ * city (the DB leg of the routing matrix; city_teams is the source of truth
+ * new work orders resolve against). Removes the category from every other
+ * team row, then adds it to the target — creating the row from the preset
+ * catalog if the city never enabled that team.
+ */
+export async function updateCityRouting(
+  category: ReportCategory,
+  teamKey: TeamId,
+): Promise<Result<void>> {
+  const staff = await getStaffUser();
+  if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
+  if (!staff.city_id) return { ok: false, error: "no_city" };
+  if (!(teamKey in TEAMS) || teamKey === "all")
+    return { ok: false, error: "invalid_team" };
+  const parsedCategory = ReportCategorySchema.safeParse(category);
+  if (!parsedCategory.success) return { ok: false, error: "invalid_category" };
+
+  const supabase = createServerClient();
+  const { data: rows, error } = await supabase
+    .from("city_teams")
+    .select("id, team_key, categories")
+    .eq("city_id", staff.city_id);
+  if (error) return { ok: false, error: error.message };
+
+  for (const row of rows ?? []) {
+    const cats = (row.categories ?? []) as ReportCategory[];
+    const isTarget = row.team_key === teamKey;
+    const has = cats.includes(parsedCategory.data);
+    const next = isTarget
+      ? has
+        ? cats
+        : [...cats, parsedCategory.data]
+      : cats.filter((c) => c !== parsedCategory.data);
+    if (next.length === cats.length && (isTarget ? has : true)) continue;
+    const { error: updateErr } = await supabase
+      .from("city_teams")
+      .update({ categories: next })
+      .eq("id", row.id);
+    if (updateErr) return { ok: false, error: updateErr.message };
+  }
+
+  if (!(rows ?? []).some((r) => r.team_key === teamKey)) {
+    const meta = TEAMS[teamKey];
+    const { error: insertErr } = await supabase.from("city_teams").insert({
+      city_id: staff.city_id,
+      team_key: teamKey,
+      label: meta.label,
+      enabled: true,
+      categories: [parsedCategory.data],
+    });
+    if (insertErr) return { ok: false, error: insertErr.message };
+  }
+
+  return { ok: true, data: undefined };
 }

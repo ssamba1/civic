@@ -50,6 +50,29 @@ export function resolveCategoryTeam(
 }
 
 /**
+ * Resolve the owning TeamId for a category in one city: the city's onboarded
+ * config first, the static preset default otherwise. The write-time resolver
+ * for work_orders.team_key (classify pipeline, staff override/reassign) —
+ * read surfaces then trust the stored key. Never throws; a config-read failure
+ * degrades to the static default.
+ */
+export async function resolveTeamKeyForCategory(
+  cityId: string | null | undefined,
+  category: ReportCategory,
+): Promise<TeamId> {
+  if (cityId) {
+    try {
+      const config = await fetchCityTeams(cityId);
+      const owner = resolveCategoryTeam(config, category);
+      if (owner && owner.teamKey in TEAMS) return owner.teamKey as TeamId;
+    } catch {
+      // fall through to the static default
+    }
+  }
+  return categoryToTeamDefault(category);
+}
+
+/**
  * Build a category → owning-team display map for the staff console.
  * Prefers the city's onboarded config; falls back to the global preset default
  * so every city (including ones never onboarded via the wizard) shows a team.

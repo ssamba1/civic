@@ -8,6 +8,7 @@ import type {
 } from "@/lib/dashboard-data";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
+import { TEAMS, type TeamId } from "@/lib/teams";
 import type { City, ReportCategory } from "@/lib/types";
 
 // Error strategy for this module: log via the shared logger (Sentry-backed) and
@@ -232,6 +233,9 @@ const ViewRowSchema = z.object({
   address: z.string().nullable(),
   lng: z.number().nullable(),
   lat: z.number().nullable(),
+  // Owning team persisted on the work order (migration 026). Optional so the
+  // parse keeps passing against a pre-026 view that lacks the column.
+  team_key: z.string().nullable().optional(),
   photo_public_url: z.string(),
   created_at: z.string(),
   tags: z.array(z.string()).nullable(),
@@ -252,6 +256,9 @@ function mapViewRow(r: ViewRow): DashboardReport {
     // reporter_id is PII — stripped from the public view; placeholder satisfies the type.
     reporter_id: "",
     tags: r.tags ?? [],
+    // DB-resolved team routing; readers fall back to categoryToTeam when unset.
+    assigned_team:
+      r.team_key && r.team_key in TEAMS ? (r.team_key as TeamId) : undefined,
   };
 }
 
@@ -284,7 +291,7 @@ export async function fetchCorpus(
     const { data, error } = await db
       .from("dashboard_reports_view")
       .select(
-        "id, category, severity, status, address, lng, lat, photo_public_url, created_at, tags",
+        "id, category, severity, status, address, lng, lat, team_key, photo_public_url, created_at, tags",
       )
       .eq("city_id", cityId)
       .in("source", sources)
@@ -310,7 +317,7 @@ export async function fetchRecentReports(
     const { data, error } = await db
       .from("dashboard_reports_view")
       .select(
-        "id, category, severity, status, address, lng, lat, photo_public_url, created_at, tags",
+        "id, category, severity, status, address, lng, lat, team_key, photo_public_url, created_at, tags",
       )
       .eq("city_id", cityId)
       .order("created_at", { ascending: false })
@@ -325,19 +332,7 @@ export async function fetchRecentReports(
       return [];
     }
 
-    return parsed.data.map((r) => ({
-      id: r.id,
-      category: (r.category ?? "other") as ReportCategory,
-      severity: (r.severity ?? 3) as 1 | 2 | 3 | 4 | 5,
-      status: r.status,
-      address: r.address ?? "Unknown location",
-      location: { lng: r.lng ?? 0, lat: r.lat ?? 0 },
-      photo_public_url: r.photo_public_url,
-      created_at: r.created_at,
-      // reporter_id is PII — stripped from the public view; placeholder satisfies the type.
-      reporter_id: "",
-      tags: r.tags ?? [],
-    }));
+    return parsed.data.map(mapViewRow);
   });
 }
 

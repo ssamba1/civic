@@ -9,6 +9,7 @@ import { classifyPhoto } from "@/lib/ai/gemini";
 import { generateWorkOrderAI } from "@/lib/ai/work-order-ai";
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
 import { createServerClient } from "@/lib/db/client";
+import { resolveTeamKeyForCategory } from "@/lib/onboarding/city-teams";
 import { sniffImageMime } from "@/lib/image/sniff-mime";
 import { createLogger } from "@/lib/logger";
 import type {
@@ -429,6 +430,32 @@ export async function runClassifyPipeline(
     });
     await markClassifyStatus(supabase, reportId, "failed", log);
     return { ok: false, error: msg };
+  }
+
+  // Persist the owning team via a separate guarded write (migration 026
+  // column; no-op-safe on un-migrated DBs — the read path falls back to the
+  // static category→team default when team_key is null). Resolved from the
+  // city's own city_teams config so per-city routing takes effect at creation.
+  try {
+    const teamKey = await resolveTeamKeyForCategory(
+      report.city_id,
+      classification.category,
+    );
+    const { error: teamErr } = await supabase
+      .from("work_orders")
+      .update({ team_key: teamKey })
+      .eq("id", insertedWorkOrder.id);
+    if (teamErr) {
+      log.warn("work_order_team_key_stamp_failed", {
+        reportId,
+        error: teamErr.message,
+      });
+    }
+  } catch (err) {
+    log.warn("work_order_team_key_resolve_threw", {
+      reportId,
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 
   // Persist est_cost + provenance via a separate guarded write (migration 010
