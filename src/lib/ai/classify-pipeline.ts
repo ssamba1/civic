@@ -285,11 +285,14 @@ export async function runClassifyPipeline(
     log.info("flagged_for_manual_review", { reportId, reviewReason });
   }
 
-  // Duplicate detection (non-emergency only — emergencies are never suppressed).
-  // A match marks THIS report 'merged', records a merges row, and skips the work
-  // order so duplicate reports don't inflate the dispatch queue. Flag-gated +
-  // no-op-safe: findDuplicate returns null on an un-migrated DB (missing RPC).
-  if (DEDUP_REPORTS) {
+  // Duplicate detection (non-emergency only — emergencies are never suppressed:
+  // merging one would silently swallow an auto-dispatch. The is_emergency guard
+  // was lost when the emergency short-circuit above was removed for issue-8;
+  // this reinstates it explicitly). A match marks THIS report 'merged', records
+  // a merges row, and skips the work order so duplicate reports don't inflate
+  // the dispatch queue. Flag-gated + no-op-safe: findDuplicate returns null on
+  // an un-migrated DB (missing RPC).
+  if (DEDUP_REPORTS && !classification.is_emergency) {
     const dup = await findDuplicate(supabase, reportId, log);
     if (dup) {
       const { error: mergeErr } = await supabase.from("merges").insert({
