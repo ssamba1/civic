@@ -45,6 +45,7 @@ import {
   fetchCategoryBreakdown,
   fetchCity,
   fetchCityStats,
+  fetchCorpus,
   fetchRecentReports,
   fetchReportMarkers,
 } from "./dashboard-queries";
@@ -74,6 +75,13 @@ describe("dashboard-queries no-throw contract (thrown exceptions, not error obje
 
   it("fetchRecentReports returns []", async () => {
     await expect(fetchRecentReports("city-1")).resolves.toEqual([]);
+  });
+
+  it("fetchCorpus returns []", async () => {
+    await expect(fetchCorpus("city-1")).resolves.toEqual([]);
+    await expect(
+      fetchCorpus("city-1", ["resident", "synthetic"]),
+    ).resolves.toEqual([]);
   });
 
   it("fetchReportMarkers returns []", async () => {

@@ -1,9 +1,15 @@
 import { Suspense } from "react";
 import { CityHeader } from "@/components/city-header";
 import { CitySidebar } from "@/components/city-sidebar";
+import type { DashboardReport } from "@/lib/dashboard-data";
 import { getReportCorpus, KNOWN_CITIES } from "@/lib/dashboard-data";
-import { fetchCity, fetchRecentReports } from "@/lib/dashboard-queries";
+import {
+  fetchCity,
+  fetchCorpus,
+  PREVIEW_SOURCES,
+} from "@/lib/dashboard-queries";
 import { DEMO_CITY } from "@/lib/demo-auth";
+import { DEMO_MODE } from "@/lib/demo-mode";
 import { FilterProvider } from "@/lib/filters/context";
 import { isStaffForCity } from "@/lib/staff-access";
 
@@ -26,17 +32,21 @@ export default async function CityDashboardLayout({
   // stays visible to every visitor.
   const isStaff = slug === DEMO_CITY || (await isStaffForCity(slug));
 
-  // Cumming ships with the rich synthetic demo corpus (slug-agnostic). Every
-  // other (onboarded) city loads its OWN live reports from the DB so its
-  // dashboard, workload, and map reflect real data — the live PostGIS point,
-  // AI category/severity, and status — instead of looking empty.
-  const corpus =
-    slug in KNOWN_CITIES
-      ? getReportCorpus()
-      : city
-        ? await fetchRecentReports(city.id, 500)
-        : [];
   const now = Date.now();
+
+  // Demo deploy keeps the rich synthetic corpus for the known demo city; every
+  // other (onboarded) city — and every city on a real deploy — loads its OWN
+  // reports from the DB per city_id (F1) so its dashboard, workload, and map
+  // reflect real data. A preview (not-yet-live) city includes synthetic/imported
+  // sources so its dashboard looks alive.
+  let corpus: DashboardReport[];
+  if (DEMO_MODE && slug in KNOWN_CITIES) {
+    corpus = getReportCorpus();
+  } else {
+    corpus = city
+      ? await fetchCorpus(city.id, city.active ? undefined : PREVIEW_SOURCES)
+      : [];
+  }
 
   return (
     // Column on mobile (fixed CityHeader on top); row on md+ where the
