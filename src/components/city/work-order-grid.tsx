@@ -1243,7 +1243,6 @@ export function WorkOrderGrid({
         </fieldset>
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          <PageSizeSelect value={pageChoice} onChange={setPageChoice} />
           {/* Always visible — the grid is just as editable on mobile, and a
               hidden warning turns unsaved edits into silent data loss. */}
           <span
@@ -1256,7 +1255,7 @@ export function WorkOrderGrid({
         </div>
       </div>
 
-      <div className="wo-grid min-h-0 flex-1">
+      <div className="wo-grid relative min-h-0 flex-1">
         <AgGridReact<GridReportRow>
           theme={gridTheme}
           rowData={filtered}
@@ -1283,6 +1282,15 @@ export function WorkOrderGrid({
           animateRows
           overlayNoRowsTemplate={"<span>No matching reports.</span>"}
         />
+        {/* Docked into AG Grid's paging-panel band. That panel keeps the row
+            range + page nav right-aligned, leaving its left free; pinning the
+            page-size control there reads as one footer. h-12 matches the
+            quartz paging-panel height so the control centers on the same line. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex h-12 items-center pl-3 sm:pl-4 lg:pl-6">
+          <div className="pointer-events-auto">
+            <PageSizeSelect value={pageChoice} onChange={setPageChoice} />
+          </div>
+        </div>
       </div>
 
       <WorkOrderExplorer
