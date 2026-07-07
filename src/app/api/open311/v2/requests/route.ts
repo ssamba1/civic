@@ -5,6 +5,7 @@ import { runClassifyPipeline } from "@/lib/ai/classify-pipeline";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
+import { lookupApiKey } from "@/lib/open311/api-keys";
 import { getService } from "@/lib/open311/services";
 import {
   expandStatus,
@@ -241,10 +242,23 @@ export async function POST(request: NextRequest) {
       body = Object.fromEntries(formData.entries()) as Record<string, string>;
     }
 
-    // Validate API key — constant-time comparison to prevent timing attacks (H10)
+    // Validate API key. Per-partner keys (api_keys table, migration 028) are
+    // looked up by SHA-256 hash and carry attribution + optional city scope;
+    // the shared env-var key stays as a legacy fallback (constant-time compare,
+    // H10). Either path must succeed.
     const apiKey = body.api_key ?? request.nextUrl.searchParams.get("api_key");
+    if (!apiKey) {
+      return errorResponse(
+        401,
+        "API key is required and must be valid",
+        wantsXml,
+      );
+    }
+    const partner = await lookupApiKey(apiKey);
     const expectedKey = process.env.OPEN311_API_KEY;
-    if (!expectedKey || !apiKey || !safeCompare(apiKey, expectedKey)) {
+    const legacyOk =
+      !!expectedKey && !partner && safeCompare(apiKey, expectedKey);
+    if (!partner && !legacyOk) {
       return errorResponse(
         401,
         "API key is required and must be valid",
@@ -297,13 +311,24 @@ export async function POST(request: NextRequest) {
 
     const db = createServerClient();
 
-    // Resolve city from jurisdiction_id or default to first active city
+    // Resolve city: a city-pinned partner key wins, then jurisdiction_id,
+    // then the deterministic first active city.
     const jurisdictionId =
       body.jurisdiction_id ??
       request.nextUrl.searchParams.get("jurisdiction_id");
 
     let city: City;
-    if (jurisdictionId) {
+    if (partner?.cityId) {
+      const { data, error } = await db
+        .from("cities")
+        .select("*")
+        .eq("id", partner.cityId)
+        .single();
+      if (error || !data) {
+        return errorResponse(500, "API key's city no longer exists", wantsXml);
+      }
+      city = data as City;
+    } else if (jurisdictionId) {
       const { data, error } = await db
         .from("cities")
         .select("*")
@@ -335,9 +360,9 @@ export async function POST(request: NextRequest) {
       city = data as City;
     }
 
-    // Reporter ID — use system user for external Open311 submissions.
-    // TODO: Replace with a real api_key → user lookup table.
-    const reporterId = process.env.OPEN311_SYSTEM_USER_ID;
+    // Reporter attribution: the partner key's own user when present, else the
+    // legacy shared system user.
+    const reporterId = partner?.userId ?? process.env.OPEN311_SYSTEM_USER_ID;
     if (!reporterId) {
       return errorResponse(
         500,

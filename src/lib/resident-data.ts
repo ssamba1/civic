@@ -48,8 +48,10 @@ export interface CityMorale {
   // Enriched morale signal
   totalReports: number;
   reportedThisWeek: number;
-  reportedDeltaPct: number; // week over week new reports
-  resolvedDeltaPct: number; // week over week resolutions
+  // Week-over-week percent change; null = "new" (no prior-week base to
+  // compare against — see pctChange).
+  reportedDeltaPct: number | null;
+  resolvedDeltaPct: number | null;
   inProgressCount: number; // dispatched + in_progress
   activeReporters: number; // distinct neighbors who reported
   severity: { severity: 1 | 2 | 3 | 4 | 5; count: number }[];
@@ -100,10 +102,11 @@ function seededFromId(id: string, salt: number): number {
    current resident always matches their own reports.
    ------------------------------------------------------------------ */
 
-let _demoReporterId: string | null = null;
-
+// Recomputed per call (no module-global cache): a server module instance is
+// shared across concurrent requests, so a once-frozen value would leak the
+// first request's answer to everyone (loop-closure plan issue #6). The scan is
+// O(corpus) over an in-memory array — negligible.
 function demoReporterId(): string {
-  if (_demoReporterId !== null) return _demoReporterId;
   const counts = new Map<string, number>();
   for (const r of getReportCorpus()) {
     counts.set(r.reporter_id, (counts.get(r.reporter_id) ?? 0) + 1);
@@ -116,7 +119,6 @@ function demoReporterId(): string {
       bestN = n;
     }
   }
-  _demoReporterId = best;
   return best;
 }
 
@@ -490,9 +492,14 @@ export async function getCityMorale(citySlug: string): Promise<CityMorale> {
     .sort((a, b) => b.count - a.count || a.category.localeCompare(b.category))
     .slice(0, 5);
 
-  // Week-over-week deltas (percent change, guarded against divide-by-zero).
-  const pctChange = (cur: number, prev: number) =>
-    prev === 0 ? (cur > 0 ? 100 : 0) : Math.round(((cur - prev) / prev) * 100);
+  // Week-over-week deltas. 0→N is NOT "+100%" — there is no base to compare
+  // against, so it returns null and the UI renders "new" instead (issue #19).
+  const pctChange = (cur: number, prev: number): number | null =>
+    prev === 0
+      ? cur > 0
+        ? null
+        : 0
+      : Math.round(((cur - prev) / prev) * 100);
 
   const reportedThisWeek = corpus.filter((r) => ageDays(r) <= 7).length;
   const reportedPrevWeek = corpus.filter(

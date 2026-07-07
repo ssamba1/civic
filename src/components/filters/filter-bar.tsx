@@ -6,6 +6,7 @@ import {
   ChevronDown,
   Gauge,
   ListFilter,
+  Lock,
   Shapes,
   Shield,
   SlidersHorizontal,
@@ -309,7 +310,7 @@ function SheetSection({
 /* ------------------------------------------------------------------ */
 
 export function FilterBar() {
-  const { filter, patch, reset, isDefault } = useFilters();
+  const { filter, patch, reset, isDefault, lockedTeam } = useFilters();
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const statusCount = filter.statuses.length;
@@ -344,7 +345,20 @@ export function FilterBar() {
             Filters
           </span>
 
-          {/* ---- Team selector: primary scoping decision ---- */}
+          {/* ---- Team selector: primary scoping decision. On a team view the
+               scope is locked — render a static badge, not a switcher, so it
+               can't LOOK changeable while every patch() forces it back. ---- */}
+          {lockedTeam ? (
+            <span
+              className="inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-hairline-strong bg-overlay-strong px-2.5 text-[12px] font-medium text-foreground"
+              title="This view is scoped to one team"
+            >
+              <Shield className="h-3.5 w-3.5 text-foreground" />
+              <span className="text-subtle">Team:</span>
+              <span className="text-foreground">{activeTeam.shortLabel}</span>
+              <Lock className="h-3 w-3 text-faint" aria-label="Locked" />
+            </span>
+          ) : (
           <Popover
             align="start"
             trigger={(open) => (
@@ -408,6 +422,7 @@ export function FilterBar() {
               </div>
             )}
           </Popover>
+          )}
 
           {/* ---- Date range: segmented control + custom popover ---- */}
           <div className="relative inline-flex items-center rounded-[10px] border border-hairline bg-overlay p-0.5">
@@ -677,33 +692,36 @@ export function FilterBar() {
           onClose={() => setSheetOpen(false)}
           title="Filters"
         >
-          {/* --- Team section --- */}
-          <SheetSection
-            icon={<Users className="h-3.5 w-3.5" />}
-            title="Team"
-            action={
-              teamScoped ? (
-                <button
-                  type="button"
-                  onClick={() => patch({ team: "all" })}
-                  className="min-h-11 px-2 py-1.5 text-[12px] font-medium text-foreground"
-                >
-                  Clear
-                </button>
-              ) : undefined
-            }
-          >
-            <div className="space-y-0.5">
-              {TEAM_LIST.map((team) => (
-                <TeamRow
-                  key={team.id}
-                  teamId={team.id}
-                  selected={filter.team === team.id}
-                  onClick={() => patch({ team: team.id })}
-                />
-              ))}
-            </div>
-          </SheetSection>
+          {/* --- Team section (hidden entirely when the view is team-locked;
+               the desktop bar shows the locked badge instead) --- */}
+          {!lockedTeam && (
+            <SheetSection
+              icon={<Users className="h-3.5 w-3.5" />}
+              title="Team"
+              action={
+                teamScoped ? (
+                  <button
+                    type="button"
+                    onClick={() => patch({ team: "all" })}
+                    className="min-h-11 px-2 py-1.5 text-[12px] font-medium text-foreground"
+                  >
+                    Clear
+                  </button>
+                ) : undefined
+              }
+            >
+              <div className="space-y-0.5">
+                {TEAM_LIST.map((team) => (
+                  <TeamRow
+                    key={team.id}
+                    teamId={team.id}
+                    selected={filter.team === team.id}
+                    onClick={() => patch({ team: team.id })}
+                  />
+                ))}
+              </div>
+            </SheetSection>
+          )}
 
           {/* --- Date range section --- */}
           <SheetSection

@@ -36,6 +36,10 @@ interface FilterContextValue {
   // so client consumers computing time-bucketed derives (e.g. team stat cards)
   // use the SAME `now` as SSR — no Date.now() drift, no hydration mismatch.
   now: number;
+  // Set on team views: the team filter is pinned to this value (see
+  // FilterProviderProps.lockedTeam) and the FilterBar renders a non-interactive
+  // locked badge instead of the team switcher.
+  lockedTeam?: TeamId;
 }
 
 const FilterContext = createContext<FilterContextValue | null>(null);
@@ -173,6 +177,7 @@ export function FilterProvider({
       filtered,
       previousWindow,
       now,
+      lockedTeam,
     }),
     [
       filter,
@@ -184,6 +189,7 @@ export function FilterProvider({
       filtered,
       previousWindow,
       now,
+      lockedTeam,
     ],
   );
 
@@ -201,8 +207,9 @@ function useFilterContext(): FilterContextValue {
 }
 
 export function useFilters() {
-  const { filter, setFilter, patch, reset, isDefault } = useFilterContext();
-  return { filter, setFilter, patch, reset, isDefault };
+  const { filter, setFilter, patch, reset, isDefault, lockedTeam } =
+    useFilterContext();
+  return { filter, setFilter, patch, reset, isDefault, lockedTeam };
 }
 
 export function useFilteredReports(): DashboardReport[] {

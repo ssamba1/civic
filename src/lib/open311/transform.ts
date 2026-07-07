@@ -86,10 +86,21 @@ export function reportToOpen311(
 ): Open311Request {
   const category = (classification?.category ?? "other") as ReportCategory;
 
+  // D2: the public feed collapses to open/closed; the richer internal state
+  // rides in status_notes so consumers can tell a fix from a merge/rejection.
+  const statusNotes =
+    report.status === "merged"
+      ? "Duplicate of another report; tracked there."
+      : report.status === "rejected"
+        ? "Reviewed and closed without dispatch."
+        : report.status === "closed"
+          ? "Resolved."
+          : "";
+
   const result: Open311Request = {
     service_request_id: report.id,
     status: mapStatus(report.status),
-    status_notes: "",
+    status_notes: statusNotes,
     service_name: serviceName(category),
     service_code: category,
     agency_responsible: getAgencyResponsible(category, city.name),
