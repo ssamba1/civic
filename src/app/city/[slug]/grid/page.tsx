@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { WorkOrderGrid } from "@/components/city/work-order-grid";
 import { fetchCity as fetchCityMock } from "@/lib/dashboard-data";
-import { getGridRows } from "@/lib/dashboard-grid-data";
+import { getCityCrewOptions, getGridRows } from "@/lib/dashboard-grid-data";
 import { fetchCity as fetchCityFromDb } from "@/lib/dashboard-queries";
 import { DEMO_CITY } from "@/lib/demo-auth";
 import { isStaffForCity } from "@/lib/staff-access";
@@ -62,6 +62,12 @@ export default async function CityGridPage({ params }: PageProps) {
 
   const rows = await getGridRows(city.id);
 
+  // Crew assignment is a staff control: the demo city renders publicly, so the
+  // dropdown (and the crews list feeding it) only ships to staff sessions. The
+  // server action re-checks staff + city on every call regardless.
+  const canAssign = await isStaffForCity(slug);
+  const crews = canAssign ? await getCityCrewOptions(city.id) : [];
+
   return (
     // Full-bleed: the grid owns the entire content area (toolbar padding lives
     // inside WorkOrderGrid). Mobile keeps the fixed-CityHeader offset; md+
@@ -70,7 +76,12 @@ export default async function CityGridPage({ params }: PageProps) {
       {/* Visible title chrome removed to give the grid the full viewport;
           the h1 survives for a11y/SEO. */}
       <h1 className="sr-only">Work Order Grid</h1>
-      <WorkOrderGrid rows={rows} cityId={city.id} />
+      <WorkOrderGrid
+        rows={rows}
+        cityId={city.id}
+        crews={crews}
+        canAssign={canAssign}
+      />
     </div>
   );
 }

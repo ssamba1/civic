@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { type CrewCandidate, CrewsPanel } from "@/components/crews/crews-panel";
 import { InviteMemberModal } from "@/components/members/invite-member-modal";
+import type { CrewOption } from "@/components/members/member-modal";
 import { MembersTable } from "@/components/members/members-table";
 import { fetchCity as fetchCityMock } from "@/lib/dashboard-data";
 import { fetchCity as fetchCityFromDb } from "@/lib/dashboard-queries";
+import { fetchCityCrews } from "@/lib/db/crews";
 import {
   type CityMembersResult,
   fetchCityMembers,
@@ -85,6 +88,23 @@ export default async function CityMembersPage({ params }: PageProps) {
       : result.members
     : [];
 
+  // Crews for this city — the panel below the roster plus the crew pickers in
+  // the invite/edit dialogs. Degrades to empty (e.g. before migration 030).
+  const crewsResult = dbCity ? await fetchCityCrews(dbCity.id) : null;
+  const crews = crewsResult?.ok ? crewsResult.crews : [];
+  const crewOptions: CrewOption[] = crews.map((c) => ({
+    id: c.id,
+    teamKey: c.teamKey,
+    name: c.name,
+    crewType: c.crewType,
+  }));
+  const crewCandidates: CrewCandidate[] = members.map((m) => ({
+    id: m.id,
+    displayName: m.displayName,
+    teamKey: m.teamKey,
+    role: m.role,
+  }));
+
   return (
     <div className="relative flex flex-col min-h-dvh bg-background">
       <div className="relative flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
@@ -99,7 +119,7 @@ export default async function CityMembersPage({ params }: PageProps) {
               {access === "demo" && " Demo session — member emails are masked."}
             </p>
           </div>
-          {canManage && <InviteMemberModal slug={slug} />}
+          {canManage && <InviteMemberModal slug={slug} crews={crewOptions} />}
         </section>
 
         {!result.ok ? (
@@ -113,7 +133,20 @@ export default async function CityMembersPage({ params }: PageProps) {
             </p>
           </div>
         ) : dbCity ? (
-          <MembersTable members={members} slug={slug} canManage={canManage} />
+          <>
+            <MembersTable
+              members={members}
+              slug={slug}
+              canManage={canManage}
+              crews={crewOptions}
+            />
+            <CrewsPanel
+              slug={slug}
+              crews={crews}
+              members={crewCandidates}
+              canManage={canManage}
+            />
+          </>
         ) : (
           <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface px-6 py-16 text-center shadow-[var(--shadow-card)]">
             <p className="text-sm font-medium text-foreground">

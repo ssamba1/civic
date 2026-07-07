@@ -1,12 +1,13 @@
 "use client";
 
 import { ImageOff, MapPin, Wrench } from "lucide-react";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { assignCrewToReport } from "@/app/staff/actions";
 import { teamIcon } from "@/components/teams/team-icon";
 import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
-import type { GridReportRow } from "@/lib/dashboard-grid-data";
+import type { GridCrewOption, GridReportRow } from "@/lib/dashboard-grid-data";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
-import { categoryToTeam, TEAMS } from "@/lib/teams";
+import { categoryToTeam, TEAMS, type TeamId } from "@/lib/teams";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 import { timeAgo } from "@/lib/utils/time-ago";
@@ -159,7 +160,101 @@ function WorkOrderImage({ src, alt }: { src: string; alt: string }) {
   );
 }
 
-export function WorkOrderDetail({ row }: { row: GridReportRow | null }) {
+/**
+ * Assigned-crew dropdown — the grid's deliberate assignment control. Own-
+ * division crews list first (suggested = crew_type match), the rest follow
+ * under an optgroup. Optimistic: the select flips immediately and rolls back
+ * on a failed server write. Keyed by report id at the call site so state
+ * never leaks across selections.
+ */
+function CrewAssignControl({
+  reportId,
+  teamId,
+  crewType,
+  assignedCrewId,
+  crews,
+}: {
+  reportId: string;
+  teamId: TeamId;
+  crewType: string | null;
+  assignedCrewId: string | null;
+  crews: GridCrewOption[];
+}) {
+  const [pending, startTransition] = useTransition();
+  const [value, setValue] = useState<string>(assignedCrewId ?? "");
+  const [failed, setFailed] = useState(false);
+
+  const own = crews.filter((c) => c.teamKey === teamId);
+  const others = crews.filter((c) => c.teamKey !== teamId);
+  // Suggested crews (matching AI labor type) sort to the top of the division.
+  own.sort((a, b) => {
+    const aSug = a.crewType !== null && a.crewType === crewType;
+    const bSug = b.crewType !== null && b.crewType === crewType;
+    if (aSug !== bSug) return aSug ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  const optionLabel = (c: GridCrewOption) =>
+    c.crewType !== null && c.crewType === crewType
+      ? `${c.name} · suggested`
+      : c.name;
+
+  function handleChange(next: string) {
+    const prev = value;
+    setValue(next);
+    setFailed(false);
+    startTransition(async () => {
+      const res = await assignCrewToReport(reportId, next === "" ? null : next);
+      if (!res.ok) {
+        setValue(prev);
+        setFailed(true);
+      }
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <select
+        value={value}
+        disabled={pending}
+        onChange={(e) => handleChange(e.target.value)}
+        aria-label="Assigned crew"
+        className="h-8 w-full max-w-[220px] rounded-[var(--radius-md)] border border-hairline bg-overlay px-2 text-[13px] text-foreground outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-accent/60 disabled:opacity-60"
+      >
+        <option value="">Unassigned</option>
+        {own.map((c) => (
+          <option key={c.id} value={c.id}>
+            {optionLabel(c)}
+          </option>
+        ))}
+        {others.length > 0 && (
+          <optgroup label="Other divisions">
+            {others.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </optgroup>
+        )}
+      </select>
+      {failed && (
+        <span className="text-[11px] text-[var(--status-danger-fg)]">
+          Couldn't save — try again.
+        </span>
+      )}
+    </div>
+  );
+}
+
+export function WorkOrderDetail({
+  row,
+  crews = [],
+  canAssign = false,
+}: {
+  row: GridReportRow | null;
+  crews?: GridCrewOption[];
+  canAssign?: boolean;
+}) {
   if (!row) {
     return (
       <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-center">
@@ -348,9 +443,28 @@ export function WorkOrderDetail({ row }: { row: GridReportRow | null }) {
               value={row.department ? titleize(row.department) : "—"}
             />
             <Stat
-              label="Crew"
+              label="Crew type"
               value={row.crew_type ? titleize(row.crew_type) : "—"}
             />
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] uppercase tracking-wider text-faint">
+                Assigned crew
+              </span>
+              {canAssign && crews.length > 0 ? (
+                <CrewAssignControl
+                  key={row.report_id}
+                  reportId={row.report_id}
+                  teamId={team.id}
+                  crewType={row.crew_type}
+                  assignedCrewId={row.assigned_crew_id}
+                  crews={crews}
+                />
+              ) : (
+                <span className="text-[15px] font-medium text-foreground leading-tight">
+                  {row.assigned_crew_name ?? "—"}
+                </span>
+              )}
+            </div>
             <Stat
               label="Est. cost"
               value={row.est_cost != null ? usd(row.est_cost) : "—"}

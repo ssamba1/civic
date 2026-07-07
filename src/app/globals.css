@@ -542,6 +542,16 @@
    a per-row hover accent (left inset bar + tint transition), true vertical
    centering for flex cell content, the popup-editor chrome reset (our custom
    dropdown draws its own card), and thin overlay-style scrollbars. */
+
+/* Page-size selector spliced into AG Grid's pagination panel (see
+   work-order-grid.tsx mountPagingSlot). Give it breathing room from the row
+   summary on its left and the page nav on its right. */
+.wo-grid .ag-paging-panel .wo-page-size-slot {
+  display: flex;
+  align-items: center;
+  margin: 0 16px;
+}
+
 .wo-grid .ag-header-cell-text {
   font-size: 11px;
   font-weight: 600;

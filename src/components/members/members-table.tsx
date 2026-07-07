@@ -8,6 +8,7 @@ import {
   RoleBadge,
   teamLabel,
 } from "@/components/members/member-badges";
+import type { CrewOption } from "@/components/members/member-modal";
 import { TeamAccessView } from "@/components/members/team-access-view";
 import type { MemberRow } from "@/lib/db/members";
 import { cn } from "@/lib/utils/cn";
@@ -16,6 +17,7 @@ interface MembersTableProps {
   members: MemberRow[];
   slug: string;
   canManage: boolean;
+  crews: CrewOption[];
 }
 
 type RoleFilter = "all" | MemberRow["role"];
@@ -57,12 +59,23 @@ function relativeTime(iso: string | null): string {
   return `${Math.floor(days / 365)}y ago`;
 }
 
-export function MembersTable({ members, slug, canManage }: MembersTableProps) {
+export function MembersTable({
+  members,
+  slug,
+  canManage,
+  crews,
+}: MembersTableProps) {
   const [view, setView] = useState<ViewMode>("people");
   const [role, setRole] = useState<RoleFilter>("all");
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<MemberRow | null>(null);
   const searchId = useId();
+
+  // Crew names render under the Team cell — resolve ids once per crews prop.
+  const crewNameById = useMemo(
+    () => new Map(crews.map((c) => [c.id, c.name])),
+    [crews],
+  );
 
   const counts = useMemo(() => {
     const map: Record<RoleFilter, number> = {
@@ -284,6 +297,14 @@ export function MembersTable({ members, slug, canManage }: MembersTableProps) {
                         <div className="text-subtle">
                           {teamLabel(m.teamKey)}
                         </div>
+                        {m.crewIds.length > 0 && (
+                          <div className="text-[11px] text-faint">
+                            {m.crewIds
+                              .map((id) => crewNameById.get(id))
+                              .filter(Boolean)
+                              .join(", ")}
+                          </div>
+                        )}
                         {m.isShared && (
                           <div className="text-[11px] text-faint">
                             Shared login
@@ -333,6 +354,7 @@ export function MembersTable({ members, slug, canManage }: MembersTableProps) {
         <EditMemberModal
           member={editing}
           slug={slug}
+          crews={crews}
           onClose={() => setEditing(null)}
         />
       )}

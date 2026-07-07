@@ -1,5 +1,6 @@
 import "server-only";
 import { createServerClient } from "@/lib/db/client";
+import { fetchCrewIdsByUser } from "@/lib/db/crews";
 import { createLogger } from "@/lib/logger";
 
 const log = createLogger("db-members");
@@ -13,6 +14,8 @@ export interface MemberRow {
   role: "resident" | "staff_dispatcher" | "staff_supervisor" | "admin";
   teamKey: string | null;
   isShared: boolean;
+  /** Crews (ids) this member sits on — resolve names via fetchCityCrews. */
+  crewIds: string[];
   joinedAt: string;
   lastSignInAt: string | null;
   reportCount: number;
@@ -223,8 +226,10 @@ export async function fetchCityMembers(
       }
     }
 
-    // 4. Last sign-in (best-effort, never throws).
+    // 4. Last sign-in (best-effort, never throws) + crew memberships
+    //    (best-effort — missing user ⇒ no crews).
     const lastSignInById = await fetchLastSignInMap(db);
+    const crewIdsByUser = await fetchCrewIdsByUser(cityId);
 
     // 5. Assemble + sort (role rank, then display name).
     const rows: MemberRow[] = users.map((u) => {
@@ -241,6 +246,7 @@ export async function fetchCityMembers(
         role: u.role,
         teamKey: u.team_key,
         isShared: u.is_shared ?? false,
+        crewIds: crewIdsByUser.get(u.id) ?? [],
         joinedAt: u.created_at,
         lastSignInAt: lastSignInById.get(u.id) ?? null,
         reportCount: reports?.count ?? 0,
@@ -402,6 +408,9 @@ export async function fetchMemberDetail(
       log.error("getUserById threw", err, { userId });
     }
 
+    // Crew memberships — best-effort map over this city's crews.
+    const crewIdsByUser = await fetchCrewIdsByUser(cityId);
+
     const member: MemberRow = {
       id: u.id,
       displayName: u.display_name,
@@ -410,6 +419,7 @@ export async function fetchMemberDetail(
       role: u.role,
       teamKey: u.team_key,
       isShared: u.is_shared ?? false,
+      crewIds: crewIdsByUser.get(u.id) ?? [],
       joinedAt: u.created_at,
       lastSignInAt,
       reportCount,

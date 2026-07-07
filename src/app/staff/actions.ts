@@ -197,6 +197,48 @@ export async function dispatchWorkOrderForReport(
 }
 
 /**
+ * Assign (or clear, crewId null) a crew on a report's work order without
+ * touching dispatch state — the grid's deliberate-assignment control, distinct
+ * from the dispatch actions above which flip report status. The crew must
+ * belong to the staffer's own city (service role bypasses RLS, so this
+ * SELECT-then-check is the guard, same policy as reportInStaffCity).
+ */
+export async function assignCrewToReport(
+  reportId: string,
+  crewId: string | null,
+): Promise<Result<void>> {
+  const staff = await getStaffUser();
+  if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
+
+  const supabase = createServerClient();
+  if (!(await reportInStaffCity(supabase, reportId, staff.city_id)))
+    return { ok: false, error: "Unauthorized: report not in your city" };
+
+  if (crewId !== null) {
+    const { data: crew } = await supabase
+      .from("crews")
+      .select("id, city_id")
+      .eq("id", crewId)
+      .maybeSingle();
+    if (!crew || crew.city_id !== staff.city_id)
+      return { ok: false, error: "crew_not_found" };
+  }
+
+  // Require the update to have touched a row — same verify-then-act rationale
+  // as dispatchWorkOrderForReport (0-row .update() reports no error).
+  const { data: updated, error } = await supabase
+    .from("work_orders")
+    .update({ assigned_crew_id: crewId })
+    .eq("report_id", reportId)
+    .select("id");
+  if (error) return { ok: false, error: "work_order_update_failed" };
+  if (!updated || updated.length === 0)
+    return { ok: false, error: "no_work_order_for_report" };
+
+  return { ok: true, data: undefined };
+}
+
+/**
  * Close a work order by its REPORT id — the shape the team task surfaces have
  * (the corpus row carries no work-order id). Resolves the report's work order
  * (unique per report) and delegates to {@link closeWorkOrder}. The photo, when

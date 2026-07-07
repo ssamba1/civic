@@ -8,6 +8,8 @@ import {
   updateMember,
 } from "@/app/city/[slug]/members/actions";
 import {
+  CrewChecklist,
+  type CrewOption,
   FormError,
   humanizeMemberError,
   MemberModalShell,
@@ -28,25 +30,35 @@ import type { MemberRow } from "@/lib/db/members";
 export function EditMemberModal({
   member,
   slug,
+  crews,
   onClose,
 }: {
   member: MemberRow | null;
   slug: string;
+  crews: CrewOption[];
   onClose: () => void;
 }) {
   if (!member) return null;
   return (
-    <EditDialog key={member.id} member={member} slug={slug} onClose={onClose} />
+    <EditDialog
+      key={member.id}
+      member={member}
+      slug={slug}
+      crews={crews}
+      onClose={onClose}
+    />
   );
 }
 
 function EditDialog({
   member,
   slug,
+  crews,
   onClose,
 }: {
   member: MemberRow;
   slug: string;
+  crews: CrewOption[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -55,8 +67,16 @@ function EditDialog({
   const [name, setName] = useState(member.displayName ?? "");
   const [role, setRole] = useState<MemberRole>(member.role);
   const [teamKey, setTeamKey] = useState<string | null>(member.teamKey);
+  const [crewIds, setCrewIds] = useState<string[]>(member.crewIds);
   const [phone, setPhone] = useState(member.phone ?? "");
   const [error, setError] = useState<string | null>(null);
+
+  // Crew membership is division-scoped — changing the team clears any picks
+  // that belonged to the previous one.
+  function handleTeamChange(next: string | null) {
+    setTeamKey(next);
+    setCrewIds([]);
+  }
 
   const nameId = useId();
   const roleId = useId();
@@ -85,6 +105,7 @@ function EditDialog({
         role,
         teamKey,
         phone: phone.trim() ? phone.trim() : null,
+        crewIds,
       });
       if (res.ok) {
         router.refresh();
@@ -123,10 +144,16 @@ function EditDialog({
             <TeamSelect
               id={teamId}
               value={teamKey}
-              onChange={setTeamKey}
+              onChange={handleTeamChange}
               required={needsTeam}
             />
           </div>
+          <CrewChecklist
+            crews={crews}
+            teamKey={teamKey}
+            selected={crewIds}
+            onChange={setCrewIds}
+          />
           <TextField
             id={phoneId}
             label="Phone"

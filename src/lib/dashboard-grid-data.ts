@@ -29,11 +29,58 @@ export interface GridReportRow {
   work_order_id: string | null;
   department: string | null;
   crew_type: string | null;
+  /** Real crew assignment (crews table) — null until a staffer assigns one. */
+  assigned_crew_id: string | null;
+  assigned_crew_name: string | null;
   priority_score: number | null;
   est_minutes: number | null;
   est_cost: number | null;
   wo_source: string | null;
   needs_manual_review: boolean;
+}
+
+/** One assignable crew for the grid's crew control (no roster — the grid
+ *  doesn't need names, just the unit). */
+export interface GridCrewOption {
+  id: string;
+  name: string;
+  teamKey: string;
+  crewType: string | null;
+}
+
+/**
+ * Active crews of a city for the grid's assignment dropdown. Degrades to []
+ * on any failure (including the crews table not existing yet — migration 030),
+ * so the grid renders without an assignment control rather than 500-ing.
+ */
+export async function getCityCrewOptions(
+  cityId: string,
+): Promise<GridCrewOption[]> {
+  const db = createServerClient();
+  const { data, error } = await db
+    .from("crews")
+    .select("id, name, team_key, crew_type")
+    .eq("city_id", cityId)
+    .eq("active", true)
+    .order("team_key")
+    .order("name");
+  if (error) {
+    logger.error("Crew options fetch failed", error);
+    return [];
+  }
+  return (
+    (data ?? []) as {
+      id: string;
+      name: string;
+      team_key: string;
+      crew_type: string | null;
+    }[]
+  ).map((c) => ({
+    id: c.id,
+    name: c.name,
+    teamKey: c.team_key,
+    crewType: c.crew_type,
+  }));
 }
 
 /** Supabase embeds a to-one relation as either an object or a 1-element array
@@ -71,6 +118,7 @@ export async function getGridRows(cityId: string): Promise<GridReportRow[]> {
         id,
         department,
         crew_type,
+        assigned_crew_id,
         priority_score,
         est_minutes,
         est_cost,
@@ -87,9 +135,26 @@ export async function getGridRows(cityId: string): Promise<GridReportRow[]> {
     return [];
   }
 
+  // Resolve assigned crew ids to names in JS rather than a PostgREST embed —
+  // the embed needs the FK from migration 030, so it would hard-fail the whole
+  // grid query on a database that hasn't applied it yet. This lookup just
+  // degrades to null names.
+  const crewNameById = new Map<string, string>();
+  const { data: crewData, error: crewErr } = await db
+    .from("crews")
+    .select("id, name")
+    .eq("city_id", cityId);
+  if (crewErr) {
+    logger.error("Crew names fetch failed", crewErr);
+  } else {
+    for (const c of (crewData ?? []) as { id: string; name: string }[])
+      crewNameById.set(c.id, c.name);
+  }
+
   return (data ?? []).map((row: Record<string, unknown>): GridReportRow => {
     const cls = firstOf(row.classifications as Record<string, unknown>);
     const wo = firstOf(row.work_orders as Record<string, unknown>);
+    const assignedCrewId = (wo?.assigned_crew_id as string) ?? null;
 
     return {
       report_id: row.id as string,
@@ -104,6 +169,10 @@ export async function getGridRows(cityId: string): Promise<GridReportRow[]> {
       work_order_id: (wo?.id as string) ?? null,
       department: (wo?.department as string) ?? null,
       crew_type: (wo?.crew_type as string) ?? null,
+      assigned_crew_id: assignedCrewId,
+      assigned_crew_name: assignedCrewId
+        ? (crewNameById.get(assignedCrewId) ?? null)
+        : null,
       priority_score: (wo?.priority_score as number) ?? null,
       est_minutes: (wo?.est_minutes as number) ?? null,
       est_cost: (wo?.est_cost as number) ?? null,

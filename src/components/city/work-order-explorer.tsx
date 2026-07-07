@@ -5,7 +5,7 @@ import { useCallback, useEffect } from "react";
 import { WorkOrderDetail } from "@/components/city/work-order-detail";
 import { Drawer } from "@/components/ui/drawer";
 import { CATEGORY_META } from "@/lib/dashboard-data";
-import type { GridReportRow } from "@/lib/dashboard-grid-data";
+import type { GridCrewOption, GridReportRow } from "@/lib/dashboard-grid-data";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
@@ -40,6 +40,8 @@ export function WorkOrderExplorer({
   open,
   onClose,
   rows,
+  crews = [],
+  canAssign = false,
   selectedId,
   onSelectId,
   detailDrawerOpen,
@@ -48,6 +50,8 @@ export function WorkOrderExplorer({
   open: boolean;
   onClose: () => void;
   rows: GridReportRow[];
+  crews?: GridCrewOption[];
+  canAssign?: boolean;
   selectedId: string | null;
   onSelectId: (id: string) => void;
   detailDrawerOpen: boolean;
@@ -200,7 +204,11 @@ export function WorkOrderExplorer({
             {/* Detail — hidden on mobile (Drawer instead), visible md+ */}
             <div className="custom-scrollbar hidden min-w-0 flex-1 overflow-y-auto p-6 pb-safe md:flex">
               <div className="flex-1">
-                <WorkOrderDetail row={selected} />
+                <WorkOrderDetail
+                  row={selected}
+                  crews={crews}
+                  canAssign={canAssign}
+                />
               </div>
             </div>
           </div>
@@ -221,7 +229,7 @@ export function WorkOrderExplorer({
         }
         side="right"
       >
-        <WorkOrderDetail row={selected} />
+        <WorkOrderDetail row={selected} crews={crews} canAssign={canAssign} />
       </Drawer>
     </>
   );

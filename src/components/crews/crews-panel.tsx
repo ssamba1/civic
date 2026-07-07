@@ -1,0 +1,557 @@
+"use client";
+
+import { HardHat, Pencil, Plus, Star } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useId, useMemo, useState, useTransition } from "react";
+import {
+  createCrew,
+  deleteCrew,
+  setCrewMembers,
+  updateCrew,
+} from "@/app/city/[slug]/members/crew-actions";
+import {
+  CONTROL_CLASS,
+  FormError,
+  humanizeMemberError,
+  MemberModalShell,
+} from "@/components/members/member-modal";
+import { Button } from "@/components/ui/button";
+import type { CrewRow } from "@/lib/db/crews";
+import { isValidTeamId, TEAM_LIST, TEAMS } from "@/lib/teams";
+
+/* ==================================================================
+   Crews panel — the org level below a division. Lives on the members
+   page (same admin gate as invite/edit member); team dashboards read
+   the same crews but management happens here, next to the people it
+   assigns.
+
+   Crews group by division in TEAM_LIST order. The dialog reuses the
+   member-modal chrome so create/edit crew feels identical to
+   invite/edit member.
+   ================================================================== */
+
+/** Roster candidate — a city member as the crew dialog sees them. */
+export interface CrewCandidate {
+  id: string;
+  displayName: string | null;
+  teamKey: string | null;
+  role: string;
+}
+
+const FIELD_LABEL_CLASS = "text-[12px] font-medium text-subtle";
+
+// Crew labor types the AI emits (CrewType union) — offered as an optional tag
+// so dispatch can auto-suggest this crew for matching work orders.
+const CREW_TYPE_OPTIONS = [
+  "paving",
+  "line_crew",
+  "sign_crew",
+  "cleanup",
+  "concrete",
+  "arborist",
+  "drain_crew",
+] as const;
+
+const TEAM_OPTIONS = TEAM_LIST.filter((t) => t.id !== "all");
+
+const typeLabel = (t: string) => t.replace(/_/g, " ");
+
+function teamShortLabel(teamKey: string): string {
+  return isValidTeamId(teamKey) ? TEAMS[teamKey].shortLabel : teamKey;
+}
+function teamColor(teamKey: string): string {
+  return isValidTeamId(teamKey) ? TEAMS[teamKey].color : "#9a9aa0";
+}
+
+type DialogState = { mode: "create" } | { mode: "edit"; crew: CrewRow } | null;
+
+export function CrewsPanel({
+  slug,
+  crews,
+  members,
+  canManage,
+}: {
+  slug: string;
+  crews: CrewRow[];
+  members: CrewCandidate[];
+  canManage: boolean;
+}) {
+  const [dialog, setDialog] = useState<DialogState>(null);
+
+  // Division sections in canonical team order; a division appears only when
+  // it has crews.
+  const groups = useMemo(() => {
+    const byTeam = new Map<string, CrewRow[]>();
+    for (const c of crews) {
+      const list = byTeam.get(c.teamKey) ?? [];
+      list.push(c);
+      byTeam.set(c.teamKey, list);
+    }
+    const ordered: { teamKey: string; crews: CrewRow[] }[] = [];
+    for (const t of TEAM_OPTIONS) {
+      const list = byTeam.get(t.id);
+      if (list) {
+        ordered.push({ teamKey: t.id, crews: list });
+        byTeam.delete(t.id);
+      }
+    }
+    // Anything with an unknown team key still renders (data beats layout).
+    for (const [teamKey, list] of byTeam)
+      ordered.push({ teamKey, crews: list });
+    return ordered;
+  }, [crews]);
+
+  return (
+    <section className="mt-8 flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="flex items-baseline gap-2">
+          <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
+            Crews
+          </h2>
+          <span className="text-[13px] tabular-nums text-faint">
+            {crews.length}
+          </span>
+        </div>
+        {canManage && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setDialog({ mode: "create" })}
+          >
+            <Plus className="h-4 w-4" strokeWidth={2} />
+            New crew
+          </Button>
+        )}
+      </div>
+
+      {crews.length === 0 ? (
+        <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface px-6 py-12 text-center shadow-[var(--shadow-card)]">
+          <p className="text-sm font-medium text-foreground">No crews yet</p>
+          <p className="mt-1.5 text-[13px] text-faint">
+            Crews are the units inside a division that work orders get assigned
+            to — “North Paving Crew”, “Sign Shop”.
+            {canManage
+              ? " Create the first one to start assigning people and work."
+              : " An admin can create them from this page."}
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-5">
+          {groups.map((group) => (
+            <div key={group.teamKey} className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: teamColor(group.teamKey) }}
+                  aria-hidden
+                />
+                <h3 className="text-[13px] font-medium text-subtle">
+                  {teamShortLabel(group.teamKey)}
+                </h3>
+                <span className="text-[12px] tabular-nums text-faint">
+                  {group.crews.length}
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {group.crews.map((crew) => (
+                  <div
+                    key={crew.id}
+                    className="flex flex-col gap-2 rounded-[var(--radius-lg)] border border-hairline bg-surface p-4 shadow-[var(--shadow-card)]"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <HardHat
+                          className="h-4 w-4 flex-shrink-0 text-subtle"
+                          strokeWidth={1.75}
+                        />
+                        <span className="truncate text-[14px] font-medium text-foreground">
+                          {crew.name}
+                        </span>
+                        {!crew.active && (
+                          <span className="flex-shrink-0 rounded-md border border-hairline bg-overlay px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-faint">
+                            Inactive
+                          </span>
+                        )}
+                      </div>
+                      {canManage && (
+                        <button
+                          type="button"
+                          aria-label={`Edit ${crew.name}`}
+                          onClick={() => setDialog({ mode: "edit", crew })}
+                          className="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[var(--radius-md)] text-faint outline-none transition-colors duration-150 hover:bg-overlay-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+                        >
+                          <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+                        </button>
+                      )}
+                    </div>
+                    {crew.crewType && (
+                      <span className="w-fit rounded-md border border-hairline bg-overlay px-1.5 py-0.5 text-[11px] font-medium text-subtle">
+                        {typeLabel(crew.crewType)}
+                      </span>
+                    )}
+                    <div className="text-[12px] leading-relaxed text-faint">
+                      {crew.members.length === 0
+                        ? "No one assigned"
+                        : crew.members.map((m, i) => (
+                            <span key={m.userId}>
+                              {i > 0 && ", "}
+                              <span
+                                className={
+                                  m.isLead
+                                    ? "font-medium text-subtle"
+                                    : undefined
+                                }
+                              >
+                                {m.displayName ?? "Unnamed"}
+                                {m.isLead && (
+                                  <Star
+                                    className="ml-0.5 inline h-3 w-3 -translate-y-px"
+                                    strokeWidth={2}
+                                    aria-label="Crew lead"
+                                  />
+                                )}
+                              </span>
+                            </span>
+                          ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {canManage && dialog && (
+        <CrewDialog
+          key={dialog.mode === "edit" ? dialog.crew.id : "create"}
+          slug={slug}
+          state={dialog}
+          members={members}
+          onClose={() => setDialog(null)}
+        />
+      )}
+    </section>
+  );
+}
+
+function CrewDialog({
+  slug,
+  state,
+  members,
+  onClose,
+}: {
+  slug: string;
+  state: NonNullable<DialogState>;
+  members: CrewCandidate[];
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const editing = state.mode === "edit" ? state.crew : null;
+
+  const [teamKey, setTeamKey] = useState<string>(
+    editing?.teamKey ?? TEAM_OPTIONS[0].id,
+  );
+  const [name, setName] = useState(editing?.name ?? "");
+  const [crewType, setCrewType] = useState<string | null>(
+    editing?.crewType ?? null,
+  );
+  const [active, setActive] = useState(editing?.active ?? true);
+  const [roster, setRoster] = useState<string[]>(
+    editing ? editing.members.map((m) => m.userId) : [],
+  );
+  const [leadId, setLeadId] = useState<string | null>(
+    editing?.members.find((m) => m.isLead)?.userId ?? null,
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const teamId = useId();
+  const nameId = useId();
+  const typeId = useId();
+  const activeId = useId();
+
+  // A crew's roster comes from its own division.
+  const candidates = useMemo(
+    () => members.filter((m) => m.teamKey === teamKey),
+    [members, teamKey],
+  );
+
+  function handleTeamChange(next: string) {
+    setTeamKey(next);
+    setRoster([]);
+    setLeadId(null);
+  }
+
+  function toggleMember(id: string) {
+    setRoster((prev) => {
+      if (prev.includes(id)) {
+        if (leadId === id) setLeadId(null);
+        return prev.filter((x) => x !== id);
+      }
+      return [...prev, id];
+    });
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (name.trim().length === 0) {
+      setError("Give the crew a name.");
+      return;
+    }
+    startTransition(async () => {
+      let crewId = editing?.id ?? null;
+      if (editing) {
+        const res = await updateCrew({
+          slug,
+          crewId: editing.id,
+          name: name.trim(),
+          crewType,
+          active,
+        });
+        if (!res.ok) {
+          setError(humanizeMemberError(res.error));
+          return;
+        }
+      } else {
+        const res = await createCrew({
+          slug,
+          teamKey,
+          name: name.trim(),
+          crewType,
+        });
+        if (!res.ok) {
+          setError(humanizeMemberError(res.error));
+          return;
+        }
+        crewId = res.crewId;
+      }
+      if (crewId) {
+        const res = await setCrewMembers({
+          slug,
+          crewId,
+          memberIds: roster,
+          leadId,
+        });
+        if (!res.ok) {
+          setError(humanizeMemberError(res.error));
+          return;
+        }
+      }
+      router.refresh();
+      onClose();
+    });
+  }
+
+  function handleDelete() {
+    if (!editing) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    startTransition(async () => {
+      const res = await deleteCrew({ slug, crewId: editing.id });
+      if (!res.ok) {
+        setError(humanizeMemberError(res.error));
+        setConfirmDelete(false);
+        return;
+      }
+      router.refresh();
+      onClose();
+    });
+  }
+
+  return (
+    <MemberModalShell
+      title={editing ? editing.name : "New crew"}
+      subtitle={
+        editing
+          ? `${teamShortLabel(editing.teamKey)} crew`
+          : "A unit inside a division that work gets assigned to"
+      }
+      icon={<HardHat className="h-4 w-4" strokeWidth={1.75} />}
+      onClose={onClose}
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-1 flex-col overflow-hidden"
+      >
+        <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar p-5">
+          {error && <FormError message={error} />}
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label htmlFor={nameId} className="flex flex-col gap-1.5">
+              <span className={FIELD_LABEL_CLASS}>
+                Name<span className="text-faint"> *</span>
+              </span>
+              <input
+                id={nameId}
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="North Paving Crew"
+                autoComplete="off"
+                className={CONTROL_CLASS}
+              />
+            </label>
+            {/* Division is fixed after creation — moving a crew would silently
+                orphan member assignments scoped to the old division. */}
+            {editing ? (
+              <div className="flex flex-col gap-1.5">
+                <span className={FIELD_LABEL_CLASS}>Division</span>
+                <span className="flex h-9 items-center rounded-[var(--radius-md)] border border-hairline bg-overlay px-3 text-[13px] text-subtle">
+                  {teamShortLabel(editing.teamKey)}
+                </span>
+              </div>
+            ) : (
+              <label htmlFor={teamId} className="flex flex-col gap-1.5">
+                <span className={FIELD_LABEL_CLASS}>Division</span>
+                <select
+                  id={teamId}
+                  value={teamKey}
+                  onChange={(e) => handleTeamChange(e.target.value)}
+                  className={CONTROL_CLASS}
+                >
+                  {TEAM_OPTIONS.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.shortLabel}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label htmlFor={typeId} className="flex flex-col gap-1.5">
+              <span className={FIELD_LABEL_CLASS}>Crew type</span>
+              <select
+                id={typeId}
+                value={crewType ?? ""}
+                onChange={(e) =>
+                  setCrewType(e.target.value === "" ? null : e.target.value)
+                }
+                className={CONTROL_CLASS}
+              >
+                <option value="">No type</option>
+                {CREW_TYPE_OPTIONS.map((t) => (
+                  <option key={t} value={t}>
+                    {typeLabel(t)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {editing && (
+              <label
+                htmlFor={activeId}
+                className="flex cursor-pointer items-center gap-2 self-end pb-2 text-[13px] text-foreground"
+              >
+                <input
+                  id={activeId}
+                  type="checkbox"
+                  checked={active}
+                  onChange={(e) => setActive(e.target.checked)}
+                  className="h-3.5 w-3.5"
+                />
+                Active — offered when assigning work
+              </label>
+            )}
+          </div>
+
+          <fieldset className="flex flex-col gap-1.5">
+            <legend className={FIELD_LABEL_CLASS}>
+              Members{" "}
+              <span className="font-normal text-faint">
+                (from {teamShortLabel(teamKey)})
+              </span>
+            </legend>
+            {candidates.length === 0 ? (
+              <p className="text-[12px] text-faint">
+                No members are assigned to this division yet — set a member's
+                team first, then add them to a crew.
+              </p>
+            ) : (
+              <div className="flex max-h-56 flex-col gap-0.5 overflow-y-auto custom-scrollbar rounded-[var(--radius-md)] border border-hairline bg-overlay p-1.5">
+                {candidates.map((m) => {
+                  const checked = roster.includes(m.id);
+                  return (
+                    <div
+                      key={m.id}
+                      className="flex items-center gap-2.5 rounded-[calc(var(--radius-md)-2px)] px-2 py-1.5 text-[13px] text-foreground transition-colors duration-150 hover:bg-overlay-strong"
+                    >
+                      <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleMember(m.id)}
+                          className="h-3.5 w-3.5"
+                        />
+                        <span className="min-w-0 truncate">
+                          {m.displayName ?? "Unnamed"}
+                        </span>
+                      </label>
+                      <button
+                        type="button"
+                        disabled={!checked}
+                        aria-pressed={leadId === m.id}
+                        aria-label={`Make ${m.displayName ?? "member"} crew lead`}
+                        onClick={() =>
+                          setLeadId((cur) => (cur === m.id ? null : m.id))
+                        }
+                        className={[
+                          "inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md outline-none transition-colors duration-150",
+                          "focus-visible:ring-2 focus-visible:ring-accent/60",
+                          leadId === m.id
+                            ? "text-foreground"
+                            : "text-faint hover:text-subtle disabled:opacity-30",
+                        ].join(" ")}
+                        title={leadId === m.id ? "Crew lead" : "Set as lead"}
+                      >
+                        <Star
+                          className="h-3.5 w-3.5"
+                          strokeWidth={2}
+                          fill={leadId === m.id ? "currentColor" : "none"}
+                        />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </fieldset>
+        </div>
+
+        <div className="flex flex-shrink-0 items-center justify-between gap-3 border-t border-hairline px-5 py-4">
+          <div>
+            {editing && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleDelete}
+                disabled={pending}
+                className="text-[var(--status-danger-fg)]"
+              >
+                {confirmDelete ? "Confirm delete" : "Delete crew"}
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="accent"
+              isPending={pending}
+              disabled={pending || name.trim().length === 0}
+            >
+              {editing ? "Save changes" : "Create crew"}
+            </Button>
+          </div>
+        </div>
+      </form>
+    </MemberModalShell>
+  );
+}

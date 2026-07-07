@@ -8,6 +8,8 @@ import {
   type MemberRole,
 } from "@/app/city/[slug]/members/actions";
 import {
+  CrewChecklist,
+  type CrewOption,
   FormError,
   humanizeMemberError,
   MemberModalShell,
@@ -24,7 +26,13 @@ import { Button } from "@/components/ui/button";
    canManage gate without wiring any client state of its own.
    ================================================================== */
 
-export function InviteMemberModal({ slug }: { slug: string }) {
+export function InviteMemberModal({
+  slug,
+  crews,
+}: {
+  slug: string;
+  crews: CrewOption[];
+}) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -32,16 +40,24 @@ export function InviteMemberModal({ slug }: { slug: string }) {
         <UserPlus className="h-4 w-4" strokeWidth={2} />
         Invite member
       </Button>
-      {open && <InviteDialog slug={slug} onClose={() => setOpen(false)} />}
+      {open && (
+        <InviteDialog
+          slug={slug}
+          crews={crews}
+          onClose={() => setOpen(false)}
+        />
+      )}
     </>
   );
 }
 
 function InviteDialog({
   slug,
+  crews,
   onClose,
 }: {
   slug: string;
+  crews: CrewOption[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -51,6 +67,7 @@ function InviteDialog({
   const [name, setName] = useState("");
   const [role, setRole] = useState<MemberRole>("staff_dispatcher");
   const [teamKey, setTeamKey] = useState<string | null>(null);
+  const [crewIds, setCrewIds] = useState<string[]>([]);
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   // Email the last invite went to — drives the inline success panel.
@@ -73,9 +90,17 @@ function InviteDialog({
     setName("");
     setRole("staff_dispatcher");
     setTeamKey(null);
+    setCrewIds([]);
     setPhone("");
     setError(null);
     setSentTo(null);
+  }
+
+  // Crew membership is division-scoped — changing the team clears any picks
+  // that belonged to the previous one.
+  function handleTeamChange(next: string | null) {
+    setTeamKey(next);
+    setCrewIds([]);
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -98,6 +123,7 @@ function InviteDialog({
         role,
         teamKey,
         phone: phone.trim() ? phone.trim() : null,
+        crewIds,
       });
       if (res.ok) {
         setSentTo(trimmedEmail);
@@ -172,10 +198,16 @@ function InviteDialog({
               <TeamSelect
                 id={teamId}
                 value={teamKey}
-                onChange={setTeamKey}
+                onChange={handleTeamChange}
                 required={needsTeam}
               />
             </div>
+            <CrewChecklist
+              crews={crews}
+              teamKey={teamKey}
+              selected={crewIds}
+              onChange={setCrewIds}
+            />
             <TextField
               id={phoneId}
               label="Phone"

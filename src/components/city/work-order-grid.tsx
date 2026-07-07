@@ -40,11 +40,12 @@ import {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import { fetchCategoryCostStats } from "@/app/staff/actions";
 import { WorkOrderExplorer } from "@/components/city/work-order-explorer";
 import { teamIcon } from "@/components/teams/team-icon";
 import { CATEGORY_META } from "@/lib/dashboard-data";
-import type { GridReportRow } from "@/lib/dashboard-grid-data";
+import type { GridCrewOption, GridReportRow } from "@/lib/dashboard-grid-data";
 import { categoryToTeam, TEAMS } from "@/lib/teams";
 import { useTheme } from "@/lib/theme";
 import type {
@@ -832,9 +833,13 @@ function PageSizeSelect({
 export function WorkOrderGrid({
   rows,
   cityId,
+  crews = [],
+  canAssign = false,
 }: {
   rows: GridReportRow[];
   cityId?: string;
+  crews?: GridCrewOption[];
+  canAssign?: boolean;
 }) {
   const { theme } = useTheme();
   const gridTheme = theme === "dark" ? gridThemeDark : gridThemeLight;
@@ -846,6 +851,33 @@ export function WorkOrderGrid({
   // repaints just the predicted column when the fetch resolves.
   const gridApiRef = useRef<GridApi<GridReportRow> | null>(null);
   const costStatsRef = useRef<Map<string, CategoryCostStats>>(new Map());
+
+  // AG Grid owns the pagination panel DOM and gives no slot for extra controls.
+  // To sit the page-size selector INLINE between the row summary ("1 to 25 of
+  // N") and the page nav ("Page 1 of 6"), splice a host node into the panel and
+  // portal the React control into it — the portal keeps React in control of the
+  // node. `mountPagingSlot` is idempotent and re-run on pagination changes so
+  // the host re-heals if AG Grid ever rebuilds the panel.
+  const gridWrapRef = useRef<HTMLDivElement>(null);
+  const [pagingSlot, setPagingSlot] = useState<HTMLElement | null>(null);
+  const mountPagingSlot = useCallback(() => {
+    const panel =
+      gridWrapRef.current?.querySelector<HTMLElement>(".ag-paging-panel");
+    if (!panel) return;
+    const pageNav = panel.querySelector<HTMLElement>(
+      ".ag-paging-page-summary-panel",
+    );
+    let host = panel.querySelector<HTMLElement>(":scope > .wo-page-size-slot");
+    if (!host) {
+      host = document.createElement("div");
+      host.className = "wo-page-size-slot";
+    }
+    // Place (or re-place) it immediately before the page nav.
+    if (pageNav && host.nextElementSibling !== pageNav) {
+      panel.insertBefore(host, pageNav);
+    }
+    setPagingSlot((prev) => (prev === host ? prev : host));
+  }, []);
 
   // Full-issue explorer (list + detail overlay), opened from a row's expand
   // button or a click on any read-only cell. Selection is held here so the
@@ -987,6 +1019,14 @@ export function WorkOrderGrid({
 
   const columnDefs = useMemo<ColDef<GridReportRow>[]>(
     () => [
+      {
+        colId: "created",
+        headerName: "Reported",
+        field: "created_at",
+        valueFormatter: dateFmt,
+        initialWidth: 150,
+        minWidth: 130,
+      },
       {
         colId: "category",
         headerName: "Issue",
@@ -1130,14 +1170,6 @@ export function WorkOrderGrid({
         minWidth: 90,
       },
       {
-        colId: "created",
-        headerName: "Reported",
-        field: "created_at",
-        valueFormatter: dateFmt,
-        initialWidth: 150,
-        minWidth: 130,
-      },
-      {
         // Always-reachable open affordance: pinned right so it survives
         // horizontal scroll, and locked (no sort/filter/resize/move/edit) so it
         // reads as chrome, not data.
@@ -1255,7 +1287,7 @@ export function WorkOrderGrid({
         </div>
       </div>
 
-      <div className="wo-grid relative min-h-0 flex-1">
+      <div ref={gridWrapRef} className="wo-grid relative min-h-0 flex-1">
         <AgGridReact<GridReportRow>
           theme={gridTheme}
           rowData={filtered}
@@ -1267,7 +1299,9 @@ export function WorkOrderGrid({
           context={gridContext}
           onGridReady={(e: GridReadyEvent<GridReportRow>) => {
             gridApiRef.current = e.api;
+            mountPagingSlot();
           }}
+          onPaginationChanged={mountPagingSlot}
           singleClickEdit
           stopEditingWhenCellsLoseFocus
           onCellValueChanged={onCellValueChanged}
@@ -1282,21 +1316,21 @@ export function WorkOrderGrid({
           animateRows
           overlayNoRowsTemplate={"<span>No matching reports.</span>"}
         />
-        {/* Docked into AG Grid's paging-panel band. That panel keeps the row
-            range + page nav right-aligned, leaving its left free; pinning the
-            page-size control there reads as one footer. h-12 matches the
-            quartz paging-panel height so the control centers on the same line. */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex h-12 items-center pl-3 sm:pl-4 lg:pl-6">
-          <div className="pointer-events-auto">
-            <PageSizeSelect value={pageChoice} onChange={setPageChoice} />
-          </div>
-        </div>
+        {/* Rendered into the host spliced into AG Grid's pagination panel, so
+            the selector sits inline between "1 to 25 of N" and "Page 1 of 6". */}
+        {pagingSlot &&
+          createPortal(
+            <PageSizeSelect value={pageChoice} onChange={setPageChoice} />,
+            pagingSlot,
+          )}
       </div>
 
       <WorkOrderExplorer
         open={explorerOpen}
         onClose={closeExplorer}
         rows={filtered}
+        crews={crews}
+        canAssign={canAssign}
         selectedId={selectedId}
         onSelectId={setSelectedId}
         detailDrawerOpen={detailDrawerOpen}

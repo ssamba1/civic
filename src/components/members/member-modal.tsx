@@ -59,6 +59,19 @@ const ERROR_COPY: Record<string, string> = {
   forbidden: "You don't have permission to do that.",
   member_not_found: "That member no longer exists.",
   city_not_found: "Couldn't resolve this city.",
+  // Crew management + member crew-assignment codes.
+  crew_name_taken: "This division already has a crew with that name.",
+  crew_not_found: "That crew no longer exists.",
+  invalid_crew: "One of the selected crews no longer exists.",
+  crew_team_mismatch: "Crews must belong to the member's own division.",
+  crew_sync_failed:
+    "The member was saved but crew assignments failed — retry from Edit member.",
+  lead_not_on_crew: "The crew lead must be on the crew.",
+  member_not_in_city: "Someone selected is not a member of this city.",
+  crew_create_failed: "Couldn't create the crew. Please try again.",
+  crew_update_failed: "Couldn't update the crew. Please try again.",
+  crew_delete_failed: "Couldn't delete the crew. Please try again.",
+  crew_members_failed: "Couldn't save the crew roster. Please try again.",
 };
 
 export function humanizeMemberError(code: string): string {
@@ -130,6 +143,77 @@ export function TeamSelect({
         ))}
       </select>
     </label>
+  );
+}
+
+/** Crew as the member dialogs see it — id/name/division only (no roster). */
+export interface CrewOption {
+  id: string;
+  teamKey: string;
+  name: string;
+  crewType: string | null;
+}
+
+/**
+ * Crew membership checklist, scoped to the selected division. Renders nothing
+ * without a team — a crew assignment only exists inside one — and an inline
+ * empty line when the division has no crews yet (created from the Crews panel
+ * on the members page).
+ */
+export function CrewChecklist({
+  crews,
+  teamKey,
+  selected,
+  onChange,
+}: {
+  crews: CrewOption[];
+  teamKey: string | null;
+  selected: string[];
+  onChange: (crewIds: string[]) => void;
+}) {
+  if (teamKey === null) return null;
+  const options = crews.filter((c) => c.teamKey === teamKey);
+
+  return (
+    <fieldset className="flex flex-col gap-1.5">
+      <legend className={FIELD_LABEL_CLASS}>Crews</legend>
+      {options.length === 0 ? (
+        <p className="text-[12px] text-faint">
+          No crews in this division yet — create one from the Crews panel.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-0.5 rounded-[var(--radius-md)] border border-hairline bg-overlay p-1.5">
+          {options.map((c) => {
+            const checked = selected.includes(c.id);
+            return (
+              <label
+                key={c.id}
+                className="flex cursor-pointer items-center gap-2.5 rounded-[calc(var(--radius-md)-2px)] px-2 py-1.5 text-[13px] text-foreground transition-colors duration-150 hover:bg-overlay-strong"
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() =>
+                    onChange(
+                      checked
+                        ? selected.filter((id) => id !== c.id)
+                        : [...selected, c.id],
+                    )
+                  }
+                  className="h-3.5 w-3.5 accent-[var(--color-accent,currentColor)]"
+                />
+                <span className="min-w-0 truncate">{c.name}</span>
+                {c.crewType && (
+                  <span className="ml-auto flex-shrink-0 text-[11px] text-faint">
+                    {c.crewType.replace(/_/g, " ")}
+                  </span>
+                )}
+              </label>
+            );
+          })}
+        </div>
+      )}
+    </fieldset>
   );
 }
 
