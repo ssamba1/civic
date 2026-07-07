@@ -382,10 +382,12 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
     row(
       "EFFICIENCY",
       "Reduction in manual sorting / triage vs. baseline",
-      m.median_upload_to_classify_min !== null &&
-        bl.manual_triage_min_per_report_before?.value
-        ? `${n(bl.manual_triage_min_per_report_before.value! - Number(m.median_upload_to_classify_min))} min saved per report`
-        : "Set pre-Civic baseline to compute",
+      (() => {
+        const triageBefore = bl.manual_triage_min_per_report_before?.value;
+        return m.median_upload_to_classify_min !== null && triageBefore
+          ? `${n(triageBefore - Number(m.median_upload_to_classify_min))} min saved per report`
+          : "Set pre-Civic baseline to compute";
+      })(),
       "min/report",
       period,
       baseline(bl, "manual_triage_min_per_report_before", (v) => `${n(v)} min`),
@@ -394,11 +396,14 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
     row(
       "EFFICIENCY",
       "Estimated staff time saved (manual triage reduction × total reports)",
-      m.total_reports !== null &&
-        bl.manual_triage_min_per_report_before?.value &&
-        m.median_upload_to_classify_min !== null
-        ? `${n(((bl.manual_triage_min_per_report_before.value! - Number(m.median_upload_to_classify_min)) * Number(m.total_reports)) / 60, 0)} hours`
-        : "Set pre-Civic baseline to compute",
+      (() => {
+        const triageBefore = bl.manual_triage_min_per_report_before?.value;
+        return m.total_reports !== null &&
+          triageBefore &&
+          m.median_upload_to_classify_min !== null
+          ? `${n(((triageBefore - Number(m.median_upload_to_classify_min)) * Number(m.total_reports)) / 60, 0)} hours`
+          : "Set pre-Civic baseline to compute";
+      })(),
       "total hours",
       period,
       "—",
