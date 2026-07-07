@@ -40,6 +40,13 @@ Legend — **Impact** H/M/L (blast radius × user value), **Effort** S (<½ day)
 | 1.14 | **Open redirect in auth callback.** `next.startsWith('/')` allows `//evil.com`. | Verify same-origin via `new URL(next, origin)`. | M | S | dev-audit sec |
 | 1.15 | **Add CI test gate + RLS regression tests.** 102 vitest tests exist, nothing runs on push; `tests/rls/` missing (violates own hard rule #3); live-DB drift already bit once (manual migration 021). | `.github/workflows/test.yml` (test+build+typecheck on PR); author `tests/rls/`. | H | M | STATE, MKT, graph |
 
+> **STATUS 2026-07-07 — TIER 2 COMPLETE incl. 2.5.** The deferred 2.5 shipped
+> via hash-allowlisted inline scripts + route-class CSP split (see
+> `docs/planning/BUILD_PLAN_2026-07.md` WS4 and the note below — the PPR path
+> was rejected: `cacheComponents` is documented-incompatible with nonce CSP,
+> and pure hashes+strict-dynamic break Next's parser-inserted flight scripts).
+> Verified with a prod build + live browser pass.
+
 ## TIER 2 — Medium (dead code, dedup, perf, consistency)
 
 | # | Item | Fix | Impact | Effort | Src |
@@ -62,6 +69,19 @@ Legend — **Impact** H/M/L (blast radius × user value), **Effort** S (<½ day)
 | 2.16 | **PII (email) logged in plaintext** in notify delivery when disabled/key-missing. | Remove email from log message. | M | S | dev-audit debug-cruft P0 |
 | 2.17 | **Report photos `alt=""`** though content-bearing → SR staff can't triage. | Contextual alt from category+address. | M | S | dev-audit a11y P0 |
 | 2.18 | **Resident nav coherence frays.** Desktop omits Map (`/user/map` mobile-only); Grid tab dead-ends non-staff to `/login`; `/user/updates` hardcodes "Cumming"; ViewSwitch lands different screens by entry point. | Reconcile nav; resolve city name; unify entry target. | M | M | UI#4/#6/#8/#13 |
+
+> **STATUS 2026-07-07 — Tier 3 engineering items largely landed** (branch
+> `feat/sidebar-shell`, PR #9; details in `docs/planning/BUILD_PLAN_2026-07.md`):
+> 3.3 (operational localStorage → DB: completion/cost, routing, delegation,
+> CSAT, upvotes, issue types — migrations 025–027), 3.7 (per-partner
+> `api_keys`, migration 028 + mint script), 3.8 Phase 1 (close flow with
+> resolution photo + actual cost, email delivery, CSAT loop, live tokenized
+> status links), 3.9 (DB-backed routing via `work_orders.team_key`),
+> 3.10 (cost cold-start, issue-8), 3.11 (route trees unified under
+> `/city/[slug]/team/[teamId]`). Still open: 3.1/3.2 (segment ADR drafted as
+> `docs/decisions/0002-target-segment.md`, **Proposed — needs owner
+> decision**; landing reposition follows it), 3.4, 3.5, 3.6, 3.12 (harness
+> ready, needs labeled photos).
 
 ## TIER 3 — Product / Market (strategic, do in parallel with eng)
 

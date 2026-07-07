@@ -855,7 +855,6 @@ export function ZampSection2() {
 
       <Reveal as="div" className="wl-zamp-s2-scene" y={36} duration={1.1}>
         {/* biome-ignore lint/a11y/noStaticElementInteractions: ported verbatim from Riven — backdrop click only collapses an already-expanded card; Escape (handled below) is the real keyboard dismiss */}
-        {/* biome-ignore lint/a11y/useKeyWithClickEvents: same — onKeyDown Escape below covers keyboard dismissal */}
         <div
           className={`wl-zamp-s2-scene-stage${expandedKey ? " has-expanded" : ""}`}
           onClick={() => expandedKey && setExpandedKey(null)}

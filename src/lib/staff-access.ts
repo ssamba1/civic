@@ -22,7 +22,7 @@ import { DEMO_MODE } from "@/lib/demo-mode";
  * that (e.g. nav visibility, the grid page itself) must OR it in themselves,
  * same as the grid page already does with `slug !== DEMO_CITY`.
  */
-export async function isStaffForCity(slug: string): Promise<boolean> {
+export async function isStaffForCity(_slug: string): Promise<boolean> {
   const demoStaff =
     DEMO_MODE &&
     isDemoStaffAccount(

@@ -1,5 +1,14 @@
 # Build Plan — 2026-07 (feat/sidebar-shell)
 
+> **STATUS 2026-07-07 — WS0–WS6 EXECUTED** (PR #9). Follow-ups also landed:
+> emergency-dedup safety fix, RLS tests for the 025–028 tables, api-key mint
+> script, ADR 0002 draft (Proposed), CI lint gate, live upvote counts.
+> Blocked on the owner: apply migrations 024–028
+> (`DATABASE_URL='postgresql://…' node scripts/run-migrations.mjs` — the DB
+> password is not in the repo), set `RESEND_API_KEY`/`NOTIFY_FROM_EMAIL`/
+> `NEXT_PUBLIC_SITE_URL`, decide ADR 0002, supply golden-set photos, merge
+> PR #9. WS7 content work + deferred L items remain.
+
 Synthesized 2026-07-07 from four parallel deep-dives: (1) gap inventory across every plan/spec doc vs actual src, (2) routing/demo-state/route-tree current-state map, (3) onboarding-branch merge analysis, (4) Next.js 16 CSP/PPR research. Supersedes nothing — REVAMP_PLAN.md remains the audit record; this is the execution plan for what's left.
 
 **State going in:** REVAMP Tier 0 complete, Tier 1 complete, Tier 2 complete except 2.5 (deferred). Issue-8 cost cold-start merged. Resend email leg + `resolution_photo` plumbing exist but are not reachable from any UI. 29 planned-but-unbuilt items inventoried below, grouped into 8 workstreams.

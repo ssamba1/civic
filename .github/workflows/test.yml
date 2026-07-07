@@ -37,6 +37,9 @@ jobs:
       - name: Type-check
         run: pnpm typecheck
 
+      - name: Lint
+        run: pnpm lint
+
       - name: Unit + RLS tests
         run: pnpm test
         env:

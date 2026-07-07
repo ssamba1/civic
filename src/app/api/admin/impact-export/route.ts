@@ -383,8 +383,8 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       "EFFICIENCY",
       "Reduction in manual sorting / triage vs. baseline",
       m.median_upload_to_classify_min !== null &&
-        bl["manual_triage_min_per_report_before"]?.value
-        ? `${n(bl["manual_triage_min_per_report_before"].value! - Number(m.median_upload_to_classify_min))} min saved per report`
+        bl.manual_triage_min_per_report_before?.value
+        ? `${n(bl.manual_triage_min_per_report_before.value! - Number(m.median_upload_to_classify_min))} min saved per report`
         : "Set pre-Civic baseline to compute",
       "min/report",
       period,
@@ -395,9 +395,9 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       "EFFICIENCY",
       "Estimated staff time saved (manual triage reduction × total reports)",
       m.total_reports !== null &&
-        bl["manual_triage_min_per_report_before"]?.value &&
+        bl.manual_triage_min_per_report_before?.value &&
         m.median_upload_to_classify_min !== null
-        ? `${n(((bl["manual_triage_min_per_report_before"].value! - Number(m.median_upload_to_classify_min)) * Number(m.total_reports)) / 60, 0)} hours`
+        ? `${n(((bl.manual_triage_min_per_report_before.value! - Number(m.median_upload_to_classify_min)) * Number(m.total_reports)) / 60, 0)} hours`
         : "Set pre-Civic baseline to compute",
       "total hours",
       period,
@@ -496,8 +496,8 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
     row(
       "DUPLICATES",
       "Reduction in duplicate backlog vs. baseline",
-      bl["monthly_duplicate_rate_pct_before"]?.value
-        ? `${n(Number(bl["monthly_duplicate_rate_pct_before"].value) - Number(m.duplicate_merge_rate_pct))} pp`
+      bl.monthly_duplicate_rate_pct_before?.value
+        ? `${n(Number(bl.monthly_duplicate_rate_pct_before.value) - Number(m.duplicate_merge_rate_pct))} pp`
         : "Set pre-Civic baseline to compute",
       "percentage points",
       period,
@@ -556,8 +556,8 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
     row(
       "RESOLUTION STATUS",
       "Backlog reduction vs. baseline",
-      bl["resolution_rate_pct_before"]?.value
-        ? `+${n(Number(m.overall_resolution_rate_pct) - Number(bl["resolution_rate_pct_before"].value))} pp`
+      bl.resolution_rate_pct_before?.value
+        ? `+${n(Number(m.overall_resolution_rate_pct) - Number(bl.resolution_rate_pct_before.value))} pp`
         : "Set pre-Civic baseline to compute",
       "percentage points",
       period,
@@ -607,8 +607,8 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
     row(
       "SLA COMPLIANCE",
       "Improvement in average days-to-close vs. baseline",
-      m.avg_days_to_close !== null && bl["avg_resolution_days_before"]?.value
-        ? `${n(Number(bl["avg_resolution_days_before"].value) - Number(m.avg_days_to_close))} days faster`
+      m.avg_days_to_close !== null && bl.avg_resolution_days_before?.value
+        ? `${n(Number(bl.avg_resolution_days_before.value) - Number(m.avg_days_to_close))} days faster`
         : "Set pre-Civic baseline to compute",
       "days",
       period,
@@ -870,7 +870,7 @@ export async function GET() {
 
     // UTF-8 BOM (﻿) makes Excel on Windows open the file with correct
     // encoding so → and — characters render properly instead of garbling.
-    return new NextResponse("﻿" + csv, {
+    return new NextResponse(`﻿${csv}`, {
       status: 200,
       headers: {
         "Content-Type": "text/csv; charset=utf-8",

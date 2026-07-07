@@ -74,18 +74,21 @@ export async function fetchRecentAlerts(
 
     return (body.features ?? [])
       .map((f) => f.properties)
-      .filter((p): p is NwsFeatureProperties => !!p && !!p.event && !!p.expires)
+      .filter(
+        (p): p is NwsFeatureProperties & { event: string; expires: string } =>
+          !!p && !!p.event && !!p.expires,
+      )
       .map((p) => ({
         id: p.id ?? `${p.event}-${p.effective}`,
-        event: p.event!,
+        event: p.event,
         severity: p.severity ?? "Unknown",
         headline: p.headline ?? null,
         areaDesc: p.areaDesc ?? "",
         effective: p.effective ?? "",
-        expires: p.expires!,
-        status: (new Date(p.expires!).getTime() >= now
-          ? "active"
-          : "expired") as "active" | "expired",
+        expires: p.expires,
+        status: (new Date(p.expires).getTime() >= now ? "active" : "expired") as
+          | "active"
+          | "expired",
       }));
   } catch (err) {
     logger.warn("nws_fetch_error", {
