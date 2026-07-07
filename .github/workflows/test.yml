@@ -23,7 +23,12 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          # pnpm-workspace.yaml here is v10+-style config-only (allowBuilds,
+          # no `packages` field) — pnpm 9 errors on it ("packages field
+          # missing or empty"), which is why this workflow never went green.
+          # Local dev runs pnpm 11 via corepack; lockfileVersion 9.0 is
+          # compatible.
+          version: 11
 
       - name: Setup Node 20
         uses: actions/setup-node@v4
