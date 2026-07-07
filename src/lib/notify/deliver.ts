@@ -35,6 +35,8 @@ export interface EmailMessage {
   photoUrl?: string | null;
   /** Optional deep link back to the report's status page. */
   reportUrl?: string | null;
+  /** Optional one-tap action links (e.g. the CSAT 👍/👎 pair). */
+  actions?: Array<{ label: string; url: string }>;
 }
 
 export interface DeliveryResult {
@@ -57,12 +59,21 @@ function renderHtml(m: EmailMessage): string {
   const cta = m.reportUrl
     ? `<a href="${escapeHtml(m.reportUrl)}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:600;font-size:14px;margin-top:8px;">View your report</a>`
     : "";
+  const actions = m.actions?.length
+    ? `<p style="font-size:14px;margin:16px 0 0;">${m.actions
+        .map(
+          (a) =>
+            `<a href="${escapeHtml(a.url)}" style="display:inline-block;border:1px solid #d4d4d8;color:#18181b;text-decoration:none;padding:8px 14px;border-radius:8px;font-weight:600;font-size:14px;margin-right:8px;">${escapeHtml(a.label)}</a>`,
+        )
+        .join("")}</p>`
+    : "";
   return [
     `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;color:#18181b;">`,
     `<h1 style="font-size:18px;margin:0 0 8px;">${escapeHtml(m.heading)}</h1>`,
     `<p style="font-size:14px;line-height:1.6;color:#3f3f46;margin:0;">${escapeHtml(m.body)}</p>`,
     photo,
     cta,
+    actions,
     `<p style="font-size:12px;color:#a1a1aa;margin-top:24px;">Civic · you're receiving this because you reported an issue.</p>`,
     `</div>`,
   ].join("");

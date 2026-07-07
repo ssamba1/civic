@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getPublicReport, type PublicStatus } from "@/lib/public-report";
+import { recordCsat } from "@/lib/notify/csat";
+import { resolvePublicReport, type PublicStatus } from "@/lib/public-report";
 import { toneChipClass, type StatusTone } from "@/lib/status";
 import { ShareActions } from "./share-actions";
 
@@ -9,13 +10,14 @@ export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ rate?: string }>;
 }
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { token } = await params;
-  const report = getPublicReport(token);
+  const report = await resolvePublicReport(token);
   if (!report) return { title: "Report not found | Civic" };
   return {
     title: `Civic | ${report.categoryLabel} — ${report.statusLabel}`,
@@ -42,12 +44,24 @@ function fmtDate(iso: string): string {
   });
 }
 
-export default async function PublicReportPage({ params }: PageProps) {
+export default async function PublicReportPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { token } = await params;
-  const report = getPublicReport(token);
+  const report = await resolvePublicReport(token);
   if (!report) notFound();
 
   const isResolved = report.publicStatus === "resolved";
+
+  // One-tap CSAT from the resolution email (?rate=up|down). Possession of the
+  // unguessable token IS the auth — the reporter is the only one who has it.
+  // Idempotent upsert; a repeat click just re-records.
+  const { rate } = await searchParams;
+  const rated =
+    (rate === "up" || rate === "down") && isResolved
+      ? await recordCsat(report.reportId, rate)
+      : null;
 
   return (
     <main className="min-h-dvh bg-background text-foreground">
@@ -136,6 +150,29 @@ export default async function PublicReportPage({ params }: PageProps) {
               This issue has been fixed. Thanks for reporting it — reports like
               this keep the city running.
             </p>
+            {rated ? (
+              <p className="mt-3 text-[13px] font-medium text-foreground">
+                {rated === "up"
+                  ? "Thanks — glad it worked out. Your rating was recorded."
+                  : "Sorry it wasn't fixed right. Your rating was recorded — the crew will take another look."}
+              </p>
+            ) : (
+              <p className="mt-3 flex items-center gap-2 text-[13px]">
+                <span className="text-subtle">How did the crew do?</span>
+                <a
+                  href={`?rate=up`}
+                  className="rounded-md border border-hairline px-2.5 py-1 font-medium text-foreground hover:bg-overlay"
+                >
+                  👍
+                </a>
+                <a
+                  href={`?rate=down`}
+                  className="rounded-md border border-hairline px-2.5 py-1 font-medium text-foreground hover:bg-overlay"
+                >
+                  👎
+                </a>
+              </p>
+            )}
           </section>
         )}
 

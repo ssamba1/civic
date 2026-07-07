@@ -123,12 +123,33 @@ export async function notifyReportStatus(
     let body: string;
     let withPhoto: string | null = null;
 
+    const url = reportUrl(reportId);
+    // Stamp the report's public token so the emailed /r/[token] link resolves
+    // against the LIVE database (the demo corpus resolves in-memory). Lazy,
+    // idempotent, best-effort — a failure must never block the send.
+    if (url) {
+      await db
+        .from("reports")
+        .update({ public_token: publicToken(reportId) })
+        .eq("id", reportId)
+        .is("public_token", null);
+    }
+
+    let actions: Array<{ label: string; url: string }> | undefined;
+
     switch (status) {
       case "closed":
         subject = `Your ${noun} report was resolved`;
         heading = "Resolved — here's what got done";
         body = `${RESOLUTION_NOTES[category]} Thanks for helping keep the city running.`;
         withPhoto = photoUrl; // the operational-transparency lever
+        // One-tap CSAT: recorded by the public status page, no login needed.
+        if (url) {
+          actions = [
+            { label: "👍 Job well done", url: `${url}?rate=up` },
+            { label: "👎 Not fixed right", url: `${url}?rate=down` },
+          ];
+        }
         break;
       case "dispatched":
         subject = `Your ${noun} report was picked up`;
@@ -150,7 +171,8 @@ export async function notifyReportStatus(
       heading,
       body,
       photoUrl: withPhoto,
-      reportUrl: reportUrl(reportId),
+      reportUrl: url,
+      actions,
     });
   } catch (err) {
     logger.error("Notification composer threw", err, { reportId });

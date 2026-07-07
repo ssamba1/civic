@@ -9,6 +9,7 @@ import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
 import { notifyReportStatus } from "@/lib/notify/status-notify";
+import { publicToken } from "@/lib/public-report";
 import type {
   CategoryCostStats,
   Classification,
@@ -193,10 +194,63 @@ export async function dispatchWorkOrderForReport(
   return { ok: true, data: undefined };
 }
 
+/**
+ * Close a work order by its REPORT id — the shape the team task surfaces have
+ * (the corpus row carries no work-order id). Resolves the report's work order
+ * (unique per report) and delegates to {@link closeWorkOrder}. The photo, when
+ * given, arrives as a downscaled data URL and is re-hosted to Storage.
+ */
+export async function closeReportWorkOrder(
+  reportId: string,
+  actualCost: number,
+  resolutionPhotoDataUrl?: string,
+): Promise<Result<void>> {
+  const staff = await getStaffUser();
+  if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
+
+  const supabase = createServerClient();
+  const { data: wo, error } = await supabase
+    .from("work_orders")
+    .select("id")
+    .eq("report_id", reportId)
+    .maybeSingle<{ id: string }>();
+  if (error || !wo) return { ok: false, error: "work_order_not_found" };
+
+  return closeWorkOrder(wo.id, actualCost, undefined, resolutionPhotoDataUrl);
+}
+
+/** Re-host a client-downscaled data-URL photo into the public photos bucket. */
+async function uploadResolutionPhoto(
+  supabase: ReturnType<typeof createServerClient>,
+  cityId: string,
+  workOrderId: string,
+  dataUrl: string,
+): Promise<string | null> {
+  const match = /^data:image\/(webp|jpeg|png);base64,(.+)$/.exec(dataUrl);
+  if (!match) return null;
+  const [, ext, b64] = match;
+  // Downscaled client-side to ~1280px; cap the decoded payload defensively.
+  if (b64.length > 1_500_000) return null;
+  const path = `${cityId}/resolutions/${workOrderId}.${ext === "jpeg" ? "jpg" : ext}`;
+  const { error } = await supabase.storage
+    .from("photos-public")
+    .upload(path, Buffer.from(b64, "base64"), {
+      contentType: `image/${ext}`,
+      upsert: true,
+    });
+  if (error) {
+    logger.error("resolution_photo_upload_failed", error, { workOrderId });
+    return null;
+  }
+  return supabase.storage.from("photos-public").getPublicUrl(path).data
+    .publicUrl;
+}
+
 export async function closeWorkOrder(
   workOrderId: string,
   actualCost: number,
   resolutionPhotoUrl?: string,
+  resolutionPhotoDataUrl?: string,
 ): Promise<Result<void>> {
   const staff = await getStaffUser();
   if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
@@ -277,9 +331,21 @@ export async function closeWorkOrder(
     }
   }
 
+  // Photo can arrive pre-hosted (URL) or as a client-downscaled data URL that
+  // we re-host to Storage here (localStorage data URLs never reach the DB).
+  let photoUrl = resolutionPhotoUrl ?? null;
+  if (!photoUrl && resolutionPhotoDataUrl && cityId) {
+    photoUrl = await uploadResolutionPhoto(
+      supabase,
+      cityId,
+      workOrderId,
+      resolutionPhotoDataUrl,
+    );
+  }
+
   const update: Record<string, unknown> = {
     completed_at: new Date().toISOString(),
-    resolution_photo_url: resolutionPhotoUrl ?? null,
+    resolution_photo_url: photoUrl,
     actual_cost: actualCost,
     actual_cost_excluded: actualCostExcluded,
   };
@@ -298,9 +364,29 @@ export async function closeWorkOrder(
   // M9 fix: check error on report status update
   const { error: reportError } = await supabase
     .from("reports")
-    .update({ status: "closed", updated_at: new Date().toISOString() })
+    .update({
+      status: "closed",
+      public_token: publicToken(wo.report_id),
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", wo.report_id);
   if (reportError) return { ok: false, error: "status_update_failed" };
+
+  // Append-only timeline row (migration 025) — feeds the resident timeline and
+  // the Open311 service-request-updates projection. Best-effort: the close
+  // itself already committed.
+  const { error: updateRowErr } = await supabase.from("report_updates").insert({
+    report_id: wo.report_id,
+    status: "closed",
+    note: "Work completed and the report closed out.",
+    photo_url: photoUrl,
+    actor: "staff",
+  });
+  if (updateRowErr) {
+    logger.error("report_updates_insert_failed", updateRowErr, {
+      reportId: wo.report_id,
+    });
+  }
 
   // The lever: resolved notification carries the resolution photo. Non-blocking.
   after(async () => {
