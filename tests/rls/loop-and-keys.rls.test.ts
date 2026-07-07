@@ -134,6 +134,7 @@ describe.skipIf(!HAS_ENV)("RLS 025–028: anonymous access", () => {
       }
     },
   );
+
 });
 
 describe.skipIf(!CHECK_APPLIED)(

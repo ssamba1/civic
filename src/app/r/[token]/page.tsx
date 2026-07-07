@@ -176,6 +176,36 @@ export default async function PublicReportPage({
           </section>
         )}
 
+        {/* Real status history (live reports; demo corpus has none) */}
+        {report.updates && report.updates.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-[13px] font-medium uppercase tracking-[0.08em] text-faint">
+              History
+            </h2>
+            <ol className="mt-3 space-y-3 border-l border-hairline pl-4">
+              {report.updates.map((u) => (
+                <li key={`${u.at}-${u.statusLabel}`} className="relative">
+                  <span
+                    className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-[var(--color-primary)]"
+                    aria-hidden="true"
+                  />
+                  <p className="text-[13px] font-medium text-foreground">
+                    {u.statusLabel}
+                    <span className="ml-2 font-normal text-faint">
+                      {fmtDate(u.at)}
+                    </span>
+                  </p>
+                  {u.note && (
+                    <p className="mt-0.5 text-[13px] leading-relaxed text-subtle">
+                      {u.note}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+
         <p className="mt-8 text-[12px] text-faint">
           This is a public status page. No account needed — bookmark this link
           to check back anytime.
