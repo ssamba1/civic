@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { SCRIPT_HASHES } from "@/lib/csp/inline-scripts";
 
 // Open311 spec-compliant clients append .json/.xml extensions. Rewrite to
 // canonical routes before auth/public-route checks so they resolve correctly.
@@ -28,23 +29,49 @@ function isPublicRoute(pathname: string): boolean {
 }
 
 /**
+ * Route prefixes that are GUARANTEED per-request dynamic (auth/cookies/DB in
+ * their tree — `next build` marks them ƒ). Only these get the per-request
+ * nonce + 'strict-dynamic' CSP. Everything else — including anything Next
+ * might prerender (○/●) — gets the nonce-FREE policy: prerendered HTML is
+ * baked with no nonce, so a nonce CSP would block every inline script in the
+ * cached page (Next's own flight-data scripts included) — the classic
+ * dev-invisible, prod-only blank page.
+ *
+ * The default is deliberately the SAFE direction: a dynamic route mistakenly
+ * left off this list merely runs under the slightly weaker no-nonce policy;
+ * a prerendered route mistakenly ON a nonce policy ships broken HTML.
+ */
+const NONCE_CSP_PREFIXES = ["/user", "/admin", "/onboard", "/r"];
+
+function isNonceCspRoute(pathname: string): boolean {
+  return NONCE_CSP_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+}
+
+/**
  * Build the Content-Security-Policy. This lives in the proxy (not next.config
- * `headers()`) because a strong CSP for the App Router needs a PER-REQUEST nonce:
- * Next streams its RSC payload and bootstraps hydration through INLINE <script>
- * tags. A static `script-src 'self'` (no nonce, no 'unsafe-inline') makes the
- * browser refuse every inline script, so the client never hydrates and any
- * client-only subtree (e.g. the WebGL map) never mounts — a blank page in prod
- * while `next dev` appears fine. See https://nextjs.org/docs (CSP guide).
+ * `headers()`) because a strong CSP for the App Router needs a PER-REQUEST nonce
+ * on dynamic routes: Next streams its RSC payload and bootstraps hydration
+ * through INLINE <script> tags. A static `script-src 'self'` (no nonce, no
+ * 'unsafe-inline') makes the browser refuse every inline script, so the client
+ * never hydrates and any client-only subtree (e.g. the WebGL map) never mounts
+ * — a blank page in prod while `next dev` appears fine. See
+ * https://nextjs.org/docs (CSP guide).
  *
  * Dev keeps the original permissive script-src ('unsafe-inline' 'unsafe-eval',
- * no nonce) so Turbopack Fast Refresh is unaffected. Prod uses nonce +
- * 'strict-dynamic': the nonced bootstrap is trusted to load the Next chunks,
- * and no host needs to be listed for each one.
+ * no nonce) so Turbopack Fast Refresh is unaffected. Prod dynamic routes use
+ * nonce + 'strict-dynamic' (Next stamps the nonce onto its own scripts) plus
+ * the SHA-256 hashes of the app's two constant inline scripts (theme-init +
+ * SW-register — see lib/csp/inline-scripts.ts), which is what lets the root
+ * layout skip headers() and static routes prerender at all.
  */
-function buildCsp(nonce: string, isDev: boolean): string {
+function buildCsp(nonce: string, isDev: boolean, useNonce: boolean): string {
   const scriptSrc = isDev
     ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`;
+    : useNonce
+      ? `script-src 'self' 'nonce-${nonce}' ${SCRIPT_HASHES.themeInit} ${SCRIPT_HASHES.swRegister} 'strict-dynamic'`
+      : "script-src 'self' 'unsafe-inline'";
 
   return [
     "default-src 'self'",
@@ -79,19 +106,24 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isDev = process.env.NODE_ENV === "development";
+  const useNonce = isNonceCspRoute(pathname);
   // btoa (not Buffer) so this runs identically in the Edge runtime Vercel uses
   // for middleware/proxy — Buffer is a Node global and may be absent on edge.
   const nonce = btoa(crypto.randomUUID());
-  const csp = buildCsp(nonce, isDev);
+  const csp = buildCsp(nonce, isDev, useNonce);
 
   // Clone the *current* request headers and inject the nonce. Setting the CSP on
-  // the request headers is what makes Next apply the nonce to its inline scripts;
-  // re-reading request.headers each call preserves any cookies Supabase refreshed
-  // below. The matching response header is what the browser actually enforces.
+  // the request headers is what makes Next apply the nonce to its inline scripts
+  // on nonce-CSP routes; every other route gets no nonce (its HTML may be
+  // prerendered and must not depend on a per-request value). Re-reading
+  // request.headers each call preserves any cookies Supabase refreshed below.
+  // The matching response header is what the browser actually enforces.
   const reqHeaders = () => {
     const h = new Headers(request.headers);
-    h.set("x-nonce", nonce);
-    h.set("Content-Security-Policy", csp);
+    if (useNonce) {
+      h.set("x-nonce", nonce);
+      h.set("Content-Security-Policy", csp);
+    }
     return h;
   };
 
