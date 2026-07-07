@@ -60,7 +60,7 @@ const TEAM_ACCOUNTS: DemoAccount[] = TEAM_LIST.filter(
   password: "teamtest",
   role: "team" as const,
   teamId: t.id,
-  home: `/${t.id}/${DEMO_CITY}`,
+  home: `/city/${DEMO_CITY}/team/${t.id}`,
   label: t.shortLabel,
 }));
 

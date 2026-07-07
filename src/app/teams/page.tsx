@@ -68,7 +68,7 @@ export default function TeamsIndexPage() {
                   return (
                     <li key={team.id}>
                       <Link
-                        href={`/${team.id}/${slug}`}
+                        href={`/city/${slug}/team/${team.id}`}
                         className="group relative flex h-full flex-col gap-3 rounded-xl border border-hairline bg-overlay p-4 outline-none transition-colors hover:bg-overlay-strong focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
                       >
                         <div className="flex items-center gap-2.5">

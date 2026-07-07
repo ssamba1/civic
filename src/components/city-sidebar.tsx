@@ -51,8 +51,8 @@ export function CitySidebar({
       // Drill into a team's workspace directly from the rail.
       sub: TEAM_LIST.filter((t) => t.id !== "all").map((t) => ({
         label: t.shortLabel,
-        href: `/${t.id}/${slug}`,
-        active: pathname?.startsWith(`/${t.id}/`) ?? false,
+        href: `/city/${slug}/team/${t.id}`,
+        active: pathname?.startsWith(`/city/${slug}/team/${t.id}`) ?? false,
         dotColor: t.color,
       })),
     },

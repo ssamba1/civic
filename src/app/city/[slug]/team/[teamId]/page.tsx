@@ -5,44 +5,42 @@ import { KNOWN_CITIES } from "@/lib/dashboard-data";
 import { fetchCity } from "@/lib/dashboard-queries";
 import { isValidTeamId, TEAMS } from "@/lib/teams";
 
-export const dynamicParams = true;
-
 interface PageProps {
-  params: Promise<{ team: string; city: string }>;
+  params: Promise<{ slug: string; teamId: string }>;
 }
 
 // DB first (provisioned cities), then the KNOWN_CITIES fallback (demo deploy).
 async function resolveCity(
-  citySlug: string,
+  slug: string,
 ): Promise<{ name: string; state: string } | null> {
-  const db = await fetchCity(citySlug);
+  const db = await fetchCity(slug);
   if (db) return { name: db.name, state: db.state };
-  const known = KNOWN_CITIES[citySlug];
+  const known = KNOWN_CITIES[slug];
   return known ? { name: known.name, state: known.state } : null;
 }
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { team, city } = await params;
-  if (!isValidTeamId(team) || team === "all") {
+  const { slug, teamId } = await params;
+  if (!isValidTeamId(teamId) || teamId === "all") {
     return { title: "Team not found | Civic" };
   }
-  const resolved = await resolveCity(city);
+  const resolved = await resolveCity(slug);
   if (!resolved) return { title: "Team not found | Civic" };
   return {
-    title: `Civic | ${TEAMS[team].shortLabel} — ${resolved.name} Overview`,
-    description: `Workload, routing, and queue depth for ${TEAMS[team].label} in ${resolved.name}, ${resolved.state}.`,
+    title: `Civic | ${TEAMS[teamId].shortLabel} — ${resolved.name} Overview`,
+    description: `Workload, routing, and queue depth for ${TEAMS[teamId].label} in ${resolved.name}, ${resolved.state}.`,
   };
 }
 
 export default async function TeamOverviewPage({ params }: PageProps) {
-  const { team, city } = await params;
-  if (!isValidTeamId(team) || team === "all") notFound();
-  const resolved = await resolveCity(city);
+  const { slug, teamId } = await params;
+  if (!isValidTeamId(teamId) || teamId === "all") notFound();
+  const resolved = await resolveCity(slug);
   if (!resolved) notFound();
 
-  const meta = TEAMS[team];
+  const meta = TEAMS[teamId];
 
   // Stats and every panel derive client-side from the team-locked corpus
   // (see TeamDashboardInteractive) so reassignments move them in lockstep —
@@ -67,7 +65,7 @@ export default async function TeamOverviewPage({ params }: PageProps) {
           </div>
         </section>
 
-        <TeamDashboardInteractive teamId={team} />
+        <TeamDashboardInteractive teamId={teamId} />
       </div>
 
       <footer className="border-t border-hairline mt-10 pb-safe">

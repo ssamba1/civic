@@ -16,7 +16,7 @@ describe("DEMO_ACCOUNTS", () => {
     expect(OPERATIONAL_TEAMS).toHaveLength(11);
   });
 
-  it("maps teamtest{n} to TEAM_LIST order with a /{teamId}/cumming home", () => {
+  it("maps teamtest{n} to TEAM_LIST order with a /city/cumming/team/{teamId} home", () => {
     OPERATIONAL_TEAMS.forEach((team, i) => {
       const account = DEMO_ACCOUNTS.find(
         (a) => a.username === `teamtest${i + 1}`,
@@ -24,7 +24,7 @@ describe("DEMO_ACCOUNTS", () => {
       expect(account, `teamtest${i + 1} exists`).toBeDefined();
       expect(account?.role).toBe("team");
       expect(account?.teamId).toBe(team.id);
-      expect(account?.home).toBe(`/${team.id}/cumming`);
+      expect(account?.home).toBe(`/city/cumming/team/${team.id}`);
       expect(account?.password).toBe("teamtest");
     });
   });

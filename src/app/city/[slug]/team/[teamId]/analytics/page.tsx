@@ -2,34 +2,44 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AnalyticsInteractive } from "@/components/analytics/analytics-interactive";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
+import { fetchCity } from "@/lib/dashboard-queries";
 import { isValidTeamId, TEAMS } from "@/lib/teams";
 
 interface PageProps {
-  params: Promise<{ team: string; city: string }>;
+  params: Promise<{ slug: string; teamId: string }>;
+}
+
+async function resolveCity(
+  slug: string,
+): Promise<{ name: string; state: string } | null> {
+  const db = await fetchCity(slug);
+  if (db) return { name: db.name, state: db.state };
+  const known = KNOWN_CITIES[slug];
+  return known ? { name: known.name, state: known.state } : null;
 }
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { team, city } = await params;
-  if (!isValidTeamId(team) || team === "all" || !(city in KNOWN_CITIES)) {
+  const { slug, teamId } = await params;
+  if (!isValidTeamId(teamId) || teamId === "all") {
     return { title: "Team not found | Civic" };
   }
-  const known = KNOWN_CITIES[city];
+  const resolved = await resolveCity(slug);
+  if (!resolved) return { title: "Team not found | Civic" };
   return {
-    title: `Civic | ${TEAMS[team].shortLabel} — ${known.name} Analytics`,
-    description: `Operational analytics for ${TEAMS[team].label} in ${known.name}, ${known.state}.`,
+    title: `Civic | ${TEAMS[teamId].shortLabel} — ${resolved.name} Analytics`,
+    description: `Operational analytics for ${TEAMS[teamId].label} in ${resolved.name}, ${resolved.state}.`,
   };
 }
 
 export default async function TeamAnalyticsPage({ params }: PageProps) {
-  const { team, city } = await params;
-  if (!isValidTeamId(team) || team === "all" || !(city in KNOWN_CITIES)) {
-    notFound();
-  }
+  const { slug, teamId } = await params;
+  if (!isValidTeamId(teamId) || teamId === "all") notFound();
+  const resolved = await resolveCity(slug);
+  if (!resolved) notFound();
 
-  const meta = TEAMS[team];
-  const known = KNOWN_CITIES[city];
+  const meta = TEAMS[teamId];
 
   return (
     <div className="relative flex flex-col min-h-dvh bg-background">
@@ -41,7 +51,7 @@ export default async function TeamAnalyticsPage({ params }: PageProps) {
               style={{ backgroundColor: meta.color }}
               aria-hidden="true"
             />
-            {known.name}, {known.state} · {meta.shortLabel}
+            {resolved.name}, {resolved.state} · {meta.shortLabel}
           </p>
           <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
