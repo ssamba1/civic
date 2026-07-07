@@ -30,10 +30,11 @@ jobs:
           # compatible.
           version: 11
 
-      - name: Setup Node 20
+      - name: Setup Node 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # pnpm 11 requires Node >= 22.13 (uses node:sqlite in its cache probe).
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
