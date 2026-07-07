@@ -73,7 +73,15 @@ function categoryRows(
   return Object.entries(obj)
     .sort((a, b) => Number(b[1]) - Number(a[1]))
     .map(([cat, val]) =>
-      row(section, `${label} — ${cat.replace(/_/g, " ")}`, formatter(val), unit, period, "—", notes),
+      row(
+        section,
+        `${label} — ${cat.replace(/_/g, " ")}`,
+        formatter(val),
+        unit,
+        period,
+        "—",
+        notes,
+      ),
     );
 }
 
@@ -82,7 +90,10 @@ function categoryRows(
 // ─────────────────────────────────────────────────────────────────────────────
 
 type Metrics = Record<string, unknown>;
-type Baselines = Record<string, { value?: number; text?: string; period?: string; source?: string }>;
+type Baselines = Record<
+  string,
+  { value?: number; text?: string; period?: string; source?: string }
+>;
 
 function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
   const period =
@@ -386,7 +397,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       m.total_reports !== null &&
         bl["manual_triage_min_per_report_before"]?.value &&
         m.median_upload_to_classify_min !== null
-        ? `${n((bl["manual_triage_min_per_report_before"].value! - Number(m.median_upload_to_classify_min)) * Number(m.total_reports) / 60, 0)} hours`
+        ? `${n(((bl["manual_triage_min_per_report_before"].value! - Number(m.median_upload_to_classify_min)) * Number(m.total_reports)) / 60, 0)} hours`
         : "Set pre-Civic baseline to compute",
       "total hours",
       period,
@@ -669,7 +680,9 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
     row(
       "COST",
       "AI cost estimate accuracy vs. actual repair cost",
-      m.cost_accuracy_pct !== null ? pct(m.cost_accuracy_pct) : "N/A — no closed reports with actual cost entered yet",
+      m.cost_accuracy_pct !== null
+        ? pct(m.cost_accuracy_pct)
+        : "N/A — no closed reports with actual cost entered yet",
       "%",
       period,
       "—",
@@ -808,7 +821,9 @@ export async function GET() {
 
       if (
         !profile ||
-        !["staff_dispatcher", "staff_supervisor", "admin"].includes(profile.role)
+        !["staff_dispatcher", "staff_supervisor", "admin"].includes(
+          profile.role,
+        )
       ) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
@@ -835,7 +850,10 @@ export async function GET() {
     if (metricsResult.error) {
       logger.error("get_impact_metrics failed", metricsResult.error);
       return NextResponse.json(
-        { error: "Failed to compute metrics", detail: metricsResult.error.message },
+        {
+          error: "Failed to compute metrics",
+          detail: metricsResult.error.message,
+        },
         { status: 500 },
       );
     }

@@ -2851,8 +2851,7 @@ function TopNeighborhoodsInner({ data }: TopNeighborhoodsProps) {
     const closedCount = Math.max(n.count - n.open, 0);
     const pctClosed = n.count > 0 ? (closedCount / n.count) * 100 : 0;
     const aboveMedian = n.open > medianOpen;
-    const accent =
-      sortBy === "open" ? "var(--color-warning)" : "var(--accent)";
+    const accent = sortBy === "open" ? "var(--color-warning)" : "var(--accent)";
     return {
       title: n.name,
       accent,
@@ -3102,7 +3101,9 @@ function renderCategoryBars(
               <span
                 className={cn(
                   "font-medium",
-                  overSla ? "text-[var(--status-danger-fg)]" : "text-foreground",
+                  overSla
+                    ? "text-[var(--status-danger-fg)]"
+                    : "text-foreground",
                 )}
               >
                 {formatHours(row.avg_hours)}
@@ -3301,9 +3302,9 @@ function CategoryResolutionTableInner({ data }: CategoryResolutionTableProps) {
           <div className="flex flex-col gap-5">
             <Prose>
               Each bar shows mean resolution time per category; the vertical
-              mark is the target SLA for that category. Red bars exceed the
-              SLA — these categories are operationally underperforming and
-              should drive crew-assignment changes or vendor reviews.
+              mark is the target SLA for that category. Red bars exceed the SLA
+              — these categories are operationally underperforming and should
+              drive crew-assignment changes or vendor reviews.
             </Prose>
             <StatGrid>
               <Stat
@@ -3565,10 +3566,7 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
         <div className="flex flex-col gap-1.5">
           <TipRow label="Reporters" value={v.toLocaleString()} />
           <TipRow label="Window avg" value={sparkAvg.toFixed(1)} muted />
-          <TipBar
-            pct={(v / Math.max(peak, 1)) * 100}
-            color="var(--subtle)"
-          />
+          <TipBar pct={(v / Math.max(peak, 1)) * 100} color="var(--subtle)" />
           <p className="text-[11px] text-faint leading-snug mt-1">
             {i === 0
               ? "First day in window."

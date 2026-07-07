@@ -31,7 +31,10 @@ function DetailTitle({ report }: { report: DashboardReport }) {
   const meta = CATEGORY_META[report.category];
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-faint" aria-hidden />
+      <span
+        className="h-2.5 w-2.5 shrink-0 rounded-full bg-faint"
+        aria-hidden
+      />
       <h2 className="truncate text-[15px] font-semibold text-foreground">
         {meta.label}
       </h2>
@@ -349,11 +352,7 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
             </label>
           )}
 
-          <Button
-            size="lg"
-            onClick={handleMarkDone}
-            disabled={busy}
-          >
+          <Button size="lg" onClick={handleMarkDone} disabled={busy}>
             {busy ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (

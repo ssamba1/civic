@@ -40,13 +40,18 @@ const HISTORY_STORAGE_KEY = "civic.routing_override_history.v1";
  * orders resolve to the changed team (migration 026). The localStorage
  * snapshot stays the instant-UI layer for this browser.
  */
-function persistCategoryRouting(category: ReportCategory, teamId: TeamId): void {
+function persistCategoryRouting(
+  category: ReportCategory,
+  teamId: TeamId,
+): void {
   if (DEMO_MODE) return;
   void import("@/app/staff/actions")
     .then(({ updateCityRouting }) => updateCityRouting(category, teamId))
     .then((result) => {
       if (result && !result.ok) {
-        console.warn(`[category-overrides] DB re-route failed: ${result.error}`);
+        console.warn(
+          `[category-overrides] DB re-route failed: ${result.error}`,
+        );
       }
     })
     .catch((err) => {

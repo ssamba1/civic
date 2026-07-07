@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { recordCsat } from "@/lib/notify/csat";
-import { resolvePublicReport, type PublicStatus } from "@/lib/public-report";
-import { toneChipClass, type StatusTone } from "@/lib/status";
+import { type PublicStatus, resolvePublicReport } from "@/lib/public-report";
+import { type StatusTone, toneChipClass } from "@/lib/status";
 import { ShareActions } from "./share-actions";
 
 // Public, account-less status page — resolved per request from an opaque token.

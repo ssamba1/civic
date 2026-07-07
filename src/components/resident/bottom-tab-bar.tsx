@@ -130,7 +130,9 @@ function TabLink({ tab, active }: { tab: TabItem; active: boolean }) {
           "outline-none transition-colors duration-150",
           "focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] focus-visible:ring-offset-0",
           "motion-reduce:transition-none",
-          active ? "text-[var(--color-primary)]" : "text-subtle hover:text-foreground",
+          active
+            ? "text-[var(--color-primary)]"
+            : "text-subtle hover:text-foreground",
         )}
       >
         <Icon

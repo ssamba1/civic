@@ -292,7 +292,9 @@ export async function closeWorkOrder(
     reports: { city_id: string } | { city_id: string }[] | null;
     classifications: { category: string } | { category: string }[] | null;
   };
-  const reportRel = Array.isArray(rels.reports) ? rels.reports[0] : rels.reports;
+  const reportRel = Array.isArray(rels.reports)
+    ? rels.reports[0]
+    : rels.reports;
   const classificationRel = Array.isArray(rels.classifications)
     ? rels.classifications[0]
     : rels.classifications;
@@ -304,7 +306,9 @@ export async function closeWorkOrder(
     // Fetch existing accepted actuals for this city+category to compute median.
     const { data: existingActuals } = await supabase
       .from("work_orders")
-      .select("actual_cost, reports!inner(city_id), classifications!inner(category)")
+      .select(
+        "actual_cost, reports!inner(city_id), classifications!inner(category)",
+      )
       .eq("reports.city_id", cityId)
       .eq("classifications.category", category)
       .eq("actual_cost_excluded", false)
@@ -317,9 +321,7 @@ export async function closeWorkOrder(
         .sort((a, b) => a - b);
       const mid = Math.floor(costs.length / 2);
       const median =
-        costs.length % 2 === 0
-          ? (costs[mid - 1] + costs[mid]) / 2
-          : costs[mid];
+        costs.length % 2 === 0 ? (costs[mid - 1] + costs[mid]) / 2 : costs[mid];
       if (actualCost > 5 * median) {
         actualCostExcluded = true;
         logger.warn("actual_cost_outlier_flagged", {
@@ -526,7 +528,9 @@ export async function overrideClassification(
           reportId,
         });
     } catch (err) {
-      logger.error("work order reroute threw after override", err, { reportId });
+      logger.error("work order reroute threw after override", err, {
+        reportId,
+      });
     }
   }
 
@@ -706,7 +710,6 @@ export async function fetchQueuedWorkOrders(
   return { ok: true, data: result, fetchedAt };
 }
 
-
 export async function fetchCategoryCostStats(
   cityId: string,
 ): Promise<Result<CategoryCostStats[]>> {
@@ -715,7 +718,9 @@ export async function fetchCategoryCostStats(
     _city_id: cityId,
   });
   if (error) {
-    logger.warn("category_cost_stats RPC failed (un-migrated?)", { error: error.message });
+    logger.warn("category_cost_stats RPC failed (un-migrated?)", {
+      error: error.message,
+    });
     return { ok: true, data: [] };
   }
   return { ok: true, data: (data ?? []) as CategoryCostStats[] };

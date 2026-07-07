@@ -36,7 +36,9 @@ const STORAGE_KEY = "civic.custom_categories.v1";
  * city-scoped issue_types table (migration 027) via the staff-gated server
  * actions. localStorage stays the instant-UI layer; demo deploy unchanged.
  */
-function persistIssueType(c: CustomCategory | { id: string; remove: true }): void {
+function persistIssueType(
+  c: CustomCategory | { id: string; remove: true },
+): void {
   if (DEMO_MODE) return;
   void import("@/app/staff/actions")
     .then((actions) =>

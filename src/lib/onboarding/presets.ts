@@ -1,5 +1,5 @@
 import { CATEGORY_META } from "@/lib/dashboard-data";
-import { categoryToTeamDefault, type TeamMeta, TEAM_LIST } from "@/lib/teams";
+import { categoryToTeamDefault, TEAM_LIST, type TeamMeta } from "@/lib/teams";
 import type { ReportCategory } from "@/lib/types";
 
 /* ==================================================================

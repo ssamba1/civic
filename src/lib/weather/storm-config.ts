@@ -47,12 +47,21 @@ export interface StormProfile {
  * heuristic (event severity x affected categories x baseline rate), not a
  * trained model — surfaced as such in the API response.
  */
-export const STORM_PROFILES: ReadonlyArray<{ matches: RegExp; profile: StormProfile }> = [
+export const STORM_PROFILES: ReadonlyArray<{
+  matches: RegExp;
+  profile: StormProfile;
+}> = [
   {
     matches: /tornado warning/i,
     profile: {
       multiplier: 6,
-      categories: ["tree_down", "downed_sign", "streetlight", "debris", "sidewalk_damage"],
+      categories: [
+        "tree_down",
+        "downed_sign",
+        "streetlight",
+        "debris",
+        "sidewalk_damage",
+      ],
       tier: 100,
     },
   },
@@ -60,7 +69,14 @@ export const STORM_PROFILES: ReadonlyArray<{ matches: RegExp; profile: StormProf
     matches: /hurricane warning|tropical storm warning/i,
     profile: {
       multiplier: 5,
-      categories: ["tree_down", "downed_sign", "streetlight", "debris", "water_leak", "drainage"],
+      categories: [
+        "tree_down",
+        "downed_sign",
+        "streetlight",
+        "debris",
+        "water_leak",
+        "drainage",
+      ],
       tier: 95,
     },
   },

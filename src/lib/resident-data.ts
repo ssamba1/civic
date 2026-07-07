@@ -495,11 +495,7 @@ export async function getCityMorale(citySlug: string): Promise<CityMorale> {
   // Week-over-week deltas. 0→N is NOT "+100%" — there is no base to compare
   // against, so it returns null and the UI renders "new" instead (issue #19).
   const pctChange = (cur: number, prev: number): number | null =>
-    prev === 0
-      ? cur > 0
-        ? null
-        : 0
-      : Math.round(((cur - prev) / prev) * 100);
+    prev === 0 ? (cur > 0 ? null : 0) : Math.round(((cur - prev) / prev) * 100);
 
   const reportedThisWeek = corpus.filter((r) => ageDays(r) <= 7).length;
   const reportedPrevWeek = corpus.filter(

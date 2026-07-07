@@ -9,11 +9,7 @@ import "./globals.css";
 import AssistantWidgetMount from "@/components/assistant/assistant-widget-mount";
 import { BottomTabBar } from "@/components/resident/bottom-tab-bar";
 import { HELP_ASSISTANT } from "@/lib/ai/config";
-import {
-  SW_CLEANUP,
-  SW_REGISTER,
-  THEME_INIT,
-} from "@/lib/csp/inline-scripts";
+import { SW_CLEANUP, SW_REGISTER, THEME_INIT } from "@/lib/csp/inline-scripts";
 
 // Both scripts are build-time constants allowlisted by SHA-256 hash in the
 // prod CSP (src/proxy.ts + src/lib/csp/inline-scripts.ts), NOT by nonce — so

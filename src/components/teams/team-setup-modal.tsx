@@ -698,7 +698,9 @@ export function TeamSetupModal({
                           onClick={() => toggleCategory(cat)}
                           className={cn(
                             "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
-                            checked ? "bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)]" : "hover:bg-overlay",
+                            checked
+                              ? "bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)]"
+                              : "hover:bg-overlay",
                           )}
                         >
                           <span
@@ -739,7 +741,9 @@ export function TeamSetupModal({
                         <div
                           className={cn(
                             "flex w-full items-center gap-1 rounded-lg pr-1.5 transition-colors",
-                            checked ? "bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)]" : "hover:bg-overlay",
+                            checked
+                              ? "bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)]"
+                              : "hover:bg-overlay",
                           )}
                         >
                           <button

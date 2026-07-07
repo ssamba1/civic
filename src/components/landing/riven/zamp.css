@@ -996,16 +996,24 @@
   overflow: hidden;
   position: relative;
 }
-.riven-root.wl-design-zamp .wl-zamp-s2-scene-slot--snap .wl-zamp-orbit-card-shot {
+.riven-root.wl-design-zamp
+  .wl-zamp-s2-scene-slot--snap
+  .wl-zamp-orbit-card-shot {
   aspect-ratio: 1918 / 1024;
 }
-.riven-root.wl-design-zamp .wl-zamp-s2-scene-slot--classify .wl-zamp-orbit-card-shot {
+.riven-root.wl-design-zamp
+  .wl-zamp-s2-scene-slot--classify
+  .wl-zamp-orbit-card-shot {
   aspect-ratio: 1839 / 952;
 }
-.riven-root.wl-design-zamp .wl-zamp-s2-scene-slot--route .wl-zamp-orbit-card-shot {
+.riven-root.wl-design-zamp
+  .wl-zamp-s2-scene-slot--route
+  .wl-zamp-orbit-card-shot {
   aspect-ratio: 1677 / 931;
 }
-.riven-root.wl-design-zamp .wl-zamp-s2-scene-slot--track .wl-zamp-orbit-card-shot {
+.riven-root.wl-design-zamp
+  .wl-zamp-s2-scene-slot--track
+  .wl-zamp-orbit-card-shot {
   aspect-ratio: 1393 / 955;
 }
 

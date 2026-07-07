@@ -154,7 +154,8 @@ export async function geminiReasoning(
       // withRetry/getReasoning fall back to the deterministic template instead
       // of crashing on JSON.parse("").
       const text = result.response?.text?.() ?? "";
-      if (!text.trim()) throw new Error("Gemini returned an empty reasoning response");
+      if (!text.trim())
+        throw new Error("Gemini returned an empty reasoning response");
       const parsed = ReasoningPayloadSchema.parse(JSON.parse(text));
       return parsed;
     },

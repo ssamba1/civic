@@ -704,9 +704,7 @@ export function FullscreenMapOrchestrator({
                                       }}
                                       className="flex items-center gap-2 px-2 py-3 text-left text-[12px] text-white hover:bg-white/[0.06] hover:text-white rounded transition-colors min-h-[44px] lg:py-1.5 lg:min-h-0"
                                     >
-                                      <span
-                                        className="h-2 w-2 shrink-0 rounded-full bg-white/40"
-                                      />
+                                      <span className="h-2 w-2 shrink-0 rounded-full bg-white/40" />
                                       <span className="flex-1 truncate">
                                         {team.shortLabel}
                                       </span>

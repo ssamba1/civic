@@ -9,9 +9,9 @@ import { classifyPhoto } from "@/lib/ai/gemini";
 import { generateWorkOrderAI } from "@/lib/ai/work-order-ai";
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
 import { createServerClient } from "@/lib/db/client";
-import { resolveTeamKeyForCategory } from "@/lib/onboarding/city-teams";
 import { sniffImageMime } from "@/lib/image/sniff-mime";
 import { createLogger } from "@/lib/logger";
+import { resolveTeamKeyForCategory } from "@/lib/onboarding/city-teams";
 import type {
   Classification,
   Result,

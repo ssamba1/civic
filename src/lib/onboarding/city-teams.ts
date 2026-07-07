@@ -21,7 +21,9 @@ export interface CityTeamConfig {
 }
 
 /** A city's enabled teams (empty when the city was not onboarded via the wizard). */
-export async function fetchCityTeams(cityId: string): Promise<CityTeamConfig[]> {
+export async function fetchCityTeams(
+  cityId: string,
+): Promise<CityTeamConfig[]> {
   const db = createServerClient();
   const { data, error } = await db
     .from("city_teams")

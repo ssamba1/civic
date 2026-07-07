@@ -569,7 +569,10 @@ function LabelPillCell({
   return (
     <EditPill className="h-8">
       <span
-        className={cn("truncate text-[13px]", value ? "text-foreground" : "text-faint")}
+        className={cn(
+          "truncate text-[13px]",
+          value ? "text-foreground" : "text-faint",
+        )}
       >
         {value ? titleize(value) : "—"}
       </span>

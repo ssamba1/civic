@@ -359,69 +359,71 @@ export function FilterBar() {
               <Lock className="h-3 w-3 text-faint" aria-label="Locked" />
             </span>
           ) : (
-          <Popover
-            align="start"
-            trigger={(open) => (
-              <span
-                className={cn(
-                  "inline-flex h-8 items-center gap-1.5 rounded-[10px] border px-2.5 text-[12px] font-medium transition-colors",
-                  teamScoped
-                    ? "border-hairline-strong bg-overlay-strong text-foreground"
-                    : "border-hairline bg-overlay text-subtle hover:border-hairline-strong hover:text-foreground",
-                  open && "border-hairline-strong",
-                )}
-              >
-                {teamScoped ? (
-                  <Shield className="h-3.5 w-3.5 text-foreground" />
-                ) : (
-                  <Users className="h-3.5 w-3.5 text-subtle" />
-                )}
-                <span className="text-subtle">Team:</span>
-                <span className="text-foreground">{activeTeam.shortLabel}</span>
-                <ChevronDown
+            <Popover
+              align="start"
+              trigger={(open) => (
+                <span
                   className={cn(
-                    "h-3.5 w-3.5 text-faint transition-transform motion-reduce:transition-none",
-                    open && "rotate-180",
+                    "inline-flex h-8 items-center gap-1.5 rounded-[10px] border px-2.5 text-[12px] font-medium transition-colors",
+                    teamScoped
+                      ? "border-hairline-strong bg-overlay-strong text-foreground"
+                      : "border-hairline bg-overlay text-subtle hover:border-hairline-strong hover:text-foreground",
+                    open && "border-hairline-strong",
                   )}
-                />
-              </span>
-            )}
-          >
-            {(close) => (
-              <div className="w-[20rem] p-0.5">
-                <div className="flex items-center justify-between px-2 pb-1.5 pt-1">
-                  <span className="text-[11px] uppercase tracking-wide text-faint">
-                    Switch team view
+                >
+                  {teamScoped ? (
+                    <Shield className="h-3.5 w-3.5 text-foreground" />
+                  ) : (
+                    <Users className="h-3.5 w-3.5 text-subtle" />
+                  )}
+                  <span className="text-subtle">Team:</span>
+                  <span className="text-foreground">
+                    {activeTeam.shortLabel}
                   </span>
-                  {teamScoped && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        patch({ team: "all" });
-                        close();
-                      }}
-                      className="text-[11px] font-medium text-subtle hover:text-foreground hover:underline"
-                    >
-                      Clear
-                    </button>
-                  )}
+                  <ChevronDown
+                    className={cn(
+                      "h-3.5 w-3.5 text-faint transition-transform motion-reduce:transition-none",
+                      open && "rotate-180",
+                    )}
+                  />
+                </span>
+              )}
+            >
+              {(close) => (
+                <div className="w-[20rem] p-0.5">
+                  <div className="flex items-center justify-between px-2 pb-1.5 pt-1">
+                    <span className="text-[11px] uppercase tracking-wide text-faint">
+                      Switch team view
+                    </span>
+                    {teamScoped && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          patch({ team: "all" });
+                          close();
+                        }}
+                        className="text-[11px] font-medium text-subtle hover:text-foreground hover:underline"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-[24rem] overflow-y-auto">
+                    {TEAM_LIST.map((team) => (
+                      <TeamRow
+                        key={team.id}
+                        teamId={team.id}
+                        selected={filter.team === team.id}
+                        onClick={() => {
+                          patch({ team: team.id });
+                          close();
+                        }}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <div className="max-h-[24rem] overflow-y-auto">
-                  {TEAM_LIST.map((team) => (
-                    <TeamRow
-                      key={team.id}
-                      teamId={team.id}
-                      selected={filter.team === team.id}
-                      onClick={() => {
-                        patch({ team: team.id });
-                        close();
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </Popover>
+              )}
+            </Popover>
           )}
 
           {/* ---- Date range: segmented control + custom popover ---- */}

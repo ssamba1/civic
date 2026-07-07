@@ -37,8 +37,7 @@ const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const HAS_ENV = OPTED_IN && Boolean(URL && ANON && SERVICE);
-const CHECK_APPLIED =
-  HAS_ENV && process.env.CHECK_MIGRATIONS_025_028 === "1";
+const CHECK_APPLIED = HAS_ENV && process.env.CHECK_MIGRATIONS_025_028 === "1";
 
 // Sessionless-anon must never read rows from these. report_updates/report_csat
 // scope SELECT to the reporter/staff; report_upvotes to the owner; api_keys has
