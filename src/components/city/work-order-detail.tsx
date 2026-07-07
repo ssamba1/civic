@@ -1,0 +1,377 @@
+"use client";
+
+import { ImageOff, MapPin, Wrench } from "lucide-react";
+import { useState } from "react";
+import { teamIcon } from "@/components/teams/team-icon";
+import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
+import type { GridReportRow } from "@/lib/dashboard-grid-data";
+import { STATUS_LABEL, statusChipClass } from "@/lib/status";
+import { categoryToTeam, TEAMS } from "@/lib/teams";
+import type { ReportCategory, ReportStatus } from "@/lib/types";
+import { cn } from "@/lib/utils/cn";
+import { timeAgo } from "@/lib/utils/time-ago";
+
+/* ==================================================================
+   Work-order detail pane — right-hand column of the grid explorer.
+
+   The grid sibling of analytics' ReportDetail. Both render a photo +
+   overlaid chips, a title row, and a stat grid — but this one reads a
+   GridReportRow (report + work-order join), so it surfaces the
+   operational fields the grid is FOR (department, crew, priority,
+   est cost/time, source, review flag) rather than the resident-facing
+   fields (coordinates, reporter, AI reasoning) that ReportDetail shows
+   and a grid row does not carry.
+
+   Small helpers (titleize, severity ramp, status maps) are
+   re-implemented locally rather than imported from work-order-grid —
+   the grid's copies are module-private, matching the same convention
+   report-detail.tsx follows against analytics-bento.
+   ================================================================== */
+
+const titleize = (s: string) =>
+  s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+const SEVERITY_DESC: Record<number, string> = {
+  1: "Minor",
+  2: "Low",
+  3: "Moderate",
+  4: "High",
+  5: "Critical",
+};
+
+// Green→red traffic-light ramp — byte-for-byte the grid's SEVERITY_HUE so a
+// severity chip reads identically in the cell and here. Built from the AA-tuned
+// --status-*-fg tokens (see work-order-grid.tsx for the full rationale).
+const SEVERITY_HUE: Record<number, string> = {
+  1: "var(--status-success-fg)",
+  2: "color-mix(in srgb, var(--status-success-fg) 55%, var(--status-warning-fg))",
+  3: "var(--status-warning-fg)",
+  4: "color-mix(in srgb, var(--status-warning-fg) 50%, var(--status-danger-fg))",
+  5: "var(--status-danger-fg)",
+};
+
+function priorityHue(score: number): string {
+  if (score < 4) return SEVERITY_HUE[1];
+  if (score < 7) return SEVERITY_HUE[2];
+  if (score < 9) return SEVERITY_HUE[3];
+  if (score < 12) return SEVERITY_HUE[4];
+  return SEVERITY_HUE[5];
+}
+
+function absoluteDate(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function ageDays(iso: string): number {
+  const diff = Math.max(0, Date.now() - new Date(iso).getTime());
+  return Math.floor(diff / 86_400_000);
+}
+
+function formatDays(hours: number): string {
+  const d = Math.round((hours / 24) * 10) / 10;
+  return Number.isInteger(d) ? `${d}d` : `${d.toFixed(1)}d`;
+}
+
+const usd = (n: number) => `$${n.toLocaleString()}`;
+
+/* ------------------------------------------------------------------ */
+
+function Stat({
+  label,
+  value,
+  hint,
+  href,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  href?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-[11px] uppercase tracking-wider text-faint">
+        {label}
+      </span>
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[15px] font-medium tabular-nums text-foreground leading-tight underline-offset-2 hover:underline"
+          title="Open in Google Maps"
+        >
+          {value}
+        </a>
+      ) : (
+        <span className="text-[15px] font-medium tabular-nums text-foreground leading-tight">
+          {value}
+        </span>
+      )}
+      {hint && <span className="text-[11px] text-faint">{hint}</span>}
+    </div>
+  );
+}
+
+function StatusPill({ status }: { status: string }) {
+  const known = status as ReportStatus;
+  return (
+    <span
+      className={cn(
+        "flex-shrink-0 rounded-md px-2 py-0.5 text-[12px] font-medium",
+        statusChipClass(known),
+      )}
+    >
+      {STATUS_LABEL[known] ?? titleize(status)}
+    </span>
+  );
+}
+
+/** Report photo with a graceful fallback — mirrors report-detail.tsx's
+    ReportImage. Keyed by report id at the call site so a dead link on one
+    selection doesn't poison the next. */
+function WorkOrderImage({ src, alt }: { src: string; alt: string }) {
+  const [errored, setErrored] = useState(false);
+
+  if (errored || !src) {
+    return (
+      <div className="flex aspect-[16/9] w-full flex-col items-center justify-center gap-2 bg-overlay text-faint">
+        <ImageOff className="h-6 w-6" strokeWidth={1.5} aria-hidden />
+        <span className="text-[12px]">Image unavailable</span>
+      </div>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    // biome-ignore lint/performance/noImgElement: dynamic external/resident photo URL, next/image impractical
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      onError={() => setErrored(true)}
+      className="aspect-[16/9] w-full object-cover"
+    />
+  );
+}
+
+export function WorkOrderDetail({ row }: { row: GridReportRow | null }) {
+  if (!row) {
+    return (
+      <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-center">
+        <p className="text-[14px] text-faint">Select an issue</p>
+      </div>
+    );
+  }
+
+  const cat = (row.category ?? "other") as ReportCategory;
+  const meta = CATEGORY_META[cat] ?? CATEGORY_META.other;
+  const label = row.category ? meta.label : "Unclassified";
+  const team = TEAMS[categoryToTeam(cat)];
+  const TeamIcon = teamIcon(team.icon);
+  const sla = row.category ? CATEGORY_SLA_TARGETS[cat] : undefined;
+  const mapsHref = row.address
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        row.address,
+      )}`
+    : undefined;
+
+  return (
+    <div
+      key={row.report_id}
+      className="flex flex-col gap-5 sm:gap-7 animate-in fade-in slide-in-from-bottom-1 duration-200 motion-reduce:animate-none"
+    >
+      {/* 1. Photo with overlaid severity + status */}
+      <div className="relative overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface">
+        <WorkOrderImage
+          key={row.report_id}
+          src={row.photo_public_url ?? ""}
+          alt={`${label} report at ${row.address ?? "unknown location"}`}
+        />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-3">
+          {row.severity != null ? (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-md bg-black/40 px-2 py-1 text-[12px] font-medium text-white backdrop-blur-sm"
+              style={{
+                boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${
+                  SEVERITY_HUE[row.severity] ?? SEVERITY_HUE[3]
+                } 45%, transparent)`,
+              }}
+            >
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{
+                  backgroundColor:
+                    SEVERITY_HUE[row.severity] ?? SEVERITY_HUE[3],
+                }}
+                aria-hidden
+              />
+              Sev {row.severity}
+            </span>
+          ) : (
+            <span aria-hidden />
+          )}
+          {row.is_emergency ? (
+            <span className="inline-flex items-center rounded-md bg-[var(--color-danger)] px-2 py-0.5 text-[12px] font-bold text-white">
+              EMERGENCY
+            </span>
+          ) : (
+            <StatusPill status={row.status} />
+          )}
+        </div>
+      </div>
+
+      {/* 2. Title row */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="flex min-w-0 items-center gap-2.5 text-[20px] font-semibold tracking-tight text-foreground">
+            <span
+              className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
+              style={{ backgroundColor: meta.color }}
+              aria-hidden
+            />
+            <span className="min-w-0">
+              <span className="block truncate">{label}</span>
+              {row.subcategory && (
+                <span className="block truncate text-[13px] font-normal text-subtle">
+                  {row.subcategory}
+                </span>
+              )}
+            </span>
+          </h2>
+          <StatusPill status={row.status} />
+        </div>
+        {mapsHref ? (
+          <a
+            href={mapsHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center gap-1.5 text-[13px] text-subtle transition-colors hover:text-foreground"
+            title="Open in Google Maps"
+          >
+            <MapPin className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={1.75} />
+            <span className="truncate underline-offset-2 group-hover:underline">
+              {row.address}
+            </span>
+          </a>
+        ) : (
+          <span className="flex items-center gap-1.5 text-[13px] text-faint">
+            <MapPin className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={1.75} />
+            No address on file
+          </span>
+        )}
+      </div>
+
+      {/* 3. Classification stat grid */}
+      <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
+        <Stat
+          label="Severity"
+          value={row.severity != null ? `Sev ${row.severity}` : "—"}
+          hint={row.severity != null ? SEVERITY_DESC[row.severity] : undefined}
+        />
+        <Stat
+          label="Status"
+          value={
+            STATUS_LABEL[row.status as ReportStatus] ?? titleize(row.status)
+          }
+        />
+        <Stat label="Category" value={label} />
+        <div className="flex flex-col gap-1">
+          <span className="text-[11px] uppercase tracking-wider text-faint">
+            Team
+          </span>
+          <span className="flex items-center gap-1.5 text-[15px] font-medium text-foreground leading-tight">
+            <span
+              className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)]"
+              style={{ backgroundColor: `${team.color}1f`, color: team.color }}
+            >
+              <TeamIcon className="h-3 w-3" strokeWidth={2.25} />
+            </span>
+            {team.shortLabel}
+          </span>
+        </div>
+        <Stat
+          label="Reported"
+          value={timeAgo(row.created_at)}
+          hint={absoluteDate(row.created_at)}
+        />
+        <Stat label="Age" value={`${ageDays(row.created_at)}d`} />
+        {sla != null && <Stat label="SLA target" value={formatDays(sla)} />}
+        {row.address && (
+          <Stat label="Location" value={row.address} href={mapsHref} />
+        )}
+        <Stat label="Report ID" value={row.report_id.slice(0, 8)} />
+      </div>
+
+      {/* 4. Work-order section — the operational payload the grid exists for.
+          Null when the report has no work order yet (emergency / merged /
+          not-yet-dispatched), so the "no WO" reality shows instead of blanks. */}
+      <div className="flex flex-col gap-4 border-t border-hairline pt-6">
+        <div className="flex items-center gap-2">
+          <Wrench className="h-4 w-4 text-subtle" strokeWidth={1.75} />
+          <h3 className="text-[15px] font-semibold tracking-tight text-foreground">
+            Work order
+          </h3>
+          {row.needs_manual_review && (
+            <span className="inline-flex items-center gap-1 rounded-md border border-hairline bg-overlay px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--status-warning-fg)]">
+              <span className="size-1.5 rounded-full bg-[var(--color-warning)]" />
+              Review
+            </span>
+          )}
+        </div>
+
+        {row.work_order_id ? (
+          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] uppercase tracking-wider text-faint">
+                Priority
+              </span>
+              {row.priority_score != null ? (
+                <span
+                  className="text-[15px] font-semibold tabular-nums leading-tight"
+                  style={{ color: priorityHue(row.priority_score) }}
+                >
+                  {row.priority_score.toFixed(1)}
+                </span>
+              ) : (
+                <span className="text-[15px] font-medium text-faint leading-tight">
+                  —
+                </span>
+              )}
+            </div>
+            <Stat
+              label="Department"
+              value={row.department ? titleize(row.department) : "—"}
+            />
+            <Stat
+              label="Crew"
+              value={row.crew_type ? titleize(row.crew_type) : "—"}
+            />
+            <Stat
+              label="Est. cost"
+              value={row.est_cost != null ? usd(row.est_cost) : "—"}
+            />
+            <Stat
+              label="Est. time"
+              value={row.est_minutes != null ? `${row.est_minutes}m` : "—"}
+            />
+            <Stat
+              label="Source"
+              value={row.wo_source ? row.wo_source.toUpperCase() : "—"}
+            />
+          </div>
+        ) : (
+          <p className="text-[13px] text-faint">
+            {row.is_emergency
+              ? "Emergency — dispatched directly, no work order created."
+              : "No work order yet for this report."}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}

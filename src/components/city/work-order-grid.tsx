@@ -2,6 +2,7 @@
 
 import {
   AllCommunityModule,
+  type CellClickedEvent,
   type CellValueChangedEvent,
   type ColDef,
   type GridApi,
@@ -23,6 +24,7 @@ import {
   HelpCircle,
   Lightbulb,
   type LucideIcon,
+  Maximize2,
   Search,
   Signpost,
   SprayCan,
@@ -39,6 +41,7 @@ import {
   useState,
 } from "react";
 import { fetchCategoryCostStats } from "@/app/staff/actions";
+import { WorkOrderExplorer } from "@/components/city/work-order-explorer";
 import { teamIcon } from "@/components/teams/team-icon";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import type { GridReportRow } from "@/lib/dashboard-grid-data";
@@ -713,6 +716,32 @@ const dateFmt = (p: ValueFormatterParams<GridReportRow, string>) =>
       })
     : "—";
 
+/** Trailing expand affordance — opens the full-issue explorer focused on this
+ *  row. Reads openDetail off the grid `context` (same channel PredictedCostCell
+ *  uses for stats) so the pinned column def never has to close over React state
+ *  and trigger a columnDefs rebuild. Editable cells keep single-click-to-edit;
+ *  this button (and any read-only cell — see onCellClicked) is the open path. */
+function ExpandCell({ data, context }: ICellRendererParams<GridReportRow>) {
+  if (!data) return null;
+  const { openDetail } = context as { openDetail: (id: string) => void };
+  const label =
+    data.category != null
+      ? (CATEGORY_META[data.category as ReportCategory]?.label ??
+        titleize(data.category))
+      : "unclassified issue";
+  return (
+    <button
+      type="button"
+      onClick={() => openDetail(data.report_id)}
+      aria-label={`Open details for ${label}`}
+      title="Open full details"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)] border border-transparent text-faint outline-none transition-colors hover:border-hairline hover:bg-overlay hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60"
+    >
+      <Maximize2 className="h-4 w-4" strokeWidth={2} />
+    </button>
+  );
+}
+
 // ── Page-size control ────────────────────────────────────────────────────────
 // Custom styled dropdown (not AG Grid's built-in number-only selector) so "All"
 // is an option, and so the chrome matches the grid's other styled dropdowns
@@ -817,7 +846,27 @@ export function WorkOrderGrid({
   // repaints just the predicted column when the fetch resolves.
   const gridApiRef = useRef<GridApi<GridReportRow> | null>(null);
   const costStatsRef = useRef<Map<string, CategoryCostStats>>(new Map());
-  const gridContext = useMemo(() => ({ costStatsRef }), []);
+
+  // Full-issue explorer (list + detail overlay), opened from a row's expand
+  // button or a click on any read-only cell. Selection is held here so the
+  // overlay opens pre-focused on the clicked row; detailDrawerOpen is the
+  // mobile branch (detail in a Drawer instead of the side pane).
+  const [explorerOpen, setExplorerOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
+  const openDetail = useCallback((id: string) => {
+    setSelectedId(id);
+    setExplorerOpen(true);
+  }, []);
+  const closeExplorer = useCallback(() => {
+    setExplorerOpen(false);
+    setDetailDrawerOpen(false);
+  }, []);
+
+  const gridContext = useMemo(
+    () => ({ costStatsRef, openDetail }),
+    [openDetail],
+  );
   useEffect(() => {
     if (!cityId) return;
     let cancelled = false;
@@ -920,6 +969,20 @@ export function WorkOrderGrid({
       );
     },
     [],
+  );
+
+  // Click-to-open on read-only cells. Editable cells (category/severity/status/
+  // dept/crew) keep single-click-to-edit, and the pinned actions button opens
+  // itself — so this fires only for the plain cells (Team, Priority, costs,
+  // Source, Reported), making "click the row" open the full issue without
+  // fighting the inline editors.
+  const onCellClicked = useCallback(
+    (e: CellClickedEvent<GridReportRow>) => {
+      if (e.colDef.editable) return;
+      if (e.column.getColId() === "actions") return;
+      if (e.data) openDetail(e.data.report_id);
+    },
+    [openDetail],
   );
 
   const columnDefs = useMemo<ColDef<GridReportRow>[]>(
@@ -1074,6 +1137,28 @@ export function WorkOrderGrid({
         initialWidth: 150,
         minWidth: 130,
       },
+      {
+        // Always-reachable open affordance: pinned right so it survives
+        // horizontal scroll, and locked (no sort/filter/resize/move/edit) so it
+        // reads as chrome, not data.
+        colId: "actions",
+        headerName: "",
+        pinned: "right",
+        width: 56,
+        minWidth: 56,
+        maxWidth: 64,
+        sortable: false,
+        filter: false,
+        resizable: false,
+        editable: false,
+        suppressMovable: true,
+        cellRenderer: ExpandCell,
+        cellStyle: {
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        },
+      },
     ],
     [deptOptions, crewOptions],
   );
@@ -1089,7 +1174,10 @@ export function WorkOrderGrid({
     "border-hairline bg-overlay text-subtle hover:border-hairline-strong hover:text-foreground";
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2">
+    // `relative` anchors the issue explorer overlay: it renders as an absolute
+    // child here (not a body portal), so it fills the content column and leaves
+    // the app sidebar visible — see WorkOrderExplorer.
+    <div className="relative flex min-h-0 flex-1 flex-col gap-2">
       {/* Toolbar keeps horizontal padding so search + chips have breathing
           room; the grid below runs full-bleed to the viewport edges. */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 pt-3 sm:px-4 lg:px-6">
@@ -1184,6 +1272,7 @@ export function WorkOrderGrid({
           singleClickEdit
           stopEditingWhenCellsLoseFocus
           onCellValueChanged={onCellValueChanged}
+          onCellClicked={onCellClicked}
           pagination
           paginationPageSize={effectivePageSize}
           // Our own PageSizeSelect (adds "All"); suppress AG Grid's built-in one.
@@ -1195,6 +1284,16 @@ export function WorkOrderGrid({
           overlayNoRowsTemplate={"<span>No matching reports.</span>"}
         />
       </div>
+
+      <WorkOrderExplorer
+        open={explorerOpen}
+        onClose={closeExplorer}
+        rows={filtered}
+        selectedId={selectedId}
+        onSelectId={setSelectedId}
+        detailDrawerOpen={detailDrawerOpen}
+        onDetailDrawerChange={setDetailDrawerOpen}
+      />
     </div>
   );
 }

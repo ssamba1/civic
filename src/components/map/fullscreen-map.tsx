@@ -13,13 +13,18 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { dispatchWorkOrderForReport } from "@/app/staff/actions";
+import type { MarkerColorMode } from "@/components/map/pin-icons";
 import type { MapTheme } from "@/components/map/report-map";
 import { ReportMapLazy as ReportMap } from "@/components/map/report-map-lazy";
 // Upvote disabled for now — client-only/no durable backend yet (see
 // lib/upvotes.ts + migration 005). Re-enable with the import below.
 // import { UpvoteButton } from "@/components/resident/upvote-button";
 import BottomSheet from "@/components/ui/bottom-sheet";
-import { LiquidGlassCard } from "@/components/ui/liquid-glass";
+import {
+  glassChrome,
+  glassSheen,
+  LiquidGlassCard,
+} from "@/components/ui/liquid-glass";
 import { useCategoryOverrides } from "@/lib/category-overrides";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
@@ -31,6 +36,7 @@ import {
   TEAMS as TEAM_META,
   type TeamId,
 } from "@/lib/teams";
+import { useTheme } from "@/lib/theme";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 
 interface FullscreenMapOrchestratorProps {
@@ -136,18 +142,21 @@ export function FullscreenMapOrchestrator({
   }, [demoReports, initialReports, statusOverrides]);
 
   // --- Map theme (lifted from ReportMap so Dispatch panel can react) ---
+  // Basemap tracks the app's light/dark theme so the map reads as part of the
+  // same surface as the sidebar/chrome. `satellite` is a deliberate override
+  // (picked from the map controls), so a theme flip leaves it alone. Init to
+  // "dark" to match the SSR default, then the effect reconciles to the real
+  // theme on mount before the lazy map paints — no hydration mismatch.
+  const { theme: appTheme } = useTheme();
   const [mapTheme, setMapTheme] = useState<MapTheme>("dark");
-  // Dispatch glass scrim adapts to the active basemap so the panel reads on each
-  // and lets the map colors bleed through. Dark → faint scrim (most see-through);
-  // satellite → mid (busy imagery); light → denser (white text needs contrast
-  // over a bright basemap). backdrop-blur (LiquidGlassCard, blur-xl) keeps the
-  // text legible even at these low tints.
-  const panelTint =
-    mapTheme === "light"
-      ? "bg-black/40"
-      : mapTheme === "satellite"
-        ? "bg-black/28"
-        : "bg-black/15";
+  useEffect(() => {
+    setMapTheme((cur) => (cur === "satellite" ? cur : appTheme));
+  }, [appTheme]);
+
+  // --- Marker color mode (lifted from ReportMap so the Dispatch panel's
+  // "Color by" control and the map's own gear-panel control stay in sync —
+  // same lift pattern as mapTheme above). ---
+  const [colorMode, setColorMode] = useState<MarkerColorMode>("progress");
 
   // --- Active Filters State ---
   // Team view seeds + locks the team scope; city view starts at "all".
@@ -510,6 +519,45 @@ export function FullscreenMapOrchestrator({
               )}
             </div>
           </div>
+
+          {/* Color by — single-select marker color mode. Mirrors Status's
+              button classes above (same rounded/px/py/min-h/lg: pattern) but
+              grid-cols-3 for the 3 mutually-exclusive modes instead of
+              Status's grid-cols-2 multi-toggle. Lifted state (colorMode/
+              setColorMode) keeps this in sync with the map's own gear-panel
+              "Marker colors" control — whichever mode is picked here or
+              there paints the same pins, including when the Dispatch panel
+              is team-filtered (color-by-team still applies to whatever's
+              visible; no special-casing). */}
+          <div className="flex flex-col gap-1.5 border-t border-white/[0.06] pt-3">
+            <span className="text-[12px] text-white">Color by</span>
+            <div className="grid grid-cols-3 gap-1">
+              {(
+                [
+                  { key: "progress", label: "Progress" },
+                  { key: "urgency", label: "Urgency" },
+                  { key: "team", label: "Team" },
+                ] as const
+              ).map(({ key, label }) => {
+                const isActive = colorMode === key;
+                return (
+                  <button
+                    type="button"
+                    key={key}
+                    onClick={() => setColorMode(key)}
+                    aria-pressed={isActive}
+                    className={`rounded px-2 py-2 text-[12px] text-left transition-colors min-h-[44px] flex items-center lg:py-1 lg:min-h-0 ${
+                      isActive
+                        ? "bg-white/[0.08] text-white"
+                        : "bg-transparent text-white/80 hover:text-white hover:bg-white/[0.03]"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Divider */}
@@ -764,6 +812,7 @@ export function FullscreenMapOrchestrator({
       selectedCategory,
       minSeverity,
       activeStatuses,
+      colorMode,
       categoriesList,
       lockedTeam,
       readOnly,
@@ -774,7 +823,7 @@ export function FullscreenMapOrchestrator({
   );
 
   return (
-    <div className="h-full w-full flex-1 min-h-0 relative overflow-hidden flex bg-black select-none">
+    <div className="h-full w-full flex-1 min-h-0 relative overflow-hidden flex bg-background select-none">
       <style>{`@keyframes fmPanelIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}`}</style>
 
       {/* Full-viewport map */}
@@ -794,6 +843,8 @@ export function FullscreenMapOrchestrator({
           isFullscreen={true}
           mapTheme={mapTheme}
           onMapThemeChange={setMapTheme}
+          colorMode={colorMode}
+          onColorModeChange={setColorMode}
         />
       </div>
 
@@ -824,21 +875,21 @@ export function FullscreenMapOrchestrator({
         {dispatchPanelContent}
       </BottomSheet>
 
-      {/* Desktop side panel — Dispatch (hidden on mobile). Liquid-glass surface
-          so the basemap colors read through; `panelTint` adapts the scrim to the
-          active basemap (light/dark/satellite). */}
+      {/* Desktop side panel — Dispatch (hidden on mobile). Frosted dark glass
+          (`glassChrome`): one translucent tint + blur + saturation so it reads
+          as glass over any basemap while white text stays legible. */}
       <LiquidGlassCard
-        className="hidden lg:flex absolute top-16 right-4 bottom-4 w-[280px] pointer-events-auto z-10 overflow-hidden"
+        className={`hidden lg:flex absolute top-16 right-4 bottom-4 w-[280px] pointer-events-auto z-10 overflow-hidden ${glassChrome}`}
         style={
           reducedMotion
             ? undefined
             : { animation: "fmPanelIn 300ms cubic-bezier(0.16,1,0.3,1)" }
         }
-        contentClassName={`${panelTint} p-4 text-white flex flex-col overflow-hidden`}
+        contentClassName={`${glassSheen} p-4 text-white flex flex-col overflow-hidden`}
         borderRadius="20px"
         blurIntensity="xl"
-        shadowIntensity="none"
-        glowIntensity="xs"
+        shadowIntensity="lg"
+        glowIntensity="none"
       >
         {/* Panel header */}
         <div className="flex items-center justify-between shrink-0 mb-3">

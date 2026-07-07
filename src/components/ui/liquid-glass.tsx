@@ -3,6 +3,23 @@
 import * as React from "react";
 import { cn } from "@/lib/utils/cn";
 
+/**
+ * Frosted dark-glass for floating map chrome (the controls gear, the HUD count
+ * pill, and the controls + dispatch panels). ONE translucent dark tint + blur +
+ * saturation, identical in light/dark, so white glyphs stay legible over any
+ * basemap (light / dark / satellite) while the blurred, saturation-pumped map
+ * still reads through — that's what makes it look like glass instead of a flat
+ * grey card. Replaces the old opaque `bg-[#1c1c1e]` chips and the muddy
+ * light-mode `black/45` content scrim (white base + dark scrim = grey mud).
+ * `backdrop-saturate-150` is the key ingredient: it revives the colours the
+ * blur washes out. Pair with `glassSheen` for the bright top edge.
+ */
+export const glassChrome =
+  "bg-[rgba(22,22,26,0.48)] backdrop-blur-xl backdrop-saturate-150 border border-white/[0.14]";
+
+/** Bright 1px top-edge highlight — the specular line that sells "glass". */
+export const glassSheen = "shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]";
+
 type BlurIntensity = "sm" | "md" | "lg" | "xl";
 type ShadowIntensity = "none" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 type GlowIntensity = "none" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";

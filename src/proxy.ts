@@ -57,7 +57,11 @@ function buildCsp(nonce: string, isDev: boolean): string {
     // maplibre canvas/tile blobs.
     "img-src 'self' data: blob: https://*.supabase.co https://*.openstreetmap.org https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.arcgisonline.com https://picsum.photos https://fastly.picsum.photos",
     "font-src 'self'",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.openstreetmap.org https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.arcgisonline.com https://*.sentry.io https://generativelanguage.googleapis.com",
+    // data: — deck.gl's IconLayer fetch()es the SVG pin icons generated as
+    // data: URLs by components/map/pin-icons.ts; fetch is governed by
+    // connect-src (img-src data: does not cover it). data: here adds no
+    // network destination — it only lets the page read its own inline URIs.
+    "connect-src 'self' data: https://*.supabase.co wss://*.supabase.co https://*.openstreetmap.org https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.arcgisonline.com https://*.sentry.io https://generativelanguage.googleapis.com",
     // maplibre-gl parses vector tiles in a Web Worker created from a blob URL.
     "worker-src 'self' blob:",
     "frame-ancestors 'none'",

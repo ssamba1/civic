@@ -1,15 +1,16 @@
 "use client";
 
 import "maplibre-gl/dist/maplibre-gl.css";
-import { HeatmapLayer, HexagonLayer } from "@deck.gl/aggregation-layers";
-import { ScatterplotLayer } from "@deck.gl/layers";
+import { HeatmapLayer } from "@deck.gl/aggregation-layers";
+import { IconLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { MapboxOverlay, type MapboxOverlayProps } from "@deck.gl/mapbox";
 import {
+  Check,
   Flame,
-  Hexagon,
   Map as MapIcon,
   MapPin,
   Mountain,
+  Palette,
   RotateCcw,
   Settings,
   Sliders,
@@ -23,12 +24,26 @@ import {
   useControl,
 } from "react-map-gl/maplibre";
 import { renderPopupHTML } from "@/components/map/map-popup";
+import {
+  type MarkerColorMode,
+  PROGRESS_LEGEND,
+  pinColorRGB,
+  pinIconFor,
+  teamLegend,
+  URGENCY_LEGEND,
+} from "@/components/map/pin-icons";
 import { SATELLITE_STYLE } from "@/components/map/satellite-style";
-import { LiquidGlassCard } from "@/components/ui/liquid-glass";
+import {
+  glassChrome,
+  glassSheen,
+  LiquidGlassCard,
+} from "@/components/ui/liquid-glass";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { STATUS_LABEL } from "@/lib/status";
+import { useTheme } from "@/lib/theme";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { useCurrency } from "@/lib/use-currency";
+import { DAY_MS } from "@/lib/utils/time-constants";
 
 export type MapTheme = "dark" | "light" | "satellite";
 
@@ -49,6 +64,10 @@ interface ReportMapProps {
   // so other UI (e.g. Dispatch panel) can react. Falls back to local state.
   mapTheme?: MapTheme;
   onMapThemeChange?: (t: MapTheme) => void;
+  // Optional controlled marker color mode — same lift-to-parent pattern as
+  // mapTheme. Falls back to local state ("progress").
+  colorMode?: MarkerColorMode;
+  onColorModeChange?: (m: MarkerColorMode) => void;
 }
 
 /* ------------------------------------------------------------------
@@ -61,26 +80,10 @@ const STYLE_DARK =
 const STYLE_LIGHT =
   "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
 
-// Enterprise status palette — muted, matches --color-success/warning/danger
-// and --fg-electric-indigo in globals.css (all theme-invariant, so these
-// literals stay correct across light/dark without a theme hook). deck.gl
-// needs plain RGB tuples (no CSS vars on the GPU), so the values are
-// hand-synced to the token hexes: success #3d9a63, warning #c08a1d, danger
-// #cc4638, info slate #5b6b8c (== --fg-electric-indigo). dispatched AND
-// in_progress share the info slate per lib/status.ts STATUS_TONE — both are
-// "routed/active", distinct from the still-unrouted open (warning). Keep the
-// legend swatches below in lockstep — a color changed only here (or only
-// there) desyncs the legend from the map.
-function statusColor(
-  status: ReportStatus,
-  severity: number,
-): [number, number, number] {
-  if (status === "closed") return [61, 154, 99]; // success
-  if (status === "dispatched" || status === "in_progress")
-    return [91, 107, 140]; // info slate
-  if (severity >= 4) return [204, 70, 56]; // danger (critical override)
-  return [192, 138, 29]; // warning (open, not yet critical)
-}
+// Marker colors now live in ./pin-icons (pinIconFor / pinColorRGB / the legend
+// metadata) so the pins, the focus halo, and the legend all read from one
+// source and can't drift. The old statusColor() helper — which hard-coded the
+// map/legend palette here — was removed with the ScatterplotLayer dot markers.
 
 /* ------------------------------------------------------------------
    DeckGL overlay glued onto the Maplibre map via useControl
@@ -109,8 +112,11 @@ function ReportMapInner({
   isFullscreen = false,
   mapTheme: mapThemeProp,
   onMapThemeChange,
+  colorMode: colorModeProp,
+  onColorModeChange,
 }: ReportMapProps) {
   const currency = useCurrency();
+  const { theme: appTheme } = useTheme();
   const mapRef = useRef<MapRef | null>(null);
   const [mapThemeLocal, setMapThemeLocal] = useState<MapTheme>("dark");
   const mapTheme = mapThemeProp ?? mapThemeLocal;
@@ -118,10 +124,25 @@ function ReportMapInner({
     if (onMapThemeChange) onMapThemeChange(t);
     else setMapThemeLocal(t);
   };
+  // Uncontrolled maps follow the app's light/dark theme so the basemap matches
+  // the surrounding UI. `satellite` is a deliberate user override, so it's left
+  // untouched until the user picks another basemap. When a parent lifts the
+  // theme (mapThemeProp set), it owns this sync instead — we no-op here.
+  useEffect(() => {
+    if (mapThemeProp !== undefined) return;
+    setMapThemeLocal((cur) => (cur === "satellite" ? cur : appTheme));
+  }, [appTheme, mapThemeProp]);
   const [is3D, setIs3D] = useState(true);
-  const [viewMode, setViewMode] = useState<"markers" | "hex" | "heatmap">(
-    "markers",
-  );
+  const [viewMode, setViewMode] = useState<"markers" | "heatmap">("markers");
+  // Marker color mode — controlled by a parent when colorModeProp is set,
+  // otherwise local (mirrors the mapTheme controlled/uncontrolled pattern).
+  const [colorModeLocal, setColorModeLocal] =
+    useState<MarkerColorMode>("progress");
+  const colorMode = colorModeProp ?? colorModeLocal;
+  const setColorMode = (m: MarkerColorMode) => {
+    if (onColorModeChange) onColorModeChange(m);
+    else setColorModeLocal(m);
+  };
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   // Panel exit choreography: closing flips `panelLeaving` to play the slide-out,
   // then unmounts after the 150ms animation. The gear icon stays tied to the
@@ -168,16 +189,47 @@ function ReportMapInner({
     onSelectMarkerRef.current = onSelectMarker;
   }, [onSelectMarker]);
 
+  // Coarse clock tick (5 min) so the 24h completed-report cutoff below keeps
+  // re-evaluating on a long-lived idle tab — with a stable `reports` reference
+  // alone, the Date.now() captured on first evaluation would freeze and
+  // expired reports would never drop off screen.
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 5 * 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Reports actually painted on the map. A resolved report drops off 24h after
+  // it was completed (or marked under fix) so the map shows the *live* backlog,
+  // not a growing pile of green checks. Reports with no completion timestamp
+  // (the synthetic corpus, or anything not yet timestamped) are always kept.
+  // Feeds the markers, the heatmap aggregation, the report-count HUD, and
+  // the focus flyTo/halo lookups below so the camera and ring never target a
+  // report that has no pin on screen.
+  const visibleReports = useMemo(() => {
+    return reports.filter((r) => {
+      if (r.status !== "closed") return true;
+      const ts = r.completed_at ?? r.marked_under_fix_at;
+      if (!ts) return true;
+      const t = new Date(ts).getTime();
+      if (Number.isNaN(t)) return true;
+      return nowTick - t < DAY_MS;
+    });
+  }, [reports, nowTick]);
+
   // Fly to focused report — only when focusId actually changes.
-  // reports must stay in deps so we can look up coords after filter mutations,
-  // but the lastFlownIdRef guard prevents re-flying for the same selection.
+  // visibleReports must stay in deps so we can look up coords after filter
+  // mutations, but the lastFlownIdRef guard prevents re-flying for the same
+  // selection. Resolving from visibleReports (not raw reports) makes focusing
+  // a 24h-expired closed report a no-op instead of flying the camera to a
+  // spot with no pin (the Dispatch list has no age filter).
   useEffect(() => {
     if (!focusId) {
       lastFlownIdRef.current = null;
       setPopupReport(null);
       return;
     }
-    const focused = reports.find((r) => r.id === focusId);
+    const focused = visibleReports.find((r) => r.id === focusId);
     if (!focused) return;
     if (lastFlownIdRef.current === focusId) {
       setPopupReport(focused);
@@ -198,7 +250,7 @@ function ReportMapInner({
       });
     }
     setPopupReport(focused);
-  }, [focusId, reports, zoom, is3D]);
+  }, [focusId, visibleReports, zoom, is3D]);
 
   // Clear marker popup when leaving marker view — stale popup from previous
   // mode would float over the aggregation layer with no anchored point.
@@ -228,11 +280,24 @@ function ReportMapInner({
     }
   };
 
-  // Halo layer depends only on focusId + reports — separated so a focus change
-  // doesn't rebuild the glow/dots layers (GPU buffer re-upload) unnecessarily.
+  // Team legend swatches — only the teams actually present on the map, so the
+  // legend never lists a department with zero visible pins. Memoized on the
+  // same corpus the pins use so it stays in step with what's rendered.
+  const [teamLegendExpanded, setTeamLegendExpanded] = useState(false);
+  const teamLegendData = useMemo(
+    () => teamLegend(visibleReports, teamLegendExpanded ? Number.POSITIVE_INFINITY : undefined),
+    [visibleReports, teamLegendExpanded],
+  );
+
+  // Halo layer depends only on focusId + visibleReports — separated so a focus
+  // change doesn't rebuild the marker layers (GPU buffer re-upload)
+  // unnecessarily. Resolving from visibleReports (same corpus as the pins)
+  // means a focused-but-expired report gets no orphan ring.
   const haloLayer = useMemo(() => {
     if (viewMode !== "markers") return null;
-    const highlighted = focusId ? reports.find((r) => r.id === focusId) : null;
+    const highlighted = focusId
+      ? visibleReports.find((r) => r.id === focusId)
+      : null;
     if (!highlighted) return null;
     return new ScatterplotLayer<DashboardReport>({
       id: "report-halo",
@@ -248,52 +313,18 @@ function ReportMapInner({
       getPosition: (r) => [r.location.lng, r.location.lat],
       getRadius: 180,
       getLineColor: () => {
-        const [cr, cg, cb] = statusColor(
-          highlighted.status,
-          highlighted.severity,
-        );
+        const [cr, cg, cb] = pinColorRGB(highlighted, colorMode);
         return [cr, cg, cb, 200];
       },
     });
-  }, [focusId, reports, viewMode]);
+  }, [focusId, visibleReports, viewMode, colorMode]);
 
   const layers = useMemo(() => {
-    // ---- Aggregation views (choropleth-style spatial distribution) ----
-    // Hex bins: deck.gl bins points into hexagons, colors by count, optionally
-    // extrudes 3D bars when pitched. True "choropleth from points".
-    if (viewMode === "hex") {
-      const hex = new HexagonLayer<DashboardReport>({
-        id: "report-hex",
-        data: reports,
-        pickable: true,
-        extruded: is3D,
-        radius: 180, // hex radius in meters; tuned for neighborhood-scale bins
-        elevationScale: is3D ? 12 : 0,
-        getPosition: (r) => [r.location.lng, r.location.lat],
-        // Single-hue intensity ramp (muted amber -> danger red) — replaces the
-        // old blue/purple/gold rainbow. Matched to the heatmap colorRange below
-        // and the shared legend swatch so all three density views read as one
-        // family. Low count = amber, high count = danger.
-        colorRange: [
-          [173, 132, 52, 140],
-          [186, 111, 47, 180],
-          [196, 91, 46, 205],
-          [204, 70, 56, 225],
-          [204, 70, 56, 240],
-          [204, 70, 56, 255],
-        ],
-        coverage: 0.9,
-        opacity: 0.78,
-        material: false, // skip lighting calc — saves a uniform pass
-        updateTriggers: { extruded: [is3D], elevationScale: [is3D] },
-      });
-      return [hex];
-    }
-
+    // ---- Aggregation view (choropleth-style spatial distribution) ----
     if (viewMode === "heatmap") {
       const heat = new HeatmapLayer<DashboardReport>({
         id: "report-heat",
-        data: reports,
+        data: visibleReports,
         pickable: false,
         getPosition: (r) => [r.location.lng, r.location.lat],
         // weight by severity — a 5-star pothole heats more than a 1-star scuff
@@ -312,8 +343,8 @@ function ReportMapInner({
         weightsTextureSize: 1024,
         // Single-hue intensity ramp — transparent -> muted amber #ad8434 ->
         // danger #cc4638 for hotspots. Replaces the old blue/purple/gold
-        // rainbow; matched to the hex colorRange above and the shared legend
-        // gradient swatch so density reads as one enterprise-muted family.
+        // rainbow; matched to the shared legend gradient swatch so density
+        // reads as one enterprise-muted family.
         colorRange: [
           [173, 132, 52, 0],
           [173, 132, 52, 90],
@@ -327,69 +358,53 @@ function ReportMapInner({
     }
 
     // ---- Marker view (default) ----
-    // Outer soft glow ring — translucent, larger
-    const glow = new ScatterplotLayer<DashboardReport>({
-      id: "report-glow",
-      data: reports,
+    // Blue "live" glow beneath ONLY the demo report — preserves the presenter
+    // affordance the old dots carried. Real reports no longer get a glow ring;
+    // the teardrop pins carry their own tone-matched shadow.
+    const demoGlow = new ScatterplotLayer<DashboardReport>({
+      id: "report-demo-glow",
+      data: visibleReports.filter((r) => r.demo),
       // Flat ground-plane overlay. In interleaved mode deck shares maplibre's
-      // depth buffer, so markers at z=0 z-fight the basemap and flicker against
-      // it during zoom ("color twitches with the background"). depthCompare:
-      // 'always' draws them unconditionally on top; depthWriteEnabled:false keeps
-      // them out of the shared depth buffer so the 3 stacked translucent marker
-      // layers don't z-fight each other either.
+      // depth buffer, so markers at z=0 z-fight the basemap and flicker during
+      // zoom ("color twitches with the background"). depthCompare:'always' draws
+      // them unconditionally on top; depthWriteEnabled:false keeps them out of
+      // the shared depth buffer so the glow + pins don't z-fight each other.
       parameters: { depthCompare: "always", depthWriteEnabled: false },
       pickable: false,
       stroked: false,
       filled: true,
       radiusUnits: "meters",
       radiusMinPixels: 10,
-      radiusMaxPixels: 42,
+      radiusMaxPixels: 60,
       getPosition: (r) => [r.location.lng, r.location.lat],
-      // Demo report gets a fatter glow so the blue halo reads from across the map.
-      getRadius: (r) => (r.demo ? 220 + r.severity * 60 : 90 + r.severity * 40),
-      getFillColor: (r) => {
-        if (r.demo) return [10, 132, 255, r.id === focusId ? 120 : 90];
-        const [cr, cg, cb] = statusColor(r.status, r.severity);
-        return [cr, cg, cb, r.id === focusId ? 70 : 38];
-      },
+      getRadius: (r) => 220 + r.severity * 60,
+      getFillColor: (r) => [10, 132, 255, r.id === focusId ? 120 : 90],
       updateTriggers: { getFillColor: [focusId] },
     });
 
-    // Inner crisp dot — neon core w/ outline
-    const dots = new ScatterplotLayer<DashboardReport>({
-      id: "report-dots",
-      data: reports,
-      // Same depth-overlay treatment as the glow — see report-glow above.
+    // Teardrop pin markers (hero-style — see ./pin-icons). getIcon returns a
+    // cached SVG data-URL keyed by fill+border+glyph, so IconLayer auto-packs
+    // a small atlas and only re-fetches when the color mode changes. Same
+    // depth-overlay params as the demo glow above (see that comment).
+    const markers = new IconLayer<DashboardReport>({
+      id: "report-markers",
+      data: visibleReports,
       parameters: { depthCompare: "always", depthWriteEnabled: false },
       pickable: true,
-      stroked: true,
-      filled: true,
-      radiusUnits: "meters",
-      radiusMinPixels: 5,
-      radiusMaxPixels: 18,
-      lineWidthMinPixels: 1.5,
-      lineWidthUnits: "pixels",
+      billboard: true,
+      sizeUnits: "pixels",
+      sizeMinPixels: 17,
+      sizeMaxPixels: 54,
       getPosition: (r) => [r.location.lng, r.location.lat],
-      // Demo report gets a noticeably larger core dot to draw the eye.
-      getRadius: (r) => (r.demo ? 70 + r.severity * 22 : 28 + r.severity * 14),
-      getFillColor: (r) => {
-        if (r.demo) return [10, 132, 255, 255];
-        const [cr, cg, cb] = statusColor(r.status, r.severity);
-        return [cr, cg, cb, r.id === focusId ? 255 : 230];
+      getIcon: (r) => pinIconFor(r, colorMode),
+      // Mild severity ramp (~26 -> ~34); demo bumped, focused pin scaled up.
+      getSize: (r) => {
+        const base = 24 + r.severity * 2;
+        const sized = r.demo ? base + 12 : base;
+        return r.id === focusId ? sized * 1.28 : sized;
       },
-      getLineColor: (r) => {
-        // Bright blue halo outline marks the demo report regardless of focus.
-        if (r.demo) return [10, 132, 255, 255];
-        const [cr, cg, cb] = statusColor(r.status, r.severity);
-        return r.id === focusId ? [255, 255, 255, 255] : [cr, cg, cb, 255];
-      },
-      getLineWidth: (r) => (r.demo ? 4 : r.id === focusId ? 3 : 1.5),
       // autoHighlight OFF — per-frame ReadPixels caused GPU stalls on lower-end GPUs.
-      updateTriggers: {
-        getFillColor: [focusId],
-        getLineColor: [focusId],
-        getLineWidth: [focusId],
-      },
+      updateTriggers: { getIcon: [colorMode], getSize: [focusId] },
       onClick: ({ object }) => {
         if (object) {
           onSelectMarkerRef.current?.(object.id);
@@ -399,10 +414,11 @@ function ReportMapInner({
     });
 
     // Halo is built in a separate useMemo (haloLayer); including it here would
-    // force an extra array allocation on focusId change but the glow/dots layers
-    // still need focusId in deps so deck.gl sees fresh updateTrigger values.
-    return [glow, dots];
-  }, [reports, focusId, viewMode, is3D]);
+    // force an extra array allocation on focusId change but the marker layer
+    // still needs focusId in deps so deck.gl sees fresh updateTrigger values.
+    // demoGlow sits beneath the pins so the blue halo reads around the tip.
+    return [demoGlow, markers];
+  }, [visibleReports, focusId, viewMode, is3D, colorMode]);
 
   // Combine base layers with the separately-memoized halo.
   const allLayers = useMemo(
@@ -410,9 +426,11 @@ function ReportMapInner({
     [layers, haloLayer],
   );
 
+  // bg-background (theme token) so the loading/edge fill matches the app in
+  // both themes — a light basemap over a black container flashed a dark void.
   const containerClass = isFullscreen
-    ? "h-full w-full relative overflow-hidden bg-[#050505]"
-    : "h-[300px] w-full sm:h-[450px] lg:h-[550px] relative rounded-xl overflow-hidden border border-white/[0.08] bg-[#050505]";
+    ? "h-full w-full relative overflow-hidden bg-background"
+    : "h-[300px] w-full sm:h-[450px] lg:h-[550px] relative rounded-xl overflow-hidden border border-hairline bg-background";
 
   return (
     <div
@@ -455,7 +473,9 @@ function ReportMapInner({
           <Popup
             longitude={popupReport.location.lng}
             latitude={popupReport.location.lat}
-            offset={20}
+            // Pin tip sits on the location and the balloon head rises ~40px
+            // above it; offset clears the head so the popup doesn't cover it.
+            offset={44}
             closeOnClick={false}
             onClose={() => setPopupReport(null)}
             maxWidth="min(300px, 90vw)"
@@ -476,12 +496,21 @@ function ReportMapInner({
         @keyframes rmPanelOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-8px)}}
         @media (prefers-reduced-motion:reduce){.rm-controls *{animation:none!important}}
       `}</style>
-      {/* Floating settings — top-16 (not top-4) to clear the fixed global header on /city/[slug]/map. */}
-      <div className="rm-controls absolute top-16 right-4 z-20 flex flex-col items-end gap-2">
+      {/* Floating map controls. In fullscreen the Dispatch panel owns the top-
+          right corner AND sits in a higher stacking context (its parent is
+          z-10, this map wrapper is z-0), so a right-aligned gear renders
+          *underneath* it however high its own z-index. Anchor it top-LEFT in
+          fullscreen to stay clear; embedded maps have no panel and keep it
+          top-right. top-16 clears the fixed mobile CityHeader in both. */}
+      <div
+        className={`rm-controls absolute top-16 z-20 flex flex-col gap-2 ${
+          isFullscreen ? "left-4 items-start" : "right-4 items-end"
+        }`}
+      >
         <button
           type="button"
           onClick={togglePanel}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-[#1c1c1e] border border-white/[0.08] text-white hover:border-white/[0.2] transition-colors pointer-events-auto"
+          className={`flex h-11 w-11 items-center justify-center rounded-full text-white transition-colors pointer-events-auto hover:border-white/[0.28] ${glassChrome} ${glassSheen}`}
           title="Map Controls"
           aria-label="Toggle map controls"
         >
@@ -495,17 +524,17 @@ function ReportMapInner({
 
         {isPanelOpen && (
           <LiquidGlassCard
-            className="w-[min(280px,calc(100vw-2rem))] pointer-events-auto"
+            className={`w-[min(280px,calc(100vw-2rem))] pointer-events-auto ${glassChrome}`}
             style={{
               animation: panelLeaving
                 ? "rmPanelOut 150ms cubic-bezier(0.4,0,1,1) forwards"
                 : "rmPanelIn 200ms cubic-bezier(0.16,1,0.3,1)",
             }}
-            contentClassName="bg-black/45 p-4 text-white flex flex-col gap-4 max-h-[420px] overflow-y-auto custom-scrollbar"
+            contentClassName={`${glassSheen} p-4 text-white flex flex-col gap-4 max-h-[420px] overflow-y-auto custom-scrollbar`}
             borderRadius="16px"
             blurIntensity="xl"
-            shadowIntensity="xs"
-            glowIntensity="xs"
+            shadowIntensity="md"
+            glowIntensity="none"
           >
             {/* View mode — markers vs choropleth aggregations */}
             <div>
@@ -513,11 +542,10 @@ function ReportMapInner({
                 <Sliders className="h-3 w-3 text-zinc-300" />
                 View
               </div>
-              <div className="grid grid-cols-3 gap-1 bg-white/[0.04] rounded-lg p-0.5 border border-white/5">
+              <div className="grid grid-cols-2 gap-1 bg-white/[0.04] rounded-lg p-0.5 border border-white/5">
                 {(
                   [
                     { key: "markers", label: "Markers", Icon: MapPin },
-                    { key: "hex", label: "Hex bins", Icon: Hexagon },
                     { key: "heatmap", label: "Heatmap", Icon: Flame },
                   ] as const
                 ).map(({ key, label, Icon }) => (
@@ -538,12 +566,44 @@ function ReportMapInner({
               </div>
               {viewMode !== "markers" && (
                 <p className="text-[10.5px] text-zinc-500 mt-1.5 leading-tight">
-                  {viewMode === "hex"
-                    ? "Reports binned into hexagons, colored by count. Try 3D tilt."
-                    : "Density gradient weighted by severity."}
+                  Density gradient weighted by severity.
                 </p>
               )}
             </div>
+
+            {/* Marker colors — only meaningful in the markers view. Shown in
+                fullscreen too (unlike the Filters section below). */}
+            {viewMode === "markers" && (
+              <div className="border-t border-white/5 pt-3">
+                <div className="flex items-center gap-1.5 text-xs text-zinc-300 mb-2">
+                  <Palette className="h-3 w-3 text-zinc-300" />
+                  Marker colors
+                </div>
+                <div className="grid grid-cols-3 gap-1 bg-white/[0.04] rounded-lg p-0.5 border border-white/5">
+                  {(
+                    [
+                      { key: "progress", label: "Progress" },
+                      { key: "urgency", label: "Urgency" },
+                      { key: "team", label: "Team" },
+                    ] as const
+                  ).map(({ key, label }) => (
+                    <button
+                      type="button"
+                      key={key}
+                      onClick={() => setColorMode(key)}
+                      aria-pressed={colorMode === key}
+                      className={`rounded-md py-3 text-xs capitalize transition-all min-h-[44px] lg:py-1.5 lg:min-h-0 ${
+                        colorMode === key
+                          ? "bg-white/15 text-white"
+                          : "text-zinc-300 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Map theme */}
             <div className="border-t border-white/5 pt-3">
@@ -693,92 +753,134 @@ function ReportMapInner({
         )}
       </div>
 
-      {/* HUD: report count */}
-      <div className="absolute bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] left-4 z-20 rounded-full bg-[#1c1c1e] border border-white/[0.08] px-3 py-1.5 text-[13px] text-zinc-300 flex items-center gap-1.5 select-none pointer-events-none">
-        <span className="text-white tabular-nums font-medium">
-          {reports.length}
-        </span>
-        <span className="text-zinc-500">reports</span>
-      </div>
+      {/* Bottom-left chrome: report-count HUD (top) + legend (below), stacked
+          in one column so the legend clears the report panel on the right and
+          can never overlap the count pill. */}
+      <div className="absolute bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] left-4 z-20 flex flex-col items-start gap-2">
+        {/* HUD: report count */}
+        <div
+          className={`rounded-full px-3 py-1.5 text-[13px] text-zinc-200 flex items-center gap-1.5 select-none pointer-events-none ${glassChrome} ${glassSheen}`}
+        >
+          <span className="text-white tabular-nums font-medium">
+            {visibleReports.length}
+          </span>
+          <span className="text-zinc-500">reports</span>
+        </div>
 
-      {/* Legend — content depends on view mode */}
-      <LiquidGlassCard
-        className="absolute bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] right-4 z-20 pointer-events-none"
-        contentClassName={`${
-          mapTheme === "light" ? "bg-black/45" : "bg-black/5"
-        } px-3 py-2.5 text-[12px] text-zinc-200 flex flex-col gap-1.5 rounded-[14px]`}
+        {/* Legend — content depends on view mode */}
+        <LiquidGlassCard
+          className={`pointer-events-none ${glassChrome}`}
+        contentClassName={`${glassSheen} px-3 py-2.5 text-[12px] text-zinc-200 flex flex-col gap-1.5 rounded-[14px]`}
         borderRadius="14px"
         blurIntensity="xl"
-        shadowIntensity="none"
-        glowIntensity="xs"
+        shadowIntensity="md"
+        glowIntensity="none"
       >
         {viewMode === "markers" ? (
-          // Legend mixes status colours (Dispatched/Resolved/In progress) with a
-          // severity override (Critical = severity ≥4, open). Grouping them under
-          // labelled sections makes the distinction audible to screen readers and
-          // removes the visual-colour-only information barrier.
-          // biome-ignore lint/a11y/useSemanticElements: role="list" intentional — <ul> applies UA list-style/margin/padding and disallows the interleaved sr-only <p> section labels; flex/gap layout is custom
-          <div role="list" aria-label="Map marker legend">
-            {/* Status group — order matches STATUS_LABEL/activeStatuses
-                (open, dispatched, in_progress, closed). Dispatched and
-                In progress intentionally share the same slate dot: they
-                share the info tone in lib/status.ts STATUS_TONE, and the
-                label text is what distinguishes them, not hue. */}
-            <p className="sr-only">Status</p>
-            {/* biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling */}
-            <div role="listitem" className="flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className="w-1.5 h-1.5 rounded-full bg-[var(--color-warning)]"
-              />
-              Open
-            </div>
-            {/* biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling */}
-            <div role="listitem" className="flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className="w-1.5 h-1.5 rounded-full bg-[var(--fg-electric-indigo)]"
-              />
-              Dispatched
-            </div>
-            {/* biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling */}
-            <div role="listitem" className="flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className="w-1.5 h-1.5 rounded-full bg-[var(--fg-electric-indigo)]"
-              />
-              In progress
-            </div>
-            {/* biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling */}
-            <div role="listitem" className="flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)]"
-              />
-              Resolved
-            </div>
-            {/* Severity override — open reports with severity ≥4 render red
-                regardless of status; separate label prevents confusion with
-                a "Critical" status that does not exist in the data model. */}
-            <p className="sr-only">Severity</p>
-            {/* biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling */}
-            <div role="listitem" className="flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className="w-1.5 h-1.5 rounded-full bg-[var(--color-danger)]"
-              />
-              Critical (sev 4–5)
-            </div>
+          // Marker legend — rendered straight from ./pin-icons metadata
+          // (PROGRESS_LEGEND / URGENCY_LEGEND / teamLegend) so the swatches and
+          // the map pins share one color source and can't drift. This replaces
+          // the old statusColor-based swatches; the color palette that used to
+          // live inline here now lives in pin-icons.
+          <div className="flex flex-col gap-1.5">
+            {colorMode === "progress" && (
+              // biome-ignore lint/a11y/useSemanticElements: role="list" intentional — <ul> applies UA list-style/margin/padding; flex/gap layout is custom
+              <div
+                role="list"
+                aria-label="Marker legend"
+                className="flex flex-col gap-1.5"
+              >
+                {PROGRESS_LEGEND.map((e) => (
+                  // biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling
+                  <div
+                    role="listitem"
+                    key={e.label}
+                    className="flex items-center gap-2"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="inline-flex h-2.5 w-2.5 items-center justify-center rounded-full"
+                      style={{
+                        background: e.color,
+                        border: `1px solid ${e.border ?? "rgba(255,255,255,0.5)"}`,
+                      }}
+                    >
+                      {e.check && (
+                        <Check className="h-2 w-2 text-white" strokeWidth={3} />
+                      )}
+                    </span>
+                    {e.label}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {colorMode === "urgency" && (
+              <>
+                <div className="text-[10.5px] uppercase tracking-wider text-zinc-400 mb-0.5">
+                  Severity
+                </div>
+                <span
+                  className="inline-block h-2 w-24 rounded-sm"
+                  style={{
+                    background: `linear-gradient(to right, ${URGENCY_LEGEND.colors.join(",")})`,
+                  }}
+                />
+                <div className="flex items-center justify-between text-[10.5px] text-zinc-400 -mt-0.5 w-24">
+                  <span>{URGENCY_LEGEND.minLabel}</span>
+                  <span>{URGENCY_LEGEND.maxLabel}</span>
+                </div>
+              </>
+            )}
+
+            {colorMode === "team" &&
+              (teamLegendData.entries.length === 0 ? (
+                <div className="text-zinc-500">No reports</div>
+              ) : (
+                // biome-ignore lint/a11y/useSemanticElements: role="list" intentional — <ul> applies UA list-style/margin/padding; flex/gap layout is custom
+                <div
+                  role="list"
+                  aria-label="Teams shown"
+                  className="flex flex-col gap-1.5"
+                >
+                  {teamLegendData.entries.map((e) => (
+                    // biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling
+                    <div
+                      role="listitem"
+                      key={e.label}
+                      className="flex items-center gap-2"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ background: e.color }}
+                      />
+                      {e.label}
+                    </div>
+                  ))}
+                  {(teamLegendData.more > 0 || teamLegendExpanded) && (
+                    <button
+                      type="button"
+                      onClick={() => setTeamLegendExpanded((v) => !v)}
+                      className="pointer-events-auto text-left text-zinc-400 hover:text-white text-[11px] pl-[18px]"
+                    >
+                      {teamLegendExpanded
+                        ? "Show less"
+                        : `+${teamLegendData.more} more`}
+                    </button>
+                  )}
+                </div>
+              ))}
           </div>
         ) : (
           <>
             <div className="text-[10.5px] uppercase tracking-wider text-zinc-400 mb-0.5">
-              {viewMode === "hex" ? "Reports per hex" : "Density"}
+              Density
             </div>
             <div className="flex items-center gap-2">
-              {/* Same amber -> danger family as the hex/heatmap colorRange
-                  above — low density fades in as faint amber, high density
-                  reads as danger red. */}
+              {/* Same amber -> danger family as the heatmap colorRange above —
+                  low density fades in as faint amber, high density reads as
+                  danger red. */}
               <span className="inline-block h-2 w-20 rounded-sm bg-gradient-to-r from-[#ad8434]/25 via-[#ad8434] to-[#cc4638]" />
             </div>
             <div className="flex items-center justify-between text-[10.5px] text-zinc-400 -mt-0.5">
@@ -787,7 +889,8 @@ function ReportMapInner({
             </div>
           </>
         )}
-      </LiquidGlassCard>
+        </LiquidGlassCard>
+      </div>
     </div>
   );
 }
