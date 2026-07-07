@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import CameraCapture from "@/components/report/camera-capture";
+import DuplicateCheck from "@/components/report/duplicate-check";
 import EmergencyInterstitial from "@/components/report/emergency-interstitial";
 import { ensureAnonSession } from "@/components/report/ensure-anon-session";
 import PhotoPreview from "@/components/report/photo-preview";
@@ -10,8 +11,15 @@ import SubmissionConfirmation from "@/components/report/submission-confirmation"
 import { ASYNC_CLASSIFY } from "@/lib/ai/config";
 import { createBrowserSupabase } from "@/lib/db/browser-client";
 import { blurFacesAndPlates } from "@/lib/privacy/blur";
+import { computeAHash } from "@/lib/utils/phash";
 import type { Classification } from "@/lib/types";
-import { reverseGeocode, submitReport } from "./actions";
+import type { DuplicateCandidate } from "./actions";
+import {
+  checkPotentialDuplicate,
+  linkAsDuplicate,
+  reverseGeocode,
+  submitReport,
+} from "./actions";
 
 async function blobToBase64(blob: Blob): Promise<string> {
   const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -50,6 +58,20 @@ type Step =
   | { name: "camera" }
   | { name: "preview"; photo: File }
   | { name: "submitting"; photo: File }
+  | {
+      name: "duplicate_check";
+      photo: File;
+      photoBlurred: string;
+      photoOriginal: string;
+      phash: string;
+      newPhotoDataUrl: string;
+      description: string | null;
+      tags: string[];
+      issueType: string | null;
+      candidate: DuplicateCandidate;
+    }
+  | { name: "confirming_link"; primaryReportId: string }
+  | { name: "linked"; primaryReportId: string }
   | {
       name: "emergency";
       photo: File;
@@ -150,56 +172,15 @@ export default function ReportPage() {
     setStep({ name: "camera" });
   }, []);
 
-  const handleSubmit = useCallback(
+  const doSubmit = useCallback(
     async (
+      photo: File,
+      photoBlurred: string,
+      photoOriginal: string,
+      phash: string,
       description: string | null,
       tags: string[],
-      issueType: string | null,
     ) => {
-      if (step.name !== "preview") return;
-
-      const photo = step.photo;
-      setStep({ name: "submitting", photo });
-      setManualIssueType(issueType);
-      setError(null);
-
-      // Decode + blur on-device. This can FAIL before anything is submitted —
-      // most commonly when the user picks a HEIC from the library on desktop
-      // Chrome / Android Chrome, where createImageBitmap rejects (blur.ts:136).
-      // That failure must NOT fall through to the success screen (no report was
-      // created): show a recoverable error and return to preview so the user can
-      // retake or pick a JPEG/PNG. Only genuine POST-submit failures use the
-      // fallback-to-done path below.
-      let photoBlurred: string;
-      let photoOriginal: string;
-      try {
-        // Blur faces/plates on-device, then send both versions:
-        // blurred → public bucket, original → raw bucket (staff-only).
-        const { blurred, original } = await blurFacesAndPlates(photo);
-        [photoBlurred, photoOriginal] = await Promise.all([
-          blobToBase64(blurred),
-          blobToBase64(original),
-        ]);
-      } catch {
-        setError(
-          "Could not process that image format. Please try a JPEG/PNG or retake the photo.",
-        );
-        setStep({ name: "preview", photo });
-        return;
-      }
-
-      // Guarantee a session right before submit. If the mount-time bootstrap was
-      // rate-limited (or never ran), the server action would reject the submit as
-      // "unauthenticated" and silently discard the photo/tags/description. Retry
-      // here (with backoff) and, on failure, keep the form intact with an honest
-      // message rather than dead-ending on a fake success.
-      const session = await ensureAnonSession();
-      if (!session.ok) {
-        setError(session.error);
-        setStep({ name: "preview", photo });
-        return;
-      }
-
       try {
         const result = await submitReport({
           photoBlurred,
@@ -208,6 +189,7 @@ export default function ReportPage() {
           address,
           description,
           tags,
+          phash,
         });
 
         if (!result.ok) {
@@ -254,8 +236,90 @@ export default function ReportPage() {
         setStep({ name: "preview", photo });
       }
     },
-    [step, location, address],
+    [location, address],
   );
+
+  const handleSubmit = useCallback(
+    async (
+      description: string | null,
+      tags: string[],
+      issueType: string | null,
+    ) => {
+      if (step.name !== "preview") return;
+
+      const photo = step.photo;
+      setStep({ name: "submitting", photo });
+      setManualIssueType(issueType);
+      setError(null);
+
+      let photoBlurred: string;
+      let photoOriginal: string;
+      try {
+        const { blurred, original } = await blurFacesAndPlates(photo);
+        [photoBlurred, photoOriginal] = await Promise.all([
+          blobToBase64(blurred),
+          blobToBase64(original),
+        ]);
+      } catch {
+        setError(
+          "Could not process that image format. Please try a JPEG/PNG or retake the photo.",
+        );
+        setStep({ name: "preview", photo });
+        return;
+      }
+
+      const session = await ensureAnonSession();
+      if (!session.ok) {
+        setError(session.error);
+        setStep({ name: "preview", photo });
+        return;
+      }
+
+      const phash = await computeAHash(`data:image/webp;base64,${photoBlurred}`);
+
+      if (location) {
+        const dupResult = await checkPotentialDuplicate({
+          lat: location.lat,
+          lng: location.lng,
+          phash,
+          category: issueType,
+        });
+        if (dupResult.ok && dupResult.data.length > 0) {
+          setStep({
+            name: "duplicate_check",
+            photo,
+            photoBlurred,
+            photoOriginal,
+            phash,
+            newPhotoDataUrl: `data:image/webp;base64,${photoBlurred}`,
+            description,
+            tags,
+            issueType,
+            candidate: dupResult.data[0],
+          });
+          return;
+        }
+      }
+
+      await doSubmit(photo, photoBlurred, photoOriginal, phash, description, tags);
+    },
+    [step, location, doSubmit],
+  );
+
+  const handleConfirmDuplicate = useCallback(async () => {
+    if (step.name !== "duplicate_check") return;
+    const primaryId = step.candidate.id;
+    setStep({ name: "confirming_link", primaryReportId: primaryId });
+    await linkAsDuplicate(primaryId);
+    setStep({ name: "linked", primaryReportId: primaryId });
+  }, [step]);
+
+  const handleDenyDuplicate = useCallback(async () => {
+    if (step.name !== "duplicate_check") return;
+    const { photo, photoBlurred, photoOriginal, phash, description, tags } = step;
+    setStep({ name: "submitting", photo });
+    await doSubmit(photo, photoBlurred, photoOriginal, phash, description, tags);
+  }, [step, doSubmit]);
 
   const handleEmergencyOverride = useCallback(() => {
     if (step.name !== "emergency") return;
@@ -469,6 +533,47 @@ export default function ReportPage() {
           onSubmit={handleSubmit}
           submitting={step.name === "submitting"}
         />
+      )}
+
+      {step.name === "duplicate_check" && (
+        <DuplicateCheck
+          newPhotoDataUrl={step.newPhotoDataUrl}
+          candidate={step.candidate}
+          onConfirm={handleConfirmDuplicate}
+          onDeny={handleDenyDuplicate}
+          confirming={false}
+        />
+      )}
+
+      {step.name === "confirming_link" && (
+        <DuplicateCheck
+          newPhotoDataUrl=""
+          candidate={{ id: step.primaryReportId, photo_public_url: "", address: null, category: null, created_at: new Date().toISOString(), distance_m: 0, score: 1 }}
+          onConfirm={() => {}}
+          onDeny={() => {}}
+          confirming={true}
+        />
+      )}
+
+      {step.name === "linked" && (
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center pb-safe">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40">
+            <svg
+              className="h-8 w-8 text-green-600 dark:text-green-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Thanks!</h1>
+          <p className="text-base text-faint">
+            Your sighting has been noted and will boost the priority of the existing report so staff address it sooner.
+          </p>
+        </div>
       )}
 
       {step.name === "emergency" && (

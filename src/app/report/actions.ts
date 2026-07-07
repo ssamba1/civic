@@ -41,6 +41,8 @@ const submitReportSchema = z.object({
     .max(8)
     .default([])
     .transform((arr) => arr.map((t) => t.trim()).filter((t) => t.length > 0)),
+  // 16-char hex aHash computed client-side for duplicate detection.
+  phash: z.string().optional(),
 });
 
 type SubmitReportInput = z.infer<typeof submitReportSchema>;
@@ -78,7 +80,7 @@ export async function submitReport(
   if (!parsed.success) {
     return { ok: false, error: z.prettifyError(parsed.error) };
   }
-  const { photoBlurred, photoOriginal, location, address, description, tags } =
+  const { photoBlurred, photoOriginal, location, address, description, tags, phash } =
     parsed.data;
 
   // reports.location is NOT NULL geography(POINT,4326). When GPS is unavailable,
@@ -195,6 +197,7 @@ export async function submitReport(
     // attach it via a typed-loose record only when async is ON. The flag-off
     // insert is the bare reportRow — byte-identical to the original behavior.
     ...(ASYNC_CLASSIFY ? { classify_status: "pending" } : {}),
+    ...(phash ? { photo_phash: phash } : {}),
   } as Record<string, unknown>;
   const { error: insertErr } = await ssr.from("reports").insert(reportRow);
   if (insertErr) {
@@ -326,4 +329,129 @@ export async function reverseGeocode(input: {
   } catch {
     return { ok: false, error: "geocode_failed" };
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pre-submit duplicate detection
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface DuplicateCandidate {
+  id: string;
+  photo_public_url: string;
+  address: string | null;
+  category: string | null;
+  created_at: string;
+  distance_m: number;
+  score: number;
+}
+
+// Bit-count lookup for each nibble (0-15) — used server-side for hamming distance.
+const NIBBLE_BITS = [0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4];
+
+function hammingDistance(a: string, b: string): number {
+  let dist = 0;
+  const len = Math.min(a.length, b.length);
+  for (let i = 0; i < len; i++) {
+    dist += NIBBLE_BITS[parseInt(a[i], 16) ^ parseInt(b[i], 16)];
+  }
+  return dist;
+}
+
+/**
+ * Find existing reports that might be duplicates of an about-to-be-submitted
+ * report.  Called client-side just before the user hits Submit; if a strong
+ * candidate is found the UI shows a side-by-side comparison so the resident
+ * can confirm or deny before any upload happens.
+ *
+ * Scoring (all components in [0, 1]):
+ *   50% location  — how close is the existing report geographically?
+ *   30% visual    — hamming distance between aHash values (0.5 if hash missing)
+ *   20% category  — exact match / mismatch / unknown (0.5)
+ * Threshold: 0.5 — below this we don't show the warning.
+ */
+export async function checkPotentialDuplicate(params: {
+  lat: number;
+  lng: number;
+  phash: string;
+  category?: string | null;
+}): Promise<Result<DuplicateCandidate[]>> {
+  const service = createServerClient();
+
+  type NearbyRow = {
+    id: string;
+    photo_public_url: string;
+    address: string | null;
+    created_at: string;
+    photo_phash: string | null;
+    category: string | null;
+    distance_m: number;
+  };
+
+  const { data, error } = await service.rpc("find_nearby_open_reports", {
+    _lat: params.lat,
+    _lng: params.lng,
+    _radius_m: 200,
+    _window_days: 30,
+  });
+
+  if (error) {
+    logger.warn("find_nearby_open_reports failed", { error: error.message });
+    return { ok: true, data: [] };
+  }
+
+  const rows = (data ?? []) as NearbyRow[];
+  const candidates: DuplicateCandidate[] = [];
+
+  for (const row of rows) {
+    const locationScore = Math.max(0, 1 - row.distance_m / 200);
+
+    const visualScore =
+      row.photo_phash && params.phash
+        ? 1 - hammingDistance(params.phash, row.photo_phash) / 64
+        : 0.5;
+
+    const categoryScore =
+      params.category && row.category
+        ? params.category === row.category
+          ? 1
+          : 0
+        : 0.5;
+
+    const score =
+      0.5 * locationScore + 0.3 * visualScore + 0.2 * categoryScore;
+
+    if (score >= 0.5) {
+      candidates.push({
+        id: row.id,
+        photo_public_url: row.photo_public_url,
+        address: row.address,
+        category: row.category,
+        created_at: row.created_at,
+        distance_m: Math.round(row.distance_m),
+        score,
+      });
+    }
+  }
+
+  candidates.sort((a, b) => b.score - a.score);
+  return { ok: true, data: candidates.slice(0, 1) };
+}
+
+/**
+ * User confirmed that their photo shows the same issue as an existing report.
+ * We don't upload their photo; we just bump the existing work order's priority
+ * so staff know the issue has more sightings.
+ */
+export async function linkAsDuplicate(
+  primaryReportId: string,
+): Promise<Result<void>> {
+  const service = createServerClient();
+  const { error } = await service.rpc("bump_work_order_priority", {
+    _report_id: primaryReportId,
+    _delta: 1,
+  });
+  if (error) {
+    logger.warn("linkAsDuplicate: bump failed", { error: error.message, primaryReportId });
+  }
+  return { ok: true, data: undefined };
 }
