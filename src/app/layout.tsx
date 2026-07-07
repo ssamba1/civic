@@ -125,6 +125,10 @@ export default async function RootLayout({
       // common path. suppressHydrationWarning: the script may flip this to the
       // stored "light" preference before React hydrates <html>.
       suppressHydrationWarning
+      // globals.css sets `scroll-behavior: smooth` on html; Next 16 wants the
+      // intent declared so router transitions can temporarily disable it
+      // instead of warning (missing-data-scroll-behavior).
+      data-scroll-behavior="smooth"
       className={`dark ${sans.variable} ${display.variable} ${hero.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">

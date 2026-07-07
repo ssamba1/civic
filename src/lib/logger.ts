@@ -44,12 +44,23 @@ export function createLogger(context: string): Logger {
     },
 
     error(message, err, meta) {
-      const errMsg =
-        err instanceof Error
-          ? err.message
-          : err != null
-            ? String(err)
-            : undefined;
+      // Non-Error throwables (PostgrestError etc.) are plain objects — String()
+      // yields "[object Object]" and destroys the diagnostic fields, so
+      // serialize objects as JSON instead.
+      let errMsg: string | undefined;
+      if (err instanceof Error) {
+        errMsg = err.message;
+      } else if (err != null) {
+        if (typeof err === "object") {
+          try {
+            errMsg = JSON.stringify(err);
+          } catch {
+            errMsg = String(err);
+          }
+        } else {
+          errMsg = String(err);
+        }
+      }
       emit("error", message, { ...meta, ...(errMsg ? { err: errMsg } : {}) });
 
       Sentry.withScope((scope) => {
