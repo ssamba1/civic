@@ -14,7 +14,11 @@ const bin = join(
   ".bin",
   process.platform === "win32" ? "vitest.CMD" : "vitest",
 );
-const child = spawn(bin, ["run", "tests/rls", ...process.argv.slice(2)], {
+// shell:true concatenates args unescaped — an unquoted repo path with spaces
+// ("C:\My projects Main\...") splits at the first space and the run dies with
+// "'C:\My' is not recognized". Quote the binary on Windows.
+const cmd = process.platform === "win32" ? `"${bin}"` : bin;
+const child = spawn(cmd, ["run", "tests/rls", ...process.argv.slice(2)], {
   stdio: "inherit",
   shell: process.platform === "win32",
   env: { ...process.env, RUN_RLS_TESTS: "1" },
