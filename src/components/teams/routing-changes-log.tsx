@@ -126,7 +126,8 @@ function RoutingChangesLogInner() {
                   <div className="flex items-center gap-1.5 pl-4 text-[11px] text-faint">
                     <span className="inline-flex min-w-0 items-center gap-1">
                       <span
-                        className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-faint"
+                        className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
+                        style={{ background: fromTeam?.color ?? "#737373" }}
                         aria-hidden
                       />
                       <span className="truncate">
@@ -140,7 +141,8 @@ function RoutingChangesLogInner() {
                     />
                     <span className="inline-flex min-w-0 items-center gap-1 text-subtle">
                       <span
-                        className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-faint"
+                        className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
+                        style={{ background: toTeam?.color ?? "#737373" }}
                         aria-hidden
                       />
                       <span className="truncate">

@@ -1,12 +1,14 @@
 "use client";
 
 import {
+  ArrowLeft,
   BarChart3,
   LayoutDashboard,
   LogOut,
   Map as MapIcon,
-  UsersRound,
+  Table,
 } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOutDemo } from "@/app/login/actions";
 import {
@@ -16,18 +18,27 @@ import {
   SidebarWhenExpanded,
 } from "@/components/dashboard/sidebar-shell";
 import { teamIcon } from "@/components/teams/team-icon";
-import { TEAM_LIST, TEAMS, type TeamId } from "@/lib/teams";
+import { TEAMS, type TeamId } from "@/lib/teams";
 
 interface TeamSidebarProps {
   team: TeamId;
   city: string;
   /** Active demo persona label (from the session cookie), or null if none. */
   accountLabel: string | null;
+  /** Server-computed staff status (or demo city) — gates the Grid tab, which is
+   *  staff-gated server-side, so the rail never links to a page that bounces to
+   *  /login. Mirrors CitySidebar. */
+  isStaff: boolean;
 }
 
 /** Desktop (md+) enterprise left rail for team views. Mobile keeps the fixed
  *  two-row TeamHeader. */
-export function TeamSidebar({ team, city, accountLabel }: TeamSidebarProps) {
+export function TeamSidebar({
+  team,
+  city,
+  accountLabel,
+  isStaff,
+}: TeamSidebarProps) {
   const pathname = usePathname();
   const meta = TEAMS[team];
   const Icon = teamIcon(meta.icon);
@@ -46,6 +57,19 @@ export function TeamSidebar({ team, city, accountLabel }: TeamSidebarProps) {
       icon: MapIcon,
       active: pathname === `${base}/map`,
     },
+    // Team-scoped work-order grid — same spreadsheet as the city Grid, filtered
+    // to this team's issues. Staff-gated server-side, so hide it for non-staff
+    // (matching CitySidebar) rather than link to a page that bounces to /login.
+    ...(isStaff
+      ? [
+          {
+            label: "Grid",
+            href: `${base}/grid`,
+            icon: Table,
+            active: pathname === `${base}/grid`,
+          },
+        ]
+      : []),
     {
       label: "Analytics",
       href: `${base}/analytics`,
@@ -54,24 +78,31 @@ export function TeamSidebar({ team, city, accountLabel }: TeamSidebarProps) {
     },
   ];
 
-  // Back to the all-teams city view, with sibling teams as sub-tabs so
-  // switching workspaces never requires the city page round-trip.
-  const cityItems = [
-    {
-      label: "All teams",
-      href: `/city/${city}`,
-      icon: UsersRound,
-      active: false,
-      sub: TEAM_LIST.filter((t) => t.id !== "all").map((t) => ({
-        label: t.shortLabel,
-        href: `/${t.id}/${city}`,
-        active: t.id === team,
-        // Grayscale by design — department identity is chrome, not state or
-        // map/chart category encoding, so the dot stays neutral everywhere.
-        dotColor: "var(--faint)",
-      })),
-    },
-  ];
+  // "Return to admin" — leaves this team workspace for the all-teams (admin)
+  // city view. Sits above the team nav as the single, explicit way back; sibling
+  // teams are reached from there, keeping this rail simple.
+  const returnToAdminBtn = (compact: boolean) => (
+    <Link
+      href={`/city/${city}`}
+      aria-label="Return to admin"
+      title="Return to admin"
+      className={[
+        compact
+          ? "inline-flex h-9 w-full items-center justify-center rounded-lg"
+          : "inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg px-2.5",
+        "border border-hairline-strong bg-overlay text-[13px] font-medium text-foreground",
+        "outline-none transition-colors hover:bg-overlay-strong",
+        "focus-visible:ring-2 focus-visible:ring-accent/60",
+      ].join(" ")}
+    >
+      <ArrowLeft
+        className="h-3.5 w-3.5 shrink-0"
+        strokeWidth={2}
+        aria-hidden="true"
+      />
+      {!compact && "Return to admin"}
+    </Link>
+  );
 
   const signOutBtn = (compact: boolean) => (
     <form action={signOutDemo}>
@@ -103,7 +134,8 @@ export function TeamSidebar({ team, city, accountLabel }: TeamSidebarProps) {
       context={
         <span className="inline-flex w-full min-w-0 items-center gap-2 text-[13px] font-medium text-foreground">
           <Icon
-            className="h-4 w-4 shrink-0 text-subtle"
+            className="h-4 w-4 shrink-0"
+            style={{ color: meta.color }}
             strokeWidth={2}
             aria-hidden="true"
           />
@@ -130,8 +162,9 @@ export function TeamSidebar({ team, city, accountLabel }: TeamSidebarProps) {
       }
     >
       <div className="flex flex-col gap-4">
+        <SidebarWhenExpanded>{returnToAdminBtn(false)}</SidebarWhenExpanded>
+        <SidebarWhenCollapsed>{returnToAdminBtn(true)}</SidebarWhenCollapsed>
         <SidebarNav heading="Team views" items={items} />
-        <SidebarNav heading="City" items={cityItems} />
       </div>
     </SidebarShell>
   );

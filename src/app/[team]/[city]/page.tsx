@@ -37,7 +37,7 @@ export default async function TeamOverviewPage({ params }: PageProps) {
   // client-only category-override resolver.
   return (
     <div className="flex flex-col min-h-dvh">
-      <div className="flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-10 sm:px-6 lg:px-8">
+      <div className="flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
         <section className="mb-5">
           <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.08em] text-faint">
             <span
@@ -58,7 +58,7 @@ export default async function TeamOverviewPage({ params }: PageProps) {
       </div>
 
       <footer className="border-t border-hairline mt-10 pb-safe">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-6 text-[13px] text-faint sm:flex-row sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-[1800px] flex-col items-center justify-between gap-3 px-3 py-6 text-[13px] text-faint sm:flex-row sm:px-4 lg:px-6">
           <span>Civic</span>
           <span>&copy; {new Date().getFullYear()} · Open311 compatible</span>
         </div>

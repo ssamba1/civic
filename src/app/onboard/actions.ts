@@ -1,6 +1,7 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
+import { KNOWN_CITIES, MUNICIPALITIES } from "@/lib/dashboard-data";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
@@ -10,6 +11,7 @@ import type {
   OnboardCityInput,
   ProvisionedAccount,
   ProvisionResult,
+  SlugCheck,
   StaffRole,
 } from "@/lib/onboarding/types";
 
@@ -161,6 +163,61 @@ export async function searchCities(query: string): Promise<CitySuggestion[]> {
     logger.error("city search failed", err);
     return [];
   }
+}
+
+// Slugs owned by built-in cities. `/city/[slug]` resolves DB cities first, then
+// falls back to these (KNOWN_CITIES + the MUNICIPALITIES directory), so any of
+// them is a genuine collision even though no `cities` row exists yet.
+const BUILTIN_SLUGS: ReadonlySet<string> = new Set([
+  ...Object.keys(KNOWN_CITIES),
+  ...MUNICIPALITIES.map((m) => m.slug),
+]);
+
+/**
+ * Live pre-flight for the wizard's City step: is `/city/[slug]` free, and if
+ * not, what nearby slugs are? This surfaces a collision on step 1 instead of
+ * letting it fail at provisioning (step 5). `provisionCity` still re-checks
+ * authoritatively — this is a UX shortcut, not the source of truth.
+ *
+ * One DB round-trip covers the slug plus every candidate alternative. On a DB
+ * error the query yields no rows, so we fall back to the built-in reserved set
+ * only; the hard check at submit remains the backstop.
+ */
+export async function checkCitySlug(
+  rawSlug: string,
+  state?: string,
+): Promise<SlugCheck> {
+  const slug = (rawSlug || "").trim().toLowerCase();
+  if (!slug || !SLUG_RE.test(slug)) {
+    return { slug, status: "invalid", suggestions: [] };
+  }
+
+  // Candidate alternatives in preference order: state-qualified, then generic
+  // and numbered. Kept slug-valid so any accepted candidate is itself legal.
+  const st = (state || "").trim().toLowerCase();
+  const candidates = [
+    st && `${slug}-${st}`,
+    `${slug}-city`,
+    `${slug}-2`,
+    `${slug}-3`,
+    `${slug}-4`,
+  ].filter((c): c is string => !!c && SLUG_RE.test(c));
+  const uniqueCandidates = [...new Set(candidates)];
+
+  const db = createServerClient();
+  const { data } = await db
+    .from("cities")
+    .select("slug")
+    .in("slug", [slug, ...uniqueCandidates]);
+  const taken = new Set<string>((data ?? []).map((r) => r.slug as string));
+  for (const s of BUILTIN_SLUGS) taken.add(s);
+
+  if (!taken.has(slug)) return { slug, status: "available", suggestions: [] };
+  return {
+    slug,
+    status: "taken",
+    suggestions: uniqueCandidates.filter((c) => !taken.has(c)).slice(0, 3),
+  };
 }
 
 interface AccountWork {

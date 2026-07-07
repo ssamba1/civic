@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { ensureResidentProfile } from "@/app/user/actions";
-import { createBrowserSupabase } from "@/lib/db/browser-client";
+import { ensureAnonSession } from "@/components/report/ensure-anon-session";
 
 /**
  * Resident anon-first bootstrap (PLAN.md §7). The resident surface has no login
@@ -18,11 +18,10 @@ import { createBrowserSupabase } from "@/lib/db/browser-client";
  */
 export function AnonBootstrap() {
   useEffect(() => {
-    const supabase = createBrowserSupabase();
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!data.session) {
-        await supabase.auth.signInAnonymously();
-      }
+    // Reuse a persisted session or mint an anonymous guest one — deduped and
+    // backed off on the shared project's signup rate limit via the same helper
+    // /report uses, so the two mount points can't race into a 429.
+    ensureAnonSession().then(() => {
       // Runs whether the session was just created or already present; the
       // action is idempotent and a silent no-op when Supabase is unconfigured.
       void ensureResidentProfile();

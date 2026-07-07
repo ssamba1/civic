@@ -14,9 +14,16 @@ interface TeamHeaderProps {
   city: string;
   /** Active demo persona label (from the session cookie), or null if none. */
   accountLabel: string | null;
+  /** Server-computed staff status — gates the Grid tab in the mobile nav. */
+  isStaff: boolean;
 }
 
-export function TeamHeader({ team, city, accountLabel }: TeamHeaderProps) {
+export function TeamHeader({
+  team,
+  city,
+  accountLabel,
+  isStaff,
+}: TeamHeaderProps) {
   const pathname = usePathname();
   // On the fullscreen map, drop the black casing so the map reads edge-to-edge.
   const transparent = pathname?.endsWith("/map") ?? false;
@@ -24,7 +31,14 @@ export function TeamHeader({ team, city, accountLabel }: TeamHeaderProps) {
   const Icon = teamIcon(meta.icon);
 
   const badge = (
-    <span className="inline-flex min-w-0 items-center gap-1.5 rounded-[var(--radius-sm)] border border-hairline bg-overlay px-2.5 py-1 text-[12px] font-medium text-subtle">
+    <span
+      className="inline-flex min-w-0 items-center gap-1.5 rounded-[var(--radius-sm)] border px-2.5 py-1 text-[12px] font-medium"
+      style={{
+        color: meta.color,
+        borderColor: `${meta.color}55`,
+        backgroundColor: `${meta.color}1a`,
+      }}
+    >
       <Icon
         className="h-3.5 w-3.5 shrink-0"
         strokeWidth={2}
@@ -64,7 +78,7 @@ export function TeamHeader({ team, city, accountLabel }: TeamHeaderProps) {
     >
       {/* ── Mobile: two rows (logo/identity row + segmented nav row) ── */}
       <div>
-        <div className="flex h-14 w-full items-center justify-between gap-2 px-4">
+        <div className="flex h-14 w-full items-center justify-between gap-2 px-3">
           <Link
             href="/"
             className="group inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-accent/60"
@@ -81,7 +95,12 @@ export function TeamHeader({ team, city, accountLabel }: TeamHeaderProps) {
           </div>
         </div>
         <div className="px-2 pb-2">
-          <TeamNav team={team} city={city} mobileSlot="tabs" />
+          <TeamNav
+            team={team}
+            city={city}
+            mobileSlot="tabs"
+            isStaff={isStaff}
+          />
         </div>
       </div>
     </header>

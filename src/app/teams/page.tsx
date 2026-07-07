@@ -21,7 +21,7 @@ export default function TeamsIndexPage() {
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
       <header className="border-b border-hairline bg-glass backdrop-blur-xl supports-[backdrop-filter]:bg-glass pt-safe">
-        <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between gap-4 px-3 sm:px-4 lg:px-6">
           <Link
             href="/"
             className="group inline-flex shrink-0 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
@@ -36,7 +36,7 @@ export default function TeamsIndexPage() {
       </header>
 
       <main className="flex-1">
-        <div className="mx-auto w-full max-w-7xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-7xl px-3 pb-16 pt-10 sm:px-4 lg:px-6">
           <section className="mb-8">
             <p className="text-[12px] font-medium uppercase tracking-[0.08em] text-faint">
               Team dashboards
@@ -102,7 +102,7 @@ export default function TeamsIndexPage() {
       </main>
 
       <footer className="border-t border-hairline pb-safe">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-6 text-[13px] text-faint sm:flex-row sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-3 py-6 text-[13px] text-faint sm:flex-row sm:px-4 lg:px-6">
           <span>Civic</span>
           <span>&copy; {new Date().getFullYear()} · Open311 compatible</span>
         </div>

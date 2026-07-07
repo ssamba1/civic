@@ -1,7 +1,8 @@
-// v2: purge v1 caches on activate — v1 was installed by dev browsers (dev now
-// unregisters instead of registering, see layout.tsx) and cached non-hashed
-// dev chunks cache-first, freezing those browsers on stale bundles.
-const CACHE_NAME = "civic-v2";
+// v3: purge older caches on activate — v1/v2 were installed by dev browsers (dev
+// now unregisters instead of registering, see layout.tsx) and cached non-hashed
+// dev chunks cache-first, freezing those browsers on stale bundles. Bumping the
+// version forces already-frozen browsers to drop the stale cache on SW update.
+const CACHE_NAME = "civic-v3";
 const STATIC_ASSETS = ["/", "/offline", "/manifest.json"];
 
 // Install: pre-cache shell
@@ -31,6 +32,16 @@ self.addEventListener("fetch", (event) => {
 
   // Skip non-GET requests
   if (request.method !== "GET") return;
+
+  // Dev safety: on localhost, Turbopack keeps chunk/CSS URLs stable across edits,
+  // so cache-first would replay a frozen bundle and hide every later change. A
+  // leftover SW from a past prod build on :3000 must not do that — always go to
+  // the network here (fall back to cache only when offline). Production hosts are
+  // never localhost, so this never affects the deployed PWA.
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+    event.respondWith(fetch(request).catch(() => caches.match(request)));
+    return;
+  }
 
   // Never cache API / admin routes — may contain authed user data
   if (

@@ -3,7 +3,7 @@
 // animate-pulse only — transforms/opacity safe, no layout animation.
 export default function BrowseLoading() {
   return (
-    <div className="flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-[calc(2.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8">
+    <div className="flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-[calc(2.5rem+env(safe-area-inset-bottom))] sm:px-4 lg:px-6">
       {/* Header */}
       <section className="mb-6 sm:mb-8">
         <div className="h-3 w-32 rounded bg-overlay-strong" />

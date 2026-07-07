@@ -130,7 +130,8 @@ function WorkloadBarsInner({
                 {/* Label: hidden on mobile (bar+count only); shown sm+ */}
                 <span className="hidden sm:flex min-w-0 items-center gap-2 text-[12px] text-subtle">
                   <span
-                    className="h-2 w-2 flex-shrink-0 rounded-full bg-faint"
+                    className="h-2 w-2 flex-shrink-0 rounded-full"
+                    style={{ background: team.color }}
                     aria-hidden
                   />
                   <span className="truncate">{team.shortLabel}</span>
@@ -139,7 +140,8 @@ function WorkloadBarsInner({
                 <div className="flex flex-col gap-1 sm:hidden col-span-1">
                   <span className="flex min-w-0 items-center gap-2 text-[12px] text-subtle">
                     <span
-                      className="h-2 w-2 flex-shrink-0 rounded-full bg-faint"
+                      className="h-2 w-2 flex-shrink-0 rounded-full"
+                      style={{ background: team.color }}
                       aria-hidden
                     />
                     <span className="truncate">{team.shortLabel}</span>
@@ -231,9 +233,14 @@ function buildTip(w: TeamWorkload) {
     w.total > 0 ? Math.round((w.closedCount / w.total) * 100) : 0;
   return {
     title: team.shortLabel,
+    accent: team.color,
     body: (
       <div className="flex flex-col gap-1.5">
-        <TipRow label="Total" value={w.total.toLocaleString()} />
+        <TipRow
+          label="Total"
+          value={w.total.toLocaleString()}
+          accent={team.color}
+        />
         <TipRow
           label="Open"
           value={w.openCount.toLocaleString()}

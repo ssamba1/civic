@@ -1,11 +1,8 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
-import {
-  DEMO_SESSION_COOKIE,
-  findDemoAccount,
-  isDemoStaffAccount,
-} from "@/lib/demo-auth";
+import { DEMO_SESSION_COOKIE, isDemoStaffAccount } from "@/lib/demo-auth";
+import { findVerifiedDemoAccount } from "@/lib/demo-cookie";
 import { DEMO_MODE } from "@/lib/demo-mode";
 
 /**
@@ -26,7 +23,11 @@ export async function isStaffForCity(slug: string): Promise<boolean> {
   const demoStaff =
     DEMO_MODE &&
     isDemoStaffAccount(
-      findDemoAccount((await cookies()).get(DEMO_SESSION_COOKIE)?.value),
+      // Verify the HMAC signature before trusting the persona — a bare/forged
+      // civic_demo_session cookie must not prove staff access.
+      findVerifiedDemoAccount(
+        (await cookies()).get(DEMO_SESSION_COOKIE)?.value,
+      ),
     );
   const devBypass =
     process.env.NODE_ENV === "development" &&

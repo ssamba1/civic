@@ -124,11 +124,42 @@ const SEVERITY_LABELS: Record<number, string> = {
   5: "Critical",
 };
 
-// Severity used to run a 5-shade traffic-light ramp (green→red). The number
-// already carries the value, so the chip is neutralized to one outline style
-// everywhere — no rainbow grading by level.
-const SEVERITY_CHIP =
-  "border border-hairline-strong bg-overlay text-foreground";
+// Severity 1→5 runs a green→red traffic-light ramp so the level reads at a
+// glance, not just from the digit. Built by color-mixing the three AA-tuned
+// `--status-*-fg` tokens (not the saturated `--color-*` — those have no dark
+// override, so text on them fails contrast in dark mode): success → warning →
+// danger, with mixed midpoints for levels 2 and 4. One hue drives all three of
+// a chip's surfaces — colored digit, 14% tint fill, 42% ring — so the same
+// value is used as text (AA-safe) and as low-opacity tint.
+const SEVERITY_HUE: Record<number, string> = {
+  1: "var(--status-success-fg)",
+  2: "color-mix(in srgb, var(--status-success-fg) 55%, var(--status-warning-fg))",
+  3: "var(--status-warning-fg)",
+  4: "color-mix(in srgb, var(--status-warning-fg) 50%, var(--status-danger-fg))",
+  5: "var(--status-danger-fg)",
+};
+
+function severityChipStyle(value: number): React.CSSProperties {
+  const hue = SEVERITY_HUE[value] ?? SEVERITY_HUE[3];
+  return {
+    color: hue,
+    backgroundColor: `color-mix(in srgb, ${hue} 14%, transparent)`,
+    borderColor: `color-mix(in srgb, ${hue} 42%, transparent)`,
+    borderWidth: 1,
+    borderStyle: "solid",
+  };
+}
+
+// Priority score → the same green→red ramp, banded across the practical
+// non-emergency range (~3.5–15, bar domain clamped to 20). Colors the number
+// and the proportional bar together so length and hue reinforce each other.
+function priorityHue(score: number): string {
+  if (score < 4) return SEVERITY_HUE[1];
+  if (score < 7) return SEVERITY_HUE[2];
+  if (score < 9) return SEVERITY_HUE[3];
+  if (score < 12) return SEVERITY_HUE[4];
+  return SEVERITY_HUE[5];
+}
 
 // Status → semantic vocabulary. open/rejected are the two states that need
 // attention (unclaimed backlog, needs a manual look) so they carry warning;
@@ -191,7 +222,8 @@ const gridThemeLight = themeQuartz.withParams({
   rowHoverColor: "rgba(0, 0, 0, 0.04)", // --overlay (light)
   selectedRowBackgroundColor: "rgba(24, 24, 27, 0.07)", // --accent-soft (light)
   borderColor: "rgba(0, 0, 0, 0.08)", // --hairline (light)
-  wrapperBorderRadius: "12px", // --radius-lg
+  wrapperBorderRadius: "0px", // full-bleed — grid runs edge-to-edge
+  wrapperBorder: false, // no outer frame; grid fills the content area
 });
 const gridThemeDark = themeQuartz.withParams({
   accentColor: "#f4f4f5", // --accent (dark)
@@ -206,14 +238,20 @@ const gridThemeDark = themeQuartz.withParams({
   rowHoverColor: "rgba(255, 255, 255, 0.04)", // --overlay (dark)
   selectedRowBackgroundColor: "rgba(255, 255, 255, 0.09)", // --accent-soft (dark)
   borderColor: "rgba(255, 255, 255, 0.09)", // --hairline (dark)
-  wrapperBorderRadius: "12px", // --radius-lg
+  wrapperBorderRadius: "0px", // full-bleed — grid runs edge-to-edge
+  wrapperBorder: false, // no outer frame; grid fills the content area
 });
 
-// Neutral icon tile — category/team color no longer rides on chrome (only map
-// data layers and chart series carry hue); the glyph + label already identify
-// the type, so a flat --elevated tile is the "filled" icon read (lucide ships
-// outline-only glyphs, so the fill lives on the tile, not the icon color).
+// Neutral icon tile for category glyphs — category color stays off chrome
+// here (only map data layers and chart series carry category hue).
 const ICON_TILE = "bg-elevated text-subtle";
+
+// Team icon tile — a soft alpha-tinted tile in the team's own color (the
+// "filled" icon read; lucide ships outline-only glyphs, so the fill lives on
+// the tile, not the icon color).
+function iconTileStyle(color: string): React.CSSProperties {
+  return { backgroundColor: `${color}1f`, color };
+}
 
 // ── Custom dropdown editor ──────────────────────────────────────────────────
 // Replaces agSelectCellEditor: the native <select> popup is OS-drawn chrome
@@ -261,10 +299,8 @@ function OptionGlyph({
   if (kind === "severity") {
     return (
       <span
-        className={cn(
-          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
-          SEVERITY_CHIP,
-        )}
+        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold"
+        style={severityChipStyle(value as number)}
       >
         {value}
       </span>
@@ -464,10 +500,8 @@ function TeamCell({ data }: ICellRendererParams<GridReportRow>) {
   return (
     <span className="flex items-center gap-2">
       <span
-        className={cn(
-          "flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--radius-md)]",
-          ICON_TILE,
-        )}
+        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--radius-md)]"
+        style={iconTileStyle(team.color)}
       >
         <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />
       </span>
@@ -483,10 +517,8 @@ function SeverityCell({ value }: ICellRendererParams<GridReportRow, number>) {
   return (
     <EditPill className="h-8">
       <span
-        className={cn(
-          "inline-flex h-[22px] w-[22px] items-center justify-center rounded-full text-[11px] font-semibold",
-          SEVERITY_CHIP,
-        )}
+        className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full text-[11px] font-semibold"
+        style={severityChipStyle(value)}
       >
         {value}
       </span>
@@ -514,15 +546,19 @@ function PriorityCell({ data }: ICellRendererParams<GridReportRow>) {
   const score = data.priority_score;
   // Practical non-emergency priorities sit ~3.5–15; clamp the bar domain to 20.
   const pct = Math.max(4, Math.min(100, (score / 20) * 100));
+  const hue = priorityHue(score);
   return (
     <span className="flex items-center gap-2">
-      <span className="tabular-nums text-[13px] font-medium text-foreground">
+      <span
+        className="tabular-nums text-[13px] font-semibold"
+        style={{ color: hue }}
+      >
         {score.toFixed(1)}
       </span>
       <span className="h-1.5 w-14 overflow-hidden rounded-full bg-elevated">
         <span
-          className="block h-full rounded-full bg-foreground"
-          style={{ width: `${pct}%` }}
+          className="block h-full rounded-full"
+          style={{ width: `${pct}%`, backgroundColor: hue }}
         />
       </span>
     </span>
@@ -569,7 +605,10 @@ function LabelPillCell({
   return (
     <EditPill className="h-8">
       <span
-        className={cn("truncate text-[13px]", value ? "text-foreground" : "text-faint")}
+        className={cn(
+          "truncate text-[13px]",
+          value ? "text-foreground" : "text-faint",
+        )}
       >
         {value ? titleize(value) : "—"}
       </span>
@@ -674,6 +713,93 @@ const dateFmt = (p: ValueFormatterParams<GridReportRow, string>) =>
       })
     : "—";
 
+// ── Page-size control ────────────────────────────────────────────────────────
+// Custom styled dropdown (not AG Grid's built-in number-only selector) so "All"
+// is an option, and so the chrome matches the grid's other styled dropdowns
+// instead of an OS-drawn <select>. "all" maps to the full filtered row count so
+// pagination collapses to a single page.
+type PageChoice = 25 | 50 | 100 | "all";
+const PAGE_CHOICES: PageChoice[] = [25, 50, 100, "all"];
+const pageChoiceLabel = (c: PageChoice) => (c === "all" ? "All" : String(c));
+
+function PageSizeSelect({
+  value,
+  onChange,
+}: {
+  value: PageChoice;
+  onChange: (c: PageChoice) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={`Rows per page: ${pageChoiceLabel(value)}`}
+        className="inline-flex items-center gap-1.5 rounded-[var(--radius-md)] border border-hairline bg-overlay px-2.5 py-1 text-xs font-medium text-subtle outline-none transition-colors hover:border-hairline-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60"
+      >
+        <span className="text-faint">Rows</span>
+        <span className="tabular-nums text-foreground">
+          {pageChoiceLabel(value)}
+        </span>
+        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-faint" />
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          className="absolute right-0 bottom-full z-30 mb-1.5 w-28 overflow-hidden rounded-[var(--radius-md)] border border-hairline bg-surface p-1 shadow-[var(--shadow-pop)]"
+        >
+          {PAGE_CHOICES.map((c) => {
+            const selected = c === value;
+            return (
+              <button
+                key={c}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                onClick={() => {
+                  onChange(c);
+                  setOpen(false);
+                }}
+                className={cn(
+                  "flex w-full items-center justify-between rounded-[var(--radius-sm)] px-2.5 py-1.5 text-left text-[13px] text-foreground transition-colors hover:bg-overlay",
+                  selected && "font-medium",
+                )}
+              >
+                <span className="tabular-nums">{pageChoiceLabel(c)}</span>
+                {selected && (
+                  <Check className="h-4 w-4 shrink-0 text-[var(--color-primary)]" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function WorkOrderGrid({
   rows,
   cityId,
@@ -719,6 +845,9 @@ export function WorkOrderGrid({
 
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  // Page size: base 25, user-selectable 25/50/100/All. "all" resolves to the
+  // current filtered row count so pagination collapses to one page.
+  const [pageChoice, setPageChoice] = useState<PageChoice>(25);
   const allChipRef = useRef<HTMLButtonElement>(null);
 
   // Search first, then status — the chip counts read from the searched set so
@@ -745,6 +874,10 @@ export function WorkOrderGrid({
         : searched,
     [searched, statusFilter],
   );
+
+  // "All" ⇒ one page holding every filtered row (min 1 — AG Grid rejects 0).
+  const effectivePageSize =
+    pageChoice === "all" ? Math.max(filtered.length, 1) : pageChoice;
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -956,8 +1089,10 @@ export function WorkOrderGrid({
     "border-hairline bg-overlay text-subtle hover:border-hairline-strong hover:text-foreground";
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+    <div className="flex min-h-0 flex-1 flex-col gap-2">
+      {/* Toolbar keeps horizontal padding so search + chips have breathing
+          room; the grid below runs full-bleed to the viewport edges. */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 pt-3 sm:px-4 lg:px-6">
         <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
           <input
@@ -1019,15 +1154,18 @@ export function WorkOrderGrid({
           ))}
         </fieldset>
 
-        {/* Always visible — the grid is just as editable on mobile, and a
-            hidden warning turns unsaved edits into silent data loss. */}
-        <span
-          className="ml-auto inline-flex items-center gap-1.5 rounded-[var(--radius-md)] border border-hairline bg-overlay px-2.5 py-1 text-[11px] font-medium text-[var(--status-warning-fg)]"
-          title="Category, severity, status, department, and crew are editable — click a cell. Changes are not saved to the database."
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-warning)]" />
-          Edits not saved to database
-        </span>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <PageSizeSelect value={pageChoice} onChange={setPageChoice} />
+          {/* Always visible — the grid is just as editable on mobile, and a
+              hidden warning turns unsaved edits into silent data loss. */}
+          <span
+            className="inline-flex items-center gap-1.5 rounded-[var(--radius-md)] border border-hairline bg-overlay px-2.5 py-1 text-[11px] font-medium text-[var(--status-warning-fg)]"
+            title="Category, severity, status, department, and crew are editable — click a cell. Changes are not saved to the database."
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-warning)]" />
+            Edits not saved to database
+          </span>
+        </div>
       </div>
 
       <div className="wo-grid min-h-0 flex-1">
@@ -1047,7 +1185,13 @@ export function WorkOrderGrid({
           stopEditingWhenCellsLoseFocus
           onCellValueChanged={onCellValueChanged}
           pagination
-          paginationAutoPageSize
+          paginationPageSize={effectivePageSize}
+          // Our own PageSizeSelect (adds "All"); suppress AG Grid's built-in one.
+          paginationPageSizeSelector={false}
+          // Smooth row-reorder on sort/filter. Works because getRowId is stable
+          // (AG Grid diffs rows by id and tweens their positions); default-true
+          // in v35, set explicitly so the intent survives future upgrades.
+          animateRows
           overlayNoRowsTemplate={"<span>No matching reports.</span>"}
         />
       </div>

@@ -11,7 +11,7 @@ const CITY_NAME = KNOWN_CITIES.cumming.name;
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `Civic | ${CITY_NAME} — Updates`,
-    description: `Status changes on your reports and city-wide announcements for ${CITY_NAME}.`,
+    description: `Status changes on community reports and city-wide announcements for ${CITY_NAME}.`,
   };
 }
 
@@ -20,7 +20,7 @@ export default async function UpdatesPage() {
   const items = await getResidentNotifications(citySlug);
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 pt-24 pb-[calc(5.5rem_+_env(safe-area-inset-bottom))] sm:px-6 md:pb-10">
+    <div className="mx-auto w-full max-w-3xl px-3 pt-24 pb-[calc(5.5rem_+_env(safe-area-inset-bottom))] sm:px-4 md:pb-10">
       <section className="mb-6">
         <p className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.08em] text-faint">
           <span
@@ -33,7 +33,8 @@ export default async function UpdatesPage() {
           Updates
         </h1>
         <p className="mt-3 text-sm text-subtle">
-          Progress on your reports and what&apos;s happening across the city.
+          Progress on community reports and what&apos;s happening across the
+          city.
         </p>
       </section>
 

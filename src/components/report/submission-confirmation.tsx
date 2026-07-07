@@ -59,6 +59,17 @@ export default function SubmissionConfirmation({
     : null;
   const ManualTeamIcon = manualTeam ? teamIcon(TEAMS[manualTeam].icon) : null;
 
+  // AI-routing preview: when the resident let the classifier decide, resolve the
+  // detected category to its owning team so the confirmation shows where the
+  // report was routed — not just the category. Skipped when a manual type was
+  // picked (that path renders its own routing card above) or on the offline
+  // fallback (confidence 0), where no category was actually detected.
+  const aiTeam =
+    !manualIssueType && hasAiResult
+      ? resolveIssueTypeTeam(classification.category, customCats)
+      : null;
+  const AiTeamIcon = aiTeam ? teamIcon(TEAMS[aiTeam].icon) : null;
+
   // Orchestrated reveal after the multi-second submit wait: container fades up,
   // checkmark pops with a soft overshoot, then detail rows stagger in. Wrapped
   // in matchMedia so reduced-motion users get instant content (opacity reset).
@@ -249,6 +260,27 @@ export default function SubmissionConfirmation({
                 ))}
               </div>
             </div>
+            {aiTeam && AiTeamIcon && (
+              <div
+                data-confirm-row
+                data-confirm-fx
+                className="flex justify-between items-center"
+              >
+                <span className="text-xs font-medium text-faint uppercase tracking-wide">
+                  Routed to
+                </span>
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] px-2.5 py-1 text-sm font-medium"
+                  style={{
+                    background: `${TEAMS[aiTeam].color}1a`,
+                    color: TEAMS[aiTeam].color,
+                  }}
+                >
+                  <AiTeamIcon className="h-3.5 w-3.5" strokeWidth={2} />
+                  {TEAMS[aiTeam].shortLabel}
+                </span>
+              </div>
+            )}
           </div>
         )}
 

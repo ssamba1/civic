@@ -19,7 +19,7 @@ function Panel({ className = "" }: { className?: string }) {
 export default function Loading() {
   return (
     <div className="relative flex flex-col min-h-dvh bg-background">
-      <div className="relative flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-10 sm:px-6 lg:px-8">
+      <div className="relative flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
         {/* Hero — static text, no shimmer (matches real page header weight) */}
         <section className="mb-6">
           <h1 className="text-[28px] sm:text-[34px] lg:text-[40px] font-semibold tracking-tight text-foreground leading-[1.1]">

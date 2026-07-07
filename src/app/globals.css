@@ -109,18 +109,20 @@
      card/canvas contrast is the core of this theme. */
   --background: #0e0e10;
   --foreground: #f5f5f6;
-  --subtle: #a1a1a8; /* zinc-400 */
-  --faint: #85858c; /* tertiary text — lightened from #71717a to clear WCAG AA (≥4.5:1) as 11–13px functional copy on both --surface #161619 and --background #0e0e10 */
+  --subtle: #b3b3ba; /* secondary text — lifted from #a1a1a8 (≈7:1 → ≈9:1 on --background); dark surfaces swallow mid-grays, so secondary copy runs one step brighter than the zinc scale suggests */
+  --faint: #95959d; /* tertiary text — lifted from #85858c; ≥4.5:1 (AA) as 11–13px functional copy on both --surface #161619 and --background #0e0e10, with headroom */
 
   --surface: #161619;
-  --elevated: #26262a;
+  --elevated: #2a2a2f; /* lifted from #26262a so active/selected fills read against both canvas and cards */
   --glass: rgba(18, 18, 22, 0.6);
 
-  --overlay: rgba(255, 255, 255, 0.04);
-  --overlay-strong: rgba(255, 255, 255, 0.08);
+  --overlay: rgba(255, 255, 255, 0.06);
+  --overlay-strong: rgba(255, 255, 255, 0.11);
 
-  --hairline: rgba(255, 255, 255, 0.09);
-  --hairline-strong: rgba(255, 255, 255, 0.16);
+  /* Lifted from 0.09/0.16 — with interior chrome dividers gone, the borders
+     that remain (card edges, the sidebar rail) must actually register. */
+  --hairline: rgba(255, 255, 255, 0.12);
+  --hairline-strong: rgba(255, 255, 255, 0.2);
 
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-pop: 0 20px 48px -12px rgba(0, 0, 0, 0.75);
@@ -565,8 +567,25 @@
 .wo-grid .ag-row-hover {
   box-shadow: inset 2px 0 0 var(--color-primary);
 }
+/* FLIP row animation on sort/filter. The base .ag-row rule above (for the hover
+   accent) omits `transform`, which clobbers the Theming API's own
+   `.ag-row-animation .ag-row { transition: transform .4s, top .4s, opacity .2s }`
+   at equal specificity — so without this rule rows JUMP to their new positions
+   instead of sliding. Re-add the theme's exact transition, scoped one class
+   deeper so it wins, and only while AG Grid is in its animation phase. AG Grid
+   adds `.ag-prevent-animation { transition:none !important }` during scroll
+   virtualization, so recycled rows never slide. */
+.wo-grid .ag-row-animation .ag-row {
+  transition:
+    transform 0.4s,
+    top 0.4s,
+    opacity 0.2s,
+    background-color 120ms ease,
+    box-shadow 120ms ease;
+}
 @media (prefers-reduced-motion: reduce) {
-  .wo-grid .ag-row {
+  .wo-grid .ag-row,
+  .wo-grid .ag-row-animation .ag-row {
     transition: none;
   }
 }

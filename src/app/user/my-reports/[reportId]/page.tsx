@@ -43,7 +43,7 @@ export async function generateMetadata({
   if (!report) return { title: `Report not found | Civic` };
   return {
     title: `Civic | ${CATEGORY_META[report.category].label} report — ${name}`,
-    description: `Status and timeline for your ${CATEGORY_META[
+    description: `Status and timeline for this ${CATEGORY_META[
       report.category
     ].label.toLowerCase()} report.`,
   };
@@ -80,7 +80,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
     : null;
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 pt-24 pb-[calc(5.5rem_+_env(safe-area-inset-bottom))] sm:px-6 md:pb-10">
+    <div className="mx-auto w-full max-w-3xl px-3 pt-24 pb-[calc(5.5rem_+_env(safe-area-inset-bottom))] sm:px-4 md:pb-10">
       <Link
         href="/user/my-reports"
         className="mb-5 inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-md)] px-2 -ml-2 text-[13px] font-medium text-subtle outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"

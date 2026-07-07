@@ -94,6 +94,7 @@ function buildTip(w: TeamWorkload) {
     w.total > 0 ? Math.round((w.closedCount / w.total) * 100) : 0;
   return {
     title: team.label,
+    accent: team.color,
     body: (
       <div className="flex flex-col gap-1.5">
         <p className="text-[11px] text-faint leading-snug">{team.duties}</p>
@@ -168,6 +169,13 @@ function TeamCard({
           : "border-hairline hover:border-hairline-strong",
         isDimmed && "opacity-55",
       )}
+      style={
+        isSelected
+          ? {
+              boxShadow: `0 0 0 1px ${team.color}66, 0 8px 24px ${team.color}22`,
+            }
+          : undefined
+      }
     >
       {/* Primary action — scope the page to this team (local highlight +
           delegation narrowing). Full-bleed and underneath, so any click that
@@ -187,7 +195,10 @@ function TeamCard({
       {/* Content — non-interactive so clicks fall through to the scope button. */}
       <header className="pointer-events-none relative z-0 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-elevated text-subtle">
+          <span
+            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md"
+            style={{ background: `${team.color}1a`, color: team.color }}
+          >
             <Icon className="h-3.5 w-3.5" strokeWidth={2} />
           </span>
           <span className="truncate text-[13.5px] font-medium text-foreground">

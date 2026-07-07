@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import CameraCapture from "@/components/report/camera-capture";
 import EmergencyInterstitial from "@/components/report/emergency-interstitial";
+import { ensureAnonSession } from "@/components/report/ensure-anon-session";
 import PhotoPreview from "@/components/report/photo-preview";
 import SubmissionConfirmation from "@/components/report/submission-confirmation";
 import { ASYNC_CLASSIFY } from "@/lib/ai/config";
 import { createBrowserSupabase } from "@/lib/db/browser-client";
 import { blurFacesAndPlates } from "@/lib/privacy/blur";
 import type { Classification } from "@/lib/types";
-import { submitReport } from "./actions";
+import { reverseGeocode, submitReport } from "./actions";
 
 async function blobToBase64(blob: Blob): Promise<string> {
   const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -79,25 +80,41 @@ export default function ReportPage() {
   const [manualIssueType, setManualIssueType] = useState<string | null>(null);
 
   // Ensure a session exists so submit isn't rejected as unauthenticated.
-  // New visitors get a silent anonymous session (guest) — keeps the 2-tap goal.
+  // Reuses a persisted session (cookies/localStorage) when present and only
+  // signs up an anonymous guest when there genuinely is none — the shared
+  // Supabase project's signup rate limit (429) trips fast if every /report load
+  // mints a new session. ensureAnonSession dedupes concurrent callers and backs
+  // off on 429; surface an honest, specific error on failure so the resident
+  // isn't left to discover it at submit time. Best-effort here — the submit
+  // handler re-checks and retries, so a transient failure now isn't terminal.
   useEffect(() => {
-    const supabase = createBrowserSupabase();
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        // Surface the failure now — otherwise an unauthenticated submit falls
-        // through to the fake-success `done` screen (handleSubmit's catch), so a
-        // dropped session looks like a saved report. supabase-js returns the
-        // error in-band rather than rejecting, so check `error`, not `.catch`.
-        supabase.auth.signInAnonymously().then(({ error }) => {
-          if (error) {
-            setError(
-              "Could not start a session. Check your connection and refresh.",
-            );
-          }
-        });
-      }
+    let active = true;
+    ensureAnonSession().then((res) => {
+      if (active && !res.ok) setError(res.error);
     });
+    return () => {
+      active = false;
+    };
   }, []);
+
+  // Reverse-geocode the acquired GPS fix into a human-readable address and
+  // pre-fill the editable manual-address field — never clobbering a value the
+  // resident has already typed. Keyed on the coordinate so it runs once per fix.
+  const reverseGeocodedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!location) return;
+    const key = `${location.lat},${location.lng}`;
+    if (reverseGeocodedFor.current === key) return;
+    reverseGeocodedFor.current = key;
+    let active = true;
+    reverseGeocode({ lat: location.lat, lng: location.lng }).then((res) => {
+      if (!active || !res.ok) return;
+      setAddress((prev) => (prev?.trim() ? prev : res.data.address));
+    });
+    return () => {
+      active = false;
+    };
+  }, [location]);
 
   // Auto-acquire GPS on mount
   useEffect(() => {
@@ -171,6 +188,18 @@ export default function ReportPage() {
         return;
       }
 
+      // Guarantee a session right before submit. If the mount-time bootstrap was
+      // rate-limited (or never ran), the server action would reject the submit as
+      // "unauthenticated" and silently discard the photo/tags/description. Retry
+      // here (with backoff) and, on failure, keep the form intact with an honest
+      // message rather than dead-ending on a fake success.
+      const session = await ensureAnonSession();
+      if (!session.ok) {
+        setError(session.error);
+        setStep({ name: "preview", photo });
+        return;
+      }
+
       try {
         const result = await submitReport({
           photoBlurred,
@@ -183,7 +212,14 @@ export default function ReportPage() {
 
         if (!result.ok) {
           // Stay on preview so the user can retry; surface the server error.
-          setError(result.error ?? "Submission failed. Please try again.");
+          // Map the raw "unauthenticated" tag to something actionable — it means
+          // the session didn't reach the server (cookie not yet written / rate
+          // limited), not that the resident did anything wrong.
+          setError(
+            result.error === "unauthenticated"
+              ? "Session not ready yet. Please tap Submit again in a moment."
+              : (result.error ?? "Submission failed. Please try again."),
+          );
           setStep({ name: "preview", photo });
           return;
         }
@@ -403,22 +439,22 @@ export default function ReportPage() {
         </div>
       )}
 
-      {/* Address fallback input — clears notch via pt-safe. Left padding leaves
-          room for the back button. */}
-      {gpsStatus === "manual" &&
-        step.name !== "done" &&
-        step.name !== "emergency" && (
-          <div className="absolute top-0 left-0 right-0 z-30 pt-safe pl-16 pr-4">
-            <input
-              type="text"
-              value={address ?? ""}
-              onChange={(e) => setAddress(e.target.value || null)}
-              aria-label="Address or intersection"
-              placeholder="Enter address or intersection..."
-              className="w-full mt-3 rounded-xl border border-hairline bg-glass backdrop-blur-sm px-4 py-3 text-base text-foreground placeholder:text-faint focus:outline-none focus:border-[var(--color-primary)]"
-            />
-          </div>
-        )}
+      {/* Camera-step address fallback — clears notch via pt-safe. Left padding
+          leaves room for the back button. On the preview/review step the address
+          field lives inside PhotoPreview (always editable + privacy notice), so
+          this overlay is scoped to the camera step to avoid a duplicate input. */}
+      {gpsStatus === "manual" && step.name === "camera" && (
+        <div className="absolute top-0 left-0 right-0 z-30 pt-safe pl-16 pr-4">
+          <input
+            type="text"
+            value={address ?? ""}
+            onChange={(e) => setAddress(e.target.value || null)}
+            aria-label="Address or intersection"
+            placeholder="Enter address or intersection..."
+            className="w-full mt-3 rounded-xl border border-hairline bg-glass backdrop-blur-sm px-4 py-3 text-base text-foreground placeholder:text-faint focus:outline-none focus:border-[var(--color-primary)]"
+          />
+        </div>
+      )}
 
       {/* Step views */}
       {step.name === "camera" && <CameraCapture onCapture={handleCapture} />}
@@ -427,6 +463,8 @@ export default function ReportPage() {
         <PhotoPreview
           photo={step.photo}
           gpsStatus={gpsStatus}
+          address={address}
+          onAddressChange={setAddress}
           onRetake={handleRetake}
           onSubmit={handleSubmit}
           submitting={step.name === "submitting"}

@@ -77,6 +77,16 @@ export interface ProvisionResult {
   warnings?: string[];
 }
 
+/** Availability of a candidate `/city/[slug]` address, checked live on the City step. */
+export interface SlugCheck {
+  /** The normalized slug that was checked. */
+  slug: string;
+  /** `invalid` = fails the slug charset; `taken` = a DB or built-in city owns it. */
+  status: "available" | "taken" | "invalid";
+  /** Free alternative slugs (only populated when `status === "taken"`). */
+  suggestions: string[];
+}
+
 /** One autocomplete result from the onboarding city search (Nominatim-backed). */
 export interface CitySuggestion {
   /** Resolved locality name, e.g. "Atlanta". */

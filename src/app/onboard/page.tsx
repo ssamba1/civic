@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getAuthUser } from "@/lib/db/ssr-client";
+import { DEMO_MODE } from "@/lib/demo-mode";
+import { getDemoSession } from "@/lib/demo-session";
 import { OnboardWizard } from "./onboard-wizard";
 
 export const metadata: Metadata = {
@@ -15,8 +17,17 @@ export const dynamic = "force-dynamic";
 
 export default async function OnboardPage() {
   const user = await getAuthUser();
+  // getAuthUser() only sees real Supabase auth, so it's blind to the demo
+  // persona cookie — the rest of the app (e.g. requireStaffFor in
+  // city/[slug]/grid/page.tsx) treats a demo session as equally authenticated.
+  // Mirror that here: any signed-in demo persona (resident, admin, or team —
+  // onboarding is open to residents too, who may upgrade to city admin, see
+  // actions.ts) reaches the wizard. Demo-cookie acceptance stays gated on
+  // DEMO_MODE so a live deployment with the cookie unset never bypasses this.
+  const demoSession = DEMO_MODE ? await getDemoSession() : null;
+  const authed = user ?? demoSession;
 
-  if (!user) {
+  if (!authed) {
     return (
       <main className="flex min-h-dvh flex-col items-center justify-center px-6 text-center">
         <div className="max-w-md">
@@ -37,7 +48,7 @@ export default async function OnboardPage() {
 
   return (
     <main className="min-h-dvh">
-      <OnboardWizard adminEmail={user.email ?? null} />
+      <OnboardWizard adminEmail={user?.email ?? null} />
     </main>
   );
 }

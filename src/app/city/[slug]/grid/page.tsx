@@ -10,9 +10,9 @@ import { getAuthUser } from "@/lib/db/ssr-client";
 import {
   DEMO_CITY,
   DEMO_SESSION_COOKIE,
-  findDemoAccount,
   isDemoStaffAccount,
 } from "@/lib/demo-auth";
+import { findVerifiedDemoAccount } from "@/lib/demo-cookie";
 import { DEMO_MODE } from "@/lib/demo-mode";
 
 interface PageProps {
@@ -54,7 +54,11 @@ async function requireStaffFor(slug: string): Promise<void> {
   const demoStaff =
     DEMO_MODE &&
     isDemoStaffAccount(
-      findDemoAccount((await cookies()).get(DEMO_SESSION_COOKIE)?.value),
+      // Verify the HMAC signature before trusting the persona — a bare/forged
+      // civic_demo_session cookie must not prove staff access on live data.
+      findVerifiedDemoAccount(
+        (await cookies()).get(DEMO_SESSION_COOKIE)?.value,
+      ),
     );
   const devBypass =
     process.env.NODE_ENV === "development" &&
@@ -100,7 +104,10 @@ export default async function CityGridPage({ params }: PageProps) {
   const rows = await getGridRows(city.id);
 
   return (
-    <div className="mx-auto flex h-dvh w-full max-w-7xl flex-col px-4 pt-city-content pb-6 sm:px-6 lg:px-8">
+    // Full-bleed: the grid owns the entire content area (toolbar padding lives
+    // inside WorkOrderGrid). Mobile keeps the fixed-CityHeader offset; md+
+    // (sidebar shell, no fixed header) is edge-to-edge.
+    <div className="flex h-dvh w-full flex-col pt-[calc(env(safe-area-inset-top)+8rem)] md:pt-0">
       {/* Visible title chrome removed to give the grid the full viewport;
           the h1 survives for a11y/SEO. */}
       <h1 className="sr-only">Work Order Grid</h1>

@@ -17,7 +17,7 @@ export default async function CommunityPulsePage() {
   const name = KNOWN_CITIES[citySlug]?.name ?? KNOWN_CITIES.cumming.name;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pt-24 pb-[calc(5.5rem_+_env(safe-area-inset-bottom))] sm:px-6 md:pb-10 lg:px-8">
+    <div className="mx-auto w-full max-w-7xl px-3 pt-24 pb-[calc(5.5rem_+_env(safe-area-inset-bottom))] sm:px-4 md:pb-10 lg:px-6">
       <section className="mb-8">
         <p className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.08em] text-faint">
           <span

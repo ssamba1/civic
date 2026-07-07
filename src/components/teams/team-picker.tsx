@@ -74,10 +74,16 @@ export function TeamPicker({
             : "border-hairline bg-overlay text-subtle hover:bg-overlay-strong hover:border-hairline",
         )}
       >
-        <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded bg-elevated text-subtle">
+        <span
+          className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded"
+          style={{ background: `${team.color}22`, color: team.color }}
+        >
           <Icon className="h-3 w-3" strokeWidth={2} />
         </span>
-        <span className="truncate" style={{ maxWidth: labelMaxWidth }}>
+        <span
+          className="truncate"
+          style={{ maxWidth: labelMaxWidth, color: team.color }}
+        >
           {team.shortLabel}
         </span>
         <ChevronDown className="h-3 w-3 text-faint" strokeWidth={2} />
@@ -121,7 +127,10 @@ export function TeamPicker({
                         : "text-subtle hover:bg-overlay",
                     )}
                   >
-                    <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-elevated text-subtle">
+                    <span
+                      className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded"
+                      style={{ background: `${t.color}22`, color: t.color }}
+                    >
                       <ItemIcon className="h-3 w-3" strokeWidth={2} />
                     </span>
                     <span className="flex-1 truncate">{t.shortLabel}</span>

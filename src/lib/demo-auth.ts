@@ -80,10 +80,13 @@ export function authenticateDemo(
   return account;
 }
 
-/** Look up an account by username (for resolving a session cookie).
- *  Not a security gate — resolves the persona for the header label + logout,
- *  including the Resident. Staff-access checks MUST additionally verify
- *  isDemoStaffAccount() AND that demo mode is on (see requireStaffFor). */
+/** Look up an account by username. PURE resolver — takes a username, not a
+ *  raw cookie: it does NOT verify the cookie's HMAC signature, so it is not a
+ *  security gate on its own. Security-gated readers MUST call
+ *  findVerifiedDemoAccount() (lib/demo-cookie) which verifies the signature
+ *  first, then additionally check isDemoStaffAccount() AND that demo mode is
+ *  on (see requireStaffFor / isStaffForCity). This bare form is only for
+ *  resolving the header label + logout persona from an already-trusted name. */
 export function findDemoAccount(
   username: string | undefined | null,
 ): DemoAccount | null {

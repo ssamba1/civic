@@ -33,7 +33,7 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
 
   return (
     <div className="relative flex flex-col min-h-dvh bg-background">
-      <div className="relative flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-10 sm:px-6 lg:px-8">
+      <div className="relative flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
         {/* Compact page header — single slim row. */}
         <section className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
@@ -49,7 +49,7 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
       </div>
 
       <footer className="border-t border-hairline mt-10 pb-safe">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-6 text-[13px] text-faint sm:flex-row sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-[1800px] flex-col items-center justify-between gap-3 px-3 py-6 text-[13px] text-faint sm:flex-row sm:px-4 lg:px-6">
           <span>Civic</span>
           <span>&copy; {new Date().getFullYear()} · Open311 compatible</span>
         </div>

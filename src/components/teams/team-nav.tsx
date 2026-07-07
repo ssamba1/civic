@@ -1,6 +1,11 @@
 "use client";
 
-import { BarChart3, LayoutDashboard, Map as MapIcon } from "lucide-react";
+import {
+  BarChart3,
+  LayoutDashboard,
+  Map as MapIcon,
+  Table,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSlidingPill } from "@/lib/hooks/use-sliding-pill";
@@ -14,9 +19,11 @@ interface TeamNavProps {
    *   undefined → desktop inline row (md+ single-row)
    */
   mobileSlot?: "tabs";
+  /** Server-computed staff status — gates the Grid tab (staff-gated route). */
+  isStaff?: boolean;
 }
 
-export function TeamNav({ team, city, mobileSlot }: TeamNavProps) {
+export function TeamNav({ team, city, mobileSlot, isStaff }: TeamNavProps) {
   const pathname = usePathname();
   const base = `/${team}/${city}`;
 
@@ -33,6 +40,16 @@ export function TeamNav({ team, city, mobileSlot }: TeamNavProps) {
       icon: MapIcon,
       active: pathname === `${base}/map`,
     },
+    ...(isStaff
+      ? [
+          {
+            label: "Grid",
+            href: `${base}/grid`,
+            icon: Table,
+            active: pathname === `${base}/grid`,
+          },
+        ]
+      : []),
     {
       label: "Analytics",
       href: `${base}/analytics`,

@@ -32,7 +32,7 @@ export function UserNav({ citySlug }: { citySlug?: string }) {
      * md:block restores the fixed header on tablet+.
      */
     <header className="hidden md:block fixed top-0 inset-x-0 z-40 border-b border-hairline bg-glass backdrop-blur-xl supports-[backdrop-filter]:bg-glass">
-      <div className="flex h-14 w-full items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+      <div className="flex h-14 w-full items-center justify-between gap-4 px-3 sm:px-4 lg:px-6">
         <Link
           href="/user/pulse"
           className="group inline-flex items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"

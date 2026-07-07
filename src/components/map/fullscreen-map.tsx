@@ -327,12 +327,18 @@ export function FullscreenMapOrchestrator({
         @keyframes fmToastOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-4px)}}
         @keyframes fmFadeIn{from{opacity:0}to{opacity:1}}
       `}</style>
-        {/* Active team banner — grayscale chrome (team identity is no longer
-            hue-coded outside the map's own data layers/legend). */}
+        {/* Active team banner */}
         {selectedTeam !== "all" && (
-          <div className="flex items-center gap-2 rounded-md border border-white/15 bg-white/[0.06] px-2.5 py-1.5 shrink-0">
+          <div
+            className="flex items-center gap-2 rounded-md border px-2.5 py-1.5 shrink-0"
+            style={{
+              borderColor: `${activeTeamMeta.color}99`,
+              backgroundColor: `${activeTeamMeta.color}2e`,
+            }}
+          >
             <Shield
-              className="h-3.5 w-3.5 shrink-0 text-white"
+              className="h-3.5 w-3.5 shrink-0"
+              style={{ color: activeTeamMeta.color }}
               strokeWidth={1.75}
             />
             <div className="flex-1 min-w-0">
@@ -587,12 +593,16 @@ export function FullscreenMapOrchestrator({
                       {report.address}
                     </p>
 
-                    {/* Auto-assigned team chip — gov only; residents don't route.
-                    Outline chip, no team hue: per spec, category/team tokens
-                    encode color only on map data layers + chart series, not
-                    chips — team identity reads from the label text alone here. */}
+                    {/* Auto-assigned team chip — gov only; residents don't route. */}
                     {!readOnly && (
-                      <div className="inline-flex self-start items-center rounded-[var(--radius-sm)] border border-white/15 bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-white/80">
+                      <div
+                        className="inline-flex self-start items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium"
+                        style={{
+                          borderColor: `${ownerTeam.color}aa`,
+                          backgroundColor: `${ownerTeam.color}33`,
+                          color: ownerTeam.color,
+                        }}
+                      >
                         {ownerTeam.shortLabel}
                       </div>
                     )}
@@ -705,7 +715,8 @@ export function FullscreenMapOrchestrator({
                                       className="flex items-center gap-2 px-2 py-3 text-left text-[12px] text-white hover:bg-white/[0.06] hover:text-white rounded transition-colors min-h-[44px] lg:py-1.5 lg:min-h-0"
                                     >
                                       <span
-                                        className="h-2 w-2 shrink-0 rounded-full bg-white/40"
+                                        className="h-2 w-2 shrink-0 rounded-full"
+                                        style={{ backgroundColor: team.color }}
                                       />
                                       <span className="flex-1 truncate">
                                         {team.shortLabel}
@@ -764,7 +775,7 @@ export function FullscreenMapOrchestrator({
 
   return (
     <div className="h-full w-full flex-1 min-h-0 relative overflow-hidden flex bg-black select-none">
-      <style>{`@keyframes fmPanelIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}`}</style>
+      <style>{`@keyframes fmPanelIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}`}</style>
 
       {/* Full-viewport map */}
       <div className="absolute inset-0 z-0 h-full w-full pointer-events-auto">
@@ -817,7 +828,7 @@ export function FullscreenMapOrchestrator({
           so the basemap colors read through; `panelTint` adapts the scrim to the
           active basemap (light/dark/satellite). */}
       <LiquidGlassCard
-        className="hidden lg:flex absolute top-16 left-4 bottom-4 w-[280px] pointer-events-auto z-10 overflow-hidden"
+        className="hidden lg:flex absolute top-16 right-4 bottom-4 w-[280px] pointer-events-auto z-10 overflow-hidden"
         style={
           reducedMotion
             ? undefined

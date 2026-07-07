@@ -16,6 +16,10 @@ type GpsStatus = "acquiring" | "found" | "manual";
 interface PhotoPreviewProps {
   photo: File;
   gpsStatus: GpsStatus;
+  /** Current report address (reverse-geocoded fix or manual entry), or null. */
+  address: string | null;
+  /** Update the report address; the resident can correct a wrong/denied fix. */
+  onAddressChange: (value: string | null) => void;
   onRetake: () => void;
   onSubmit: (
     description: string | null,
@@ -36,6 +40,8 @@ const BUILTIN_ISSUE_TYPES = builtinIssueTypeOptions();
 export default function PhotoPreview({
   photo,
   gpsStatus,
+  address,
+  onAddressChange,
   onRetake,
   onSubmit,
   submitting,
@@ -104,7 +110,10 @@ export default function PhotoPreview({
           <img
             src={previewUrl}
             alt="The issue you captured"
-            className="w-full h-full object-cover"
+            // object-contain (not cover) so the full framed subject is visible
+            // before submit — cover cropped 4:3 photos inside the tall frame,
+            // hiding real content the resident meant to report.
+            className="w-full h-full object-contain"
           />
         )}
 
@@ -190,7 +199,7 @@ export default function PhotoPreview({
                 </optgroup>
               )}
             </select>
-            {routedTeam && RoutedTeamIcon && (
+            {routedTeam && RoutedTeamIcon ? (
               <div className="flex items-center gap-1.5 text-xs text-faint">
                 <span>Routes to</span>
                 <span
@@ -202,6 +211,22 @@ export default function PhotoPreview({
                 >
                   <RoutedTeamIcon className="h-3 w-3" strokeWidth={2} />
                   {TEAMS[routedTeam].shortLabel}
+                </span>
+              </div>
+            ) : (
+              // AI-routing preview: with no manual pick, show that the classifier
+              // will run and route — not just a bare "Let AI decide" label.
+              <div className="flex items-center gap-1.5 text-xs text-faint">
+                <span className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-hairline px-2 py-1 font-medium text-subtle">
+                  <svg
+                    className="h-3 w-3"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 2l1.9 4.9L18.8 8.8l-4.9 1.9L12 15.6l-1.9-4.9L5.2 8.8l4.9-1.9L12 2zm6.5 10l.95 2.45L21.9 15.4l-2.45.95L18.5 18.8l-.95-2.45L15.1 15.4l2.45-.95L18.5 12z" />
+                  </svg>
+                  AI will classify &amp; route to the right team
                 </span>
               </div>
             )}
@@ -258,6 +283,56 @@ export default function PhotoPreview({
                 className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2.5 text-base text-foreground placeholder:text-faint focus:outline-none focus:border-[var(--color-primary)] resize-none"
               />
             </div>
+          </div>
+
+          {/* Location — always editable so a wrong or denied GPS fix can be
+              corrected. Pre-filled from the reverse-geocoded fix when available.
+              This is the manual-address fallback the project requires. */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="report-address"
+              className="block text-xs font-medium text-subtle"
+            >
+              Location{" "}
+              <span className="text-faint">
+                {gpsStatus === "found"
+                  ? "(from GPS — edit if wrong)"
+                  : gpsStatus === "acquiring"
+                    ? "(getting GPS…)"
+                    : "(GPS unavailable — enter manually)"}
+              </span>
+            </label>
+            <input
+              id="report-address"
+              type="text"
+              value={address ?? ""}
+              onChange={(e) => onAddressChange(e.target.value || null)}
+              placeholder="Address or intersection"
+              className="w-full min-h-[44px] rounded-lg border border-hairline-strong bg-surface px-3 py-2.5 text-base text-foreground placeholder:text-faint focus:outline-none focus:border-[var(--color-primary)]"
+            />
+          </div>
+
+          {/* Privacy notice — reassure before upload that PII is stripped
+              on-device (faces + plates blurred in lib/privacy/blur.ts). */}
+          <div className="flex items-start gap-2 text-xs text-faint">
+            <svg
+              className="mt-0.5 h-3.5 w-3.5 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"
+              />
+            </svg>
+            <span>
+              Faces and license plates are blurred on your device before this
+              photo is uploaded.
+            </span>
           </div>
 
           {/* Action buttons — min-h-[56px] ensures thumb-reachable targets */}

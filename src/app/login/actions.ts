@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { signDemoSession } from "@/lib/demo-cookie";
 import { authenticateDemo, DEMO_SESSION_COOKIE } from "@/lib/demo-auth";
 import { DEMO_MODE } from "@/lib/demo-mode";
 
@@ -27,7 +28,9 @@ export async function signInDemo(formData: FormData): Promise<void> {
   }
 
   const store = await cookies();
-  store.set(DEMO_SESSION_COOKIE, account.username, {
+  // Store an HMAC-signed value, not the bare username — a bare username lets
+  // anyone forge staff access by hand-setting the cookie. See lib/demo-cookie.
+  store.set(DEMO_SESSION_COOKIE, signDemoSession(account.username), {
     httpOnly: true,
     sameSite: "lax",
     path: "/",

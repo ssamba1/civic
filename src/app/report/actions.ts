@@ -284,3 +284,46 @@ export async function submitReport(
 
   return { ok: true, data: { id: reportId, classification } };
 }
+
+const reverseGeocodeSchema = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+});
+
+/**
+ * Reverse-geocode GPS coordinates into a human-readable address via OpenStreetMap
+ * Nominatim, so the report form can pre-fill the editable manual-address field
+ * from the acquired fix. Server-side (matches the forward geocoder in
+ * onboard/actions.ts) so we can send the required identifying User-Agent, which
+ * a browser can't set. Best-effort: returns ok:false on any failure and the
+ * caller leaves the field blank for manual entry — geocoding never blocks a
+ * report.
+ */
+export async function reverseGeocode(input: {
+  lat: number;
+  lng: number;
+}): Promise<Result<{ address: string }>> {
+  const parsed = reverseGeocodeSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "invalid_coordinates" };
+  const { lat, lng } = parsed.data;
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&lat=${lat}&lon=${lng}`,
+      {
+        headers: {
+          "User-Agent":
+            "civic-app/1.0 (+https://civic-social-impact.vercel.app)",
+          Accept: "application/json",
+        },
+        cache: "no-store",
+      },
+    );
+    if (!res.ok) return { ok: false, error: "geocode_failed" };
+    const data = (await res.json()) as { display_name?: string };
+    const address = data.display_name?.trim();
+    if (!address) return { ok: false, error: "no_address" };
+    return { ok: true, data: { address } };
+  } catch {
+    return { ok: false, error: "geocode_failed" };
+  }
+}

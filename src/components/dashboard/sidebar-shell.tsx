@@ -152,7 +152,7 @@ export function SidebarNav({
               )}
             </div>
             {sub && expanded && !collapsed && (
-              <div className="mt-0.5 mb-1 ml-[1.15rem] flex flex-col gap-px border-l border-hairline pl-2.5">
+              <div className="mt-0.5 mb-1 ml-[1.15rem] flex flex-col gap-px pl-2.5">
                 {sub.map((s) => (
                   <Link
                     key={s.href}
@@ -232,7 +232,7 @@ export function SidebarShell({
       >
         <div
           className={cn(
-            "flex h-12 shrink-0 items-center border-b border-hairline",
+            "flex h-12 shrink-0 items-center",
             collapsed ? "justify-center px-0" : "justify-between pl-4 pr-2",
           )}
         >
@@ -260,9 +260,7 @@ export function SidebarShell({
           </button>
         </div>
         {context && !collapsed ? (
-          <div className="shrink-0 border-b border-hairline px-3 py-2.5">
-            {context}
-          </div>
+          <div className="shrink-0 px-3 pb-2 pt-0.5">{context}</div>
         ) : null}
         <div
           className={cn(
@@ -274,10 +272,7 @@ export function SidebarShell({
         </div>
         {footer ? (
           <div
-            className={cn(
-              "shrink-0 border-t border-hairline py-2.5",
-              collapsed ? "px-2" : "px-3",
-            )}
+            className={cn("shrink-0 pb-3 pt-1", collapsed ? "px-2" : "px-3")}
           >
             {footer}
           </div>

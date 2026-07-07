@@ -4,8 +4,10 @@ import { Suspense } from "react";
 import { TeamHeader } from "@/components/teams/team-header";
 import { TeamSidebar } from "@/components/teams/team-sidebar";
 import { getReportCorpus, KNOWN_CITIES } from "@/lib/dashboard-data";
+import { DEMO_CITY } from "@/lib/demo-auth";
 import { getDemoSession } from "@/lib/demo-session";
 import { FilterProvider } from "@/lib/filters/context";
+import { isStaffForCity } from "@/lib/staff-access";
 import { isValidTeamId, TEAM_LIST } from "@/lib/teams";
 
 // Prerender every operational team × known city, mirroring the city view's
@@ -32,6 +34,11 @@ export default async function TeamViewLayout({
   const now = Date.now();
   const session = await getDemoSession();
 
+  // Nav-visibility only (the grid page enforces its own requireStaffFor()
+  // redirect). Demo city always counts as staff — matching the grid page's
+  // `slug !== DEMO_CITY` bypass — so its Grid tab stays visible to everyone.
+  const isStaff = city === DEMO_CITY || (await isStaffForCity(city));
+
   return (
     // Column on mobile (fixed TeamHeader on top); row on md+ where the
     // sticky TeamSidebar owns the left rail and flexbox owns content width.
@@ -40,11 +47,13 @@ export default async function TeamViewLayout({
         team={team}
         city={city}
         accountLabel={session?.label ?? null}
+        isStaff={isStaff}
       />
       <TeamSidebar
         team={team}
         city={city}
         accountLabel={session?.label ?? null}
+        isStaff={isStaff}
       />
 
       <Suspense fallback={null}>

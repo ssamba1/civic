@@ -63,7 +63,7 @@ export function MyReportsInteractive({
             value={String(summary.total)}
             hint={
               summary.total === 1
-                ? "Your first report is on the board."
+                ? "The first report is on the board."
                 : "Every one moves the city forward."
             }
           />
@@ -120,7 +120,7 @@ export function MyReportsInteractive({
             <EmptyState
               message={
                 reports.length === 0
-                  ? "You haven't filed any reports yet."
+                  ? "No reports filed yet."
                   : filter === "resolved"
                     ? "No resolved reports yet — they'll land here once crews wrap up."
                     : "Nothing active right now — you're all caught up."

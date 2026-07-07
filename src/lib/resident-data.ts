@@ -685,13 +685,13 @@ async function syntheticNotifications(
       id: `notif-${r.id}`,
       type: isResolved ? "resolved" : "status",
       title: isReceived
-        ? `Your ${catLabel} report was received`
-        : `Your ${catLabel} report was ${label}`,
+        ? `A ${catLabel} report was received`
+        : `A ${catLabel} report was ${label}`,
       body: isResolved
-        ? "Crews finished the fix — thanks for helping keep the city running."
+        ? "Crews finished the fix — thanks to everyone helping keep the city running."
         : isReceived
-          ? "Thanks for the report — it's logged and waiting to be picked up. We'll let you know the moment a crew takes it on."
-          : `A crew has picked up your report. We'll keep you posted as it progresses.`,
+          ? "Logged and waiting to be picked up. We'll post an update the moment a crew takes it on."
+          : `A crew has picked up this report. We'll keep the community posted as it progresses.`,
       at,
       read: now - new Date(at).getTime() > 3 * DAY_MS,
       reportId: r.id,

@@ -8,7 +8,7 @@ export default function Loading() {
     >
       {/* nav silhouette */}
       <header className="absolute inset-x-0 top-0 z-50">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-8 sm:px-12 lg:px-20">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6 sm:px-8 lg:px-12">
           <div className="h-5 w-16 animate-pulse rounded-full bg-overlay-strong" />
           <div className="flex items-center gap-3">
             <div className="hidden h-4 w-20 animate-pulse rounded-full bg-overlay-strong sm:block" />
@@ -20,7 +20,7 @@ export default function Loading() {
 
       {/* hero shimmer — mirrors the asymmetric 5/6 split */}
       <section className="relative isolate border-b border-hairline lg:min-h-[calc(100dvh-3.5rem)]">
-        <div className="mx-auto grid max-w-7xl gap-8 px-8 pb-10 pt-24 sm:px-12 lg:px-20 sm:pb-14 sm:pt-28 lg:grid-cols-[5fr_6fr] lg:min-h-[calc(100dvh-3.5rem)] lg:items-center">
+        <div className="mx-auto grid max-w-7xl gap-8 px-6 pb-10 pt-24 sm:px-8 lg:px-12 sm:pb-14 sm:pt-28 lg:grid-cols-[5fr_6fr] lg:min-h-[calc(100dvh-3.5rem)] lg:items-center">
           <div className="flex flex-col justify-center gap-5">
             <div className="h-7 w-44 animate-pulse rounded-full bg-overlay-strong" />
             <div className="mt-2 space-y-3">

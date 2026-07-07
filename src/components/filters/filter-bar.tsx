@@ -249,9 +249,10 @@ function TeamRow({
         selected ? "bg-overlay-strong" : "hover:bg-overlay",
       )}
     >
-      {/* Team identity no longer carries hue (chrome is grayscale) — a plain
-          faint bullet keeps the list's scan rhythm. */}
-      <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-faint ring-1 ring-inset ring-hairline-strong" />
+      <span
+        className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-inset ring-hairline-strong"
+        style={{ backgroundColor: team.color }}
+      />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span
           className={cn(
@@ -352,13 +353,24 @@ export function FilterBar() {
                 className={cn(
                   "inline-flex h-8 items-center gap-1.5 rounded-[10px] border px-2.5 text-[12px] font-medium transition-colors",
                   teamScoped
-                    ? "border-hairline-strong bg-overlay-strong text-foreground"
+                    ? "border-hairline-strong text-foreground"
                     : "border-hairline bg-overlay text-subtle hover:border-hairline-strong hover:text-foreground",
                   open && "border-hairline-strong",
                 )}
+                style={
+                  teamScoped
+                    ? {
+                        backgroundColor: `${activeTeam.color}1f`,
+                        borderColor: `${activeTeam.color}66`,
+                      }
+                    : undefined
+                }
               >
                 {teamScoped ? (
-                  <Shield className="h-3.5 w-3.5 text-foreground" />
+                  <Shield
+                    className="h-3.5 w-3.5"
+                    style={{ color: activeTeam.color }}
+                  />
                 ) : (
                   <Users className="h-3.5 w-3.5 text-subtle" />
                 )}

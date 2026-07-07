@@ -41,7 +41,7 @@ export function CityHeader({
       {/* ── Mobile layout: two rows (logo row + segmented nav row) ── */}
       <div>
         {/* Row 1: Civic logo + city switcher (left), action buttons (right) */}
-        <div className="flex h-14 w-full items-center justify-between gap-2 px-4">
+        <div className="flex h-14 w-full items-center justify-between gap-2 px-3">
           <div className="flex min-w-0 items-center gap-2">
             <Link
               href="/"

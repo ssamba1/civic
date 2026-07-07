@@ -28,7 +28,7 @@ export default async function BrowsePage({ params }: PageProps) {
     (await fetchCityCenter(slug, city.name, city.state)) ?? [-84.14, 34.21];
 
   return (
-    <div className="flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-[calc(2.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8">
+    <div className="flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-[calc(2.5rem+env(safe-area-inset-bottom))] sm:px-4 lg:px-6">
       <section className="mb-6 sm:mb-8">
         <p className="text-[13px] text-faint">
           {city.name}, {city.state}

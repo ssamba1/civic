@@ -10,7 +10,7 @@ export default function CityDashboardLoading() {
       aria-busy="true"
       aria-label="Loading dashboard"
     >
-      <div className="flex-grow mx-auto w-full max-w-7xl px-4 pt-city-content pb-10 sm:px-6 lg:px-8">
+      <div className="flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
         {/* Hero */}
         <section className="mb-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

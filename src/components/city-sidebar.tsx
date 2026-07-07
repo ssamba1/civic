@@ -106,22 +106,20 @@ export function CitySidebar({
   return (
     <SidebarShell
       context={
-        <div className="rounded-xl border border-hairline bg-overlay p-2">
-          <CitySwitcher
-            currentSlug={slug}
-            currentName={cityName}
-            currentState={cityState}
-            compact
-            className="min-w-0"
-          />
-        </div>
+        <CitySwitcher
+          currentSlug={slug}
+          currentName={cityName}
+          currentState={cityState}
+          compact
+          className="min-w-0"
+        />
       }
       footer={
         <>
           <SidebarWhenExpanded>
             <div className="flex flex-col gap-2">
               {reportBtn(false)}
-              <div className="flex flex-col gap-2 border-t border-hairline pt-2.5">
+              <div className="flex flex-col gap-2 pt-1">
                 {/* User|City segment — full-width row, segments split evenly */}
                 <div className="flex h-8 w-full items-center [&>div]:h-8 [&>div]:w-full [&_a]:h-full [&_a]:flex-1">
                   <ViewSwitch citySlug={slug} />

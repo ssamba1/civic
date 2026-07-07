@@ -10,7 +10,7 @@ import {
   Send,
   XCircle,
 } from "lucide-react";
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import type { ReasoningResponse } from "@/app/api/ai/reasoning/route";
 import { Stat, StatGrid } from "@/components/analytics/bento-primitives";
 import { formatCost } from "@/lib/currency";
@@ -28,6 +28,21 @@ import { TEAMS, type TeamId } from "@/lib/teams";
 import type { TeamWorkload } from "@/lib/teams-data";
 import { useCurrency } from "@/lib/use-currency";
 import { timeAgo, timeUntil } from "@/lib/utils/time-ago";
+
+/* ------------------------------------------------------------------
+   Reasoning-fetch circuit breaker (module scope, per page load).
+
+   /api/ai/reasoning returns 401 for unauthenticated visitors — the live
+   Gemini path is staff-only. The delegation panel mounts one row per
+   report (~30), each of which would otherwise fire a request, producing a
+   burst of 401s. Two guards stop that:
+     1. Rows only fetch once visible (expanded) — see the IntersectionObserver
+        below — so a page of collapsed rows fires nothing.
+     2. The first 401 trips this flag; every other row then skips the network
+        entirely and shows the unavailable state (stop-after-first-401).
+   Reset on a full page load (module re-eval), e.g. after signing in.
+   ------------------------------------------------------------------ */
+let reasoningAuthBlocked = false;
 
 /* ------------------------------------------------------------------
    Public types
@@ -197,12 +212,51 @@ function DelegationRowExpandedInner({
   const [loading, setLoading] = useState<boolean>(!cached);
   const [error, setError] = useState<boolean>(false);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: fire once per report.id — `cached` is derived from the ref-backed reasoningCache the fetch itself writes, so including it (or the stable setters) would re-run/loop the fetch on cache populate
+  // Row root — the IntersectionObserver target. Collapsed rows live inside a
+  // height:0 wrapper (the panel's GSAP collapse), so they never intersect and
+  // never fetch. Only an expanded (visible) row triggers the reasoning call.
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    // No cache miss to resolve, or no observer support (SSR/old browsers):
+    // fall back to the original eager behavior so nothing regresses.
+    if (cached || typeof IntersectionObserver === "undefined") {
+      setVisible(true);
+      return;
+    }
+    const el = rootRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisible(true);
+          obs.disconnect();
+        }
+      },
+      { threshold: 0 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+    // Observe once per report row; `cached` only flips false→true when the
+    // fetch below populates it, at which point observation is moot.
+  }, [cached]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on report.id + visible; `cached` is derived from the ref-backed reasoningCache the fetch itself writes, so including it (or the stable setters) would re-run/loop the fetch on cache populate
   useEffect(() => {
     if (cached) {
       setData(cached);
       setLoading(false);
       setError(false);
+      return;
+    }
+    // Wait until the row is actually on-screen (expanded) before requesting.
+    if (!visible) return;
+    // A prior request already came back 401 (unauthenticated): don't re-probe,
+    // just surface the unavailable state and make no network call.
+    if (reasoningAuthBlocked) {
+      setLoading(false);
+      setError(true);
       return;
     }
     const controller = new AbortController();
@@ -229,6 +283,11 @@ function DelegationRowExpandedInner({
           }),
           signal,
         });
+        // Unauthenticated: trip the breaker so no other row re-probes.
+        if (res.status === 401) {
+          reasoningAuthBlocked = true;
+          throw new Error("HTTP 401");
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as ReasoningData;
         if (signal.aborted) return;
@@ -245,7 +304,7 @@ function DelegationRowExpandedInner({
     return () => {
       controller.abort();
     };
-  }, [report.id]);
+  }, [report.id, visible]);
 
   /* -------- Stat tile values -------- */
 
@@ -275,7 +334,10 @@ function DelegationRowExpandedInner({
   const dutyFirstSentence = effectiveMeta.duties.split(".")[0];
 
   return (
-    <div className="px-4 pb-4 pt-3 bg-overlay border-t border-hairline">
+    <div
+      ref={rootRef}
+      className="px-4 pb-4 pt-3 bg-overlay border-t border-hairline"
+    >
       {/* Section A: photo + reasoning */}
       {/* Mobile: photo full-width then reasoning below. sm+: side-by-side */}
       <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-4">

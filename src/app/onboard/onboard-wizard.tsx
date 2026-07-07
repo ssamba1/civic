@@ -4,12 +4,14 @@ import {
   AlertTriangle,
   Check,
   Download,
+  Loader2,
   Pencil,
   Plus,
   Trash2,
+  X,
 } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { teamIcon } from "@/components/teams/team-icon";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,9 +30,10 @@ import type {
   ProvisionResult,
   RosterGranularity,
   RosterPersonInput,
+  SlugCheck,
   StaffRole,
 } from "@/lib/onboarding/types";
-import { provisionCity } from "./actions";
+import { checkCitySlug, provisionCity } from "./actions";
 import { CitySearch } from "./city-search";
 
 const STEPS = ["city", "teams", "routing", "roster", "review"] as const;
@@ -56,6 +59,14 @@ interface CityState {
   center: { lat: number; lng: number } | null;
   geoDisplay: string | null;
 }
+
+/** Client-side view of slug availability: server `SlugCheck.status` plus the two
+ *  transient states the server never returns (`idle` before a city is picked,
+ *  `checking` while a request is in flight). */
+type SlugState = {
+  status: "idle" | "checking" | SlugCheck["status"];
+  suggestions: string[];
+};
 
 function emptyPerson(teamKey: string): RosterPersonInput {
   return { name: "", email: "", role: "staff_dispatcher", teamKey };
@@ -107,12 +118,71 @@ export function OnboardWizard({ adminEmail }: { adminEmail: string | null }) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ProvisionResult | null>(null);
 
+  // Live availability of the chosen /city/[slug] address (City step). Lifted to
+  // the wizard because the Continue gate must block until the slug is confirmed
+  // free — a taken slug otherwise only fails at "Create" on the final step.
+  const [slugCheck, setSlugCheck] = useState<SlugState>({
+    status: "idle",
+    suggestions: [],
+  });
+
   const enabledKeys = useMemo<string[]>(
     () => TEAM_PRESETS.filter((t) => enabled[t.id]).map((t) => t.id),
     [enabled],
   );
 
   const effectiveSlug = city.slug.trim() || slugify(city.name);
+
+  const hasMalformedEmail = useMemo(
+    () =>
+      granularity === "per_person"
+        ? roster.some((p) => isMalformedEmail(p.email))
+        : enabledKeys.some((k) => isMalformedEmail(sharedEmails[k] ?? "")),
+    [granularity, roster, enabledKeys, sharedEmails],
+  );
+
+  // Is the CURRENT step complete enough to advance? Drives the Continue button's
+  // disabled state so problems block the next tab instead of surfacing only at
+  // "Create" on the final step.
+  const stepValid = useMemo(() => {
+    switch (step) {
+      case "city":
+        return (
+          !!city.name.trim() &&
+          !!city.center &&
+          slugCheck.status === "available"
+        );
+      case "teams":
+        return enabledKeys.length > 0;
+      case "roster":
+        return !hasMalformedEmail;
+      default:
+        return true; // routing (sane defaults) + review (submits, not advances)
+    }
+  }, [step, city, slugCheck.status, enabledKeys, hasMalformedEmail]);
+
+  // One-line reason the current step can't advance yet, shown next to the
+  // disabled Continue button. Null while a check is in flight (its own spinner
+  // covers that) or when the step is valid.
+  const blockHint = useMemo<string | null>(() => {
+    if (stepValid) return null;
+    switch (step) {
+      case "city":
+        if (!city.name.trim() || !city.center)
+          return "Search for your city and pick it from the list.";
+        if (slugCheck.status === "taken")
+          return "That public address is taken — pick a suggestion below.";
+        if (slugCheck.status === "invalid")
+          return "Public address needs lowercase letters, numbers, or dashes.";
+        return null;
+      case "teams":
+        return "Enable at least one team to continue.";
+      case "roster":
+        return "Fix the highlighted email addresses to continue.";
+      default:
+        return null;
+    }
+  }, [stepValid, step, city, slugCheck.status]);
 
   // Keep routing valid against the enabled set: reset any category pointing at
   // a now-disabled team to its default, preserving still-valid manual edits.
@@ -256,6 +326,8 @@ export function OnboardWizard({ adminEmail }: { adminEmail: string | null }) {
             city={city}
             setCity={setCity}
             effectiveSlug={effectiveSlug}
+            slugCheck={slugCheck}
+            setSlugCheck={setSlugCheck}
           />
         )}
         {step === "teams" && (
@@ -312,7 +384,7 @@ export function OnboardWizard({ adminEmail }: { adminEmail: string | null }) {
         </p>
       )}
 
-      <div className="mt-8 flex items-center justify-between">
+      <div className="mt-8 flex items-center justify-between gap-3">
         <Button
           variant="ghost"
           onClick={goBack}
@@ -320,25 +392,32 @@ export function OnboardWizard({ adminEmail }: { adminEmail: string | null }) {
         >
           Back
         </Button>
-        {step === "review" ? (
-          <Button
-            variant="accent"
-            onClick={submit}
-            isPending={busy}
-            disabled={busy}
-          >
-            Create city
-          </Button>
-        ) : (
-          <Button
-            variant="primary"
-            onClick={goNext}
-            isPending={busy}
-            disabled={busy}
-          >
-            Continue
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          {blockHint && (
+            <span className="hidden text-xs text-subtle sm:inline">
+              {blockHint}
+            </span>
+          )}
+          {step === "review" ? (
+            <Button
+              variant="accent"
+              onClick={submit}
+              isPending={busy}
+              disabled={busy}
+            >
+              Create city
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              onClick={goNext}
+              isPending={busy}
+              disabled={busy || !stepValid}
+            >
+              Continue
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -423,10 +502,14 @@ function CityStep({
   city,
   setCity,
   effectiveSlug,
+  slugCheck,
+  setSlugCheck,
 }: {
   city: CityState;
   setCity: React.Dispatch<React.SetStateAction<CityState>>;
   effectiveSlug: string;
+  slugCheck: SlugState;
+  setSlugCheck: React.Dispatch<React.SetStateAction<SlugState>>;
 }) {
   const handleSelect = (s: CitySuggestion) => {
     setCity((c) => ({
@@ -450,6 +533,26 @@ function CityStep({
       geoDisplay: null,
     }));
   };
+
+  // Live availability of the /city/[slug] address. Re-runs on every change to
+  // the effective slug (city pick or manual edit), debounced. A stale-response
+  // guard drops a slower earlier request so it can't overwrite a newer verdict.
+  const latestSlug = useRef(effectiveSlug);
+  useEffect(() => {
+    latestSlug.current = effectiveSlug;
+    if (!city.name.trim()) {
+      setSlugCheck({ status: "idle", suggestions: [] });
+      return;
+    }
+    setSlugCheck((s) => ({ ...s, status: "checking" }));
+    const t = setTimeout(() => {
+      void checkCitySlug(effectiveSlug, city.state).then((r) => {
+        if (latestSlug.current !== effectiveSlug) return; // superseded
+        setSlugCheck({ status: r.status, suggestions: r.suggestions });
+      });
+    }, 400);
+    return () => clearTimeout(t);
+  }, [effectiveSlug, city.name, city.state, setSlugCheck]);
 
   return (
     <div>
@@ -487,21 +590,92 @@ function CityStep({
             />
           </div>
         </Field>
-        <p className="text-xs text-subtle">
-          Your city will live at{" "}
-          <span className="font-medium text-foreground">
-            /city/{effectiveSlug}
-          </span>
-          .
-          {city.geoDisplay && (
-            <>
-              {" "}
-              Located:{" "}
-              <span className="text-foreground">{city.geoDisplay}</span>
-            </>
-          )}
-        </p>
+        {city.name.trim() ? (
+          <SlugAvailability
+            slug={effectiveSlug}
+            check={slugCheck}
+            onPick={(slug) => setCity((c) => ({ ...c, slug }))}
+          />
+        ) : (
+          <p className="text-xs text-subtle">
+            Your city will live at{" "}
+            <span className="font-medium text-foreground">/city/…</span>
+          </p>
+        )}
+
+        {city.geoDisplay && (
+          <p className="text-xs text-subtle">
+            Located:{" "}
+            <span className="text-foreground">{city.geoDisplay}</span>
+          </p>
+        )}
       </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------- slug availability badge */
+
+function SlugAvailability({
+  slug,
+  check,
+  onPick,
+}: {
+  slug: string;
+  check: SlugState;
+  onPick: (slug: string) => void;
+}) {
+  const addr = <span className="font-medium text-foreground">/city/{slug}</span>;
+
+  if (check.status === "checking" || check.status === "idle") {
+    return (
+      <p className="flex items-center gap-1.5 text-xs text-subtle">
+        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+        Checking if {addr} is free…
+      </p>
+    );
+  }
+
+  if (check.status === "available") {
+    return (
+      <p className="flex items-center gap-1.5 text-xs text-[var(--status-success-fg)]">
+        <Check className="h-3.5 w-3.5" aria-hidden />
+        {addr} is available.
+      </p>
+    );
+  }
+
+  if (check.status === "invalid") {
+    return (
+      <p className="flex items-center gap-1.5 text-xs text-[var(--status-warning-fg)]">
+        <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+        Public address needs lowercase letters, numbers, or dashes.
+      </p>
+    );
+  }
+
+  // taken
+  return (
+    <div className="space-y-2">
+      <p className="flex items-center gap-1.5 text-xs text-[var(--status-danger-fg)]">
+        <X className="h-3.5 w-3.5" aria-hidden />
+        {addr} is already taken.
+      </p>
+      {check.suggestions.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-subtle">Try:</span>
+          {check.suggestions.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => onPick(s)}
+              className="rounded-full border border-hairline bg-surface px-2.5 py-1 text-xs font-medium text-foreground outline-none transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_50%,transparent)]"
+            >
+              /city/{s}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -611,15 +785,16 @@ function TeamsStep({
                 aria-checked={on}
                 aria-label={`${on ? "Disable" : "Enable"} ${t.label}`}
                 onClick={() => setEnabled((e) => ({ ...e, [t.id]: !e[t.id] }))}
-                className={`relative h-5 w-9 shrink-0 rounded-full outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] ${
-                  on ? "bg-[var(--color-primary)]" : "bg-overlay-strong"
+                className={`relative inline-flex h-[22px] w-10 shrink-0 cursor-pointer items-center rounded-full border transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_55%,transparent)] ${
+                  on
+                    ? "border-transparent bg-[var(--color-primary)]"
+                    : "border-[var(--hairline-strong)] bg-overlay-strong hover:bg-overlay"
                 }`}
               >
                 <span
-                  className={`absolute top-0.5 h-4 w-4 rounded-full shadow-sm transition-transform ${
-                    on
-                      ? "translate-x-[18px] bg-[var(--accent-contrast)]"
-                      : "translate-x-0.5 bg-white"
+                  aria-hidden
+                  className={`pointer-events-none block h-4 w-4 rounded-full bg-[var(--background)] shadow-[0_1px_2px_rgba(0,0,0,0.3)] transition-transform duration-200 ${
+                    on ? "translate-x-5" : "translate-x-0.5"
                   }`}
                 />
               </button>
