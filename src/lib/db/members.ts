@@ -9,6 +9,7 @@ export interface MemberRow {
   id: string;
   displayName: string | null;
   email: string | null;
+  phone: string | null;
   role: "resident" | "staff_dispatcher" | "staff_supervisor" | "admin";
   teamKey: string | null;
   isShared: boolean;
@@ -25,6 +26,7 @@ interface UserRowRaw {
   id: string;
   display_name: string | null;
   email: string | null;
+  phone: string | null;
   role: MemberRow["role"];
   team_key: string | null;
   is_shared: boolean | null;
@@ -36,6 +38,22 @@ interface ReportRowRaw {
 }
 interface EventRowRaw {
   actor_id: string | null;
+  created_at: string;
+}
+interface MemberReportRowRaw {
+  id: string;
+  status: string;
+  address: string | null;
+  created_at: string;
+  // category lives on the 1:1 classifications table, embedded via the report_id
+  // FK. PostgREST returns an object when the FK is UNIQUE (it is) but may return
+  // an array on other configs, so the extractor tolerates both.
+  classifications: { category: string }[] | { category: string } | null;
+}
+interface MemberEventRowRaw {
+  id: string;
+  report_id: string | null;
+  event_type: string;
   created_at: string;
 }
 
@@ -59,6 +77,16 @@ function chunk<T>(items: T[], size: number): T[][] {
 function maxIso(a: string | null, b: string | null): string | null {
   if (a && b) return a > b ? a : b;
   return a ?? b ?? null;
+}
+
+// Flatten the embedded classifications relation (object, array, or null) to a
+// single category string. See MemberReportRowRaw for why both shapes appear.
+function embeddedCategory(
+  c: MemberReportRowRaw["classifications"],
+): string | null {
+  if (!c) return null;
+  const row = Array.isArray(c) ? c[0] : c;
+  return row?.category ?? null;
 }
 
 /**
@@ -111,6 +139,20 @@ export function maskEmail(email: string | null): string | null {
 }
 
 /**
+ * Mask a phone for demo-grade sessions: "+1 470 555 0142" → "•••••42". Same
+ * rationale as maskEmail — demo credentials are public, so a demo session must
+ * never see raw member phone numbers. Keeps the last two digits for recognition
+ * ("is this the number I expect?") while hiding the rest behind a fixed mask.
+ * Server-side only — the raw number must not reach the client.
+ */
+export function maskPhone(phone: string | null): string | null {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, "");
+  const last2 = digits.slice(-2);
+  return `•••••${last2}`;
+}
+
+/**
  * Load every member of `cityId` with per-user activity rollups (report count,
  * last report/event time, last sign-in). Service-role client — call only behind
  * the page's staff-access gate. Never throws: a failure on the primary users
@@ -127,7 +169,9 @@ export async function fetchCityMembers(
     // 1. Everyone in this city.
     const { data: userData, error: userErr } = await db
       .from("users")
-      .select("id, display_name, email, role, team_key, is_shared, created_at")
+      .select(
+        "id, display_name, email, phone, role, team_key, is_shared, created_at",
+      )
       .eq("city_id", cityId);
     if (userErr) {
       log.error("users query failed", userErr, { cityId });
@@ -193,6 +237,7 @@ export async function fetchCityMembers(
         id: u.id,
         displayName: u.display_name,
         email: u.email,
+        phone: u.phone,
         role: u.role,
         teamKey: u.team_key,
         isShared: u.is_shared ?? false,
@@ -213,5 +258,167 @@ export async function fetchCityMembers(
   } catch (err) {
     log.error("fetchCityMembers threw", err, { cityId });
     return { ok: false, error: "members_query_failed" };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Member detail
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** One report authored by the member. category is null when unclassified. */
+export interface MemberReportItem {
+  id: string;
+  status: string;
+  category: string | null;
+  address: string | null;
+  createdAt: string;
+}
+/** One lifecycle event the member is the actor of. `note` is always null —
+ *  report_events has no freetext column (metadata is structured jsonb). */
+export interface MemberEventItem {
+  id: string;
+  reportId: string | null;
+  type: string;
+  note: string | null;
+  createdAt: string;
+}
+export interface MemberDetail {
+  member: MemberRow;
+  reports: MemberReportItem[]; // newest first, capped
+  events: MemberEventItem[]; // newest first, capped
+  statusCounts: Record<string, number>; // over ALL of this member's city reports
+}
+export type MemberDetailResult =
+  | { ok: true; detail: MemberDetail }
+  | { ok: false; error: string };
+
+// Detail list caps: statusCounts/reportCount still span the full history, only
+// the returned arrays are truncated.
+const MEMBER_REPORTS_CAP = 50;
+const MEMBER_EVENTS_CAP = 100;
+
+/**
+ * Load one member of `cityId` with their report history, lifecycle events, and
+ * status rollup. Service-role client — call only behind the page's admin gate.
+ * Never throws: a missing/foreign member returns `member_not_found`, a failure
+ * on the primary users lookup returns a tagged error, and every rollup (reports,
+ * events, last sign-in) degrades to empty/null so the profile still renders —
+ * same policy as fetchCityMembers.
+ */
+export async function fetchMemberDetail(
+  cityId: string,
+  userId: string,
+): Promise<MemberDetailResult> {
+  try {
+    const db = createServerClient();
+
+    // 1. The member — id AND city_id both enforced, so a user belonging to
+    //    another city can never be loaded through this city's console.
+    const { data: userRow, error: userErr } = await db
+      .from("users")
+      .select(
+        "id, display_name, email, phone, role, team_key, is_shared, created_at",
+      )
+      .eq("id", userId)
+      .eq("city_id", cityId)
+      .maybeSingle();
+    if (userErr) {
+      log.error("member users query failed", userErr, { cityId, userId });
+      return { ok: false, error: "member_query_failed" };
+    }
+    if (!userRow) return { ok: false, error: "member_not_found" };
+    const u = userRow as UserRowRaw;
+
+    // 2. Every report this member filed in this city, newest first. Fetched in
+    //    full so statusCounts + reportCount span the whole history; the returned
+    //    list is sliced to the cap. category is embedded from the 1:1
+    //    classifications table via its report_id FK.
+    const statusCounts: Record<string, number> = {};
+    let reports: MemberReportItem[] = [];
+    let reportCount = 0;
+    let lastReportAt: string | null = null;
+    const { data: reportData, error: reportErr } = await db
+      .from("reports")
+      .select("id, status, address, created_at, classifications(category)")
+      .eq("reporter_id", userId)
+      .eq("city_id", cityId)
+      .order("created_at", { ascending: false });
+    if (reportErr) {
+      // Degrade like fetchCityMembers: log and leave the rollups empty rather
+      // than failing the whole profile — the member row already loaded.
+      log.error("member reports query failed", reportErr, { cityId, userId });
+    } else {
+      const reportRows = (reportData ?? []) as MemberReportRowRaw[];
+      reportCount = reportRows.length;
+      lastReportAt = reportRows[0]?.created_at ?? null; // newest-first
+      for (const r of reportRows)
+        statusCounts[r.status] = (statusCounts[r.status] ?? 0) + 1;
+      reports = reportRows.slice(0, MEMBER_REPORTS_CAP).map((r) => ({
+        id: r.id,
+        status: r.status,
+        category: embeddedCategory(r.classifications),
+        address: r.address,
+        createdAt: r.created_at,
+      }));
+    }
+
+    // 3. Lifecycle events this member is the actor of, newest first. Only rows
+    //    with actor_id set attribute to a person (report_created → reporter,
+    //    classification_overridden → staff); system status-change rows carry no
+    //    actor_id and are excluded.
+    let events: MemberEventItem[] = [];
+    let lastEventAt: string | null = null;
+    const { data: eventData, error: eventErr } = await db
+      .from("report_events")
+      .select("id, report_id, event_type, created_at")
+      .eq("actor_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(MEMBER_EVENTS_CAP);
+    if (eventErr) {
+      log.error("member report_events query failed", eventErr, {
+        cityId,
+        userId,
+      });
+    } else {
+      const eventRows = (eventData ?? []) as MemberEventRowRaw[];
+      lastEventAt = eventRows[0]?.created_at ?? null; // newest-first
+      events = eventRows.map((e) => ({
+        id: e.id,
+        reportId: e.report_id,
+        type: e.event_type,
+        note: null,
+        createdAt: e.created_at,
+      }));
+    }
+
+    // 4. Last sign-in — single Auth lookup, best-effort (never throws).
+    let lastSignInAt: string | null = null;
+    try {
+      const { data: authData, error: authErr } =
+        await db.auth.admin.getUserById(userId);
+      if (authErr) log.error("getUserById failed", authErr, { userId });
+      else lastSignInAt = authData.user?.last_sign_in_at ?? null;
+    } catch (err) {
+      log.error("getUserById threw", err, { userId });
+    }
+
+    const member: MemberRow = {
+      id: u.id,
+      displayName: u.display_name,
+      email: u.email,
+      phone: u.phone,
+      role: u.role,
+      teamKey: u.team_key,
+      isShared: u.is_shared ?? false,
+      joinedAt: u.created_at,
+      lastSignInAt,
+      reportCount,
+      lastActiveAt: maxIso(lastReportAt, lastEventAt),
+    };
+
+    return { ok: true, detail: { member, reports, events, statusCounts } };
+  } catch (err) {
+    log.error("fetchMemberDetail threw", err, { cityId, userId });
+    return { ok: false, error: "member_query_failed" };
   }
 }

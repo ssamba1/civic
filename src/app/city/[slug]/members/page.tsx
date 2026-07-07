@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { InviteMemberModal } from "@/components/members/invite-member-modal";
 import { MembersTable } from "@/components/members/members-table";
 import { fetchCity as fetchCityMock } from "@/lib/dashboard-data";
 import { fetchCity as fetchCityFromDb } from "@/lib/dashboard-queries";
@@ -7,8 +8,9 @@ import {
   type CityMembersResult,
   fetchCityMembers,
   maskEmail,
+  maskPhone,
 } from "@/lib/db/members";
-import { getStaffAccessForCity } from "@/lib/staff-access";
+import { getCityAdminContext, getStaffAccessForCity } from "@/lib/staff-access";
 
 // Auth-gated per request (reads cookies via isStaffForCity) and exposes member
 // PII — never prerender or cache.
@@ -63,6 +65,11 @@ export default async function CityMembersPage({ params }: PageProps) {
     redirect(`/login?redirect=/city/${slug}/members`);
   }
 
+  // Management (invite / edit) is gated on a genuine city admin — never a demo
+  // session, whose public credentials prove nothing about the visitor.
+  const adminCtx = access === "real" ? await getCityAdminContext(slug) : null;
+  const canManage = adminCtx !== null;
+
   // Synthetic (non-DB) cities have no real member rows — render an empty state
   // rather than querying a placeholder city id.
   const result: CityMembersResult = dbCity
@@ -70,22 +77,29 @@ export default async function CityMembersPage({ params }: PageProps) {
     : { ok: true, members: [] };
   const members = result.ok
     ? access === "demo"
-      ? result.members.map((m) => ({ ...m, email: maskEmail(m.email) }))
+      ? result.members.map((m) => ({
+          ...m,
+          email: maskEmail(m.email),
+          phone: maskPhone(m.phone),
+        }))
       : result.members
     : [];
 
   return (
     <div className="relative flex flex-col min-h-dvh bg-background">
       <div className="relative flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
-        <section className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
-            Members
-          </h1>
-          <p className="text-[13px] text-faint">
-            People with access to {city.name} — residents, dispatchers,
-            supervisors, and admins.
-            {access === "demo" && " Demo session — member emails are masked."}
-          </p>
+        <section className="mb-5 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
+              Members
+            </h1>
+            <p className="text-[13px] text-faint">
+              People with access to {city.name} — residents, dispatchers,
+              supervisors, and admins.
+              {access === "demo" && " Demo session — member emails are masked."}
+            </p>
+          </div>
+          {canManage && <InviteMemberModal slug={slug} />}
         </section>
 
         {!result.ok ? (
@@ -99,7 +113,7 @@ export default async function CityMembersPage({ params }: PageProps) {
             </p>
           </div>
         ) : dbCity ? (
-          <MembersTable members={members} />
+          <MembersTable members={members} slug={slug} canManage={canManage} />
         ) : (
           <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface px-6 py-16 text-center shadow-[var(--shadow-card)]">
             <p className="text-sm font-medium text-foreground">

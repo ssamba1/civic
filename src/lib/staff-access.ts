@@ -106,3 +106,65 @@ export async function getStaffAccessForCity(
 export async function isStaffForCity(slug: string): Promise<boolean> {
   return (await getStaffAccessForCity(slug)) !== null;
 }
+
+/**
+ * Resolved context for a city admin — the acting admin's id plus the city they
+ * administer. `userId` is empty ONLY under the dev bypass (no acting identity),
+ * which callers use to skip self-referential checks (e.g. an admin demoting
+ * their own role).
+ */
+export interface CityAdminContext {
+  cityId: string;
+  userId: string;
+}
+
+/**
+ * SERVER-ONLY. Resolve admin authority over the city owning `slug`. Non-null
+ * ONLY for the local dev bypass or a real authenticated user whose
+ * `users.role === "admin"` AND whose home `city_id` owns `slug`. Demo sessions
+ * NEVER qualify: this gates member mutations, and demo credentials are public,
+ * so a demo persona must never write. Mirrors getStaffAccessForCity's query and
+ * logging, but requires the strict admin role (not any staff role) and returns
+ * the resolved ids the mutating actions need.
+ */
+export async function getCityAdminContext(
+  slug: string,
+): Promise<CityAdminContext | null> {
+  const db = createServerClient();
+
+  // Resolve the city that owns `slug` first — the dev bypass still needs the
+  // real city id, and the real path compares it against the user's home city.
+  const { data: cityRow, error: cityErr } = await db
+    .from("cities")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (cityErr) {
+    log.error("city slug lookup failed", cityErr, { slug });
+  }
+  if (!cityRow) return null;
+
+  const devBypass =
+    process.env.NODE_ENV === "development" &&
+    process.env.DEV_AUTH_BYPASS === "1";
+  // Empty userId marks the bypass — no real admin is acting, so callers skip
+  // self-checks.
+  if (devBypass) return { cityId: cityRow.id, userId: "" };
+
+  const user = await getAuthUser();
+  if (!user) return null;
+
+  const { data: profile, error: profileErr } = await db
+    .from("users")
+    .select("role, city_id")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (profileErr) {
+    log.error("users role lookup failed", profileErr, { slug });
+  }
+  // Strict admin only, and their home city must own `slug`.
+  if (profile?.role === "admin" && profile.city_id === cityRow.id) {
+    return { cityId: cityRow.id, userId: user.id };
+  }
+  return null;
+}

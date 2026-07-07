@@ -1,15 +1,25 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { LayoutGrid, Pencil, Search, Users } from "lucide-react";
 import { useId, useMemo, useState } from "react";
+import { EditMemberModal } from "@/components/members/edit-member-modal";
+import {
+  MemberNameLink,
+  RoleBadge,
+  teamLabel,
+} from "@/components/members/member-badges";
+import { TeamAccessView } from "@/components/members/team-access-view";
 import type { MemberRow } from "@/lib/db/members";
-import { TEAMS, type TeamId } from "@/lib/teams";
+import { cn } from "@/lib/utils/cn";
 
 interface MembersTableProps {
   members: MemberRow[];
+  slug: string;
+  canManage: boolean;
 }
 
 type RoleFilter = "all" | MemberRow["role"];
+type ViewMode = "people" | "team";
 
 const FILTERS: ReadonlyArray<{ key: RoleFilter; label: string }> = [
   { key: "all", label: "All" },
@@ -19,32 +29,14 @@ const FILTERS: ReadonlyArray<{ key: RoleFilter; label: string }> = [
   { key: "resident", label: "Residents" },
 ];
 
-// Grayscale role badges — differentiation is carried by fill weight and outline,
-// never hue, so the enterprise register stays monochrome.
-const ROLE_META: Record<MemberRow["role"], { label: string; badge: string }> = {
-  admin: {
-    label: "Admin",
-    badge: "border-transparent bg-accent text-accent-contrast",
-  },
-  staff_supervisor: {
-    label: "Supervisor",
-    badge: "border-hairline-strong bg-overlay-strong text-foreground",
-  },
-  staff_dispatcher: {
-    label: "Dispatcher",
-    badge: "border-hairline bg-overlay text-subtle",
-  },
-  resident: {
-    label: "Resident",
-    badge: "border-transparent bg-transparent text-faint",
-  },
-};
-
-function teamLabel(key: string | null): string {
-  if (!key) return "—";
-  const meta = TEAMS[key as TeamId];
-  return meta ? meta.shortLabel : key;
-}
+const VIEWS: ReadonlyArray<{
+  key: ViewMode;
+  label: string;
+  Icon: typeof Users;
+}> = [
+  { key: "people", label: "People", Icon: Users },
+  { key: "team", label: "By team", Icon: LayoutGrid },
+];
 
 // Coarse relative time — "just now" / "3d ago" / "2mo ago". Small enough to keep
 // local; no date library dependency.
@@ -65,27 +57,38 @@ function relativeTime(iso: string | null): string {
   return `${Math.floor(days / 365)}y ago`;
 }
 
-export function MembersTable({ members }: MembersTableProps) {
+export function MembersTable({ members, slug, canManage }: MembersTableProps) {
+  const [view, setView] = useState<ViewMode>("people");
   const [role, setRole] = useState<RoleFilter>("all");
   const [query, setQuery] = useState("");
+  const [editing, setEditing] = useState<MemberRow | null>(null);
   const searchId = useId();
 
   const counts = useMemo(() => {
     const map: Record<RoleFilter, number> = {
-      all: members.length,
+      all: 0,
       admin: 0,
       staff_supervisor: 0,
       staff_dispatcher: 0,
       resident: 0,
     };
-    for (const m of members) map[m.role] += 1;
+    for (const m of members) {
+      map[m.role] += 1;
+      // "All" is the operators view — residents are counted only under their
+      // own chip, never rolled into All.
+      if (m.role !== "resident") map.all += 1;
+    }
     return map;
   }, [members]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return members.filter((m) => {
-      if (role !== "all" && m.role !== role) return false;
+      if (role === "all") {
+        if (m.role === "resident") return false;
+      } else if (m.role !== role) {
+        return false;
+      }
       if (!needle) return true;
       return (
         (m.displayName ?? "").toLowerCase().includes(needle) ||
@@ -94,10 +97,74 @@ export function MembersTable({ members }: MembersTableProps) {
     });
   }, [members, role, query]);
 
+  // Member, Phone, Role, Team, Reports, Last active, Last sign-in (+ Actions).
+  const colCount = canManage ? 8 : 7;
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Controls — role chips + text search. */}
+      {/* Top controls — view toggle + (People-only) search. */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div
+          role="toolbar"
+          aria-label="Switch member view"
+          aria-orientation="horizontal"
+          className="inline-flex items-center gap-0.5 rounded-[var(--radius-md)] border border-hairline bg-overlay p-0.5"
+        >
+          {VIEWS.map(({ key, label, Icon }) => {
+            const active = view === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setView(key)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-[calc(var(--radius-md)-2px)] px-2.5 h-7 text-[13px] font-medium",
+                  "transition-colors duration-150 outline-none",
+                  "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                  active
+                    ? "bg-surface text-foreground shadow-[var(--shadow-card)]"
+                    : "text-subtle hover:text-foreground",
+                )}
+              >
+                <Icon
+                  className="h-3.5 w-3.5"
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
+                {label}
+              </button>
+            );
+          })}
+        </div>
+
+        {view === "people" && (
+          <div className="relative sm:w-64">
+            <Search
+              className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-faint"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+            <input
+              id={searchId}
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search name or email"
+              aria-label="Search members by name or email"
+              className={[
+                "h-8 w-full rounded-[var(--radius-md)] border border-hairline bg-surface pl-8 pr-2.5 text-[13px] text-foreground",
+                "placeholder:text-faint outline-none transition-colors duration-150",
+                "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+              ].join(" ")}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Role chips — People view only; By-team groups by team and drops
+          residents, so a role filter there would be redundant. */}
+      {view === "people" && (
         <div
           className="flex flex-wrap items-center gap-1.5"
           role="toolbar"
@@ -134,116 +201,141 @@ export function MembersTable({ members }: MembersTableProps) {
             );
           })}
         </div>
+      )}
 
-        <div className="relative sm:w-64">
-          <Search
-            className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-faint"
-            strokeWidth={2}
-            aria-hidden="true"
-          />
-          <input
-            id={searchId}
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search name or email"
-            aria-label="Search members by name or email"
-            className={[
-              "h-8 w-full rounded-[var(--radius-md)] border border-hairline bg-surface pl-8 pr-2.5 text-[13px] text-foreground",
-              "placeholder:text-faint outline-none transition-colors duration-150",
-              "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-            ].join(" ")}
-          />
-        </div>
-      </div>
-
-      {/* Roster table. */}
-      <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-card)]">
-        <table className="w-full min-w-[720px] border-collapse text-left text-[13px]">
-          <thead>
-            <tr className="border-b border-hairline text-[11px] uppercase tracking-wide text-faint">
-              <th scope="col" className="px-4 py-3 font-medium">
-                Member
-              </th>
-              <th scope="col" className="px-4 py-3 font-medium">
-                Role
-              </th>
-              <th scope="col" className="px-4 py-3 font-medium">
-                Team
-              </th>
-              <th scope="col" className="px-4 py-3 text-right font-medium">
-                Reports
-              </th>
-              <th scope="col" className="px-4 py-3 font-medium">
-                Last active
-              </th>
-              <th scope="col" className="px-4 py-3 font-medium">
-                Last sign-in
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-4 py-16 text-center">
-                  <p className="text-sm font-medium text-foreground">
-                    No members match
-                  </p>
-                  <p className="mt-1 text-[13px] text-faint">
-                    Try a different role filter or clear the search.
-                  </p>
-                </td>
+      {view === "team" ? (
+        <TeamAccessView
+          members={members}
+          slug={slug}
+          canManage={canManage}
+          onEdit={setEditing}
+        />
+      ) : (
+        <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-card)]">
+          <table className="w-full min-w-[860px] border-collapse text-left text-[13px]">
+            <thead>
+              <tr className="border-b border-hairline text-[11px] uppercase tracking-wide text-faint">
+                <th scope="col" className="px-4 py-3 font-medium">
+                  Member
+                </th>
+                <th scope="col" className="px-4 py-3 font-medium">
+                  Phone
+                </th>
+                <th scope="col" className="px-4 py-3 font-medium">
+                  Role
+                </th>
+                <th scope="col" className="px-4 py-3 font-medium">
+                  Team
+                </th>
+                <th scope="col" className="px-4 py-3 text-right font-medium">
+                  Reports
+                </th>
+                <th scope="col" className="px-4 py-3 font-medium">
+                  Last active
+                </th>
+                <th scope="col" className="px-4 py-3 font-medium">
+                  Last sign-in
+                </th>
+                {canManage && (
+                  <th scope="col" className="px-4 py-3 text-right font-medium">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                )}
               </tr>
-            ) : (
-              filtered.map((m) => {
-                const meta = ROLE_META[m.role];
-                return (
-                  <tr
-                    key={m.id}
-                    className="border-b border-hairline last:border-b-0 transition-colors duration-150 hover:bg-overlay"
-                  >
-                    <td className="px-4 py-3 align-middle">
-                      <div className="font-medium text-foreground">
-                        {m.displayName ?? "Unnamed"}
-                      </div>
-                      <div className="text-[12px] text-faint">
-                        {m.email ?? "—"}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 align-middle">
-                      <span
-                        className={[
-                          "inline-flex items-center rounded-[var(--radius-md)] border px-2 py-0.5 text-[11px] font-medium",
-                          meta.badge,
-                        ].join(" ")}
-                      >
-                        {meta.label}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 align-middle">
-                      <div className="text-subtle">{teamLabel(m.teamKey)}</div>
-                      {m.isShared && (
-                        <div className="text-[11px] text-faint">
-                          Shared login
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={colCount} className="px-4 py-16 text-center">
+                    <p className="text-sm font-medium text-foreground">
+                      No members match
+                    </p>
+                    <p className="mt-1 text-[13px] text-faint">
+                      Try a different role filter or clear the search.
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((m) => {
+                  const pendingInvite =
+                    m.lastSignInAt === null && m.role !== "resident";
+                  return (
+                    <tr
+                      key={m.id}
+                      className="border-b border-hairline last:border-b-0 transition-colors duration-150 hover:bg-overlay"
+                    >
+                      <td className="px-4 py-3 align-middle">
+                        <MemberNameLink
+                          slug={slug}
+                          id={m.id}
+                          name={m.displayName}
+                        />
+                        <div className="text-[12px] text-faint">
+                          {m.email ?? "—"}
                         </div>
+                      </td>
+                      <td className="px-4 py-3 align-middle tabular-nums text-subtle">
+                        {m.phone ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 align-middle">
+                        <RoleBadge role={m.role} />
+                      </td>
+                      <td className="px-4 py-3 align-middle">
+                        <div className="text-subtle">
+                          {teamLabel(m.teamKey)}
+                        </div>
+                        {m.isShared && (
+                          <div className="text-[11px] text-faint">
+                            Shared login
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 align-middle text-right tabular-nums text-foreground">
+                        {m.reportCount}
+                      </td>
+                      <td className="px-4 py-3 align-middle text-subtle">
+                        {relativeTime(m.lastActiveAt)}
+                      </td>
+                      <td className="px-4 py-3 align-middle text-subtle">
+                        {pendingInvite ? (
+                          <span className="inline-flex items-center rounded-[var(--radius-md)] border border-hairline bg-overlay px-2 py-0.5 text-[11px] font-medium text-faint">
+                            Pending invite
+                          </span>
+                        ) : (
+                          relativeTime(m.lastSignInAt)
+                        )}
+                      </td>
+                      {canManage && (
+                        <td className="px-4 py-3 align-middle text-right">
+                          <button
+                            type="button"
+                            aria-label={`Edit ${m.displayName ?? "member"}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditing(m);
+                            }}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-md)] text-faint outline-none transition-colors duration-150 hover:bg-overlay-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+                          >
+                            <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+                          </button>
+                        </td>
                       )}
-                    </td>
-                    <td className="px-4 py-3 align-middle text-right tabular-nums text-foreground">
-                      {m.reportCount}
-                    </td>
-                    <td className="px-4 py-3 align-middle text-subtle">
-                      {relativeTime(m.lastActiveAt)}
-                    </td>
-                    <td className="px-4 py-3 align-middle text-subtle">
-                      {relativeTime(m.lastSignInAt)}
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {canManage && (
+        <EditMemberModal
+          member={editing}
+          slug={slug}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </div>
   );
 }
