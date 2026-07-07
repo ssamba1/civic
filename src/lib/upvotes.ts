@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { DEMO_MODE } from "@/lib/demo-mode";
 import { validateUpvotes } from "@/lib/schemas";
 import { createReactiveStore } from "@/lib/utils/reactive-store";
 
@@ -20,6 +21,42 @@ import { createReactiveStore } from "@/lib/utils/reactive-store";
    ================================================================== */
 
 const STORAGE_KEY = "civic.upvotes.v1";
+
+/**
+ * DB leg of a toggle (live deploy only): fire-and-forget insert/delete of the
+ * caller's own report_upvotes row (migration 027; RLS enforces
+ * user_id = auth.uid()). localStorage stays the optimistic layer; a failure
+ * (e.g. a synthetic report id with no DB row) is logged and the local state
+ * stands — correct demo behavior, self-healing on the next real toggle.
+ */
+function persistUpvote(reportId: string, upvoted: boolean): void {
+  if (DEMO_MODE) return;
+  void import("@/lib/db/browser-client")
+    .then(async ({ createBrowserSupabase }) => {
+      const supabase = createBrowserSupabase();
+      const { data } = await supabase.auth.getUser();
+      const userId = data.user?.id;
+      if (!userId) return;
+      const { error } = upvoted
+        ? await supabase
+            .from("report_upvotes")
+            .upsert(
+              { report_id: reportId, user_id: userId },
+              { onConflict: "report_id,user_id", ignoreDuplicates: true },
+            )
+        : await supabase
+            .from("report_upvotes")
+            .delete()
+            .eq("report_id", reportId)
+            .eq("user_id", userId);
+      if (error) {
+        console.warn(`[upvotes] DB persist failed: ${error.message}`);
+      }
+    })
+    .catch((err) => {
+      console.warn("[upvotes] DB persist threw", err);
+    });
+}
 
 type UpvoteSet = ReadonlySet<string>;
 
@@ -96,11 +133,13 @@ export function useUpvotes(): UseUpvotesReturn {
 
   const toggle = useCallback((reportId: string) => {
     const next = new Set(snapshot);
-    if (next.has(reportId)) next.delete(reportId);
-    else next.add(reportId);
+    const upvoted = !next.has(reportId);
+    if (upvoted) next.add(reportId);
+    else next.delete(reportId);
     snapshot = next;
     writeStorage(snapshot);
     emit();
+    persistUpvote(reportId, upvoted);
   }, []);
 
   return { has, count, toggle };

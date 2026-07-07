@@ -722,6 +722,57 @@ export async function fetchCategoryCostStats(
 }
 
 /**
+ * Upsert a dispatcher-defined issue type for the staff member's city (the DB
+ * leg of the custom-categories store; issue_types, migration 027).
+ */
+export async function saveIssueType(input: {
+  key: string;
+  label: string;
+  color: string;
+  teamKey: TeamId;
+}): Promise<Result<void>> {
+  const staff = await getStaffUser();
+  if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
+  if (!staff.city_id) return { ok: false, error: "no_city" };
+  if (!(input.teamKey in TEAMS) || input.teamKey === "all")
+    return { ok: false, error: "invalid_team" };
+  const key = input.key.trim();
+  const label = input.label.trim();
+  if (!/^custom_[a-z0-9_]{1,64}$/.test(key) || !label || label.length > 80)
+    return { ok: false, error: "invalid_issue_type" };
+
+  const supabase = createServerClient();
+  const { error } = await supabase.from("issue_types").upsert(
+    {
+      city_id: staff.city_id,
+      key,
+      label,
+      color: input.color,
+      team_key: input.teamKey,
+    },
+    { onConflict: "city_id,key" },
+  );
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data: undefined };
+}
+
+/** Delete a dispatcher-defined issue type for the staff member's city. */
+export async function deleteIssueType(key: string): Promise<Result<void>> {
+  const staff = await getStaffUser();
+  if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
+  if (!staff.city_id) return { ok: false, error: "no_city" };
+
+  const supabase = createServerClient();
+  const { error } = await supabase
+    .from("issue_types")
+    .delete()
+    .eq("city_id", staff.city_id)
+    .eq("key", key.trim());
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data: undefined };
+}
+
+/**
  * Reassign one report's work order to another team (the DB leg of the
  * delegation panel — the localStorage overlay stays as the instant-UI layer).
  */
