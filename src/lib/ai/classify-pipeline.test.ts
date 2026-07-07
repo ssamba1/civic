@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { GEMINI_MODEL } from "@/lib/ai/config";
 import { findDuplicate } from "@/lib/ai/dedup";
 import { classifyPhoto } from "@/lib/ai/gemini";
 import { createServerClient } from "@/lib/db/client";
@@ -317,7 +318,7 @@ describe("runClassifyPipeline", () => {
       expect.objectContaining({
         report_id: REPORT_ID,
         category: "pothole",
-        model_version: "gemini-2.5-flash",
+        model_version: GEMINI_MODEL,
         raw_response: { text: '{"category":"pothole"}', mime: "image/jpeg" },
       }),
       { onConflict: "report_id" },
@@ -344,10 +345,23 @@ describe("runClassifyPipeline", () => {
     }
   });
 
-  it("emergency -> no work order, status dispatched", async () => {
+  it("emergency -> work order created (review gate bypassed), status dispatched", async () => {
+    // Issue-8 behavior: emergencies no longer short-circuit — they get a work
+    // order like any high-confidence report (so cost actuals can be captured
+    // and the +50 priority term is live), and skip the manual-review hold.
+    const insertedWorkOrder = {
+      id: "wo-emergency",
+      report_id: REPORT_ID,
+      department: "utilities",
+      crew_type: "line_crew",
+      priority_score: 60,
+      est_minutes: 120,
+      materials: ["varies by severity"],
+    };
     const { client, tables } = makeSupabase({
       report: { data: REPORT_ROW, error: null },
       download: { data: jpegBlob(), error: null },
+      workOrder: { data: insertedWorkOrder, error: null },
     });
     createServerClientMock.mockReturnValue(client as never);
     classifyPhotoMock.mockResolvedValue({
@@ -366,16 +380,24 @@ describe("runClassifyPipeline", () => {
 
     // Classification persisted.
     expect(tables.classifications.upsert).toHaveBeenCalled();
-    // Emergency short-circuits: NO work order.
-    expect(tables.work_orders.upsert).not.toHaveBeenCalled();
-    // Status still transitioned to dispatched.
+    // Work order created, never held for manual review.
+    expect(tables.work_orders.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        report_id: REPORT_ID,
+        department: "utilities",
+        crew_type: "line_crew",
+        needs_manual_review: false,
+      }),
+      { onConflict: "report_id" },
+    );
+    // Status transitioned to dispatched.
     expect(tables.reports.update).toHaveBeenCalledWith({
       status: "dispatched",
     });
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.emergency).toBe(true);
-      expect(result.data.work_order).toBeNull();
+      expect(result.data.work_order).toEqual(insertedWorkOrder);
     }
   });
 
@@ -430,6 +452,19 @@ describe("runClassifyPipeline", () => {
     const { client, tables } = makeSupabase({
       report: { data: REPORT_ROW, error: null },
       download: { data: jpegBlob(), error: null },
+      // Emergencies create a work order (issue-8) before dispatching.
+      workOrder: {
+        data: {
+          id: "wo-emergency-dup",
+          report_id: REPORT_ID,
+          department: "utilities",
+          crew_type: "line_crew",
+          priority_score: 60,
+          est_minutes: 120,
+          materials: ["varies by severity"],
+        },
+        error: null,
+      },
     });
     createServerClientMock.mockReturnValue(client as never);
     classifyPhotoMock.mockResolvedValue({
@@ -443,7 +478,8 @@ describe("runClassifyPipeline", () => {
         rawText: "{}",
       },
     });
-    // Even if a dup existed, the emergency short-circuit returns first.
+    // Even if a dup existed, dedup is guarded on !is_emergency — an emergency
+    // must never be merged away from auto-dispatch.
     findDuplicateMock.mockResolvedValue({
       primaryReportId: "earlier-report-1",
       distanceM: 5,

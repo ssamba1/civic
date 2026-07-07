@@ -3,15 +3,27 @@
   "samples": [
     {
       "image": "pothole-deep-01.jpg",
-      "expected": { "category": "pothole", "severity": 4, "is_emergency": false }
+      "expected": {
+        "category": "pothole",
+        "severity": 4,
+        "is_emergency": false
+      }
     },
     {
       "image": "water-main-break-01.jpg",
-      "expected": { "category": "water_leak", "severity": 5, "is_emergency": true }
+      "expected": {
+        "category": "water_leak",
+        "severity": 5,
+        "is_emergency": true
+      }
     },
     {
       "image": "graffiti-wall-01.jpg",
-      "expected": { "category": "graffiti", "severity": 1, "is_emergency": false }
+      "expected": {
+        "category": "graffiti",
+        "severity": 1,
+        "is_emergency": false
+      }
     }
   ]
 }

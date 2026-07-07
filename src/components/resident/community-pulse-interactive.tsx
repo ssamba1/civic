@@ -178,20 +178,23 @@ function DeltaRow({
 }: {
   label: string;
   value: number;
-  deltaPct: number;
+  /** Percent change, or null = "new" (no prior-week base). */
+  deltaPct: number | null;
   goodWhenUp?: boolean;
   tipBindings?: TipBindings;
   hoverLabel?: string;
 }) {
-  const up = deltaPct > 0;
+  const isNew = deltaPct === null;
+  const up = (deltaPct ?? 0) > 0;
   const flat = deltaPct === 0;
-  const positive = flat ? false : up === goodWhenUp;
-  const color = flat
-    ? "var(--color-muted)"
-    : positive
-      ? "var(--color-success)"
-      : "var(--color-warning)";
-  const Icon = flat ? ArrowRight : up ? ArrowUpRight : ArrowDownRight;
+  const positive = flat || isNew ? false : up === goodWhenUp;
+  const color =
+    flat || isNew
+      ? "var(--color-muted)"
+      : positive
+        ? "var(--color-success)"
+        : "var(--color-warning)";
+  const Icon = flat || isNew ? ArrowRight : up ? ArrowUpRight : ArrowDownRight;
   const inner = (
     <>
       <span className="text-[13px] text-subtle">{label}</span>
@@ -204,7 +207,7 @@ function DeltaRow({
           style={{ color }}
         >
           <Icon className="h-3 w-3" strokeWidth={2.25} />
-          {flat ? "0%" : `${Math.abs(deltaPct)}%`}
+          {isNew ? "new" : flat ? "0%" : `${Math.abs(deltaPct ?? 0)}%`}
         </span>
       </span>
     </>
@@ -477,20 +480,27 @@ function fixSpeedTip(b: CityMorale["fixSpeed"][number], total: number) {
 function deltaTip(
   label: string,
   value: number,
-  deltaPct: number,
+  deltaPct: number | null,
   goodWhenUp: boolean,
 ) {
   // Reconstruct prior week from the delta the card already shows.
+  // null = "new": prior week was zero, so the whole value is the change.
   const prior =
-    deltaPct !== 0 ? Math.round(value / (1 + deltaPct / 100)) : value;
+    deltaPct === null
+      ? 0
+      : deltaPct !== 0
+        ? Math.round(value / (1 + deltaPct / 100))
+        : value;
   const change = value - prior;
   const flat = deltaPct === 0;
-  const positive = flat ? false : deltaPct > 0 === goodWhenUp;
-  const color = flat
-    ? "var(--color-muted)"
-    : positive
-      ? "var(--color-success)"
-      : "var(--color-warning)";
+  const isNew = deltaPct === null;
+  const positive = flat || isNew ? false : deltaPct > 0 === goodWhenUp;
+  const color =
+    flat || isNew
+      ? "var(--color-muted)"
+      : positive
+        ? "var(--color-success)"
+        : "var(--color-warning)";
   return {
     title: label,
     accent: color,
@@ -512,9 +522,8 @@ function deltaTip(
     footer: (
       <div className="flex items-center justify-between">
         <span>Week over week</span>
-        <TipChip tone={flat ? "neutral" : positive ? "good" : "warn"}>
-          {deltaPct > 0 ? "+" : ""}
-          {deltaPct}%
+        <TipChip tone={flat || isNew ? "neutral" : positive ? "good" : "warn"}>
+          {isNew ? "new" : `${(deltaPct ?? 0) > 0 ? "+" : ""}${deltaPct ?? 0}%`}
         </TipChip>
       </div>
     ),
@@ -621,7 +630,10 @@ export function CommunityPulseInteractive({
                         value={morale.inProgressCount.toLocaleString()}
                         accent="var(--fg-electric-indigo)"
                       />
-                      <TipBar pct={morale.pctResolved} color="var(--color-success)" />
+                      <TipBar
+                        pct={morale.pctResolved}
+                        color="var(--color-success)"
+                      />
                     </div>
                   ),
                   footer: (
@@ -813,7 +825,10 @@ export function CommunityPulseInteractive({
       <Tile>
         <div className="flex items-start gap-3">
           <span className="mt-0.5 inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-elevated">
-            <MapPin className="h-3.5 w-3.5 text-foreground" strokeWidth={2.25} />
+            <MapPin
+              className="h-3.5 w-3.5 text-foreground"
+              strokeWidth={2.25}
+            />
           </span>
           <p className="max-w-[70ch] text-[13px] leading-relaxed text-subtle">
             A reported pothole becomes a smoother drive to school. A fixed

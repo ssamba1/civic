@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronUp } from "lucide-react";
+import { DEMO_MODE } from "@/lib/demo-mode";
 import { useUpvotes } from "@/lib/upvotes";
 import { cn } from "@/lib/utils/cn";
 
@@ -39,7 +40,7 @@ export function UpvoteButton({
       aria-pressed={active}
       aria-label={`${active ? "Remove your upvote, " : "Upvote, "}${n} ${
         n === 1 ? "upvote" : "upvotes"
-      } — saved on this device`}
+      }${DEMO_MODE ? " — saved on this device" : ""}`}
       className={cn(
         "inline-flex flex-col items-center justify-center rounded-lg border transition-colors active:scale-90 motion-reduce:active:scale-100 motion-reduce:transition-none tabular-nums",
         size === "sm" ? "h-11 w-9 text-[11px]" : "h-12 w-10 text-xs",

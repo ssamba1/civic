@@ -75,7 +75,9 @@ export async function buildStormAdvisory(): Promise<StormAdvisory> {
     .map(([category, multiplier]) => {
       const baselineDailyAvg = baseline[category] ?? 0;
       const predictedCount =
-        baselineDailyAvg > 0 ? Math.round(baselineDailyAvg * multiplier * forecastDays) : null;
+        baselineDailyAvg > 0
+          ? Math.round(baselineDailyAvg * multiplier * forecastDays)
+          : null;
       return { category, baselineDailyAvg, multiplier, predictedCount };
     })
     .sort((a, b) => (b.predictedCount ?? 0) - (a.predictedCount ?? 0));

@@ -31,10 +31,7 @@
 //   SUPABASE_SERVICE_ROLE_KEY    service-role key (RLS-bypassing; provisions fixtures)
 //
 // See tests/rls/README.md for the full local-run recipe.
-import {
-  createClient,
-  type SupabaseClient,
-} from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const URL = process.env.SUPABASE_TEST_URL;
@@ -121,7 +118,10 @@ async function signIn(f: Fixture): Promise<SupabaseClient> {
 
 // Insert a report owned by `owner` in the owner's city (service role bypasses
 // RLS so we can seed regardless of policy). Returns the new report id.
-async function seedReport(svc: SupabaseClient, owner: Fixture): Promise<string> {
+async function seedReport(
+  svc: SupabaseClient,
+  owner: Fixture,
+): Promise<string> {
   const { data, error } = await svc
     .from("reports")
     .insert({

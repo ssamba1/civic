@@ -11,6 +11,7 @@ import { generateWorkOrder } from "@/lib/ai/work-order-rules";
 import { createServerClient } from "@/lib/db/client";
 import { sniffImageMime } from "@/lib/image/sniff-mime";
 import { createLogger } from "@/lib/logger";
+import { resolveTeamKeyForCategory } from "@/lib/onboarding/city-teams";
 import type {
   Classification,
   Result,
@@ -284,11 +285,14 @@ export async function runClassifyPipeline(
     log.info("flagged_for_manual_review", { reportId, reviewReason });
   }
 
-  // Duplicate detection (non-emergency only — emergencies are never suppressed).
-  // A match marks THIS report 'merged', records a merges row, and skips the work
-  // order so duplicate reports don't inflate the dispatch queue. Flag-gated +
-  // no-op-safe: findDuplicate returns null on an un-migrated DB (missing RPC).
-  if (DEDUP_REPORTS) {
+  // Duplicate detection (non-emergency only — emergencies are never suppressed:
+  // merging one would silently swallow an auto-dispatch. The is_emergency guard
+  // was lost when the emergency short-circuit above was removed for issue-8;
+  // this reinstates it explicitly). A match marks THIS report 'merged', records
+  // a merges row, and skips the work order so duplicate reports don't inflate
+  // the dispatch queue. Flag-gated + no-op-safe: findDuplicate returns null on
+  // an un-migrated DB (missing RPC).
+  if (DEDUP_REPORTS && !classification.is_emergency) {
     const dup = await findDuplicate(supabase, reportId, log);
     if (dup) {
       const { error: mergeErr } = await supabase.from("merges").insert({
@@ -429,6 +433,32 @@ export async function runClassifyPipeline(
     });
     await markClassifyStatus(supabase, reportId, "failed", log);
     return { ok: false, error: msg };
+  }
+
+  // Persist the owning team via a separate guarded write (migration 026
+  // column; no-op-safe on un-migrated DBs — the read path falls back to the
+  // static category→team default when team_key is null). Resolved from the
+  // city's own city_teams config so per-city routing takes effect at creation.
+  try {
+    const teamKey = await resolveTeamKeyForCategory(
+      report.city_id,
+      classification.category,
+    );
+    const { error: teamErr } = await supabase
+      .from("work_orders")
+      .update({ team_key: teamKey })
+      .eq("id", insertedWorkOrder.id);
+    if (teamErr) {
+      log.warn("work_order_team_key_stamp_failed", {
+        reportId,
+        error: teamErr.message,
+      });
+    }
+  } catch (err) {
+    log.warn("work_order_team_key_resolve_threw", {
+      reportId,
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 
   // Persist est_cost + provenance via a separate guarded write (migration 010

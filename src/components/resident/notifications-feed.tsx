@@ -203,7 +203,8 @@ export function NotificationsFeed({
                   onClick={() => handleClick(item)}
                   className={cn(
                     "flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors min-h-[44px]",
-                    !read && "bg-[color-mix(in_srgb,var(--color-primary)_4%,transparent)]",
+                    !read &&
+                      "bg-[color-mix(in_srgb,var(--color-primary)_4%,transparent)]",
                     clickable ? "hover:bg-overlay" : "cursor-default",
                   )}
                 >
@@ -212,7 +213,9 @@ export function NotificationsFeed({
                       "mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg",
                       !meta.color && "bg-elevated",
                     )}
-                    style={meta.color ? { background: `${meta.color}1f` } : undefined}
+                    style={
+                      meta.color ? { background: `${meta.color}1f` } : undefined
+                    }
                   >
                     <Icon
                       className={cn("h-4 w-4", !meta.color && "text-subtle")}

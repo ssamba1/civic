@@ -60,9 +60,7 @@ export function LegalShell({
         <h1 className="mt-3 text-[28px] font-semibold leading-[1.15] tracking-tight sm:text-[34px]">
           {title}
         </h1>
-        <p className="mt-4 text-[13px] text-faint">
-          Last updated {EFFECTIVE}
-        </p>
+        <p className="mt-4 text-[13px] text-faint">Last updated {EFFECTIVE}</p>
         <div className="mt-7 text-[15px] leading-relaxed text-subtle">
           {intro}
         </div>

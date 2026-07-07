@@ -1,5 +1,10 @@
 import { createLogger } from "@/lib/logger";
-import { CITY_CENTER, LOOKBACK_HOURS, NWS_TIMEOUT_MS, NWS_USER_AGENT } from "./storm-config";
+import {
+  CITY_CENTER,
+  LOOKBACK_HOURS,
+  NWS_TIMEOUT_MS,
+  NWS_USER_AGENT,
+} from "./storm-config";
 
 const logger = createLogger("[nws-client]");
 
@@ -42,7 +47,9 @@ interface NwsAlertsResponse {
 export async function fetchRecentAlerts(
   point: { lat: number; lng: number } = CITY_CENTER,
 ): Promise<NwsAlert[]> {
-  const start = new Date(Date.now() - LOOKBACK_HOURS * 60 * 60 * 1000).toISOString();
+  const start = new Date(
+    Date.now() - LOOKBACK_HOURS * 60 * 60 * 1000,
+  ).toISOString();
   const url = `https://api.weather.gov/alerts?point=${point.lat},${point.lng}&start=${encodeURIComponent(start)}`;
 
   const controller = new AbortController();
@@ -67,21 +74,26 @@ export async function fetchRecentAlerts(
 
     return (body.features ?? [])
       .map((f) => f.properties)
-      .filter((p): p is NwsFeatureProperties => !!p && !!p.event && !!p.expires)
+      .filter(
+        (p): p is NwsFeatureProperties & { event: string; expires: string } =>
+          !!p && !!p.event && !!p.expires,
+      )
       .map((p) => ({
         id: p.id ?? `${p.event}-${p.effective}`,
-        event: p.event!,
+        event: p.event,
         severity: p.severity ?? "Unknown",
         headline: p.headline ?? null,
         areaDesc: p.areaDesc ?? "",
         effective: p.effective ?? "",
-        expires: p.expires!,
-        status: (new Date(p.expires!).getTime() >= now ? "active" : "expired") as
+        expires: p.expires,
+        status: (new Date(p.expires).getTime() >= now ? "active" : "expired") as
           | "active"
           | "expired",
       }));
   } catch (err) {
-    logger.warn("nws_fetch_error", { error: err instanceof Error ? err.message : String(err) });
+    logger.warn("nws_fetch_error", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return [];
   } finally {
     clearTimeout(timeout);

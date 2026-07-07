@@ -8,6 +8,7 @@ import type {
 } from "@/lib/dashboard-data";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
+import { TEAMS, type TeamId } from "@/lib/teams";
 import type { City, ReportCategory } from "@/lib/types";
 
 // Error strategy for this module: log via the shared logger (Sentry-backed) and
@@ -145,19 +146,26 @@ const EMPTY_STATS: CityStats = {
   prev_week: 0,
 };
 
-export async function fetchCityStats(cityId: string): Promise<CityStats> {
+export async function fetchCityStats(
+  cityId: string,
+  sources?: string[],
+): Promise<CityStats> {
   return safeQuery("fetchCityStats", EMPTY_STATS, async () => {
     const db = createServerClient();
-    const { data, error } = await db
-      .rpc("city_stats", { _city_id: cityId })
-      .maybeSingle<{
-        total: number;
-        open_count: number;
-        resolved: number;
-        this_week: number;
-        prev_week: number;
-        avg_hours: number;
-      }>();
+    // Omit _sources for the default (resident-only) so the 1-arg RPC still
+    // resolves on a pre-015 DB; pass it only when a caller (preview) needs to
+    // include synthetic/imported rows.
+    const args = sources
+      ? { _city_id: cityId, _sources: sources }
+      : { _city_id: cityId };
+    const { data, error } = await db.rpc("city_stats", args).maybeSingle<{
+      total: number;
+      open_count: number;
+      resolved: number;
+      this_week: number;
+      prev_week: number;
+      avg_hours: number;
+    }>();
     if (error) log.error("city_stats RPC failed", error, { cityId });
     return {
       total: Number(data?.total ?? 0),
@@ -172,15 +180,17 @@ export async function fetchCityStats(cityId: string): Promise<CityStats> {
 
 export async function fetchCategoryBreakdown(
   cityId: string,
+  sources?: string[],
 ): Promise<CategoryCount[]> {
   return safeQuery(
     "fetchCategoryBreakdown",
     [] as CategoryCount[],
     async () => {
       const db = createServerClient();
-      const { data, error } = await db.rpc("city_category_breakdown", {
-        _city_id: cityId,
-      });
+      const args = sources
+        ? { _city_id: cityId, _sources: sources }
+        : { _city_id: cityId };
+      const { data, error } = await db.rpc("city_category_breakdown", args);
       if (error)
         log.error("city_category_breakdown RPC failed", error, { cityId });
       return (data ?? []).map(
@@ -223,10 +233,80 @@ const ViewRowSchema = z.object({
   address: z.string().nullable(),
   lng: z.number().nullable(),
   lat: z.number().nullable(),
+  // Owning team persisted on the work order (migration 026). Optional so the
+  // parse keeps passing against a pre-026 view that lacks the column.
+  team_key: z.string().nullable().optional(),
   photo_public_url: z.string(),
   created_at: z.string(),
   tags: z.array(z.string()).nullable(),
 });
+
+type ViewRow = z.infer<typeof ViewRowSchema>;
+
+function mapViewRow(r: ViewRow): DashboardReport {
+  return {
+    id: r.id,
+    category: (r.category ?? "other") as ReportCategory,
+    severity: (r.severity ?? 3) as 1 | 2 | 3 | 4 | 5,
+    status: r.status,
+    address: r.address ?? "Unknown location",
+    location: { lng: r.lng ?? 0, lat: r.lat ?? 0 },
+    photo_public_url: r.photo_public_url,
+    created_at: r.created_at,
+    // reporter_id is PII — stripped from the public view; placeholder satisfies the type.
+    reporter_id: "",
+    tags: r.tags ?? [],
+    // DB-resolved team routing; readers fall back to categoryToTeam when unset.
+    assigned_team:
+      r.team_key && r.team_key in TEAMS ? (r.team_key as TeamId) : undefined,
+  };
+}
+
+/**
+ * Sources to include when previewing a not-yet-live city — synthetic/imported
+ * data must show so the dashboard looks alive. Live (active) cities default to
+ * resident-only so real KPIs stay clean (mirrors the RPCs' default).
+ */
+export const PREVIEW_SOURCES: string[] = [
+  "resident",
+  "synthetic",
+  "arcgis",
+  "import",
+  "open311",
+  "csv",
+];
+
+/**
+ * Full per-city report set for the dashboard's shared FilterProvider (F1). DB-
+ * backed replacement for the synthetic getReportCorpus, scoped by city_id +
+ * source. `sources` defaults to resident-only; a preview passes PREVIEW_SOURCES.
+ */
+export async function fetchCorpus(
+  cityId: string,
+  sources: string[] = ["resident"],
+  limit = 5000,
+): Promise<DashboardReport[]> {
+  return safeQuery("fetchCorpus", [] as DashboardReport[], async () => {
+    const db = createServerClient();
+    const { data, error } = await db
+      .from("dashboard_reports_view")
+      .select(
+        "id, category, severity, status, address, lng, lat, team_key, photo_public_url, created_at, tags",
+      )
+      .eq("city_id", cityId)
+      .in("source", sources)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) log.error("fetchCorpus view query failed", error, { cityId });
+    if (error || !data) return [];
+    const parsed = z.array(ViewRowSchema).safeParse(data);
+    if (!parsed.success) {
+      log.error("fetchCorpus schema mismatch", parsed.error, { cityId });
+      return [];
+    }
+    return parsed.data.map(mapViewRow);
+  });
+}
 
 export async function fetchRecentReports(
   cityId: string,
@@ -237,7 +317,7 @@ export async function fetchRecentReports(
     const { data, error } = await db
       .from("dashboard_reports_view")
       .select(
-        "id, category, severity, status, address, lng, lat, photo_public_url, created_at, tags",
+        "id, category, severity, status, address, lng, lat, team_key, photo_public_url, created_at, tags",
       )
       .eq("city_id", cityId)
       .order("created_at", { ascending: false })
@@ -252,19 +332,7 @@ export async function fetchRecentReports(
       return [];
     }
 
-    return parsed.data.map((r) => ({
-      id: r.id,
-      category: (r.category ?? "other") as ReportCategory,
-      severity: (r.severity ?? 3) as 1 | 2 | 3 | 4 | 5,
-      status: r.status,
-      address: r.address ?? "Unknown location",
-      location: { lng: r.lng ?? 0, lat: r.lat ?? 0 },
-      photo_public_url: r.photo_public_url,
-      created_at: r.created_at,
-      // reporter_id is PII — stripped from the public view; placeholder satisfies the type.
-      reporter_id: "",
-      tags: r.tags ?? [],
-    }));
+    return parsed.data.map(mapViewRow);
   });
 }
 

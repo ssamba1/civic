@@ -6,6 +6,7 @@ import {
   ChevronDown,
   Gauge,
   ListFilter,
+  Lock,
   Shapes,
   Shield,
   SlidersHorizontal,
@@ -249,10 +250,9 @@ function TeamRow({
         selected ? "bg-overlay-strong" : "hover:bg-overlay",
       )}
     >
-      <span
-        className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-inset ring-hairline-strong"
-        style={{ backgroundColor: team.color }}
-      />
+      {/* Team identity no longer carries hue (chrome is grayscale) — a plain
+          faint bullet keeps the list's scan rhythm. */}
+      <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-faint ring-1 ring-inset ring-hairline-strong" />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span
           className={cn(
@@ -310,7 +310,7 @@ function SheetSection({
 /* ------------------------------------------------------------------ */
 
 export function FilterBar() {
-  const { filter, patch, reset, isDefault } = useFilters();
+  const { filter, patch, reset, isDefault, lockedTeam } = useFilters();
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const statusCount = filter.statuses.length;
@@ -345,81 +345,86 @@ export function FilterBar() {
             Filters
           </span>
 
-          {/* ---- Team selector: primary scoping decision ---- */}
-          <Popover
-            align="start"
-            trigger={(open) => (
-              <span
-                className={cn(
-                  "inline-flex h-8 items-center gap-1.5 rounded-[10px] border px-2.5 text-[12px] font-medium transition-colors",
-                  teamScoped
-                    ? "border-hairline-strong text-foreground"
-                    : "border-hairline bg-overlay text-subtle hover:border-hairline-strong hover:text-foreground",
-                  open && "border-hairline-strong",
-                )}
-                style={
-                  teamScoped
-                    ? {
-                        backgroundColor: `${activeTeam.color}1f`,
-                        borderColor: `${activeTeam.color}66`,
-                      }
-                    : undefined
-                }
-              >
-                {teamScoped ? (
-                  <Shield
-                    className="h-3.5 w-3.5"
-                    style={{ color: activeTeam.color }}
-                  />
-                ) : (
-                  <Users className="h-3.5 w-3.5 text-subtle" />
-                )}
-                <span className="text-subtle">Team:</span>
-                <span className="text-foreground">{activeTeam.shortLabel}</span>
-                <ChevronDown
+          {/* ---- Team selector: primary scoping decision. On a team view the
+               scope is locked — render a static badge, not a switcher, so it
+               can't LOOK changeable while every patch() forces it back. ---- */}
+          {lockedTeam ? (
+            <span
+              className="inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-hairline-strong bg-overlay-strong px-2.5 text-[12px] font-medium text-foreground"
+              title="This view is scoped to one team"
+            >
+              <Shield className="h-3.5 w-3.5 text-foreground" />
+              <span className="text-subtle">Team:</span>
+              <span className="text-foreground">{activeTeam.shortLabel}</span>
+              <Lock className="h-3 w-3 text-faint" aria-label="Locked" />
+            </span>
+          ) : (
+            <Popover
+              align="start"
+              trigger={(open) => (
+                <span
                   className={cn(
-                    "h-3.5 w-3.5 text-faint transition-transform motion-reduce:transition-none",
-                    open && "rotate-180",
+                    "inline-flex h-8 items-center gap-1.5 rounded-[10px] border px-2.5 text-[12px] font-medium transition-colors",
+                    teamScoped
+                      ? "border-hairline-strong bg-overlay-strong text-foreground"
+                      : "border-hairline bg-overlay text-subtle hover:border-hairline-strong hover:text-foreground",
+                    open && "border-hairline-strong",
                   )}
-                />
-              </span>
-            )}
-          >
-            {(close) => (
-              <div className="w-[20rem] p-0.5">
-                <div className="flex items-center justify-between px-2 pb-1.5 pt-1">
-                  <span className="text-[11px] uppercase tracking-wide text-faint">
-                    Switch team view
+                >
+                  {teamScoped ? (
+                    <Shield className="h-3.5 w-3.5 text-foreground" />
+                  ) : (
+                    <Users className="h-3.5 w-3.5 text-subtle" />
+                  )}
+                  <span className="text-subtle">Team:</span>
+                  <span className="text-foreground">
+                    {activeTeam.shortLabel}
                   </span>
-                  {teamScoped && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        patch({ team: "all" });
-                        close();
-                      }}
-                      className="text-[11px] font-medium text-subtle hover:text-foreground hover:underline"
-                    >
-                      Clear
-                    </button>
-                  )}
+                  <ChevronDown
+                    className={cn(
+                      "h-3.5 w-3.5 text-faint transition-transform motion-reduce:transition-none",
+                      open && "rotate-180",
+                    )}
+                  />
+                </span>
+              )}
+            >
+              {(close) => (
+                <div className="w-[20rem] p-0.5">
+                  <div className="flex items-center justify-between px-2 pb-1.5 pt-1">
+                    <span className="text-[11px] uppercase tracking-wide text-faint">
+                      Switch team view
+                    </span>
+                    {teamScoped && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          patch({ team: "all" });
+                          close();
+                        }}
+                        className="text-[11px] font-medium text-subtle hover:text-foreground hover:underline"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-[24rem] overflow-y-auto">
+                    {TEAM_LIST.map((team) => (
+                      <TeamRow
+                        key={team.id}
+                        teamId={team.id}
+                        selected={filter.team === team.id}
+                        onClick={() => {
+                          patch({ team: team.id });
+                          close();
+                        }}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <div className="max-h-[24rem] overflow-y-auto">
-                  {TEAM_LIST.map((team) => (
-                    <TeamRow
-                      key={team.id}
-                      teamId={team.id}
-                      selected={filter.team === team.id}
-                      onClick={() => {
-                        patch({ team: team.id });
-                        close();
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </Popover>
+              )}
+            </Popover>
+          )}
 
           {/* ---- Date range: segmented control + custom popover ---- */}
           <div className="relative inline-flex items-center rounded-[10px] border border-hairline bg-overlay p-0.5">
@@ -689,33 +694,36 @@ export function FilterBar() {
           onClose={() => setSheetOpen(false)}
           title="Filters"
         >
-          {/* --- Team section --- */}
-          <SheetSection
-            icon={<Users className="h-3.5 w-3.5" />}
-            title="Team"
-            action={
-              teamScoped ? (
-                <button
-                  type="button"
-                  onClick={() => patch({ team: "all" })}
-                  className="min-h-11 px-2 py-1.5 text-[12px] font-medium text-foreground"
-                >
-                  Clear
-                </button>
-              ) : undefined
-            }
-          >
-            <div className="space-y-0.5">
-              {TEAM_LIST.map((team) => (
-                <TeamRow
-                  key={team.id}
-                  teamId={team.id}
-                  selected={filter.team === team.id}
-                  onClick={() => patch({ team: team.id })}
-                />
-              ))}
-            </div>
-          </SheetSection>
+          {/* --- Team section (hidden entirely when the view is team-locked;
+               the desktop bar shows the locked badge instead) --- */}
+          {!lockedTeam && (
+            <SheetSection
+              icon={<Users className="h-3.5 w-3.5" />}
+              title="Team"
+              action={
+                teamScoped ? (
+                  <button
+                    type="button"
+                    onClick={() => patch({ team: "all" })}
+                    className="min-h-11 px-2 py-1.5 text-[12px] font-medium text-foreground"
+                  >
+                    Clear
+                  </button>
+                ) : undefined
+              }
+            >
+              <div className="space-y-0.5">
+                {TEAM_LIST.map((team) => (
+                  <TeamRow
+                    key={team.id}
+                    teamId={team.id}
+                    selected={filter.team === team.id}
+                    onClick={() => patch({ team: team.id })}
+                  />
+                ))}
+              </div>
+            </SheetSection>
+          )}
 
           {/* --- Date range section --- */}
           <SheetSection

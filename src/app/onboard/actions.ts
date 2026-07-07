@@ -306,6 +306,23 @@ export async function provisionCity(
     };
   }
 
+  // 2c. Abuse guard: self-serve provisioning is capped per account so a single
+  //     signup can't mass-create tenants (each city seeds config rows + staff
+  //     invites). Operators needing more go through /admin/onboard.
+  const MAX_CITIES_PER_ACCOUNT = 3;
+  const { count: createdCount } = await db
+    .from("cities")
+    .select("id", { count: "exact", head: true })
+    .eq("created_by", authUser.id);
+  if ((createdCount ?? 0) >= MAX_CITIES_PER_ACCOUNT) {
+    return {
+      ok: false,
+      accounts: [],
+      error:
+        "This account has reached its city limit. Contact us to onboard more cities.",
+    };
+  }
+
   // 3. Slug uniqueness (the city's public URL must be unique).
   const { data: existing } = await db
     .from("cities")
@@ -373,6 +390,17 @@ export async function provisionCity(
       error:
         "The city could not be set up (admin access failed). Nothing was saved — please try again.",
     };
+  }
+
+  // Mirror the role into auth app_metadata so future proxy/JWT-level guards
+  // (e.g. an /admin matcher) see it without a DB read. Best-effort: the
+  // public.users row above is the source of truth for RLS.
+  try {
+    await db.auth.admin.updateUserById(authUser.id, {
+      app_metadata: { role: "admin" },
+    });
+  } catch (err) {
+    logger.error("app_metadata role sync failed", err);
   }
 
   const warnings: string[] = [];

@@ -14,9 +14,11 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { closeReportWorkOrder } from "@/app/staff/actions";
 import { Button } from "@/components/ui/button";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
+import { DEMO_MODE } from "@/lib/demo-mode";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import { useTaskCompletion } from "@/lib/task-completion";
 import { cn } from "@/lib/utils/cn";
@@ -29,7 +31,10 @@ function DetailTitle({ report }: { report: DashboardReport }) {
   const meta = CATEGORY_META[report.category];
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-faint" aria-hidden />
+      <span
+        className="h-2.5 w-2.5 shrink-0 rounded-full bg-faint"
+        aria-hidden
+      />
       <h2 className="truncate text-[15px] font-semibold text-foreground">
         {meta.label}
       </h2>
@@ -165,6 +170,7 @@ export function TaskDetailPane({ report, onClose }: TaskDetailPaneProps) {
 function TaskDetailBody({ report }: { report: DashboardReport }) {
   const { markDone, reopen } = useTaskCompletion();
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
+  const [actualCost, setActualCost] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -189,9 +195,45 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
     }
   }
 
-  function handleMarkDone() {
-    markDone(report, pendingPhoto ?? undefined);
-    setPendingPhoto(null);
+  async function handleMarkDone() {
+    // Demo deploy: local-only completion overlay, no DB writes.
+    if (DEMO_MODE) {
+      markDone(report, pendingPhoto ?? undefined);
+      setPendingPhoto(null);
+      return;
+    }
+
+    // Live deploy: the close is a real work-order write. Actual cost is
+    // required — it is the training signal for the cost model (issue-8).
+    const cost = Number(actualCost);
+    if (!actualCost.trim() || !Number.isFinite(cost) || cost <= 0) {
+      setError("Enter the actual cost spent (a dollar amount above zero).");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await closeReportWorkOrder(
+        report.id,
+        Math.round(cost * 100) / 100,
+        pendingPhoto ?? undefined,
+      );
+      if (!result.ok) {
+        setError(
+          result.error === "work_order_not_found"
+            ? "No work order exists for this report yet — dispatch it first."
+            : result.error,
+        );
+        return;
+      }
+      // Mirror into the local overlay so the UI flips instantly; the DB row is
+      // the durable record.
+      markDone(report, pendingPhoto ?? undefined);
+      setPendingPhoto(null);
+      setActualCost("");
+    } finally {
+      setBusy(false);
+    }
   }
 
   function handleReopen() {
@@ -290,16 +332,38 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
             />
           </label>
 
-          <Button
-            size="lg"
-            onClick={handleMarkDone}
-            disabled={busy}
-          >
-            <CheckCircle2 className="h-4 w-4" />
+          {!DEMO_MODE && (
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[12px] font-medium text-subtle">
+                Actual cost spent ($) <span aria-hidden="true">*</span>
+              </span>
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="0.01"
+                required
+                value={actualCost}
+                onChange={(e) => setActualCost(e.target.value)}
+                placeholder="e.g. 240"
+                aria-label="Actual cost spent in dollars"
+                className="h-11 rounded-[var(--radius-md)] border border-hairline-strong bg-overlay px-3 text-[14px] text-foreground placeholder:text-faint focus-visible:outline-2 focus-visible:outline-[var(--color-primary)]"
+              />
+            </label>
+          )}
+
+          <Button size="lg" onClick={handleMarkDone} disabled={busy}>
+            {busy ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4" />
+            )}
             Mark done
           </Button>
           <p className="text-center text-[12px] text-faint">
-            Photo optional — adds a before/after record.
+            {DEMO_MODE
+              ? "Photo optional — adds a before/after record."
+              : "Photo optional — it's sent to the reporter with the resolution notice."}
           </p>
         </div>
       )}

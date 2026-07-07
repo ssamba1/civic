@@ -135,19 +135,26 @@ export async function fetchAnalyticsKpis(
     const weekAgo = new Date(now - 7 * DAY_MS).toISOString();
     const twoWeeksAgo = new Date(now - 14 * DAY_MS).toISOString();
 
-    const [totalR, closedR, backlogR, twTotalR, twClosedR, pwTotalR, pwClosedR] =
-      await Promise.all([
-        base(),
-        base().eq("status", "closed"),
-        base().in("status", ["open", "dispatched", "in_progress"]),
-        base().gt("created_at", weekAgo),
-        base().eq("status", "closed").gt("created_at", weekAgo),
-        base().gt("created_at", twoWeeksAgo).lte("created_at", weekAgo),
-        base()
-          .eq("status", "closed")
-          .gt("created_at", twoWeeksAgo)
-          .lte("created_at", weekAgo),
-      ]);
+    const [
+      totalR,
+      closedR,
+      backlogR,
+      twTotalR,
+      twClosedR,
+      pwTotalR,
+      pwClosedR,
+    ] = await Promise.all([
+      base(),
+      base().eq("status", "closed"),
+      base().in("status", ["open", "dispatched", "in_progress"]),
+      base().gt("created_at", weekAgo),
+      base().eq("status", "closed").gt("created_at", weekAgo),
+      base().gt("created_at", twoWeeksAgo).lte("created_at", weekAgo),
+      base()
+        .eq("status", "closed")
+        .gt("created_at", twoWeeksAgo)
+        .lte("created_at", weekAgo),
+    ]);
 
     const total = totalR.count ?? 0;
     if (totalR.error || total === 0) {

@@ -9,6 +9,9 @@ import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
 import { notifyReportStatus } from "@/lib/notify/status-notify";
+import { resolveTeamKeyForCategory } from "@/lib/onboarding/city-teams";
+import { publicToken } from "@/lib/public-report";
+import { TEAMS, type TeamId } from "@/lib/teams";
 import type {
   CategoryCostStats,
   Classification,
@@ -193,10 +196,63 @@ export async function dispatchWorkOrderForReport(
   return { ok: true, data: undefined };
 }
 
+/**
+ * Close a work order by its REPORT id — the shape the team task surfaces have
+ * (the corpus row carries no work-order id). Resolves the report's work order
+ * (unique per report) and delegates to {@link closeWorkOrder}. The photo, when
+ * given, arrives as a downscaled data URL and is re-hosted to Storage.
+ */
+export async function closeReportWorkOrder(
+  reportId: string,
+  actualCost: number,
+  resolutionPhotoDataUrl?: string,
+): Promise<Result<void>> {
+  const staff = await getStaffUser();
+  if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
+
+  const supabase = createServerClient();
+  const { data: wo, error } = await supabase
+    .from("work_orders")
+    .select("id")
+    .eq("report_id", reportId)
+    .maybeSingle<{ id: string }>();
+  if (error || !wo) return { ok: false, error: "work_order_not_found" };
+
+  return closeWorkOrder(wo.id, actualCost, undefined, resolutionPhotoDataUrl);
+}
+
+/** Re-host a client-downscaled data-URL photo into the public photos bucket. */
+async function uploadResolutionPhoto(
+  supabase: ReturnType<typeof createServerClient>,
+  cityId: string,
+  workOrderId: string,
+  dataUrl: string,
+): Promise<string | null> {
+  const match = /^data:image\/(webp|jpeg|png);base64,(.+)$/.exec(dataUrl);
+  if (!match) return null;
+  const [, ext, b64] = match;
+  // Downscaled client-side to ~1280px; cap the decoded payload defensively.
+  if (b64.length > 1_500_000) return null;
+  const path = `${cityId}/resolutions/${workOrderId}.${ext === "jpeg" ? "jpg" : ext}`;
+  const { error } = await supabase.storage
+    .from("photos-public")
+    .upload(path, Buffer.from(b64, "base64"), {
+      contentType: `image/${ext}`,
+      upsert: true,
+    });
+  if (error) {
+    logger.error("resolution_photo_upload_failed", error, { workOrderId });
+    return null;
+  }
+  return supabase.storage.from("photos-public").getPublicUrl(path).data
+    .publicUrl;
+}
+
 export async function closeWorkOrder(
   workOrderId: string,
   actualCost: number,
   resolutionPhotoUrl?: string,
+  resolutionPhotoDataUrl?: string,
 ): Promise<Result<void>> {
   const staff = await getStaffUser();
   if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
@@ -236,7 +292,9 @@ export async function closeWorkOrder(
     reports: { city_id: string } | { city_id: string }[] | null;
     classifications: { category: string } | { category: string }[] | null;
   };
-  const reportRel = Array.isArray(rels.reports) ? rels.reports[0] : rels.reports;
+  const reportRel = Array.isArray(rels.reports)
+    ? rels.reports[0]
+    : rels.reports;
   const classificationRel = Array.isArray(rels.classifications)
     ? rels.classifications[0]
     : rels.classifications;
@@ -248,7 +306,9 @@ export async function closeWorkOrder(
     // Fetch existing accepted actuals for this city+category to compute median.
     const { data: existingActuals } = await supabase
       .from("work_orders")
-      .select("actual_cost, reports!inner(city_id), classifications!inner(category)")
+      .select(
+        "actual_cost, reports!inner(city_id), classifications!inner(category)",
+      )
       .eq("reports.city_id", cityId)
       .eq("classifications.category", category)
       .eq("actual_cost_excluded", false)
@@ -261,9 +321,7 @@ export async function closeWorkOrder(
         .sort((a, b) => a - b);
       const mid = Math.floor(costs.length / 2);
       const median =
-        costs.length % 2 === 0
-          ? (costs[mid - 1] + costs[mid]) / 2
-          : costs[mid];
+        costs.length % 2 === 0 ? (costs[mid - 1] + costs[mid]) / 2 : costs[mid];
       if (actualCost > 5 * median) {
         actualCostExcluded = true;
         logger.warn("actual_cost_outlier_flagged", {
@@ -277,9 +335,21 @@ export async function closeWorkOrder(
     }
   }
 
+  // Photo can arrive pre-hosted (URL) or as a client-downscaled data URL that
+  // we re-host to Storage here (localStorage data URLs never reach the DB).
+  let photoUrl = resolutionPhotoUrl ?? null;
+  if (!photoUrl && resolutionPhotoDataUrl && cityId) {
+    photoUrl = await uploadResolutionPhoto(
+      supabase,
+      cityId,
+      workOrderId,
+      resolutionPhotoDataUrl,
+    );
+  }
+
   const update: Record<string, unknown> = {
     completed_at: new Date().toISOString(),
-    resolution_photo_url: resolutionPhotoUrl ?? null,
+    resolution_photo_url: photoUrl,
     actual_cost: actualCost,
     actual_cost_excluded: actualCostExcluded,
   };
@@ -298,9 +368,29 @@ export async function closeWorkOrder(
   // M9 fix: check error on report status update
   const { error: reportError } = await supabase
     .from("reports")
-    .update({ status: "closed", updated_at: new Date().toISOString() })
+    .update({
+      status: "closed",
+      public_token: publicToken(wo.report_id),
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", wo.report_id);
   if (reportError) return { ok: false, error: "status_update_failed" };
+
+  // Append-only timeline row (migration 025) — feeds the resident timeline and
+  // the Open311 service-request-updates projection. Best-effort: the close
+  // itself already committed.
+  const { error: updateRowErr } = await supabase.from("report_updates").insert({
+    report_id: wo.report_id,
+    status: "closed",
+    note: "Work completed and the report closed out.",
+    photo_url: photoUrl,
+    actor: "staff",
+  });
+  if (updateRowErr) {
+    logger.error("report_updates_insert_failed", updateRowErr, {
+      reportId: wo.report_id,
+    });
+  }
 
   // The lever: resolved notification carries the resolution photo. Non-blocking.
   after(async () => {
@@ -419,6 +509,10 @@ export async function overrideClassification(
         { ...existing, category: parsed.data },
         { recurrenceCount: 0 },
       );
+      const teamKey = await resolveTeamKeyForCategory(
+        staff.city_id,
+        parsed.data,
+      );
       const { error: rerouteError } = await supabase
         .from("work_orders")
         .update({
@@ -426,6 +520,7 @@ export async function overrideClassification(
           crew_type: routed.crew_type,
           est_minutes: routed.est_minutes,
           materials: routed.materials,
+          team_key: teamKey,
         })
         .eq("report_id", reportId);
       if (rerouteError)
@@ -433,7 +528,9 @@ export async function overrideClassification(
           reportId,
         });
     } catch (err) {
-      logger.error("work order reroute threw after override", err, { reportId });
+      logger.error("work order reroute threw after override", err, {
+        reportId,
+      });
     }
   }
 
@@ -613,7 +710,6 @@ export async function fetchQueuedWorkOrders(
   return { ok: true, data: result, fetchedAt };
 }
 
-
 export async function fetchCategoryCostStats(
   cityId: string,
 ): Promise<Result<CategoryCostStats[]>> {
@@ -622,8 +718,147 @@ export async function fetchCategoryCostStats(
     _city_id: cityId,
   });
   if (error) {
-    logger.warn("category_cost_stats RPC failed (un-migrated?)", { error: error.message });
+    logger.warn("category_cost_stats RPC failed (un-migrated?)", {
+      error: error.message,
+    });
     return { ok: true, data: [] };
   }
   return { ok: true, data: (data ?? []) as CategoryCostStats[] };
+}
+
+/**
+ * Upsert a dispatcher-defined issue type for the staff member's city (the DB
+ * leg of the custom-categories store; issue_types, migration 027).
+ */
+export async function saveIssueType(input: {
+  key: string;
+  label: string;
+  color: string;
+  teamKey: TeamId;
+}): Promise<Result<void>> {
+  const staff = await getStaffUser();
+  if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
+  if (!staff.city_id) return { ok: false, error: "no_city" };
+  if (!(input.teamKey in TEAMS) || input.teamKey === "all")
+    return { ok: false, error: "invalid_team" };
+  const key = input.key.trim();
+  const label = input.label.trim();
+  if (!/^custom_[a-z0-9_]{1,64}$/.test(key) || !label || label.length > 80)
+    return { ok: false, error: "invalid_issue_type" };
+
+  const supabase = createServerClient();
+  const { error } = await supabase.from("issue_types").upsert(
+    {
+      city_id: staff.city_id,
+      key,
+      label,
+      color: input.color,
+      team_key: input.teamKey,
+    },
+    { onConflict: "city_id,key" },
+  );
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data: undefined };
+}
+
+/** Delete a dispatcher-defined issue type for the staff member's city. */
+export async function deleteIssueType(key: string): Promise<Result<void>> {
+  const staff = await getStaffUser();
+  if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
+  if (!staff.city_id) return { ok: false, error: "no_city" };
+
+  const supabase = createServerClient();
+  const { error } = await supabase
+    .from("issue_types")
+    .delete()
+    .eq("city_id", staff.city_id)
+    .eq("key", key.trim());
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data: undefined };
+}
+
+/**
+ * Reassign one report's work order to another team (the DB leg of the
+ * delegation panel — the localStorage overlay stays as the instant-UI layer).
+ */
+export async function reassignReportTeam(
+  reportId: string,
+  teamKey: TeamId,
+): Promise<Result<void>> {
+  const staff = await getStaffUser();
+  if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
+  if (!(teamKey in TEAMS) || teamKey === "all")
+    return { ok: false, error: "invalid_team" };
+
+  const supabase = createServerClient();
+  if (!(await reportInStaffCity(supabase, reportId, staff.city_id)))
+    return { ok: false, error: "Unauthorized: report not in your city" };
+
+  const { data: wo, error } = await supabase
+    .from("work_orders")
+    .update({ team_key: teamKey })
+    .eq("report_id", reportId)
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!wo) return { ok: false, error: "work_order_not_found" };
+  return { ok: true, data: undefined };
+}
+
+/**
+ * Move a category's default routing to another team for the staff member's
+ * city (the DB leg of the routing matrix; city_teams is the source of truth
+ * new work orders resolve against). Removes the category from every other
+ * team row, then adds it to the target — creating the row from the preset
+ * catalog if the city never enabled that team.
+ */
+export async function updateCityRouting(
+  category: ReportCategory,
+  teamKey: TeamId,
+): Promise<Result<void>> {
+  const staff = await getStaffUser();
+  if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
+  if (!staff.city_id) return { ok: false, error: "no_city" };
+  if (!(teamKey in TEAMS) || teamKey === "all")
+    return { ok: false, error: "invalid_team" };
+  const parsedCategory = ReportCategorySchema.safeParse(category);
+  if (!parsedCategory.success) return { ok: false, error: "invalid_category" };
+
+  const supabase = createServerClient();
+  const { data: rows, error } = await supabase
+    .from("city_teams")
+    .select("id, team_key, categories")
+    .eq("city_id", staff.city_id);
+  if (error) return { ok: false, error: error.message };
+
+  for (const row of rows ?? []) {
+    const cats = (row.categories ?? []) as ReportCategory[];
+    const isTarget = row.team_key === teamKey;
+    const has = cats.includes(parsedCategory.data);
+    const next = isTarget
+      ? has
+        ? cats
+        : [...cats, parsedCategory.data]
+      : cats.filter((c) => c !== parsedCategory.data);
+    if (next.length === cats.length && (isTarget ? has : true)) continue;
+    const { error: updateErr } = await supabase
+      .from("city_teams")
+      .update({ categories: next })
+      .eq("id", row.id);
+    if (updateErr) return { ok: false, error: updateErr.message };
+  }
+
+  if (!(rows ?? []).some((r) => r.team_key === teamKey)) {
+    const meta = TEAMS[teamKey];
+    const { error: insertErr } = await supabase.from("city_teams").insert({
+      city_id: staff.city_id,
+      team_key: teamKey,
+      label: meta.label,
+      enabled: true,
+      categories: [parsedCategory.data],
+    });
+    if (insertErr) return { ok: false, error: insertErr.message };
+  }
+
+  return { ok: true, data: undefined };
 }

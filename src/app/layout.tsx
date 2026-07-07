@@ -5,39 +5,20 @@ import {
   JetBrains_Mono,
   Newsreader,
 } from "next/font/google";
-import { headers } from "next/headers";
 import "./globals.css";
 import AssistantWidgetMount from "@/components/assistant/assistant-widget-mount";
 import { BottomTabBar } from "@/components/resident/bottom-tab-bar";
 import { HELP_ASSISTANT } from "@/lib/ai/config";
+import { SW_CLEANUP, SW_REGISTER, THEME_INIT } from "@/lib/csp/inline-scripts";
 
-// No-flash theme init. Runs synchronously before the body paints, so the
-// correct theme class is on <html> from the first frame. Default is dark
-// (matches the server-rendered `dark` class → zero flash for the common case);
-// only a stored "light" preference removes it. Kept tiny + dependency-free;
-// the React store (lib/theme.ts) takes over after hydration.
-const THEME_INIT = `(function(){try{var t=localStorage.getItem('civic.theme');if(t==='light'){document.documentElement.classList.remove('dark');}else{document.documentElement.classList.add('dark');}}catch(e){}})();`;
-
-// Registers public/sw.js (precache + offline fallback, see that file) once the
-// page has finished loading, so registration never competes with the initial
-// paint. PRODUCTION ONLY: sw.js serves /_next/static/ and *.js cache-first,
-// which is safe in prod (chunks are content-hashed, immutable) but poison in
-// dev — Turbopack keeps chunk names stable across edits, so a dev browser that
-// ever installed the SW replays its first-cached bundle through every reload
-// and silently ignores all later code changes. Dev therefore injects the
-// inverse: unregister any worker and delete its caches, self-healing browsers
-// that already latched a stale one.
-const SW_REGISTER = `(function(){if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}})();`;
-const SW_CLEANUP = `(function(){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});}).catch(function(){});}if(window.caches&&caches.keys){caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});}).catch(function(){});}})();`;
+// Both scripts are build-time constants allowlisted by SHA-256 hash in the
+// prod CSP (src/proxy.ts + src/lib/csp/inline-scripts.ts), NOT by nonce — so
+// this layout never reads headers() and routes with no dynamic data of their
+// own (landing, /terms, /privacy, /offline) can statically prerender again
+// (REVAMP_PLAN 2.5; the old force-dynamic + per-request nonce forced every
+// route to SSR per request).
 const SW_SCRIPT =
   process.env.NODE_ENV === "production" ? SW_REGISTER : SW_CLEANUP;
-
-// Force every route to render per-request. Our CSP (src/proxy.ts) uses a
-// per-request nonce with 'strict-dynamic'; statically prerendered HTML is baked
-// at build time with no nonce, so its inline hydration scripts would be blocked
-// at runtime (the request's nonce can't match build-time HTML). Dynamic
-// rendering lets Next stamp the live nonce onto every page's inline scripts.
-export const dynamic = "force-dynamic";
 
 // Body / UI — Inter, the enterprise product standard (Linear/Palantir/Stripe
 // register). Carries headings, buttons, labels, body, and data across app chrome.
@@ -109,15 +90,11 @@ export const viewport: Viewport = {
   ],
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Per-request CSP nonce (set by proxy.ts) — required for the inline theme
-  // script to run under the prod `script-src 'nonce-…' 'strict-dynamic'` policy.
-  const nonce = (await headers()).get("x-nonce") ?? undefined;
-
   return (
     <html
       lang="en"
@@ -133,19 +110,11 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans">
         {/* No-flash theme init — children form (matches the repo's inline
-            <style>{`…`}</style> idiom) so no dangerouslySetInnerHTML. THEME_INIT
-            is a static constant; nonce-gated under the prod CSP.
-            suppressHydrationWarning: browsers (Chrome 98+) clear the nonce
-            content attribute after parse for CSP security, so the client reads
-            nonce="" while the server HTML carries the real nonce — a benign
-            mismatch React can't patch. The nonce is already consumed at parse
-            time; nothing runtime depends on it. */}
-        <script nonce={nonce} suppressHydrationWarning>
-          {THEME_INIT}
-        </script>
-        <script nonce={nonce} suppressHydrationWarning>
-          {SW_SCRIPT}
-        </script>
+            <style>{`…`}</style> idiom) so no dangerouslySetInnerHTML. Both
+            scripts are hash-allowlisted in the prod CSP (see
+            lib/csp/inline-scripts.ts). */}
+        <script suppressHydrationWarning>{THEME_INIT}</script>
+        <script suppressHydrationWarning>{SW_SCRIPT}</script>
         <div className="page-enter flex flex-1 flex-col">{children}</div>
         <BottomTabBar />
         {HELP_ASSISTANT ? <AssistantWidgetMount /> : null}

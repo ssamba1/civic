@@ -40,6 +40,8 @@ export type PublicStatus = "in_progress" | "resolved" | "closed";
 
 export interface PublicReportView {
   token: string;
+  /** Internal report id — used server-side only (e.g. CSAT); never rendered. */
+  reportId: string;
   category: ReportCategory;
   categoryLabel: string;
   categoryColor: string;
@@ -75,6 +77,7 @@ function toView(report: DashboardReport): PublicReportView {
   const { publicStatus, label } = toPublicStatus(report.status);
   return {
     token: publicToken(report.id),
+    reportId: report.id,
     category: report.category,
     categoryLabel: meta.label,
     categoryColor: meta.color,
@@ -90,11 +93,83 @@ function toView(report: DashboardReport): PublicReportView {
 
 /**
  * Resolve a public token to a PII-safe report view, or null if no report maps
- * to it. O(n) over the corpus — fine for the demo set; a live deployment would
- * back this with an indexed token column. Never throws.
+ * to it. O(n) over the corpus — fine for the demo set; live reports resolve
+ * via {@link resolvePublicReport} instead. Never throws.
  */
 export function getPublicReport(token: string): PublicReportView | null {
   if (!token) return null;
   const match = getReportCorpus().find((r) => publicToken(r.id) === token);
   return match ? toView(match) : null;
+}
+
+interface LiveTokenRow {
+  id: string;
+  status: ReportStatus;
+  address: string | null;
+  photo_public_url: string | null;
+  created_at: string;
+  classifications:
+    | { category: ReportCategory | null }[]
+    | { category: ReportCategory | null }
+    | null;
+  work_orders:
+    | { completed_at: string | null; resolution_photo_url: string | null }[]
+    | { completed_at: string | null; resolution_photo_url: string | null }
+    | null;
+}
+
+/**
+ * Token resolution for BOTH deployments: the in-memory demo corpus first (it
+ * covers every synthetic report), then the live DB via the indexed
+ * reports.public_token column (stamped by status-notify the first time a link
+ * leaves the system). Service-role read — the page itself is the public
+ * surface and the view is PII-safe by construction. Never throws.
+ */
+export async function resolvePublicReport(
+  token: string,
+): Promise<PublicReportView | null> {
+  const demo = getPublicReport(token);
+  if (demo) return demo;
+  if (!token || !/^[0-9a-f]{24}$/.test(token)) return null;
+
+  try {
+    // Dynamic import keeps the demo path free of a hard client dependency.
+    const { createServerClient } = await import("@/lib/db/client");
+    const db = createServerClient();
+    const { data, error } = await db
+      .from("reports")
+      .select(
+        "id, status, address, photo_public_url, created_at, classifications ( category ), work_orders ( completed_at, resolution_photo_url )",
+      )
+      .eq("public_token", token)
+      .maybeSingle<LiveTokenRow>();
+    if (error || !data) return null;
+
+    const cl = Array.isArray(data.classifications)
+      ? (data.classifications[0] ?? null)
+      : data.classifications;
+    const category = (cl?.category ?? "other") as ReportCategory;
+    const wo = Array.isArray(data.work_orders)
+      ? (data.work_orders[0] ?? null)
+      : data.work_orders;
+    const meta = CATEGORY_META[category];
+    const { publicStatus, label } = toPublicStatus(data.status);
+
+    return {
+      token,
+      reportId: data.id,
+      category,
+      categoryLabel: meta.label,
+      categoryColor: meta.color,
+      publicStatus,
+      statusLabel: label,
+      address: data.address ?? "Location on file",
+      photoUrl: data.photo_public_url ?? "",
+      filedAt: data.created_at,
+      resolvedAt: wo?.completed_at ?? undefined,
+      resolutionPhotoUrl: wo?.resolution_photo_url ?? undefined,
+    };
+  } catch {
+    return null;
+  }
 }

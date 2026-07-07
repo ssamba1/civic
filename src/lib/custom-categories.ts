@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { CATEGORY_META } from "@/lib/dashboard-data";
+import { DEMO_MODE } from "@/lib/demo-mode";
 import { validateCustomCategories } from "@/lib/schemas";
 import { categoryToTeam, isValidTeamId, type TeamId } from "@/lib/teams";
 import type { ReportCategory } from "@/lib/types";
@@ -29,6 +30,36 @@ import { createReactiveStore } from "@/lib/utils/reactive-store";
    ================================================================== */
 
 const STORAGE_KEY = "civic.custom_categories.v1";
+
+/**
+ * DB leg (live deploy only): fire-and-forget upsert/delete against the
+ * city-scoped issue_types table (migration 027) via the staff-gated server
+ * actions. localStorage stays the instant-UI layer; demo deploy unchanged.
+ */
+function persistIssueType(
+  c: CustomCategory | { id: string; remove: true },
+): void {
+  if (DEMO_MODE) return;
+  void import("@/app/staff/actions")
+    .then((actions) =>
+      "remove" in c
+        ? actions.deleteIssueType(c.id)
+        : actions.saveIssueType({
+            key: c.id,
+            label: c.label,
+            color: c.color,
+            teamKey: c.team,
+          }),
+    )
+    .then((result) => {
+      if (result && !result.ok) {
+        console.warn(`[custom-categories] DB persist failed: ${result.error}`);
+      }
+    })
+    .catch((err) => {
+      console.warn("[custom-categories] DB persist threw", err);
+    });
+}
 
 export interface CustomCategory {
   /** Always `custom_<slug>` so it never collides with a built-in key. */
@@ -133,9 +164,11 @@ export function useCustomCategories(): UseCustomCategoriesReturn {
       const label = input.label.trim();
       const team = input.team === "all" ? "general_admin" : input.team;
       const id = uniqueId(label, snapshot);
-      snapshot = [...snapshot, { id, label, color: input.color, team }];
+      const created = { id, label, color: input.color, team };
+      snapshot = [...snapshot, created];
       writeStorage(snapshot);
       emit();
+      persistIssueType(created);
       return id;
     },
     [],
@@ -146,6 +179,7 @@ export function useCustomCategories(): UseCustomCategoriesReturn {
     snapshot = snapshot.filter((c) => c.id !== id);
     writeStorage(snapshot);
     emit();
+    persistIssueType({ id, remove: true });
   }, []);
 
   const setCustomCategoryTeam = useCallback((id: string, team: TeamId) => {
@@ -160,6 +194,8 @@ export function useCustomCategories(): UseCustomCategoriesReturn {
     snapshot = next;
     writeStorage(snapshot);
     emit();
+    const updated = next.find((c) => c.id === id);
+    if (updated) persistIssueType(updated);
   }, []);
 
   return {

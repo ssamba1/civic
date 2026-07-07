@@ -19,8 +19,7 @@ const buttonVariants = cva(
         outline:
           "border border-hairline-strong bg-surface text-foreground hover:bg-overlay",
         ghost: "text-subtle hover:bg-overlay hover:text-foreground",
-        destructive:
-          "bg-[var(--color-danger)] text-white hover:opacity-90",
+        destructive: "bg-[var(--color-danger)] text-white hover:opacity-90",
       },
       size: {
         default: "h-9 min-h-11 md:min-h-0 px-3.5",

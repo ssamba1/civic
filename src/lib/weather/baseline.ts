@@ -11,9 +11,13 @@ const logger = createLogger("[storm-baseline]");
  * history. Fails soft: returns an empty map on any DB error so the storm
  * advisory can still render (without numeric predictions).
  */
-export async function getCategoryDailyBaseline(): Promise<Partial<Record<ReportCategory, number>>> {
+export async function getCategoryDailyBaseline(): Promise<
+  Partial<Record<ReportCategory, number>>
+> {
   const db = createServerClient();
-  const since = new Date(Date.now() - BASELINE_LOOKBACK_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const since = new Date(
+    Date.now() - BASELINE_LOOKBACK_DAYS * 24 * 60 * 60 * 1000,
+  ).toISOString();
 
   const { data, error } = await db
     .from("classifications")

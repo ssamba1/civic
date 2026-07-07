@@ -23,12 +23,18 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          # pnpm-workspace.yaml here is v10+-style config-only (allowBuilds,
+          # no `packages` field) — pnpm 9 errors on it ("packages field
+          # missing or empty"), which is why this workflow never went green.
+          # Local dev runs pnpm 11 via corepack; lockfileVersion 9.0 is
+          # compatible.
+          version: 11
 
-      - name: Setup Node 20
+      - name: Setup Node 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # pnpm 11 requires Node >= 22.13 (uses node:sqlite in its cache probe).
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
@@ -36,6 +42,9 @@ jobs:
 
       - name: Type-check
         run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
 
       - name: Unit + RLS tests
         run: pnpm test
