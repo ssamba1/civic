@@ -25,7 +25,12 @@ export default async function OnboardPage() {
   // actions.ts) reaches the wizard. Demo-cookie acceptance stays gated on
   // DEMO_MODE so a live deployment with the cookie unset never bypasses this.
   const demoSession = DEMO_MODE ? await getDemoSession() : null;
-  const authed = user ?? demoSession;
+  // An anonymous Supabase user (guest sign-in) has no email and no real
+  // login, so it must not count as "signed in" for this gate — otherwise a
+  // city creator could end up owning a city with no way back into the
+  // account. Demo persona handling is untouched (it's a separate cookie).
+  const realUser = user && !user.is_anonymous ? user : null;
+  const authed = realUser ?? demoSession;
 
   if (!authed) {
     return (
@@ -35,8 +40,9 @@ export default async function OnboardPage() {
             Set up your city
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-subtle">
-            Sign in (or create an account) to provision your city. You'll become
-            its admin and can add your team in a few steps.
+            Sign in with Google or email (or create an account) to provision
+            your city. You'll become its admin and can add your team in a few
+            steps.
           </p>
           <Button asChild variant="accent" className="mt-6">
             <Link href="/login?redirect=/onboard">Sign in to continue</Link>
@@ -48,7 +54,7 @@ export default async function OnboardPage() {
 
   return (
     <main className="min-h-dvh">
-      <OnboardWizard adminEmail={user?.email ?? null} />
+      <OnboardWizard adminEmail={realUser?.email ?? null} />
     </main>
   );
 }

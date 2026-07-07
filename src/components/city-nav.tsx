@@ -6,6 +6,7 @@ import {
   Map as MapIcon,
   RefreshCw,
   Table,
+  Users,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -112,6 +113,12 @@ export function CityNav({ slug, mobileSlot, isStaff }: CityNavProps) {
             href: `/city/${slug}/grid`,
             icon: Table,
             active: pathname === `/city/${slug}/grid`,
+          },
+          {
+            label: "Members",
+            href: `/city/${slug}/members`,
+            icon: Users,
+            active: pathname === `/city/${slug}/members`,
           },
         ]
       : []),

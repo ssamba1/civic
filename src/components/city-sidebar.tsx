@@ -5,6 +5,7 @@ import {
   Camera,
   Map as MapIcon,
   Table,
+  Users,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -69,6 +70,12 @@ export function CitySidebar({
             href: `/city/${slug}/grid`,
             icon: Table,
             active: pathname === `/city/${slug}/grid`,
+          },
+          {
+            label: "Members",
+            href: `/city/${slug}/members`,
+            icon: Users,
+            active: pathname === `/city/${slug}/members`,
           },
         ]
       : []),

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
+import { resolveAuthHome } from "@/lib/auth-home";
 import { createSSRClient } from "@/lib/db/ssr-client";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("auth-callback");
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -40,5 +44,21 @@ export async function GET(request: Request) {
       // Invalid URL, stay on homepage
     }
   }
+
+  // No explicit destination was requested (or it failed validation) — route
+  // staff straight to their city console instead of always landing on "/".
+  if (safeNext === "/") {
+    const {
+      data: { user },
+      error: userErr,
+    } = await supabase.auth.getUser();
+    // Landing on "/" is a safe fallback, but never a silent one — an error
+    // here means staff quietly stop reaching their console after sign-in.
+    if (userErr) log.error("getUser failed post-exchange", userErr);
+    if (user) {
+      safeNext = await resolveAuthHome(user.id);
+    }
+  }
+
   return NextResponse.redirect(new URL(safeNext, url.origin));
 }

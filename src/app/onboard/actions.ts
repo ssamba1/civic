@@ -247,6 +247,17 @@ export async function provisionCity(
       error: "You must be signed in to set up a city.",
     };
   }
+  // Defense-in-depth: the onboard page gate already excludes anonymous
+  // (guest) sessions, but re-check here since this action is the actual
+  // write path and could be reached directly.
+  if (authUser.is_anonymous) {
+    return {
+      ok: false,
+      accounts: [],
+      error:
+        "Sign in with Google or email to set up a city — guest sessions can't own a city.",
+    };
+  }
 
   // 2. Validate the city.
   const name = input.city.name?.trim();

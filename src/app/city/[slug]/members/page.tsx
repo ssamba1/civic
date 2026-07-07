@@ -1,0 +1,117 @@
+import type { Metadata } from "next";
+import { notFound, redirect } from "next/navigation";
+import { MembersTable } from "@/components/members/members-table";
+import { fetchCity as fetchCityMock } from "@/lib/dashboard-data";
+import { fetchCity as fetchCityFromDb } from "@/lib/dashboard-queries";
+import {
+  type CityMembersResult,
+  fetchCityMembers,
+  maskEmail,
+} from "@/lib/db/members";
+import { getStaffAccessForCity } from "@/lib/staff-access";
+
+// Auth-gated per request (reads cookies via isStaffForCity) and exposes member
+// PII — never prerender or cache.
+export const dynamic = "force-dynamic";
+
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  let city = null;
+  try {
+    city = await fetchCityFromDb(slug);
+  } catch {
+    city = null;
+  }
+  if (!city) city = await fetchCityMock(slug);
+  if (!city) return { title: "City not found | Civic" };
+  return {
+    title: `Civic | ${city.name}, ${city.state} — Members`,
+    description: `People with access to the ${city.name} console — residents, dispatchers, supervisors, and admins.`,
+    // Member emails are PII behind an auth gate; keep this out of search indexes.
+    robots: { index: false, follow: false },
+  };
+}
+
+export default async function CityMembersPage({ params }: PageProps) {
+  const { slug } = await params;
+
+  // Resolve the city the way the grid page does: real DB row first, falling
+  // back to the synthetic KNOWN_CITIES entry so demo slugs still resolve.
+  let dbCity = null;
+  try {
+    dbCity = await fetchCityFromDb(slug);
+  } catch {
+    dbCity = null;
+  }
+  const city = dbCity ?? (await fetchCityMock(slug));
+  if (!city) notFound();
+
+  // Access gate. Unlike the grid, there is NO public demo-city bypass here:
+  // this page exposes member emails (PII) and must never be public, even for
+  // the demo slug. Demo staff sessions may view the roster, but demo
+  // credentials are public — so "demo" access gets emails masked server-side
+  // (the raw addresses never reach the client). Only "real" staff (an
+  // authenticated user whose city matches) see raw emails.
+  const access = await getStaffAccessForCity(slug);
+  if (!access) {
+    redirect(`/login?redirect=/city/${slug}/members`);
+  }
+
+  // Synthetic (non-DB) cities have no real member rows — render an empty state
+  // rather than querying a placeholder city id.
+  const result: CityMembersResult = dbCity
+    ? await fetchCityMembers(dbCity.id)
+    : { ok: true, members: [] };
+  const members = result.ok
+    ? access === "demo"
+      ? result.members.map((m) => ({ ...m, email: maskEmail(m.email) }))
+      : result.members
+    : [];
+
+  return (
+    <div className="relative flex flex-col min-h-dvh bg-background">
+      <div className="relative flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
+        <section className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
+            Members
+          </h1>
+          <p className="text-[13px] text-faint">
+            People with access to {city.name} — residents, dispatchers,
+            supervisors, and admins.
+            {access === "demo" && " Demo session — member emails are masked."}
+          </p>
+        </section>
+
+        {!result.ok ? (
+          <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface px-6 py-16 text-center shadow-[var(--shadow-card)]">
+            <p className="text-sm font-medium text-foreground">
+              Couldn't load members
+            </p>
+            <p className="mt-1.5 text-[13px] text-faint">
+              Something went wrong fetching the roster. Refresh to try again —
+              if it persists, check the server logs.
+            </p>
+          </div>
+        ) : dbCity ? (
+          <MembersTable members={members} />
+        ) : (
+          <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface px-6 py-16 text-center shadow-[var(--shadow-card)]">
+            <p className="text-sm font-medium text-foreground">
+              No member data for demo cities
+            </p>
+            <p className="mt-1.5 text-[13px] text-faint">
+              Member records appear for onboarded cities backed by live
+              accounts.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

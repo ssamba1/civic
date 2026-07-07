@@ -13,6 +13,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { DemoSignIn } from "@/components/auth/demo-sign-in";
 import { createBrowserSupabase } from "@/lib/db/browser-client";
+import { resolveOwnAuthHome } from "./landing-action";
 
 type Mode = "signin" | "signup";
 
@@ -74,6 +75,23 @@ export default function LoginForm() {
         setBusy(null);
         return;
       }
+      // No explicit destination requested — send staff to their city
+      // console instead of always landing on "/" (mirrors auth/callback's
+      // landing logic, which this password path never goes through).
+      // Sign-in has already succeeded by this point, so a failed landing
+      // lookup must still navigate somewhere — never strand the user on a
+      // frozen spinner while actually logged in.
+      let destination = redirectTo;
+      if (redirectTo === "/") {
+        try {
+          destination = await resolveOwnAuthHome();
+        } catch {
+          destination = "/";
+        }
+      }
+      router.push(destination);
+      router.refresh();
+      return;
     } else {
       const { error } = await supabase.auth.signUp({
         email,
@@ -89,8 +107,6 @@ export default function LoginForm() {
       setBusy(null);
       return;
     }
-    router.push(redirectTo);
-    router.refresh();
   }
 
   async function handleGuest() {
