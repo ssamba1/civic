@@ -1,7 +1,11 @@
 # Loop State — Civic / Social Impact
 
-Last run: 2026-07-08 (backlog sweeps 1–3)
-Branch: `feat/backlog-sweep-3` (off `-sweep-2` off `-sweep-1` off `main`)
+Last run: 2026-07-08 (notify-drain + api-keys sweep)
+Branch: `feat/notify-drain-api-keys` (30 commits ahead of `main`, clean, pushed)
+
+Verify status (2026-07-08): `typecheck` ✅ · `test` ✅ 649 pass / 63 skip ·
+`lint` content-clean (fixed 12 noNonNullAssertion in weather tests; remaining
+biome errors are Windows-CRLF format only — CI runs LF and is green).
 
 ## Shipped this session (PRs open, stacked)
 
