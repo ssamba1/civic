@@ -114,6 +114,27 @@ describe("reportToOpen311", () => {
       civic_is_emergency: true,
     });
   });
+
+  it("projects expected_datetime from the SLA window for open requests", () => {
+    // pothole SLA = 72h from created_at 2026-07-01T10:00Z → 2026-07-04T10:00Z
+    const o = reportToOpen311(
+      report({ status: "open" }),
+      classification(),
+      CITY,
+    );
+    expect(o.expected_datetime).toBe("2026-07-04T10:00:00.000Z");
+  });
+
+  it("leaves expected_datetime null for resolved (closed/merged/rejected) requests", () => {
+    expect(
+      reportToOpen311(report({ status: "closed" }), null, CITY)
+        .expected_datetime,
+    ).toBeNull();
+    expect(
+      reportToOpen311(report({ status: "merged" }), null, CITY)
+        .expected_datetime,
+    ).toBeNull();
+  });
 });
 
 describe("XML serialization (GeoReport v2 shape)", () => {
@@ -144,8 +165,8 @@ describe("XML serialization (GeoReport v2 shape)", () => {
     expect(xml).not.toContain('<"road"');
   });
 
-  it("renders expected_datetime as an empty tag when null", () => {
-    const o = reportToOpen311(report(), null, CITY);
+  it("renders expected_datetime as an empty tag when null (resolved request)", () => {
+    const o = reportToOpen311(report({ status: "closed" }), null, CITY);
     const xml = toOpen311Xml([o]);
     expect(xml).toContain("<expected_datetime></expected_datetime>");
   });
