@@ -25,18 +25,17 @@
 
 Related: load-balancing across same-type crews deferred to [issue #16](https://github.com/28gugales-dev/-Social-Impact-/issues/16).
 
-## ⏳ PENDING USER ACTION — apply migration 031 to prod
-Auto-mode classifier blocks prod schema writes (expected — memory: schema pushes = user's move). Files are committed. Run once outside auto mode from `-Social-Impact-/`:
+## ⏳ PENDING USER ACTION — apply migration 031 (crew_types) to prod
+FORK RECONCILE (2026-07-08 merge `89034a7`): PR #11's `crew_types` catalog model won; this branch's `city_crew_types` migration was DROPPED. Browser QA confirmed `crew_types` is NOT in prod either (insert → save-failed copy; app falls back to the 7 `DEFAULT_CREW_TYPES`). Apply THEIR migration once, outside auto mode, from `-Social-Impact-/`:
 ```bash
 set -a && . <(grep -E '^(SUPABASE_ACCESS_TOKEN|NEXT_PUBLIC_SUPABASE_URL)=' .env.local) && set +a && node -e '
 const fs=require("fs");
 const ref=(process.env.NEXT_PUBLIC_SUPABASE_URL||"").match(/https?:\/\/([^.]+)\./)[1];
-const sql=fs.readFileSync("supabase/migrations/20260708_031_city_crew_types.sql","utf8");
+const sql=fs.readFileSync("supabase/migrations/20260707_031_crew_types.sql","utf8");
 fetch(`https://api.supabase.com/v1/projects/${ref}/database/query`,{method:"POST",headers:{Authorization:`Bearer ${process.env.SUPABASE_ACCESS_TOKEN}`,"Content-Type":"application/json"},body:JSON.stringify({query:sql})}).then(async r=>{console.log("HTTP",r.status,await r.text());});
 '
 ```
-Then verify: `CHECK_MIGRATION_031=1 pnpm test:rls`.
-Tasks 3–10 build/typecheck WITHOUT this (accessor returns `[]` on missing table). Only Task 11 browser QA + the RLS-with-CHECK run need it live.
+Then verify with the RLS suite (`pnpm test:rls`, see tests/rls/crew-types.rls.test.ts for its gating env var). Until applied: catalog = read-only defaults, inline "New type…" + the crew-types panel save with a friendly error.
 
 ## How execution runs (subagent-driven-development skill)
 Per task: dispatch a fresh general-purpose implementer subagent (reads ONLY its task section from the plan file; controller supplies scene-setting + guardrails inline), then review. Heavy/risky tasks (4, 5, 7, 9, 10) → full TWO-stage review (spec-compliance subagent, THEN code-quality subagent). Trivial/declarative tasks (2, 3) → ONE combined reviewer. Implementer fixes via SendMessage (same agent), re-review, then mark done. One implementer at a time (shared git index).
