@@ -45,7 +45,7 @@ import { fetchCategoryCostStats } from "@/app/staff/actions";
 import { WorkOrderExplorer } from "@/components/city/work-order-explorer";
 import { teamIcon } from "@/components/teams/team-icon";
 import { DEFAULT_CREW_TYPE_KEYS } from "@/lib/crew-types";
-import { CATEGORY_META } from "@/lib/dashboard-data";
+import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
 import type { GridCrewOption, GridReportRow } from "@/lib/dashboard-grid-data";
 import { categoryToTeam, TEAMS } from "@/lib/teams";
 import { useTheme } from "@/lib/theme";
@@ -595,6 +595,78 @@ function StatusCell({ data }: ICellRendererParams<GridReportRow>) {
   );
 }
 
+// ── SLA column ──────────────────────────────────────────────────────────────
+// Derived client-side from category + created_at (NOT the work_orders.due_at
+// column) so it renders on databases that haven't applied migration 032 yet —
+// same computation as deriveSlaRisk. The due_at column drives the server-side
+// escalation job; this surfaces the same status to the operator in the grid.
+const SLA_BACKLOG_STATUSES = new Set(["open", "dispatched", "in_progress"]);
+const SLA_AT_RISK_FRACTION = 0.2; // within the last 20% of the window
+
+interface SlaState {
+  /** Hours remaining to the deadline; negative = overdue. null = not applicable. */
+  remaining: number | null;
+  tier: "overdue" | "due_soon" | "on_track" | "na";
+  label: string;
+}
+
+function computeSla(row: GridReportRow): SlaState {
+  if (!row.category || !SLA_BACKLOG_STATUSES.has(row.status)) {
+    return { remaining: null, tier: "na", label: "—" };
+  }
+  const target = CATEGORY_SLA_TARGETS[row.category as ReportCategory];
+  if (!target) return { remaining: null, tier: "na", label: "—" };
+  const ageH = Math.max(
+    0,
+    (Date.now() - Date.parse(row.created_at)) / 3_600_000,
+  );
+  const remaining = target - ageH;
+  if (remaining <= 0) {
+    const overdueH = Math.round(-remaining);
+    const disp =
+      overdueH >= 48 ? `${Math.round(overdueH / 24)}d` : `${overdueH}h`;
+    return { remaining, tier: "overdue", label: `${disp} over` };
+  }
+  const leftH = Math.round(remaining);
+  const disp = leftH >= 48 ? `${Math.round(leftH / 24)}d` : `${leftH}h`;
+  if (remaining <= target * SLA_AT_RISK_FRACTION) {
+    return { remaining, tier: "due_soon", label: `${disp} left` };
+  }
+  return { remaining, tier: "on_track", label: `${disp} left` };
+}
+
+const SLA_TIER_STYLE: Record<SlaState["tier"], string> = {
+  overdue: "text-[var(--status-danger-fg)]",
+  due_soon: "text-[var(--status-warning-fg)]",
+  on_track: "text-muted",
+  na: "text-faint",
+};
+const SLA_TIER_DOT: Record<SlaState["tier"], string> = {
+  overdue: "bg-[var(--color-danger)]",
+  due_soon: "bg-[var(--color-warning)]",
+  on_track: "bg-[var(--color-success)]",
+  na: "bg-transparent",
+};
+
+function SlaCell({ data }: ICellRendererParams<GridReportRow>) {
+  if (!data) return null;
+  const sla = computeSla(data);
+  if (sla.tier === "na") {
+    return <span className="text-[13px] text-faint">—</span>;
+  }
+  return (
+    <span className="flex items-center gap-1.5">
+      <span
+        className={cn("h-2 w-2 shrink-0 rounded-full", SLA_TIER_DOT[sla.tier])}
+      />
+      <span className={cn("text-[13px] font-medium", SLA_TIER_STYLE[sla.tier])}>
+        {sla.tier === "overdue" ? "Overdue " : ""}
+        {sla.label}
+      </span>
+    </span>
+  );
+}
+
 /** Dept + Crew share this: label pill with chevron; null → muted em-dash pill
  *  (still editable, so it keeps the affordance). */
 function LabelPillCell({
@@ -1093,6 +1165,19 @@ export function WorkOrderGrid({
           p.data ? titleize(p.data.status) : "",
         initialWidth: 180,
         minWidth: 150,
+      },
+      {
+        colId: "sla",
+        headerName: "SLA",
+        // Sort/filter on hours-remaining (overdue = most negative sorts first
+        // on asc). Not editable — it's a derived read-only signal.
+        valueGetter: (p: ValueGetterParams<GridReportRow>) =>
+          p.data ? computeSla(p.data).remaining : null,
+        cellRenderer: SlaCell,
+        comparator: (a, b) =>
+          (a ?? Number.POSITIVE_INFINITY) - (b ?? Number.POSITIVE_INFINITY),
+        initialWidth: 130,
+        minWidth: 110,
       },
       {
         colId: "department",
