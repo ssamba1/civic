@@ -43,7 +43,8 @@ export interface MenuSelectProps {
   /** Label for the null choice. When set, it renders as the first option. */
   placeholder?: string;
   disabled?: boolean;
-  /** Footer action row (e.g. "+ New type…"). Closes the menu, then fires. */
+  /** Action row (e.g. "+ New type…"), pinned to the TOP of the menu. Closes
+   *  the menu, then fires. */
   action?: { label: string; onSelect: () => void };
   className?: string;
 }
@@ -76,7 +77,8 @@ export function MenuSelect({
   const typeahead = useRef({ buffer: "", at: 0 });
   const listboxId = useId();
 
-  // The rendered rows: optional null row first, then options, then action.
+  // The rendered rows: action row pinned first (top), then the optional null
+  // row, then options.
   const rows: Array<
     | {
         kind: "option";
@@ -87,11 +89,11 @@ export function MenuSelect({
       }
     | { kind: "action"; label: string }
   > = [
+    ...(action ? [{ kind: "action" as const, label: action.label }] : []),
     ...(placeholder !== undefined
       ? [{ kind: "option" as const, value: null, label: placeholder }]
       : []),
     ...options.map((o) => ({ kind: "option" as const, ...o })),
-    ...(action ? [{ kind: "action" as const, label: action.label }] : []),
   ];
 
   const selectedIndex = rows.findIndex(
@@ -320,7 +322,6 @@ export function MenuSelect({
                 if (row.kind === "action") {
                   return (
                     <div key="__action" role="presentation">
-                      <div className="mx-1 my-1 border-t border-hairline" />
                       {/* biome-ignore lint/a11y/useFocusableInteractive: aria-activedescendant listbox — focus stays on the trigger by design; options are not individually tabbable. */}
                       {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard is handled on the trigger's onKeyDown (roving activedescendant); onClick is the pointer-only fallback. */}
                       <div
@@ -339,6 +340,7 @@ export function MenuSelect({
                         <Plus className="h-3.5 w-3.5" strokeWidth={2} />
                         {row.label}
                       </div>
+                      <div className="mx-1 my-1 border-t border-hairline" />
                     </div>
                   );
                 }
