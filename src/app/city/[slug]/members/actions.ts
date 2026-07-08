@@ -15,6 +15,9 @@ export type MemberRole =
   | "staff_supervisor"
   | "admin";
 export type MemberActionResult = { ok: true } | { ok: false; error: string };
+export type InviteMemberResult =
+  | { ok: true; userId: string }
+  | { ok: false; error: string };
 
 // Same shape as onboard/actions.ts EMAIL_RE — one local address, one dotted host.
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -181,7 +184,7 @@ export interface InviteMemberInput {
  */
 export async function inviteMember(
   input: InviteMemberInput,
-): Promise<MemberActionResult> {
+): Promise<InviteMemberResult> {
   const parsed = inviteSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid_input" };
   const { slug, displayName, role, teamKey, phone, crewIds } = parsed.data;
@@ -244,7 +247,7 @@ export async function inviteMember(
   }
 
   revalidatePath(`/city/${slug}/members`);
-  return { ok: true };
+  return { ok: true, userId };
 }
 
 export interface UpdateMemberInput {

@@ -34,7 +34,7 @@ export interface CityCrewType {
 export const MIN_TYPE_DESCRIPTION_WORDS = 10;
 export const MAX_TYPE_DESCRIPTION_CHARS = 500;
 
-const NAME_RE = /^[a-z0-9][a-z0-9_]{1,39}$/;
+export const NAME_RE = /^[a-z0-9][a-z0-9_]{1,39}$/;
 
 /**
  * Normalize a user-typed type name to canonical form: lowercase,
