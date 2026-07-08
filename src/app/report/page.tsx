@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ensureResidentProfile } from "@/app/user/actions";
 import CameraCapture from "@/components/report/camera-capture";
 import DuplicateCheck from "@/components/report/duplicate-check";
 import EmergencyInterstitial from "@/components/report/emergency-interstitial";
@@ -113,6 +114,12 @@ export default function ReportPage() {
     let active = true;
     ensureAnonSession().then((res) => {
       if (active && !res.ok) setError(res.error);
+      // Self-heal the resident's public.users row so the status-change
+      // notification trigger has a row to write against — a /report-only
+      // reporter never visits /user (where AnonBootstrap does this), so
+      // without it a first-time filer gets no resolution email. Idempotent,
+      // best-effort, and a silent no-op when Supabase is unconfigured.
+      if (res.ok) void ensureResidentProfile();
     });
     return () => {
       active = false;
