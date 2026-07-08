@@ -265,6 +265,17 @@ export async function POST(request: NextRequest) {
         wantsXml,
       );
     }
+    // Per-partner keys must carry the open311:write scope to POST. The legacy
+    // shared env key is unscoped and implicitly full-access. A read-only key
+    // (e.g. scopes ['open311:read']) is rejected here with 403, not 401 — the
+    // key is valid, it just lacks the permission.
+    if (partner && !partner.scopes.includes("open311:write")) {
+      return errorResponse(
+        403,
+        "API key lacks the open311:write scope required to submit requests",
+        wantsXml,
+      );
+    }
 
     // Validate required fields
     const serviceCode = body.service_code;

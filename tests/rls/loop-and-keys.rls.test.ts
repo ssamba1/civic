@@ -157,6 +157,53 @@ describe.skipIf(!CHECK_APPLIED)(
       const { error } = await service.from(table).select("*").limit(1);
       expect(error).toBeNull();
     });
+
+    it("service role can mint an api_key, and a revoked key is excluded from active lookup", async () => {
+      // Positive write control: proves the anon INSERT denial above is RLS,
+      // not a missing table. Then verify revocation removes the key from the
+      // revoked_at IS NULL lookup that lookupApiKey() relies on.
+      const hash = `test_${NIL.replace(/-/g, "")}${Date.now()}`;
+      // Need a real user + city FK; grab the first of each.
+      const { data: u } = await service.from("users").select("id").limit(1).single();
+      if (!u) return; // empty DB — nothing to attribute a key to
+      const { data: minted, error: mintErr } = await service
+        .from("api_keys")
+        .insert({
+          key_hash: hash,
+          label: "rls-test ephemeral",
+          user_id: u.id,
+          scopes: ["open311:write"],
+        })
+        .select("id")
+        .single();
+      expect(mintErr).toBeNull();
+      expect(minted?.id).toBeTruthy();
+
+      // Active lookup finds it.
+      const active = await service
+        .from("api_keys")
+        .select("id")
+        .eq("key_hash", hash)
+        .is("revoked_at", null)
+        .maybeSingle();
+      expect(active.data?.id).toBe(minted?.id);
+
+      // Revoke, then confirm the active lookup no longer returns it.
+      await service
+        .from("api_keys")
+        .update({ revoked_at: new Date().toISOString() })
+        .eq("id", minted?.id);
+      const afterRevoke = await service
+        .from("api_keys")
+        .select("id")
+        .eq("key_hash", hash)
+        .is("revoked_at", null)
+        .maybeSingle();
+      expect(afterRevoke.data).toBeNull();
+
+      // Cleanup.
+      await service.from("api_keys").delete().eq("id", minted?.id);
+    });
   },
 );
 
