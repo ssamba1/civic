@@ -137,7 +137,9 @@ export interface WorkOrder {
   id: string;
   report_id: string;
   department: Department;
-  crew_type: CrewType | null;
+  // string, not the CrewType union: cities can define custom crew types
+  // (city_crew_types) that the AI generator may emit.
+  crew_type: string | null;
   priority_score: number;
   est_minutes: number | null;
   materials: string[] | null;

@@ -9,6 +9,7 @@ import { classifyPhoto } from "@/lib/ai/gemini";
 import { generateWorkOrderAI } from "@/lib/ai/work-order-ai";
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
 import { createServerClient } from "@/lib/db/client";
+import { fetchCityCrewTypes } from "@/lib/db/crew-types";
 import { sniffImageMime } from "@/lib/image/sniff-mime";
 import { createLogger } from "@/lib/logger";
 import { resolveTeamKeyForCategory } from "@/lib/onboarding/city-teams";
@@ -367,7 +368,7 @@ export async function runClassifyPipeline(
   // stays deterministic — the AI sizes crew/materials/minutes/cost, not the
   // dispatch priority math.
   let department = rulesWorkOrder.department;
-  let crewType = rulesWorkOrder.crew_type;
+  let crewType: string | null = rulesWorkOrder.crew_type;
   let estMinutes = rulesWorkOrder.est_minutes;
   let materials: string[] = rulesWorkOrder.materials;
   let estCost = rulesWorkOrder.est_cost;
@@ -376,7 +377,10 @@ export async function runClassifyPipeline(
   let woRationale: string | null = null;
 
   if (AI_WORK_ORDER) {
-    const aiResult = await generateWorkOrderAI(classification);
+    // Custom crew types widen the generator's routing vocabulary; [] (no
+    // customs / un-migrated DB) reproduces today's exact prompt + schema.
+    const customTypes = await fetchCityCrewTypes(report.city_id);
+    const aiResult = await generateWorkOrderAI(classification, customTypes);
     if (aiResult.ok) {
       department = aiResult.data.department;
       crewType = aiResult.data.crew_type;

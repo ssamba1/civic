@@ -12,6 +12,11 @@ import { runClassifyPipeline } from "./classify-pipeline";
 // never touch the network or a real Supabase. Logger is mocked to kill the
 // Sentry side-effect (the only env/network risk left in the import graph).
 // generateWorkOrder + sniffImageMime run for real — they are pure.
+// "server-only" isn't an installed package (Next resolves it specially);
+// db/crew-types.ts (pulled in transitively for AI_WORK_ORDER's custom-types
+// fetch) imports it directly, so it needs the same stub every other
+// server-only-importing test file uses.
+vi.mock("server-only", () => ({}));
 vi.mock("@/lib/db/client", () => ({ createServerClient: vi.fn() }));
 vi.mock("@/lib/ai/gemini", () => ({ classifyPhoto: vi.fn() }));
 vi.mock("@/lib/ai/dedup", () => ({ findDuplicate: vi.fn() }));
