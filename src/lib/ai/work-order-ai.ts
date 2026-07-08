@@ -4,7 +4,11 @@ import { withRetry } from "@/lib/ai/retry";
 import { type CrewTypeDef, DEFAULT_CREW_TYPES } from "@/lib/crew-types";
 import { serverEnv } from "@/lib/env";
 import type { Classification, Department, Result } from "@/lib/types";
-import { buildWorkOrderPrompt, WORK_ORDER_SYSTEM_PROMPT } from "./prompt";
+import {
+  buildWorkOrderPrompt,
+  type PromptCrew,
+  WORK_ORDER_SYSTEM_PROMPT,
+} from "./prompt";
 import { checkAndRecordGeminiCall } from "./rate-limiter";
 import { estimateCost } from "./work-order-rules";
 import {
@@ -25,6 +29,10 @@ export interface AiGeneratedWorkOrder {
   /** A key from the city's crew_types catalog (or a default key), not the
    *  static CrewType union — cities define their own types (031). */
   crew_type: string | null;
+  /** Exact crew name the model believes best fits (## CREWS section), or
+   *  null. Advisory only — autoAssignCrew honors it solely when it matches a
+   *  real active same-type crew; otherwise the load balancer decides. */
+  crew_hint: string | null;
   est_minutes: number;
   materials: string[];
   est_cost: number;
@@ -54,6 +62,7 @@ function stripCodeFences(raw: string): string {
 export async function generateWorkOrderAI(
   classification: Classification,
   crewTypes: CrewTypeDef[] = DEFAULT_CREW_TYPES,
+  crews: PromptCrew[] = [],
 ): Promise<Result<AiGeneratedWorkOrder>> {
   const rateCheck = checkAndRecordGeminiCall();
   if (!rateCheck.allowed) {
@@ -80,7 +89,7 @@ export async function generateWorkOrderAI(
     });
 
     // The classification is the entire context — append it as compact JSON.
-    const request = `${buildWorkOrderPrompt(effectiveTypes)}
+    const request = `${buildWorkOrderPrompt(effectiveTypes, crews)}
 
 ## CLASSIFICATION
 ${JSON.stringify(
@@ -139,6 +148,7 @@ ${JSON.stringify(
       data: {
         department: wo.department,
         crew_type: wo.crew_type,
+        crew_hint: wo.crew_hint,
         est_minutes: wo.est_minutes,
         materials: flattenMaterials(wo.materials),
         est_cost: estCost,

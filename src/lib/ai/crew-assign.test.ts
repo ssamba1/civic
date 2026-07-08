@@ -240,4 +240,63 @@ describe("autoAssignCrew", () => {
       active: true,
     });
   });
+
+  it("honors a crew_hint that exactly matches a candidate (skips load ranking)", async () => {
+    const { db, calls } = mockDb({
+      // Hint hit: no crew_members / open-load queries should run at all.
+      crews: [
+        {
+          data: [
+            { id: "north", name: "North Paving" },
+            { id: "south", name: "South Paving" },
+          ],
+        },
+      ],
+      work_orders: [{ data: null }], // the assignment update only
+    });
+
+    const picked = await autoAssignCrew(db, {
+      ...OPTS,
+      crewHint: "  south paving ", // case/whitespace-insensitive match
+    });
+    expect(picked).toBe("south");
+    expect(calls.some((c) => c.table === "crew_members")).toBe(false);
+    const update = calls.find((c) => c.method === "update");
+    expect(update?.payload).toEqual({ assigned_crew_id: "south" });
+    expect(update?.filters["is:assigned_crew_id"]).toBeNull();
+  });
+
+  it("ignores a hint that matches no candidate and falls back to ranking", async () => {
+    const { db, calls } = mockDb({
+      crews: [
+        {
+          data: [
+            { id: "hollow", name: "Hollow" },
+            { id: "staffed", name: "Staffed" },
+          ],
+        },
+      ],
+      crew_members: [{ data: [{ crew_id: "staffed" }] }],
+      work_orders: [
+        { data: [] }, // open-load query
+        { data: null }, // the assignment update
+      ],
+    });
+
+    const picked = await autoAssignCrew(db, {
+      ...OPTS,
+      crewHint: "Imaginary Crew",
+    });
+    expect(picked).toBe("staffed");
+    expect(calls.some((c) => c.table === "crew_members")).toBe(true);
+  });
+
+  it("treats a null/absent hint exactly like before", async () => {
+    const { db } = mockDb({
+      crews: [{ data: [{ id: "only", name: "Only" }] }],
+      crew_members: [{ data: [] }],
+      work_orders: [{ data: [] }, { data: null }],
+    });
+    expect(await autoAssignCrew(db, { ...OPTS, crewHint: null })).toBe("only");
+  });
 });

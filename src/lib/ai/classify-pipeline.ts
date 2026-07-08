@@ -8,6 +8,7 @@ import {
 import { autoAssignCrew } from "@/lib/ai/crew-assign";
 import { findDuplicate } from "@/lib/ai/dedup";
 import { classifyPhoto } from "@/lib/ai/gemini";
+import type { PromptCrew } from "@/lib/ai/prompt";
 import { generateWorkOrderAI } from "@/lib/ai/work-order-ai";
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
 import { createServerClient } from "@/lib/db/client";
@@ -37,6 +38,47 @@ export interface ClassifyPipelineResult {
 }
 
 type SupabaseLike = ReturnType<typeof createServerClient>;
+
+/**
+ * Active crews (name/type/description) for the ## CREWS prompt section.
+ * Best-effort: [] on any failure — including a pre-032 DB where
+ * crews.description doesn't exist yet — keeps the prompt byte-identical to
+ * the no-crews form, so the AI call itself never depends on this data.
+ */
+async function fetchPromptCrews(
+  supabase: SupabaseLike,
+  cityId: string,
+  log: ReturnType<typeof createLogger>,
+): Promise<PromptCrew[]> {
+  try {
+    const { data, error } = await supabase
+      .from("crews")
+      .select("name, crew_type, description")
+      .eq("city_id", cityId)
+      .eq("active", true);
+    if (error) {
+      log.warn("prompt_crews_query_failed", { cityId, error: error.message });
+      return [];
+    }
+    return (
+      (data ?? []) as {
+        name: string;
+        crew_type: string | null;
+        description: string | null;
+      }[]
+    ).map((c) => ({
+      name: c.name,
+      crewType: c.crew_type,
+      description: c.description ?? "",
+    }));
+  } catch (err) {
+    log.warn("prompt_crews_threw", {
+      cityId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return [];
+  }
+}
 
 /**
  * Async-only: stamp reports.classify_status so the resident UI's Realtime
@@ -379,12 +421,23 @@ export async function runClassifyPipeline(
   let woSource: WorkOrderSource = "rules";
   // AI rationale explaining crew/time/materials/cost sizing; null on rules path.
   let woRationale: string | null = null;
+  // AI's crew-name pick among same-type siblings (## CREWS section); consumed
+  // only by autoAssignCrew below, which validates it against real candidates.
+  let crewHint: string | null = null;
 
   if (AI_WORK_ORDER) {
     // City catalog with descriptions — degrades to the app defaults when the
     // city has no rows or 031 isn't applied, so this never blocks the call.
     const cityCrewTypes = await fetchActiveCrewTypeDefs(report.city_id);
-    const aiResult = await generateWorkOrderAI(classification, cityCrewTypes);
+    // Active crews (name/type/description) feed the ## CREWS prompt section.
+    // Best-effort like the catalog: [] on any failure (or pre-032, where the
+    // description column is absent) keeps the prompt byte-identical to today.
+    const promptCrews = await fetchPromptCrews(supabase, report.city_id, log);
+    const aiResult = await generateWorkOrderAI(
+      classification,
+      cityCrewTypes,
+      promptCrews,
+    );
     if (aiResult.ok) {
       department = aiResult.data.department;
       crewType = aiResult.data.crew_type;
@@ -394,8 +447,9 @@ export async function runClassifyPipeline(
       // undercut the deterministic material+labor floor from work-order-rules.ts.
       estCost = Math.max(rulesWorkOrder.est_cost, aiResult.data.est_cost);
       woRationale = aiResult.data.rationale;
+      crewHint = aiResult.data.crew_hint;
       woSource = "ai";
-      log.info("work_order_ai_ok", { reportId, estCost, crewType });
+      log.info("work_order_ai_ok", { reportId, estCost, crewType, crewHint });
     } else {
       log.error("work_order_ai_failed_using_rules", undefined, {
         reportId,
@@ -484,6 +538,7 @@ export async function runClassifyPipeline(
       cityId: report.city_id,
       teamKey: resolvedTeamKey,
       crewType,
+      crewHint,
       log,
     });
   }
