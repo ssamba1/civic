@@ -144,4 +144,36 @@ describe("generateWorkOrderAI", () => {
     expect(mocks.generateContent).toHaveBeenCalledTimes(1);
     expect(String(mocks.lastRequest)).toContain("pothole");
   });
+
+  const CUSTOM_TYPES = [
+    {
+      name: "street_lights",
+      description:
+        "Dedicated crew handling street light outages, pole replacement, and municipal lighting maintenance across the city.",
+    },
+  ];
+
+  it("accepts a custom crew type passed via customTypes", async () => {
+    mocks.textReturn = JSON.stringify({
+      ...VALID_WO,
+      crew_type: "street_lights",
+    });
+
+    const result = await generateWorkOrderAI(CLASSIFICATION, CUSTOM_TYPES);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data.crew_type).toBe("street_lights");
+    // The custom type's name + description reach the prompt (routing signal).
+    expect(String(mocks.lastRequest)).toContain("street_lights");
+    expect(String(mocks.lastRequest)).toContain("Dedicated crew");
+  });
+
+  it("still rejects an unknown crew type when customTypes is set", async () => {
+    mocks.textReturn = JSON.stringify({ ...VALID_WO, crew_type: "bogus_type" });
+
+    const result = await generateWorkOrderAI(CLASSIFICATION, CUSTOM_TYPES);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toContain("validation failed");
+  });
 });
