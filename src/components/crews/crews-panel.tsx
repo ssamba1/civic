@@ -3,6 +3,7 @@
 import { HardHat, Pencil, Plus, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useMemo, useState, useTransition } from "react";
+import { inviteMember } from "@/app/city/[slug]/members/actions";
 import {
   createCrew,
   createCrewType,
@@ -279,16 +280,34 @@ function CrewDialog({
   const [typeError, setTypeError] = useState<string | null>(null);
   const [typePending, startTypeTransition] = useTransition();
 
+  // Inline "Invite by email" sub-form: an admin can invite someone with no
+  // account straight onto the crew's division. The invite fires immediately
+  // (real email + pending member row); crew-roster membership only persists on
+  // crew submit (setCrewMembers).
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [invitePending, startInviteTransition] = useTransition();
+  // People invited from this dialog — appended to the candidate list so they
+  // can sit on the roster before the page refetches.
+  const [invited, setInvited] = useState<CrewCandidate[]>([]);
+
   const teamId = useId();
   const nameId = useId();
   const typeId = useId();
   const activeId = useId();
 
-  // A crew's roster comes from its own division.
-  const candidates = useMemo(
-    () => members.filter((m) => m.teamKey === teamKey),
-    [members, teamKey],
-  );
+  // A crew's roster comes from its own division — the fetched division members
+  // plus anyone just invited from this dialog (same teamKey, deduped by id).
+  const candidates = useMemo(() => {
+    const base = members.filter((m) => m.teamKey === teamKey);
+    const known = new Set(base.map((m) => m.id));
+    return [
+      ...base,
+      ...invited.filter((m) => m.teamKey === teamKey && !known.has(m.id)),
+    ];
+  }, [members, invited, teamKey]);
 
   // Dropdown options: the built-ins, then this city's custom types (server +
   // session-created, de-duped by name), then the current value if it's since
@@ -322,6 +341,11 @@ function CrewDialog({
     normalizeCrewTypeName(newTypeName) !== null &&
     descriptionWordCount(newTypeDesc) >= MIN_TYPE_DESCRIPTION_WORDS;
 
+  // Both fields required. Also gates the guard in handleInvite so a bare Enter
+  // in either input can't slip past and submit the outer crew form.
+  const canInvite =
+    inviteEmail.trim().length > 0 && inviteName.trim().length > 0;
+
   function handleAddType() {
     if (!canAddType || typePending) return;
     setTypeError(null);
@@ -345,6 +369,40 @@ function CrewDialog({
       setTypeFormOpen(false);
       setNewTypeName("");
       setNewTypeDesc("");
+    });
+  }
+
+  function handleInvite() {
+    // Guard: both fields present and no invite in flight. This is what stops a
+    // bare Enter in the email/name inputs from bubbling to the crew form's
+    // submit (the same fix the New-type sub-form needed).
+    if (!canInvite || invitePending) return;
+    setInviteError(null);
+    const email = inviteEmail.trim();
+    const displayName = inviteName.trim();
+    startInviteTransition(async () => {
+      const res = await inviteMember({
+        slug,
+        email,
+        displayName,
+        role: "staff_dispatcher", // crew members get console access for their division
+        teamKey, // the crew's division — always a real team in this dialog
+        phone: null,
+        crewIds: [], // roster membership lands on crew submit via setCrewMembers
+      });
+      if (!res.ok) {
+        setInviteError(humanizeMemberError(res.error));
+        return;
+      }
+      // Surface them immediately: add to candidates and pre-check onto the roster.
+      setInvited((prev) => [
+        ...prev,
+        { id: res.userId, displayName, teamKey, role: "staff_dispatcher" },
+      ]);
+      setRoster((prev) => [...prev, res.userId]);
+      setInviteEmail("");
+      setInviteName("");
+      setInviteOpen(false);
     });
   }
 
@@ -656,6 +714,87 @@ function CrewDialog({
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {!inviteOpen ? (
+              <button
+                type="button"
+                onClick={() => setInviteOpen(true)}
+                className="flex w-fit items-center gap-1.5 rounded-[var(--radius-md)] px-1 py-0.5 text-[12px] font-medium text-subtle outline-none transition-colors duration-150 hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60"
+              >
+                <Plus className="h-3.5 w-3.5" strokeWidth={2} />
+                Invite by email
+              </button>
+            ) : (
+              <div className="flex flex-col gap-2.5 rounded-[var(--radius-md)] border border-hairline bg-overlay p-3">
+                <p className="text-[12px] font-medium text-subtle">
+                  Invite to {teamShortLabel(teamKey)} &amp; this crew
+                </p>
+                {inviteError && <FormError message={inviteError} />}
+                <input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  onKeyDown={(e) => {
+                    // Enter here would implicitly submit the OUTER crew form;
+                    // send the invite instead.
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleInvite();
+                    }
+                  }}
+                  placeholder="name@city.gov"
+                  autoComplete="off"
+                  inputMode="email"
+                  className={CONTROL_CLASS}
+                  aria-label="Email"
+                />
+                <input
+                  type="text"
+                  value={inviteName}
+                  onChange={(e) => setInviteName(e.target.value)}
+                  onKeyDown={(e) => {
+                    // Enter here would implicitly submit the OUTER crew form;
+                    // send the invite instead.
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleInvite();
+                    }
+                  }}
+                  placeholder="Full name"
+                  autoComplete="off"
+                  className={CONTROL_CLASS}
+                  aria-label="Name"
+                />
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[11px] text-faint">
+                    They get an email invite &amp; dispatcher access
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setInviteOpen(false);
+                        setInviteError(null);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      isPending={invitePending}
+                      disabled={invitePending || !canInvite}
+                      onClick={handleInvite}
+                    >
+                      Send invite
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
           </fieldset>
