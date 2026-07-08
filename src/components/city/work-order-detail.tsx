@@ -4,11 +4,13 @@ import { ImageOff, MapPin, Wrench } from "lucide-react";
 import { useState, useTransition } from "react";
 import { assignCrewToReport } from "@/app/staff/actions";
 import { teamIcon } from "@/components/teams/team-icon";
+import { formatCost } from "@/lib/currency";
 import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
 import type { GridCrewOption, GridReportRow } from "@/lib/dashboard-grid-data";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import { categoryToTeam, TEAMS, type TeamId } from "@/lib/teams";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
+import { useCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils/cn";
 import { timeAgo } from "@/lib/utils/time-ago";
 
@@ -77,8 +79,6 @@ function formatDays(hours: number): string {
   const d = Math.round((hours / 24) * 10) / 10;
   return Number.isInteger(d) ? `${d}d` : `${d.toFixed(1)}d`;
 }
-
-const usd = (n: number) => `$${n.toLocaleString()}`;
 
 /* ------------------------------------------------------------------ */
 
@@ -255,6 +255,7 @@ export function WorkOrderDetail({
   crews?: GridCrewOption[];
   canAssign?: boolean;
 }) {
+  const currency = useCurrency();
   if (!row) {
     return (
       <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-center">
@@ -467,7 +468,7 @@ export function WorkOrderDetail({
             </div>
             <Stat
               label="Est. cost"
-              value={row.est_cost != null ? usd(row.est_cost) : "—"}
+              value={formatCost(row.est_cost, currency)}
             />
             <Stat
               label="Est. time"

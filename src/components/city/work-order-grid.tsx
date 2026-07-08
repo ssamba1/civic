@@ -45,6 +45,7 @@ import { fetchCategoryCostStats } from "@/app/staff/actions";
 import { WorkOrderExplorer } from "@/components/city/work-order-explorer";
 import { teamIcon } from "@/components/teams/team-icon";
 import { DEFAULT_CREW_TYPE_KEYS } from "@/lib/crew-types";
+import { type CurrencyConfig, formatCost } from "@/lib/currency";
 import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
 import type { GridCrewOption, GridReportRow } from "@/lib/dashboard-grid-data";
 import { categoryToTeam, TEAMS } from "@/lib/teams";
@@ -54,6 +55,7 @@ import type {
   Department,
   ReportCategory,
 } from "@/lib/types";
+import { useCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils/cn";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -709,9 +711,6 @@ function SourceCell({ value }: ICellRendererParams<GridReportRow, string>) {
   );
 }
 
-const usd = (p: ValueFormatterParams<GridReportRow, number | null>) =>
-  p.value == null ? "—" : `$${p.value.toLocaleString()}`;
-
 /* ── Predicted cost (category_cost_stats RPC) ──
    Cold-start rule from the cost-prediction design: a category needs 5+
    accepted actuals before a prediction shows; below that the cell reads as an
@@ -745,9 +744,11 @@ function PredictedCostCell({
   data,
   context,
 }: ICellRendererParams<GridReportRow>) {
-  const statsRef = (
-    context as { costStatsRef: { current: Map<string, CategoryCostStats> } }
-  ).costStatsRef;
+  const ctx = context as {
+    costStatsRef: { current: Map<string, CategoryCostStats> };
+    currency: CurrencyConfig;
+  };
+  const statsRef = ctx.costStatsRef;
   const s = data?.category ? statsRef.current.get(data.category) : undefined;
   const predicted = predictFromStats(data, statsRef.current);
   if (predicted == null) {
@@ -766,7 +767,9 @@ function PredictedCostCell({
   }
   return (
     <span className="inline-flex items-baseline gap-1.5">
-      <span className="tabular-nums">${predicted.toLocaleString()}</span>
+      <span className="tabular-nums">
+        {formatCost(predicted, ctx.currency)}
+      </span>
       <span
         className={cn(
           "font-mono text-[10px] uppercase tracking-[0.08em]",
@@ -916,6 +919,10 @@ export function WorkOrderGrid({
 }) {
   const { theme } = useTheme();
   const gridTheme = theme === "dark" ? gridThemeDark : gridThemeLight;
+  // City currency (INR for ahilyanagar, USD default). Threaded into the cost
+  // column formatters + the predicted-cost cell via grid context so a non-USD
+  // city renders ₹ with the right grouping instead of a hardcoded $.
+  const currency = useCurrency();
 
   // Predicted-cost stats live in a ref (not state) so their arrival can't
   // rebuild columnDefs — AG Grid re-applies colDef sort/width on columnDefs
@@ -969,8 +976,8 @@ export function WorkOrderGrid({
   }, []);
 
   const gridContext = useMemo(
-    () => ({ costStatsRef, openDetail }),
-    [openDetail],
+    () => ({ costStatsRef, openDetail, currency }),
+    [openDetail, currency],
   );
   useEffect(() => {
     if (!cityId) return;
@@ -1220,7 +1227,9 @@ export function WorkOrderGrid({
         colId: "est_cost",
         headerName: "Est. Cost",
         field: "est_cost",
-        valueFormatter: usd,
+        valueFormatter: (
+          p: ValueFormatterParams<GridReportRow, number | null>,
+        ) => (p.value == null ? "—" : formatCost(p.value, currency)),
         type: "rightAligned",
         initialWidth: 120,
         minWidth: 100,
@@ -1278,7 +1287,7 @@ export function WorkOrderGrid({
         },
       },
     ],
-    [deptOptions, crewOptions],
+    [deptOptions, crewOptions, currency],
   );
 
   const defaultColDef = useMemo<ColDef<GridReportRow>>(

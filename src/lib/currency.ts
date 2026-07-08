@@ -66,3 +66,19 @@ export function formatCost(
     maximumFractionDigits: 0,
   }).format(usdAmount * cfg.rateFromUsd);
 }
+
+/**
+ * Format a timestamp in the city's locale (drives day/month order and script).
+ * Same config object as formatCost so a single currencyForCitySlug() lookup
+ * localizes both money and dates. Returns an em dash for missing/invalid input.
+ */
+export function formatLocalDate(
+  iso: string | null | undefined,
+  cfg: CurrencyConfig = DEFAULT_CURRENCY,
+  opts: Intl.DateTimeFormatOptions = { dateStyle: "medium" },
+): string {
+  if (!iso) return "—";
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "—";
+  return new Intl.DateTimeFormat(cfg.locale, opts).format(t);
+}
