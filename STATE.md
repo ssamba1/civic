@@ -25,6 +25,24 @@ biome errors are Windows-CRLF format only — CI runs LF and is green).
 
 Merge order: #12 → #13 → #14 (each stacks on the prior).
 
+## Tier 0 security audit (2026-07-08)
+
+- **0.1 forgeable demo cookie** — FIXED (HMAC-signed, `demo-cookie.ts` +
+  `staff-access.ts`; DEMO_MODE + slug gated).
+- **0.2 staff mutations lack city scope** — FIXED (`reportInStaffCity`/
+  `workOrderInStaffCity` on every action, `staff/actions.ts`).
+- **0.3 rate limiter trusts spoofable IP** — FIXED spoofable fallback: prod now
+  REQUIRES `RATE_LIMIT_TRUSTED_HEADER` (env validation throws). In-memory
+  per-instance state NOT fixed — needs Redis (new dep + owner infra), left as
+  documented TODO in `rate-limit.ts`.
+- **0.4 unauth AI chat/reasoning** — FIXED (both require `getAuthUser` 401 +
+  shared Gemini budget cap).
+- **0.5 analytics theater** — OPEN (data-integrity, not security). 6 of 8 widget
+  fns (`fetchReportsTrend`, `fetchStatusFunnel`, `fetchSeverityDistribution`,
+  `fetchHourlyHeatmap`, `fetchTopNeighborhoods`, `fetchCategoryResolution`)
+  ignore `cityId` and return mocks(demo)/zeros(live); MTTR + SLA KPIs return
+  demo literals in live mode too (`analytics-data.ts`). Needs real queries.
+
 ## High Priority (owner-blocked — cannot be done by the agent)
 
 - **Apply migrations 024–034 to the live DB.** `DATABASE_URL` is owner-held.
