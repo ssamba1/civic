@@ -55,3 +55,36 @@ test("POST /requests without an api_key is rejected 401", async ({
   });
   expect(res.status()).toBe(401);
 });
+
+test("canonical .json URLs resolve (proxy rewrite → ?format=json)", async ({
+  request,
+}) => {
+  const services = await request.get("/api/open311/v2/services.json");
+  expect(services.ok()).toBeTruthy();
+  expect(Array.isArray(await services.json())).toBe(true);
+
+  const def = await request.get("/api/open311/v2/services/pothole.json");
+  expect(def.ok()).toBeTruthy();
+  expect(await def.json()).toMatchObject({ service_code: "pothole" });
+
+  const requests = await request.get("/api/open311/v2/requests.json");
+  expect(requests.ok()).toBeTruthy();
+  expect(Array.isArray(await requests.json())).toBe(true);
+});
+
+test("GET /requests?jurisdiction_id filters without error", async ({
+  request,
+}) => {
+  const res = await request.get(
+    "/api/open311/v2/requests?jurisdiction_id=cumming.ga.us",
+  );
+  expect(res.ok()).toBeTruthy();
+  expect(Array.isArray(await res.json())).toBe(true);
+});
+
+test("GET /requests?status rejects an invalid status with 400", async ({
+  request,
+}) => {
+  const res = await request.get("/api/open311/v2/requests?status=bogus");
+  expect(res.status()).toBe(400);
+});

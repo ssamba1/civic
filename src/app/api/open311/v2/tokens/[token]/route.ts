@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
-import { toErrorXml } from "@/lib/open311/xml";
+import { open311Error, wantsXml } from "@/lib/open311/http";
 
 const logger = createLogger("[open311-token]");
 
@@ -23,17 +23,17 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> },
 ) {
-  const wantsXml = requestWantsXml(request);
+  const xml = wantsXml(request);
   try {
     const rl = checkRateLimit(`open311_token:${clientIp(request)}`, {
       windowMs: 60_000,
       max: 60,
     });
-    if (!rl.allowed) return errorResponse(429, "Rate limit exceeded", wantsXml);
+    if (!rl.allowed) return open311Error(429, "Rate limit exceeded", xml);
 
     const { token } = await params;
     if (!UUID_RE.test(token)) {
-      return errorResponse(404, "Token not found", wantsXml);
+      return open311Error(404, "Token not found", xml);
     }
 
     const db = createServerClient();
@@ -45,11 +45,11 @@ export async function GET(
       .maybeSingle<{ id: string }>();
 
     if (error || !data) {
-      return errorResponse(404, "Token not found", wantsXml);
+      return open311Error(404, "Token not found", xml);
     }
 
     const payload = { service_request_id: data.id, token };
-    if (wantsXml) {
+    if (xml) {
       return new NextResponse(
         [
           '<?xml version="1.0" encoding="utf-8"?>',
@@ -66,24 +66,6 @@ export async function GET(
     return NextResponse.json([payload]);
   } catch (err) {
     logger.error("GET /tokens/[token] unhandled error", err);
-    return errorResponse(500, "Internal server error", wantsXml);
+    return open311Error(500, "Internal server error", xml);
   }
-}
-
-function requestWantsXml(request: NextRequest): boolean {
-  const format = request.nextUrl.searchParams.get("format");
-  if (format === "xml") return true;
-  if (format === "json") return false;
-  const accept = request.headers.get("accept") ?? "";
-  return accept.includes("text/xml") || accept.includes("application/xml");
-}
-
-function errorResponse(code: number, description: string, xml: boolean) {
-  if (xml) {
-    return new NextResponse(toErrorXml(code, description), {
-      status: code,
-      headers: { "Content-Type": "text/xml; charset=utf-8" },
-    });
-  }
-  return NextResponse.json([{ code, description }], { status: code });
 }
