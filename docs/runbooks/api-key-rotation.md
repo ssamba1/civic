@@ -1,10 +1,22 @@
 # Runbook — Open311 API key issuance & rotation
 
-**Table:** `api_keys` (migration 028) · **Lib:** `src/lib/open311/api-keys.ts` ·
-ADR 0006. Scripts read `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` from
-`.env.local`.
+**Table:** `api_keys` (migration 028) · **Lib:** `src/lib/open311/api-keys.ts`
+(read path) + `src/lib/open311/admin-keys.ts` (write path) · ADR 0006. Scripts
+read `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` from `.env.local`.
 
-## Issue a key
+## Admin UI (primary path)
+
+`/admin/api-keys` (admin role) issues, lists, and revokes keys with no shell
+access:
+- **Issue** — enter a label, optional city scope, and scopes; the plaintext
+  `civic_sk_<…>` is revealed **once** with a copy button (only its SHA-256 hash
+  is stored). Attribution defaults to the issuing admin's `users.id`.
+- **Revoke** — one click, confirm; the key stops resolving immediately.
+
+The CLI below is the equivalent headless path (CI / scripting / a dedicated
+partner `--user`). Both write the same table.
+
+## Issue a key (CLI)
 
 ```
 node scripts/issue-api-key.mjs --label "Forsyth County GIS" --user <users.id uuid> \
