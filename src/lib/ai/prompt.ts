@@ -136,9 +136,16 @@ export function buildWorkOrderPrompt(customTypes: CityCrewType[]): string {
     `## CITY-SPECIFIC CREW TYPES`,
     `This city also operates the following custom crews. Prefer one of these over the`,
     `generic list above when its description matches the repair better:`,
-    ...customTypes.map((t) => `- ${t.name}: ${t.description}`),
+    ...customTypes.map(
+      (t) => `- ${t.name}: ${t.description.replace(/\s+/g, " ")}`,
+    ),
     ``,
     ``,
   ].join("\n");
-  return WORK_ORDER_PROMPT.replace("## DEPARTMENT", `${section}## DEPARTMENT`);
+  // Replacer function keeps the replacement literal — a plain string arg to
+  // .replace() would interpret $&/$$/$` etc. in admin-authored descriptions.
+  return WORK_ORDER_PROMPT.replace(
+    "## DEPARTMENT",
+    () => `${section}## DEPARTMENT`,
+  );
 }

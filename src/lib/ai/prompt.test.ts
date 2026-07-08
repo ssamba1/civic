@@ -23,4 +23,17 @@ describe("buildWorkOrderPrompt", () => {
     expect(out).toContain("## CREW TYPE");
     expect(out).toContain("## OUTPUT");
   });
+  it("treats a description containing $-patterns as literal text", () => {
+    const out = buildWorkOrderPrompt([
+      {
+        name: "street_lights",
+        description: "$& costs $$ here",
+      },
+    ]);
+    const needle = "$& costs $$ here";
+    const firstIndex = out.indexOf(needle);
+    expect(firstIndex).toBeGreaterThanOrEqual(0);
+    expect(out.indexOf(needle, firstIndex + 1)).toBe(-1);
+    expect(out.split("## DEPARTMENT").length - 1).toBe(1);
+  });
 });
