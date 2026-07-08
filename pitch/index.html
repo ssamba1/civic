@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Civic — Pitch Deck</title>
+<meta name="description" content="Civic: an AI-native replacement for the city 311 system. A resident's photo becomes a costed, routed, publicly-tracked repair." />
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root{
+  --ink:#0a0a0b; --bg:#fafafa; --card:#ffffff;
+  --blue:#2563eb; --blue-700:#1d4ed8; --blue-50:#eff6ff;
+  --navy:#0b1f3a; --navy-2:#0a1730;
+  --z900:#18181b; --z700:#3f3f46; --z500:#71717a; --z400:#a1a1aa; --z300:#d4d4d8; --z200:#e4e4e7; --z100:#f4f4f5;
+  --green:#16a34a; --amber:#f59e0b; --red:#dc2626;
+  --radius:20px; --shadow:0 10px 40px -12px rgba(10,20,40,.18), 0 2px 8px -2px rgba(10,20,40,.08);
+  --maxw:1180px;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font);background:#000;color:var(--ink);-webkit-font-smoothing:antialiased;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+#deck{position:relative;height:100vh;width:100vw;overflow:hidden;background:var(--bg)}
+
+.slide{
+  position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+  padding:64px 80px 76px;opacity:0;visibility:hidden;transform:translateY(8px);
+  transition:opacity .45s ease, transform .45s ease;
+}
+.slide.active{opacity:1;visibility:visible;transform:none}
+.slide.dark{background:radial-gradient(120% 120% at 80% 0%, #14346b 0%, var(--navy) 45%, var(--navy-2) 100%);color:#fff}
+.slide .inner{width:100%;max-width:var(--maxw);margin:0 auto}
+
+/* grid overlay for hero slides */
+.grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:46px 46px;mask-image:radial-gradient(120% 90% at 70% 10%,#000 30%,transparent 75%);pointer-events:none}
+
+/* typographic system */
+.kicker{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:22px}
+.dark .kicker{color:#7aa5ff}
+.kicker::before{content:"";width:26px;height:2px;background:currentColor;border-radius:2px}
+h1.headline{font-size:clamp(40px,5.4vw,76px);line-height:1.02;font-weight:800;letter-spacing:-.025em}
+h2.headline{font-size:clamp(34px,4.4vw,60px);line-height:1.04;font-weight:800;letter-spacing:-.022em}
+.sub{font-size:clamp(18px,1.7vw,24px);line-height:1.5;color:var(--z500);font-weight:450;margin-top:22px;max-width:760px}
+.dark .sub{color:#c4d2ea}
+.lead{font-size:clamp(20px,2vw,28px);font-weight:600;color:var(--z700)}
+.dark .lead{color:#dbe6fb}
+.mono{font-variant-numeric:tabular-nums}
+
+/* footer */
+.foot{position:absolute;left:80px;right:80px;bottom:30px;display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--z400)}
+.dark .foot{color:#6f86ad}
+.wordmark{font-weight:800;letter-spacing:-.02em;font-size:18px;color:var(--ink);display:inline-flex;align-items:center;gap:8px}
+.dark .wordmark{color:#fff}
+.wordmark .dot{width:10px;height:10px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.18)}
+.foot .pageno{font-variant-numeric:tabular-nums;font-weight:600}
+
+/* cards / components */
+.card{background:var(--card);border:1px solid var(--z200);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px}
+.dark .card{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.10);box-shadow:none;backdrop-filter:blur(8px)}
+.grid{display:grid;gap:20px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:6px 13px;border-radius:999px;font-size:13px;font-weight:600;background:var(--blue-50);color:var(--blue-700);border:1px solid #dbe4ff}
+.dark .pill{background:rgba(122,165,255,.12);color:#a9c4ff;border-color:rgba(122,165,255,.22)}
+.pill.green{background:#ecfdf3;color:#15803d;border-color:#bbf7d0}
+.pill.amber{background:#fffbeb;color:#b45309;border-color:#fde68a}
+.pill.red{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+.pill .d{width:7px;height:7px;border-radius:50%;background:currentColor}
+
+.stat{font-size:clamp(44px,6vw,84px);font-weight:850;letter-spacing:-.04em;line-height:1}
+.stat.blue{color:var(--blue)}.stat.red{color:var(--red)}.stat.green{color:var(--green)}
+.stat-l{font-size:15px;color:var(--z500);font-weight:550;margin-top:10px;line-height:1.35}
+.dark .stat-l{color:#aebfdb}
+
+.eyebrow{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--z400)}
+
+/* steps */
+.steps{display:flex;gap:14px;align-items:stretch}
+.step{flex:1;background:var(--card);border:1px solid var(--z200);border-radius:16px;padding:20px;position:relative}
+.dark .step{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1)}
+.step .n{width:30px;height:30px;border-radius:9px;background:var(--blue);color:#fff;font-weight:800;font-size:15px;display:grid;place-items:center;margin-bottom:12px}
+.step h4{font-size:18px;font-weight:700;margin-bottom:5px}
+.step p{font-size:14px;color:var(--z500);line-height:1.4}
+.dark .step p{color:#b3c2de}
+.arrow{align-self:center;color:var(--z300);font-size:24px;font-weight:700}
+.dark .arrow{color:#42577d}
+
+/* pipeline */
+.pipe{display:flex;align-items:center;gap:0;flex-wrap:wrap}
+.node{flex:1;min-width:150px;text-align:center;padding:18px 12px;border-radius:14px;background:var(--card);border:1px solid var(--z200);box-shadow:var(--shadow)}
+.dark .node{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1);box-shadow:none}
+.node .ic{font-size:24px;margin-bottom:8px}
+.node b{display:block;font-size:15px;font-weight:700}
+.node span{font-size:12.5px;color:var(--z500)}
+.dark .node span{color:#a9badd}
+.conn{flex:0 0 30px;text-align:center;color:var(--blue);font-size:20px;font-weight:800}
+
+/* phone */
+.phone{width:248px;border-radius:34px;background:#0a0a0b;padding:11px;box-shadow:0 24px 60px -20px rgba(10,20,40,.5);border:1px solid #232327}
+.phone .scr{border-radius:25px;background:#fff;overflow:hidden;aspect-ratio:9/19.2;display:flex;flex-direction:column}
+.phscr-top{background:var(--blue);color:#fff;padding:13px 15px 12px;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:space-between}
+.phscr-photo{flex:1;background:linear-gradient(160deg,#3f4754,#23282f);position:relative;display:grid;place-items:center;color:#cfd6e0}
+.phscr-photo .crack{position:absolute;width:130px;height:5px;background:#11151b;border-radius:4px;transform:rotate(-18deg);box-shadow:0 8px 0 -2px rgba(0,0,0,.25)}
+.phscr-class{padding:13px 15px;border-top:1px solid var(--z200)}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{font-size:11px;font-weight:700;padding:4px 9px;border-radius:8px;background:var(--blue-50);color:var(--blue-700)}
+.confbar{height:7px;border-radius:5px;background:var(--z200);overflow:hidden;margin-top:9px}
+.confbar > i{display:block;height:100%;background:var(--green);border-radius:5px}
+
+/* work order card */
+.wo{border-radius:16px;border:1px solid var(--z200);background:var(--card);overflow:hidden;box-shadow:var(--shadow)}
+.wo-h{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--z100);border-bottom:1px solid var(--z200)}
+.wo-h b{font-size:16px;font-weight:800}
+.wo-row{display:flex;justify-content:space-between;padding:11px 18px;font-size:14.5px;border-bottom:1px solid var(--z100)}
+.wo-row:last-child{border-bottom:0}
+.wo-row span{color:var(--z500)}
+.wo-row b{font-weight:700}
+.tag-blob{display:inline-block;padding:14px 20px;border-radius:14px;border:1.5px dashed var(--z300);color:var(--z500);font-weight:600;font-size:16px;background:var(--z100)}
+
+/* matrix */
+table.mx{width:100%;border-collapse:separate;border-spacing:0;font-size:15px}
+table.mx th,table.mx td{padding:13px 14px;text-align:center;border-bottom:1px solid var(--z200)}
+table.mx th{font-size:13px;font-weight:700;color:var(--z500);text-transform:uppercase;letter-spacing:.04em}
+table.mx td:first-child,table.mx th:first-child{text-align:left;font-weight:600}
+table.mx .us{background:var(--blue-50)}
+table.mx .us.head{background:var(--blue);color:#fff;border-radius:12px 12px 0 0;font-weight:800;letter-spacing:-.01em;text-transform:none;font-size:16px}
+.yes{color:var(--green);font-weight:800}.no{color:var(--z300);font-weight:800}
+.mxnote{font-size:13px;color:var(--z400);margin-top:14px}
+
+/* bars (equity / scoreboard) */
+.bar-row{display:flex;align-items:center;gap:14px;margin:11px 0}
+.bar-row .lbl{width:150px;font-size:14.5px;font-weight:600;flex:0 0 auto}
+.bar-track{flex:1;height:16px;background:var(--z200);border-radius:8px;overflow:hidden}
+.bar-track > i{display:block;height:100%;border-radius:8px}
+.bar-row .val{width:64px;text-align:right;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+
+/* flywheel */
+.fly{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap}
+.fly .stg{background:var(--card);border:1px solid var(--z200);border-radius:16px;padding:20px 22px;box-shadow:var(--shadow);max-width:230px}
+.fly .stg .t{font-weight:800;font-size:17px;margin-bottom:6px}
+.fly .stg p{font-size:13.5px;color:var(--z500);line-height:1.4}
+.fly .ar{font-size:26px;color:var(--blue);font-weight:800}
+
+/* timeline */
+.tl{display:flex;gap:0;align-items:flex-start;margin-top:8px}
+.tl .it{flex:1;position:relative;padding:0 8px}
+.tl .it::before{content:"";position:absolute;top:9px;left:0;right:0;height:2px;background:var(--z200)}
+.tl .it .dotm{width:18px;height:18px;border-radius:50%;background:var(--blue);border:4px solid #fff;box-shadow:0 0 0 1px var(--z200);position:relative;z-index:1;margin-bottom:14px}
+.tl .it.done .dotm{background:var(--green)}
+.tl .it h5{font-size:15px;font-weight:700;margin-bottom:4px}
+.tl .it p{font-size:13px;color:var(--z500);line-height:1.35}
+
+/* misc utility */
+.row{display:flex;gap:14px;align-items:center}
+.between{display:flex;justify-content:space-between;align-items:flex-end;gap:30px}
+.mt8{margin-top:8px}.mt16{margin-top:16px}.mt24{margin-top:24px}.mt32{margin-top:32px}.mt40{margin-top:40px}
+.center{text-align:center}
+.muted{color:var(--z500)}
+.src{font-size:12px;color:var(--z400);margin-top:18px}
+ul.clean{list-style:none}
+ul.clean li{position:relative;padding-left:26px;margin:11px 0;font-size:17px;line-height:1.4}
+ul.clean li::before{content:"";position:absolute;left:0;top:8px;width:9px;height:9px;border-radius:3px;background:var(--blue)}
+.dark ul.clean li::before{background:#7aa5ff}
+
+/* progress + nav */
+#bar{position:fixed;top:0;left:0;height:3px;background:var(--blue);z-index:50;transition:width .35s ease}
+#dots{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:50}
+#dots button{width:8px;height:8px;border-radius:50%;border:0;background:var(--z300);cursor:pointer;padding:0;transition:.2s}
+#dots button.on{background:var(--blue);width:22px;border-radius:5px}
+.hint{position:fixed;top:16px;right:22px;font-size:12px;color:var(--z400);z-index:50;opacity:.7}
+
+/* map svg */
+.usmap{width:100%;height:auto}
+.gmap path{transition:.3s}
+
+/* hero scenes (inline svg, civic map + cluster pins) */
+.hero-scene{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.hero-scene svg{position:absolute;inset:0;width:100%;height:100%}
+.slide .inner{position:relative;z-index:2}
+.slide .foot{z-index:3}
+.slide.dark .grid-bg{z-index:1}
+.slide.dark::after,.slide.lite-scene::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none}
+.slide.dark::after{background:linear-gradient(100deg,rgba(11,31,58,.93) 0%,rgba(11,31,58,.55) 50%,rgba(11,31,58,.08) 82%)}
+.slide.lite-scene::after{background:linear-gradient(100deg,rgba(250,250,250,.97) 0%,rgba(250,250,250,.74) 54%,rgba(250,250,250,.28) 88%)}
+@keyframes pulse{0%{transform:scale(.6);opacity:.55}70%{opacity:0}100%{transform:scale(1.7);opacity:0}}
+.pulse-ring{transform-box:fill-box;transform-origin:center;animation:pulse 3.6s ease-out infinite}
+@media (prefers-reduced-motion:reduce){.pulse-ring{animation:none;opacity:.25}}
+
+@media print{
+  @page{size:1280px 720px;margin:0}
+  body,#deck{overflow:visible;height:auto}
+  .slide{position:relative;inset:auto;opacity:1!important;visibility:visible!important;transform:none!important;height:720px;width:1280px;page-break-after:always;break-after:page}
+  #bar,#dots,.hint{display:none}
+}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div id="deck">
+
+<!-- 1 — COVER -->
+<section class="slide dark active">
+  <div class="hero-scene"><svg viewBox="0 0 1280 720" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+    <defs><filter id="glowB" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="9"/></filter></defs>
+    <g stroke="#5b8cf0" stroke-width="1.2" opacity=".22" fill="none">
+      <line x1="-160" y1="720" x2="760" y2="250"/><line x1="40" y1="720" x2="760" y2="250"/><line x1="240" y1="720" x2="760" y2="250"/><line x1="440" y1="720" x2="760" y2="250"/><line x1="640" y1="720" x2="760" y2="250"/><line x1="840" y1="720" x2="760" y2="250"/><line x1="1040" y1="720" x2="760" y2="250"/><line x1="1240" y1="720" x2="760" y2="250"/><line x1="1440" y1="720" x2="760" y2="250"/>
+      <line x1="-100" y1="720" x2="1380" y2="720"/><line x1="-60" y1="640" x2="1340" y2="640"/><line x1="-20" y1="566" x2="1300" y2="566"/><line x1="20" y1="500" x2="1260" y2="500"/><line x1="60" y1="446" x2="1220" y2="446"/><line x1="120" y1="404" x2="1160" y2="404"/><line x1="200" y1="372" x2="1080" y2="372"/>
+    </g>
+    <g>
+      <circle class="pulse-ring" cx="1060" cy="556" r="46" fill="none" stroke="#7aa5ff" stroke-width="2"/>
+      <circle class="pulse-ring" cx="880" cy="612" r="36" fill="none" stroke="#7aa5ff" stroke-width="2" style="animation-delay:1.4s"/>
+    </g>
+    <g fill="#5b8cf0">
+      <g filter="url(#glowB)" opacity=".4"><circle cx="1060" cy="556" r="40"/><circle cx="900" cy="612" r="30"/><circle cx="1180" cy="600" r="26"/><circle cx="800" cy="520" r="20"/><circle cx="1140" cy="470" r="20"/><circle cx="980" cy="430" r="16"/><circle cx="700" cy="650" r="16"/></g>
+    </g>
+    <g>
+      <circle cx="1060" cy="556" r="19" fill="#1f4fd0"/><circle cx="1060" cy="556" r="40" fill="none" stroke="#9bbcff" stroke-width="1.4" opacity=".6"/>
+      <circle cx="900" cy="612" r="14" fill="#1f4fd0"/><circle cx="900" cy="612" r="30" fill="none" stroke="#9bbcff" stroke-width="1.3" opacity=".55"/>
+      <circle cx="1180" cy="600" r="12" fill="#1f4fd0"/><circle cx="1180" cy="600" r="26" fill="none" stroke="#9bbcff" stroke-width="1.2" opacity=".5"/>
+      <circle cx="800" cy="520" r="9" fill="#2f63e6"/><circle cx="800" cy="520" r="20" fill="none" stroke="#9bbcff" stroke-width="1.1" opacity=".45"/>
+      <circle cx="1140" cy="470" r="9" fill="#2f63e6"/><circle cx="980" cy="430" r="7" fill="#2f63e6"/><circle cx="700" cy="650" r="8" fill="#2f63e6"/>
+    </g>
+  </svg></div>
+  <div class="grid-bg"></div>
+  <div class="inner">
+    <div class="wordmark" style="font-size:26px;margin-bottom:34px"><span class="dot"></span>Civic</div>
+    <h1 class="headline">See it. Snap it.<br>Your city fixes it.</h1>
+    <p class="sub" style="max-width:680px">An AI-native replacement for the city 311 system. A resident's photo becomes a costed, routed, publicly-tracked repair — in under five seconds.</p>
+    <div class="row mt40" style="gap:10px">
+      <span class="pill"><span class="d"></span>Pilot — Cumming &amp; Forsyth County, GA</span>
+      <span class="pill green"><span class="d"></span>Open311 conformant</span>
+    </div>
+  </div>
+  <div class="foot"><span class="wordmark"><span class="dot"></span>Civic</span><span class="pageno">01 / 12</span></div>
+</section>
+
+<!-- 2 — PROBLEM -->
+<section class="slide lite-scene">
+  <div class="hero-scene"><svg viewBox="0 0 1280 720" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+    <defs><filter id="glowR" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="8"/></filter></defs>
+    <g stroke="#94a3c4" stroke-width="1.1" opacity=".3" fill="none">
+      <line x1="-160" y1="720" x2="820" y2="300"/><line x1="80" y1="720" x2="820" y2="300"/><line x1="320" y1="720" x2="820" y2="300"/><line x1="560" y1="720" x2="820" y2="300"/><line x1="820" y1="720" x2="820" y2="300"/><line x1="1080" y1="720" x2="820" y2="300"/><line x1="1320" y1="720" x2="820" y2="300"/>
+      <line x1="-100" y1="720" x2="1380" y2="720"/><line x1="-60" y1="636" x2="1340" y2="636"/><line x1="-20" y1="560" x2="1300" y2="560"/><line x1="40" y1="494" x2="1240" y2="494"/><line x1="120" y1="440" x2="1160" y2="440"/><line x1="240" y1="398" x2="1040" y2="398"/>
+    </g>
+    <g filter="url(#glowR)" opacity=".5"><circle cx="1080" cy="560" r="26" fill="#dc2626"/><circle cx="920" cy="630" r="22" fill="#f59e0b"/><circle cx="1180" cy="470" r="16" fill="#dc2626"/><circle cx="800" cy="540" r="16" fill="#f59e0b"/><circle cx="1010" cy="450" r="13" fill="#dc2626"/><circle cx="700" cy="650" r="14" fill="#f59e0b"/></g>
+    <g><circle cx="1080" cy="560" r="11" fill="#dc2626"/><circle cx="920" cy="630" r="9" fill="#f59e0b"/><circle cx="1180" cy="470" r="7" fill="#dc2626"/><circle cx="800" cy="540" r="7" fill="#f59e0b"/><circle cx="1010" cy="450" r="6" fill="#dc2626"/><circle cx="700" cy="650" r="6" fill="#f59e0b"/></g>
+  </svg></div>
+  <div class="inner">
+    <div class="kicker">The problem</div>
+    <h2 class="headline">Cities run on a broken 311.</h2>
+    <p class="sub">Residents report a hazard and it vanishes into a void. Staff drown in unstructured intake. Leadership has no idea how it's actually doing.</p>
+    <div class="grid g3 mt40">
+      <div class="card">
+        <div class="stat red mono">61.8<span style="font-size:28px;font-weight:700"> days</span></div>
+        <div class="stat-l">avg. hazardous-sidewalk repair (Winnipeg) — against a <b>2-day</b> target.</div>
+      </div>
+      <div class="card">
+        <div class="stat mono">42M</div>
+        <div class="stat-l">311 contacts a year in NYC alone — a <b>3-day</b> median resolution.</div>
+      </div>
+      <div class="card">
+        <div class="stat mono">3–7<span style="font-size:28px;font-weight:700"> days</span></div>
+        <div class="stat-l">to fill a pothole in Memphis. Streetlights: 5–10.</div>
+      </div>
+    </div>
+    <p class="src">Sources: NYC OpenData 311; City of Winnipeg service standards; City of Memphis 311.</p>
+  </div>
+  <div class="foot"><span class="wordmark"><span class="dot"></span>Civic</span><span class="pageno">02 / 12</span></div>
+</section>
+
+<!-- 3 — WHY NOW -->
+<section class="slide dark">
+  <div class="hero-scene"><svg viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="glowW" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="11"/></filter>
+      <radialGradient id="node" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#bcd3ff"/><stop offset="55%" stop-color="#4f86f0"/><stop offset="100%" stop-color="#1f4fd0" stop-opacity="0"/></radialGradient>
+    </defs>
+    <g stroke="#6f9bf2" stroke-width="2" opacity=".5" fill="none">
+      <line x1="120" y1="120" x2="980" y2="380"/><line x1="80" y1="640" x2="980" y2="380"/><line x1="1300" y1="120" x2="980" y2="380"/><line x1="1320" y1="700" x2="980" y2="380"/><line x1="980" y1="-40" x2="980" y2="380"/>
+    </g>
+    <g>
+      <circle class="pulse-ring" cx="980" cy="380" r="90" fill="none" stroke="#7aa5ff" stroke-width="2"/>
+      <circle class="pulse-ring" cx="980" cy="380" r="90" fill="none" stroke="#7aa5ff" stroke-width="2" style="animation-delay:1.8s"/>
+    </g>
+    <circle cx="980" cy="380" r="120" fill="url(#node)" opacity=".7"/>
+    <circle cx="980" cy="380" r="26" fill="#dbe7ff" filter="url(#glowW)"/>
+    <circle cx="980" cy="380" r="13" fill="#fff"/>
+    <g fill="#7aa5ff"><circle cx="120" cy="120" r="6"/><circle cx="80" cy="640" r="6"/><circle cx="1300" cy="120" r="6"/><circle cx="1320" cy="700" r="6"/></g>
+  </svg></div>
+  <div class="grid-bg"></div>
+  <div class="inner">
+    <div class="kicker">Why now</div>
+    <h2 class="headline">The window just opened.</h2>
+    <p class="sub">Four forces converged — none of them were true five years ago.</p>
+    <div class="grid g4 mt40">
+      <div class="card">
+        <div class="stat blue mono" style="font-size:46px">$0.0001</div>
+        <div class="stat-l">per photo. Vision LLMs now classify, cost &amp; route a repair for a fraction of a cent.</div>
+      </div>
+      <div class="card">
+        <div class="stat mono" style="font-size:46px;color:#fff">91%</div>
+        <div class="stat-l">of US adults own a smartphone — a camera and GPS already in every pocket.</div>
+      </div>
+      <div class="card">
+        <div class="stat mono" style="font-size:46px;color:#fff">Apr&nbsp;2026</div>
+        <div class="stat-l">ADA Title II / WCAG&nbsp;AA became <b>law</b> for cities over 50k. Incumbents aren't compliant.</div>
+      </div>
+      <div class="card">
+        <div class="stat mono" style="font-size:46px;color:#fff">Jan&nbsp;2026</div>
+        <div class="stat-l">Incumbents <i>just</i> shipped photo tagging — and stopped at a suggestion.</div>
+      </div>
+    </div>
+    <p class="src" style="color:#7e93b8">Sources: Gemini 2.5 Flash pricing; Pew Research Center (US smartphone ownership, 2025); ADA Title II final rule (eff. Apr 2026); SeeClickFix product release (Jan 2026).</p>
+  </div>
+  <div class="foot"><span class="wordmark"><span class="dot"></span>Civic</span><span class="pageno">03 / 12</span></div>
+</section>
+
+<!-- 4 — SOLUTION -->
+<section class="slide">
+  <div class="inner between">
+    <div style="flex:1">
+      <div class="kicker">The solution</div>
+      <h2 class="headline">Snap a photo.<br>Watch it get fixed.</h2>
+      <p class="sub">Two taps. Faces and plates blurred on-device before anything leaves the phone. In seconds it's a costed work order on the city's desk — and a pin on a public map.</p>
+      <div class="steps mt40">
+        <div class="step"><div class="n">1</div><h4>Photo</h4><p>Open camera, submit. Even offline — it queues and syncs.</p></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">2</div><h4>AI classifies</h4><p>Category, severity, cost &amp; crew in &lt;5s.</p></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">3</div><h4>City fixes</h4><p>Dispatched, resolved, tracked in public.</p></div>
+      </div>
+    </div>
+    <div class="phone" style="flex:0 0 auto;margin-left:10px">
+      <div class="scr">
+        <div class="phscr-top"><span>Report an issue</span><span>✕</span></div>
+        <div class="phscr-photo"><div class="crack"></div></div>
+        <div class="phscr-class">
+          <div style="font-size:12px;font-weight:700;color:var(--z500)">AI CLASSIFICATION</div>
+          <div class="chip-row"><span class="chip">Pothole</span><span class="chip" style="background:#fffbeb;color:#b45309">Severity: High</span></div>
+          <div class="confbar"><i style="width:94%"></i></div>
+          <div style="font-size:11.5px;color:var(--z500);margin-top:6px">94% confidence · faces blurred on-device</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="wordmark"><span class="dot"></span>Civic</span><span class="pageno">04 / 12</span></div>
+</section>
+
+<!-- 5 — HOW IT WORKS -->
+<section class="slide">
+  <div class="inner">
+    <div class="kicker">How it works</div>
+    <h2 class="headline">One unbroken thread.</h2>
+    <p class="sub">From a resident's tap to a public scoreboard — no forms, no call center, no black hole.</p>
+    <div class="pipe mt40">
+      <div class="node"><div class="ic">📷</div><b>Submit</b><span>2-tap photo, on-device blur, offline-safe</span></div>
+      <div class="conn">→</div>
+      <div class="node"><div class="ic">🧠</div><b>Classify</b><span>Gemini 2.5 Flash → structured JSON</span></div>
+      <div class="conn">→</div>
+      <div class="node"><div class="ic">🧾</div><b>Work order</b><span>dept · crew · materials · $cost · SLA</span></div>
+      <div class="conn">→</div>
+      <div class="node"><div class="ic">🚚</div><b>Dispatch</b><span>staff inbox, one keystroke</span></div>
+      <div class="conn">→</div>
+      <div class="node"><div class="ic">📊</div><b>Public</b><span>live map + accountability scoreboard</span></div>
+    </div>
+    <div class="grid g3 mt32">
+      <div class="card"><div class="eyebrow">Built on</div><div class="lead mt8" style="font-size:18px">Next.js 16 · Supabase PostGIS · Gemini 2.5 Flash · Leaflet</div></div>
+      <div class="card"><div class="eyebrow">Interop</div><div class="lead mt8" style="font-size:18px">Open311 GeoReport v2 — drops into existing city systems</div></div>
+      <div class="card" style="background:var(--blue);border-color:var(--blue);color:#fff"><div class="eyebrow" style="color:#cfe0ff">Live demo</div><div class="lead mt8" style="font-size:18px;color:#fff">Submit a real photo → costed work order → live map. No mockups.</div></div>
+    </div>
+  </div>
+  <div class="foot"><span class="wordmark"><span class="dot"></span>Civic</span><span class="pageno">05 / 12</span></div>
+</section>
+
+<!-- 6 — THE MAGIC -->
+<section class="slide">
+  <div class="inner">
+    <div class="kicker">The difference</div>
+    <h2 class="headline">Everyone tags. We dispatch.</h2>
+    <p class="sub">Incumbents stop at a category suggestion. Civic produces the actual work order — and posts it where the city can't hide it.</p>
+    <div class="grid g2 mt40" style="align-items:center">
+      <div class="card center">
+        <div class="eyebrow" style="margin-bottom:18px">Incumbent AI</div>
+        <span class="tag-blob">Category: “Pothole” ✓</span>
+        <p class="muted mt24" style="font-size:15px">A label. A human still has to cost it, route it, and chase it.</p>
+      </div>
+      <div>
+        <div class="eyebrow" style="margin-bottom:12px;color:var(--blue)">Civic — auto work order <span style="color:var(--z400)">· example</span></div>
+        <div class="wo">
+          <div class="wo-h"><b>Pothole · Main St &amp; 3rd</b><span class="pill red" style="font-size:12px"><span class="d"></span>🔴 SLA due 6h</span></div>
+          <div class="wo-row"><span>Department</span><b>Public Works · Roads</b></div>
+          <div class="wo-row"><span>Crew</span><b>Patch Team B (2)</b></div>
+          <div class="wo-row"><span>Materials</span><b>Cold-mix asphalt · 0.5 t</b></div>
+          <div class="wo-row"><span>Est. labor</span><b>45 min</b></div>
+          <div class="wo-row"><span>Est. cost</span><b style="color:var(--blue)">$182</b></div>
+        </div>
+      </div>
+    </div>
+    <p class="src">Privacy by construction: on-device face/plate blur, RLS default-deny, open data. <b>The public scoreboard is the product.</b></p>
+  </div>
+  <div class="foot"><span class="wordmark"><span class="dot"></span>Civic</span><span class="pageno">06 / 12</span></div>
+</section>
+
+<!-- 7 — MARKET -->
+<section class="slide">
+  <div class="inner between">
+    <div style="flex:1.1">
+      <div class="kicker">Market</div>
+      <h2 class="headline">$1B+ market,<br>starting in one county.</h2>
+      <p class="sub">Bottom-up, not “1% of a big number.” ~19,000 US municipalities plus tens of thousands of HOAs, priced at $0.50–$2.00 per capita per year.</p>
+      <ul class="clean mt24">
+        <li><b>Beachhead — Cumming, GA:</b> $4k–$16k/yr</li>
+        <li><b>Expand — Forsyth County:</b> $125k–$500k/yr</li>
+        <li><b>Benchmark:</b> incumbent charges Bend, OR <b>$57,750/yr</b> (pop. 104k)</li>
+      </ul>
+      <p class="src">Land one county, prove the scoreboard, expand across the state. Sources: census municipal counts; incumbent public contracts.</p>
+    </div>
+    <div style="flex:1;display:grid;place-items:center">
+      <svg class="usmap" viewBox="0 0 320 240" style="max-width:380px" aria-label="Beachhead expansion">
+        <rect x="0" y="0" width="320" height="240" rx="18" fill="#eff4fb"/>
+        <!-- stylized rings expanding from a point -->
+        <circle cx="208" cy="150" r="92" fill="none" stroke="#bcd0f5" stroke-width="2" stroke-dasharray="4 6"/>
+        <circle cx="208" cy="150" r="62" fill="none" stroke="#8fb2ee" stroke-width="2" stroke-dasharray="4 6"/>
+        <circle cx="208" cy="150" r="34" fill="#dbe7fb" stroke="#2563eb" stroke-width="2"/>
+        <circle cx="208" cy="150" r="7" fill="#2563eb"/>
+        <text x="208" y="134" text-anchor="middle" font-size="11" font-weight="800" fill="#1d4ed8" font-family="Inter">Cumming</text>
+        <text x="208" y="220" text-anchor="middle" font-size="11" font-weight="700" fill="#5878b3" font-family="Inter">County → State → US</text>
+        <g font-family="Inter" font-weight="700">
+          <text x="60" y="60" font-size="12" fill="#94a3c4">19,000 municipalities</text>
+          <text x="40" y="200" font-size="12" fill="#94a3c4">+ HOAs</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <div class="foot"><span class="wordmark"><span class="dot"></span>Civic</span><span class="pageno">07 / 12</span></div>
+</section>
+
+<!-- 8 — BUSINESS MODEL -->
+<section class="slide">
+  <div class="inner">
+    <div class="kicker">Business model</div>
+    <h2 class="headline">Free for residents. Cents per report.</h2>
+    <p class="sub">Residents never pay — that's the wedge. The city pays for the back-office integration once residents have made its performance public.</p>
+    <div class="fly mt40">
+      <div class="stg"><div class="t">Win residents</div><p>Free, 2-tap reporting. Reports go public on a live scoreboard.</p></div>
+      <div class="ar">→</div>
+      <div class="stg"><div class="t">Apply pressure</div><p>The city's response time is now legible. Voters notice.</p></div>
+      <div class="ar">→</div>
+      <div class="stg" style="border-color:var(--blue)"><div class="t" style="color:var(--blue)">Sell the city</div><p>City buys the staff inbox + integration. Very low churn.</p></div>
+    </div>
+    <div class="grid g3 mt40">
+      <div class="card"><div class="stat blue mono" style="font-size:44px">$0.0001</div><div class="stat-l">AI cost per classification</div></div>
+      <div class="card"><div class="stat mono" style="font-size:44px">&lt;$0.001</div><div class="stat-l">target all-in cost per report</div></div>
+      <div class="card"><div class="stat mono" style="font-size:44px">$0.50–2</div><div class="stat-l">price per capita / year to the city</div></div>
+    </div>
+  </div>
+  <div class="foot"><span class="wordmark"><span class="dot"></span>Civic</span><span class="pageno">08 / 12</span></div>
+</section>
+
+<!-- 9 — TRACTION -->
+<section class="slide">
+  <div class="inner">
+    <div class="kicker">Traction</div>
+    <h2 class="headline">Built, conformant, in market.</h2>
+    <p class="sub">Not a concept — a working product, an interoperability standard, a confirmed beachhead, and a live pipeline.</p>
+    <div class="grid g4 mt40">
+      <div class="card"><div class="pill green" style="margin-bottom:12px"><span class="d"></span>Shipped</div><div class="lead" style="font-size:18px">Working MVP</div><p class="muted mt8" style="font-size:13.5px">Capture → classify → staff inbox on a real backend</p></div>
+      <div class="card"><div class="pill green" style="margin-bottom:12px"><span class="d"></span>Standard</div><div class="lead" style="font-size:18px">Open311 v2</div><p class="muted mt8" style="font-size:13.5px">GeoReport JSON + XML — interoperable by default</p></div>
+      <div class="card"><div class="pill" style="margin-bottom:12px"><span class="d"></span>Beachhead</div><div class="lead" style="font-size:18px">Cumming, GA</div><p class="muted mt8" style="font-size:13.5px">Not on SeeClickFix; incumbent is intake-only, no AI</p></div>
+      <div class="card" style="background:var(--blue);border-color:var(--blue);color:#fff"><div class="pill" style="margin-bottom:12px;background:rgba(255,255,255,.16);color:#fff;border-color:transparent"><span class="d"></span>Pipeline</div><div class="lead" style="font-size:18px;color:#fff">283 named leads</div><p class="mt8" style="font-size:13.5px;color:#dbe8ff">+ ~528 structured leads across 8 states</p></div>
+    </div>
+    <div class="tl mt40">
+      <div class="it done"><div class="dotm"></div><h5>Schema + pipeline</h5><p>4 migrations, PostGIS, classify endpoint, staff inbox live</p></div>
+      <div class="it done"><div class="dotm"></div><h5>Open311 export</h5><p>GeoReport v2 conformance</p></div>
+      <div class="it"><div class="dotm"></div><h5>Scoreboard + equity</h5><p>cost/SLA, by-neighborhood, realtime map</p></div>
+      <div class="it"><div class="dotm"></div><h5>Cumming pilot</h5><p>90-day live deployment</p></div>
+    </div>
+  </div>
+  <div class="foot"><span class="wordmark"><span class="dot"></span>Civic</span><span class="pageno">09 / 12</span></div>
+</section>
+
+<!-- 10 — COMPETITION -->
+<section class="slide">
+  <div class="inner">
+    <div class="kicker">Competition</div>
+    <h2 class="headline">Why cities choose Civic.</h2>
+    <table class="mx mt32">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="us head">Civic</th>
+          <th>SeeClickFix / CivicPlus</th>
+          <th>Tyler Technologies</th>
+          <th>Legacy 311 / nothing</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Photo categorization</td><td class="us yes">✓</td><td><span class="yes">✓</span></td><td><span class="no">✕</span></td><td><span class="no">✕</span></td></tr>
+        <tr><td>Auto-costed work order</td><td class="us yes">✓</td><td><span class="no">✕</span></td><td><span class="no">✕</span></td><td><span class="no">✕</span></td></tr>
+        <tr><td>Public accountability scoreboard</td><td class="us yes">✓</td><td><span class="no">✕</span></td><td><span class="no">✕</span></td><td><span class="no">✕</span></td></tr>
+        <tr><td>On-device privacy blur</td><td class="us yes">✓</td><td><span class="no">✕</span></td><td><span class="no">✕</span></td><td><span class="no">✕</span></td></tr>
+        <tr><td>Open311 open API</td><td class="us yes">✓</td><td><span class="yes">✓</span></td><td>partial</td><td><span class="no">✕</span></td></tr>
+        <tr><td>Price / capita / yr</td><td class="us"><b>$0.50–2</b></td><td>~$0.55+</td><td>enterprise</td><td>—</td></tr>
+        <tr><td>Resident-led adoption</td><td class="us yes">✓</td><td><span class="no">✕</span></td><td><span class="no">✕</span></td><td><span class="no">✕</span></td></tr>
+      </tbody>
+    </table>
+    <p class="mxnote">Incumbents own the installed base — and that's real. But none turn a photo into a dispatched, costed, publicly-tracked repair. Doing nothing is still the biggest competitor.</p>
+  </div>
+  <div class="foot"><span class="wordmark"><span class="dot"></span>Civic</span><span class="pageno">10 / 12</span></div>
+</section>
+
+<!-- 11 — IMPACT -->
+<section class="slide">
+  <div class="inner">
+    <div class="kicker">Impact &amp; accountability</div>
+    <h2 class="headline">Public infrastructure, finally legible.</h2>
+    <div class="grid g2 mt32" style="align-items:start">
+      <div>
+        <div class="grid g3" style="gap:14px">
+          <div class="card"><div class="stat green mono" style="font-size:40px">41h</div><div class="stat-l">median resolution · target 72h ✅</div></div>
+          <div class="card"><div class="stat mono" style="font-size:40px">6</div><div class="stat-l">cases open &gt; 30 days, surfaced</div></div>
+          <div class="card"><div class="stat blue mono" style="font-size:40px">88%</div><div class="stat-l">resolved on-time (SLA)</div></div>
+        </div>
+        <div class="card mt16">
+          <div class="eyebrow" style="margin-bottom:14px">Equity — resolution time by neighborhood <span style="color:var(--z300)">· sample</span></div>
+          <div class="bar-row"><span class="lbl">Downtown</span><div class="bar-track"><i style="width:34%;background:var(--green)"></i></div><span class="val">36h</span></div>
+          <div class="bar-row"><span class="lbl">Riverside</span><div class="bar-track"><i style="width:46%;background:var(--green)"></i></div><span class="val">49h</span></div>
+          <div class="bar-row"><span class="lbl">Eastside</span><div class="bar-track"><i style="width:78%;background:var(--amber)"></i></div><span class="val">83h</span></div>
+          <div class="bar-row"><span class="lbl">Mill District</span><div class="bar-track"><i style="width:96%;background:var(--red)"></i></div><span class="val">102h</span></div>
+        </div>
+      </div>
+      <div>
+        <h3 style="font-size:24px;font-weight:800;letter-spacing:-.02em">Trust is a feature, not a slogan.</h3>
+        <ul class="clean mt16">
+          <li><b>Equity lens</b> — surfaces neighborhoods the city quietly fixes last.</li>
+          <li><b>Privacy by construction</b> — faces &amp; plates blurred before upload; default-deny data access.</li>
+          <li><b>Open by default</b> — Open311 API, public dashboards, no vendor lock-in.</li>
+          <li><b>WCAG&nbsp;AA</b> — accessibility that's now law for cities over 50k. Incumbents aren't there.</li>
+        </ul>
+        <p class="src">Figures illustrative — computed live from each city's data. Inequitable 311 response is a documented civil-rights concern; Civic makes it measurable.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="wordmark"><span class="dot"></span>Civic</span><span class="pageno">11 / 12</span></div>
+</section>
+
+<!-- 12 — VISION + ASK -->
+<section class="slide dark">
+  <div class="hero-scene"><svg viewBox="0 0 1280 720" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="glowG" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="9"/></filter>
+      <radialGradient id="sun" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffd9a0" stop-opacity=".55"/><stop offset="60%" stop-color="#f5a64f" stop-opacity=".12"/><stop offset="100%" stop-color="#f5a64f" stop-opacity="0"/></radialGradient>
+    </defs>
+    <circle cx="1140" cy="170" r="320" fill="url(#sun)"/>
+    <g stroke="#5fb98a" stroke-width="1.2" opacity=".22" fill="none">
+      <line x1="-160" y1="720" x2="760" y2="250"/><line x1="40" y1="720" x2="760" y2="250"/><line x1="240" y1="720" x2="760" y2="250"/><line x1="440" y1="720" x2="760" y2="250"/><line x1="640" y1="720" x2="760" y2="250"/><line x1="840" y1="720" x2="760" y2="250"/><line x1="1040" y1="720" x2="760" y2="250"/><line x1="1240" y1="720" x2="760" y2="250"/><line x1="1440" y1="720" x2="760" y2="250"/>
+      <line x1="-100" y1="720" x2="1380" y2="720"/><line x1="-60" y1="640" x2="1340" y2="640"/><line x1="-20" y1="566" x2="1300" y2="566"/><line x1="20" y1="500" x2="1260" y2="500"/><line x1="60" y1="446" x2="1220" y2="446"/><line x1="120" y1="404" x2="1160" y2="404"/>
+    </g>
+    <g filter="url(#glowG)" opacity=".45"><circle cx="1060" cy="556" r="38" fill="#34d27f"/><circle cx="900" cy="612" r="28" fill="#34d27f"/><circle cx="1180" cy="600" r="24" fill="#34d27f"/><circle cx="800" cy="520" r="18" fill="#34d27f"/><circle cx="1140" cy="470" r="18" fill="#34d27f"/><circle cx="980" cy="430" r="14" fill="#5b8cf0"/><circle cx="700" cy="650" r="15" fill="#34d27f"/></g>
+    <g>
+      <circle cx="1060" cy="556" r="18" fill="#16a34a"/><text x="1060" y="562" text-anchor="middle" font-size="18" font-weight="800" fill="#eafff3" font-family="Inter">✓</text>
+      <circle cx="900" cy="612" r="13" fill="#16a34a"/><circle cx="1180" cy="600" r="11" fill="#16a34a"/>
+      <circle cx="800" cy="520" r="9" fill="#1aa34d"/><circle cx="1140" cy="470" r="9" fill="#1aa34d"/><circle cx="980" cy="430" r="7" fill="#2f63e6"/><circle cx="700" cy="650" r="8" fill="#1aa34d"/>
+    </g>
+  </svg></div>
+  <div class="grid-bg"></div>
+  <div class="inner">
+    <div class="kicker">Vision</div>
+    <h2 class="headline">The accountability layer for<br>public infrastructure.</h2>
+    <p class="sub" style="max-width:760px">Every pothole, every streetlight, every report — costed, routed, and tracked in public, in every city in America. We start with one county and the scoreboard does the selling.</p>
+    <div class="grid g3 mt40">
+      <div class="card"><div class="eyebrow" style="color:#7aa5ff">For judges</div><div class="lead mt8" style="font-size:19px;color:#fff">Try the live demo →</div><p class="mt8" style="font-size:13.5px;color:#b9c8e6">Submit a real photo, watch it dispatch.</p></div>
+      <div class="card"><div class="eyebrow" style="color:#7aa5ff">For cities</div><div class="lead mt8" style="font-size:19px;color:#fff">Fund a 90-day pilot</div><p class="mt8" style="font-size:13.5px;color:#b9c8e6">Cumming &amp; Forsyth County, GA.</p></div>
+      <div class="card"><div class="eyebrow" style="color:#7aa5ff">For investors</div><div class="lead mt8" style="font-size:19px;color:#fff">Pre-seed → first 5 cities</div><p class="mt8" style="font-size:13.5px;color:#b9c8e6">$1B+ market · $0-CAC pressure engine · low churn.</p></div>
+    </div>
+    <div class="row mt40" style="gap:14px">
+      <span class="wordmark" style="font-size:24px"><span class="dot"></span>Civic</span>
+      <span class="sub" style="margin-top:0;font-size:20px;color:#cdd9f0">See it. Snap it. Your city fixes it.</span>
+    </div>
+  </div>
+  <div class="foot"><span class="wordmark"><span class="dot"></span>Civic</span><span class="pageno">12 / 12</span></div>
+</section>
+
+</div>
+
+<div id="dots"></div>
+<div class="hint">← → · Space · F fullscreen · P print/PDF</div>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var bar = document.getElementById('bar');
+  var dotsWrap = document.getElementById('dots');
+  var i = 0;
+  slides.forEach(function(_,n){
+    var b = document.createElement('button');
+    b.addEventListener('click', function(){ go(n); });
+    dotsWrap.appendChild(b);
+  });
+  var dots = Array.prototype.slice.call(dotsWrap.children);
+  function render(){
+    slides.forEach(function(s,n){ s.classList.toggle('active', n===i); });
+    dots.forEach(function(d,n){ d.classList.toggle('on', n===i); });
+    bar.style.width = ((i)/(slides.length-1)*100) + '%';
+  }
+  function go(n){ i = Math.max(0, Math.min(slides.length-1, n)); render(); }
+  function next(){ go(i+1); } function prev(){ go(i-1); }
+  document.addEventListener('keydown', function(e){
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){ e.preventDefault(); next(); }
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); prev(); }
+    else if(e.key==='Home'){ go(0); } else if(e.key==='End'){ go(slides.length-1); }
+    else if(e.key==='f'||e.key==='F'){ if(!document.fullscreenElement){ document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); } else { document.exitFullscreen&&document.exitFullscreen(); } }
+    else if(e.key==='p'||e.key==='P'){ window.print(); }
+  });
+  var sx=null;
+  document.addEventListener('touchstart',function(e){ sx=e.touches[0].clientX; },{passive:true});
+  document.addEventListener('touchend',function(e){ if(sx===null) return; var dx=e.changedTouches[0].clientX-sx; if(Math.abs(dx)>50){ dx<0?next():prev(); } sx=null; },{passive:true});
+  render();
+})();
+</script>
+</body>
+</html>
