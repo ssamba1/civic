@@ -5,6 +5,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils/cn";
 import { lockBodyScroll } from "@/lib/utils/scroll-lock";
+import { useFocusTrap } from "@/lib/utils/use-focus-trap";
 
 export interface DrawerProps {
   /** Whether the drawer is visible. The drawer mounts only while open so the
@@ -40,6 +41,7 @@ export function Drawer({
   children,
 }: DrawerProps) {
   const titleId = React.useId();
+  const panelRef = React.useRef<HTMLDivElement>(null);
   // Portal only after mount so SSR markup matches and `fixed` positioning is
   // measured against the viewport, never a transformed ancestor (map/GSAP).
   const [mounted, setMounted] = React.useState(false);
@@ -60,6 +62,16 @@ export function Drawer({
     if (!open) return;
     return lockBodyScroll();
   }, [open]);
+
+  // Move focus into the panel on open; restore to the trigger on close.
+  React.useEffect(() => {
+    if (!open) return;
+    const prevActive = document.activeElement as HTMLElement | null;
+    panelRef.current?.focus();
+    return () => prevActive?.focus?.();
+  }, [open]);
+
+  useFocusTrap(panelRef, open);
 
   if (!open || !mounted) return null;
 
@@ -97,6 +109,8 @@ export function Drawer({
 
       {/* Side panel. */}
       <div
+        ref={panelRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={title ? undefined : "Panel"}
