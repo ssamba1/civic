@@ -79,21 +79,23 @@ describe.skipIf(!HAS_ENV)("RLS: crews are staff-only (migration 030)", () => {
   });
 });
 
-describe.skipIf(!CHECK_030)("RLS: crews service-role control (030 applied)", () => {
-  let service: SupabaseClient;
+describe.skipIf(!CHECK_030)(
+  "RLS: crews service-role control (030 applied)",
+  () => {
+    let service: SupabaseClient;
 
-  beforeAll(() => {
-    service = createClient(String(URL), String(SERVICE), {
-      auth: { persistSession: false },
+    beforeAll(() => {
+      service = createClient(String(URL), String(SERVICE), {
+        auth: { persistSession: false },
+      });
     });
-  });
 
-  it.each(CREW_TABLES)(
-    "service role can query %s without an RLS error",
-    async (table) => {
+    it.each(
+      CREW_TABLES,
+    )("service role can query %s without an RLS error", async (table) => {
       // Proves the anon denials above are RLS, not a missing table.
       const { error } = await service.from(table).select("*").limit(1);
       expect(error).toBeNull();
-    },
-  );
-});
+    });
+  },
+);

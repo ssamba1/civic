@@ -427,6 +427,37 @@ export async function getReportTimeline(
     return steps;
   }
 
+  // Live overlay: real timeline rows (report_updates, migration 025) replace
+  // the synthetic stage times + canned notes where a row exists. RLS scopes
+  // the read to the reporter's own report; failures leave the synthetic
+  // fallback standing (an un-migrated DB included).
+  if (!DEMO_MODE) {
+    try {
+      const supabase = await createSSRClient();
+      const { data } = await supabase
+        .from("report_updates")
+        .select("status, note, created_at")
+        .eq("report_id", reportId)
+        .order("created_at", { ascending: true });
+      const STAGE_FOR_STATUS: Partial<Record<string, TimelineStep["stage"]>> = {
+        open: "filed",
+        dispatched: "dispatched",
+        in_progress: "in_progress",
+        closed: "resolved",
+      };
+      for (const u of data ?? []) {
+        const stage = STAGE_FOR_STATUS[u.status as string];
+        if (!stage) continue;
+        const step = steps.find((s) => s.stage === stage);
+        if (!step) continue;
+        step.at = u.created_at as string;
+        if (u.note) step.note = u.note as string;
+      }
+    } catch {
+      // synthetic times stand
+    }
+  }
+
   // current = latest done stage when not fully resolved.
   if (!reached.resolved) {
     for (let i = steps.length - 1; i >= 0; i--) {

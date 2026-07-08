@@ -38,6 +38,12 @@ export function publicToken(reportId: string): string {
 
 export type PublicStatus = "in_progress" | "resolved" | "closed";
 
+export interface PublicUpdate {
+  statusLabel: string;
+  note: string | null;
+  at: string;
+}
+
 export interface PublicReportView {
   token: string;
   /** Internal report id — used server-side only (e.g. CSAT); never rendered. */
@@ -52,6 +58,8 @@ export interface PublicReportView {
   filedAt: string;
   resolvedAt?: string;
   resolutionPhotoUrl?: string;
+  /** Real status history (report_updates) — live reports only, PII-safe. */
+  updates?: PublicUpdate[];
 }
 
 // Internal lifecycle → the two-value-plus public surface. open/dispatched/
@@ -116,6 +124,15 @@ interface LiveTokenRow {
     | { completed_at: string | null; resolution_photo_url: string | null }[]
     | { completed_at: string | null; resolution_photo_url: string | null }
     | null;
+  report_updates:
+    | { status: ReportStatus; note: string | null; created_at: string }[]
+    | null;
+}
+
+// Public projection of an internal status — mirrors toPublicStatus's collapse
+// so history entries never reveal more than the page's own status chip.
+function publicUpdateLabel(status: ReportStatus): string {
+  return toPublicStatus(status).label;
 }
 
 /**
@@ -139,7 +156,7 @@ export async function resolvePublicReport(
     const { data, error } = await db
       .from("reports")
       .select(
-        "id, status, address, photo_public_url, created_at, classifications ( category ), work_orders ( completed_at, resolution_photo_url )",
+        "id, status, address, photo_public_url, created_at, classifications ( category ), work_orders ( completed_at, resolution_photo_url ), report_updates ( status, note, created_at )",
       )
       .eq("public_token", token)
       .maybeSingle<LiveTokenRow>();
@@ -168,6 +185,14 @@ export async function resolvePublicReport(
       filedAt: data.created_at,
       resolvedAt: wo?.completed_at ?? undefined,
       resolutionPhotoUrl: wo?.resolution_photo_url ?? undefined,
+      updates: (data.report_updates ?? [])
+        .slice()
+        .sort((a, b) => a.created_at.localeCompare(b.created_at))
+        .map((u) => ({
+          statusLabel: publicUpdateLabel(u.status),
+          note: u.note,
+          at: u.created_at,
+        })),
     };
   } catch {
     return null;
