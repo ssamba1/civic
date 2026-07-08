@@ -1,3 +1,5 @@
+import type { BuiltInCrewType } from "@/lib/crew-types";
+
 export type Result<T, E = string> =
   | { ok: true; data: T }
   | { ok: false; error: E };
@@ -38,14 +40,8 @@ export type Department =
   | "sanitation"
   | "other";
 
-export type CrewType =
-  | "paving"
-  | "line_crew"
-  | "sign_crew"
-  | "cleanup"
-  | "concrete"
-  | "arborist"
-  | "drain_crew";
+/** Built-in crew type union (custom city crew types are plain strings). */
+export type CrewType = BuiltInCrewType;
 
 export interface Classification {
   category: ReportCategory;

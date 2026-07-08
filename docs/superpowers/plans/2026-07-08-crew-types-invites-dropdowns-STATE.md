@@ -50,9 +50,6 @@ Per task: dispatch a fresh general-purpose implementer subagent (reads ONLY its 
 1. RLS test = NEW file `tests/rls/city-crew-types.rls.test.ts` mirroring `tests/rls/crews.rls.test.ts`, gated on `CHECK_MIGRATION_031`. IGNORE the plan's "edit scripts/test-rls.mjs" wording (the runner just spawns vitest on `tests/rls/`).
 2. Task 1 polish added beyond plan: `isBuiltInCrewType` is now a type predicate (`name is BuiltInCrewType`); 2 extra edge tests. `NAME_RE` unchanged (must stay identical to the DB CHECK + server schema).
 
-## NEXT STEP (resume here)
-Dispatch **Task 4** implementer: modify `src/app/city/[slug]/members/crew-actions.ts` (drop local `CREW_TYPE_VALUES`, import from `@/lib/crew-types`, relax `crewTypeSchema` to `z.string().regex(/^[a-z0-9][a-z0-9_]{1,39}$/).nullable()`, add `crewTypeExists` helper called in `createCrew`+`updateCrew` after the ctx gate, add `createCrewType` action) and `src/app/city/[slug]/members/actions.ts` (`inviteMember` returns `{ ok: true, userId }` via new `InviteMemberResult`; `updateMember` unchanged). Reproduce exact code from plan Task 4. Verify no other `inviteMember` caller breaks (only `invite-member-modal.tsx`, reads `res.ok`). Then Tasks 5→11 + final review/finish.
-
 ## Key project facts (learned this session)
 - Migration apply: Management API `/v1/projects/{ref}/database/query` + `SUPABASE_ACCESS_TOKEN` PAT in `.env.local`; ref parsed from `NEXT_PUBLIC_SUPABASE_URL`. NOT `pnpm db:migrate`/`db push` (ledger unrecorded).
 - Helper fns `is_staff()` / `current_user_city_id()` defined in migration 001; RLS mirrors crews (030).

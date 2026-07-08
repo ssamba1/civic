@@ -320,15 +320,15 @@ export async function createCrewType(input: {
   if (!parsed.success) return { ok: false, error: "invalid_input" };
   const { slug, description } = parsed.data;
 
+  const ctx = await getCityAdminContext(slug);
+  if (!ctx) return { ok: false, error: "not_authorized" };
+
   const name = normalizeCrewTypeName(parsed.data.name);
   if (!name) return { ok: false, error: "invalid_type_name" };
   if (isBuiltInCrewType(name))
     return { ok: false, error: "crew_type_reserved" };
   if (descriptionWordCount(description) < MIN_TYPE_DESCRIPTION_WORDS)
     return { ok: false, error: "type_description_too_short" };
-
-  const ctx = await getCityAdminContext(slug);
-  if (!ctx) return { ok: false, error: "not_authorized" };
 
   const db = createServerClient();
   const { error } = await db
