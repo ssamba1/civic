@@ -2,8 +2,8 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { signDemoSession } from "@/lib/demo-cookie";
 import { authenticateDemo, DEMO_SESSION_COOKIE } from "@/lib/demo-auth";
+import { signDemoSession } from "@/lib/demo-cookie";
 import { DEMO_MODE } from "@/lib/demo-mode";
 
 /* Demo persona sign-in. Validates against the baked credential table, sets a
