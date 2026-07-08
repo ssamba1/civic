@@ -6,6 +6,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { MemberRole } from "@/app/city/[slug]/members/actions";
 import { Button } from "@/components/ui/button";
+import { MenuSelect } from "@/components/ui/menu-select";
 import { TEAM_LIST } from "@/lib/teams";
 import { cn } from "@/lib/utils/cn";
 import { lockBodyScroll } from "@/lib/utils/scroll-lock";
@@ -72,6 +73,19 @@ const ERROR_COPY: Record<string, string> = {
   crew_update_failed: "Couldn't update the crew. Please try again.",
   crew_delete_failed: "Couldn't delete the crew. Please try again.",
   crew_members_failed: "Couldn't save the crew roster. Please try again.",
+  // Crew-type management + invite-flow codes (crew-type create/lookup, invite send).
+  unknown_crew_type:
+    "That crew type no longer exists — pick another or create it again.",
+  crew_type_check_failed: "Couldn't verify the crew type — please try again.",
+  invalid_type_name:
+    "Type names are 2-40 characters: letters, numbers, spaces.",
+  crew_type_reserved: "That's a built-in type — pick it from the list instead.",
+  type_description_too_short:
+    "Describe what this crew does in at least 10 words.",
+  crew_type_taken: "This city already has a crew type with that name.",
+  crew_type_create_failed: "Couldn't create the crew type. Please try again.",
+  invite_failed: "Couldn't send the invite. Please try again.",
+  member_row_failed: "The invite was sent but the profile failed — try again.",
 };
 
 export function humanizeMemberError(code: string): string {
@@ -90,23 +104,19 @@ export function RoleSelect({
   disabled?: boolean;
 }) {
   return (
-    <label htmlFor={id} className="flex flex-col gap-1.5">
-      <span className={FIELD_LABEL_CLASS}>Role</span>
-      <select
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className={FIELD_LABEL_CLASS}>
+        Role
+      </label>
+      <MenuSelect
         id={id}
         value={value}
+        // Role options are exactly the MemberRole union, so the cast is total.
+        onChange={(v) => onChange(v as MemberRole)}
+        options={ROLE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
         disabled={disabled}
-        // Options are exactly the MemberRole union, so the cast is total.
-        onChange={(e) => onChange(e.target.value as MemberRole)}
-        className={cn(CONTROL_CLASS, "disabled:opacity-60")}
-      >
-        {ROLE_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
+      />
+    </div>
   );
 }
 
@@ -122,27 +132,22 @@ export function TeamSelect({
   required?: boolean;
 }) {
   return (
-    <label htmlFor={id} className="flex flex-col gap-1.5">
-      <span className={FIELD_LABEL_CLASS}>
-        Team
-        {required && <span className="text-faint"> *</span>}
-      </span>
-      <select
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className={FIELD_LABEL_CLASS}>
+        Team{required && <span className="text-faint"> *</span>}
+      </label>
+      <MenuSelect
         id={id}
-        value={value ?? ""}
-        onChange={(e) =>
-          onChange(e.target.value === "" ? null : e.target.value)
-        }
-        className={CONTROL_CLASS}
-      >
-        <option value="">No team</option>
-        {TEAM_OPTIONS.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.shortLabel}
-          </option>
-        ))}
-      </select>
-    </label>
+        value={value}
+        onChange={onChange}
+        placeholder="No team"
+        options={TEAM_OPTIONS.map((t) => ({
+          value: t.id,
+          label: t.shortLabel,
+          swatch: t.color,
+        }))}
+      />
+    </div>
   );
 }
 
