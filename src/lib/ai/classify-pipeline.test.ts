@@ -1,6 +1,7 @@
 // @vitest-environment node
 
 import { GEMINI_MODEL } from "@/lib/ai/config";
+import { autoAssignCrew } from "@/lib/ai/crew-assign";
 import { findDuplicate } from "@/lib/ai/dedup";
 import { classifyPhoto } from "@/lib/ai/gemini";
 import { createServerClient } from "@/lib/db/client";
@@ -12,15 +13,24 @@ import { runClassifyPipeline } from "./classify-pipeline";
 // never touch the network or a real Supabase. Logger is mocked to kill the
 // Sentry side-effect (the only env/network risk left in the import graph).
 // generateWorkOrder + sniffImageMime run for real — they are pure.
+// "server-only" throws outside an RSC environment; the pipeline now imports
+// db/crew-types (031 catalog) which carries that guard.
+vi.mock("server-only", () => ({}));
 vi.mock("@/lib/db/client", () => ({ createServerClient: vi.fn() }));
 vi.mock("@/lib/ai/gemini", () => ({ classifyPhoto: vi.fn() }));
 vi.mock("@/lib/ai/dedup", () => ({ findDuplicate: vi.fn() }));
 // DEDUP_REPORTS forced ON so the dedup branch is exercisable; findDuplicate is
 // mocked and defaults to undefined (no match), so non-dedup tests fall through
-// to normal work-order creation unchanged. Other config exports preserved.
+// to normal work-order creation unchanged. AI_CREW_ASSIGN forced ON the same
+// way — autoAssignCrew is mocked below, so the only observable effect is
+// whether the pipeline invokes it. Other config exports preserved.
 vi.mock("@/lib/ai/config", async (orig) => ({
   ...(await orig<typeof import("@/lib/ai/config")>()),
   DEDUP_REPORTS: true,
+  AI_CREW_ASSIGN: true,
+}));
+vi.mock("@/lib/ai/crew-assign", () => ({
+  autoAssignCrew: vi.fn().mockResolvedValue(null),
 }));
 vi.mock("@/lib/logger", () => ({
   createLogger: () => ({
@@ -34,6 +44,7 @@ vi.mock("@/lib/logger", () => ({
 const createServerClientMock = vi.mocked(createServerClient);
 const classifyPhotoMock = vi.mocked(classifyPhoto);
 const findDuplicateMock = vi.mocked(findDuplicate);
+const autoAssignCrewMock = vi.mocked(autoAssignCrew);
 
 // --- Supabase test double --------------------------------------------------
 // Per-table query builder. `.eq()` is used two ways in the pipeline:
@@ -536,5 +547,65 @@ describe("runClassifyPipeline", () => {
     expect(tables.work_orders.upsert).toHaveBeenCalled();
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.data.merged).toBeUndefined();
+  });
+
+  it("AI_CREW_ASSIGN on -> auto-assign runs after the team stamp with the WO's team/type", async () => {
+    const { client } = makeSupabase({
+      report: { data: REPORT_ROW, error: null },
+      download: { data: jpegBlob(), error: null },
+      workOrder: {
+        data: { id: "wo-assign", report_id: REPORT_ID, priority_score: 6 },
+        error: null,
+      },
+    });
+    createServerClientMock.mockReturnValue(client as never);
+    classifyPhotoMock.mockResolvedValue({
+      ok: true,
+      data: {
+        classification: classification({ category: "pothole" }),
+        rawText: "{}",
+      },
+    });
+    findDuplicateMock.mockResolvedValue(null);
+
+    const result = await runClassifyPipeline(REPORT_ID);
+    expect(result.ok).toBe(true);
+
+    expect(autoAssignCrewMock).toHaveBeenCalledTimes(1);
+    const opts = autoAssignCrewMock.mock.calls[0][1];
+    expect(opts.workOrderId).toBe("wo-assign");
+    expect(opts.cityId).toBe(REPORT_ROW.city_id);
+    // pothole routes to streets_roads / paving under the static defaults
+    // (city_teams lookup degrades in the double).
+    expect(opts.teamKey).toBe("streets_roads");
+    expect(opts.crewType).toBe("paving");
+  });
+
+  it("needs_manual_review -> auto-assign is skipped (a human is about to re-route)", async () => {
+    const { client } = makeSupabase({
+      report: { data: REPORT_ROW, error: null },
+      download: { data: jpegBlob(), error: null },
+      workOrder: {
+        data: { id: "wo-flagged", report_id: REPORT_ID, priority_score: 2 },
+        error: null,
+      },
+    });
+    createServerClientMock.mockReturnValue(client as never);
+    classifyPhotoMock.mockResolvedValue({
+      ok: true,
+      data: {
+        classification: classification({
+          category: "pothole",
+          no_issue_detected: true,
+        }),
+        rawText: "{}",
+      },
+    });
+    findDuplicateMock.mockResolvedValue(null);
+
+    const result = await runClassifyPipeline(REPORT_ID);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data.needs_manual_review).toBe(true);
+    expect(autoAssignCrewMock).not.toHaveBeenCalled();
   });
 });

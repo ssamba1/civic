@@ -135,7 +135,9 @@ export function demoWorkOrderFromReport(
     id: `demo-wo-${r.id}`,
     report_id: r.id,
     department: "Parks & Recreation",
-    crew_type: "forestry",
+    // arborist = the catalog key for tree work (crew-types defaults); a
+    // bespoke "forestry" key would never match dispatch crew auto-suggest.
+    crew_type: "arborist",
     priority_score: 72,
     est_minutes: 60,
     materials: ["chainsaw", "wood chipper", "hazard cones"],

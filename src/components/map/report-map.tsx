@@ -421,9 +421,8 @@ function ReportMapInner({
     // force an extra array allocation on focusId change but the marker layer
     // still needs focusId in deps so deck.gl sees fresh updateTrigger values.
     // demoGlow sits beneath the pins so the blue halo reads around the tip.
+    // is3D deliberately absent: no layer input reads it (pitch is a view prop).
     return [demoGlow, markers];
-    // is3D only affects camera pitch/bearing (handled in their own effects),
-    // not layer construction — excluded so a 2D/3D toggle doesn't rebuild layers.
   }, [visibleReports, focusId, viewMode, colorMode]);
 
   // Combine base layers with the separately-memoized halo.
