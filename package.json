@@ -20,6 +20,7 @@
     "db:apply-012": "node scripts/apply-012.mjs",
     "db:seed": "tsx supabase/seed/index.ts",
     "eval": "tsx scripts/eval-classify.ts",
+    "audit:privacy": "tsx scripts/audit-privacy.ts",
     "health": "curl http://localhost:3000/api/health"
   },
   "dependencies": {
