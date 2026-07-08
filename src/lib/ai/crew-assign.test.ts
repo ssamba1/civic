@@ -201,6 +201,32 @@ describe("autoAssignCrew", () => {
     expect(calls.some((c) => c.method === "update")).toBe(true);
   });
 
+  it("does not count work orders of rejected/merged/closed reports as load", async () => {
+    const { db } = mockDb({
+      crews: [
+        {
+          data: [
+            { id: "alpha", name: "Alpha" },
+            { id: "bravo", name: "Bravo" },
+          ],
+        },
+      ],
+      crew_members: [{ data: [{ crew_id: "alpha" }, { crew_id: "bravo" }] }],
+      work_orders: [
+        {
+          // Alpha's only assignment belongs to a rejected report — dead work,
+          // never completed_at-stamped. Counting it would flip the pick to
+          // Bravo; excluding it makes both 0 and Alpha wins the name tie.
+          data: [
+            { assigned_crew_id: "alpha", reports: { status: "rejected" } },
+          ],
+        },
+        { data: null }, // the assignment update
+      ],
+    });
+    expect(await autoAssignCrew(db, OPTS)).toBe("alpha");
+  });
+
   it("filters candidates by city, team, type, and active", async () => {
     const { db, calls } = mockDb({
       crews: [{ data: [] }],

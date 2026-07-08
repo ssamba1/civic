@@ -573,9 +573,10 @@ export async function overrideClassification(
         logger.error("work order reroute after override failed", rerouteError, {
           reportId,
         });
-      } else if (AI_CREW_ASSIGN && rerouted && routed.crew_type) {
+      } else if (AI_CREW_ASSIGN && rerouted) {
         // Keep the crew assignment coherent with the new routing. A crew from
-        // the OLD division is stale by construction — clear it; a same-team
+        // the OLD division is stale by construction — clear it (also when the
+        // new category has no crew type at all, e.g. 'other'); a same-team
         // crew was a deliberate staff pick and is kept. autoAssignCrew only
         // writes into a null slot, so it fills the cleared (or never-set)
         // assignment and never overrides a retained one.
@@ -592,13 +593,15 @@ export async function overrideClassification(
               .eq("id", rerouted.id);
           }
         }
-        await autoAssignCrew(supabase, {
-          workOrderId: rerouted.id,
-          cityId: staff.city_id,
-          teamKey,
-          crewType: routed.crew_type,
-          log: logger,
-        });
+        if (routed.crew_type) {
+          await autoAssignCrew(supabase, {
+            workOrderId: rerouted.id,
+            cityId: staff.city_id,
+            teamKey,
+            crewType: routed.crew_type,
+            log: logger,
+          });
+        }
       }
     } catch (err) {
       logger.error("work order reroute threw after override", err, {

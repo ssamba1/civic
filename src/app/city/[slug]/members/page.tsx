@@ -101,8 +101,12 @@ export default async function CityMembersPage({ params }: PageProps) {
   const crewTypesResult = dbCity ? await fetchCityCrewTypes(dbCity.id) : null;
   const crewTypeCatalogAvailable = crewTypesResult?.ok ?? false;
   const crewTypeRows = crewTypesResult?.ok ? crewTypesResult.types : [];
+  // Defaults apply only when the city has NO catalog (pre-031 DB or a city
+  // created after the seed). A catalog where every row is deactivated is a
+  // deliberate admin choice — honor it with an empty select, don't silently
+  // resurrect the built-ins.
   const activeCrewTypes: CrewTypeDef[] =
-    crewTypeCatalogAvailable && crewTypeRows.some((t) => t.active)
+    crewTypeCatalogAvailable && crewTypeRows.length > 0
       ? crewTypeRows
           .filter((t) => t.active)
           .map(({ key, label, description }) => ({ key, label, description }))

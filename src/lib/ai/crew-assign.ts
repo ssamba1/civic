@@ -94,11 +94,14 @@ export async function autoAssignCrew(
       memberCounts.set(m.crew_id, (memberCounts.get(m.crew_id) ?? 0) + 1);
     }
 
-    // Current load — open (not yet completed) work orders per crew.
+    // Current load — open (not yet completed) work orders per crew. The
+    // report status join matters: rejected/merged reports never get their
+    // work order completed_at stamped, so completed_at alone would count
+    // dead work forever and permanently skew the ranking.
     const openCounts = new Map<string, number>();
     const { data: woData, error: woErr } = await supabase
       .from("work_orders")
-      .select("assigned_crew_id")
+      .select("assigned_crew_id, reports(status)")
       .in("assigned_crew_id", crewIds)
       .is("completed_at", null);
     if (woErr) {
@@ -107,8 +110,15 @@ export async function autoAssignCrew(
         error: woErr.message,
       });
     }
-    for (const w of (woData ?? []) as { assigned_crew_id: string | null }[]) {
+    const DEAD_STATUSES = new Set(["closed", "merged", "rejected"]);
+    // Double cast: supabase-js infers the reports embed as an array, but the
+    // work_orders→reports FK is many-to-one so PostgREST returns an object.
+    for (const w of (woData ?? []) as unknown as {
+      assigned_crew_id: string | null;
+      reports: { status: string } | null;
+    }[]) {
       if (!w.assigned_crew_id) continue;
+      if (w.reports && DEAD_STATUSES.has(w.reports.status)) continue;
       openCounts.set(
         w.assigned_crew_id,
         (openCounts.get(w.assigned_crew_id) ?? 0) + 1,

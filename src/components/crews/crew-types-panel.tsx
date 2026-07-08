@@ -82,9 +82,9 @@ export function CrewTypesPanel({
       </div>
 
       <p className="-mt-2 text-[13px] text-faint">
-        The kinds of labor this city fields. The AI reads each description when
-        it picks a crew type for a new work order — write what the crew
-        physically does.
+        The kinds of labor this city fields. When AI work-order generation is
+        enabled, the model reads each description to pick a crew type for new
+        work orders — write what the crew physically does.
         {!catalogAvailable &&
           " Showing the built-in defaults — the per-city catalog isn't available on this database yet."}
       </p>
