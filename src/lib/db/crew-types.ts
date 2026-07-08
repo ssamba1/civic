@@ -35,7 +35,19 @@ export async function fetchCityCrewTypes(
       .eq("city_id", cityId)
       .order("label");
     if (error) {
-      log.error("crew_types query failed", error, { cityId });
+      // PGRST205 = table not in the schema cache — the expected pre-031
+      // state, and every caller has a defaults fallback. Warn, don't error:
+      // an error here makes the designed degrade path look like an outage.
+      if (error.code === "PGRST205") {
+        log.warn(
+          "crew_types table missing (migration 031 pending) — using built-in defaults",
+          {
+            cityId,
+          },
+        );
+      } else {
+        log.error("crew_types query failed", error, { cityId });
+      }
       return { ok: false, error: "crew_types_query_failed" };
     }
     return { ok: true, types: (data ?? []) as CrewTypeRow[] };
