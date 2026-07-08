@@ -7,6 +7,7 @@ import { ASYNC_CLASSIFY } from "@/lib/ai/config";
 import { createServerClient } from "@/lib/db/client";
 import { createSSRClient } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
+import { stripImageMetadata } from "@/lib/privacy/exif-strip";
 import type { Classification, Result } from "@/lib/types";
 
 const logger = createLogger("[submit-report]");
@@ -155,10 +156,12 @@ export async function submitReport(
 
   // Upload via service role: storage RLS has no INSERT policy (folder-scoping
   // can't be set via the pooler), so the service role performs the writes.
-  // Privacy is preserved because the blur already ran client-side.
+  // Privacy is preserved because the blur already ran client-side; the
+  // server-side EXIF strip is defense-in-depth against a non-canvas client
+  // sneaking GPS/device metadata past the blur (LCP-20).
   const { error: pubErr } = await service.storage
     .from(PUBLIC_BUCKET)
-    .upload(publicPath, Buffer.from(photoBlurred, "base64"), {
+    .upload(publicPath, stripImageMetadata(Buffer.from(photoBlurred, "base64")), {
       contentType: "image/webp",
       upsert: false,
     });
@@ -168,7 +171,7 @@ export async function submitReport(
 
   const { error: rawErr } = await service.storage
     .from(RAW_BUCKET)
-    .upload(rawPath, Buffer.from(photoOriginal, "base64"), {
+    .upload(rawPath, stripImageMetadata(Buffer.from(photoOriginal, "base64")), {
       contentType: "image/jpeg",
       upsert: false,
     });
