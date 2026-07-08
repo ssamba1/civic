@@ -25,3 +25,11 @@ test("/city/cumming public dashboard loads without a client crash", async ({
   await expect(page).toHaveTitle(/Civic|Cumming/i);
   expect(errors).toEqual([]);
 });
+
+test("POST /api/admin/sla-escalate is auth-gated (401 without a session)", async ({
+  request,
+}) => {
+  const res = await request.post("/api/admin/sla-escalate");
+  // No session + no cron bearer → rejected (401). Never 200 to anon.
+  expect([401, 403]).toContain(res.status());
+});
