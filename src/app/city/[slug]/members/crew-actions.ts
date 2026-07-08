@@ -289,16 +289,19 @@ async function crewTypeInCity(
   id: string,
   cityId: string,
 ): Promise<boolean> {
+  // city_id is part of the DB filter (not just an app-side compare) so a
+  // foreign id is indistinguishable from a missing one at the query level.
   const { data, error } = await db
     .from("crew_types")
-    .select("id, city_id")
+    .select("id")
     .eq("id", id)
+    .eq("city_id", cityId)
     .maybeSingle();
   if (error) {
     log.error("crew type lookup failed", error, { id });
     return false;
   }
-  return Boolean(data && data.city_id === cityId);
+  return Boolean(data);
 }
 
 export interface SaveCrewTypeInput {
@@ -341,10 +344,13 @@ export async function saveCrewType(
   } else {
     if (!(await crewTypeInCity(db, id, ctx.cityId)))
       return { ok: false, error: "crew_type_not_found" };
+    // city_id repeated on the mutation itself so the cross-city guard is
+    // atomic — the pre-check only exists for the friendlier error code.
     const { error } = await db
       .from("crew_types")
       .update({ label, description, active })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("city_id", ctx.cityId);
     if (error) {
       log.error("crew type update failed", error, { slug, id });
       return { ok: false, error: "crew_type_save_failed" };
@@ -372,7 +378,12 @@ export async function deleteCrewType(input: {
   if (!(await crewTypeInCity(db, id, ctx.cityId)))
     return { ok: false, error: "crew_type_not_found" };
 
-  const { error } = await db.from("crew_types").delete().eq("id", id);
+  // Same atomic city scoping as the update path.
+  const { error } = await db
+    .from("crew_types")
+    .delete()
+    .eq("id", id)
+    .eq("city_id", ctx.cityId);
   if (error) {
     log.error("crew type delete failed", error, { slug, id });
     return { ok: false, error: "crew_type_delete_failed" };

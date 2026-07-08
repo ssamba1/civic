@@ -103,8 +103,14 @@ export const WORK_ORDER_SYSTEM_PROMPT =
 export function buildWorkOrderPrompt(
   crewTypes: readonly { key: string; description: string }[],
 ): string {
+  // Descriptions are admin-authored free text headed into the prompt — flatten
+  // whitespace so a multi-line description can't break out of its list item
+  // and read as a new instruction block.
   const crewMenu = crewTypes
-    .map((t) => `- ${t.key}${t.description ? ` — ${t.description}` : ""}`)
+    .map((t) => {
+      const desc = t.description.replace(/\s+/g, " ").trim();
+      return `- ${t.key}${desc ? ` — ${desc}` : ""}`;
+    })
     .join("\n");
   return `Given the infrastructure classification below, produce a dispatch-ready work order.
 

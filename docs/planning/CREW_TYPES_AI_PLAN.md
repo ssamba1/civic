@@ -1,7 +1,8 @@
 # Crew Types + AI Crew Assignment — Plan
 
-> Status: PLANNED (research done, not built). 2026-07-07.
-> Builds on migration 030 crews (commit `c2c4e27`). Next migration number: 031.
+> Status: BUILT on branch feat/crew-types-ai (P1–P4 + audit fixes + override
+> re-assign), 2026-07-08. Migration 031 authored, NOT applied to live DB.
+> Builds on migration 030 crews (commit `c2c4e27`).
 
 ## 1. The ask, decoded
 
