@@ -50,6 +50,18 @@ export const ASYNC_CLASSIFY = process.env.NEXT_PUBLIC_ASYNC_CLASSIFY === "1";
 export const AI_WORK_ORDER = process.env.AI_WORK_ORDER === "1";
 
 /**
+ * When "1", the classify pipeline auto-assigns an actual crew
+ * (work_orders.assigned_crew_id) after stamping team_key: candidates are the
+ * city's active crews matching the work order's team + crew_type, ranked
+ * staffed-before-hollow, then fewest open work orders, then name. Deterministic
+ * (no extra Gemini call). Default OFF; staff can always assign/override
+ * manually via the grid. Skipped for needs_manual_review reports — a human is
+ * about to look, and a category override would re-route the team anyway.
+ * Server-only flag (no NEXT_PUBLIC_ prefix).
+ */
+export const AI_CREW_ASSIGN = process.env.AI_CREW_ASSIGN === "1";
+
+/**
  * When "1", the classify pipeline checks each new (non-emergency) report for a
  * duplicate of an earlier open report of the same category within DEDUP_RADIUS_M
  * metres and the last 30 days (via the find_duplicate_report RPC, migration

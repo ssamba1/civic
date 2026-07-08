@@ -1,15 +1,17 @@
 import {
+  AI_CREW_ASSIGN,
   AI_WORK_ORDER,
   ASYNC_CLASSIFY,
   DEDUP_REPORTS,
   GEMINI_MODEL,
 } from "@/lib/ai/config";
+import { autoAssignCrew } from "@/lib/ai/crew-assign";
 import { findDuplicate } from "@/lib/ai/dedup";
 import { classifyPhoto } from "@/lib/ai/gemini";
 import { generateWorkOrderAI } from "@/lib/ai/work-order-ai";
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
 import { createServerClient } from "@/lib/db/client";
-import { fetchCityCrewTypes } from "@/lib/db/crew-types";
+import { fetchActiveCrewTypeDefs } from "@/lib/db/crew-types";
 import { sniffImageMime } from "@/lib/image/sniff-mime";
 import { createLogger } from "@/lib/logger";
 import { resolveTeamKeyForCategory } from "@/lib/onboarding/city-teams";
@@ -368,6 +370,8 @@ export async function runClassifyPipeline(
   // stays deterministic — the AI sizes crew/materials/minutes/cost, not the
   // dispatch priority math.
   let department = rulesWorkOrder.department;
+  // string (not the static CrewType union): the AI path picks from the city's
+  // own crew_types catalog (031), which may carry bespoke keys.
   let crewType: string | null = rulesWorkOrder.crew_type;
   let estMinutes = rulesWorkOrder.est_minutes;
   let materials: string[] = rulesWorkOrder.materials;
@@ -377,10 +381,10 @@ export async function runClassifyPipeline(
   let woRationale: string | null = null;
 
   if (AI_WORK_ORDER) {
-    // Custom crew types widen the generator's routing vocabulary; [] (no
-    // customs / un-migrated DB) reproduces today's exact prompt + schema.
-    const customTypes = await fetchCityCrewTypes(report.city_id);
-    const aiResult = await generateWorkOrderAI(classification, customTypes);
+    // City catalog with descriptions — degrades to the app defaults when the
+    // city has no rows or 031 isn't applied, so this never blocks the call.
+    const cityCrewTypes = await fetchActiveCrewTypeDefs(report.city_id);
+    const aiResult = await generateWorkOrderAI(classification, cityCrewTypes);
     if (aiResult.ok) {
       department = aiResult.data.department;
       crewType = aiResult.data.crew_type;
@@ -443,6 +447,7 @@ export async function runClassifyPipeline(
   // column; no-op-safe on un-migrated DBs — the read path falls back to the
   // static category→team default when team_key is null). Resolved from the
   // city's own city_teams config so per-city routing takes effect at creation.
+  let resolvedTeamKey: string | null = null;
   try {
     const teamKey = await resolveTeamKeyForCategory(
       report.city_id,
@@ -457,11 +462,29 @@ export async function runClassifyPipeline(
         reportId,
         error: teamErr.message,
       });
+    } else {
+      resolvedTeamKey = teamKey;
     }
   } catch (err) {
     log.warn("work_order_team_key_resolve_threw", {
       reportId,
       error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  // Auto-assign an actual crew (migration 030/031; AI_CREW_ASSIGN flag).
+  // Deterministic pick over the city's active crews matching this work order's
+  // team + crew_type — best-effort like the team_key stamp above, and skipped
+  // for flagged reports (a human is about to review; a category override would
+  // re-route the team and orphan the pick). Runs for emergencies: they skip
+  // manual review by design and need a crew soonest.
+  if (AI_CREW_ASSIGN && !needsManualReview && resolvedTeamKey && crewType) {
+    await autoAssignCrew(supabase, {
+      workOrderId: insertedWorkOrder.id,
+      cityId: report.city_id,
+      teamKey: resolvedTeamKey,
+      crewType,
+      log,
     });
   }
 

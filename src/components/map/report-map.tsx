@@ -285,7 +285,11 @@ function ReportMapInner({
   // same corpus the pins use so it stays in step with what's rendered.
   const [teamLegendExpanded, setTeamLegendExpanded] = useState(false);
   const teamLegendData = useMemo(
-    () => teamLegend(visibleReports, teamLegendExpanded ? Number.POSITIVE_INFINITY : undefined),
+    () =>
+      teamLegend(
+        visibleReports,
+        teamLegendExpanded ? Number.POSITIVE_INFINITY : undefined,
+      ),
     [visibleReports, teamLegendExpanded],
   );
 
@@ -417,8 +421,9 @@ function ReportMapInner({
     // force an extra array allocation on focusId change but the marker layer
     // still needs focusId in deps so deck.gl sees fresh updateTrigger values.
     // demoGlow sits beneath the pins so the blue halo reads around the tip.
+    // is3D deliberately absent: no layer input reads it (pitch is a view prop).
     return [demoGlow, markers];
-  }, [visibleReports, focusId, viewMode, is3D, colorMode]);
+  }, [visibleReports, focusId, viewMode, colorMode]);
 
   // Combine base layers with the separately-memoized halo.
   const allLayers = useMemo(
@@ -770,80 +775,27 @@ function ReportMapInner({
         {/* Legend — content depends on view mode */}
         <LiquidGlassCard
           className={`pointer-events-none ${glassChrome}`}
-        contentClassName={`${glassSheen} px-3 py-2.5 text-[12px] text-zinc-200 flex flex-col gap-1.5 rounded-[14px]`}
-        borderRadius="14px"
-        blurIntensity="xl"
-        shadowIntensity="md"
-        glowIntensity="none"
-      >
-        {viewMode === "markers" ? (
-          // Marker legend — rendered straight from ./pin-icons metadata
-          // (PROGRESS_LEGEND / URGENCY_LEGEND / teamLegend) so the swatches and
-          // the map pins share one color source and can't drift. This replaces
-          // the old statusColor-based swatches; the color palette that used to
-          // live inline here now lives in pin-icons.
-          <div className="flex flex-col gap-1.5">
-            {colorMode === "progress" && (
-              // biome-ignore lint/a11y/useSemanticElements: role="list" intentional — <ul> applies UA list-style/margin/padding; flex/gap layout is custom
-              <div
-                role="list"
-                aria-label="Marker legend"
-                className="flex flex-col gap-1.5"
-              >
-                {PROGRESS_LEGEND.map((e) => (
-                  // biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling
-                  <div
-                    role="listitem"
-                    key={e.label}
-                    className="flex items-center gap-2"
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="inline-flex h-2.5 w-2.5 items-center justify-center rounded-full"
-                      style={{
-                        background: e.color,
-                        border: `1px solid ${e.border ?? "rgba(255,255,255,0.5)"}`,
-                      }}
-                    >
-                      {e.check && (
-                        <Check className="h-2 w-2 text-white" strokeWidth={3} />
-                      )}
-                    </span>
-                    {e.label}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {colorMode === "urgency" && (
-              <>
-                <div className="text-[10.5px] uppercase tracking-wider text-zinc-400 mb-0.5">
-                  Severity
-                </div>
-                <span
-                  className="inline-block h-2 w-24 rounded-sm"
-                  style={{
-                    background: `linear-gradient(to right, ${URGENCY_LEGEND.colors.join(",")})`,
-                  }}
-                />
-                <div className="flex items-center justify-between text-[10.5px] text-zinc-400 -mt-0.5 w-24">
-                  <span>{URGENCY_LEGEND.minLabel}</span>
-                  <span>{URGENCY_LEGEND.maxLabel}</span>
-                </div>
-              </>
-            )}
-
-            {colorMode === "team" &&
-              (teamLegendData.entries.length === 0 ? (
-                <div className="text-zinc-500">No reports</div>
-              ) : (
+          contentClassName={`${glassSheen} px-3 py-2.5 text-[12px] text-zinc-200 flex flex-col gap-1.5 rounded-[14px]`}
+          borderRadius="14px"
+          blurIntensity="xl"
+          shadowIntensity="md"
+          glowIntensity="none"
+        >
+          {viewMode === "markers" ? (
+            // Marker legend — rendered straight from ./pin-icons metadata
+            // (PROGRESS_LEGEND / URGENCY_LEGEND / teamLegend) so the swatches and
+            // the map pins share one color source and can't drift. This replaces
+            // the old statusColor-based swatches; the color palette that used to
+            // live inline here now lives in pin-icons.
+            <div className="flex flex-col gap-1.5">
+              {colorMode === "progress" && (
                 // biome-ignore lint/a11y/useSemanticElements: role="list" intentional — <ul> applies UA list-style/margin/padding; flex/gap layout is custom
                 <div
                   role="list"
-                  aria-label="Teams shown"
+                  aria-label="Marker legend"
                   className="flex flex-col gap-1.5"
                 >
-                  {teamLegendData.entries.map((e) => (
+                  {PROGRESS_LEGEND.map((e) => (
                     // biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling
                     <div
                       role="listitem"
@@ -852,43 +804,99 @@ function ReportMapInner({
                     >
                       <span
                         aria-hidden="true"
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ background: e.color }}
-                      />
+                        className="inline-flex h-2.5 w-2.5 items-center justify-center rounded-full"
+                        style={{
+                          background: e.color,
+                          border: `1px solid ${e.border ?? "rgba(255,255,255,0.5)"}`,
+                        }}
+                      >
+                        {e.check && (
+                          <Check
+                            className="h-2 w-2 text-white"
+                            strokeWidth={3}
+                          />
+                        )}
+                      </span>
                       {e.label}
                     </div>
                   ))}
-                  {(teamLegendData.more > 0 || teamLegendExpanded) && (
-                    <button
-                      type="button"
-                      onClick={() => setTeamLegendExpanded((v) => !v)}
-                      className="pointer-events-auto text-left text-zinc-400 hover:text-white text-[11px] pl-[18px]"
-                    >
-                      {teamLegendExpanded
-                        ? "Show less"
-                        : `+${teamLegendData.more} more`}
-                    </button>
-                  )}
                 </div>
-              ))}
-          </div>
-        ) : (
-          <>
-            <div className="text-[10.5px] uppercase tracking-wider text-zinc-400 mb-0.5">
-              Density
+              )}
+
+              {colorMode === "urgency" && (
+                <>
+                  <div className="text-[10.5px] uppercase tracking-wider text-zinc-400 mb-0.5">
+                    Severity
+                  </div>
+                  <span
+                    className="inline-block h-2 w-24 rounded-sm"
+                    style={{
+                      background: `linear-gradient(to right, ${URGENCY_LEGEND.colors.join(",")})`,
+                    }}
+                  />
+                  <div className="flex items-center justify-between text-[10.5px] text-zinc-400 -mt-0.5 w-24">
+                    <span>{URGENCY_LEGEND.minLabel}</span>
+                    <span>{URGENCY_LEGEND.maxLabel}</span>
+                  </div>
+                </>
+              )}
+
+              {colorMode === "team" &&
+                (teamLegendData.entries.length === 0 ? (
+                  <div className="text-zinc-500">No reports</div>
+                ) : (
+                  // biome-ignore lint/a11y/useSemanticElements: role="list" intentional — <ul> applies UA list-style/margin/padding; flex/gap layout is custom
+                  <div
+                    role="list"
+                    aria-label="Teams shown"
+                    className="flex flex-col gap-1.5"
+                  >
+                    {teamLegendData.entries.map((e) => (
+                      // biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling
+                      <div
+                        role="listitem"
+                        key={e.label}
+                        className="flex items-center gap-2"
+                      >
+                        <span
+                          aria-hidden="true"
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ background: e.color }}
+                        />
+                        {e.label}
+                      </div>
+                    ))}
+                    {(teamLegendData.more > 0 || teamLegendExpanded) && (
+                      <button
+                        type="button"
+                        onClick={() => setTeamLegendExpanded((v) => !v)}
+                        className="pointer-events-auto text-left text-zinc-400 hover:text-white text-[11px] pl-[18px]"
+                      >
+                        {teamLegendExpanded
+                          ? "Show less"
+                          : `+${teamLegendData.more} more`}
+                      </button>
+                    )}
+                  </div>
+                ))}
             </div>
-            <div className="flex items-center gap-2">
-              {/* Same amber -> danger family as the heatmap colorRange above —
+          ) : (
+            <>
+              <div className="text-[10.5px] uppercase tracking-wider text-zinc-400 mb-0.5">
+                Density
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Same amber -> danger family as the heatmap colorRange above —
                   low density fades in as faint amber, high density reads as
                   danger red. */}
-              <span className="inline-block h-2 w-20 rounded-sm bg-gradient-to-r from-[#ad8434]/25 via-[#ad8434] to-[#cc4638]" />
-            </div>
-            <div className="flex items-center justify-between text-[10.5px] text-zinc-400 -mt-0.5">
-              <span>Low</span>
-              <span>High</span>
-            </div>
-          </>
-        )}
+                <span className="inline-block h-2 w-20 rounded-sm bg-gradient-to-r from-[#ad8434]/25 via-[#ad8434] to-[#cc4638]" />
+              </div>
+              <div className="flex items-center justify-between text-[10.5px] text-zinc-400 -mt-0.5">
+                <span>Low</span>
+                <span>High</span>
+              </div>
+            </>
+          )}
         </LiquidGlassCard>
       </div>
     </div>

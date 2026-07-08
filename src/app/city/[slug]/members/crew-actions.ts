@@ -3,12 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod/v4";
 import {
+  CREW_TYPE_KEY_PATTERN,
   descriptionWordCount,
-  isBuiltInCrewType,
-  MAX_TYPE_DESCRIPTION_CHARS,
   MIN_TYPE_DESCRIPTION_WORDS,
-  NAME_RE,
-  normalizeCrewTypeName,
 } from "@/lib/crew-types";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
@@ -23,9 +20,14 @@ export type CrewCreateResult =
   | { ok: false; error: string };
 
 const crewNameSchema = z.string().trim().min(1).max(80);
-// Free text, but canonical: 2-40 chars of [a-z0-9_]. Existence (built-in or
-// this city's city_crew_types row) is verified in the action, not the schema.
-const crewTypeSchema = z.string().regex(NAME_RE).nullable();
+// A crew-type is a key into the city's crew_types catalog (031) or one of the
+// app defaults. Validated by shape (the same CHECK the column enforces), not
+// by membership — the select UI constrains the choices, and a key whose
+// catalog row was later deleted must stay editable rather than brick the form.
+const crewTypeSchema = z
+  .string()
+  .regex(CREW_TYPE_KEY_PATTERN, "invalid_crew_type")
+  .nullable();
 // Same guard as members/actions.ts teamKeySchema: a crew belongs to one real
 // division, never the synthetic "all" view.
 const teamKeySchema = z
@@ -80,30 +82,6 @@ async function crewInCity(
   return { id: data.id, team_key: data.team_key };
 }
 
-/** A crew's type must be a built-in or one of this city's custom types —
- *  rejects forged values that would silently break dispatch auto-suggest.
- *  Tri-state: true = exists (built-in or row found), false = confirmed not
- *  found, null = the lookup itself failed (distinguish so callers don't treat
- *  a transient DB error as a forged type). */
-async function crewTypeExists(
-  db: ReturnType<typeof createServerClient>,
-  cityId: string,
-  crewType: string,
-): Promise<boolean | null> {
-  if (isBuiltInCrewType(crewType)) return true;
-  const { data, error } = await db
-    .from("city_crew_types")
-    .select("name")
-    .eq("city_id", cityId)
-    .eq("name", crewType)
-    .maybeSingle();
-  if (error) {
-    log.error("crew type lookup failed", error, { cityId, crewType });
-    return null;
-  }
-  return data !== null;
-}
-
 export interface CreateCrewInput {
   slug: string;
   teamKey: string;
@@ -124,13 +102,6 @@ export async function createCrew(
   if (!ctx) return { ok: false, error: "not_authorized" };
 
   const db = createServerClient();
-  if (crewType) {
-    const typeCheck = await crewTypeExists(db, ctx.cityId, crewType);
-    if (typeCheck === null)
-      return { ok: false, error: "crew_type_check_failed" };
-    if (!typeCheck) return { ok: false, error: "unknown_crew_type" };
-  }
-
   const { data, error } = await db
     .from("crews")
     .insert({
@@ -174,12 +145,6 @@ export async function updateCrew(
   const db = createServerClient();
   if (!(await crewInCity(db, crewId, ctx.cityId)))
     return { ok: false, error: "crew_not_found" };
-  if (crewType) {
-    const typeCheck = await crewTypeExists(db, ctx.cityId, crewType);
-    if (typeCheck === null)
-      return { ok: false, error: "crew_type_check_failed" };
-    if (!typeCheck) return { ok: false, error: "unknown_crew_type" };
-  }
 
   const { error } = await db
     .from("crews")
@@ -295,51 +260,144 @@ export async function setCrewMembers(
   return { ok: true };
 }
 
-export type CrewTypeCreateResult =
-  | { ok: true; name: string; description: string }
-  | { ok: false; error: string };
+/* ==================================================================
+   Crew types (migration 031) — the per-city catalog of labor types.
+   The description feeds the work-order AI's crew_type pick, so these
+   actions are how a city teaches the AI what its crews can do.
+   ================================================================== */
 
-const createTypeSchema = z.object({
+const crewTypeKeySchema = z
+  .string()
+  .regex(CREW_TYPE_KEY_PATTERN, "invalid_key");
+
+const saveCrewTypeSchema = z.object({
   slug: z.string().min(1),
-  name: z.string().min(1).max(80),
-  description: z.string().trim().max(MAX_TYPE_DESCRIPTION_CHARS),
+  // null = create; a uuid = update (key is immutable after creation — crews
+  // and work orders reference it softly, renaming would orphan them).
+  id: z.string().min(1).nullable(),
+  key: crewTypeKeySchema,
+  label: z.string().trim().min(1).max(80),
+  description: z.string().trim().max(500),
+  active: z.boolean(),
 });
 
-/**
- * Create a custom crew type for the admin's city. The description is
- * mandatory and must run >=10 words — it is the signal the AI work-order
- * generator uses to route work to this type, so a bare label is useless.
- * Admin-gated.
- */
-export async function createCrewType(input: {
+const deleteCrewTypeSchema = z.object({
+  slug: z.string().min(1),
+  id: z.string().min(1),
+});
+
+/** Resolve a crew_types row and confirm it belongs to the admin's city —
+ *  mirror of crewInCity: a foreign id must behave like a missing one. */
+async function crewTypeInCity(
+  db: ReturnType<typeof createServerClient>,
+  id: string,
+  cityId: string,
+): Promise<boolean> {
+  // city_id is part of the DB filter (not just an app-side compare) so a
+  // foreign id is indistinguishable from a missing one at the query level.
+  const { data, error } = await db
+    .from("crew_types")
+    .select("id")
+    .eq("id", id)
+    .eq("city_id", cityId)
+    .maybeSingle();
+  if (error) {
+    log.error("crew type lookup failed", error, { id });
+    return false;
+  }
+  return Boolean(data);
+}
+
+export interface SaveCrewTypeInput {
   slug: string;
-  name: string;
+  id: string | null;
+  key: string;
+  label: string;
   description: string;
-}): Promise<CrewTypeCreateResult> {
-  const parsed = createTypeSchema.safeParse(input);
+  active: boolean;
+}
+
+/** Create or update a crew type. Admin-gated. On update the key is left
+ *  untouched (immutable) — only label/description/active change. */
+export async function saveCrewType(
+  input: SaveCrewTypeInput,
+): Promise<CrewActionResult> {
+  const parsed = saveCrewTypeSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid_input" };
-  const { slug, description } = parsed.data;
+  const { slug, id, key, label, description, active } = parsed.data;
 
   const ctx = await getCityAdminContext(slug);
   if (!ctx) return { ok: false, error: "not_authorized" };
 
-  const name = normalizeCrewTypeName(parsed.data.name);
-  if (!name) return { ok: false, error: "invalid_type_name" };
-  if (isBuiltInCrewType(name))
-    return { ok: false, error: "crew_type_reserved" };
-  if (descriptionWordCount(description) < MIN_TYPE_DESCRIPTION_WORDS)
-    return { ok: false, error: "type_description_too_short" };
-
   const db = createServerClient();
-  const { error } = await db
-    .from("city_crew_types")
-    .insert({ city_id: ctx.cityId, name, description });
-  if (error) {
-    if (error.code === "23505") return { ok: false, error: "crew_type_taken" };
-    log.error("crew type insert failed", error, { slug, name });
-    return { ok: false, error: "crew_type_create_failed" };
+  if (id === null) {
+    // New types demand a real AI-routing description — a >=10-word sentence
+    // about what the crew does, not a label repeat. Create-only: seeded and
+    // legacy rows may be edited without tripping the gate.
+    if (descriptionWordCount(description) < MIN_TYPE_DESCRIPTION_WORDS)
+      return { ok: false, error: "type_description_too_short" };
+    const { error } = await db.from("crew_types").insert({
+      city_id: ctx.cityId,
+      key,
+      label,
+      description,
+      active,
+    });
+    if (error) {
+      // 23505 = unique_violation on (city_id, key).
+      if (error.code === "23505")
+        return { ok: false, error: "crew_type_key_taken" };
+      log.error("crew type insert failed", error, { slug, key });
+      return { ok: false, error: "crew_type_save_failed" };
+    }
+  } else {
+    if (!(await crewTypeInCity(db, id, ctx.cityId)))
+      return { ok: false, error: "crew_type_not_found" };
+    // city_id repeated on the mutation itself so the cross-city guard is
+    // atomic — the pre-check only exists for the friendlier error code.
+    const { error } = await db
+      .from("crew_types")
+      .update({ label, description, active })
+      .eq("id", id)
+      .eq("city_id", ctx.cityId);
+    if (error) {
+      log.error("crew type update failed", error, { slug, id });
+      return { ok: false, error: "crew_type_save_failed" };
+    }
   }
 
   revalidatePath(`/city/${slug}/members`);
-  return { ok: true, name, description };
+  return { ok: true };
+}
+
+/** Delete a crew type. Crews referencing the key keep it (soft reference —
+ *  the UI shows the raw key); the AI simply stops offering it. Admin-gated. */
+export async function deleteCrewType(input: {
+  slug: string;
+  id: string;
+}): Promise<CrewActionResult> {
+  const parsed = deleteCrewTypeSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "invalid_input" };
+  const { slug, id } = parsed.data;
+
+  const ctx = await getCityAdminContext(slug);
+  if (!ctx) return { ok: false, error: "not_authorized" };
+
+  const db = createServerClient();
+  if (!(await crewTypeInCity(db, id, ctx.cityId)))
+    return { ok: false, error: "crew_type_not_found" };
+
+  // Same atomic city scoping as the update path.
+  const { error } = await db
+    .from("crew_types")
+    .delete()
+    .eq("id", id)
+    .eq("city_id", ctx.cityId);
+  if (error) {
+    log.error("crew type delete failed", error, { slug, id });
+    return { ok: false, error: "crew_type_delete_failed" };
+  }
+
+  revalidatePath(`/city/${slug}/members`);
+  return { ok: true };
 }

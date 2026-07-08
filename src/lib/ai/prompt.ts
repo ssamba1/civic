@@ -1,5 +1,3 @@
-import type { CityCrewType } from "@/lib/crew-types";
-
 /**
  * System instruction: establishes the model's role and analytical lens.
  * Kept separate from the user prompt so the model treats it as persistent context.
@@ -98,8 +96,23 @@ export const WORK_ORDER_SYSTEM_PROMPT =
 
 /**
  * User-facing work-order prompt. The caller appends the classification JSON.
+ * Built per call: the crew-type menu is the city's own catalog (crew_types
+ * table, migration 031) with the admin-written descriptions — the description
+ * is what lets the model match "cracked sidewalk panel" to a concrete crew.
  */
-export const WORK_ORDER_PROMPT = `Given the infrastructure classification below, produce a dispatch-ready work order.
+export function buildWorkOrderPrompt(
+  crewTypes: readonly { key: string; description: string }[],
+): string {
+  // Descriptions are admin-authored free text headed into the prompt — flatten
+  // whitespace so a multi-line description can't break out of its list item
+  // and read as a new instruction block.
+  const crewMenu = crewTypes
+    .map((t) => {
+      const desc = t.description.replace(/\s+/g, " ").trim();
+      return `- ${t.key}${desc ? ` — ${desc}` : ""}`;
+    })
+    .join("\n");
+  return `Given the infrastructure classification below, produce a dispatch-ready work order.
 
 ## ASSUMPTIONS
 - Blended crew labor rate: ~$75/hour (loaded — wage + equipment + overhead).
@@ -108,9 +121,9 @@ export const WORK_ORDER_PROMPT = `Given the infrastructure classification below,
 - Scale time and cost with the reported SEVERITY and visible size — a severity-4
   pothole takes longer and costs more than a severity-2 one of the same category.
 
-## CREW TYPE — choose the single best match
-paving · line_crew · sign_crew · cleanup · concrete · arborist · drain_crew
-(Use the crew that physically does the repair. Use null only when the category is "other".)
+## CREW TYPES AVAILABLE IN THIS CITY — choose the single best match by what the crew does
+${crewMenu}
+(Use the crew whose description covers the physical repair. Use null only when no listed crew fits, e.g. category "other".)
 
 ## DEPARTMENT — choose the single best match
 public_works · utilities · parks · code_enforcement · sanitation · other
@@ -118,34 +131,10 @@ public_works · utilities · parks · code_enforcement · sanitation · other
 ## OUTPUT — valid JSON only. No markdown, no prose, no code fences. Every field required.
 {
   "department": "<one of the department strings>",
-  "crew_type": "<one of the crew strings, or null for 'other'>",
+  "crew_type": "<one of the crew type keys above, or null>",
   "est_minutes": <integer, realistic time on site>,
   "materials": [ { "item": "<short name>", "qty": <integer ≥ 1> } ],
   "est_cost": <integer USD: labor + materials, rounded>,
   "rationale": "<1–2 sentences: how you sized the crew, time, materials, and cost>"
 }`;
-
-/**
- * Work-order prompt with this city's custom crew types injected (name +
- * admin-written description — the routing signal). Zero custom types returns
- * WORK_ORDER_PROMPT unchanged, so existing cities see an identical prompt.
- */
-export function buildWorkOrderPrompt(customTypes: CityCrewType[]): string {
-  if (customTypes.length === 0) return WORK_ORDER_PROMPT;
-  const section = [
-    `## CITY-SPECIFIC CREW TYPES`,
-    `This city also operates the following custom crews. Prefer one of these over the`,
-    `generic list above when its description matches the repair better:`,
-    ...customTypes.map(
-      (t) => `- ${t.name}: ${t.description.replace(/\s+/g, " ")}`,
-    ),
-    ``,
-    ``,
-  ].join("\n");
-  // Replacer function keeps the replacement literal — a plain string arg to
-  // .replace() would interpret $&/$$/$` etc. in admin-authored descriptions.
-  return WORK_ORDER_PROMPT.replace(
-    "## DEPARTMENT",
-    () => `${section}## DEPARTMENT`,
-  );
 }

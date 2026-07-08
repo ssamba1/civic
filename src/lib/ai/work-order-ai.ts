@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { AI_TIMEOUT_MS, GEMINI_MODEL } from "@/lib/ai/config";
 import { withRetry } from "@/lib/ai/retry";
-import type { CityCrewType } from "@/lib/crew-types";
+import { type CrewTypeDef, DEFAULT_CREW_TYPES } from "@/lib/crew-types";
 import { serverEnv } from "@/lib/env";
 import type { Classification, Department, Result } from "@/lib/types";
 import { buildWorkOrderPrompt, WORK_ORDER_SYSTEM_PROMPT } from "./prompt";
@@ -22,8 +22,8 @@ import {
  */
 export interface AiGeneratedWorkOrder {
   department: Department;
-  // string, not the CrewType union: cities can define custom crew types
-  // (city_crew_types) that the AI generator may emit.
+  /** A key from the city's crew_types catalog (or a default key), not the
+   *  static CrewType union — cities define their own types (031). */
   crew_type: string | null;
   est_minutes: number;
   materials: string[];
@@ -53,7 +53,7 @@ function stripCodeFences(raw: string): string {
  */
 export async function generateWorkOrderAI(
   classification: Classification,
-  customTypes: CityCrewType[] = [],
+  crewTypes: CrewTypeDef[] = DEFAULT_CREW_TYPES,
 ): Promise<Result<AiGeneratedWorkOrder>> {
   const rateCheck = checkAndRecordGeminiCall();
   if (!rateCheck.allowed) {
@@ -63,12 +63,10 @@ export async function generateWorkOrderAI(
     };
   }
 
-  // Per-call artifacts: zero custom types reproduces the static
-  // GEMINI_WORK_ORDER_SCHEMA / aiWorkOrderSchema / WORK_ORDER_PROMPT exactly —
-  // the zero-drift guarantee for cities with no custom crew types.
-  const customNames = customTypes.map((t) => t.name);
-  const responseSchema = buildGeminiWorkOrderSchema(customNames);
-  const workOrderSchema = buildAiWorkOrderSchema(customNames);
+  // Guard here (not just in the schema builders) so the prompt menu and the
+  // response enum always describe the same list.
+  const effectiveTypes = crewTypes.length > 0 ? crewTypes : DEFAULT_CREW_TYPES;
+  const crewTypeKeys = effectiveTypes.map((t) => t.key);
 
   try {
     const genAI = new GoogleGenerativeAI(serverEnv.GEMINI_API_KEY);
@@ -77,12 +75,12 @@ export async function generateWorkOrderAI(
       systemInstruction: WORK_ORDER_SYSTEM_PROMPT,
       generationConfig: {
         responseMimeType: "application/json",
-        responseSchema,
+        responseSchema: buildGeminiWorkOrderSchema(crewTypeKeys),
       },
     });
 
     // The classification is the entire context — append it as compact JSON.
-    const request = `${buildWorkOrderPrompt(customTypes)}
+    const request = `${buildWorkOrderPrompt(effectiveTypes)}
 
 ## CLASSIFICATION
 ${JSON.stringify(
@@ -116,7 +114,7 @@ ${JSON.stringify(
       };
     }
 
-    const validation = workOrderSchema.safeParse(parsed);
+    const validation = buildAiWorkOrderSchema(crewTypeKeys).safeParse(parsed);
     if (!validation.success) {
       return {
         ok: false,

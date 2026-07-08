@@ -11,8 +11,8 @@ import SubmissionConfirmation from "@/components/report/submission-confirmation"
 import { ASYNC_CLASSIFY } from "@/lib/ai/config";
 import { createBrowserSupabase } from "@/lib/db/browser-client";
 import { blurFacesAndPlates } from "@/lib/privacy/blur";
-import { computeAHash } from "@/lib/utils/phash";
 import type { Classification } from "@/lib/types";
+import { computeAHash } from "@/lib/utils/phash";
 import type { DuplicateCandidate } from "./actions";
 import {
   checkPotentialDuplicate,
@@ -275,7 +275,9 @@ export default function ReportPage() {
         return;
       }
 
-      const phash = await computeAHash(`data:image/webp;base64,${photoBlurred}`);
+      const phash = await computeAHash(
+        `data:image/webp;base64,${photoBlurred}`,
+      );
 
       if (location) {
         const dupResult = await checkPotentialDuplicate({
@@ -301,7 +303,14 @@ export default function ReportPage() {
         }
       }
 
-      await doSubmit(photo, photoBlurred, photoOriginal, phash, description, tags);
+      await doSubmit(
+        photo,
+        photoBlurred,
+        photoOriginal,
+        phash,
+        description,
+        tags,
+      );
     },
     [step, location, doSubmit],
   );
@@ -316,9 +325,17 @@ export default function ReportPage() {
 
   const handleDenyDuplicate = useCallback(async () => {
     if (step.name !== "duplicate_check") return;
-    const { photo, photoBlurred, photoOriginal, phash, description, tags } = step;
+    const { photo, photoBlurred, photoOriginal, phash, description, tags } =
+      step;
     setStep({ name: "submitting", photo });
-    await doSubmit(photo, photoBlurred, photoOriginal, phash, description, tags);
+    await doSubmit(
+      photo,
+      photoBlurred,
+      photoOriginal,
+      phash,
+      description,
+      tags,
+    );
   }, [step, doSubmit]);
 
   const handleEmergencyOverride = useCallback(() => {
@@ -548,7 +565,15 @@ export default function ReportPage() {
       {step.name === "confirming_link" && (
         <DuplicateCheck
           newPhotoDataUrl=""
-          candidate={{ id: step.primaryReportId, photo_public_url: "", address: null, category: null, created_at: new Date().toISOString(), distance_m: 0, score: 1 }}
+          candidate={{
+            id: step.primaryReportId,
+            photo_public_url: "",
+            address: null,
+            category: null,
+            created_at: new Date().toISOString(),
+            distance_m: 0,
+            score: 1,
+          }}
           onConfirm={() => {}}
           onDeny={() => {}}
           confirming={true}
@@ -566,12 +591,17 @@ export default function ReportPage() {
               stroke="currentColor"
               aria-hidden="true"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4.5 12.75l6 6 9-13.5"
+              />
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-foreground">Thanks!</h1>
           <p className="text-base text-faint">
-            Your sighting has been noted and will boost the priority of the existing report so staff address it sooner.
+            Your sighting has been noted and will boost the priority of the
+            existing report so staff address it sooner.
           </p>
         </div>
       )}

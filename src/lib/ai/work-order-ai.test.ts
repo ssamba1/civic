@@ -147,7 +147,8 @@ describe("generateWorkOrderAI", () => {
 
   const CUSTOM_TYPES = [
     {
-      name: "street_lights",
+      key: "street_lights",
+      label: "Street Lights",
       description:
         "Dedicated crew handling street light outages, pole replacement, and municipal lighting maintenance across the city.",
     },

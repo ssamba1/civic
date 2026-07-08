@@ -30,8 +30,8 @@ export default async function MyReportsPage() {
           {cityName}&apos;s community reports
         </h1>
         <p className="mt-3 text-sm text-subtle">
-          Everything the community has flagged, and where each one stands.
-          Tap a report to see its full timeline.
+          Everything the community has flagged, and where each one stands. Tap a
+          report to see its full timeline.
         </p>
       </section>
 

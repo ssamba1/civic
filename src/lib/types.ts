@@ -1,5 +1,3 @@
-import type { BuiltInCrewType } from "@/lib/crew-types";
-
 export type Result<T, E = string> =
   | { ok: true; data: T }
   | { ok: false; error: E };
@@ -40,8 +38,14 @@ export type Department =
   | "sanitation"
   | "other";
 
-/** Built-in crew type union (custom city crew types are plain strings). */
-export type CrewType = BuiltInCrewType;
+export type CrewType =
+  | "paving"
+  | "line_crew"
+  | "sign_crew"
+  | "cleanup"
+  | "concrete"
+  | "arborist"
+  | "drain_crew";
 
 export interface Classification {
   category: ReportCategory;
@@ -133,8 +137,8 @@ export interface WorkOrder {
   id: string;
   report_id: string;
   department: Department;
-  // string, not the CrewType union: cities can define custom crew types
-  // (city_crew_types) that the AI generator may emit.
+  /** Crew-type key. Usually one of the CrewType defaults, but cities define
+   *  their own catalog (crew_types, migration 031) — so plain string. */
   crew_type: string | null;
   priority_score: number;
   est_minutes: number | null;

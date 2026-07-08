@@ -4,6 +4,8 @@ import { after } from "next/server";
 // Reuse the canonical 12-category enum so staff overrides aren't limited to the
 // original 8-item local list (adds debris/drainage/faded_signage/other).
 import { classificationSchema } from "@/lib/ai/classification-schema";
+import { AI_CREW_ASSIGN } from "@/lib/ai/config";
+import { autoAssignCrew } from "@/lib/ai/crew-assign";
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
@@ -555,7 +557,7 @@ export async function overrideClassification(
         staff.city_id,
         parsed.data,
       );
-      const { error: rerouteError } = await supabase
+      const { data: rerouted, error: rerouteError } = await supabase
         .from("work_orders")
         .update({
           department: routed.department,
@@ -564,11 +566,43 @@ export async function overrideClassification(
           materials: routed.materials,
           team_key: teamKey,
         })
-        .eq("report_id", reportId);
-      if (rerouteError)
+        .eq("report_id", reportId)
+        .select("id, assigned_crew_id")
+        .maybeSingle();
+      if (rerouteError) {
         logger.error("work order reroute after override failed", rerouteError, {
           reportId,
         });
+      } else if (AI_CREW_ASSIGN && rerouted) {
+        // Keep the crew assignment coherent with the new routing. A crew from
+        // the OLD division is stale by construction — clear it (also when the
+        // new category has no crew type at all, e.g. 'other'); a same-team
+        // crew was a deliberate staff pick and is kept. autoAssignCrew only
+        // writes into a null slot, so it fills the cleared (or never-set)
+        // assignment and never overrides a retained one.
+        if (rerouted.assigned_crew_id) {
+          const { data: crew } = await supabase
+            .from("crews")
+            .select("team_key")
+            .eq("id", rerouted.assigned_crew_id)
+            .maybeSingle();
+          if (crew && crew.team_key !== teamKey) {
+            await supabase
+              .from("work_orders")
+              .update({ assigned_crew_id: null })
+              .eq("id", rerouted.id);
+          }
+        }
+        if (routed.crew_type) {
+          await autoAssignCrew(supabase, {
+            workOrderId: rerouted.id,
+            cityId: staff.city_id,
+            teamKey,
+            crewType: routed.crew_type,
+            log: logger,
+          });
+        }
+      }
     } catch (err) {
       logger.error("work order reroute threw after override", err, {
         reportId,

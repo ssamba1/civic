@@ -48,7 +48,9 @@ export function roleRequiresTeam(role: MemberRole): boolean {
 const TEAM_OPTIONS = TEAM_LIST.filter((t) => t.id !== "all");
 
 // Server-action error codes → human sentences. Unknown codes fall back to a
-// generic line so a new server-side error never surfaces as a raw token.
+// generic line so a new server-side error never surfaces as a raw token. The
+// map covers the union across every humanizeMemberError caller (invite/edit
+// member, crews panel, crew-types panel).
 const ERROR_COPY: Record<string, string> = {
   email_already_member: "That email is already a member.",
   cannot_change_own_role: "You can't change your own role.",
@@ -73,17 +75,14 @@ const ERROR_COPY: Record<string, string> = {
   crew_update_failed: "Couldn't update the crew. Please try again.",
   crew_delete_failed: "Couldn't delete the crew. Please try again.",
   crew_members_failed: "Couldn't save the crew roster. Please try again.",
-  // Crew-type management + invite-flow codes (crew-type create/lookup, invite send).
-  unknown_crew_type:
-    "That crew type no longer exists — pick another or create it again.",
-  crew_type_check_failed: "Couldn't verify the crew type — please try again.",
-  invalid_type_name:
-    "Type names are 2-40 characters: letters, numbers, spaces.",
-  crew_type_reserved: "That's a built-in type — pick it from the list instead.",
+  // Crew-type catalog codes (saveCrewType / deleteCrewType).
   type_description_too_short:
     "Describe what this crew does in at least 10 words.",
-  crew_type_taken: "This city already has a crew type with that name.",
-  crew_type_create_failed: "Couldn't create the crew type. Please try again.",
+  crew_type_key_taken: "This city already has a crew type with that name.",
+  crew_type_save_failed: "Couldn't save the crew type. Please try again.",
+  crew_type_not_found: "That crew type no longer exists.",
+  crew_type_delete_failed: "Couldn't delete the crew type. Please try again.",
+  // Invite-flow codes.
   invite_failed: "Couldn't send the invite. Please try again.",
   member_row_failed: "The invite was sent but the profile failed — try again.",
 };
@@ -157,6 +156,12 @@ export interface CrewOption {
   teamKey: string;
   name: string;
   crewType: string | null;
+  /** Display label from the city's crew_types catalog; falls back to the raw
+   *  key when the catalog has no row (orphan key or pre-031 DB). */
+  crewTypeLabel?: string | null;
+  /** Catalog description — surfaced as a tooltip so the inviter knows what
+   *  kind of work they're assigning someone to. */
+  crewTypeDescription?: string | null;
 }
 
 /**
@@ -209,8 +214,11 @@ export function CrewChecklist({
                 />
                 <span className="min-w-0 truncate">{c.name}</span>
                 {c.crewType && (
-                  <span className="ml-auto flex-shrink-0 text-[11px] text-faint">
-                    {c.crewType.replace(/_/g, " ")}
+                  <span
+                    className="ml-auto flex-shrink-0 rounded-md border border-hairline bg-overlay-strong px-1.5 py-0.5 text-[11px] text-faint"
+                    title={c.crewTypeDescription ?? undefined}
+                  >
+                    {c.crewTypeLabel ?? c.crewType.replace(/_/g, " ")}
                   </span>
                 )}
               </label>

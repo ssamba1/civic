@@ -1,17 +1,17 @@
 // src/lib/crew-types.test.ts
 import { describe, expect, it } from "vitest";
 import {
-  BUILT_IN_CREW_TYPES,
+  type CrewTypeDef,
   crewTypeLabel,
+  DEFAULT_CREW_TYPES,
   descriptionWordCount,
-  isBuiltInCrewType,
   MIN_TYPE_DESCRIPTION_WORDS,
-  normalizeCrewTypeName,
+  normalizeCrewTypeKey,
 } from "./crew-types";
 
-describe("BUILT_IN_CREW_TYPES", () => {
-  it("contains exactly the 7 AI labor types", () => {
-    expect([...BUILT_IN_CREW_TYPES]).toEqual([
+describe("DEFAULT_CREW_TYPES", () => {
+  it("seeds exactly the 7 AI labor types", () => {
+    expect(DEFAULT_CREW_TYPES.map((t) => t.key)).toEqual([
       "paving",
       "line_crew",
       "sign_crew",
@@ -21,31 +21,30 @@ describe("BUILT_IN_CREW_TYPES", () => {
       "drain_crew",
     ]);
   });
+  it("every seed has a non-empty label and description", () => {
+    for (const t of DEFAULT_CREW_TYPES) {
+      expect(t.label.length).toBeGreaterThan(0);
+      expect(t.description.length).toBeGreaterThan(0);
+    }
+  });
 });
 
-describe("normalizeCrewTypeName", () => {
+describe("normalizeCrewTypeKey", () => {
   it("lowercases, trims, and snake_cases spaces", () => {
-    expect(normalizeCrewTypeName("  Street Lights ")).toBe("street_lights");
+    expect(normalizeCrewTypeKey("  Street Lights ")).toBe("street_lights");
   });
   it("collapses runs of whitespace/underscores", () => {
-    expect(normalizeCrewTypeName("street   __ lights")).toBe("street_lights");
+    expect(normalizeCrewTypeKey("street   __ lights")).toBe("street_lights");
+  });
+  it("strips leading/trailing underscores", () => {
+    expect(normalizeCrewTypeKey("_foo_")).toBe("foo");
   });
   it("returns null for invalid input", () => {
-    expect(normalizeCrewTypeName("")).toBeNull();
-    expect(normalizeCrewTypeName("a")).toBeNull(); // too short
-    expect(normalizeCrewTypeName("has!bang")).toBeNull(); // bad char
-    expect(normalizeCrewTypeName("x".repeat(41))).toBeNull(); // too long
-  });
-  it("strips leading/trailing underscores and rejects all-underscore", () => {
-    expect(normalizeCrewTypeName("_foo_")).toBe("foo");
-    expect(normalizeCrewTypeName("___")).toBeNull();
-  });
-});
-
-describe("isBuiltInCrewType", () => {
-  it("recognizes built-ins and rejects customs", () => {
-    expect(isBuiltInCrewType("paving")).toBe(true);
-    expect(isBuiltInCrewType("street_lights")).toBe(false);
+    expect(normalizeCrewTypeKey("")).toBeNull();
+    expect(normalizeCrewTypeKey("a")).toBeNull(); // too short (1 char)
+    expect(normalizeCrewTypeKey("has!bang")).toBeNull(); // bad char
+    expect(normalizeCrewTypeKey("x".repeat(41))).toBeNull(); // too long
+    expect(normalizeCrewTypeKey("___")).toBeNull(); // all-underscore → empty
   });
 });
 
@@ -66,8 +65,23 @@ describe("descriptionWordCount", () => {
 });
 
 describe("crewTypeLabel", () => {
-  it("renders underscores as spaces", () => {
-    expect(crewTypeLabel("line_crew")).toBe("line crew");
-    expect(crewTypeLabel("street_lights")).toBe("street lights");
+  const catalog: CrewTypeDef[] = [
+    { key: "street_lights", label: "Street Lights", description: "" },
+    { key: "night_paving", label: "Night Paving", description: "" },
+  ];
+
+  it("resolves against the default catalog", () => {
+    expect(crewTypeLabel("paving")).toBe("Paving");
+    expect(crewTypeLabel("line_crew")).toBe("Line Crew");
+  });
+  it("resolves against a supplied catalog", () => {
+    expect(crewTypeLabel("street_lights", catalog)).toBe("Street Lights");
+  });
+  it("falls back to the raw key for orphans not in the catalog", () => {
+    expect(crewTypeLabel("gone_key", catalog)).toBe("gone_key");
+  });
+  it("returns null for a null key", () => {
+    expect(crewTypeLabel(null)).toBeNull();
+    expect(crewTypeLabel(null, catalog)).toBeNull();
   });
 });

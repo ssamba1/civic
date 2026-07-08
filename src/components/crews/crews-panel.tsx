@@ -6,8 +6,8 @@ import { useId, useMemo, useState, useTransition } from "react";
 import { inviteMember } from "@/app/city/[slug]/members/actions";
 import {
   createCrew,
-  createCrewType,
   deleteCrew,
+  saveCrewType,
   setCrewMembers,
   updateCrew,
 } from "@/app/city/[slug]/members/crew-actions";
@@ -20,12 +20,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { MenuSelect } from "@/components/ui/menu-select";
 import {
-  BUILT_IN_CREW_TYPES,
-  type CityCrewType,
-  crewTypeLabel,
+  type CrewTypeDef,
+  DEFAULT_CREW_TYPES,
   descriptionWordCount,
   MIN_TYPE_DESCRIPTION_WORDS,
-  normalizeCrewTypeName,
+  normalizeCrewTypeKey,
 } from "@/lib/crew-types";
 import type { CrewRow } from "@/lib/db/crews";
 import { isValidTeamId, TEAM_LIST, TEAMS } from "@/lib/teams";
@@ -54,6 +53,12 @@ const FIELD_LABEL_CLASS = "text-[12px] font-medium text-subtle";
 
 const TEAM_OPTIONS = TEAM_LIST.filter((t) => t.id !== "all");
 
+/** Catalog label for a type key; orphan keys (deleted catalog row) fall back
+ *  to a humanized raw key so the crew still renders honestly. */
+function typeLabel(key: string, crewTypes: CrewTypeDef[]): string {
+  return crewTypes.find((t) => t.key === key)?.label ?? key.replace(/_/g, " ");
+}
+
 function teamShortLabel(teamKey: string): string {
   return isValidTeamId(teamKey) ? TEAMS[teamKey].shortLabel : teamKey;
 }
@@ -68,13 +73,15 @@ export function CrewsPanel({
   crews,
   members,
   canManage,
-  crewTypes,
+  crewTypes = DEFAULT_CREW_TYPES,
 }: {
   slug: string;
   crews: CrewRow[];
   members: CrewCandidate[];
   canManage: boolean;
-  crewTypes: CityCrewType[];
+  /** The city's crew-type catalog (031) — feeds the type select and the type
+   *  badges. Defaults to the built-in list for pre-031 DBs. */
+  crewTypes?: CrewTypeDef[];
 }) {
   const [dialog, setDialog] = useState<DialogState>(null);
 
@@ -185,13 +192,19 @@ export function CrewsPanel({
                       )}
                     </div>
                     {crew.crewType && (
-                      <span className="w-fit rounded-md border border-hairline bg-overlay px-1.5 py-0.5 text-[11px] font-medium text-subtle">
-                        {crewTypeLabel(crew.crewType)}
+                      <span
+                        className="w-fit rounded-md border border-hairline bg-overlay px-1.5 py-0.5 text-[11px] font-medium text-subtle"
+                        title={
+                          crewTypes.find((t) => t.key === crew.crewType)
+                            ?.description
+                        }
+                      >
+                        {typeLabel(crew.crewType, crewTypes)}
                       </span>
                     )}
                     <div className="text-[12px] leading-relaxed text-faint">
                       {crew.members.length === 0
-                        ? "No one assigned"
+                        ? "No members yet — work can still route here"
                         : crew.members.map((m, i) => (
                             <span key={m.userId}>
                               {i > 0 && ", "}
@@ -246,7 +259,7 @@ function CrewDialog({
   slug: string;
   state: NonNullable<DialogState>;
   members: CrewCandidate[];
-  crewTypes: CityCrewType[];
+  crewTypes: CrewTypeDef[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -271,9 +284,10 @@ function CrewDialog({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Inline "New type…" sub-form: an admin can mint a custom crew type without
-  // leaving the dialog. Created types join the dropdown for this session
-  // (localTypes) and persist server-side for the next open.
-  const [localTypes, setLocalTypes] = useState<CityCrewType[]>([]);
+  // leaving the dialog. Created types persist server-side (saveCrewType) and
+  // join the dropdown for this session (localTypes) so they're immediately
+  // selectable before the page refetches.
+  const [localTypes, setLocalTypes] = useState<CrewTypeDef[]>([]);
   const [typeFormOpen, setTypeFormOpen] = useState(false);
   const [newTypeName, setNewTypeName] = useState("");
   const [newTypeDesc, setNewTypeDesc] = useState("");
@@ -309,36 +323,32 @@ function CrewDialog({
     ];
   }, [members, invited, teamKey]);
 
-  // Dropdown options: the built-ins, then this city's custom types (server +
-  // session-created, de-duped by name), then the current value if it's since
-  // unknown — its row was deleted after the crew was typed — so editing a crew
-  // never silently drops its own type.
+  // Dropdown options: the city's catalog (prop) plus any type created in this
+  // session (localTypes), de-duped by key; then the current value if it's now
+  // unknown — its catalog row was deleted after the crew was typed — so editing
+  // a crew never silently drops its own type.
   const typeOptions = useMemo(() => {
     const seen = new Set<string>();
     const opts: { value: string; label: string; hint?: string }[] = [];
-    for (const t of BUILT_IN_CREW_TYPES) {
-      seen.add(t);
-      opts.push({ value: t, label: crewTypeLabel(t) });
-    }
     for (const t of [...crewTypes, ...localTypes]) {
-      if (seen.has(t.name)) continue;
-      seen.add(t.name);
-      opts.push({
-        value: t.name,
-        label: crewTypeLabel(t.name),
-        hint: t.description,
-      });
+      if (seen.has(t.key)) continue;
+      seen.add(t.key);
+      opts.push({ value: t.key, label: t.label, hint: t.description });
     }
     if (crewType && !seen.has(crewType))
-      opts.push({ value: crewType, label: crewTypeLabel(crewType) });
+      opts.push({
+        value: crewType,
+        label: typeLabel(crewType, crewTypes),
+        hint: "removed type",
+      });
     return opts;
   }, [crewTypes, localTypes, crewType]);
 
-  // Gate for adding a custom type. normalizeCrewTypeName also rejects
-  // invalid-character names pre-submit, matching the server's invalid_type_name
-  // guard (and covering the >=2-char rule the old length check enforced).
+  // Gate for adding a custom type: a name that normalizes to a valid key and a
+  // description that meets the AI-routing word minimum (the same checks the
+  // server's create path enforces).
   const canAddType =
-    normalizeCrewTypeName(newTypeName) !== null &&
+    normalizeCrewTypeKey(newTypeName) !== null &&
     descriptionWordCount(newTypeDesc) >= MIN_TYPE_DESCRIPTION_WORDS;
 
   // Both fields required. Also gates the guard in handleInvite so a bare Enter
@@ -348,12 +358,19 @@ function CrewDialog({
 
   function handleAddType() {
     if (!canAddType || typePending) return;
+    const key = normalizeCrewTypeKey(newTypeName);
+    if (!key) return;
+    const label = newTypeName.trim();
+    const description = newTypeDesc.trim();
     setTypeError(null);
     startTypeTransition(async () => {
-      const res = await createCrewType({
+      const res = await saveCrewType({
         slug,
-        name: newTypeName,
-        description: newTypeDesc.trim(),
+        id: null,
+        key,
+        label,
+        description,
+        active: true,
       });
       if (!res.ok) {
         setTypeError(humanizeMemberError(res.error));
@@ -361,11 +378,8 @@ function CrewDialog({
       }
       // Append the freshly-created type so it's immediately selectable, then
       // select it and reset the sub-form.
-      setLocalTypes((prev) => [
-        ...prev,
-        { name: res.name, description: res.description },
-      ]);
-      setCrewType(res.name);
+      setLocalTypes((prev) => [...prev, { key, label, description }]);
+      setCrewType(key);
       setTypeFormOpen(false);
       setNewTypeName("");
       setNewTypeDesc("");
@@ -614,6 +628,7 @@ function CrewDialog({
                 onChange={(e) => setNewTypeDesc(e.target.value)}
                 placeholder="What does this crew do? The AI uses this to route matching work orders here."
                 rows={3}
+                maxLength={500}
                 className={cn(
                   CONTROL_CLASS,
                   "h-auto min-h-[72px] resize-y py-2",
@@ -660,7 +675,8 @@ function CrewDialog({
             <legend className={FIELD_LABEL_CLASS}>
               Members{" "}
               <span className="font-normal text-faint">
-                (from {teamShortLabel(teamKey)})
+                (from {teamShortLabel(teamKey)} — optional; create the crew now
+                and staff it later, work can still route here)
               </span>
             </legend>
             {candidates.length === 0 ? (
