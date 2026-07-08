@@ -107,10 +107,10 @@ export default function DuplicateCheck({
             Your photo
           </p>
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-800">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {/* biome-ignore lint/performance/noImgElement: in-browser data URL, not a remote asset next/image can optimize. */}
             <img
               src={newPhotoDataUrl}
-              alt="Your photo"
+              alt="What you just captured"
               className="h-full w-full object-cover"
             />
           </div>
@@ -135,6 +135,7 @@ export default function DuplicateCheck({
                 className="h-4 w-4 animate-spin"
                 fill="none"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <circle
                   className="opacity-25"
