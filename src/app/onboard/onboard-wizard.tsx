@@ -605,8 +605,7 @@ function CityStep({
 
         {city.geoDisplay && (
           <p className="text-xs text-subtle">
-            Located:{" "}
-            <span className="text-foreground">{city.geoDisplay}</span>
+            Located: <span className="text-foreground">{city.geoDisplay}</span>
           </p>
         )}
       </div>
@@ -625,7 +624,9 @@ function SlugAvailability({
   check: SlugState;
   onPick: (slug: string) => void;
 }) {
-  const addr = <span className="font-medium text-foreground">/city/{slug}</span>;
+  const addr = (
+    <span className="font-medium text-foreground">/city/{slug}</span>
+  );
 
   if (check.status === "checking" || check.status === "idle") {
     return (

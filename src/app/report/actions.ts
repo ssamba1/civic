@@ -80,8 +80,15 @@ export async function submitReport(
   if (!parsed.success) {
     return { ok: false, error: z.prettifyError(parsed.error) };
   }
-  const { photoBlurred, photoOriginal, location, address, description, tags, phash } =
-    parsed.data;
+  const {
+    photoBlurred,
+    photoOriginal,
+    location,
+    address,
+    description,
+    tags,
+    phash,
+  } = parsed.data;
 
   // reports.location is NOT NULL geography(POINT,4326). When GPS is unavailable,
   // fall back to the demo city center so submission never dead-ends.
@@ -417,8 +424,7 @@ export async function checkPotentialDuplicate(params: {
           : 0
         : 0.5;
 
-    const score =
-      0.5 * locationScore + 0.3 * visualScore + 0.2 * categoryScore;
+    const score = 0.5 * locationScore + 0.3 * visualScore + 0.2 * categoryScore;
 
     if (score >= 0.5) {
       candidates.push({
@@ -451,7 +457,10 @@ export async function linkAsDuplicate(
     _delta: 1,
   });
   if (error) {
-    logger.warn("linkAsDuplicate: bump failed", { error: error.message, primaryReportId });
+    logger.warn("linkAsDuplicate: bump failed", {
+      error: error.message,
+      primaryReportId,
+    });
   }
   return { ok: true, data: undefined };
 }
