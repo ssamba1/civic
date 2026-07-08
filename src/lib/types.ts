@@ -137,7 +137,9 @@ export interface WorkOrder {
   id: string;
   report_id: string;
   department: Department;
-  crew_type: CrewType | null;
+  /** Crew-type key. Usually one of the CrewType defaults, but cities define
+   *  their own catalog (crew_types, migration 031) — so plain string. */
+  crew_type: string | null;
   priority_score: number;
   est_minutes: number | null;
   materials: string[] | null;

@@ -12,6 +12,9 @@ import { runClassifyPipeline } from "./classify-pipeline";
 // never touch the network or a real Supabase. Logger is mocked to kill the
 // Sentry side-effect (the only env/network risk left in the import graph).
 // generateWorkOrder + sniffImageMime run for real — they are pure.
+// "server-only" throws outside an RSC environment; the pipeline now imports
+// db/crew-types (031 catalog) which carries that guard.
+vi.mock("server-only", () => ({}));
 vi.mock("@/lib/db/client", () => ({ createServerClient: vi.fn() }));
 vi.mock("@/lib/ai/gemini", () => ({ classifyPhoto: vi.fn() }));
 vi.mock("@/lib/ai/dedup", () => ({ findDuplicate: vi.fn() }));

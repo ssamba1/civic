@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { CrewTypesPanel } from "@/components/crews/crew-types-panel";
 import { type CrewCandidate, CrewsPanel } from "@/components/crews/crews-panel";
 import { InviteMemberModal } from "@/components/members/invite-member-modal";
 import type { CrewOption } from "@/components/members/member-modal";
 import { MembersTable } from "@/components/members/members-table";
+import { type CrewTypeDef, DEFAULT_CREW_TYPES } from "@/lib/crew-types";
 import { fetchCity as fetchCityMock } from "@/lib/dashboard-data";
 import { fetchCity as fetchCityFromDb } from "@/lib/dashboard-queries";
+import { fetchCityCrewTypes } from "@/lib/db/crew-types";
 import { fetchCityCrews } from "@/lib/db/crews";
 import {
   type CityMembersResult,
@@ -92,11 +95,36 @@ export default async function CityMembersPage({ params }: PageProps) {
   // the invite/edit dialogs. Degrades to empty (e.g. before migration 030).
   const crewsResult = dbCity ? await fetchCityCrews(dbCity.id) : null;
   const crews = crewsResult?.ok ? crewsResult.crews : [];
+
+  // Crew-type catalog (031). When unreadable (pre-031 DB) the panels fall
+  // back to the built-in defaults and type editing is disabled.
+  const crewTypesResult = dbCity ? await fetchCityCrewTypes(dbCity.id) : null;
+  const crewTypeCatalogAvailable = crewTypesResult?.ok ?? false;
+  const crewTypeRows = crewTypesResult?.ok ? crewTypesResult.types : [];
+  const activeCrewTypes: CrewTypeDef[] =
+    crewTypeCatalogAvailable && crewTypeRows.some((t) => t.active)
+      ? crewTypeRows
+          .filter((t) => t.active)
+          .map(({ key, label, description }) => ({ key, label, description }))
+      : DEFAULT_CREW_TYPES;
+  const typeByKey = new Map(
+    (crewTypeCatalogAvailable ? crewTypeRows : DEFAULT_CREW_TYPES).map((t) => [
+      t.key,
+      t,
+    ]),
+  );
+
   const crewOptions: CrewOption[] = crews.map((c) => ({
     id: c.id,
     teamKey: c.teamKey,
     name: c.name,
     crewType: c.crewType,
+    crewTypeLabel: c.crewType
+      ? (typeByKey.get(c.crewType)?.label ?? null)
+      : null,
+    crewTypeDescription: c.crewType
+      ? (typeByKey.get(c.crewType)?.description ?? null)
+      : null,
   }));
   const crewCandidates: CrewCandidate[] = members.map((m) => ({
     id: m.id,
@@ -145,6 +173,13 @@ export default async function CityMembersPage({ params }: PageProps) {
               crews={crews}
               members={crewCandidates}
               canManage={canManage}
+              crewTypes={activeCrewTypes}
+            />
+            <CrewTypesPanel
+              slug={slug}
+              types={crewTypeRows}
+              canManage={canManage}
+              catalogAvailable={crewTypeCatalogAvailable}
             />
           </>
         ) : (

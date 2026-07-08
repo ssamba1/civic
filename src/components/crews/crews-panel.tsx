@@ -16,6 +16,7 @@ import {
   MemberModalShell,
 } from "@/components/members/member-modal";
 import { Button } from "@/components/ui/button";
+import { type CrewTypeDef, DEFAULT_CREW_TYPES } from "@/lib/crew-types";
 import type { CrewRow } from "@/lib/db/crews";
 import { isValidTeamId, TEAM_LIST, TEAMS } from "@/lib/teams";
 
@@ -40,21 +41,13 @@ export interface CrewCandidate {
 
 const FIELD_LABEL_CLASS = "text-[12px] font-medium text-subtle";
 
-// Crew labor types the AI emits (CrewType union) — offered as an optional tag
-// so dispatch can auto-suggest this crew for matching work orders.
-const CREW_TYPE_OPTIONS = [
-  "paving",
-  "line_crew",
-  "sign_crew",
-  "cleanup",
-  "concrete",
-  "arborist",
-  "drain_crew",
-] as const;
-
 const TEAM_OPTIONS = TEAM_LIST.filter((t) => t.id !== "all");
 
-const typeLabel = (t: string) => t.replace(/_/g, " ");
+/** Catalog label for a type key; orphan keys (deleted catalog row) fall back
+ *  to a humanized raw key so the crew still renders honestly. */
+function typeLabel(key: string, crewTypes: CrewTypeDef[]): string {
+  return crewTypes.find((t) => t.key === key)?.label ?? key.replace(/_/g, " ");
+}
 
 function teamShortLabel(teamKey: string): string {
   return isValidTeamId(teamKey) ? TEAMS[teamKey].shortLabel : teamKey;
@@ -70,11 +63,15 @@ export function CrewsPanel({
   crews,
   members,
   canManage,
+  crewTypes = DEFAULT_CREW_TYPES,
 }: {
   slug: string;
   crews: CrewRow[];
   members: CrewCandidate[];
   canManage: boolean;
+  /** The city's crew-type catalog (031) — feeds the type select and the type
+   *  badges. Defaults to the built-in list for pre-031 DBs. */
+  crewTypes?: CrewTypeDef[];
 }) {
   const [dialog, setDialog] = useState<DialogState>(null);
 
@@ -185,13 +182,19 @@ export function CrewsPanel({
                       )}
                     </div>
                     {crew.crewType && (
-                      <span className="w-fit rounded-md border border-hairline bg-overlay px-1.5 py-0.5 text-[11px] font-medium text-subtle">
-                        {typeLabel(crew.crewType)}
+                      <span
+                        className="w-fit rounded-md border border-hairline bg-overlay px-1.5 py-0.5 text-[11px] font-medium text-subtle"
+                        title={
+                          crewTypes.find((t) => t.key === crew.crewType)
+                            ?.description
+                        }
+                      >
+                        {typeLabel(crew.crewType, crewTypes)}
                       </span>
                     )}
                     <div className="text-[12px] leading-relaxed text-faint">
                       {crew.members.length === 0
-                        ? "No one assigned"
+                        ? "No members yet — work can still route here"
                         : crew.members.map((m, i) => (
                             <span key={m.userId}>
                               {i > 0 && ", "}
@@ -228,6 +231,7 @@ export function CrewsPanel({
           slug={slug}
           state={dialog}
           members={members}
+          crewTypes={crewTypes}
           onClose={() => setDialog(null)}
         />
       )}
@@ -239,11 +243,13 @@ function CrewDialog({
   slug,
   state,
   members,
+  crewTypes,
   onClose,
 }: {
   slug: string;
   state: NonNullable<DialogState>;
   members: CrewCandidate[];
+  crewTypes: CrewTypeDef[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -436,12 +442,23 @@ function CrewDialog({
                 className={CONTROL_CLASS}
               >
                 <option value="">No type</option>
-                {CREW_TYPE_OPTIONS.map((t) => (
-                  <option key={t} value={t}>
-                    {typeLabel(t)}
+                {crewTypes.map((t) => (
+                  <option key={t.key} value={t.key}>
+                    {t.label}
                   </option>
                 ))}
+                {/* A crew can carry a key whose catalog row was deleted —
+                    keep it selectable so editing doesn't silently drop it. */}
+                {crewType && !crewTypes.some((t) => t.key === crewType) && (
+                  <option value={crewType}>{crewType} (removed type)</option>
+                )}
               </select>
+              {crewType && (
+                <span className="text-[11px] leading-snug text-faint">
+                  {crewTypes.find((t) => t.key === crewType)?.description ??
+                    "This type is no longer in the city's catalog — the AI won't route new work to it."}
+                </span>
+              )}
             </label>
             {editing && (
               <label
@@ -464,7 +481,8 @@ function CrewDialog({
             <legend className={FIELD_LABEL_CLASS}>
               Members{" "}
               <span className="font-normal text-faint">
-                (from {teamShortLabel(teamKey)})
+                (from {teamShortLabel(teamKey)} — optional; create the crew now
+                and staff it later, work can still route here)
               </span>
             </legend>
             {candidates.length === 0 ? (

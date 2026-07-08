@@ -44,13 +44,13 @@ import { createPortal } from "react-dom";
 import { fetchCategoryCostStats } from "@/app/staff/actions";
 import { WorkOrderExplorer } from "@/components/city/work-order-explorer";
 import { teamIcon } from "@/components/teams/team-icon";
+import { DEFAULT_CREW_TYPE_KEYS } from "@/lib/crew-types";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import type { GridCrewOption, GridReportRow } from "@/lib/dashboard-grid-data";
 import { categoryToTeam, TEAMS } from "@/lib/teams";
 import { useTheme } from "@/lib/theme";
 import type {
   CategoryCostStats,
-  CrewType,
   Department,
   ReportCategory,
 } from "@/lib/types";
@@ -99,15 +99,9 @@ const DEPARTMENTS: Department[] = [
   "sanitation",
   "other",
 ];
-const CREWS: CrewType[] = [
-  "paving",
-  "line_crew",
-  "sign_crew",
-  "cleanup",
-  "concrete",
-  "arborist",
-  "drain_crew",
-];
+// Baseline crew-type keys; buildOptions folds in whatever keys the live rows
+// carry, so per-city catalog types (031) appear once any row uses them.
+const CREWS: string[] = DEFAULT_CREW_TYPE_KEYS;
 const STATUSES = [
   "open",
   "dispatched",

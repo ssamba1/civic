@@ -72,6 +72,11 @@ const ERROR_COPY: Record<string, string> = {
   crew_update_failed: "Couldn't update the crew. Please try again.",
   crew_delete_failed: "Couldn't delete the crew. Please try again.",
   crew_members_failed: "Couldn't save the crew roster. Please try again.",
+  // Crew-type catalog codes.
+  crew_type_key_taken: "This city already has a crew type with that key.",
+  crew_type_not_found: "That crew type no longer exists.",
+  crew_type_save_failed: "Couldn't save the crew type. Please try again.",
+  crew_type_delete_failed: "Couldn't delete the crew type. Please try again.",
 };
 
 export function humanizeMemberError(code: string): string {
@@ -152,6 +157,12 @@ export interface CrewOption {
   teamKey: string;
   name: string;
   crewType: string | null;
+  /** Display label from the city's crew_types catalog; falls back to the raw
+   *  key when the catalog has no row (orphan key or pre-031 DB). */
+  crewTypeLabel?: string | null;
+  /** Catalog description — surfaced as a tooltip so the inviter knows what
+   *  kind of work they're assigning someone to. */
+  crewTypeDescription?: string | null;
 }
 
 /**
@@ -204,8 +215,11 @@ export function CrewChecklist({
                 />
                 <span className="min-w-0 truncate">{c.name}</span>
                 {c.crewType && (
-                  <span className="ml-auto flex-shrink-0 text-[11px] text-faint">
-                    {c.crewType.replace(/_/g, " ")}
+                  <span
+                    className="ml-auto flex-shrink-0 rounded-md border border-hairline bg-overlay-strong px-1.5 py-0.5 text-[11px] text-faint"
+                    title={c.crewTypeDescription ?? undefined}
+                  >
+                    {c.crewTypeLabel ?? c.crewType.replace(/_/g, " ")}
                   </span>
                 )}
               </label>
