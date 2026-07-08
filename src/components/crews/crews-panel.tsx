@@ -274,6 +274,7 @@ function CrewDialog({
     editing?.crewType ?? null,
   );
   const [active, setActive] = useState(editing?.active ?? true);
+  const [description, setDescription] = useState(editing?.description ?? "");
   const [roster, setRoster] = useState<string[]>(
     editing ? editing.members.map((m) => m.userId) : [],
   );
@@ -452,6 +453,7 @@ function CrewDialog({
           name: name.trim(),
           crewType,
           active,
+          description: description.trim(),
         });
         if (!res.ok) {
           setError(humanizeMemberError(res.error));
@@ -463,6 +465,7 @@ function CrewDialog({
           teamKey,
           name: name.trim(),
           crewType,
+          description: description.trim(),
         });
         if (!res.ok) {
           setError(humanizeMemberError(res.error));
@@ -599,6 +602,24 @@ function CrewDialog({
               </label>
             )}
           </div>
+
+          <label className="flex flex-col gap-1.5">
+            <span className={FIELD_LABEL_CLASS}>
+              Description{" "}
+              <span className="font-normal text-faint">
+                optional — helps the AI pick between same-type crews
+              </span>
+            </span>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="e.g. North side arterial roads and school zones"
+              rows={2}
+              maxLength={500}
+              className={cn(CONTROL_CLASS, "h-auto min-h-[72px] resize-y py-2")}
+              aria-label="Crew description"
+            />
+          </label>
 
           {typeFormOpen && (
             <div className="flex flex-col gap-2.5 rounded-[var(--radius-md)] border border-hairline bg-overlay p-3">
