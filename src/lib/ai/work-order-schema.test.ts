@@ -59,3 +59,26 @@ describe("buildGeminiWorkOrderSchema", () => {
     expect(schema.required).not.toContain("crew_type");
   });
 });
+
+describe("crew_hint (routing among same-type sibling crews)", () => {
+  const schema = buildAiWorkOrderSchema(["paving"]);
+
+  it("accepts a string, null, or an omitted key (defaults to null)", () => {
+    expect(
+      schema.safeParse({ ...VALID_WO, crew_hint: "North Paving" }).success,
+    ).toBe(true);
+    expect(schema.safeParse({ ...VALID_WO, crew_hint: null }).success).toBe(
+      true,
+    );
+    const omitted = schema.safeParse(VALID_WO);
+    expect(omitted.success).toBe(true);
+    if (omitted.success) expect(omitted.data.crew_hint).toBeNull();
+  });
+
+  it("stays nullable + non-required in the Gemini schema", () => {
+    const gemini = buildGeminiWorkOrderSchema(["paving"]);
+    const hint = gemini.properties?.crew_hint as { nullable?: boolean };
+    expect(hint.nullable).toBe(true);
+    expect(gemini.required).not.toContain("crew_hint");
+  });
+});

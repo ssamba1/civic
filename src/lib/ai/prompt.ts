@@ -100,8 +100,52 @@ export const WORK_ORDER_SYSTEM_PROMPT =
  * table, migration 031) with the admin-written descriptions — the description
  * is what lets the model match "cracked sidewalk panel" to a concrete crew.
  */
+export interface PromptCrew {
+  name: string;
+  crewType: string | null;
+  description: string;
+}
+
+/**
+ * "## CREWS" section — only when some crew type has SIBLING crews (≥2 of the
+ * same type) and at least one of those carries a description to tell them
+ * apart. Solo crews need no hint (the assigner finds them by type alone), and
+ * description-less siblings give the model nothing to choose on — in both
+ * cases the section is omitted and the prompt stays byte-identical to today.
+ */
+function buildCrewSection(crews: readonly PromptCrew[]): string {
+  const byType = new Map<string, PromptCrew[]>();
+  for (const c of crews) {
+    if (!c.crewType) continue;
+    const list = byType.get(c.crewType) ?? [];
+    list.push(c);
+    byType.set(c.crewType, list);
+  }
+  const ambiguous = [...byType.values()].filter(
+    (list) => list.length >= 2 && list.some((c) => c.description.trim() !== ""),
+  );
+  if (ambiguous.length === 0) return "";
+
+  // Deterministic order + a hard cap so a crew-heavy city can't balloon the
+  // prompt. Same whitespace-flattening rationale as the type menu above.
+  const lines = ambiguous
+    .flatMap((list) => list)
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .slice(0, 20)
+    .map((c) => {
+      const desc = c.description.replace(/\s+/g, " ").trim();
+      return `- "${c.name.replace(/\s+/g, " ").trim()}" (${c.crewType})${desc ? ` — ${desc}` : ""}`;
+    });
+  return `
+## CREWS — this city fields multiple crews of the same type
+${lines.join("\n")}
+(When the descriptions clearly indicate which crew covers this problem — by area, specialty, or scope — set crew_hint to that crew's EXACT quoted name. Otherwise set crew_hint to null and dispatch will balance the load.)
+`;
+}
+
 export function buildWorkOrderPrompt(
   crewTypes: readonly { key: string; description: string }[],
+  crews: readonly PromptCrew[] = [],
 ): string {
   // Descriptions are admin-authored free text headed into the prompt — flatten
   // whitespace so a multi-line description can't break out of its list item
@@ -124,7 +168,7 @@ export function buildWorkOrderPrompt(
 ## CREW TYPES AVAILABLE IN THIS CITY — choose the single best match by what the crew does
 ${crewMenu}
 (Use the crew whose description covers the physical repair. Use null only when no listed crew fits, e.g. category "other".)
-
+${buildCrewSection(crews)}
 ## DEPARTMENT — choose the single best match
 public_works · utilities · parks · code_enforcement · sanitation · other
 
@@ -132,6 +176,7 @@ public_works · utilities · parks · code_enforcement · sanitation · other
 {
   "department": "<one of the department strings>",
   "crew_type": "<one of the crew type keys above, or null>",
+  "crew_hint": "<exact crew name from CREWS, or null when no CREWS section / no clear fit>",
   "est_minutes": <integer, realistic time on site>,
   "materials": [ { "item": "<short name>", "qty": <integer ≥ 1> } ],
   "est_cost": <integer USD: labor + materials, rounded>,

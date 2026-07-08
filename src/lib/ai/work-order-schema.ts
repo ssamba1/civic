@@ -35,6 +35,12 @@ export function buildAiWorkOrderSchema(crewTypeKeys: readonly string[]) {
       .string()
       .refine((k) => keys.includes(k), "unknown_crew_type")
       .nullable(),
+    // Free text on purpose (crew names aren't an enum the model must hit):
+    // the pipeline only honors a hint that exactly matches a real crew, so a
+    // hallucinated name degrades to the load balancer, never a bad assignment.
+    // default(null): crew_hint is nullable + non-required in the Gemini schema,
+    // so the model may omit the key entirely — treat absent as "no hint".
+    crew_hint: z.string().nullable().default(null),
     est_minutes: z.number().int().min(0),
     materials: z
       .array(
@@ -79,6 +85,10 @@ export function buildGeminiWorkOrderSchema(
         type: SchemaType.STRING,
         format: "enum",
         enum: effectiveKeys(crewTypeKeys),
+        nullable: true,
+      },
+      crew_hint: {
+        type: SchemaType.STRING,
         nullable: true,
       },
       est_minutes: { type: SchemaType.INTEGER },
