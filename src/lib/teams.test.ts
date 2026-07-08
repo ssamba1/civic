@@ -1,0 +1,134 @@
+// @vitest-environment node
+import { describe, expect, it, vi } from "vitest";
+
+// categoryToTeam reads getCategoryOverridesSnapshot — mock it so tests are deterministic
+vi.mock("@/lib/category-overrides", () => ({
+  getCategoryOverridesSnapshot: vi.fn(() => ({})),
+}));
+
+import {
+  TEAM_LIST,
+  TEAMS,
+  categoryToTeam,
+  categoryToTeamDefault,
+  isValidTeamId,
+  type TeamId,
+} from "./teams";
+import type { ReportCategory } from "@/lib/types";
+
+const ALL_CATEGORIES: ReportCategory[] = [
+  "pothole",
+  "streetlight",
+  "downed_sign",
+  "graffiti",
+  "illegal_dump",
+  "water_leak",
+  "sidewalk_damage",
+  "tree_down",
+  "debris",
+  "drainage",
+  "faded_signage",
+  "other",
+];
+
+describe("TEAMS integrity", () => {
+  it("has unique ids", () => {
+    const ids = Object.values(TEAMS).map((t) => t.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("each team's id matches its key in TEAMS", () => {
+    for (const [key, meta] of Object.entries(TEAMS)) {
+      expect(meta.id).toBe(key);
+    }
+  });
+});
+
+describe("TEAM_LIST", () => {
+  it("contains all TEAMS entries", () => {
+    expect(TEAM_LIST.length).toBe(Object.keys(TEAMS).length);
+  });
+});
+
+describe("categoryToTeamDefault", () => {
+  it.each(ALL_CATEGORIES)("%s maps to a real TeamId", (cat) => {
+    const teamId = categoryToTeamDefault(cat);
+    expect(teamId in TEAMS).toBe(true);
+  });
+
+  it("pothole → streets_roads", () => {
+    expect(categoryToTeamDefault("pothole")).toBe("streets_roads");
+  });
+
+  it("streetlight → street_lighting", () => {
+    expect(categoryToTeamDefault("streetlight")).toBe("street_lighting");
+  });
+
+  it("downed_sign → traffic_engineering", () => {
+    expect(categoryToTeamDefault("downed_sign")).toBe("traffic_engineering");
+  });
+
+  it("graffiti → graffiti_abatement", () => {
+    expect(categoryToTeamDefault("graffiti")).toBe("graffiti_abatement");
+  });
+
+  it("illegal_dump → code_enforcement", () => {
+    expect(categoryToTeamDefault("illegal_dump")).toBe("code_enforcement");
+  });
+
+  it("water_leak → water_utilities", () => {
+    expect(categoryToTeamDefault("water_leak")).toBe("water_utilities");
+  });
+
+  it("sidewalk_damage → sidewalks_ada", () => {
+    expect(categoryToTeamDefault("sidewalk_damage")).toBe("sidewalks_ada");
+  });
+
+  it("tree_down → parks_forestry", () => {
+    expect(categoryToTeamDefault("tree_down")).toBe("parks_forestry");
+  });
+
+  it("debris → environmental_services", () => {
+    expect(categoryToTeamDefault("debris")).toBe("environmental_services");
+  });
+
+  it("drainage → stormwater", () => {
+    expect(categoryToTeamDefault("drainage")).toBe("stormwater");
+  });
+
+  it("faded_signage → traffic_engineering", () => {
+    expect(categoryToTeamDefault("faded_signage")).toBe("traffic_engineering");
+  });
+
+  it("other → general_admin", () => {
+    expect(categoryToTeamDefault("other")).toBe("general_admin");
+  });
+});
+
+describe("categoryToTeam (no overrides)", () => {
+  it.each(ALL_CATEGORIES)("%s falls back to default when no override", (cat) => {
+    expect(categoryToTeam(cat)).toBe(categoryToTeamDefault(cat));
+  });
+});
+
+describe("categoryToTeam (with override)", () => {
+  it("returns the override team when set", async () => {
+    const { getCategoryOverridesSnapshot } = await import("@/lib/category-overrides");
+    vi.mocked(getCategoryOverridesSnapshot).mockReturnValueOnce({
+      pothole: "parks_forestry" as TeamId,
+    });
+    expect(categoryToTeam("pothole")).toBe("parks_forestry");
+  });
+});
+
+describe("isValidTeamId", () => {
+  it("returns true for known ids", () => {
+    expect(isValidTeamId("streets_roads")).toBe(true);
+    expect(isValidTeamId("all")).toBe(true);
+  });
+
+  it("returns false for unknown ids", () => {
+    expect(isValidTeamId("made_up")).toBe(false);
+    expect(isValidTeamId("")).toBe(false);
+  });
+});
