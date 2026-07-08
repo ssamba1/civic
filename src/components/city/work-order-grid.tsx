@@ -287,6 +287,8 @@ function OptionGlyph({
   if (kind === "status") {
     return (
       <span
+        role="img"
+        aria-label={`status: ${String(value).replace(/_/g, " ")}`}
         className={cn(
           "h-2.5 w-2.5 shrink-0 rounded-full",
           STATUS_DOT[value as string] ?? STATUS_DOT.open,
@@ -571,6 +573,7 @@ function StatusCell({ data }: ICellRendererParams<GridReportRow>) {
     <span className="flex flex-wrap items-center gap-1">
       <EditPill className="h-8 pl-2.5">
         <span
+          aria-hidden="true"
           className={cn(
             "h-2 w-2 shrink-0 rounded-full",
             STATUS_DOT[data.status] ?? STATUS_DOT.open,
@@ -587,7 +590,10 @@ function StatusCell({ data }: ICellRendererParams<GridReportRow>) {
       </EditPill>
       {data.needs_manual_review && (
         <span className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-hairline bg-overlay px-1.5 py-0.5 text-[10px] font-bold text-[var(--status-warning-fg)]">
-          <span className="size-1.5 rounded-full bg-[var(--color-warning)]" />
+          <span
+            aria-hidden="true"
+            className="size-1.5 rounded-full bg-[var(--color-warning)]"
+          />
           Review
         </span>
       )}
@@ -657,6 +663,7 @@ function SlaCell({ data }: ICellRendererParams<GridReportRow>) {
   return (
     <span className="flex items-center gap-1.5">
       <span
+        aria-hidden="true"
         className={cn("h-2 w-2 shrink-0 rounded-full", SLA_TIER_DOT[sla.tier])}
       />
       <span className={cn("text-[13px] font-medium", SLA_TIER_STYLE[sla.tier])}>
