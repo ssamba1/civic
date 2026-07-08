@@ -6,6 +6,7 @@ import type { CrewOption } from "@/components/members/member-modal";
 import { MembersTable } from "@/components/members/members-table";
 import { fetchCity as fetchCityMock } from "@/lib/dashboard-data";
 import { fetchCity as fetchCityFromDb } from "@/lib/dashboard-queries";
+import { fetchCityCrewTypes } from "@/lib/db/crew-types";
 import { fetchCityCrews } from "@/lib/db/crews";
 import {
   type CityMembersResult,
@@ -92,6 +93,10 @@ export default async function CityMembersPage({ params }: PageProps) {
   // the invite/edit dialogs. Degrades to empty (e.g. before migration 030).
   const crewsResult = dbCity ? await fetchCityCrews(dbCity.id) : null;
   const crews = crewsResult?.ok ? crewsResult.crews : [];
+  // City-defined crew types for the crew dialog's type dropdown (built-ins are
+  // added client-side). Guarded like `crews`; degrades to [] before migration
+  // 031 is applied.
+  const crewTypes = dbCity ? await fetchCityCrewTypes(dbCity.id) : [];
   const crewOptions: CrewOption[] = crews.map((c) => ({
     id: c.id,
     teamKey: c.teamKey,
@@ -145,6 +150,7 @@ export default async function CityMembersPage({ params }: PageProps) {
               crews={crews}
               members={crewCandidates}
               canManage={canManage}
+              crewTypes={crewTypes}
             />
           </>
         ) : (

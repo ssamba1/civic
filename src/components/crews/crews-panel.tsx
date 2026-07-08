@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useId, useMemo, useState, useTransition } from "react";
 import {
   createCrew,
+  createCrewType,
   deleteCrew,
   setCrewMembers,
   updateCrew,
@@ -16,8 +17,18 @@ import {
   MemberModalShell,
 } from "@/components/members/member-modal";
 import { Button } from "@/components/ui/button";
+import { MenuSelect } from "@/components/ui/menu-select";
+import {
+  BUILT_IN_CREW_TYPES,
+  type CityCrewType,
+  crewTypeLabel,
+  descriptionWordCount,
+  MIN_TYPE_DESCRIPTION_WORDS,
+  normalizeCrewTypeName,
+} from "@/lib/crew-types";
 import type { CrewRow } from "@/lib/db/crews";
 import { isValidTeamId, TEAM_LIST, TEAMS } from "@/lib/teams";
+import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
    Crews panel — the org level below a division. Lives on the members
@@ -40,21 +51,7 @@ export interface CrewCandidate {
 
 const FIELD_LABEL_CLASS = "text-[12px] font-medium text-subtle";
 
-// Crew labor types the AI emits (CrewType union) — offered as an optional tag
-// so dispatch can auto-suggest this crew for matching work orders.
-const CREW_TYPE_OPTIONS = [
-  "paving",
-  "line_crew",
-  "sign_crew",
-  "cleanup",
-  "concrete",
-  "arborist",
-  "drain_crew",
-] as const;
-
 const TEAM_OPTIONS = TEAM_LIST.filter((t) => t.id !== "all");
-
-const typeLabel = (t: string) => t.replace(/_/g, " ");
 
 function teamShortLabel(teamKey: string): string {
   return isValidTeamId(teamKey) ? TEAMS[teamKey].shortLabel : teamKey;
@@ -70,11 +67,13 @@ export function CrewsPanel({
   crews,
   members,
   canManage,
+  crewTypes,
 }: {
   slug: string;
   crews: CrewRow[];
   members: CrewCandidate[];
   canManage: boolean;
+  crewTypes: CityCrewType[];
 }) {
   const [dialog, setDialog] = useState<DialogState>(null);
 
@@ -186,7 +185,7 @@ export function CrewsPanel({
                     </div>
                     {crew.crewType && (
                       <span className="w-fit rounded-md border border-hairline bg-overlay px-1.5 py-0.5 text-[11px] font-medium text-subtle">
-                        {typeLabel(crew.crewType)}
+                        {crewTypeLabel(crew.crewType)}
                       </span>
                     )}
                     <div className="text-[12px] leading-relaxed text-faint">
@@ -228,6 +227,7 @@ export function CrewsPanel({
           slug={slug}
           state={dialog}
           members={members}
+          crewTypes={crewTypes}
           onClose={() => setDialog(null)}
         />
       )}
@@ -239,11 +239,13 @@ function CrewDialog({
   slug,
   state,
   members,
+  crewTypes,
   onClose,
 }: {
   slug: string;
   state: NonNullable<DialogState>;
   members: CrewCandidate[];
+  crewTypes: CityCrewType[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -267,6 +269,16 @@ function CrewDialog({
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  // Inline "New type…" sub-form: an admin can mint a custom crew type without
+  // leaving the dialog. Created types join the dropdown for this session
+  // (localTypes) and persist server-side for the next open.
+  const [localTypes, setLocalTypes] = useState<CityCrewType[]>([]);
+  const [typeFormOpen, setTypeFormOpen] = useState(false);
+  const [newTypeName, setNewTypeName] = useState("");
+  const [newTypeDesc, setNewTypeDesc] = useState("");
+  const [typeError, setTypeError] = useState<string | null>(null);
+  const [typePending, startTypeTransition] = useTransition();
+
   const teamId = useId();
   const nameId = useId();
   const typeId = useId();
@@ -277,6 +289,64 @@ function CrewDialog({
     () => members.filter((m) => m.teamKey === teamKey),
     [members, teamKey],
   );
+
+  // Dropdown options: the built-ins, then this city's custom types (server +
+  // session-created, de-duped by name), then the current value if it's since
+  // unknown — its row was deleted after the crew was typed — so editing a crew
+  // never silently drops its own type.
+  const typeOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const opts: { value: string; label: string; hint?: string }[] = [];
+    for (const t of BUILT_IN_CREW_TYPES) {
+      seen.add(t);
+      opts.push({ value: t, label: crewTypeLabel(t) });
+    }
+    for (const t of [...crewTypes, ...localTypes]) {
+      if (seen.has(t.name)) continue;
+      seen.add(t.name);
+      opts.push({
+        value: t.name,
+        label: crewTypeLabel(t.name),
+        hint: t.description,
+      });
+    }
+    if (crewType && !seen.has(crewType))
+      opts.push({ value: crewType, label: crewTypeLabel(crewType) });
+    return opts;
+  }, [crewTypes, localTypes, crewType]);
+
+  // Gate for adding a custom type. normalizeCrewTypeName also rejects
+  // invalid-character names pre-submit, matching the server's invalid_type_name
+  // guard (and covering the >=2-char rule the old length check enforced).
+  const canAddType =
+    normalizeCrewTypeName(newTypeName) !== null &&
+    descriptionWordCount(newTypeDesc) >= MIN_TYPE_DESCRIPTION_WORDS;
+
+  function handleAddType() {
+    if (!canAddType || typePending) return;
+    setTypeError(null);
+    startTypeTransition(async () => {
+      const res = await createCrewType({
+        slug,
+        name: newTypeName,
+        description: newTypeDesc.trim(),
+      });
+      if (!res.ok) {
+        setTypeError(humanizeMemberError(res.error));
+        return;
+      }
+      // Append the freshly-created type so it's immediately selectable, then
+      // select it and reset the sub-form.
+      setLocalTypes((prev) => [
+        ...prev,
+        { name: res.name, description: res.description },
+      ]);
+      setCrewType(res.name);
+      setTypeFormOpen(false);
+      setNewTypeName("");
+      setNewTypeDesc("");
+    });
+  }
 
   function handleTeamChange(next: string) {
     setTeamKey(next);
@@ -406,43 +476,41 @@ function CrewDialog({
                 </span>
               </div>
             ) : (
-              <label htmlFor={teamId} className="flex flex-col gap-1.5">
-                <span className={FIELD_LABEL_CLASS}>Division</span>
-                <select
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor={teamId} className={FIELD_LABEL_CLASS}>
+                  Division
+                </label>
+                <MenuSelect
                   id={teamId}
                   value={teamKey}
-                  onChange={(e) => handleTeamChange(e.target.value)}
-                  className={CONTROL_CLASS}
-                >
-                  {TEAM_OPTIONS.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.shortLabel}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  onChange={(v) => v !== null && handleTeamChange(v)}
+                  options={TEAM_OPTIONS.map((t) => ({
+                    value: t.id,
+                    label: t.shortLabel,
+                    swatch: t.color,
+                  }))}
+                />
+              </div>
             )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <label htmlFor={typeId} className="flex flex-col gap-1.5">
-              <span className={FIELD_LABEL_CLASS}>Crew type</span>
-              <select
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor={typeId} className={FIELD_LABEL_CLASS}>
+                Crew type
+              </label>
+              <MenuSelect
                 id={typeId}
-                value={crewType ?? ""}
-                onChange={(e) =>
-                  setCrewType(e.target.value === "" ? null : e.target.value)
-                }
-                className={CONTROL_CLASS}
-              >
-                <option value="">No type</option>
-                {CREW_TYPE_OPTIONS.map((t) => (
-                  <option key={t} value={t}>
-                    {typeLabel(t)}
-                  </option>
-                ))}
-              </select>
-            </label>
+                value={crewType}
+                onChange={setCrewType}
+                placeholder="No type"
+                options={typeOptions}
+                action={{
+                  label: "New type…",
+                  onSelect: () => setTypeFormOpen(true),
+                }}
+              />
+            </div>
             {editing && (
               <label
                 htmlFor={activeId}
@@ -459,6 +527,76 @@ function CrewDialog({
               </label>
             )}
           </div>
+
+          {typeFormOpen && (
+            <div className="flex flex-col gap-2.5 rounded-[var(--radius-md)] border border-hairline bg-overlay p-3">
+              <p className="text-[12px] font-medium text-subtle">
+                New crew type
+              </p>
+              {typeError && <FormError message={typeError} />}
+              <input
+                type="text"
+                value={newTypeName}
+                onChange={(e) => setNewTypeName(e.target.value)}
+                onKeyDown={(e) => {
+                  // Enter here would implicitly submit the OUTER crew form and
+                  // discard the half-entered type; add the type instead.
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddType();
+                  }
+                }}
+                placeholder="e.g. street lights"
+                autoComplete="off"
+                className={CONTROL_CLASS}
+                aria-label="Type name"
+              />
+              <textarea
+                value={newTypeDesc}
+                onChange={(e) => setNewTypeDesc(e.target.value)}
+                placeholder="What does this crew do? The AI uses this to route matching work orders here."
+                rows={3}
+                className={cn(
+                  CONTROL_CLASS,
+                  "h-auto min-h-[72px] resize-y py-2",
+                )}
+                aria-label="What this crew does"
+              />
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[11px] tabular-nums text-faint">
+                  {(() => {
+                    const words = descriptionWordCount(newTypeDesc);
+                    return words >= MIN_TYPE_DESCRIPTION_WORDS
+                      ? `${words} words`
+                      : `${MIN_TYPE_DESCRIPTION_WORDS - words} more word${MIN_TYPE_DESCRIPTION_WORDS - words === 1 ? "" : "s"} needed`;
+                  })()}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setTypeFormOpen(false);
+                      setTypeError(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    isPending={typePending}
+                    disabled={typePending || !canAddType}
+                    onClick={handleAddType}
+                  >
+                    Add type
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <fieldset className="flex flex-col gap-1.5">
             <legend className={FIELD_LABEL_CLASS}>
