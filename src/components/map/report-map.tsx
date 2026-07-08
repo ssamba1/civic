@@ -2,7 +2,7 @@
 
 import "maplibre-gl/dist/maplibre-gl.css";
 import { HeatmapLayer } from "@deck.gl/aggregation-layers";
-import { IconLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { IconLayer, ScatterplotLayer, TextLayer } from "@deck.gl/layers";
 import { MapboxOverlay, type MapboxOverlayProps } from "@deck.gl/mapbox";
 import {
   Check,
@@ -16,7 +16,7 @@ import {
   Sliders,
   Star,
 } from "lucide-react";
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Map as MapLibreMap,
   type MapRef,
@@ -39,6 +39,13 @@ import {
   LiquidGlassCard,
 } from "@/components/ui/liquid-glass";
 import type { DashboardReport } from "@/lib/dashboard-data";
+import {
+  type Bounds,
+  buildClusterIndex,
+  type ClusterFeature,
+  clusterExpansionZoom,
+  clustersForView,
+} from "@/lib/map/clustering";
 import { STATUS_LABEL } from "@/lib/status";
 import { useTheme } from "@/lib/theme";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
@@ -46,6 +53,10 @@ import { useCurrency } from "@/lib/use-currency";
 import { DAY_MS } from "@/lib/utils/time-constants";
 
 export type MapTheme = "dark" | "light" | "satellite";
+
+// Below this many visible reports the map draws every pin (demo/pilot size);
+// above it, supercluster aggregates to keep the IconLayer from choking.
+const CLUSTER_THRESHOLD = 500;
 
 interface ReportMapProps {
   reports: DashboardReport[];
@@ -216,6 +227,40 @@ function ReportMapInner({
       return nowTick - t < DAY_MS;
     });
   }, [reports, nowTick]);
+
+  // ── Marker clustering (LCP-17) ─────────────────────────────────────────────
+  // Only engage above CLUSTER_THRESHOLD: at the demo corpus size the map draws
+  // every pin exactly as before (zero behavior change), and clustering kicks in
+  // only when the raw IconLayer would choke (agents.md: breaks past ~5k points).
+  const clusteringActive =
+    viewMode === "markers" && visibleReports.length > CLUSTER_THRESHOLD;
+
+  // Live viewport, updated on moveEnd. Null until the map first reports bounds;
+  // clustering falls back to no-op (all pins) until then.
+  const [view, setView] = useState<{ bounds: Bounds; zoom: number } | null>(
+    null,
+  );
+
+  // O(n) index build — memoized on the report set so pan/zoom reuse one index.
+  const clusterIndex = useMemo(
+    () => (clusteringActive ? buildClusterIndex(visibleReports) : null),
+    [clusteringActive, visibleReports],
+  );
+
+  const clusterFeatures = useMemo<ClusterFeature[] | null>(() => {
+    if (!clusterIndex || !view) return null;
+    return clustersForView(clusterIndex, view.bounds, view.zoom);
+  }, [clusterIndex, view]);
+
+  const syncViewFromMap = useCallback(() => {
+    const m = mapRef.current?.getMap();
+    if (!m) return;
+    const b = m.getBounds();
+    setView({
+      bounds: [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()],
+      zoom: m.getZoom(),
+    });
+  }, []);
 
   // Fly to focused report — only when focusId actually changes.
   // visibleReports must stay in deps so we can look up coords after filter
@@ -390,9 +435,24 @@ function ReportMapInner({
     // cached SVG data-URL keyed by fill+border+glyph, so IconLayer auto-packs
     // a small atlas and only re-fetches when the color mode changes. Same
     // depth-overlay params as the demo glow above (see that comment).
+    // When clustering, the IconLayer draws only the reports supercluster left
+    // un-clustered at this zoom (the leaves); grouped points are drawn as
+    // aggregate bubbles below. Below the threshold clusterFeatures is null and
+    // every report renders, exactly as before.
+    const leafIds = clusterFeatures
+      ? new Set(
+          clusterFeatures
+            .filter((f) => f.kind === "leaf")
+            .map((f) => (f.kind === "leaf" ? f.reportId : "")),
+        )
+      : null;
+    const markerData = leafIds
+      ? visibleReports.filter((r) => leafIds.has(r.id))
+      : visibleReports;
+
     const markers = new IconLayer<DashboardReport>({
       id: "report-markers",
-      data: visibleReports,
+      data: markerData,
       parameters: { depthCompare: "always", depthWriteEnabled: false },
       pickable: true,
       billboard: true,
@@ -417,13 +477,78 @@ function ReportMapInner({
       },
     });
 
+    // Cluster bubbles + count labels, drawn only when clustering is engaged.
+    // A bubble scales gently with its point count (sqrt so a 100-pt and a
+    // 10-pt cluster don't differ 10×); clicking one flies to the zoom where it
+    // splits, so a cluster is a drill-in affordance, not a dead dot.
+    const clusters = clusterFeatures
+      ? clusterFeatures.filter(
+          (f): f is Extract<ClusterFeature, { kind: "cluster" }> =>
+            f.kind === "cluster",
+        )
+      : [];
+    const clusterLayers =
+      clusters.length > 0
+        ? [
+            new ScatterplotLayer<(typeof clusters)[number]>({
+              id: "report-clusters",
+              data: clusters,
+              parameters: { depthCompare: "always", depthWriteEnabled: false },
+              pickable: true,
+              stroked: true,
+              filled: true,
+              lineWidthMinPixels: 2,
+              radiusUnits: "pixels",
+              getPosition: (c) => [c.lng, c.lat],
+              getRadius: (c) => 14 + Math.sqrt(c.count) * 3,
+              radiusMinPixels: 16,
+              radiusMaxPixels: 48,
+              getFillColor: [37, 99, 235, 210],
+              getLineColor: [255, 255, 255, 230],
+              onClick: ({ object }) => {
+                if (!object || !clusterIndex) return;
+                const targetZoom = clusterExpansionZoom(
+                  clusterIndex,
+                  object.clusterId,
+                );
+                mapRef.current?.getMap()?.flyTo({
+                  center: [object.lng, object.lat],
+                  zoom: targetZoom,
+                });
+              },
+              updateTriggers: { getRadius: [clusters] },
+            }),
+            new TextLayer<(typeof clusters)[number]>({
+              id: "report-cluster-labels",
+              data: clusters,
+              parameters: { depthCompare: "always", depthWriteEnabled: false },
+              pickable: false,
+              getPosition: (c) => [c.lng, c.lat],
+              getText: (c) => String(c.count),
+              getSize: 13,
+              getColor: [255, 255, 255, 255],
+              fontWeight: 700,
+              getTextAnchor: "middle",
+              getAlignmentBaseline: "center",
+            }),
+          ]
+        : [];
+
     // Halo is built in a separate useMemo (haloLayer); including it here would
     // force an extra array allocation on focusId change but the marker layer
     // still needs focusId in deps so deck.gl sees fresh updateTrigger values.
     // demoGlow sits beneath the pins so the blue halo reads around the tip.
     // is3D deliberately absent: no layer input reads it (pitch is a view prop).
-    return [demoGlow, markers];
-  }, [visibleReports, focusId, viewMode, colorMode]);
+    // Cluster bubbles sit beneath the leaf pins; labels above everything.
+    return [demoGlow, ...clusterLayers, markers];
+  }, [
+    visibleReports,
+    focusId,
+    viewMode,
+    colorMode,
+    clusterFeatures,
+    clusterIndex,
+  ]);
 
   // Combine base layers with the separately-memoized halo.
   const allLayers = useMemo(
@@ -470,6 +595,11 @@ function ReportMapInner({
         refreshExpiredTiles={false}
         fadeDuration={150}
         localIdeographFontFamily="sans-serif"
+        // Feed the live viewport to the clustering layer. onLoad seeds the
+        // first bounds; onMoveEnd re-queries after each pan/zoom settles
+        // (moveEnd, not move — clustering per animation frame is wasteful).
+        onLoad={syncViewFromMap}
+        onMoveEnd={syncViewFromMap}
       >
         {/* interleaved=true shares maplibre's WebGL context (single GPU canvas),
             avoiding a second compositor layer + second WebGL context. */}
