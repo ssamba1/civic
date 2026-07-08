@@ -222,26 +222,27 @@ export default function ZampHero({ pinStory = false }: { pinStory?: boolean }) {
               }}
             >
               <motion.p variants={glassChild} className="wl-zamp-tagline">
-                An AI-native 311{" "}
-                <em>grounded in photos your residents actually send.</em>
+                Turn a resident&rsquo;s photo into a{" "}
+                <em>costed, routed work order.</em>
               </motion.p>
               <motion.ul variants={glassChild} className="wl-zamp-feature-list">
                 <li>
                   <span>
-                    <strong>Built-in triage AI</strong> — classifies, dedupes,
-                    and routes every photo in 1.4 seconds.
+                    <strong>Photo → costed work order</strong> — AI prices the
+                    repair, picks the crew, and drafts the order in 1.4 seconds.
+                  </span>
+                </li>
+                <li>
+                  <span>
+                    <strong>Closes the loop</strong> — dispatch, actual cost,
+                    resolution photo, and a 👍/👎 back to the reporter — not
+                    just a ticket number.
                   </span>
                 </li>
                 <li>
                   <span>
                     <strong>Open311 native</strong> — SeeClickFix, Tyler, and
                     Granicus ingest reports with zero rework.
-                  </span>
-                </li>
-                <li>
-                  <span>
-                    <strong>Public by default</strong> — every report and
-                    resolution time on a live dashboard.
                   </span>
                 </li>
               </motion.ul>
