@@ -450,10 +450,41 @@ export async function runClassifyPipeline(
   // city's own city_teams config so per-city routing takes effect at creation.
   let resolvedTeamKey: string | null = null;
   try {
-    const teamKey = await resolveTeamKeyForCategory(
+    // Widened to string: a zone override may carry a custom per-city team_key
+    // that isn't in the static TeamId union, and the column is plain text.
+    let teamKey: string = await resolveTeamKeyForCategory(
       report.city_id,
       classification.category,
     );
+    // Geographic override (LCP-15, migration 033): if the report's point falls
+    // inside a routing_zone, that zone's team wins over the category default.
+    // No-op-safe — the RPC returns null (or errors on an un-migrated DB) unless
+    // the city has opted into zones, leaving category routing untouched.
+    try {
+      const { data: zoneTeam, error: zoneErr } = await supabase.rpc(
+        "resolve_zone_team",
+        { _report_id: reportId },
+      );
+      if (zoneErr) {
+        log.warn("resolve_zone_team_failed", {
+          reportId,
+          error: zoneErr.message,
+        });
+      } else if (typeof zoneTeam === "string" && zoneTeam.length > 0) {
+        log.info("team_key_zone_override", {
+          reportId,
+          categoryTeam: teamKey,
+          zoneTeam,
+        });
+        teamKey = zoneTeam;
+      }
+    } catch (zoneThrow) {
+      log.warn("resolve_zone_team_threw", {
+        reportId,
+        error:
+          zoneThrow instanceof Error ? zoneThrow.message : String(zoneThrow),
+      });
+    }
     const { error: teamErr } = await supabase
       .from("work_orders")
       .update({ team_key: teamKey })
