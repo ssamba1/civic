@@ -68,6 +68,7 @@
     "pg": "^8.21.0",
     "playwright": "^1.60.0",
     "tailwindcss": "^4",
+    "tsx": "^4.8.1",
     "typescript": "^5",
     "vitest": "^4.1.7"
   }
