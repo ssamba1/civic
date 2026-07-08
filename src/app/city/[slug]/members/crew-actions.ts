@@ -39,6 +39,7 @@ const createSchema = z.object({
   teamKey: teamKeySchema,
   name: crewNameSchema,
   crewType: crewTypeSchema,
+  description: z.string().trim().max(500).optional().default(""),
 });
 
 const updateSchema = z.object({
@@ -47,6 +48,7 @@ const updateSchema = z.object({
   name: crewNameSchema,
   crewType: crewTypeSchema,
   active: z.boolean(),
+  description: z.string().trim().max(500).optional().default(""),
 });
 
 const deleteSchema = z.object({
@@ -60,6 +62,18 @@ const setMembersSchema = z.object({
   memberIds: z.array(z.string().min(1)).max(100),
   leadId: z.string().min(1).nullable(),
 });
+
+/** Strip description and retry once when the DB predates migration 032. */
+function isMissingDescriptionColumn(error: {
+  code?: string;
+  message?: string;
+}): boolean {
+  return (
+    error.code === "42703" ||
+    ((error.message ?? "").includes("description") &&
+      (error.message ?? "").includes("does not exist"))
+  );
+}
 
 /** Resolve a crew and confirm it belongs to the admin's city — every mutation
  *  below must pass this before touching the row (a crew id from another city
@@ -87,6 +101,7 @@ export interface CreateCrewInput {
   teamKey: string;
   name: string;
   crewType: string | null;
+  description?: string;
 }
 
 /** Create a crew inside a division. Admin-gated. Returns the new crew id so
@@ -96,22 +111,38 @@ export async function createCrew(
 ): Promise<CrewCreateResult> {
   const parsed = createSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid_input" };
-  const { slug, teamKey, name, crewType } = parsed.data;
+  const { slug, teamKey, name, crewType, description } = parsed.data;
 
   const ctx = await getCityAdminContext(slug);
   if (!ctx) return { ok: false, error: "not_authorized" };
 
   const db = createServerClient();
-  const { data, error } = await db
+  let { data, error } = await db
     .from("crews")
     .insert({
       city_id: ctx.cityId,
       team_key: teamKey,
       name,
       crew_type: crewType,
+      description,
     })
     .select("id")
     .single();
+  if (error && isMissingDescriptionColumn(error)) {
+    log.warn("crews.description missing (pre-032 db) — retrying without it", {
+      slug,
+    });
+    ({ data, error } = await db
+      .from("crews")
+      .insert({
+        city_id: ctx.cityId,
+        team_key: teamKey,
+        name,
+        crew_type: crewType,
+      })
+      .select("id")
+      .single());
+  }
   if (error || !data) {
     // 23505 = unique_violation on (city_id, team_key, name).
     if (error?.code === "23505") return { ok: false, error: "crew_name_taken" };
@@ -129,6 +160,7 @@ export interface UpdateCrewInput {
   name: string;
   crewType: string | null;
   active: boolean;
+  description?: string;
 }
 
 /** Rename / retype / (de)activate a crew. Admin-gated. */
@@ -137,7 +169,7 @@ export async function updateCrew(
 ): Promise<CrewActionResult> {
   const parsed = updateSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid_input" };
-  const { slug, crewId, name, crewType, active } = parsed.data;
+  const { slug, crewId, name, crewType, active, description } = parsed.data;
 
   const ctx = await getCityAdminContext(slug);
   if (!ctx) return { ok: false, error: "not_authorized" };
@@ -146,10 +178,20 @@ export async function updateCrew(
   if (!(await crewInCity(db, crewId, ctx.cityId)))
     return { ok: false, error: "crew_not_found" };
 
-  const { error } = await db
+  let { error } = await db
     .from("crews")
-    .update({ name, crew_type: crewType, active })
+    .update({ name, crew_type: crewType, active, description })
     .eq("id", crewId);
+  if (error && isMissingDescriptionColumn(error)) {
+    log.warn("crews.description missing (pre-032 db) — retrying without it", {
+      slug,
+      crewId,
+    });
+    ({ error } = await db
+      .from("crews")
+      .update({ name, crew_type: crewType, active })
+      .eq("id", crewId));
+  }
   if (error) {
     if (error.code === "23505") return { ok: false, error: "crew_name_taken" };
     log.error("crew update failed", error, { slug, crewId });

@@ -19,6 +19,7 @@ export interface CrewRow {
   teamKey: string;
   name: string;
   crewType: string | null;
+  description: string;
   active: boolean;
   members: CrewMemberInfo[];
 }
@@ -32,6 +33,8 @@ interface CrewRowRaw {
   team_key: string;
   name: string;
   crew_type: string | null;
+  // Pre-032 DBs don't have this column yet — PostgREST simply omits the key.
+  description?: string;
   active: boolean;
 }
 interface CrewMemberRowRaw {
@@ -60,7 +63,7 @@ export async function fetchCityCrews(cityId: string): Promise<CityCrewsResult> {
 
     const { data: crewData, error: crewErr } = await db
       .from("crews")
-      .select("id, team_key, name, crew_type, active")
+      .select("id, team_key, name, crew_type, description, active")
       .eq("city_id", cityId)
       .order("team_key")
       .order("name");
@@ -133,6 +136,7 @@ export async function fetchCityCrews(cityId: string): Promise<CityCrewsResult> {
         teamKey: c.team_key,
         name: c.name,
         crewType: c.crew_type,
+        description: c.description ?? "",
         active: c.active,
         members: membersByCrew.get(c.id) ?? [],
       })),
