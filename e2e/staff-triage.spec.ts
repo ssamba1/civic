@@ -33,3 +33,22 @@ test("POST /api/admin/sla-escalate is auth-gated (401 without a session)", async
   // No session + no cron bearer → rejected (401). Never 200 to anon.
   expect([401, 403]).toContain(res.status());
 });
+
+test("POST /api/admin/notify-drain is auth-gated (401 without a session)", async ({
+  request,
+}) => {
+  // The email outbox drain (LCP-05) mirrors sla-escalate's auth: no session and
+  // no NOTIFY_CRON_SECRET bearer → rejected, never a 200 that would let anon
+  // trigger a resend sweep.
+  const res = await request.post("/api/admin/notify-drain");
+  expect([401, 403]).toContain(res.status());
+});
+
+test("POST /api/admin/notify-drain rejects a wrong bearer token", async ({
+  request,
+}) => {
+  const res = await request.post("/api/admin/notify-drain", {
+    headers: { authorization: "Bearer not-the-secret" },
+  });
+  expect([401, 403]).toContain(res.status());
+});
