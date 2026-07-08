@@ -16,6 +16,7 @@ import { fetchSlaHours } from "@/lib/db/sla-targets";
 import { sniffImageMime } from "@/lib/image/sniff-mime";
 import { createLogger } from "@/lib/logger";
 import { resolveTeamKeyForCategory } from "@/lib/onboarding/city-teams";
+import { resolveOwningCity } from "@/lib/routing/jurisdiction";
 import type {
   Classification,
   Result,
@@ -529,6 +530,42 @@ export async function runClassifyPipeline(
     }
   } catch (err) {
     log.warn("work_order_due_at_stamp_threw", {
+      reportId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  // Cross-jurisdiction ownership (migration 034; no-op-safe). If the category
+  // escalates to the parent jurisdiction, stamp owner_city_id so the parent
+  // owns the work order; otherwise it stays NULL (report's own city). Dark
+  // until a city seeds escalates_to_parent — resolveOwningCity returns the
+  // report's own city in every other case.
+  try {
+    const owningCity = await resolveOwningCity(
+      supabase,
+      reportId,
+      report.city_id,
+    );
+    if (owningCity !== report.city_id) {
+      const { error: ownerErr } = await supabase
+        .from("work_orders")
+        .update({ owner_city_id: owningCity })
+        .eq("id", insertedWorkOrder.id);
+      if (ownerErr) {
+        log.warn("work_order_owner_city_stamp_failed", {
+          reportId,
+          error: ownerErr.message,
+        });
+      } else {
+        log.info("work_order_cross_jurisdiction", {
+          reportId,
+          reportCity: report.city_id,
+          ownerCity: owningCity,
+        });
+      }
+    }
+  } catch (err) {
+    log.warn("work_order_owner_city_threw", {
       reportId,
       error: err instanceof Error ? err.message : String(err),
     });
