@@ -1,5 +1,6 @@
 import { type ObjectSchema, SchemaType } from "@google/generative-ai";
 import { z } from "zod/v4";
+import { BUILT_IN_CREW_TYPES } from "@/lib/crew-types";
 
 const DEPARTMENTS = [
   "public_works",
@@ -10,15 +11,7 @@ const DEPARTMENTS = [
   "other",
 ] as const;
 
-const CREW_TYPES = [
-  "paving",
-  "line_crew",
-  "sign_crew",
-  "cleanup",
-  "concrete",
-  "arborist",
-  "drain_crew",
-] as const;
+const CREW_TYPES = BUILT_IN_CREW_TYPES; // keep local alias; shape unchanged
 
 /**
  * Shape returned by the Gemini work-order generator. crew_type is nullable
@@ -83,3 +76,45 @@ export const GEMINI_WORK_ORDER_SCHEMA: ObjectSchema = {
   },
   required: ["department", "est_minutes", "materials", "est_cost", "rationale"],
 };
+
+/** Built-ins ∪ custom names, deduped, order-stable (built-ins first). */
+function allCrewTypes(customNames: string[]): string[] {
+  return [...new Set([...CREW_TYPES, ...customNames])];
+}
+
+/**
+ * Zod validator for a work order whose crew_type may be one of this city's
+ * custom types. With no custom names this accepts exactly what
+ * aiWorkOrderSchema accepts.
+ */
+export function buildAiWorkOrderSchema(customNames: string[]) {
+  const allowed = new Set(allCrewTypes(customNames));
+  return aiWorkOrderSchema.extend({
+    crew_type: z
+      .string()
+      .refine((v) => allowed.has(v), "unknown crew_type")
+      .nullable(),
+  });
+}
+
+/**
+ * Gemini structured-output schema with the crew_type enum widened to this
+ * city's custom types. With no custom names this deep-equals
+ * GEMINI_WORK_ORDER_SCHEMA — the zero-drift guarantee for existing cities.
+ */
+export function buildGeminiWorkOrderSchema(
+  customNames: string[],
+): ObjectSchema {
+  return {
+    ...GEMINI_WORK_ORDER_SCHEMA,
+    properties: {
+      ...GEMINI_WORK_ORDER_SCHEMA.properties,
+      crew_type: {
+        type: SchemaType.STRING,
+        format: "enum",
+        enum: allCrewTypes(customNames),
+        nullable: true,
+      },
+    },
+  };
+}

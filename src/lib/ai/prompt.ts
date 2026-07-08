@@ -1,3 +1,5 @@
+import type { CityCrewType } from "@/lib/crew-types";
+
 /**
  * System instruction: establishes the model's role and analytical lens.
  * Kept separate from the user prompt so the model treats it as persistent context.
@@ -122,3 +124,21 @@ public_works · utilities · parks · code_enforcement · sanitation · other
   "est_cost": <integer USD: labor + materials, rounded>,
   "rationale": "<1–2 sentences: how you sized the crew, time, materials, and cost>"
 }`;
+
+/**
+ * Work-order prompt with this city's custom crew types injected (name +
+ * admin-written description — the routing signal). Zero custom types returns
+ * WORK_ORDER_PROMPT unchanged, so existing cities see an identical prompt.
+ */
+export function buildWorkOrderPrompt(customTypes: CityCrewType[]): string {
+  if (customTypes.length === 0) return WORK_ORDER_PROMPT;
+  const section = [
+    `## CITY-SPECIFIC CREW TYPES`,
+    `This city also operates the following custom crews. Prefer one of these over the`,
+    `generic list above when its description matches the repair better:`,
+    ...customTypes.map((t) => `- ${t.name}: ${t.description}`),
+    ``,
+    ``,
+  ].join("\n");
+  return WORK_ORDER_PROMPT.replace("## DEPARTMENT", `${section}## DEPARTMENT`);
+}
