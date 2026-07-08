@@ -1,47 +1,56 @@
 # Loop State — Civic / Social Impact
 
-Last run: 2026-07-08 (backlog sweep session)
-Branch scanned: `main` @ e8280eb (PRs #9, #10, #11 all merged)
+Last run: 2026-07-08 (backlog sweeps 1–3)
+Branch: `feat/backlog-sweep-3` (off `-sweep-2` off `-sweep-1` off `main`)
 
-## High Priority (waiting on human)
+## Shipped this session (PRs open, stacked)
 
-- **Live DB is 8+ migrations behind the repo.** `20260707_024_city_config.sql`
-  through `20260707_031_crew_types.sql` are authored, tested, and merged to
-  main but NOT applied to the live database. Close-the-loop, DB routing,
-  upvotes, api_keys, crews, and crew-types features all no-op or
-  graceful-degrade against live until applied.
-  - *Next action (human):* `DATABASE_URL='postgresql://…' node scripts/run-migrations.mjs`
-    (DB password is not in the repo — owner-held).
-  - *Effort:* 10 min + smoke test.
+- **PR #12 `feat/backlog-sweep`** — EXIF strip, api-key scopes, SLA due_at +
+  escalation, zone routing, a11y focus traps, landing reposition, ADR 0002
+  accepted, supercluster, Modal 44px.
+- **PR #13 `feat/backlog-sweep-2`** — 30-item plan: Open311 lib/db/blur/derive
+  tests, city-config RLS, token + service-definition routes, expected_datetime,
+  a11y dot labels, audit:privacy script, dead-code deletion, currency
+  formatLocalDate + useCurrency (grid/detail), staff assistant tools,
+  cross-jurisdiction routing (migration 034), e2e (open311/submit/dedup/staff).
+- **PR (this branch) `feat/backlog-sweep-3`** — 40-item plan: +188 unit tests
+  across 15 lib modules; Open311 shared http helpers + `.json` rewrites +
+  public-route rate limits; admin/auth route rate limits; CI e2e + audit steps
+  + tsx dep; ADRs 0003–0008; 4 runbooks; report-detail currency; seed
+  idempotency + --dry-run; eval --mock; this refresh.
 
-- **Email leg dead: Resend env unset.** `RESEND_API_KEY`, `NOTIFY_FROM_EMAIL`
-  must be set (`NEXT_PUBLIC_SITE_URL` exists in `.env.local`). Resolution
-  emails + CSAT loop silently skip until then.
+Merge order: #12 → #13 → #14 (each stacks on the prior).
 
-- **Golden-set eval blocked on photos.** `tests/golden/images/` is empty;
-  manifest + runner (`pnpm eval`) exist. Owner must supply labeled photos.
-  Gates: category ≥85%, severity ±1 ≥90%, emergency FNR ≤5%.
+## High Priority (owner-blocked — cannot be done by the agent)
+
+- **Apply migrations 024–034 to the live DB.** `DATABASE_URL` is owner-held.
+  Biggest single apply; run against a shadow DB first (migration-021 drift
+  precedent). Everything DB-backed (close-the-loop, routing, upvotes, api_keys,
+  crews, crew-types, SLA due_at, zone routing, cross-jurisdiction) no-ops or
+  graceful-degrades until applied.
+- **Resend env** (`RESEND_API_KEY`, `NOTIFY_FROM_EMAIL`) — resolution email +
+  CSAT stay dark until set. See `docs/runbooks/notification-delivery.md`.
+- **Golden-set photos** — `tests/golden/images/` empty; `pnpm eval` needs
+  labeled photos (or run `pnpm eval --mock` for a harness smoke, no photos).
+- **Browser/Lighthouse pass** — cluster-bubble polish + the color-only-dot a11y
+  audit want a real browser; the playwright-mcp profile was locked this session.
 
 ## Watch List
 
-- **ADR 0002 marked Accepted (segment A: US small cities, Open311-first)**
-  during the 2026-07-08 sweep, on the strength of the owner's "do all of it"
-  directive. Revert to Proposed if that read is wrong — landing copy and
-  priority ordering downstream depend on it.
-- **Two `023_*` migrations** (`cost_prediction`, `photo_phash`) share a number.
-  Runner sorts lexicographically so both apply, but the next migration author
-  should not reuse numbers.
-- **Live-DB drift pattern.** DB needed manual reconcile migration 021 on
-  6-30. The 024–031 batch is the biggest single apply yet — run against a
-  shadow DB first per BUILD_PLAN verification gates.
+- CI e2e + audit:privacy steps are gated on `secrets.SUPABASE_TEST_URL` — they
+  only run once a test-DB secret is configured (same pattern as RLS tests).
+- Migrations authored (032/033/034) are idempotent + RLS-tested but NOT applied
+  by the agent — the standing pattern.
+- Two `023_*` migrations share a number (cost_prediction, photo_phash); the
+  runner sorts lexicographically so both apply — don't reuse numbers.
 
-## Resolved since last run (2026-07-01)
+## Resolved this session
 
-- CI gate exists and runs green (`test` workflow, node 22 / pnpm 11).
-- `civic-ahilyanagar` divergence: superseded — its features were rebuilt on
-  main via the sidebar-shell line (PR #9).
-- Issue #6 (data-driven issue types): closed by migration 027 + issue_types
-  work in PR #9.
+- CI runs typecheck/lint/test/build green; e2e + audit now wired (gated).
+- `tsx` added to devDependencies (was only transitive; frozen-lockfile safety).
+- Dead `privacy/upload.ts` + `signed-url.ts` deleted; `audit.ts` now live via
+  `pnpm audit:privacy`.
 
 ---
-Run log: 2026-07-08 — PRs #10/#11 merged; backlog sweep branch `feat/backlog-sweep` carries EXIF strip, SLA due_at, a11y, supercluster, zone routing, landing reposition.
+Run log: 2026-07-08 — three backlog sweeps (PRs #12/#13/#14), ~230 new tests,
+639+ passing, typecheck/build green.
