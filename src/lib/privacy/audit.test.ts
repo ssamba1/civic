@@ -36,6 +36,7 @@ vi.mock("@/lib/db/client", () => ({
           return b;
         };
         b.not = () => makeBuilder(true);
+        // biome-ignore lint/suspicious/noThenProperty: intentional thenable mock of the supabase count builder
         b.then = (resolve: (v: unknown) => unknown) => {
           const [total, withV] = blurCounts[currentCity] ?? [0, 0];
           return resolve({ count: notted ? withV : total, error: null });
