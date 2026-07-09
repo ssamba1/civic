@@ -81,6 +81,34 @@ No markdown. No code fences. No prose before or after the JSON. Every field requ
   "alternate_categories": [<0–2 other category strings that could also plausibly apply; [] if confident in a single category>]
 }`;
 
+export interface CorrectionExample {
+  original_category: string;
+  corrected_category: string;
+  n: number;
+}
+
+/**
+ * OUTFLANK #7 — human-in-the-loop feedback. Builds a per-city few-shot block
+ * from staff correction history (classification_feedback) to append to the
+ * classification prompt. Returns "" when there are no corrections, so the base
+ * prompt is unchanged for a fresh city. Only surfaces pairs a city's staff have
+ * corrected repeatedly, framed as "double-check", not a hard override — the
+ * photo is still the primary signal.
+ */
+export function buildCorrectionGuidance(examples: CorrectionExample[]): string {
+  const strong = examples.filter(
+    (e) => e.original_category !== e.corrected_category && e.n > 0,
+  );
+  if (strong.length === 0) return "";
+  const lines = strong
+    .map(
+      (e) =>
+        `- When this looks like "${e.original_category}", this city's staff have re-classified it as "${e.corrected_category}" ${e.n} time${e.n === 1 ? "" : "s"}. Double-check before choosing "${e.original_category}".`,
+    )
+    .join("\n");
+  return `\n\n## PAST CORRECTIONS IN THIS CITY\nLocal staff have repeatedly corrected these classifications. Weigh them, but the photo remains the primary evidence — do not blindly apply a correction if the image clearly shows otherwise.\n${lines}`;
+}
+
 /**
  * System instruction for the work-order generator: turns a classification into
  * a dispatch-ready work order. Kept separate from classification so each call

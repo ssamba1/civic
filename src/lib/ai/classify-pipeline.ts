@@ -8,9 +8,10 @@ import {
 import { autoAssignCrew } from "@/lib/ai/crew-assign";
 import { findDuplicate } from "@/lib/ai/dedup";
 import { classifyPhoto } from "@/lib/ai/gemini";
-import type { PromptCrew } from "@/lib/ai/prompt";
+import { buildCorrectionGuidance, type PromptCrew } from "@/lib/ai/prompt";
 import { generateWorkOrderAI } from "@/lib/ai/work-order-ai";
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
+import { fetchCorrectionExamples } from "@/lib/db/classification-feedback";
 import { createServerClient } from "@/lib/db/client";
 import { fetchActiveCrewTypeDefs } from "@/lib/db/crew-types";
 import { fetchSlaHours } from "@/lib/db/sla-targets";
@@ -219,7 +220,18 @@ export async function runClassifyPipeline(
     const bytes = new Uint8Array(await photoBlob.arrayBuffer());
     sniffed = sniffImageMime(bytes) ?? "image/jpeg";
     const imageBase64 = Buffer.from(bytes).toString("base64");
-    classificationResult = await classifyPhoto(imageBase64, sniffed);
+    // OUTFLANK #7 — inject this city's past staff corrections as few-shot
+    // guidance. Best-effort: empty string on a fresh city or any error, so the
+    // base prompt (and thus classification behaviour) is unchanged.
+    const corrections = await fetchCorrectionExamples(report.city_id);
+    const guidance = buildCorrectionGuidance(corrections);
+    if (guidance) {
+      log.info("classify_correction_guidance", {
+        reportId,
+        pairs: corrections.length,
+      });
+    }
+    classificationResult = await classifyPhoto(imageBase64, sniffed, guidance);
   }
 
   // Resilience: if Gemini fails (network/rate/latency), DON'T abort the
