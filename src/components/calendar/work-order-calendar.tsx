@@ -58,6 +58,7 @@ export function WorkOrderCalendar({
   monthISO,
   todayISO,
   lockedCrewType,
+  lockedCrewId,
 }: {
   slug: string;
   orders: CalendarWorkOrder[];
@@ -72,16 +73,21 @@ export function WorkOrderCalendar({
    *  locked constant, not a default the user could nudge away from. Absent
    *  (the city calendar route) → behavior is unchanged. */
   lockedCrewType?: string;
+  /** Per-crew instance scope (?crew=<name> resolved server-side to an id):
+   *  pins the Crew filter to this id and hides its picker, exactly like
+   *  lockedCrewType does for crew types. Absent → behavior is unchanged. */
+  lockedCrewId?: string;
 }) {
   const [fTeam, setFTeam] = useState<string | null>(null);
   const [fType, setFType] = useState<string | null>(lockedCrewType ?? null);
-  const [fCrew, setFCrew] = useState<string | null>(null);
+  const [fCrew, setFCrew] = useState<string | null>(lockedCrewId ?? null);
   const [fStatus, setFStatus] = useState<string | null>(null);
   const [openDay, setOpenDay] = useState<string | null>(null);
 
-  // The lock always wins over client state, regardless of how fType got set —
-  // a constant, not merely an initial value.
+  // The locks always win over client state, regardless of how fType/fCrew got
+  // set — constants, not merely initial values.
   const effectiveType = lockedCrewType ?? fType;
+  const effectiveCrew = lockedCrewId ?? fCrew;
 
   // Month-nav links stay inside the crew portal when locked — otherwise
   // "Next month" would silently drop the user onto the unscoped city
@@ -89,6 +95,17 @@ export function WorkOrderCalendar({
   const calendarPath = lockedCrewType
     ? `/city/${slug}/crew/${lockedCrewType}/calendar`
     : `/city/${slug}/calendar`;
+
+  // Preserve the ?crew= instance scope across month-nav links (same reason the
+  // crew-type lock keeps you inside the portal): resolve the locked crew's
+  // name from the crews list so "Next month" doesn't drop the scope. The page
+  // guarantees the locked crew is in `crews` even when inactive.
+  const lockedCrewName = lockedCrewId
+    ? crews.find((c) => c.id === lockedCrewId)?.name
+    : undefined;
+  const crewQuery = lockedCrewName
+    ? `&crew=${encodeURIComponent(lockedCrewName)}`
+    : "";
 
   const teamId = useId();
   const typeId = useId();
@@ -107,10 +124,10 @@ export function WorkOrderCalendar({
         (o) =>
           (!fTeam || o.teamKey === fTeam) &&
           (!effectiveType || o.crewType === effectiveType) &&
-          (!fCrew || o.crewId === fCrew) &&
+          (!effectiveCrew || o.crewId === effectiveCrew) &&
           (!fStatus || o.status === fStatus),
       ),
-    [orders, fTeam, effectiveType, fCrew, fStatus],
+    [orders, fTeam, effectiveType, effectiveCrew, fStatus],
   );
 
   // Bucket by calendarDate, each bucket sorted priority-desc, nulls last.
@@ -141,12 +158,15 @@ export function WorkOrderCalendar({
   const onCurrentMonth = monthISO.slice(0, 7) === todayParam;
 
   const hasFilter = Boolean(
-    fTeam || (!lockedCrewType && fType) || fCrew || fStatus,
+    fTeam ||
+      (!lockedCrewType && fType) ||
+      (!lockedCrewId && fCrew) ||
+      fStatus,
   );
   function clearFilters() {
     setFTeam(null);
     if (!lockedCrewType) setFType(null);
-    setFCrew(null);
+    if (!lockedCrewId) setFCrew(null);
     setFStatus(null);
   }
 
@@ -162,14 +182,14 @@ export function WorkOrderCalendar({
             aria-label="Change month"
           >
             <Link
-              href={`${calendarPath}?month=${monthParam(-1)}`}
+              href={`${calendarPath}?month=${monthParam(-1)}${crewQuery}`}
               aria-label="Previous month"
               className={cn(NAV_BTN, "w-9 px-0")}
             >
               <ChevronLeft className="h-4 w-4" strokeWidth={2} aria-hidden />
             </Link>
             <Link
-              href={`${calendarPath}?month=${todayParam}`}
+              href={`${calendarPath}?month=${todayParam}${crewQuery}`}
               aria-label="Jump to current month"
               aria-current={onCurrentMonth ? "date" : undefined}
               className={cn(NAV_BTN, onCurrentMonth && "text-faint")}
@@ -177,7 +197,7 @@ export function WorkOrderCalendar({
               Today
             </Link>
             <Link
-              href={`${calendarPath}?month=${monthParam(1)}`}
+              href={`${calendarPath}?month=${monthParam(1)}${crewQuery}`}
               aria-label="Next month"
               className={cn(NAV_BTN, "w-9 px-0")}
             >
@@ -218,15 +238,17 @@ export function WorkOrderCalendar({
             />
           </FilterField>
         )}
-        <FilterField id={crewId} label="Crew">
-          <MenuSelect
-            id={crewId}
-            value={fCrew}
-            onChange={setFCrew}
-            placeholder="All crews"
-            options={crews.map((c) => ({ value: c.id, label: c.name }))}
-          />
-        </FilterField>
+        {!lockedCrewId && (
+          <FilterField id={crewId} label="Crew">
+            <MenuSelect
+              id={crewId}
+              value={fCrew}
+              onChange={setFCrew}
+              placeholder="All crews"
+              options={crews.map((c) => ({ value: c.id, label: c.name }))}
+            />
+          </FilterField>
+        )}
         <FilterField id={statusId} label="Status">
           <MenuSelect
             id={statusId}

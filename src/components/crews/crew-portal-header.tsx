@@ -5,6 +5,10 @@ interface CrewPortalHeaderProps {
   crewType: string;
   label: string;
   categories: ReportCategory[];
+  /** Resolved `?crew=` instance name — when present it becomes the heading and
+   *  the type label drops to a subtitle. Absent → type-level header,
+   *  byte-identical to before. */
+  crewName?: string;
 }
 
 /**
@@ -18,6 +22,7 @@ export function CrewPortalHeader({
   crewType,
   label,
   categories,
+  crewName,
 }: CrewPortalHeaderProps) {
   return (
     <div
@@ -25,8 +30,13 @@ export function CrewPortalHeader({
       className="rounded-[var(--radius-lg)] border border-hairline bg-surface px-4 py-3.5"
     >
       <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
-        {label} Crew
+        {crewName ?? `${label} Crew`}
       </h1>
+      {crewName && (
+        <p className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.08em] text-faint">
+          {label} Crew
+        </p>
+      )}
       <p className="mt-1 text-[13px] text-subtle">
         This portal shows only {label.toLowerCase()}-relevant reports.
       </p>

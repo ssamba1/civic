@@ -23,7 +23,7 @@ const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 interface PageProps {
   params: Promise<{ slug: string; crewType: string }>;
-  searchParams: Promise<{ month?: string }>;
+  searchParams: Promise<{ month?: string; crew?: string }>;
 }
 
 /** "YYYY-MM" for the current month in SERVER-LOCAL time — see the city
@@ -77,7 +77,7 @@ export default async function CrewPortalCalendarPage({
 }: PageProps) {
   const { slug, crewType } = await params;
   if (!isPortalCrewType(crewType)) notFound();
-  const { month: monthParam } = await searchParams;
+  const { month: monthParam, crew: crewParam } = await searchParams;
 
   // Resolve the city the way the city calendar page does: real DB row first,
   // falling back to the synthetic KNOWN_CITIES entry so demo slugs resolve.
@@ -119,11 +119,27 @@ export default async function CrewPortalCalendarPage({
         CrewTypeDef[],
       ]);
 
+  // Optional ?crew=<name> instance scope: resolve to a real crew OF THIS TYPE
+  // (case-sensitive exact match) against the full roster result. Unresolved
+  // (demo city, no such crew) → undefined → type-level calendar, unchanged.
+  const lockedCrew =
+    crewParam && crewsResult?.ok
+      ? crewsResult.crews.find(
+          (c) => c.name === crewParam && c.crewType === crewType,
+        )
+      : undefined;
+
   const crews = crewsResult?.ok
     ? crewsResult.crews
         .filter((c) => c.active)
         .map((c) => ({ id: c.id, name: c.name }))
     : [];
+  // Keep the locked crew in the list even if inactive (the picker is hidden
+  // when locked, so an extra entry is invisible) so the calendar can preserve
+  // its name in month-nav links.
+  if (lockedCrew && !crews.some((c) => c.id === lockedCrew.id)) {
+    crews.push({ id: lockedCrew.id, name: lockedCrew.name });
+  }
   const crewTypes = crewTypeDefs.map((t) => ({ key: t.key, label: t.label }));
   // Same division source + colors as the sidebar and crews panel.
   const teams = TEAM_LIST.filter((t) => t.id !== "all").map((t) => ({
@@ -158,6 +174,7 @@ export default async function CrewPortalCalendarPage({
             monthISO={monthISO}
             todayISO={todayISO}
             lockedCrewType={crewType}
+            lockedCrewId={lockedCrew?.id}
           />
         ) : (
           <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface px-6 py-16 text-center shadow-[var(--shadow-card)]">

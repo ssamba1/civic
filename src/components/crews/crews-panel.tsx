@@ -1,6 +1,7 @@
 "use client";
 
 import { HardHat, Pencil, Plus, Star } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useMemo, useState, useTransition } from "react";
 import { inviteMember } from "@/app/city/[slug]/members/actions";
@@ -19,6 +20,7 @@ import {
 } from "@/components/members/member-modal";
 import { Button } from "@/components/ui/button";
 import { MenuSelect } from "@/components/ui/menu-select";
+import { isPortalCrewType } from "@/lib/crew-portal";
 import {
   type CrewTypeDef,
   DEFAULT_CREW_TYPES,
@@ -171,9 +173,19 @@ export function CrewsPanel({
                           className="h-4 w-4 flex-shrink-0 text-subtle"
                           strokeWidth={1.75}
                         />
-                        <span className="truncate text-[14px] font-medium text-foreground">
-                          {crew.name}
-                        </span>
+                        {crew.crewType && isPortalCrewType(crew.crewType) ? (
+                          <Link
+                            href={`/city/${slug}/crew/${crew.crewType}/analytics?crew=${encodeURIComponent(crew.name)}`}
+                            aria-label={`View ${crew.name} analytics`}
+                            className="truncate rounded-sm text-[14px] font-medium text-foreground underline-offset-2 outline-none transition-colors duration-150 hover:text-accent hover:underline focus-visible:ring-2 focus-visible:ring-accent/60"
+                          >
+                            {crew.name}
+                          </Link>
+                        ) : (
+                          <span className="truncate text-[14px] font-medium text-foreground">
+                            {crew.name}
+                          </span>
+                        )}
                         {!crew.active && (
                           <span className="flex-shrink-0 rounded-md border border-hairline bg-overlay px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-faint">
                             Inactive
