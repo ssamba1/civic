@@ -72,10 +72,7 @@ export default async function AdminPrivacyPage() {
           </thead>
           <tbody>
             {report.cities.map((c) => (
-              <tr
-                key={c.cityId}
-                className="border-t border-hairline align-top"
-              >
+              <tr key={c.cityId} className="border-t border-hairline align-top">
                 <td className="px-4 py-3 font-medium text-foreground">
                   {c.cityName}
                 </td>
@@ -102,10 +99,7 @@ export default async function AdminPrivacyPage() {
             ))}
             {report.cities.length === 0 && (
               <tr>
-                <td
-                  colSpan={3}
-                  className="px-4 py-6 text-center text-subtle"
-                >
+                <td colSpan={3} className="px-4 py-6 text-center text-subtle">
                   No cities to audit.
                 </td>
               </tr>

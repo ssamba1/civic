@@ -22,7 +22,10 @@ vi.mock("@/lib/db/client", () => ({
     storage: {
       from: (bucket: string) => ({
         list: (prefix: string) =>
-          Promise.resolve({ data: store[`${bucket}/${prefix}`] ?? [], error: null }),
+          Promise.resolve({
+            data: store[`${bucket}/${prefix}`] ?? [],
+            error: null,
+          }),
       }),
     },
   }),
@@ -37,8 +40,12 @@ beforeEach(() => {
 describe("auditAllCities", () => {
   it("passes when no public file size-matches its raw counterpart", async () => {
     // Cleanville: blurred public (small) vs raw (large) — no match.
-    store["photos-public/city-clean"] = [{ name: "a.jpg", metadata: { size: 100 } }];
-    store["photos-raw/city-clean"] = [{ name: "a.jpg", metadata: { size: 900 } }];
+    store["photos-public/city-clean"] = [
+      { name: "a.jpg", metadata: { size: 100 } },
+    ];
+    store["photos-raw/city-clean"] = [
+      { name: "a.jpg", metadata: { size: 900 } },
+    ];
     store["photos-public/city-leak"] = [];
     store["photos-raw/city-leak"] = [];
 
@@ -53,8 +60,12 @@ describe("auditAllCities", () => {
     store["photos-public/city-clean"] = [];
     store["photos-raw/city-clean"] = [];
     // Leaktown: identical sizes -> likely raw leaked to public.
-    store["photos-public/city-leak"] = [{ name: "b.jpg", metadata: { size: 500 } }];
-    store["photos-raw/city-leak"] = [{ name: "b.jpg", metadata: { size: 500 } }];
+    store["photos-public/city-leak"] = [
+      { name: "b.jpg", metadata: { size: 500 } },
+    ];
+    store["photos-raw/city-leak"] = [
+      { name: "b.jpg", metadata: { size: 500 } },
+    ];
 
     const report = await auditAllCities("2026-07-09T00:00:00.000Z");
     expect(report.ok).toBe(false);
