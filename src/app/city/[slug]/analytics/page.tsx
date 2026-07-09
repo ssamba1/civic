@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { AnalyticsInteractive } from "@/components/analytics/analytics-interactive";
 import { DistrictRollups } from "@/components/analytics/district-rollups";
 import { EquityPanel } from "@/components/analytics/equity-panel";
-import { PeerBenchmarks } from "@/components/analytics/peer-benchmarks";
+import { PeerBenchmarkCard } from "@/components/analytics/peer-benchmark-card";
 import { SurgeBanner } from "@/components/analytics/surge-banner";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
 import { fetchCity } from "@/lib/dashboard-queries";
@@ -50,6 +50,7 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
         </section>
 
         <SurgeBanner />
+        <PeerBenchmarkCard cityId={city.id} />
 
         <AnalyticsInteractive />
 
@@ -58,7 +59,6 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
         <div className="mt-6 space-y-4">
           <DistrictRollups cityId={city.id} />
           <EquityPanel cityId={city.id} />
-          <PeerBenchmarks currentCityId={city.id} />
         </div>
       </div>
 

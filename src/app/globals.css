@@ -340,25 +340,32 @@
     opacity: 1;
   }
 }
-.skeleton {
-  border-radius: inherit;
-  background-color: var(--elevated);
-  background-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--overlay-strong) 50%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
-  background-repeat: no-repeat;
-  animation:
-    skeleton-in 0.4s ease-out both,
-    skeleton-shimmer 2s ease-in-out 0.4s infinite;
-}
-@media (prefers-reduced-motion: reduce) {
+/* In @layer components (not unlayered) so Tailwind's `rounded-*` utilities —
+   which live in the higher `utilities` layer — win over the `inherit` default.
+   Bare `.skeleton` still inherits the parent radius (fill-a-rounded-box case);
+   `.skeleton rounded-full` now actually rounds instead of the utility being
+   silently overridden by an unlayered rule. */
+@layer components {
   .skeleton {
-    animation: none;
-    background-image: none;
+    border-radius: inherit;
+    background-color: var(--elevated);
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--overlay-strong) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation:
+      skeleton-in 0.4s ease-out both,
+      skeleton-shimmer 2s ease-in-out 0.4s infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton {
+      animation: none;
+      background-image: none;
+    }
   }
 }
 
@@ -654,6 +661,11 @@
 /* ── Base ── */
 html {
   scroll-behavior: smooth;
+  /* Base render at 90% — the app reads denser/better at 90% browser zoom than
+     100%, so bake that in. `zoom` (not transform:scale) re-runs layout, so vw
+     units, fixed/sticky chrome, body-portaled modals, and the map all scale as
+     one with no dead gutter. */
+  zoom: 0.9;
 }
 
 body {

@@ -20,6 +20,7 @@ import { sniffImageMime } from "@/lib/image/sniff-mime";
 import { createLogger } from "@/lib/logger";
 import { resolveTeamKeyForCategory } from "@/lib/onboarding/city-teams";
 import { resolveOwningCity } from "@/lib/routing/jurisdiction";
+import { autoAssignUnit } from "@/lib/routing/org-units";
 import type {
   Classification,
   Result,
@@ -688,6 +689,23 @@ export async function runClassifyPipeline(
       teamKey: resolvedTeamKey,
       crewType,
       crewHint,
+      log,
+    });
+  }
+
+  // Advanced routing over the org_units tree (migration 042). Runs alongside
+  // the legacy crew pick during the transition: it stamps assigned_unit_id (the
+  // new source of truth) via cost/SLA-weighted load balance across internal
+  // crews + contractors. Best-effort and no-op-safe on an un-migrated DB (no
+  // org_units rows → no candidates → null). Gated identically to the crew pick.
+  if (AI_CREW_ASSIGN && !needsManualReview && crewType) {
+    await autoAssignUnit(supabase, {
+      workOrderId: insertedWorkOrder.id,
+      cityId: report.city_id,
+      category: classification.category,
+      crewType,
+      dueAt: insertedWorkOrder.due_at ?? null,
+      nowMs: Date.now(),
       log,
     });
   }

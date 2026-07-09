@@ -107,6 +107,16 @@ const RULES: Record<ReportCategory, WorkOrderRule> = {
   },
 };
 
+/** Category → rules-engine crew type, for surfaces that scope BY CREW TYPE
+ *  (crew portals). Derived from RULES so it can never drift from dispatch. */
+export const CATEGORY_CREW_TYPES: Readonly<
+  Record<ReportCategory, CrewType | null>
+> = Object.fromEntries(
+  (Object.entries(RULES) as [ReportCategory, WorkOrderRule][]).map(
+    ([cat, r]) => [cat, r.crew_type],
+  ),
+) as Record<ReportCategory, CrewType | null>;
+
 /**
  * Deterministic repair cost floor in whole USD:
  *   labor_rate * (minutes / 60) + flat material cost.
