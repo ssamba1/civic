@@ -25,11 +25,20 @@ interface PageProps {
   searchParams: Promise<{ month?: string }>;
 }
 
-/** "YYYY-MM" for the current UTC month — the default when `?month=` is
- *  absent or fails MONTH_RE. */
+/** "YYYY-MM" for the current month in SERVER-LOCAL time — the default when
+ *  `?month=` is absent or fails MONTH_RE. Local (not UTC) on purpose: for a
+ *  US-evening viewer, UTC has already rolled to tomorrow, which would open
+ *  the calendar on the wrong month at month boundaries and ring the wrong
+ *  "today" cell. Server-local is the best proxy we have for the city's day. */
 function currentMonth(): string {
   const now = new Date();
-  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/** Today as YYYY-MM-DD in server-local time — same rationale as currentMonth. */
+function todayLocalISO(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
 /** Day after `iso` (YYYY-MM-DD), UTC — turns the grid's last cell into the
@@ -88,7 +97,7 @@ export default async function CityCalendarPage({
   const month =
     monthParam && MONTH_RE.test(monthParam) ? monthParam : currentMonth();
   const monthISO = `${month}-01`;
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const todayISO = todayLocalISO();
   const cells = monthGrid(monthISO, todayISO);
   const fromISO = cells[0].iso;
   const toISO = isoPlusOneDay(cells[cells.length - 1].iso);
