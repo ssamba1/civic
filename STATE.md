@@ -37,11 +37,14 @@ Merge order: #12 → #13 → #14 (each stacks on the prior).
   documented TODO in `rate-limit.ts`.
 - **0.4 unauth AI chat/reasoning** — FIXED (both require `getAuthUser` 401 +
   shared Gemini budget cap).
-- **0.5 analytics theater** — OPEN (data-integrity, not security). 6 of 8 widget
-  fns (`fetchReportsTrend`, `fetchStatusFunnel`, `fetchSeverityDistribution`,
-  `fetchHourlyHeatmap`, `fetchTopNeighborhoods`, `fetchCategoryResolution`)
-  ignore `cityId` and return mocks(demo)/zeros(live); MTTR + SLA KPIs return
-  demo literals in live mode too (`analytics-data.ts`). Needs real queries.
+- **0.5 analytics theater** — FIXED (2026-07-08). Migration `036_analytics_rpcs`
+  adds 8 SECURITY DEFINER per-city aggregate RPCs (trend, status-funnel,
+  severity, hourly-heatmap, top-locations, category-resolution,
+  resolution-distribution, MTTR/SLA, reporter-velocity). `analytics-data.ts`
+  rewritten to call them in live mode; demo literals kept under DEMO_MODE
+  (synthetic rows carry no completed_at → live MTTR is honestly 0 until real
+  work-order closes land). Applied via MCP + verified against Cumming data.
+  Widgets degrade to empty (never fabricated) on error.
 
 ## High Priority (owner-blocked — cannot be done by the agent)
 
