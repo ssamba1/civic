@@ -72,7 +72,37 @@ export interface ReporterVelocity {
 }
 
 /* ------------------------------------------------------------------
-   Deterministic mock generators
+   Live query helper
+   ------------------------------------------------------------------ */
+
+// Calls a per-city analytics RPC (migration 036) with the service-role client.
+// Returns [] on any error so a live widget degrades to an empty (never
+// fabricated) state instead of throwing. cityId is required for a real query.
+async function rpcRows<T>(
+  fn: string,
+  cityId: string,
+  extra: Record<string, unknown> = {},
+): Promise<T[]> {
+  if (!cityId) return [];
+  try {
+    const { createServerClient } = await import("@/lib/db/client");
+    const db = createServerClient();
+    const { data, error } = await db.rpc(fn, { _city_id: cityId, ...extra });
+    if (error) {
+      logger.warn(`analytics RPC ${fn} failed`, { error: error.message });
+      return [];
+    }
+    return (data ?? []) as T[];
+  } catch (err) {
+    logger.warn(`analytics RPC ${fn} threw`, {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return [];
+  }
+}
+
+/* ------------------------------------------------------------------
+   Deterministic mock generators (DEMO_MODE only)
    ------------------------------------------------------------------ */
 
 const seed = (i: number, salt: number) => {
@@ -80,8 +110,8 @@ const seed = (i: number, salt: number) => {
   return x - Math.floor(x);
 };
 
-// Hardcoded demo KPIs — returned when the live aggregate errors or finds no
-// reports, so analytics never renders an empty dashboard.
+// Hardcoded demo KPIs — returned in DEMO_MODE, or when the live aggregate
+// errors / finds no reports, so demo analytics never renders empty.
 const KPI_FALLBACK: AnalyticsKpis = {
   resolution_rate_pct: 76.5,
   resolution_rate_delta_pct: 4.2,
@@ -175,17 +205,39 @@ export async function fetchAnalyticsKpis(
       prev === 0 ? (cur > 0 ? 100 : 0) : ((cur - prev) / prev) * 100;
     const round1 = (n: number) => Math.round(n * 10) / 10;
 
+    // Real MTTR + SLA from completed work orders (migration 036 RPC). In demo
+    // mode keep the literals — the synthetic rows carry no completion timestamps
+    // so a real query would flatline them to zero.
+    let mttr_hours = kpiFallback().mttr_hours;
+    let mttr_delta_pct = kpiFallback().mttr_delta_pct;
+    let sla_compliance_pct = kpiFallback().sla_compliance_pct;
+    if (!DEMO_MODE) {
+      const [ms] = await rpcRows<{
+        mttr_hours: number;
+        mttr_prev_hours: number;
+        sla_compliance_pct: number;
+        sla_denominator: number;
+      }>("analytics_mttr_sla", cityId);
+      mttr_hours = ms ? Number(ms.mttr_hours) : 0;
+      mttr_delta_pct = ms
+        ? round1(pctChange(Number(ms.mttr_hours), Number(ms.mttr_prev_hours)))
+        : 0;
+      // Only report SLA compliance when at least one work order carries a due_at;
+      // otherwise there is nothing to comply with — leave it at zero.
+      sla_compliance_pct =
+        ms && Number(ms.sla_denominator) > 0
+          ? Number(ms.sla_compliance_pct)
+          : 0;
+    }
+
     return {
       resolution_rate_pct: round1(rate(closed, total)),
       resolution_rate_delta_pct: round1(
         pctChange(rate(twClosed, twTotal), rate(pwClosed, pwTotal)),
       ),
-      // MTTR + SLA need work-order completion timestamps that the synthetic DB
-      // rows don't carry; keep the demo literals for those two signals (zeros
-      // in live mode so real deployments never show fabricated numbers).
-      mttr_hours: kpiFallback().mttr_hours,
-      mttr_delta_pct: kpiFallback().mttr_delta_pct,
-      sla_compliance_pct: kpiFallback().sla_compliance_pct,
+      mttr_hours,
+      mttr_delta_pct,
+      sla_compliance_pct,
       sla_target_pct: kpiFallback().sla_target_pct,
       active_backlog: backlog,
       backlog_delta_pct: round1(pctChange(twTotal, pwTotal)),
@@ -203,90 +255,162 @@ export async function fetchReportsTrend(
   days = 14,
   now = Date.now(),
 ): Promise<TrendPoint[]> {
-  void cityId;
+  if (DEMO_MODE) {
+    return Array.from({ length: days }, (_, i) => {
+      const idx = days - 1 - i;
+      const date = new Date(now - idx * 86_400_000);
+      const base = 8 + Math.round(seed(idx, 7) * 10);
+      const created = base + (idx % 4 === 0 ? 4 : 0);
+      const closed = Math.max(
+        1,
+        Math.round(base * 0.78 + seed(idx, 13) * 4 - 2),
+      );
+      return { date: date.toISOString().slice(0, 10), created, closed };
+    });
+  }
+
+  const rows = await rpcRows<{ day: string; created: number; closed: number }>(
+    "analytics_trend",
+    cityId,
+    { _days: days },
+  );
+  if (rows.length > 0) {
+    return rows.map((r) => ({
+      date: r.day,
+      created: Number(r.created),
+      closed: Number(r.closed),
+    }));
+  }
+  // Empty city / error: keep the date axis, flatline at zero (charts stay mounted).
   return Array.from({ length: days }, (_, i) => {
     const idx = days - 1 - i;
     const date = new Date(now - idx * 86_400_000);
-    // Live mode: keep the date axis but flatline at zero (charts stay mounted).
-    if (!DEMO_MODE) {
-      return { date: date.toISOString().slice(0, 10), created: 0, closed: 0 };
-    }
-    const base = 8 + Math.round(seed(idx, 7) * 10);
-    const created = base + (idx % 4 === 0 ? 4 : 0);
-    const closed = Math.max(1, Math.round(base * 0.78 + seed(idx, 13) * 4 - 2));
-    return {
-      date: date.toISOString().slice(0, 10),
-      created,
-      closed,
-    };
+    return { date: date.toISOString().slice(0, 10), created: 0, closed: 0 };
   });
 }
 
 export async function fetchResolutionDistribution(
   cityId: string,
 ): Promise<ResolutionBucket[]> {
-  void cityId;
-  if (!DEMO_MODE) {
+  const EMPTY: ResolutionBucket[] = [
+    { label: "<24h", hours_max: 24, count: 0 },
+    { label: "1-3d", hours_max: 72, count: 0 },
+    { label: "3-7d", hours_max: 168, count: 0 },
+    { label: "1-2w", hours_max: 336, count: 0 },
+    { label: ">2w", hours_max: 9999, count: 0 },
+  ];
+  if (DEMO_MODE) {
     return [
-      { label: "<24h", hours_max: 24, count: 0 },
-      { label: "1-3d", hours_max: 72, count: 0 },
-      { label: "3-7d", hours_max: 168, count: 0 },
-      { label: "1-2w", hours_max: 336, count: 0 },
-      { label: ">2w", hours_max: 9999, count: 0 },
+      { label: "<24h", hours_max: 24, count: 62 },
+      { label: "1-3d", hours_max: 72, count: 71 },
+      { label: "3-7d", hours_max: 168, count: 38 },
+      { label: "1-2w", hours_max: 336, count: 14 },
+      { label: ">2w", hours_max: 9999, count: 4 },
     ];
   }
-  return [
-    { label: "<24h", hours_max: 24, count: 62 },
-    { label: "1-3d", hours_max: 72, count: 71 },
-    { label: "3-7d", hours_max: 168, count: 38 },
-    { label: "1-2w", hours_max: 336, count: 14 },
-    { label: ">2w", hours_max: 9999, count: 4 },
-  ];
+  const rows = await rpcRows<{
+    label: string;
+    hours_max: number;
+    count: number;
+  }>("analytics_resolution_distribution", cityId);
+  return rows.length > 0
+    ? rows.map((r) => ({
+        label: r.label,
+        hours_max: Number(r.hours_max),
+        count: Number(r.count),
+      }))
+    : EMPTY;
 }
+
+const FUNNEL_LABELS: Record<string, string> = {
+  open: "Open",
+  dispatched: "Dispatched",
+  in_progress: "In progress",
+  closed: "Resolved",
+};
+const FUNNEL_ORDER: ReportStatus[] = [
+  "open",
+  "dispatched",
+  "in_progress",
+  "closed",
+];
 
 export async function fetchStatusFunnel(
   cityId: string,
 ): Promise<StatusFunnelStep[]> {
-  void cityId;
-  const demo = DEMO_MODE;
-  return [
-    { status: "open", label: "Open", count: demo ? 43 : 0 },
-    { status: "dispatched", label: "Dispatched", count: demo ? 31 : 0 },
-    { status: "in_progress", label: "In progress", count: demo ? 22 : 0 },
-    { status: "closed", label: "Resolved", count: demo ? 189 : 0 },
-  ];
+  if (DEMO_MODE) {
+    return [
+      { status: "open", label: "Open", count: 43 },
+      { status: "dispatched", label: "Dispatched", count: 31 },
+      { status: "in_progress", label: "In progress", count: 22 },
+      { status: "closed", label: "Resolved", count: 189 },
+    ];
+  }
+  const rows = await rpcRows<{ status: string; count: number }>(
+    "analytics_status_funnel",
+    cityId,
+  );
+  const byStatus = new Map(rows.map((r) => [r.status, Number(r.count)]));
+  return FUNNEL_ORDER.map((status) => ({
+    status,
+    label: FUNNEL_LABELS[status],
+    count: byStatus.get(status) ?? 0,
+  }));
 }
 
 export async function fetchSeverityDistribution(
   cityId: string,
 ): Promise<SeveritySlice[]> {
-  void cityId;
-  if (!DEMO_MODE) {
-    return ([1, 2, 3, 4, 5] as const).map((severity) => ({
-      severity,
-      count: 0,
-    }));
+  if (DEMO_MODE) {
+    return [
+      { severity: 1, count: 58 },
+      { severity: 2, count: 71 },
+      { severity: 3, count: 64 },
+      { severity: 4, count: 38 },
+      { severity: 5, count: 16 },
+    ];
   }
-  return [
-    { severity: 1, count: 58 },
-    { severity: 2, count: 71 },
-    { severity: 3, count: 64 },
-    { severity: 4, count: 38 },
-    { severity: 5, count: 16 },
-  ];
+  const rows = await rpcRows<{ severity: number; count: number }>(
+    "analytics_severity",
+    cityId,
+  );
+  const bySev = new Map(rows.map((r) => [Number(r.severity), Number(r.count)]));
+  return ([1, 2, 3, 4, 5] as const).map((severity) => ({
+    severity,
+    count: bySev.get(severity) ?? 0,
+  }));
 }
 
 export async function fetchHourlyHeatmap(cityId: string): Promise<HeatCell[]> {
-  void cityId;
+  if (DEMO_MODE) {
+    const cells: HeatCell[] = [];
+    for (let d = 0; d < 7; d++) {
+      for (let h = 0; h < 24; h++) {
+        // Higher during commute (7-9, 16-19) and on weekdays
+        const commute = (h >= 7 && h <= 9) || (h >= 16 && h <= 19) ? 1.6 : 1;
+        const weekday = d >= 1 && d <= 5 ? 1.25 : 0.6;
+        const noise = 0.5 + seed(d * 24 + h, 23);
+        cells.push({
+          day: d,
+          hour: h,
+          count: Math.round(commute * weekday * noise * 4),
+        });
+      }
+    }
+    return cells;
+  }
+
+  const rows = await rpcRows<{ day: number; hour: number; count: number }>(
+    "analytics_hourly_heatmap",
+    cityId,
+  );
+  const byCell = new Map(
+    rows.map((r) => [`${r.day}:${r.hour}`, Number(r.count)]),
+  );
   const cells: HeatCell[] = [];
   for (let d = 0; d < 7; d++) {
     for (let h = 0; h < 24; h++) {
-      // Higher during commute (7-9, 16-19) and on weekdays
-      const commute = (h >= 7 && h <= 9) || (h >= 16 && h <= 19) ? 1.6 : 1;
-      const weekday = d >= 1 && d <= 5 ? 1.25 : 0.6;
-      const noise = 0.5 + seed(d * 24 + h, 23);
-      const v = DEMO_MODE ? Math.round(commute * weekday * noise * 4) : 0;
-      cells.push({ day: d, hour: h, count: v });
+      cells.push({ day: d, hour: h, count: byCell.get(`${d}:${h}`) ?? 0 });
     }
   }
   return cells;
@@ -295,67 +419,103 @@ export async function fetchHourlyHeatmap(cityId: string): Promise<HeatCell[]> {
 export async function fetchTopNeighborhoods(
   cityId: string,
 ): Promise<NeighborhoodVolume[]> {
-  void cityId;
-  if (!DEMO_MODE) return [];
-  return [
-    { name: "Downtown", count: 64, open: 12 },
-    { name: "Vickery Village", count: 47, open: 9 },
-    { name: "Sawnee Mountain", count: 38, open: 7 },
-    { name: "Lake Lanier S.", count: 31, open: 5 },
-    { name: "Bethelview", count: 24, open: 4 },
-    { name: "Castleberry", count: 19, open: 3 },
-  ];
+  if (DEMO_MODE) {
+    return [
+      { name: "Downtown", count: 64, open: 12 },
+      { name: "Vickery Village", count: 47, open: 9 },
+      { name: "Sawnee Mountain", count: 38, open: 7 },
+      { name: "Lake Lanier S.", count: 31, open: 5 },
+      { name: "Bethelview", count: 24, open: 4 },
+      { name: "Castleberry", count: 19, open: 3 },
+    ];
+  }
+  const rows = await rpcRows<{ name: string; count: number; open: number }>(
+    "analytics_top_neighborhoods",
+    cityId,
+    { _limit: 6 },
+  );
+  return rows.map((r) => ({
+    name: r.name,
+    count: Number(r.count),
+    open: Number(r.open),
+  }));
 }
 
 export async function fetchCategoryResolution(
   cityId: string,
 ): Promise<CategoryResolution[]> {
-  void cityId;
-  if (!DEMO_MODE) return [];
-  const rows: Array<{
+  const enrich = (r: {
     category: ReportCategory;
     avg_hours: number;
     target_hours: number;
     count: number;
-  }> = [
-    { category: "pothole", avg_hours: 58, target_hours: 72, count: 68 },
-    { category: "streetlight", avg_hours: 96, target_hours: 120, count: 41 },
-    { category: "water_leak", avg_hours: 14, target_hours: 24, count: 29 },
-    {
-      category: "sidewalk_damage",
-      avg_hours: 184,
-      target_hours: 168,
-      count: 24,
-    },
-    { category: "downed_sign", avg_hours: 28, target_hours: 48, count: 22 },
-    { category: "graffiti", avg_hours: 122, target_hours: 96, count: 18 },
-    { category: "tree_down", avg_hours: 18, target_hours: 24, count: 14 },
-    { category: "drainage", avg_hours: 76, target_hours: 96, count: 12 },
-  ];
-  return rows.map((r) => ({
+  }): CategoryResolution => ({
     ...r,
-    label: CATEGORY_META[r.category].label,
-    color: CATEGORY_META[r.category].color,
-  }));
+    label: CATEGORY_META[r.category]?.label ?? r.category,
+    color: CATEGORY_META[r.category]?.color ?? "#888",
+  });
+
+  if (DEMO_MODE) {
+    const rows: Array<{
+      category: ReportCategory;
+      avg_hours: number;
+      target_hours: number;
+      count: number;
+    }> = [
+      { category: "pothole", avg_hours: 58, target_hours: 72, count: 68 },
+      { category: "streetlight", avg_hours: 96, target_hours: 120, count: 41 },
+      { category: "water_leak", avg_hours: 14, target_hours: 24, count: 29 },
+      {
+        category: "sidewalk_damage",
+        avg_hours: 184,
+        target_hours: 168,
+        count: 24,
+      },
+      { category: "downed_sign", avg_hours: 28, target_hours: 48, count: 22 },
+      { category: "graffiti", avg_hours: 122, target_hours: 96, count: 18 },
+      { category: "tree_down", avg_hours: 18, target_hours: 24, count: 14 },
+      { category: "drainage", avg_hours: 76, target_hours: 96, count: 12 },
+    ];
+    return rows.map(enrich);
+  }
+
+  const rows = await rpcRows<{
+    category: ReportCategory;
+    avg_hours: number;
+    target_hours: number;
+    count: number;
+  }>("analytics_category_resolution", cityId);
+  return rows.map((r) =>
+    enrich({
+      category: r.category,
+      avg_hours: Number(r.avg_hours),
+      target_hours: Number(r.target_hours),
+      count: Number(r.count),
+    }),
+  );
 }
 
 export async function fetchReporterVelocity(
   cityId: string,
 ): Promise<ReporterVelocity> {
-  void cityId;
-  if (!DEMO_MODE) {
-    return {
-      unique_reporters: 0,
-      reports_per_reporter: 0,
-      spark: Array.from({ length: 14 }, () => 0),
-    };
+  if (DEMO_MODE) {
+    const spark = Array.from({ length: 14 }, (_, i) =>
+      Math.round(6 + seed(i, 91) * 10),
+    );
+    return { unique_reporters: 134, reports_per_reporter: 1.84, spark };
   }
-  const spark = Array.from({ length: 14 }, (_, i) =>
-    Math.round(6 + seed(i, 91) * 10),
+
+  const [row] = await rpcRows<{ unique_reporters: number; total: number }>(
+    "analytics_reporter_velocity",
+    cityId,
   );
+  const unique = row ? Number(row.unique_reporters) : 0;
+  const total = row ? Number(row.total) : 0;
+  const trend = await fetchReportsTrend(cityId, 14);
   return {
-    unique_reporters: 134,
-    reports_per_reporter: 1.84,
-    spark,
+    unique_reporters: unique,
+    reports_per_reporter:
+      unique === 0 ? 0 : Math.round((total / unique) * 100) / 100,
+    spark: trend.map((p) => p.created),
   };
 }

@@ -1,23 +1,42 @@
 import { z } from "zod/v4";
 
-const serverEnvSchema = z.object({
-  SUPABASE_URL: z.url(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-  GEMINI_API_KEY: z.string().min(1),
-  SENTRY_DSN: z.string().optional(),
-  INTERNAL_CLASSIFY_SECRET: z.string().optional(),
-  OPEN311_API_KEY: z.string().optional(),
-  OPEN311_SYSTEM_USER_ID: z.string().optional(),
-  RESEND_API_KEY: z.string().optional(),
-  NOTIFY_FROM_EMAIL: z.string().optional(),
-  NOTIFY_DISABLE: z.string().optional(),
-  DEV_AUTH_BYPASS: z.string().optional(),
-  // The single request header that carries the real client IP for rate
-  // limiting. Set to the platform-set, un-spoofable header for your deploy
-  // (e.g. "x-real-ip" on Vercel/nginx). When set, ONLY this header is trusted,
-  // so a client can't rotate the limiter key by forging x-forwarded-for.
-  RATE_LIMIT_TRUSTED_HEADER: z.string().optional(),
-});
+const serverEnvSchema = z
+  .object({
+    SUPABASE_URL: z.url(),
+    SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+    GEMINI_API_KEY: z.string().min(1),
+    SENTRY_DSN: z.string().optional(),
+    INTERNAL_CLASSIFY_SECRET: z.string().optional(),
+    OPEN311_API_KEY: z.string().optional(),
+    OPEN311_SYSTEM_USER_ID: z.string().optional(),
+    RESEND_API_KEY: z.string().optional(),
+    NOTIFY_FROM_EMAIL: z.string().optional(),
+    NOTIFY_DISABLE: z.string().optional(),
+    DEV_AUTH_BYPASS: z.string().optional(),
+    // The single request header that carries the real client IP for rate
+    // limiting. Set to the platform-set, un-spoofable header for your deploy
+    // (e.g. "x-real-ip" on Vercel/nginx). When set, ONLY this header is trusted,
+    // so a client can't rotate the limiter key by forging x-forwarded-for.
+    RATE_LIMIT_TRUSTED_HEADER: z.string().optional(),
+  })
+  .superRefine((env, ctx) => {
+    // In production the rate limiter MUST key off a platform-set, un-spoofable
+    // header — otherwise clientIp() silently falls back to client-forgeable
+    // x-real-ip / x-forwarded-for and an attacker rotates the key to defeat every
+    // AI + Open311 limit (unbounded Gemini spend). Fail loud on misconfig rather
+    // than degrade silently. Dev/test are exempt (no trusted proxy in front).
+    if (
+      process.env.NODE_ENV === "production" &&
+      !env.RATE_LIMIT_TRUSTED_HEADER?.trim()
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["RATE_LIMIT_TRUSTED_HEADER"],
+        message:
+          "required in production: set to the platform's un-spoofable client-IP header (e.g. x-real-ip) so the rate-limit key cannot be forged",
+      });
+    }
+  });
 
 const clientEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.url(),

@@ -1,7 +1,11 @@
 # Loop State — Civic / Social Impact
 
-Last run: 2026-07-08 (backlog sweeps 1–3)
-Branch: `feat/backlog-sweep-3` (off `-sweep-2` off `-sweep-1` off `main`)
+Last run: 2026-07-08 (notify-drain + api-keys sweep)
+Branch: `feat/notify-drain-api-keys` (30 commits ahead of `main`, clean, pushed)
+
+Verify status (2026-07-08): `typecheck` ✅ · `test` ✅ 649 pass / 63 skip ·
+`lint` content-clean (fixed 12 noNonNullAssertion in weather tests; remaining
+biome errors are Windows-CRLF format only — CI runs LF and is green).
 
 ## Shipped this session (PRs open, stacked)
 
@@ -20,6 +24,27 @@ Branch: `feat/backlog-sweep-3` (off `-sweep-2` off `-sweep-1` off `main`)
   idempotency + --dry-run; eval --mock; this refresh.
 
 Merge order: #12 → #13 → #14 (each stacks on the prior).
+
+## Tier 0 security audit (2026-07-08)
+
+- **0.1 forgeable demo cookie** — FIXED (HMAC-signed, `demo-cookie.ts` +
+  `staff-access.ts`; DEMO_MODE + slug gated).
+- **0.2 staff mutations lack city scope** — FIXED (`reportInStaffCity`/
+  `workOrderInStaffCity` on every action, `staff/actions.ts`).
+- **0.3 rate limiter trusts spoofable IP** — FIXED spoofable fallback: prod now
+  REQUIRES `RATE_LIMIT_TRUSTED_HEADER` (env validation throws). In-memory
+  per-instance state NOT fixed — needs Redis (new dep + owner infra), left as
+  documented TODO in `rate-limit.ts`.
+- **0.4 unauth AI chat/reasoning** — FIXED (both require `getAuthUser` 401 +
+  shared Gemini budget cap).
+- **0.5 analytics theater** — FIXED (2026-07-08). Migration `036_analytics_rpcs`
+  adds 8 SECURITY DEFINER per-city aggregate RPCs (trend, status-funnel,
+  severity, hourly-heatmap, top-locations, category-resolution,
+  resolution-distribution, MTTR/SLA, reporter-velocity). `analytics-data.ts`
+  rewritten to call them in live mode; demo literals kept under DEMO_MODE
+  (synthetic rows carry no completed_at → live MTTR is honestly 0 until real
+  work-order closes land). Applied via MCP + verified against Cumming data.
+  Widgets degrade to empty (never fabricated) on error.
 
 ## High Priority (owner-blocked — cannot be done by the agent)
 

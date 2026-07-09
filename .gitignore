@@ -63,3 +63,7 @@ scripts/shots/
 
 # playwright-mcp browser session artifacts
 .playwright-mcp/
+
+# Playwright artifacts
+test-results/
+.mcp.json
