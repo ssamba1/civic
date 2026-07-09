@@ -1,4 +1,6 @@
+import { Smartphone } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TeamDashboardInteractive } from "@/components/teams/team-dashboard-interactive";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
@@ -62,6 +64,13 @@ export default async function TeamOverviewPage({ params }: PageProps) {
               Overview
             </h1>
             <p className="max-w-2xl text-[13px] text-faint">{meta.duties}</p>
+            <Link
+              href={`/city/${slug}/team/${teamId}/field`}
+              className="inline-flex items-center gap-1.5 rounded-[var(--radius-md)] border border-hairline px-2.5 py-1 text-[13px] font-medium text-foreground hover:bg-overlay"
+            >
+              <Smartphone className="h-3.5 w-3.5" strokeWidth={1.75} />
+              Field view
+            </Link>
           </div>
         </section>
 

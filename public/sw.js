@@ -71,6 +71,27 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Field-crew view (#52): network-first, but STORE each successful page load
+  // and serve the cached page when offline — a crew that loses signal sees the
+  // last-synced queue instead of the generic /offline screen. Scoped to the
+  // /city/*/team/*/field route so no other authed page is persisted.
+  if (/^\/city\/[^/]+\/team\/[^/]+\/field\/?$/.test(url.pathname)) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          return response;
+        })
+        .catch(() =>
+          caches
+            .match(request)
+            .then((cached) => cached || caches.match("/offline"))
+        )
+    );
+    return;
+  }
+
   // Network-first for pages, offline fallback
   event.respondWith(
     fetch(request).catch(() =>
