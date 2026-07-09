@@ -17,13 +17,13 @@ vi.mock("@/lib/logger", () => ({
   createLogger: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() }),
 }));
 
+import { categoryToTeamDefault } from "@/lib/teams";
 import {
+  type CityTeamConfig,
+  fetchCityTeams,
   resolveCategoryTeam,
   resolveTeamKeyForCategory,
-  fetchCityTeams,
-  type CityTeamConfig,
 } from "./city-teams";
-import { categoryToTeamDefault } from "@/lib/teams";
 
 beforeEach(() => {
   from.mockClear();
@@ -46,7 +46,10 @@ const PARKS_CONFIG: CityTeamConfig = {
 
 describe("resolveCategoryTeam", () => {
   it("returns the matching team config when a category is found", () => {
-    const result = resolveCategoryTeam([STREETS_CONFIG, PARKS_CONFIG], "pothole");
+    const result = resolveCategoryTeam(
+      [STREETS_CONFIG, PARKS_CONFIG],
+      "pothole",
+    );
     expect(result).toBe(STREETS_CONFIG);
   });
 
@@ -70,7 +73,10 @@ describe("resolveCategoryTeam", () => {
   });
 
   it("picks correct team for multi-category configs", () => {
-    const result = resolveCategoryTeam([STREETS_CONFIG, PARKS_CONFIG], "tree_down");
+    const result = resolveCategoryTeam(
+      [STREETS_CONFIG, PARKS_CONFIG],
+      "tree_down",
+    );
     expect(result).toBe(PARKS_CONFIG);
   });
 });

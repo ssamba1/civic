@@ -52,7 +52,11 @@ beforeEach(() => {
 
 describe("getReportTeam", () => {
   it("returns override from the map when present", () => {
-    const report = { id: "r1", category: "pothole" as const, assigned_team: undefined };
+    const report = {
+      id: "r1",
+      category: "pothole" as const,
+      assigned_team: undefined,
+    };
     const overrides = { r1: "streets_roads" as const };
     expect(getReportTeam(report, overrides)).toBe("streets_roads");
   });
@@ -67,7 +71,11 @@ describe("getReportTeam", () => {
   });
 
   it("falls back to categoryToTeam when no override or assigned_team", () => {
-    const report = { id: "r1", category: "pothole" as const, assigned_team: undefined };
+    const report = {
+      id: "r1",
+      category: "pothole" as const,
+      assigned_team: undefined,
+    };
     // categoryToTeam("pothole") → "streets_roads" per teams.ts mapping
     const result = getReportTeam(report, {});
     expect(typeof result).toBe("string");
@@ -85,7 +93,11 @@ describe("getReportTeam", () => {
   });
 
   it("different report id does not pick up another report's override", () => {
-    const report = { id: "r2", category: "pothole" as const, assigned_team: undefined };
+    const report = {
+      id: "r2",
+      category: "pothole" as const,
+      assigned_team: undefined,
+    };
     const overrides = { r1: "stormwater" as const };
     // Should NOT return stormwater for r2
     expect(getReportTeam(report, overrides)).not.toBe("stormwater");
@@ -99,8 +111,16 @@ describe("getReportHistory", () => {
 
   it("returns the events for the given report id", () => {
     const events = [
-      { from: "streets_roads" as const, to: "parks_forestry" as const, ts: "2026-06-01T10:00:00Z" },
-      { from: "parks_forestry" as const, to: "stormwater" as const, ts: "2026-06-01T11:00:00Z" },
+      {
+        from: "streets_roads" as const,
+        to: "parks_forestry" as const,
+        ts: "2026-06-01T10:00:00Z",
+      },
+      {
+        from: "parks_forestry" as const,
+        to: "stormwater" as const,
+        ts: "2026-06-01T11:00:00Z",
+      },
     ];
     const history = { r1: events };
     expect(getReportHistory("r1", history)).toBe(events);
@@ -108,7 +128,13 @@ describe("getReportHistory", () => {
 
   it("does not cross-contaminate between report ids", () => {
     const history = {
-      r1: [{ from: "streets_roads" as const, to: "parks_forestry" as const, ts: "2026-06-01T10:00:00Z" }],
+      r1: [
+        {
+          from: "streets_roads" as const,
+          to: "parks_forestry" as const,
+          ts: "2026-06-01T10:00:00Z",
+        },
+      ],
     };
     expect(getReportHistory("r2", history)).toEqual([]);
   });

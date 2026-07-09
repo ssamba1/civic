@@ -41,8 +41,18 @@ describe("getCityCrewOptions", () => {
   it("maps DB rows to GridCrewOption shape", async () => {
     responses.crews = {
       data: [
-        { id: "c1", name: "Alpha Crew", team_key: "streets_roads", crew_type: "paving" },
-        { id: "c2", name: "Beta Crew", team_key: "parks_forestry", crew_type: null },
+        {
+          id: "c1",
+          name: "Alpha Crew",
+          team_key: "streets_roads",
+          crew_type: "paving",
+        },
+        {
+          id: "c2",
+          name: "Beta Crew",
+          team_key: "parks_forestry",
+          crew_type: null,
+        },
       ],
       error: null,
     };
@@ -127,7 +137,14 @@ describe("getGridRows", () => {
           address: null,
           photo_public_url: null,
           created_at: "2026-06-01T00:00:00Z",
-          classifications: [{ category: "streetlight", subcategory: null, severity: 2, is_emergency: true }],
+          classifications: [
+            {
+              category: "streetlight",
+              subcategory: null,
+              severity: 2,
+              is_emergency: true,
+            },
+          ],
           work_orders: [],
         },
       ],
@@ -189,7 +206,17 @@ describe("getGridRows", () => {
           photo_public_url: null,
           created_at: "2026-06-01T00:00:00Z",
           classifications: null,
-          work_orders: { id: "wo3", department: null, crew_type: null, assigned_crew_id: "c9", priority_score: null, est_minutes: null, est_cost: null, wo_source: null, needs_manual_review: false },
+          work_orders: {
+            id: "wo3",
+            department: null,
+            crew_type: null,
+            assigned_crew_id: "c9",
+            priority_score: null,
+            est_minutes: null,
+            est_cost: null,
+            wo_source: null,
+            needs_manual_review: false,
+          },
         },
       ],
       error: null,

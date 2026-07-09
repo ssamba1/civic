@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-
+import type { ReportStatus } from "@/lib/types";
 import {
   STATUS_LABEL,
   STATUS_TONE,
@@ -8,7 +8,6 @@ import {
   toneChipClass,
   toneTextClass,
 } from "./status";
-import type { ReportStatus } from "@/lib/types";
 
 const ALL_STATUSES: ReportStatus[] = [
   "open",
@@ -63,7 +62,7 @@ describe("statusChipClass", () => {
   });
 
   it("different tones produce different classes", () => {
-    const open = statusChipClass("open");     // warning
+    const open = statusChipClass("open"); // warning
     const closed = statusChipClass("closed"); // success
     const rejected = statusChipClass("rejected"); // danger
     expect(open).not.toBe(closed);

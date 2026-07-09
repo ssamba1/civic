@@ -1,18 +1,19 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-
+import type { DashboardReport } from "@/lib/dashboard-data";
+import type { TeamId } from "@/lib/teams";
 import {
   aggregateByTeam,
   computeTeamStats,
   sortTeamsByLoad,
   type TeamWorkload,
 } from "./teams-data";
-import type { DashboardReport } from "@/lib/dashboard-data";
-import type { TeamId } from "@/lib/teams";
 
 // Minimal DashboardReport factory
 function makeReport(
-  overrides: Partial<DashboardReport> & { category: DashboardReport["category"] },
+  overrides: Partial<DashboardReport> & {
+    category: DashboardReport["category"];
+  },
 ): DashboardReport {
   const base: DashboardReport = {
     id: "r1",
@@ -42,7 +43,11 @@ describe("aggregateByTeam", () => {
       makeReport({ category: "pothole", status: "open" }),
       makeReport({ category: "pothole", status: "open" }),
     ];
-    const workloads = aggregateByTeam(reports, () => "streets_roads" as TeamId, NOW);
+    const workloads = aggregateByTeam(
+      reports,
+      () => "streets_roads" as TeamId,
+      NOW,
+    );
     const bucket = workloads.get("streets_roads")!;
     expect(bucket.total).toBe(2);
     expect(bucket.openCount).toBe(2);
@@ -56,7 +61,11 @@ describe("aggregateByTeam", () => {
       makeReport({ category: "pothole", status: "in_progress" }),
       makeReport({ category: "pothole", status: "closed" }),
     ];
-    const workloads = aggregateByTeam(reports, () => "streets_roads" as TeamId, NOW);
+    const workloads = aggregateByTeam(
+      reports,
+      () => "streets_roads" as TeamId,
+      NOW,
+    );
     const bucket = workloads.get("streets_roads")!;
     expect(bucket.openCount).toBe(3);
     expect(bucket.closedCount).toBe(1);
@@ -68,13 +77,19 @@ describe("aggregateByTeam", () => {
       makeReport({ category: "pothole", status: "closed", severity: 1 }),
       makeReport({ category: "pothole", status: "closed", severity: 3 }),
     ];
-    const workloads = aggregateByTeam(reports, () => "streets_roads" as TeamId, NOW);
+    const workloads = aggregateByTeam(
+      reports,
+      () => "streets_roads" as TeamId,
+      NOW,
+    );
     expect(workloads.get("streets_roads")!.mttrHours).toBe(48);
   });
 
   it("sets topCategory to the most common category", () => {
     const getTeam = (r: DashboardReport) =>
-      r.category === "pothole" ? ("streets_roads" as TeamId) : ("parks_forestry" as TeamId);
+      r.category === "pothole"
+        ? ("streets_roads" as TeamId)
+        : ("parks_forestry" as TeamId);
     const reports = [
       makeReport({ category: "pothole" }),
       makeReport({ category: "pothole" }),
@@ -107,8 +122,14 @@ describe("aggregateByTeam", () => {
 
   it("computes oldestOpenAgeDays from created_at", () => {
     const oldDate = new Date(NOW - 10 * 86_400_000).toISOString(); // 10 days ago
-    const reports = [makeReport({ category: "pothole", status: "open", created_at: oldDate })];
-    const workloads = aggregateByTeam(reports, () => "streets_roads" as TeamId, NOW);
+    const reports = [
+      makeReport({ category: "pothole", status: "open", created_at: oldDate }),
+    ];
+    const workloads = aggregateByTeam(
+      reports,
+      () => "streets_roads" as TeamId,
+      NOW,
+    );
     const age = workloads.get("streets_roads")!.oldestOpenAgeDays!;
     expect(Math.round(age)).toBe(10);
   });
@@ -119,8 +140,17 @@ describe("computeTeamStats", () => {
     const thisWeekDate = new Date(NOW - 3 * 86_400_000).toISOString();
     const prevWeekDate = new Date(NOW - 10 * 86_400_000).toISOString();
     const reports = [
-      makeReport({ category: "pothole", status: "open", created_at: thisWeekDate }),
-      makeReport({ category: "pothole", status: "closed", severity: 2, created_at: prevWeekDate }),
+      makeReport({
+        category: "pothole",
+        status: "open",
+        created_at: thisWeekDate,
+      }),
+      makeReport({
+        category: "pothole",
+        status: "closed",
+        severity: 2,
+        created_at: prevWeekDate,
+      }),
     ];
     const stats = computeTeamStats(reports, NOW);
     expect(stats.total).toBe(2);
@@ -160,11 +190,22 @@ describe("computeTeamStats", () => {
 });
 
 describe("sortTeamsByLoad", () => {
-  function makeWorkload(teamId: TeamId, openCount: number, total: number): TeamWorkload {
+  function makeWorkload(
+    teamId: TeamId,
+    openCount: number,
+    total: number,
+  ): TeamWorkload {
     return {
       teamId,
       total,
-      byStatus: { open: openCount, dispatched: 0, in_progress: 0, closed: 0, merged: 0, rejected: 0 },
+      byStatus: {
+        open: openCount,
+        dispatched: 0,
+        in_progress: 0,
+        closed: 0,
+        merged: 0,
+        rejected: 0,
+      },
       openCount,
       closedCount: 0,
       oldestOpenAgeDays: null,

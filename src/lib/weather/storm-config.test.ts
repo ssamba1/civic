@@ -7,8 +7,8 @@ import {
   LOOKBACK_HOURS,
   NWS_TIMEOUT_MS,
   NWS_USER_AGENT,
-  STORM_PROFILES,
   profileForEvent,
+  STORM_PROFILES,
 } from "./storm-config";
 
 describe("storm-config constants", () => {

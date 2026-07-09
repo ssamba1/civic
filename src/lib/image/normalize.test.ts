@@ -21,8 +21,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // hoisted block: sets up globalThis.document before any module is evaluated.
 const { stubDoc } = vi.hoisted(() => {
   // biome-ignore lint/suspicious/noExplicitAny: test setup
-  let _toBlob: (cb: (b: Blob | null) => void, type: string, q?: number) => void = (cb, type) =>
-    cb(new Blob(["jpeg"], { type }));
+  let _toBlob: (
+    cb: (b: Blob | null) => void,
+    type: string,
+    q?: number,
+  ) => void = (cb, type) => cb(new Blob(["jpeg"], { type }));
   // biome-ignore lint/suspicious/noExplicitAny: test setup
   let _lastCanvas: any = { width: 0, height: 0 };
 
@@ -39,9 +42,13 @@ const { stubDoc } = vi.hoisted(() => {
       _lastCanvas = canvas;
       return canvas;
     },
-    setToBlob: (fn: typeof _toBlob) => { _toBlob = fn; },
+    setToBlob: (fn: typeof _toBlob) => {
+      _toBlob = fn;
+    },
     getLastCanvas: () => _lastCanvas,
-    resetCanvas: () => { _lastCanvas = { width: 0, height: 0 }; },
+    resetCanvas: () => {
+      _lastCanvas = { width: 0, height: 0 };
+    },
     resetToBlob: () => {
       _toBlob = (cb, type) => cb(new Blob(["jpeg"], { type }));
     },

@@ -20,8 +20,8 @@ vi.mock("@/lib/db/client", () => ({
 }));
 
 import { createServerClient } from "@/lib/db/client";
-import { BASELINE_LOOKBACK_DAYS } from "./storm-config";
 import { getCategoryDailyBaseline } from "./baseline";
+import { BASELINE_LOOKBACK_DAYS } from "./storm-config";
 
 describe("getCategoryDailyBaseline", () => {
   it("returns empty map on DB error", async () => {

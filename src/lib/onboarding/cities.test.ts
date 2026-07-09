@@ -14,8 +14,8 @@ function makeBuilder(table: string) {
 const from = vi.fn((table: string) => makeBuilder(table));
 vi.mock("@/lib/db/client", () => ({ createServerClient: () => ({ from }) }));
 
-import { cityStatus, listCities } from "./cities";
 import type { CityListItem } from "./cities";
+import { cityStatus, listCities } from "./cities";
 
 beforeEach(() => {
   from.mockClear();

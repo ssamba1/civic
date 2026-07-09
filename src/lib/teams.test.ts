@@ -6,15 +6,15 @@ vi.mock("@/lib/category-overrides", () => ({
   getCategoryOverridesSnapshot: vi.fn(() => ({})),
 }));
 
+import type { ReportCategory } from "@/lib/types";
 import {
-  TEAM_LIST,
-  TEAMS,
   categoryToTeam,
   categoryToTeamDefault,
   isValidTeamId,
+  TEAM_LIST,
+  TEAMS,
   type TeamId,
 } from "./teams";
-import type { ReportCategory } from "@/lib/types";
 
 const ALL_CATEGORIES: ReportCategory[] = [
   "pothole",
@@ -106,14 +106,18 @@ describe("categoryToTeamDefault", () => {
 });
 
 describe("categoryToTeam (no overrides)", () => {
-  it.each(ALL_CATEGORIES)("%s falls back to default when no override", (cat) => {
+  it.each(
+    ALL_CATEGORIES,
+  )("%s falls back to default when no override", (cat) => {
     expect(categoryToTeam(cat)).toBe(categoryToTeamDefault(cat));
   });
 });
 
 describe("categoryToTeam (with override)", () => {
   it("returns the override team when set", async () => {
-    const { getCategoryOverridesSnapshot } = await import("@/lib/category-overrides");
+    const { getCategoryOverridesSnapshot } = await import(
+      "@/lib/category-overrides"
+    );
     vi.mocked(getCategoryOverridesSnapshot).mockReturnValueOnce({
       pothole: "parks_forestry" as TeamId,
     });

@@ -10,10 +10,10 @@ vi.mock("./baseline", () => ({
   getCategoryDailyBaseline: vi.fn(),
 }));
 
-import { fetchRecentAlerts } from "./nws-client";
 import { getCategoryDailyBaseline } from "./baseline";
-import { buildStormAdvisory } from "./storm-advisory";
 import type { NwsAlert } from "./nws-client";
+import { fetchRecentAlerts } from "./nws-client";
+import { buildStormAdvisory } from "./storm-advisory";
 import { FORECAST_WINDOW_HOURS } from "./storm-config";
 
 function makeAlert(event: string, overrides: Partial<NwsAlert> = {}): NwsAlert {
