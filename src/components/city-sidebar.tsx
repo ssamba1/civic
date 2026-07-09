@@ -2,6 +2,7 @@
 
 import {
   BarChart3,
+  CalendarDays,
   Camera,
   Map as MapIcon,
   Table,
@@ -70,6 +71,12 @@ export function CitySidebar({
             href: `/city/${slug}/grid`,
             icon: Table,
             active: pathname === `/city/${slug}/grid`,
+          },
+          {
+            label: "Calendar",
+            href: `/city/${slug}/calendar`,
+            icon: CalendarDays,
+            active: pathname === `/city/${slug}/calendar`,
           },
           {
             label: "Members",
