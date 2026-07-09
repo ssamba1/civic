@@ -10,6 +10,31 @@ LF and is authoritative-green. #12/#13 merge CI ran full pipeline (incl build)
 green; #14/#15 merge runs registered 0 jobs (concurrency cancellation from 4
 rapid merges), not a code failure — content == verified #15 tip.
 
+## 2026-07-09 — OUTFLANK build-now features (branch feat/outflank-build-now)
+
+Investigated the OUTFLANK build-now set; most was already built by prior sweeps.
+Shipped the genuine gaps:
+
+- **#41 recurring-problem detection (NEW).** Migration `037` adds the
+  `analytics_recurring_hotspots` RPC (category + ~111m grid + distinct-week
+  episodes); `deriveRecurringHotspots` mirrors it client-side; new
+  `RecurringHotspotsCard` bento tile mounted in the analytics dashboard. Full
+  test coverage (derive + live RPC mapper).
+- **#4 resident-facing fix-by date (NEW).** Public `/r/[token]` status page now
+  shows "Estimated fix by [date]" for open reports (work-order `due_at`, else
+  filed + category SLA window), with an honest overdue note. PII-safe.
+- **Already built (verified, no work needed):** #4 cost estimate (staff-side,
+  `est_cost` + `category_cost_stats`), #5 smart routing (category→team, crew
+  auto-assign load-balanced, zone RPC — all wired; gaps are operational only),
+  LCP-19 pre-submit duplicate deflection (`DuplicateCheck` flow).
+- **#5 operational enablement** documented in `docs/runbooks/routing-enablement.md`
+  (AI_CREW_ASSIGN flag, crew/zone seeding).
+- **Hardening:** live-mode test coverage for the 036 analytics RPC mappers.
+
+Verify: biome 0 · typecheck 0 · test 721 pass / 63 skip · build 0.
+Also fixed a latent CI bug: `test.yml` used `secrets` in step `if:` (invalid →
+0 jobs); hoisted to a job-level env var.
+
 ## 2026-07-09 — analytics theater fixed + stack merged
 
 - **0.5 analytics theater FIXED** — migration `036_analytics_rpcs` (8 SECURITY
