@@ -2,6 +2,7 @@
 
 import {
   Building2,
+  Inbox,
   KeyRound,
   LandPlot,
   Network,
@@ -16,6 +17,7 @@ import { cn } from "@/lib/utils/cn";
 const navItems = [
   { href: "/admin/cities", label: "Cities", icon: Building2 },
   { href: "/admin/onboard", label: "Onboard a city", icon: PlusCircle },
+  { href: "/admin/requests", label: "Requests", icon: Inbox },
   { href: "/admin/api-keys", label: "API keys", icon: KeyRound },
   { href: "/admin/privacy", label: "Privacy audit", icon: ShieldCheck },
   { href: "/admin/districts", label: "District rollups", icon: LandPlot },
