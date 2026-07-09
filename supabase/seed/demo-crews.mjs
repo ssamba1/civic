@@ -107,11 +107,16 @@ async function seedCity(slug) {
   // succeed for a disabled/absent division and the UI would show a crew
   // under a division the city turned off.
   const teamRows = await ok(db.from("city_teams").select("team_key, enabled").eq("city_id", cityId), `city_teams lookup ${slug}`);
+  // A city with ZERO city_teams rows runs on the app's preset divisions
+  // (the UI falls back to TEAM_LIST — Cumming is in this state), so an empty
+  // table means "everything enabled", not "nothing enabled".
+  const hasTeamConfig = (teamRows ?? []).length > 0;
   const enabledTeamKeys = new Set((teamRows ?? []).filter((t) => t.enabled).map((t) => t.team_key));
+  const teamEnabled = (key) => !hasTeamConfig || enabledTeamKeys.has(key);
 
-  const toSeed = CREW_ROSTER.filter((c) => enabledTeamKeys.has(c.team_key));
+  const toSeed = CREW_ROSTER.filter((c) => teamEnabled(c.team_key));
   for (const c of CREW_ROSTER) {
-    if (!enabledTeamKeys.has(c.team_key)) log(`  skip crew "${c.name}" — team_key "${c.team_key}" not enabled for this city`);
+    if (!teamEnabled(c.team_key)) log(`  skip crew "${c.name}" — team_key "${c.team_key}" not enabled for this city`);
   }
 
   const crews = toSeed.length ? await upsertCrews(cityId, toSeed) : [];
