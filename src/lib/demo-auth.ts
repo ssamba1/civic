@@ -78,10 +78,50 @@ const CREW_ACCOUNTS: DemoAccount[] = DEFAULT_CREW_TYPES.map((t, i) => ({
   label: `${t.label} Crew`,
 }));
 
+// One account per SEEDED crew instance (not just crew type) — lands on that
+// crew's own portal via the ?crew=<exact name> instance scope (see
+// src/app/city/[slug]/crew/[crewType]/page.tsx, which resolves the query
+// param against fetchCityCrews() by case-sensitive name + crewType match).
+// MUST stay in sync with CREW_ROSTER in supabase/seed/demo-crews.mjs — same
+// names/crew_type values, else the login lands on a real portal but the
+// ?crew= scope silently fails to resolve (falls back to the type-level view).
+export const CREW_UNIT_ROSTER: {
+  username: string;
+  name: string;
+  crewType: string;
+}[] = [
+  { username: "northpaving", name: "North Paving Crew", crewType: "paving" },
+  { username: "southpaving", name: "South Paving Crew", crewType: "paving" },
+  { username: "flatwork", name: "Flatwork Crew", crewType: "concrete" },
+  {
+    username: "stormdrain",
+    name: "Storm Drain Crew",
+    crewType: "drain_crew",
+  },
+  { username: "nightline", name: "Night Line Crew", crewType: "line_crew" },
+  {
+    username: "signcrew",
+    name: "Signal & Sign Crew",
+    crewType: "sign_crew",
+  },
+  { username: "forestry", name: "Forestry Crew", crewType: "arborist" },
+  { username: "beautify", name: "Beautification Crew", crewType: "cleanup" },
+];
+
+const CREW_UNIT_ACCOUNTS: DemoAccount[] = CREW_UNIT_ROSTER.map((c) => ({
+  username: c.username,
+  password: "crewtest",
+  role: "crew" as const,
+  crewType: c.crewType,
+  home: `/city/${DEMO_CITY}/crew/${c.crewType}?crew=${encodeURIComponent(c.name)}`,
+  label: c.name,
+}));
+
 export const DEMO_ACCOUNTS: DemoAccount[] = [
   ...STATIC_ACCOUNTS,
   ...TEAM_ACCOUNTS,
   ...CREW_ACCOUNTS,
+  ...CREW_UNIT_ACCOUNTS,
 ];
 
 /** Validate a username/password pair. Returns the account or null. */

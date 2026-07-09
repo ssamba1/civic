@@ -4,6 +4,7 @@ import { DEFAULT_CREW_TYPES } from "@/lib/crew-types";
 import { TEAM_LIST } from "@/lib/teams";
 import {
   authenticateDemo,
+  CREW_UNIT_ROSTER,
   DEMO_ACCOUNTS,
   findDemoAccount,
   isDemoStaffAccount,
@@ -12,11 +13,15 @@ import {
 const OPERATIONAL_TEAMS = TEAM_LIST.filter((t) => t.id !== "all");
 
 describe("DEMO_ACCOUNTS", () => {
-  it("has one resident, one admin, one account per operational team, and one per crew type", () => {
+  it("has one resident, one admin, one account per operational team, one per crew type, and one per seeded crew unit", () => {
     expect(DEMO_ACCOUNTS).toHaveLength(
-      2 + OPERATIONAL_TEAMS.length + DEFAULT_CREW_TYPES.length,
+      2 +
+        OPERATIONAL_TEAMS.length +
+        DEFAULT_CREW_TYPES.length +
+        CREW_UNIT_ROSTER.length,
     );
     expect(OPERATIONAL_TEAMS).toHaveLength(11);
+    expect(CREW_UNIT_ROSTER).toHaveLength(8);
   });
 
   it("maps teamtest{n} to TEAM_LIST order with a /city/cumming/team/{teamId} home", () => {
@@ -45,6 +50,20 @@ describe("DEMO_ACCOUNTS", () => {
     });
   });
 
+  it("maps each per-crew-unit username to its own instance-scoped portal home", () => {
+    CREW_UNIT_ROSTER.forEach((c) => {
+      const account = DEMO_ACCOUNTS.find((a) => a.username === c.username);
+      expect(account, `${c.username} exists`).toBeDefined();
+      expect(account?.role).toBe("crew");
+      expect(account?.crewType).toBe(c.crewType);
+      expect(account?.label).toBe(c.name);
+      expect(account?.home).toBe(
+        `/city/cumming/crew/${c.crewType}?crew=${encodeURIComponent(c.name)}`,
+      );
+      expect(account?.password).toBe("crewtest");
+    });
+  });
+
   it("routes the resident and admin personas to their surfaces", () => {
     expect(findDemoAccount("usertest")?.home).toBe("/user/pulse");
     expect(findDemoAccount("admintest")?.home).toBe("/city/cumming");
@@ -69,6 +88,16 @@ describe("authenticateDemo", () => {
     expect(account?.role).toBe("crew");
     expect(account?.crewType).toBe("paving");
     expect(account?.home).toBe("/city/cumming/crew/paving");
+  });
+
+  it("accepts a per-crew-unit persona and resolves its instance-scoped portal home", () => {
+    const account = authenticateDemo("northpaving", "crewtest");
+    expect(account?.role).toBe("crew");
+    expect(account?.crewType).toBe("paving");
+    expect(account?.label).toBe("North Paving Crew");
+    expect(account?.home).toBe(
+      "/city/cumming/crew/paving?crew=North%20Paving%20Crew",
+    );
   });
 
   it("rejects a wrong password or unknown username", () => {

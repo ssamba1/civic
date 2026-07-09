@@ -45,6 +45,11 @@ const STAFF_ROLES = ["staff_dispatcher", "staff_supervisor", "admin"];
 // Two same-type crews on streets_roads are deliberate — showcases the AI
 // crew_hint routing (descriptions differentiate them) and the load balancer
 // in src/lib/ai/crew-assign.ts when the hint misses.
+//
+// MUST stay in sync with CREW_UNIT_ROSTER in src/lib/demo-auth.ts — same
+// names/crew_type values, so each per-crew demo login's ?crew=<name> scope
+// resolves against a real seeded row instead of silently falling back to
+// the type-level portal.
 const CREW_ROSTER = [
   { name: "North Paving Crew", team_key: "streets_roads", crew_type: "paving", description: "Arterial roads, school zones, and everything north of the city core — fast pothole patch turnarounds." },
   { name: "South Paving Crew", team_key: "streets_roads", crew_type: "paving", description: "Downtown, the parks district, and southern subdivisions — larger resurfacing and prep jobs." },
