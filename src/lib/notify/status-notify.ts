@@ -8,7 +8,6 @@ import { deliverSms } from "@/lib/notify/deliver-sms";
 import { stampNotificationOutcome } from "@/lib/notify/outbox";
 import { publicToken } from "@/lib/public-report";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
-import { fireWebhook } from "@/lib/webhooks/outbound";
 
 const logger = createLogger("[notify-composer]");
 
@@ -119,16 +118,10 @@ export async function notifyReportStatus(
     const category = (cl?.category ?? "other") as ReportCategory;
     const noun = CATEGORY_LABEL[category] || "issue";
 
-    // Outbound webhooks (#79): fan this status change out to any configured
-    // Zapier/Make/custom endpoint. Best-effort, env-gated, no-op when unset.
+    // Outbound webhooks (#79) fire from the action layer (report/actions.ts,
+    // staff/actions.ts) via the DB-backed webhook_endpoints dispatcher — not
+    // here, to avoid double-delivery for the same status change.
     const occurredAt = new Date().toISOString();
-    void fireWebhook({
-      event: `report.${status}`,
-      reportId,
-      status,
-      category,
-      occurredAt,
-    });
     // CMMS/ERP/GIS connectors (#74/#75/#76/#77/#78): same event, mapped per
     // vendor. Each no-ops without its own env creds. Best-effort, never blocks.
     void syncToConnectors({
