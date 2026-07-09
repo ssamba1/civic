@@ -83,7 +83,9 @@ describe("getPublicReport", () => {
     corpus.reports = [
       report({ id: "done", status: "closed", category: "pothole" }),
     ];
-    expect(getPublicReport(publicToken("done"))?.estimatedFixBy).toBeUndefined();
+    expect(
+      getPublicReport(publicToken("done"))?.estimatedFixBy,
+    ).toBeUndefined();
   });
 
   it("surfaces the resolution photo only when resolved", () => {
