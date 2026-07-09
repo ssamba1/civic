@@ -129,7 +129,7 @@ function buildCrewSection(crews: readonly PromptCrew[]): string {
   // Deterministic order + a hard cap so a crew-heavy city can't balloon the
   // prompt. Same whitespace-flattening rationale as the type menu above.
   const lines = ambiguous
-    .flatMap((list) => list)
+    .flat()
     .sort((a, b) => a.name.localeCompare(b.name))
     .slice(0, 20)
     .map((c) => {

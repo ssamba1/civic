@@ -20,7 +20,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // hoisted block: sets up globalThis.document before any module is evaluated.
 const { stubDoc } = vi.hoisted(() => {
-  // biome-ignore lint/suspicious/noExplicitAny: test setup
   let _toBlob: (
     cb: (b: Blob | null) => void,
     type: string,
