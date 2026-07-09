@@ -98,7 +98,8 @@ export default async function TeamSchedulePage({
       ? weekParam
       : mondayOf(today);
   const weekDates = buildWeek(weekStart);
-  const weekEnd = weekDates[weekDates.length - 1]!;
+  // buildWeek always returns 7 entries, so the last is defined.
+  const weekEnd = weekDates.at(-1) ?? weekStart;
 
   // Fetch data (only for real DB cities).
   const [scheduledResult, crewsResult] = dbCity

@@ -255,7 +255,7 @@ export async function getOptimizedRouteForCrew(
     });
   }
 
-  const { orderedStops, totalMeters, twoOptApplied } = optimizeRoute(stops);
+  const { orderedStops, twoOptApplied } = optimizeRoute(stops);
   const stats = routeStats(orderedStops);
 
   const crewStops: CrewRouteStop[] = orderedStops.map((s) => {

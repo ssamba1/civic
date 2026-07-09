@@ -681,7 +681,7 @@ export default function ReportPage() {
                       key={`${f.name}-${f.size}-${f.lastModified}`}
                       className="relative flex-shrink-0"
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      {/* biome-ignore lint/performance/noImgElement: local object-URL preview of a not-yet-uploaded blob; next/image cannot optimize blob: URLs */}
                       <img
                         src={objUrl}
                         alt={`Attachment ${i + 1}`}

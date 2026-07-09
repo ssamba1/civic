@@ -4,21 +4,43 @@ import type { createLogger } from "@/lib/logger";
 type SupabaseLike = ReturnType<typeof createServerClient>;
 type Logger = ReturnType<typeof createLogger>;
 
-/** One assignable crew, with the two ranking signals the picker uses. */
+/** Fallback minutes when a work order has no est_minutes and the crew_type has
+ *  no median to borrow (a cold DB with zero estimated work). */
+export const DEFAULT_EST_MINUTES = 60;
+
+/** One assignable crew, with the ranking signals the balancer uses. */
 export interface CrewCandidate {
   id: string;
   name: string;
   memberCount: number;
+  /** Count of the crew's OPEN work orders — the first load tie-break. */
   openWorkOrders: number;
+  /** Sum of est_minutes across the crew's OPEN work orders (NULLs already
+   *  resolved to the crew_type median / DEFAULT_EST_MINUTES by the caller). */
+  openMinutes: number;
+  /** Epoch ms of the crew's most recent assignment (max created_at of its open
+   *  work orders), or null if it holds none — drives round-robin. */
+  lastAssignedAt: number | null;
+}
+
+/** Per-capita workload: minutes of open work divided by crew size, so a bigger
+ *  crew absorbs proportionally more before it looks "loaded". memberCount is
+ *  floored at 1 — shells (0 members) are already deprioritized by the staffed
+ *  gate below, so this only guards against a divide-by-zero, never reorders. */
+function loadPerCapita(c: CrewCandidate): number {
+  return c.openMinutes / Math.max(c.memberCount, 1);
 }
 
 /**
- * Deterministic crew pick — no model call. Ranking:
+ * Deterministic crew pick — no model call. Ranking (argmin load):
  *   1. staffed crews before hollow shells (a shell is still assignable — the
  *      city created it precisely so work can route there before it's staffed —
  *      but a crew with people wins when one exists);
- *   2. fewest open work orders (spread the load);
- *   3. name (stable tie-break so re-runs pick the same crew).
+ *   2. lowest workload-hours ÷ crew size (real effort balanced by team size);
+ *   3. fewest open work orders (spread raw count on a minutes tie);
+ *   4. least-recently-assigned, i.e. smallest lastAssignedAt — null (never
+ *      assigned) sorts first, giving idle crews the next job (round-robin);
+ *   5. name (stable final tie-break so re-runs pick the same crew).
  */
 export function pickCrew(candidates: CrewCandidate[]): CrewCandidate | null {
   if (candidates.length === 0) return null;
@@ -26,8 +48,20 @@ export function pickCrew(candidates: CrewCandidate[]): CrewCandidate | null {
     const aStaffed = a.memberCount > 0;
     const bStaffed = b.memberCount > 0;
     if (aStaffed !== bStaffed) return aStaffed ? -1 : 1;
+
+    const loadA = loadPerCapita(a);
+    const loadB = loadPerCapita(b);
+    if (loadA !== loadB) return loadA - loadB;
+
     if (a.openWorkOrders !== b.openWorkOrders)
       return a.openWorkOrders - b.openWorkOrders;
+
+    // null = never assigned, sorts before any timestamp (round-robin: the
+    // crew idle longest is next). Number.NEGATIVE_INFINITY models "never".
+    const lastA = a.lastAssignedAt ?? Number.NEGATIVE_INFINITY;
+    const lastB = b.lastAssignedAt ?? Number.NEGATIVE_INFINITY;
+    if (lastA !== lastB) return lastA - lastB;
+
     return a.name.localeCompare(b.name);
   });
   return sorted[0];
@@ -118,11 +152,15 @@ export async function autoAssignCrew(
       // Current load — open (not yet completed) work orders per crew. The
       // report status join matters: rejected/merged reports never get their
       // work order completed_at stamped, so completed_at alone would count
-      // dead work forever and permanently skew the ranking.
+      // dead work forever and permanently skew the ranking. est_minutes drives
+      // the workload-hours side of the balancer; created_at is the recency
+      // signal for the round-robin tie-break.
       const openCounts = new Map<string, number>();
+      const openMinutes = new Map<string, number>();
+      const lastAssignedAt = new Map<string, number>();
       const { data: woData, error: woErr } = await supabase
         .from("work_orders")
-        .select("assigned_crew_id, reports(status)")
+        .select("assigned_crew_id, est_minutes, created_at, reports(status)")
         .in("assigned_crew_id", crewIds)
         .is("completed_at", null);
       if (woErr) {
@@ -134,28 +172,74 @@ export async function autoAssignCrew(
       const DEAD_STATUSES = new Set(["closed", "merged", "rejected"]);
       // Double cast: supabase-js infers the reports embed as an array, but the
       // work_orders→reports FK is many-to-one so PostgREST returns an object.
-      for (const w of (woData ?? []) as unknown as {
-        assigned_crew_id: string | null;
-        reports: { status: string } | null;
-      }[]) {
-        if (!w.assigned_crew_id) continue;
-        if (w.reports && DEAD_STATUSES.has(w.reports.status)) continue;
-        openCounts.set(
-          w.assigned_crew_id,
-          (openCounts.get(w.assigned_crew_id) ?? 0) + 1,
-        );
+      const liveOrders = (
+        (woData ?? []) as unknown as {
+          assigned_crew_id: string | null;
+          est_minutes: number | null;
+          created_at: string | null;
+          reports: { status: string } | null;
+        }[]
+      ).filter(
+        (w) =>
+          w.assigned_crew_id &&
+          !(w.reports && DEAD_STATUSES.has(w.reports.status)),
+      );
+
+      // NULL est_minutes borrows the median of the estimated open work in this
+      // candidate set (same crew_type + division), falling back to a fixed
+      // default when nothing is estimated yet — so an un-estimated order still
+      // contributes realistic load instead of zero.
+      const estimated = liveOrders
+        .map((w) => w.est_minutes)
+        .filter((m): m is number => m != null && m > 0)
+        .sort((a, b) => a - b);
+      const median =
+        estimated.length > 0
+          ? estimated[Math.floor((estimated.length - 1) / 2)]
+          : DEFAULT_EST_MINUTES;
+
+      for (const w of liveOrders) {
+        const crewId = w.assigned_crew_id as string;
+        openCounts.set(crewId, (openCounts.get(crewId) ?? 0) + 1);
+        const minutes =
+          w.est_minutes != null && w.est_minutes > 0 ? w.est_minutes : median;
+        openMinutes.set(crewId, (openMinutes.get(crewId) ?? 0) + minutes);
+        const ts = w.created_at ? Date.parse(w.created_at) : NaN;
+        if (!Number.isNaN(ts)) {
+          lastAssignedAt.set(
+            crewId,
+            Math.max(
+              lastAssignedAt.get(crewId) ?? Number.NEGATIVE_INFINITY,
+              ts,
+            ),
+          );
+        }
       }
 
-      const picked = pickCrew(
-        crews.map((c) => ({
-          id: c.id,
-          name: c.name,
-          memberCount: memberCounts.get(c.id) ?? 0,
-          openWorkOrders: openCounts.get(c.id) ?? 0,
-        })),
-      );
+      const candidates: CrewCandidate[] = crews.map((c) => ({
+        id: c.id,
+        name: c.name,
+        memberCount: memberCounts.get(c.id) ?? 0,
+        openWorkOrders: openCounts.get(c.id) ?? 0,
+        openMinutes: openMinutes.get(c.id) ?? 0,
+        lastAssignedAt: lastAssignedAt.get(c.id) ?? null,
+      }));
+      const picked = pickCrew(candidates);
       if (!picked) return null;
       chosen = { id: picked.id, name: picked.name };
+
+      // Observability: the load inputs behind the pick, for balancer tuning.
+      log.info("crew_auto_assign_loads", {
+        workOrderId,
+        crewType,
+        candidates: candidates.map((c) => ({
+          id: c.id,
+          members: c.memberCount,
+          openWorkOrders: c.openWorkOrders,
+          openMinutes: c.openMinutes,
+          loadPerCapita: c.openMinutes / Math.max(c.memberCount, 1),
+        })),
+      });
     }
 
     const { error: updateErr } = await supabase

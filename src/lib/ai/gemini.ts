@@ -3,11 +3,15 @@ import { AI_TIMEOUT_MS, GEMINI_MODEL } from "@/lib/ai/config";
 import { withRetry } from "@/lib/ai/retry";
 import { serverEnv } from "@/lib/env";
 import type { Classification, Result } from "@/lib/types";
+import { BUILTIN_CATEGORY_DEFS, type CategoryDef } from "./categories";
 import {
-  classificationSchema,
-  GEMINI_CLASSIFICATION_SCHEMA,
+  buildClassificationSchema,
+  buildGeminiClassificationSchema,
 } from "./classification-schema";
-import { CLASSIFICATION_PROMPT, CLASSIFICATION_SYSTEM_PROMPT } from "./prompt";
+import {
+  buildClassificationPrompt,
+  CLASSIFICATION_SYSTEM_PROMPT,
+} from "./prompt";
 import { checkAndRecordGeminiCall } from "./rate-limiter";
 
 function getClient() {
@@ -45,6 +49,11 @@ export async function classifyPhoto(
   // buildCorrectionGuidance) appended to the base prompt. Empty string = base
   // prompt unchanged, so a fresh city classifies exactly as before.
   correctionGuidance = "",
+  // Issue #6 — the effective category set (built-ins ∪ a city's custom issue
+  // types). Defaults to the 12 built-ins, so a call without a city context
+  // classifies exactly as before. Drives the prompt menu, the Gemini enum, and
+  // the zod validation together so a custom category round-trips end-to-end.
+  categories: readonly CategoryDef[] = BUILTIN_CATEGORY_DEFS,
 ): Promise<Result<{ classification: Classification; rawText: string }>> {
   const rateCheck = checkAndRecordGeminiCall();
   if (!rateCheck.allowed) {
@@ -54,6 +63,9 @@ export async function classifyPhoto(
     };
   }
 
+  const categoryKeys = categories.map((c) => c.key);
+  const classificationSchema = buildClassificationSchema(categoryKeys);
+
   try {
     const genAI = getClient();
     const model = genAI.getGenerativeModel({
@@ -61,12 +73,12 @@ export async function classifyPhoto(
       systemInstruction: CLASSIFICATION_SYSTEM_PROMPT,
       generationConfig: {
         responseMimeType: "application/json",
-        responseSchema: GEMINI_CLASSIFICATION_SCHEMA,
+        responseSchema: buildGeminiClassificationSchema(categoryKeys),
       },
     });
 
     const request = [
-      CLASSIFICATION_PROMPT + correctionGuidance,
+      buildClassificationPrompt(categories) + correctionGuidance,
       {
         inlineData: {
           data: imageBase64,
@@ -115,7 +127,11 @@ export async function classifyPhoto(
 
     return {
       ok: true,
-      data: { classification: validation.data, rawText },
+      // category/alternate_categories validate as `string` under the dynamic
+      // enum (a custom key isn't in the ReportCategory union). The value is a
+      // real, offered category; cast at this boundary — the union stays the
+      // compile-time contract for the 12 built-ins (issue #6, staged).
+      data: { classification: validation.data as Classification, rawText },
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

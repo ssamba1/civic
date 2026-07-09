@@ -866,6 +866,7 @@ export async function fetchCategoryCostStats(
 export async function saveIssueType(input: {
   key: string;
   label: string;
+  description?: string;
   color: string;
   teamKey: TeamId;
 }): Promise<Result<void>> {
@@ -878,6 +879,9 @@ export async function saveIssueType(input: {
   const label = input.label.trim();
   if (!/^custom_[a-z0-9_]{1,64}$/.test(key) || !label || label.length > 80)
     return { ok: false, error: "invalid_issue_type" };
+  // AI-facing description (issue #6). Cap length so a pasted essay can't bloat
+  // the classification prompt; empty/whitespace normalizes to null.
+  const description = input.description?.trim().slice(0, 500) || null;
 
   const supabase = createServerClient();
   const { error } = await supabase.from("issue_types").upsert(
@@ -885,6 +889,7 @@ export async function saveIssueType(input: {
       city_id: staff.city_id,
       key,
       label,
+      description,
       color: input.color,
       team_key: input.teamKey,
     },

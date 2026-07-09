@@ -81,7 +81,7 @@ export default function PhotoGallery({
               onClick={() => openLightbox(i)}
               className="group relative aspect-square overflow-hidden rounded-lg border border-hairline bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {/* biome-ignore lint/performance/noImgElement: signed Supabase Storage URLs rotate; next/image loader cannot cache them */}
               <img
                 src={url}
                 alt={`${altPrefix} ${i + 1}`}
@@ -127,7 +127,7 @@ export default function PhotoGallery({
           {/* Backdrop click (target === currentTarget) closes; clicks on the
               image or nav buttons don't reach here. */}
           <div className="relative max-h-full max-w-full">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {/* biome-ignore lint/performance/noImgElement: signed Supabase Storage URLs rotate; next/image loader cannot cache them */}
             <img
               src={urls[lightboxIdx]}
               alt={`${altPrefix} ${lightboxIdx + 1}`}

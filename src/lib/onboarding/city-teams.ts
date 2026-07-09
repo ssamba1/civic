@@ -1,4 +1,6 @@
+import { isBuiltinCategory } from "@/lib/ai/categories";
 import { createServerClient } from "@/lib/db/client";
+import { fetchIssueTypeTeam } from "@/lib/db/issue-types";
 import { ALL_CATEGORIES } from "@/lib/onboarding/presets";
 import type { CategoryTeamMap } from "@/lib/onboarding/types";
 import { categoryToTeamDefault, TEAMS, type TeamId } from "@/lib/teams";
@@ -60,18 +62,29 @@ export function resolveCategoryTeam(
  */
 export async function resolveTeamKeyForCategory(
   cityId: string | null | undefined,
-  category: ReportCategory,
-): Promise<TeamId> {
+  // Widened to string: a custom issue type (issue #6) carries a slug outside
+  // the ReportCategory union, and the column is plain text.
+  category: string,
+): Promise<string> {
   if (cityId) {
     try {
       const config = await fetchCityTeams(cityId);
-      const owner = resolveCategoryTeam(config, category);
+      const owner = resolveCategoryTeam(config, category as ReportCategory);
       if (owner && owner.teamKey in TEAMS) return owner.teamKey as TeamId;
     } catch {
-      // fall through to the static default
+      // fall through
+    }
+    // Custom issue type (not a built-in): its owning team lives on the
+    // issue_types row (migration 027), not the city_teams category config.
+    // Best-effort — null when unavailable, so we still land on a sane default.
+    if (!isBuiltinCategory(category)) {
+      const customTeam = await fetchIssueTypeTeam(cityId, category);
+      if (customTeam) return customTeam;
     }
   }
-  return categoryToTeamDefault(category);
+  // Built-in default. An unknown custom category with no configured team falls
+  // here too — categoryToTeamDefault returns the general_admin catch-all.
+  return categoryToTeamDefault(category as ReportCategory) ?? "general_admin";
 }
 
 /**

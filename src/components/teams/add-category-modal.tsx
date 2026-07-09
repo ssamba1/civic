@@ -53,6 +53,7 @@ export function AddCategoryModal({
   useEffect(() => setMounted(true), []);
 
   const [label, setLabel] = useState("");
+  const [description, setDescription] = useState("");
   const [color, setColor] = useState("#3b82f6");
   const [team, setTeam] = useState<TeamId>(DEFAULT_TEAM);
   const [submitted, setSubmitted] = useState(false);
@@ -75,6 +76,7 @@ export function AddCategoryModal({
   useEffect(() => {
     if (!open) return;
     setLabel("");
+    setDescription("");
     setColor("#3b82f6");
     setTeam(DEFAULT_TEAM);
     setSubmitted(false);
@@ -84,7 +86,12 @@ export function AddCategoryModal({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    addCustomCategory({ label: label.trim(), color, team });
+    addCustomCategory({
+      label: label.trim(),
+      description: description.trim(),
+      color,
+      team,
+    });
     setSubmitted(true);
   }
 
@@ -181,6 +188,28 @@ export function AddCategoryModal({
                   onChange={(e) => setLabel(e.target.value)}
                   className="rounded-lg border border-hairline bg-overlay px-3 py-2 text-sm text-foreground placeholder:text-faint outline-none focus:border-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] focus:ring-1 focus:ring-[color-mix(in_srgb,var(--color-primary)_40%,transparent)]"
                 />
+              </label>
+
+              {/* Description — AI-facing. Drives auto-classification: the model
+                  reads it to decide whether a photo fits this custom type. */}
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[12px] font-medium text-subtle">
+                  What it looks like{" "}
+                  <span className="text-faint">
+                    (helps AI auto-classify photos)
+                  </span>
+                </span>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. A car left parked and unmoved on a public street or lot, often with flat tires, expired tags, or visible damage."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="resize-none rounded-lg border border-hairline bg-overlay px-3 py-2 text-sm text-foreground placeholder:text-faint outline-none focus:border-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] focus:ring-1 focus:ring-[color-mix(in_srgb,var(--color-primary)_40%,transparent)]"
+                />
+                <span className="text-[11px] leading-relaxed text-faint">
+                  Without a description, new reports can still route here when
+                  picked manually, but the AI won't auto-classify into it.
+                </span>
               </label>
 
               {/* Color */}

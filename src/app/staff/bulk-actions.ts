@@ -199,7 +199,7 @@ async function applyBulkMutation(
 
   switch (action) {
     case "acknowledge": {
-      const { error, count } = await db
+      const { error } = await db
         .from("reports")
         .update({ acknowledged_at: now, updated_at: now })
         .in("id", ids)
