@@ -19,7 +19,10 @@ const SOS = Buffer.concat([
 ]);
 
 function exifApp1(gps = "GPS 33.90,-84.13"): Buffer {
-  return jpegSegment(0xe1, Buffer.concat([Buffer.from("Exif\0\0"), Buffer.from(gps)]));
+  return jpegSegment(
+    0xe1,
+    Buffer.concat([Buffer.from("Exif\0\0"), Buffer.from(gps)]),
+  );
 }
 
 // ---- WebP builders ----------------------------------------------------------
@@ -59,7 +62,10 @@ describe("stripImageMetadata — JPEG", () => {
   });
 
   it("drops APP13 (IPTC) and COM comment segments", () => {
-    const iptc = jpegSegment(0xed, Buffer.from("Photoshop 3.0\0 caption:secret"));
+    const iptc = jpegSegment(
+      0xed,
+      Buffer.from("Photoshop 3.0\0 caption:secret"),
+    );
     const com = jpegSegment(0xfe, Buffer.from("shot on device X at home"));
     const input = Buffer.concat([SOI, iptc, com, SOS, EOI]);
     const out = stripImageMetadata(input);
@@ -84,7 +90,12 @@ describe("stripImageMetadata — JPEG", () => {
   });
 
   it("passes through a clean JPEG unchanged", () => {
-    const input = Buffer.concat([SOI, jpegSegment(0xe0, Buffer.from("JFIF\0")), SOS, EOI]);
+    const input = Buffer.concat([
+      SOI,
+      jpegSegment(0xe0, Buffer.from("JFIF\0")),
+      SOS,
+      EOI,
+    ]);
     expect(stripImageMetadata(input).equals(input)).toBe(true);
   });
 
@@ -98,7 +109,10 @@ describe("stripImageMetadata — WebP", () => {
   it("drops EXIF and XMP chunks, keeps VP8 image data", () => {
     const vp8 = webpChunk("VP8 ", Buffer.from([0x01, 0x02, 0x03, 0x04]));
     const exif = webpChunk("EXIF", Buffer.from("GPS 12.34,-56.78"));
-    const xmp = webpChunk("XMP ", Buffer.from("<x:xmpmeta>location</x:xmpmeta>"));
+    const xmp = webpChunk(
+      "XMP ",
+      Buffer.from("<x:xmpmeta>location</x:xmpmeta>"),
+    );
     const input = webp([vp8, exif, xmp]);
     const out = stripImageMetadata(input);
     expect(out.includes(Buffer.from("GPS 12.34"))).toBe(false);

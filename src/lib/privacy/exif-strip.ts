@@ -122,7 +122,12 @@ function stripPng(buf: Buffer): Buffer {
  * this layer must never turn a valid photo into a broken one).
  */
 export function stripImageMetadata(buf: Buffer): Buffer {
-  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) {
+  if (
+    buf.length >= 3 &&
+    buf[0] === 0xff &&
+    buf[1] === 0xd8 &&
+    buf[2] === 0xff
+  ) {
     return stripJpeg(buf);
   }
   if (buf.length >= 12 && buf.toString("latin1", 0, 4) === "RIFF") {

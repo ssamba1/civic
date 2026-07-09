@@ -161,10 +161,14 @@ export async function submitReport(
   // sneaking GPS/device metadata past the blur (LCP-20).
   const { error: pubErr } = await service.storage
     .from(PUBLIC_BUCKET)
-    .upload(publicPath, stripImageMetadata(Buffer.from(photoBlurred, "base64")), {
-      contentType: "image/webp",
-      upsert: false,
-    });
+    .upload(
+      publicPath,
+      stripImageMetadata(Buffer.from(photoBlurred, "base64")),
+      {
+        contentType: "image/webp",
+        upsert: false,
+      },
+    );
   if (pubErr) {
     return { ok: false, error: `Photo upload failed: ${pubErr.message}` };
   }
