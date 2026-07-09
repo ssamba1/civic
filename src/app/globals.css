@@ -664,8 +664,12 @@ html {
   /* Base render at 90% — the app reads denser/better at 90% browser zoom than
      100%, so bake that in. `zoom` (not transform:scale) re-runs layout, so vw
      units, fixed/sticky chrome, body-portaled modals, and the map all scale as
-     one with no dead gutter. */
-  zoom: 0.9;
+     one with no dead gutter. Exposed as --app-zoom because viewport units are
+     resolved BEFORE zoom scales them: a `100vh` section paints at only 90% of
+     the window. Anything that must truly fill the viewport divides by this
+     (see the landing hero: calc(100vh / var(--app-zoom))). */
+  --app-zoom: 0.9;
+  zoom: var(--app-zoom);
 }
 
 body {

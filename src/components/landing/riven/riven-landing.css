@@ -65,7 +65,10 @@
   /* -- Hero layout ----------------------------------------- */
   --wl-hero-pt: 96px;
   --wl-hero-pb: 0px;
-  --wl-hero-min-h: 100vh;
+  /* ÷ --app-zoom: html renders at zoom 0.9, which shrinks resolved vh units —
+     bare 100vh would leave a ~10% band of the next section peeking under the
+     hero. Dividing restores a true full-viewport hero. */
+  --wl-hero-min-h: calc(100vh / var(--app-zoom, 1));
   --wl-hero-content-max: 820px;
 
   /* -- Pitch rhythm ---------------------------------------- */
@@ -337,7 +340,7 @@
 .v2-section--hero {
   display: block;
   padding: 0;
-  min-height: 100vh;
+  min-height: calc(100vh / var(--app-zoom, 1));
   overflow: hidden;
 }
 .v2-section--hero > * {
