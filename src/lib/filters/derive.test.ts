@@ -6,6 +6,7 @@ import {
   deriveCategoryResolution,
   deriveHourlyHeatmap,
   deriveKpis,
+  deriveRecurringHotspots,
   deriveReporterVelocity,
   deriveResolutionDistribution,
   deriveSeverityDistribution,
@@ -31,6 +32,87 @@ function makeReport(overrides: Partial<DashboardReport> = {}): DashboardReport {
     ...overrides,
   };
 }
+
+describe("deriveRecurringHotspots", () => {
+  const spot = { lat: 34.2073, lng: -84.1402 };
+  const week = (n: number) =>
+    new Date(now - n * 7 * DAY_MS + DAY_MS).toISOString();
+
+  it("flags a location that recurs across >= minEpisodes distinct weeks", () => {
+    const reports = [
+      makeReport({
+        id: "a",
+        category: "drainage",
+        location: spot,
+        created_at: week(0),
+      }),
+      makeReport({
+        id: "b",
+        category: "drainage",
+        location: spot,
+        created_at: week(1),
+      }),
+      makeReport({
+        id: "c",
+        category: "drainage",
+        location: spot,
+        created_at: week(2),
+      }),
+    ];
+    const hot = deriveRecurringHotspots(reports, 3, 2);
+    expect(hot).toHaveLength(1);
+    expect(hot[0]).toMatchObject({
+      category: "drainage",
+      total: 3,
+      episodes: 3,
+    });
+    expect(hot[0].lat).toBeCloseTo(spot.lat, 3);
+  });
+
+  it("does NOT flag many reports in a single week (one incident, not recurring)", () => {
+    const sameWeek = new Date(now).toISOString();
+    const reports = Array.from({ length: 5 }, (_, i) =>
+      makeReport({
+        id: `x${i}`,
+        category: "pothole",
+        location: spot,
+        created_at: sameWeek,
+      }),
+    );
+    expect(deriveRecurringHotspots(reports, 3, 2)).toHaveLength(0);
+  });
+
+  it("separates distinct categories at the same location", () => {
+    const reports = [
+      makeReport({
+        id: "d1",
+        category: "drainage",
+        location: spot,
+        created_at: week(0),
+      }),
+      makeReport({
+        id: "d2",
+        category: "drainage",
+        location: spot,
+        created_at: week(1),
+      }),
+      makeReport({
+        id: "d3",
+        category: "drainage",
+        location: spot,
+        created_at: week(2),
+      }),
+      makeReport({
+        id: "p1",
+        category: "pothole",
+        location: spot,
+        created_at: week(0),
+      }),
+    ];
+    const hot = deriveRecurringHotspots(reports, 3, 2);
+    expect(hot.map((h) => h.category)).toEqual(["drainage"]);
+  });
+});
 
 describe("deriveSlaRisk", () => {
   // pothole SLA target = 72h; at-risk threshold = 0.8 * 72 = 57.6h.

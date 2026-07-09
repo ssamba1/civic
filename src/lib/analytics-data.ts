@@ -71,6 +71,19 @@ export interface ReporterVelocity {
   spark: number[]; // last 14 days
 }
 
+export interface RecurringHotspot {
+  category: ReportCategory;
+  label: string;
+  color: string;
+  lng: number;
+  lat: number;
+  total: number;
+  open_count: number;
+  episodes: number; // distinct weeks the spot recurred
+  first_seen: string; // ISO date
+  last_seen: string; // ISO date
+}
+
 /* ------------------------------------------------------------------
    Live query helper
    ------------------------------------------------------------------ */
@@ -518,4 +531,79 @@ export async function fetchReporterVelocity(
       unique === 0 ? 0 : Math.round((total / unique) * 100) / 100,
     spark: trend.map((p) => p.created),
   };
+}
+
+// OUTFLANK #41 — recurring-problem detection. Locations where the same category
+// recurs across >= minEpisodes distinct weeks (migration 037). In demo mode
+// returns a couple of illustrative spots so the widget is never empty on stage.
+export async function fetchRecurringHotspots(
+  cityId: string,
+  minCount = 3,
+  minEpisodes = 2,
+): Promise<RecurringHotspot[]> {
+  const enrich = (r: {
+    category: ReportCategory;
+    lng: number;
+    lat: number;
+    total: number;
+    open_count: number;
+    episodes: number;
+    first_seen: string;
+    last_seen: string;
+  }): RecurringHotspot => ({
+    ...r,
+    label: CATEGORY_META[r.category]?.label ?? r.category,
+    color: CATEGORY_META[r.category]?.color ?? "#888",
+  });
+
+  if (DEMO_MODE) {
+    return [
+      {
+        category: "drainage" as ReportCategory,
+        lng: -84.1402,
+        lat: 34.2073,
+        total: 9,
+        open_count: 2,
+        episodes: 4,
+        first_seen: "2026-02-11",
+        last_seen: "2026-07-02",
+      },
+      {
+        category: "pothole" as ReportCategory,
+        lng: -84.1449,
+        lat: 34.2118,
+        total: 6,
+        open_count: 1,
+        episodes: 3,
+        first_seen: "2026-03-04",
+        last_seen: "2026-06-28",
+      },
+    ].map(enrich);
+  }
+
+  const rows = await rpcRows<{
+    category: ReportCategory;
+    lng: number;
+    lat: number;
+    total: number;
+    open_count: number;
+    episodes: number;
+    first_seen: string;
+    last_seen: string;
+  }>("analytics_recurring_hotspots", cityId, {
+    _min_count: minCount,
+    _min_episodes: minEpisodes,
+  });
+  return rows.map((r) =>
+    enrich({
+      category: r.category,
+      lng: Number(r.lng),
+      lat: Number(r.lat),
+      total: Number(r.total),
+      open_count: Number(r.open_count),
+      episodes: Number(r.episodes),
+      first_seen: r.first_seen,
+      last_seen: r.last_seen,
+    }),
+  );
 }

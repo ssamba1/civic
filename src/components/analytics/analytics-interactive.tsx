@@ -6,6 +6,7 @@ import {
   CategoryResolutionTable,
   KpiCards,
   PeakHoursHeatmap,
+  RecurringHotspotsCard,
   ReporterVelocityCard,
   ReportsTrend,
   ResolutionHistogram,
@@ -25,6 +26,7 @@ import {
   deriveCategoryResolution,
   deriveHourlyHeatmap,
   deriveKpis,
+  deriveRecurringHotspots,
   deriveReporterVelocity,
   deriveResolutionDistribution,
   deriveSeverityDistribution,
@@ -74,6 +76,7 @@ export function AnalyticsInteractive() {
     [filtered],
   );
   const velocity = useMemo(() => deriveReporterVelocity(filtered), [filtered]);
+  const hotspots = useMemo(() => deriveRecurringHotspots(filtered), [filtered]);
 
   return (
     <div className="space-y-4 animate-in fade-in duration-500">
@@ -107,6 +110,7 @@ export function AnalyticsInteractive() {
               <PeakHoursHeatmap data={heatmap} />
               <TopNeighborhoods data={neighborhoods} />
               <CategoryResolutionTable data={categoryRes} />
+              <RecurringHotspotsCard data={hotspots} />
             </div>
           </div>
 

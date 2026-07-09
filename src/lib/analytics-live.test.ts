@@ -28,6 +28,7 @@ vi.mock("@/lib/db/client", () => ({
 import {
   fetchCategoryResolution,
   fetchHourlyHeatmap,
+  fetchRecurringHotspots,
   fetchReporterVelocity,
   fetchReportsTrend,
   fetchResolutionDistribution,
@@ -209,5 +210,45 @@ describe("live fetchResolutionDistribution", () => {
     const r = await fetchResolutionDistribution("c1");
     expect(r).toHaveLength(5);
     expect(r.every((b) => b.count === 0)).toBe(true);
+  });
+});
+
+describe("live fetchRecurringHotspots", () => {
+  it("maps rpc rows, coerces numerics, enriches with category meta", async () => {
+    rpcData.analytics_recurring_hotspots = {
+      data: [
+        {
+          category: "drainage",
+          lng: "-84.14",
+          lat: "34.2",
+          total: "9",
+          open_count: "2",
+          episodes: "4",
+          first_seen: "2026-02-11",
+          last_seen: "2026-07-02",
+        },
+      ],
+      error: null,
+    };
+    const r = await fetchRecurringHotspots("c1", 3, 2);
+    expect(r[0]).toMatchObject({
+      category: "drainage",
+      lng: -84.14,
+      lat: 34.2,
+      total: 9,
+      episodes: 4,
+      label: "L:drainage",
+      color: "#123",
+    });
+    expect(rpc).toHaveBeenCalledWith("analytics_recurring_hotspots", {
+      _city_id: "c1",
+      _min_count: 3,
+      _min_episodes: 2,
+    });
+  });
+
+  it("returns [] when no location recurs (empty rpc)", async () => {
+    const r = await fetchRecurringHotspots("c1");
+    expect(r).toEqual([]);
   });
 });

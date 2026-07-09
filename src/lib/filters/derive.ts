@@ -3,6 +3,7 @@ import type {
   CategoryResolution,
   HeatCell,
   NeighborhoodVolume,
+  RecurringHotspot,
   ReporterVelocity,
   ResolutionBucket,
   SeveritySlice,
@@ -299,6 +300,87 @@ export function deriveReporterVelocity(
       : 0,
     spark,
   };
+}
+
+/* --------------------- Recurring hotspots --------------------- */
+
+// ISO-ish week bucket (year-week) for episode counting. Uses UTC to stay
+// deterministic across the client's timezone.
+function weekKey(ms: number): string {
+  const d = new Date(ms);
+  const jan1 = Date.UTC(d.getUTCFullYear(), 0, 1);
+  const week = Math.floor((ms - jan1) / (7 * DAY_MS));
+  return `${d.getUTCFullYear()}-${week}`;
+}
+
+/**
+ * OUTFLANK #41 — recurring-problem detection (client-side mirror of the
+ * `analytics_recurring_hotspots` RPC in migration 037). Groups the filtered set
+ * by category and a ~111m coordinate grid (3-decimal round), surfacing spots
+ * where the same problem recurs across >= minEpisodes distinct weeks. A spot
+ * reported 6 times in one week is one incident, not a recurring pattern — so
+ * recurrence is measured in distinct weeks, not raw count.
+ */
+export function deriveRecurringHotspots(
+  reports: DashboardReport[],
+  minCount = 3,
+  minEpisodes = 2,
+): RecurringHotspot[] {
+  const cells = new Map<
+    string,
+    {
+      category: ReportCategory;
+      lngSum: number;
+      latSum: number;
+      total: number;
+      open: number;
+      weeks: Set<string>;
+      first: number;
+      last: number;
+    }
+  >();
+
+  for (const r of reports) {
+    if (RESOLVED_STATUSES.has(r.status) && r.status === "merged") continue;
+    const gLng = Math.round(r.location.lng * 1000) / 1000;
+    const gLat = Math.round(r.location.lat * 1000) / 1000;
+    const key = `${r.category}|${gLng}|${gLat}`;
+    const t = Date.parse(r.created_at);
+    const cell = cells.get(key) ?? {
+      category: r.category,
+      lngSum: 0,
+      latSum: 0,
+      total: 0,
+      open: 0,
+      weeks: new Set<string>(),
+      first: t,
+      last: t,
+    };
+    cell.lngSum += r.location.lng;
+    cell.latSum += r.location.lat;
+    cell.total++;
+    if (BACKLOG_STATUSES.has(r.status)) cell.open++;
+    cell.weeks.add(weekKey(t));
+    cell.first = Math.min(cell.first, t);
+    cell.last = Math.max(cell.last, t);
+    cells.set(key, cell);
+  }
+
+  return Array.from(cells.values())
+    .filter((c) => c.total >= minCount && c.weeks.size >= minEpisodes)
+    .map((c) => ({
+      category: c.category,
+      label: CATEGORY_META[c.category].label,
+      color: CATEGORY_META[c.category].color,
+      lng: c.lngSum / c.total,
+      lat: c.latSum / c.total,
+      total: c.total,
+      open_count: c.open,
+      episodes: c.weeks.size,
+      first_seen: dayKey(c.first),
+      last_seen: dayKey(c.last),
+    }))
+    .sort((a, b) => b.episodes - a.episodes || b.total - a.total);
 }
 
 /* --------------------- Backlog age + SLA risk --------------------- */
