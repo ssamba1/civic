@@ -21,7 +21,7 @@ import { filterToParams, parseFilterFromParams } from "@/lib/filters/url-sync";
 import { useTaskCompletion } from "@/lib/task-completion";
 import type { TeamId } from "@/lib/teams";
 import { useTeamOverrides } from "@/lib/teams-overrides";
-import type { ReportStatus } from "@/lib/types";
+import type { ReportCategory, ReportStatus } from "@/lib/types";
 
 interface FilterContextValue {
   filter: ReportFilter;
@@ -40,6 +40,10 @@ interface FilterContextValue {
   // FilterProviderProps.lockedTeam) and the FilterBar renders a non-interactive
   // locked badge instead of the team switcher.
   lockedTeam?: TeamId;
+  // Set on crew-type portals: the category filter is pinned to this set (see
+  // FilterProviderProps.lockedCategories) and the FilterBar renders a
+  // non-interactive locked badge instead of the category picker.
+  lockedCategories?: ReportCategory[];
 }
 
 const FilterContext = createContext<FilterContextValue | null>(null);
@@ -55,6 +59,10 @@ interface FilterProviderProps {
   // every setFilter/patch forces it back, so reused surfaces (map, analytics,
   // lists) only ever see this team's reports. Omit for the city/admin view.
   lockedTeam?: TeamId;
+  // When set (crew-type portal), the category filter is seeded to this set
+  // and locked — every setFilter/patch forces it back, so reused surfaces
+  // only ever see reports in this crew type's categories. Omit elsewhere.
+  lockedCategories?: ReportCategory[];
   children: React.ReactNode;
 }
 
@@ -62,6 +70,7 @@ export function FilterProvider({
   corpus: baseCorpus,
   now: serverNow,
   lockedTeam,
+  lockedCategories,
   children,
 }: FilterProviderProps) {
   const router = useRouter();
@@ -95,18 +104,33 @@ export function FilterProvider({
 
   // Initialize once from the URL; subsequent state is owned locally and pushed
   // back to the URL so it stays shareable without re-deriving from params. In
-  // the team view, the locked team overrides any team in the URL.
+  // the team view, the locked team overrides any team in the URL. Same for
+  // crew portals and lockedCategories. Reads the raw prop (not the memoized
+  // form below) — this initializer only runs once, on mount.
   const [filter, setFilterState] = useState<ReportFilter>(() => {
     const parsed = parseFilterFromParams(
       new URLSearchParams(searchParams.toString()),
     );
-    return lockedTeam ? { ...parsed, team: lockedTeam } : parsed;
+    let seeded = lockedTeam ? { ...parsed, team: lockedTeam } : parsed;
+    if (lockedCategories) seeded = { ...seeded, categories: lockedCategories };
+    return seeded;
   });
 
   // Stable `now` for the lifetime of the provider so window math doesn't drift
   // between renders (and SSR/CSR stay aligned). Seeded from the server value.
   const nowRef = useRef<number>(serverNow);
   const now = nowRef.current;
+
+  // Referential stability: unlike lockedTeam (a primitive TeamId, stable by
+  // nature), lockedCategories is an array — callers (crew-portal layouts)
+  // can pass a fresh literal on every render. Re-derive on content, not
+  // identity, so the callbacks/memo below don't invalidate on every parent
+  // render (avoids re-render loops downstream).
+  // biome-ignore lint/correctness/useExhaustiveDependencies: content-based dep (join) is intentional — keeps this stable across re-renders when lockedCategories arrives as a fresh array literal with the same contents
+  const stableLockedCategories = useMemo(
+    () => lockedCategories,
+    [lockedCategories?.join(",")],
+  );
 
   const syncUrl = useCallback(
     (next: ReportFilter) => {
@@ -118,21 +142,25 @@ export function FilterProvider({
 
   const setFilter = useCallback(
     (next: ReportFilter) => {
-      const scoped = lockedTeam ? { ...next, team: lockedTeam } : next;
+      let scoped = lockedTeam ? { ...next, team: lockedTeam } : next;
+      if (stableLockedCategories) {
+        scoped = { ...scoped, categories: stableLockedCategories };
+      }
       setFilterState(scoped);
       syncUrl(scoped);
     },
-    [syncUrl, lockedTeam],
+    [syncUrl, lockedTeam, stableLockedCategories],
   );
 
   const patch = useCallback(
     (partial: Partial<ReportFilter>) => {
       const next = { ...filter, ...partial };
       if (lockedTeam) next.team = lockedTeam;
+      if (stableLockedCategories) next.categories = stableLockedCategories;
       setFilterState(next);
       syncUrl(next);
     },
-    [filter, syncUrl, lockedTeam],
+    [filter, syncUrl, lockedTeam, stableLockedCategories],
   );
 
   const reset = useCallback(() => setFilter(DEFAULT_FILTER), [setFilter]);
@@ -178,6 +206,7 @@ export function FilterProvider({
       previousWindow,
       now,
       lockedTeam,
+      lockedCategories: stableLockedCategories,
     }),
     [
       filter,
@@ -190,6 +219,7 @@ export function FilterProvider({
       previousWindow,
       now,
       lockedTeam,
+      stableLockedCategories,
     ],
   );
 
@@ -207,9 +237,24 @@ function useFilterContext(): FilterContextValue {
 }
 
 export function useFilters() {
-  const { filter, setFilter, patch, reset, isDefault, lockedTeam } =
-    useFilterContext();
-  return { filter, setFilter, patch, reset, isDefault, lockedTeam };
+  const {
+    filter,
+    setFilter,
+    patch,
+    reset,
+    isDefault,
+    lockedTeam,
+    lockedCategories,
+  } = useFilterContext();
+  return {
+    filter,
+    setFilter,
+    patch,
+    reset,
+    isDefault,
+    lockedTeam,
+    lockedCategories,
+  };
 }
 
 export function useFilteredReports(): DashboardReport[] {

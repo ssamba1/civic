@@ -9,6 +9,7 @@ import { type CrewTypeDef, DEFAULT_CREW_TYPES } from "@/lib/crew-types";
 import { fetchCity as fetchCityMock } from "@/lib/dashboard-data";
 import { fetchCity as fetchCityFromDb } from "@/lib/dashboard-queries";
 import { fetchCityCrewTypes } from "@/lib/db/crew-types";
+import { fetchCrewWorkloads } from "@/lib/db/crew-workloads";
 import { fetchCityCrews } from "@/lib/db/crews";
 import {
   type CityMembersResult,
@@ -96,6 +97,13 @@ export default async function CityMembersPage({ params }: PageProps) {
   const crewsResult = dbCity ? await fetchCityCrews(dbCity.id) : null;
   const crews = crewsResult?.ok ? crewsResult.crews : [];
 
+  // Per-crew workload metrics for the crew panel's load badges. Degrades to an
+  // empty map (pre-030 DB, query error) so the panel still renders its roster.
+  const crewWorkloadsResult = dbCity ? await fetchCrewWorkloads(dbCity.id) : null;
+  const crewWorkloads = crewWorkloadsResult?.ok
+    ? crewWorkloadsResult.workloads
+    : {};
+
   // Crew-type catalog (031). When unreadable (pre-031 DB) the panels fall
   // back to the built-in defaults and type editing is disabled.
   const crewTypesResult = dbCity ? await fetchCityCrewTypes(dbCity.id) : null;
@@ -178,6 +186,7 @@ export default async function CityMembersPage({ params }: PageProps) {
               members={crewCandidates}
               canManage={canManage}
               crewTypes={activeCrewTypes}
+              crewWorkloads={crewWorkloads}
             />
             <CrewTypesPanel
               slug={slug}
