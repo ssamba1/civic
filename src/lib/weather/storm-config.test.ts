@@ -70,40 +70,40 @@ describe("profileForEvent", () => {
   it("matches tornado warning (tier 100, multiplier 6)", () => {
     const p = profileForEvent("Tornado Warning");
     expect(p).not.toBeNull();
-    expect(p!.tier).toBe(100);
-    expect(p!.multiplier).toBe(6);
-    expect(p!.categories).toContain("tree_down");
+    expect(p?.tier).toBe(100);
+    expect(p?.multiplier).toBe(6);
+    expect(p?.categories).toContain("tree_down");
   });
 
   it("matches flash flood warning", () => {
     const p = profileForEvent("Flash Flood Warning");
     expect(p).not.toBeNull();
-    expect(p!.tier).toBe(90);
-    expect(p!.categories).toContain("drainage");
+    expect(p?.tier).toBe(90);
+    expect(p?.categories).toContain("drainage");
   });
 
   it("does NOT match plain flood warning against flash flood pattern", () => {
     const p = profileForEvent("Flood Warning");
     // should match the (?<!flash )flood warning profile (tier 65), not flash flood
     expect(p).not.toBeNull();
-    expect(p!.tier).toBe(65);
+    expect(p?.tier).toBe(65);
   });
 
   it("matches severe thunderstorm warning (case insensitive)", () => {
     const p = profileForEvent("SEVERE THUNDERSTORM WARNING");
     expect(p).not.toBeNull();
-    expect(p!.multiplier).toBe(3);
+    expect(p?.multiplier).toBe(3);
   });
 
   it("matches wind advisory", () => {
     const p = profileForEvent("Wind Advisory");
     expect(p).not.toBeNull();
-    expect(p!.multiplier).toBe(1.3);
+    expect(p?.multiplier).toBe(1.3);
   });
 
   it("matches hurricane warning", () => {
     const p = profileForEvent("Hurricane Warning");
     expect(p).not.toBeNull();
-    expect(p!.tier).toBe(95);
+    expect(p?.tier).toBe(95);
   });
 });

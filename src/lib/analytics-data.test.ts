@@ -19,7 +19,7 @@ vi.mock("@/lib/dashboard-data", () => ({
 }));
 
 // Per-table awaitable chainable builder
-let countResponses: Record<string, { count: number | null; error: unknown }>;
+let _countResponses: Record<string, { count: number | null; error: unknown }>;
 
 function makeCountBuilder(defaultCount: number | null = 0) {
   const b: Record<string, unknown> = {};
@@ -35,6 +35,7 @@ function makeCountBuilder(defaultCount: number | null = 0) {
   ]) {
     b[m] = () => b;
   }
+  // biome-ignore lint/suspicious/noThenProperty: intentional thenable mock of the supabase query builder
   b.then = (resolve: (v: unknown) => unknown) =>
     resolve({ count: defaultCount, error: null });
   return b;
@@ -58,7 +59,7 @@ import {
 } from "./analytics-data";
 
 beforeEach(() => {
-  countResponses = {};
+  _countResponses = {};
   from.mockClear();
 });
 
@@ -94,6 +95,7 @@ describe("fetchAnalyticsKpis", () => {
       ]) {
         b[m] = () => b;
       }
+      // biome-ignore lint/suspicious/noThenProperty: intentional thenable mock of the supabase query builder
       b.then = (resolve: (v: unknown) => unknown) =>
         resolve({ count: counts[captured] ?? 0, error: null });
       return b;
@@ -121,6 +123,7 @@ describe("fetchAnalyticsKpis", () => {
       ]) {
         b[m] = () => b;
       }
+      // biome-ignore lint/suspicious/noThenProperty: intentional thenable mock of the supabase query builder
       b.then = (resolve: (v: unknown) => unknown) =>
         resolve({ count: null, error: { message: "db error" } });
       return b;

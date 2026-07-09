@@ -22,6 +22,7 @@ function makeBuilder(table: string) {
   ]) {
     b[m] = () => b;
   }
+  // biome-ignore lint/suspicious/noThenProperty: intentional thenable mock of the supabase query builder
   b.then = (resolve: (v: unknown) => unknown) =>
     resolve(responses[table] ?? { data: [], error: null });
   return b;

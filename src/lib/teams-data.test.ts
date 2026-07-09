@@ -48,10 +48,10 @@ describe("aggregateByTeam", () => {
       () => "streets_roads" as TeamId,
       NOW,
     );
-    const bucket = workloads.get("streets_roads")!;
-    expect(bucket.total).toBe(2);
-    expect(bucket.openCount).toBe(2);
-    expect(bucket.byStatus.open).toBe(2);
+    const bucket = workloads.get("streets_roads");
+    expect(bucket?.total).toBe(2);
+    expect(bucket?.openCount).toBe(2);
+    expect(bucket?.byStatus.open).toBe(2);
   });
 
   it("counts backlog statuses in openCount", () => {
@@ -66,9 +66,9 @@ describe("aggregateByTeam", () => {
       () => "streets_roads" as TeamId,
       NOW,
     );
-    const bucket = workloads.get("streets_roads")!;
-    expect(bucket.openCount).toBe(3);
-    expect(bucket.closedCount).toBe(1);
+    const bucket = workloads.get("streets_roads");
+    expect(bucket?.openCount).toBe(3);
+    expect(bucket?.closedCount).toBe(1);
   });
 
   it("computes synthetic MTTR for closed reports", () => {
@@ -82,7 +82,7 @@ describe("aggregateByTeam", () => {
       () => "streets_roads" as TeamId,
       NOW,
     );
-    expect(workloads.get("streets_roads")!.mttrHours).toBe(48);
+    expect(workloads.get("streets_roads")?.mttrHours).toBe(48);
   });
 
   it("sets topCategory to the most common category", () => {
@@ -96,7 +96,7 @@ describe("aggregateByTeam", () => {
       makeReport({ category: "tree_down" }),
     ];
     const workloads = aggregateByTeam(reports, getTeam, NOW);
-    expect(workloads.get("streets_roads")!.topCategory).toBe("pothole");
+    expect(workloads.get("streets_roads")?.topCategory).toBe("pothole");
   });
 
   it("routes to correct team bucket per getTeam", () => {
@@ -107,8 +107,8 @@ describe("aggregateByTeam", () => {
       makeReport({ category: "tree_down" }),
     ];
     const workloads = aggregateByTeam(reports, getTeam, NOW);
-    expect(workloads.get("streets_roads")!.total).toBe(1);
-    expect(workloads.get("parks_forestry")!.total).toBe(1);
+    expect(workloads.get("streets_roads")?.total).toBe(1);
+    expect(workloads.get("parks_forestry")?.total).toBe(1);
   });
 
   it("ignores reports where getTeam returns 'all'", () => {
@@ -130,7 +130,7 @@ describe("aggregateByTeam", () => {
       () => "streets_roads" as TeamId,
       NOW,
     );
-    const age = workloads.get("streets_roads")!.oldestOpenAgeDays!;
+    const age = workloads.get("streets_roads")?.oldestOpenAgeDays ?? 0;
     expect(Math.round(age)).toBe(10);
   });
 });

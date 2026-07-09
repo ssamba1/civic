@@ -78,7 +78,7 @@ describe("buildStormAdvisory", () => {
       (c) => c.category === "tree_down",
     );
     expect(treeDown).toBeDefined();
-    expect(treeDown!.multiplier).toBe(6);
+    expect(treeDown?.multiplier).toBe(6);
   });
 
   it("computes predictedCount correctly from baseline", async () => {
@@ -94,7 +94,7 @@ describe("buildStormAdvisory", () => {
       (c) => c.category === "drainage",
     );
     expect(drainage).toBeDefined();
-    expect(drainage!.predictedCount).toBe(
+    expect(drainage?.predictedCount).toBe(
       Math.round(5 * 4 * (FORECAST_WINDOW_HOURS / 24)),
     );
   });
@@ -110,7 +110,7 @@ describe("buildStormAdvisory", () => {
       (c) => c.category === "drainage",
     );
     expect(drainage).toBeDefined();
-    expect(drainage!.predictedCount).toBeNull();
+    expect(drainage?.predictedCount).toBeNull();
   });
 
   it("skips alerts with no matching profile", async () => {
