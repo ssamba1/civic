@@ -39,6 +39,8 @@ Then verify with the RLS suite (`pnpm test:rls`, see tests/rls/crew-types.rls.te
 
 **ALSO PENDING — migration 032** (`20260708_032_crew_descriptions.sql`, crews.description for AI crew_hint routing; epic shipped `2bb7cdf`). Apply with the same command, swapping the filename. Until applied: crew create/edit silently retries without the description (still saves), and the AI ## CREWS section stays off.
 
+**ALSO PENDING — demo crews seed** (`97e7839`): after 031+032, run `pnpm db:seed:demo-crews` from `-Social-Impact-/`. Idempotent; seeds 8 named crews per demo city (cumming + ahilyanagar, incl. two same-type paving crews with contrasting descriptions to exercise crew_hint routing), staffs them from existing staff users, and stamps unassigned/undispatched seeded work orders so the /calendar view shows chips. Runs pre-032 too (drops descriptions with a warning). Auto-mode classifier blocks the agent from running it — user's action.
+
 ## How execution runs (subagent-driven-development skill)
 Per task: dispatch a fresh general-purpose implementer subagent (reads ONLY its task section from the plan file; controller supplies scene-setting + guardrails inline), then review. Heavy/risky tasks (4, 5, 7, 9, 10) → full TWO-stage review (spec-compliance subagent, THEN code-quality subagent). Trivial/declarative tasks (2, 3) → ONE combined reviewer. Implementer fixes via SendMessage (same agent), re-review, then mark done. One implementer at a time (shared git index).
 
