@@ -111,7 +111,9 @@ export function reprioritize(
     const cityMatch =
       surgeConfig.city_id === null || r.city_id === surgeConfig.city_id;
     const eligible =
-      cityMatch && ELIGIBLE_STATUSES.has(r.status) && categorySet.has(r.category);
+      cityMatch &&
+      ELIGIBLE_STATUSES.has(r.status) &&
+      categorySet.has(r.category);
 
     if (!eligible) return r;
 
@@ -130,7 +132,11 @@ export function reprioritize(
   annotated.sort((a, b) => {
     const diff = b.priority_score - a.priority_score;
     if (diff !== 0) return diff;
-    return a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0;
+    return a.created_at < b.created_at
+      ? -1
+      : a.created_at > b.created_at
+        ? 1
+        : 0;
   });
 
   return annotated;

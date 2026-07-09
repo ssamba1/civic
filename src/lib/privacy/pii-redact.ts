@@ -32,16 +32,14 @@ export interface RedactResult {
  * Must be more specific than phone so we run it first.
  * Negative lookahead/lookbehind on digits guards against phone number overlap.
  */
-const SSN_RE =
-  /(?<!\d)(\b\d{3}-\d{2}-\d{4}\b)(?!\d)/g;
+const SSN_RE = /(?<!\d)(\b\d{3}-\d{2}-\d{4}\b)(?!\d)/g;
 
 /**
  * Email addresses.  Guard: preceded by a non-URL context (not preceded by
  * a scheme like "https://" or path separator "/").
  * Uses a broad but practical character set rather than RFC 5321.
  */
-const EMAIL_RE =
-  /(?<![/\w])([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/g;
+const EMAIL_RE = /(?<![/\w])([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
 
 /**
  * US phone numbers in common formats:
@@ -112,7 +110,8 @@ export function redactPII(text: string): RedactResult {
   // append the remainder verbatim so that legitimate PII near the start is
   // still redacted while the worst-case regex work stays O(1) in input length.
   const MATCH_LIMIT = 10_000;
-  const matchText = text.length > MATCH_LIMIT ? text.slice(0, MATCH_LIMIT) : text;
+  const matchText =
+    text.length > MATCH_LIMIT ? text.slice(0, MATCH_LIMIT) : text;
   const tail = text.length > MATCH_LIMIT ? text.slice(MATCH_LIMIT) : "";
 
   const raw: RawMatch[] = [];
@@ -120,6 +119,7 @@ export function redactPII(text: string): RedactResult {
   function collect(re: RegExp, type: string) {
     re.lastIndex = 0;
     let m: RegExpExecArray | null;
+    // biome-ignore lint/suspicious/noAssignInExpressions: standard regex-exec iteration idiom
     while ((m = re.exec(matchText)) !== null) {
       const start = m.index;
       const original = m[0];
@@ -155,7 +155,12 @@ export function redactPII(text: string): RedactResult {
   for (const m of merged) {
     result += matchText.slice(pos, m.start);
     const placeholder = `[${m.type}]`;
-    spans.push({ start: result.length, end: result.length + placeholder.length, type: m.type, original: m.original });
+    spans.push({
+      start: result.length,
+      end: result.length + placeholder.length,
+      type: m.type,
+      original: m.original,
+    });
     result += placeholder;
     pos = m.end;
   }

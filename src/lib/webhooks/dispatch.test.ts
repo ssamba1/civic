@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildWebhookPayload,
-  signPayload,
-  verifySignature,
-} from "./dispatch";
 import type { WebhookReportPayload } from "./dispatch";
+import { buildWebhookPayload, signPayload, verifySignature } from "./dispatch";
 
 const SAMPLE_REPORT: WebhookReportPayload = {
   id: "abc-123",
@@ -54,14 +50,22 @@ describe("signPayload", () => {
   });
 
   it("is deterministic for the same payload + secret", () => {
-    const p = buildWebhookPayload("report.created", SAMPLE_REPORT, "2026-07-09T00:00:00Z");
+    const p = buildWebhookPayload(
+      "report.created",
+      SAMPLE_REPORT,
+      "2026-07-09T00:00:00Z",
+    );
     const s1 = signPayload(p, "mysecret");
     const s2 = signPayload(p, "mysecret");
     expect(s1).toBe(s2);
   });
 
   it("differs with different secrets", () => {
-    const p = buildWebhookPayload("report.created", SAMPLE_REPORT, "2026-07-09T00:00:00Z");
+    const p = buildWebhookPayload(
+      "report.created",
+      SAMPLE_REPORT,
+      "2026-07-09T00:00:00Z",
+    );
     expect(signPayload(p, "secret-a")).not.toBe(signPayload(p, "secret-b"));
   });
 
@@ -75,18 +79,30 @@ describe("signPayload", () => {
 
 describe("verifySignature", () => {
   it("returns true for a valid signature", () => {
-    const p = buildWebhookPayload("report.created", SAMPLE_REPORT, "2026-07-09T00:00:00Z");
+    const p = buildWebhookPayload(
+      "report.created",
+      SAMPLE_REPORT,
+      "2026-07-09T00:00:00Z",
+    );
     const sig = signPayload(p, "secret");
     expect(verifySignature(p, "secret", sig)).toBe(true);
   });
 
   it("returns false for a tampered signature", () => {
-    const p = buildWebhookPayload("report.created", SAMPLE_REPORT, "2026-07-09T00:00:00Z");
+    const p = buildWebhookPayload(
+      "report.created",
+      SAMPLE_REPORT,
+      "2026-07-09T00:00:00Z",
+    );
     expect(verifySignature(p, "secret", "deadbeef")).toBe(false);
   });
 
   it("returns false for wrong secret", () => {
-    const p = buildWebhookPayload("report.created", SAMPLE_REPORT, "2026-07-09T00:00:00Z");
+    const p = buildWebhookPayload(
+      "report.created",
+      SAMPLE_REPORT,
+      "2026-07-09T00:00:00Z",
+    );
     const sig = signPayload(p, "correct");
     expect(verifySignature(p, "wrong", sig)).toBe(false);
   });

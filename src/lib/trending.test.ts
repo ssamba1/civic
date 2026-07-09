@@ -79,7 +79,12 @@ describe("rankTrending", () => {
   });
 
   it("preserves extra fields on reports", () => {
-    const r = { id: "x", created_at: NOW.toISOString(), upvotes: 3, extra: "yes" };
+    const r = {
+      id: "x",
+      created_at: NOW.toISOString(),
+      upvotes: 3,
+      extra: "yes",
+    };
     const [result] = rankTrending([r], NOW);
     expect(result.extra).toBe("yes");
   });

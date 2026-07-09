@@ -36,7 +36,11 @@ describe("reprioritize", () => {
   });
 
   it("boosts matching category × 2", () => {
-    const r = makeReport({ id: "r1", category: "tree_down", priority_score: 80 });
+    const r = makeReport({
+      id: "r1",
+      category: "tree_down",
+      priority_score: 80,
+    });
     const [boosted] = reprioritize([r], BASE_SURGE, NOW);
     expect(boosted.priority_score).toBe(160);
     expect(boosted.surgeBoost?.original_priority_score).toBe(80);
@@ -51,8 +55,16 @@ describe("reprioritize", () => {
   });
 
   it("does NOT boost closed/rejected reports", () => {
-    const closed = makeReport({ id: "r1", category: "tree_down", status: "closed" });
-    const rejected = makeReport({ id: "r2", category: "drainage", status: "rejected" });
+    const closed = makeReport({
+      id: "r1",
+      category: "tree_down",
+      status: "closed",
+    });
+    const rejected = makeReport({
+      id: "r2",
+      category: "drainage",
+      status: "rejected",
+    });
     const result = reprioritize([closed, rejected], BASE_SURGE, NOW);
     expect(result[0].surgeBoost).toBeUndefined();
     expect(result[1].surgeBoost).toBeUndefined();
@@ -69,21 +81,37 @@ describe("reprioritize", () => {
   });
 
   it("does NOT boost reports in a different city", () => {
-    const r = makeReport({ id: "r1", category: "tree_down", city_id: "city-other" });
+    const r = makeReport({
+      id: "r1",
+      category: "tree_down",
+      city_id: "city-other",
+    });
     const [result] = reprioritize([r], BASE_SURGE, NOW);
     expect(result.surgeBoost).toBeUndefined();
   });
 
   it("boosts all cities when city_id is null", () => {
-    const r = makeReport({ id: "r1", category: "tree_down", city_id: "city-other" });
+    const r = makeReport({
+      id: "r1",
+      category: "tree_down",
+      city_id: "city-other",
+    });
     const [result] = reprioritize([r], { ...BASE_SURGE, city_id: null }, NOW);
     expect(result.surgeBoost).toBeDefined();
   });
 
   it("sorts boosted reports above unboosted", () => {
     const reports = [
-      makeReport({ id: "low-priority-surge", category: "tree_down", priority_score: 10 }),
-      makeReport({ id: "high-priority-no-surge", category: "pothole", priority_score: 90 }),
+      makeReport({
+        id: "low-priority-surge",
+        category: "tree_down",
+        priority_score: 10,
+      }),
+      makeReport({
+        id: "high-priority-no-surge",
+        category: "pothole",
+        priority_score: 90,
+      }),
     ];
     const result = reprioritize(reports, BASE_SURGE, NOW);
     // tree_down (10 × 2 = 20) vs pothole (90 no boost)
@@ -104,15 +132,29 @@ describe("reprioritize", () => {
 
   it("uses created_at as tiebreaker (older first) when scores are equal", () => {
     const reports = [
-      makeReport({ id: "newer", category: "tree_down", priority_score: 50, created_at: "2026-07-09T11:00:00.000Z" }),
-      makeReport({ id: "older", category: "tree_down", priority_score: 50, created_at: "2026-07-09T09:00:00.000Z" }),
+      makeReport({
+        id: "newer",
+        category: "tree_down",
+        priority_score: 50,
+        created_at: "2026-07-09T11:00:00.000Z",
+      }),
+      makeReport({
+        id: "older",
+        category: "tree_down",
+        priority_score: 50,
+        created_at: "2026-07-09T09:00:00.000Z",
+      }),
     ];
     const result = reprioritize(reports, BASE_SURGE, NOW);
     expect(result[0].id).toBe("older");
   });
 
   it("no-ops on empty categories list", () => {
-    const r = makeReport({ id: "r1", category: "tree_down", priority_score: 100 });
+    const r = makeReport({
+      id: "r1",
+      category: "tree_down",
+      priority_score: 100,
+    });
     const [result] = reprioritize([r], { ...BASE_SURGE, categories: [] }, NOW);
     expect(result.surgeBoost).toBeUndefined();
     expect(result.priority_score).toBe(100);

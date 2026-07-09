@@ -70,14 +70,20 @@ export function locationScore(distanceM: number): number {
 }
 
 /** Visual score: phash Hamming similarity over 64 bits. 0.5 if hash absent. */
-export function visualScore(phashA: string | null, phashB: string | null): number {
+export function visualScore(
+  phashA: string | null,
+  phashB: string | null,
+): number {
   if (!phashA || !phashB) return 0.5;
   const dist = hammingDistance(phashA, phashB);
   return Math.max(0, 1 - dist / 64);
 }
 
 /** Category score: 1 exact, 0 mismatch, 0.5 unknown. */
-export function categoryScore(catA: string | null, catB: string | null): number {
+export function categoryScore(
+  catA: string | null,
+  catB: string | null,
+): number {
   if (!catA || !catB) return 0.5;
   return catA === catB ? 1 : 0;
 }

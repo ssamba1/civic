@@ -22,7 +22,7 @@ export function isBlockedWebhookHost(hostname: string): boolean {
   // Try to parse as an IPv4 address
   const ipv4 = parseIPv4(h);
   if (ipv4 !== null) {
-    const [a, b, c] = ipv4;
+    const [a, b, _c] = ipv4;
     // Loopback: 127.0.0.0/8
     if (a === 127) return true;
     // RFC-1918: 10.0.0.0/8

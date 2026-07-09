@@ -4,11 +4,11 @@ import {
   categoryScore,
   hammingDistance,
   locationScore,
+  type ReportForMerge,
   rankDuplicateCandidates,
   scoreDuplicatePair,
   timeScore,
   visualScore,
-  type ReportForMerge,
 } from "./merge";
 
 // ─── hammingDistance ──────────────────────────────────────────────────────────
@@ -233,7 +233,10 @@ describe("canMerge", () => {
   });
 
   it("rejects when reports are in different cities", () => {
-    const result = canMerge(openReport("a", "city-x"), openReport("b", "city-y"));
+    const result = canMerge(
+      openReport("a", "city-x"),
+      openReport("b", "city-y"),
+    );
     expect(result).toEqual({ ok: false, error: "different_cities" });
   });
 });

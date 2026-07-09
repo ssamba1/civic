@@ -64,7 +64,9 @@ export function validateBulkSelection(ids: unknown): Result<string[]> {
   }
 
   // Dedup first, then check limit so the user doesn't get a confusing error
-  const deduped = [...new Set<string>(ids.filter((id) => typeof id === "string"))];
+  const deduped = [
+    ...new Set<string>(ids.filter((id) => typeof id === "string")),
+  ];
 
   if (deduped.length === 0) {
     return { ok: false, error: "ids_empty" };

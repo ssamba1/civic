@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   detectConflicts,
   groupByDay,
-  validateSchedule,
   type SchedulableWorkOrder,
+  validateSchedule,
 } from "./schedule";
 
 // ---------------------------------------------------------------------------

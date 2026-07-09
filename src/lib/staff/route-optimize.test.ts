@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  haversineMeters,
-  optimizeRoute,
-  routeStats,
-} from "./route-optimize";
 import type { RouteStop } from "./route-optimize";
+import { haversineMeters, optimizeRoute, routeStats } from "./route-optimize";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -74,7 +70,7 @@ describe("optimizeRoute — edge cases", () => {
     const s = stop("A", 0, 0);
     const result = optimizeRoute([s]);
     expect(result.orderedStops).toHaveLength(1);
-    expect(result.orderedStops[0]!.sequence).toBe(1);
+    expect(result.orderedStops[0]?.sequence).toBe(1);
     expect(result.twoOptApplied).toBe(false);
   });
 
@@ -83,7 +79,7 @@ describe("optimizeRoute — edge cases", () => {
     const start = BASE;
     const result = optimizeRoute([s], start);
     expect(result.totalMeters).toBeGreaterThan(0);
-    expect(result.orderedStops[0]!.legMeters).toBeCloseTo(
+    expect(result.orderedStops[0]?.legMeters).toBeCloseTo(
       haversineMeters(start, s.location!),
       0,
     );
@@ -93,7 +89,7 @@ describe("optimizeRoute — edge cases", () => {
     const s = stopNoLoc("A");
     const result = optimizeRoute([s]);
     expect(result.orderedStops).toHaveLength(1);
-    expect(result.orderedStops[0]!.legMeters).toBe(0);
+    expect(result.orderedStops[0]?.legMeters).toBe(0);
     expect(result.totalMeters).toBe(0);
   });
 });
@@ -108,8 +104,8 @@ describe("optimizeRoute — ordering", () => {
     const near = stop("near", 0.001, 0);
     const far = stop("far", 0.1, 0);
     const result = optimizeRoute([far, near], BASE);
-    expect(result.orderedStops[0]!.id).toBe("near");
-    expect(result.orderedStops[1]!.id).toBe("far");
+    expect(result.orderedStops[0]?.id).toBe("near");
+    expect(result.orderedStops[1]?.id).toBe("far");
   });
 
   it("produces a valid sequence 1…n", () => {
@@ -139,11 +135,7 @@ describe("optimizeRoute — ordering", () => {
   });
 
   it("total distance equals sum of leg distances", () => {
-    const stops = [
-      stop("A", 0, 0),
-      stop("B", 0.01, 0),
-      stop("C", 0.02, 0.01),
-    ];
+    const stops = [stop("A", 0, 0), stop("B", 0.01, 0), stop("C", 0.02, 0.01)];
     const result = optimizeRoute(stops, BASE);
     const sumLegs = result.orderedStops.reduce((s, o) => s + o.legMeters, 0);
     expect(result.totalMeters).toBeCloseTo(sumLegs, 3);
@@ -163,7 +155,11 @@ describe("2-opt never worsens total distance", () => {
   }
 
   it("with 3 stops from a start point", () => {
-    const stops = [stop("A", 0.05, 0), stop("B", 0, 0.05), stop("C", 0.05, 0.05)];
+    const stops = [
+      stop("A", 0.05, 0),
+      stop("B", 0, 0.05),
+      stop("C", 0.05, 0.05),
+    ];
     // Run twice with and without start — in both cases 2-opt must not increase distance.
     const withStart = totalForRoute(stops, BASE);
     const withoutStart = totalForRoute(stops);

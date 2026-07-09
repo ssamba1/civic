@@ -4,7 +4,11 @@
 
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
-import type { WebhookEventType, WebhookPayload, WebhookReportPayload } from "./dispatch";
+import type {
+  WebhookEventType,
+  WebhookPayload,
+  WebhookReportPayload,
+} from "./dispatch";
 import { buildWebhookPayload, signPayload } from "./dispatch";
 
 const logger = createLogger("[webhooks]");
@@ -51,7 +55,10 @@ async function deliverOne(
     } catch (err) {
       // Network error — retryable
       if (attempt >= retries) {
-        return { ok: false, error: err instanceof Error ? err.message : String(err) };
+        return {
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+        };
       }
     }
     if (attempt < retries) {

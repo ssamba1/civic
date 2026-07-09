@@ -149,14 +149,17 @@ describe("validateBulkAction", () => {
   });
 
   describe("set_status", () => {
-    it.each(["open", "dispatched", "in_progress", "closed", "rejected"])(
-      "accepts valid status '%s'",
-      (status) => {
-        const r = validateBulkAction("set_status", status);
-        expect(r.ok).toBe(true);
-        expect(r.ok === true && r.data.value).toBe(status);
-      },
-    );
+    it.each([
+      "open",
+      "dispatched",
+      "in_progress",
+      "closed",
+      "rejected",
+    ])("accepts valid status '%s'", (status) => {
+      const r = validateBulkAction("set_status", status);
+      expect(r.ok).toBe(true);
+      expect(r.ok === true && r.data.value).toBe(status);
+    });
 
     it("rejects 'merged' (merge-only status, not bulk-settable)", () => {
       const r = validateBulkAction("set_status", "merged");
@@ -170,14 +173,16 @@ describe("validateBulkAction", () => {
   });
 
   describe("set_priority", () => {
-    it.each(["low", "medium", "high", "critical"])(
-      "accepts valid priority '%s'",
-      (p) => {
-        const r = validateBulkAction("set_priority", p);
-        expect(r.ok).toBe(true);
-        expect(r.ok === true && r.data.value).toBe(p);
-      },
-    );
+    it.each([
+      "low",
+      "medium",
+      "high",
+      "critical",
+    ])("accepts valid priority '%s'", (p) => {
+      const r = validateBulkAction("set_priority", p);
+      expect(r.ok).toBe(true);
+      expect(r.ok === true && r.data.value).toBe(p);
+    });
 
     it("rejects invalid priority", () => {
       const r = validateBulkAction("set_priority", "urgent");

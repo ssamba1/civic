@@ -43,7 +43,10 @@ export function rankTrending<T extends TrendableReport>(
   reports: T[],
   now: Date | number = new Date(),
 ): T[] {
-  const scored = reports.map((r) => ({ report: r, score: scoreTrending(r, now) }));
+  const scored = reports.map((r) => ({
+    report: r,
+    score: scoreTrending(r, now),
+  }));
   scored.sort(
     (a, b) =>
       b.score - a.score ||

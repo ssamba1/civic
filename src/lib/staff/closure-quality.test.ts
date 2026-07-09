@@ -54,7 +54,9 @@ describe("isGenericClosure", () => {
     ["Tree removed and stump ground down; debris hauled away."],
     ["Water leak sealed — replaced corroded 2-inch coupling at 123 Elm."],
     // Long enough with 'resolved'/'repaired' prefix to pass length guard
-    ["Resolved after crew cleared storm debris blocking drain inlet at 5th Ave."],
+    [
+      "Resolved after crew cleared storm debris blocking drain inlet at 5th Ave.",
+    ],
     ["Repaired the 4-inch pothole on Main Street using hot-mix asphalt."],
     // Unusual but specific
     ["No issue found after inspection — resident confirmed location in error."],
