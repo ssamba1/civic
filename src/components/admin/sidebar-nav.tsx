@@ -1,6 +1,12 @@
 "use client";
 
-import { Building2, KeyRound, PlusCircle, Shield } from "lucide-react";
+import {
+  Building2,
+  KeyRound,
+  PlusCircle,
+  Shield,
+  ShieldCheck,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
@@ -9,6 +15,7 @@ const navItems = [
   { href: "/admin/cities", label: "Cities", icon: Building2 },
   { href: "/admin/onboard", label: "Onboard a city", icon: PlusCircle },
   { href: "/admin/api-keys", label: "API keys", icon: KeyRound },
+  { href: "/admin/privacy", label: "Privacy audit", icon: ShieldCheck },
   { href: "/staff", label: "Staff console", icon: Shield },
 ] as const;
 
