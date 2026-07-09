@@ -106,6 +106,31 @@ export default function ReportPage() {
   // custom type's routing rule is visible without touching the classifier.
   const [manualIssueType, setManualIssueType] = useState<string | null>(null);
 
+  // Conversational intake hand-off (#20). The chat route writes an IntakeDraft
+  // to sessionStorage (never a query string — no PII in URLs) then redirects
+  // here. Consume + clear on mount, seeding the top-level address / issue-type.
+  // Best-effort: corrupt or absent storage is ignored silently. Does NOT touch
+  // the photo/submit flow. (Description-into-preview prefill is a follow-up.)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = window.sessionStorage.getItem("civic:intake-draft");
+    if (!raw) return;
+    window.sessionStorage.removeItem("civic:intake-draft");
+    try {
+      const draft = JSON.parse(raw) as {
+        category?: string;
+        location_hint?: string | null;
+      };
+      if (draft.category) setManualIssueType(draft.category);
+      if (draft.location_hint) {
+        const hint = draft.location_hint;
+        setAddress((prev) => (prev?.trim() ? prev : hint));
+      }
+    } catch {
+      // corrupt storage — ignore
+    }
+  }, []);
+
   // Ensure a session exists so submit isn't rejected as unauthenticated.
   // Reuses a persisted session (cookies/localStorage) when present and only
   // signs up an anonymous guest when there genuinely is none — the shared
