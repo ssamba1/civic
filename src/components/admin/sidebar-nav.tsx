@@ -3,6 +3,7 @@
 import {
   Building2,
   KeyRound,
+  LandPlot,
   PlusCircle,
   Shield,
   ShieldCheck,
@@ -16,6 +17,7 @@ const navItems = [
   { href: "/admin/onboard", label: "Onboard a city", icon: PlusCircle },
   { href: "/admin/api-keys", label: "API keys", icon: KeyRound },
   { href: "/admin/privacy", label: "Privacy audit", icon: ShieldCheck },
+  { href: "/admin/districts", label: "District rollups", icon: LandPlot },
   { href: "/staff", label: "Staff console", icon: Shield },
 ] as const;
 
