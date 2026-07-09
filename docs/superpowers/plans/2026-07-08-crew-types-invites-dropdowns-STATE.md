@@ -37,6 +37,8 @@ fetch(`https://api.supabase.com/v1/projects/${ref}/database/query`,{method:"POST
 ```
 Then verify with the RLS suite (`pnpm test:rls`, see tests/rls/crew-types.rls.test.ts for its gating env var). Until applied: catalog = read-only defaults, inline "New type…" + the crew-types panel save with a friendly error.
 
+**ALSO PENDING — migration 032** (`20260708_032_crew_descriptions.sql`, crews.description for AI crew_hint routing; epic shipped `2bb7cdf`). Apply with the same command, swapping the filename. Until applied: crew create/edit silently retries without the description (still saves), and the AI ## CREWS section stays off.
+
 ## How execution runs (subagent-driven-development skill)
 Per task: dispatch a fresh general-purpose implementer subagent (reads ONLY its task section from the plan file; controller supplies scene-setting + guardrails inline), then review. Heavy/risky tasks (4, 5, 7, 9, 10) → full TWO-stage review (spec-compliance subagent, THEN code-quality subagent). Trivial/declarative tasks (2, 3) → ONE combined reviewer. Implementer fixes via SendMessage (same agent), re-review, then mark done. One implementer at a time (shared git index).
 
