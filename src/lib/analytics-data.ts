@@ -514,7 +514,8 @@ export async function fetchReporterVelocity(
   const trend = await fetchReportsTrend(cityId, 14);
   return {
     unique_reporters: unique,
-    reports_per_reporter: unique === 0 ? 0 : Math.round((total / unique) * 100) / 100,
+    reports_per_reporter:
+      unique === 0 ? 0 : Math.round((total / unique) * 100) / 100,
     spark: trend.map((p) => p.created),
   };
 }
