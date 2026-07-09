@@ -440,3 +440,49 @@ export function deriveSlaRisk(
   }
   return { on_track, at_risk, breached };
 }
+
+/* --------------------- Needs-attention triage --------------------- */
+
+export interface AttentionItem {
+  id: string;
+  category: ReportCategory;
+  status: ReportStatus;
+  address: string;
+  severity: number;
+  created_at: string;
+  /** Hours since filed — used for tie-break ranking and the breach flag. */
+  age_hours: number;
+  /** Already past its per-category SLA window. */
+  breaches_sla: boolean;
+}
+
+/**
+ * The top open items an operator should look at right now. Only the OPEN
+ * backlog (open/dispatched/in_progress) is eligible. Ranked severity-first — a
+ * fresh Sev-5 outranks a stale Sev-2 — then oldest-first within a tier, so the
+ * most urgent, longest-waiting reports float up. Pure; `now` is injectable for
+ * tests.
+ */
+export function deriveNeedsAttention(
+  reports: DashboardReport[],
+  now = Date.now(),
+  limit = 5,
+): AttentionItem[] {
+  return reports
+    .filter((r) => BACKLOG_STATUSES.has(r.status))
+    .map((r) => {
+      const age_hours = Math.max(0, (now - Date.parse(r.created_at)) / HOUR_MS);
+      return {
+        id: r.id,
+        category: r.category,
+        status: r.status,
+        address: r.address,
+        severity: r.severity,
+        created_at: r.created_at,
+        age_hours,
+        breaches_sla: age_hours >= CATEGORY_SLA_TARGETS[r.category],
+      };
+    })
+    .sort((a, b) => b.severity - a.severity || b.age_hours - a.age_hours)
+    .slice(0, limit);
+}

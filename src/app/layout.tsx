@@ -98,15 +98,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      // Default to dark so the server markup matches the no-flash script's
+      // Default to light so the server markup matches the no-flash script's
       // common path. suppressHydrationWarning: the script may flip this to the
-      // stored "light" preference before React hydrates <html>.
+      // stored "dark" preference before React hydrates <html>.
       suppressHydrationWarning
       // globals.css sets `scroll-behavior: smooth` on html; Next 16 wants the
       // intent declared so router transitions can temporarily disable it
       // instead of warning (missing-data-scroll-behavior).
       data-scroll-behavior="smooth"
-      className={`dark ${sans.variable} ${display.variable} ${hero.variable} ${mono.variable} h-full antialiased`}
+      className={`${sans.variable} ${display.variable} ${hero.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
         {/* No-flash theme init — children form (matches the repo's inline

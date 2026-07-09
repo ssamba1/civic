@@ -145,8 +145,34 @@ export default function ReportPage() {
     };
   }, [location]);
 
+  // QR walk-up prefill (#16): a printed QR encodes ?lat=&lng=(&asset=). When
+  // present, pre-tag the location and skip GPS entirely — the whole point is a
+  // scan-and-file flow with no typing and no GPS dependency. Runs before the
+  // GPS effect (declaration order) and sets the ref that gates it.
+  const prefilledFromQr = useRef(false);
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const lat = Number(p.get("lat"));
+    const lng = Number(p.get("lng"));
+    if (
+      Number.isFinite(lat) &&
+      lat >= -90 &&
+      lat <= 90 &&
+      Number.isFinite(lng) &&
+      lng >= -180 &&
+      lng <= 180
+    ) {
+      prefilledFromQr.current = true;
+      setLocation({ lat, lng });
+      setGpsStatus("found");
+      // Address is left for the reverse-geocode effect to fill from the coords.
+    }
+  }, []);
+
   // Auto-acquire GPS on mount
   useEffect(() => {
+    // A QR walk-up already pre-tagged the location — don't let GPS override it.
+    if (prefilledFromQr.current) return;
     if (!navigator.geolocation) {
       setGpsStatus("manual");
       return;

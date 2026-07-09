@@ -18,11 +18,11 @@
    ================================================================== */
 
 // No-flash theme init. Runs synchronously before the body paints, so the
-// correct theme class is on <html> from the first frame. Default is dark
-// (matches the server-rendered `dark` class → zero flash for the common case);
-// only a stored "light" preference removes it. Kept tiny + dependency-free;
-// the React store (lib/theme.ts) takes over after hydration.
-export const THEME_INIT = `(function(){try{var t=localStorage.getItem('civic.theme');if(t==='light'){document.documentElement.classList.remove('dark');}else{document.documentElement.classList.add('dark');}}catch(e){}})();`;
+// correct theme class is on <html> from the first frame. Default is light
+// (matches the server-rendered markup, no `dark` class → zero flash for the
+// common case); only a stored "dark" preference adds it. Kept tiny +
+// dependency-free; the React store (lib/theme.ts) takes over after hydration.
+export const THEME_INIT = `(function(){try{var t=localStorage.getItem('civic.theme');if(t==='dark'){document.documentElement.classList.add('dark');}else{document.documentElement.classList.remove('dark');}}catch(e){}})();`;
 
 // Registers public/sw.js (precache + offline fallback, see that file) once the
 // page has finished loading, so registration never competes with the initial
@@ -39,6 +39,6 @@ export const SW_CLEANUP = `(function(){if('serviceWorker' in navigator){navigato
 /** sha256-base64 of THEME_INIT + SW_REGISTER, as CSP source expressions.
  *  Only the prod pair is hashed — dev CSP allows 'unsafe-inline' anyway. */
 export const SCRIPT_HASHES = {
-  themeInit: "'sha256-itCahU3EbxgEBozydoKDmRch8HqCZIJOUzQJ93Ewmfw='",
+  themeInit: "'sha256-3iT3WqKKZQ2bYUsIgQ1Kv3zmvrwnmmWKTuJHz5amE98='",
   swRegister: "'sha256-QY4HAPfWMl/mr6Y4dUm8FZcgloKphAwf+QMzfpcIvnI='",
 } as const;
