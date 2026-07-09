@@ -310,7 +310,8 @@ function SheetSection({
 /* ------------------------------------------------------------------ */
 
 export function FilterBar() {
-  const { filter, patch, reset, isDefault, lockedTeam } = useFilters();
+  const { filter, patch, reset, isDefault, lockedTeam, lockedCategories } =
+    useFilters();
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const statusCount = filter.statuses.length;
@@ -579,54 +580,71 @@ export function FilterBar() {
             )}
           </Popover>
 
-          {/* ---- Category multi-select popover (with category colors) ---- */}
-          <Popover
-            trigger={(open) => (
-              <TriggerPill
-                icon={<Shapes className="h-3.5 w-3.5" />}
-                label="Category"
-                count={categoryCount}
-                active={categoryCount > 0}
-                open={open}
-              />
-            )}
-          >
-            {() => (
-              <div className="w-[15rem] p-0.5">
-                <div className="flex items-center justify-between px-2 pb-1.5 pt-1">
-                  <span className="text-[11px] uppercase tracking-wide text-faint">
-                    Category
-                  </span>
-                  {categoryCount > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => patch({ categories: [] })}
-                      className="text-[11px] font-medium text-subtle hover:text-foreground hover:underline"
-                    >
-                      Clear
-                    </button>
-                  )}
+          {/* ---- Category selector: on a crew portal the scope is locked —
+               render a static badge, not the picker, so it can't LOOK
+               changeable while every patch() forces it back. ---- */}
+          {lockedCategories ? (
+            <span
+              className="inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-hairline-strong bg-overlay-strong px-2.5 text-[12px] font-medium text-foreground"
+              title="This view is scoped to certain categories"
+            >
+              <Shapes className="h-3.5 w-3.5 text-foreground" />
+              <span className="text-subtle">Category:</span>
+              <span className="text-foreground">
+                Scoped to {lockedCategories.length}{" "}
+                {lockedCategories.length === 1 ? "category" : "categories"}
+              </span>
+              <Lock className="h-3 w-3 text-faint" aria-label="Locked" />
+            </span>
+          ) : (
+            <Popover
+              trigger={(open) => (
+                <TriggerPill
+                  icon={<Shapes className="h-3.5 w-3.5" />}
+                  label="Category"
+                  count={categoryCount}
+                  active={categoryCount > 0}
+                  open={open}
+                />
+              )}
+            >
+              {() => (
+                <div className="w-[15rem] p-0.5">
+                  <div className="flex items-center justify-between px-2 pb-1.5 pt-1">
+                    <span className="text-[11px] uppercase tracking-wide text-faint">
+                      Category
+                    </span>
+                    {categoryCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => patch({ categories: [] })}
+                        className="text-[11px] font-medium text-subtle hover:text-foreground hover:underline"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-[15rem] overflow-y-auto">
+                    {CATEGORIES.map(([cat, meta]) => (
+                      <MenuRow
+                        key={cat}
+                        selected={filter.categories.includes(cat)}
+                        onClick={() =>
+                          patch({ categories: toggle(filter.categories, cat) })
+                        }
+                      >
+                        {/* Category dot is grayscale here — chips/menus are
+                            chrome, not a map layer/chart series, so the glyph +
+                            label carry the identity, not hue. */}
+                        <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-faint ring-1 ring-inset ring-hairline-strong" />
+                        {meta.label}
+                      </MenuRow>
+                    ))}
+                  </div>
                 </div>
-                <div className="max-h-[15rem] overflow-y-auto">
-                  {CATEGORIES.map(([cat, meta]) => (
-                    <MenuRow
-                      key={cat}
-                      selected={filter.categories.includes(cat)}
-                      onClick={() =>
-                        patch({ categories: toggle(filter.categories, cat) })
-                      }
-                    >
-                      {/* Category dot is grayscale here — chips/menus are
-                          chrome, not a map layer/chart series, so the glyph +
-                          label carry the identity, not hue. */}
-                      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-faint ring-1 ring-inset ring-hairline-strong" />
-                      {meta.label}
-                    </MenuRow>
-                  ))}
-                </div>
-              </div>
-            )}
-          </Popover>
+              )}
+            </Popover>
+          )}
 
           {/* ---- Active category chips + reset ---- */}
           <div className="ml-auto flex flex-wrap items-center gap-1.5">
@@ -864,40 +882,44 @@ export function FilterBar() {
             </div>
           </SheetSection>
 
-          {/* --- Category section --- */}
-          <SheetSection
-            icon={<Shapes className="h-3.5 w-3.5" />}
-            title="Category"
-            action={
-              categoryCount > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => patch({ categories: [] })}
-                  className="min-h-11 px-2 py-1.5 text-[12px] font-medium text-foreground"
-                >
-                  Clear
-                </button>
-              ) : undefined
-            }
-          >
-            <div className="space-y-0.5">
-              {CATEGORIES.map(([cat, meta]) => (
-                <MenuRow
-                  key={cat}
-                  selected={filter.categories.includes(cat)}
-                  onClick={() =>
-                    patch({ categories: toggle(filter.categories, cat) })
-                  }
-                >
-                  <span
-                    className="h-2.5 w-2.5 shrink-0 rounded-full bg-faint ring-1 ring-inset ring-hairline-strong"
-                    aria-hidden
-                  />
-                  {meta.label}
-                </MenuRow>
-              ))}
-            </div>
-          </SheetSection>
+          {/* --- Category section (hidden entirely when the view is
+               category-locked; the desktop bar shows the locked badge
+               instead) --- */}
+          {!lockedCategories && (
+            <SheetSection
+              icon={<Shapes className="h-3.5 w-3.5" />}
+              title="Category"
+              action={
+                categoryCount > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => patch({ categories: [] })}
+                    className="min-h-11 px-2 py-1.5 text-[12px] font-medium text-foreground"
+                  >
+                    Clear
+                  </button>
+                ) : undefined
+              }
+            >
+              <div className="space-y-0.5">
+                {CATEGORIES.map(([cat, meta]) => (
+                  <MenuRow
+                    key={cat}
+                    selected={filter.categories.includes(cat)}
+                    onClick={() =>
+                      patch({ categories: toggle(filter.categories, cat) })
+                    }
+                  >
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full bg-faint ring-1 ring-inset ring-hairline-strong"
+                      aria-hidden
+                    />
+                    {meta.label}
+                  </MenuRow>
+                ))}
+              </div>
+            </SheetSection>
+          )}
 
           {/* --- Pinned footer: Apply + Reset ---
               sticky bottom-0 sits above the sheet's own pb-safe — no double-adding */}
