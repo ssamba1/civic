@@ -11,6 +11,8 @@ function candidate(overrides: Partial<CrewCandidate>): CrewCandidate {
     name: "Crew",
     memberCount: 0,
     openWorkOrders: 0,
+    openMinutes: 0,
+    lastAssignedAt: null,
     ...overrides,
   };
 }
@@ -21,12 +23,13 @@ describe("pickCrew", () => {
   });
 
   it("prefers a staffed crew over a hollow shell, regardless of load", () => {
-    const hollow = candidate({ id: "hollow", name: "A", openWorkOrders: 0 });
+    const hollow = candidate({ id: "hollow", name: "A", openMinutes: 0 });
     const staffed = candidate({
       id: "staffed",
       name: "Z",
       memberCount: 2,
       openWorkOrders: 9,
+      openMinutes: 900,
     });
     expect(pickCrew([hollow, staffed])?.id).toBe("staffed");
   });
@@ -36,20 +39,52 @@ describe("pickCrew", () => {
     expect(pickCrew([hollow])?.id).toBe("hollow");
   });
 
-  it("prefers the least-loaded crew among staffed candidates", () => {
-    const busy = candidate({
-      id: "busy",
+  it("prefers the lowest workload-hours ÷ crew size among staffed candidates", () => {
+    // Big crew carries more raw minutes but less per head: 300/3 = 100 vs
+    // 120/1 = 120. The per-capita balancer must pick the big crew.
+    const big = candidate({
+      id: "big",
       name: "A",
       memberCount: 3,
       openWorkOrders: 5,
+      openMinutes: 300,
     });
-    const idle = candidate({
-      id: "idle",
+    const small = candidate({
+      id: "small",
       name: "Z",
       memberCount: 1,
       openWorkOrders: 1,
+      openMinutes: 120,
     });
-    expect(pickCrew([busy, idle])?.id).toBe("idle");
+    expect(pickCrew([big, small])?.id).toBe("big");
+  });
+
+  it("breaks a load tie by fewest open work orders", () => {
+    // Equal per-capita load (0), differ only in raw open count.
+    const many = candidate({ id: "many", name: "A", memberCount: 2, openWorkOrders: 4 });
+    const few = candidate({ id: "few", name: "Z", memberCount: 2, openWorkOrders: 1 });
+    expect(pickCrew([many, few])?.id).toBe("few");
+  });
+
+  it("breaks a load+count tie by least-recently-assigned (round-robin)", () => {
+    // Same load and open count; the crew idle longest (smaller timestamp, or
+    // never = null) is next.
+    const recent = candidate({
+      id: "recent",
+      name: "A",
+      memberCount: 1,
+      lastAssignedAt: 2000,
+    });
+    const stale = candidate({
+      id: "stale",
+      name: "Z",
+      memberCount: 1,
+      lastAssignedAt: 1000,
+    });
+    expect(pickCrew([recent, stale])?.id).toBe("stale");
+    // never-assigned (null) beats any timestamp.
+    const never = candidate({ id: "never", name: "M", memberCount: 1 });
+    expect(pickCrew([recent, stale, never])?.id).toBe("never");
   });
 
   it("breaks full ties by name for deterministic re-runs", () => {
@@ -225,6 +260,58 @@ describe("autoAssignCrew", () => {
       ],
     });
     expect(await autoAssignCrew(db, OPTS)).toBe("alpha");
+  });
+
+  it("balances by workload-minutes ÷ crew size, not raw open count", async () => {
+    const { db } = mockDb({
+      crews: [
+        {
+          data: [
+            { id: "big", name: "Big Crew" },
+            { id: "small", name: "Small Crew" },
+          ],
+        },
+      ],
+      // Big crew has 3 members, Small has 1.
+      crew_members: [
+        {
+          data: [
+            { crew_id: "big" },
+            { crew_id: "big" },
+            { crew_id: "big" },
+            { crew_id: "small" },
+          ],
+        },
+      ],
+      work_orders: [
+        {
+          // Big: 300 min over 3 heads = 100/head. Small: 120 min over 1 = 120.
+          // Raw count favors Small (1 vs 2) but per-capita favors Big.
+          data: [
+            {
+              assigned_crew_id: "big",
+              est_minutes: 150,
+              created_at: "2026-07-01T00:00:00Z",
+              reports: { status: "open" },
+            },
+            {
+              assigned_crew_id: "big",
+              est_minutes: 150,
+              created_at: "2026-07-02T00:00:00Z",
+              reports: { status: "open" },
+            },
+            {
+              assigned_crew_id: "small",
+              est_minutes: 120,
+              created_at: "2026-07-03T00:00:00Z",
+              reports: { status: "open" },
+            },
+          ],
+        },
+        { data: null }, // the assignment update
+      ],
+    });
+    expect(await autoAssignCrew(db, OPTS)).toBe("big");
   });
 
   it("filters candidates by city, team, type, and active", async () => {

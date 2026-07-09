@@ -44,7 +44,12 @@ import { createPortal } from "react-dom";
 import { fetchCategoryCostStats } from "@/app/staff/actions";
 import { WorkOrderExplorer } from "@/components/city/work-order-explorer";
 import { teamIcon } from "@/components/teams/team-icon";
-import { DEFAULT_CREW_TYPE_KEYS } from "@/lib/crew-types";
+import {
+  type CrewTypeDef,
+  crewTypeLabel,
+  DEFAULT_CREW_TYPES,
+  DEFAULT_CREW_TYPE_KEYS,
+} from "@/lib/crew-types";
 import { type CurrencyConfig, formatCost } from "@/lib/currency";
 import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
 import type { GridCrewOption, GridReportRow } from "@/lib/dashboard-grid-data";
@@ -910,11 +915,15 @@ export function WorkOrderGrid({
   rows,
   cityId,
   crews = [],
+  crewTypes = DEFAULT_CREW_TYPES,
   canAssign = false,
 }: {
   rows: GridReportRow[];
   cityId?: string;
   crews?: GridCrewOption[];
+  // Per-city crew-type catalog (031) — built-ins ∪ customs — so the crew
+  // filter/edit dropdown can show and select custom types with no work order.
+  crewTypes?: CrewTypeDef[];
   canAssign?: boolean;
 }) {
   const { theme } = useTheme();
@@ -1061,14 +1070,22 @@ export function WorkOrderGrid({
       ),
     [rows],
   );
+  // Seed from the city's crew-type catalog (built-ins ∪ customs) so custom
+  // types appear/select even with no work order yet; buildOptions still folds
+  // in any orphan key a live row carries. Labels resolve via crewTypeLabel,
+  // matching the crew dialog and the members page.
+  const crewTypeKeys = useMemo(
+    () => crewTypes.map((t) => t.key),
+    [crewTypes],
+  );
   const crewOptions = useMemo(
     () =>
       buildOptions(
-        CREWS,
+        crewTypeKeys.length > 0 ? crewTypeKeys : CREWS,
         rows.map((r) => r.crew_type),
-        titleize,
+        (v) => crewTypeLabel(v, crewTypes) ?? titleize(v),
       ),
-    [rows],
+    [rows, crewTypeKeys, crewTypes],
   );
 
   const onCellValueChanged = useCallback(
@@ -1219,7 +1236,10 @@ export function WorkOrderGrid({
         cellEditorPopupPosition: "under",
         cellEditorParams: { options: crewOptions, kind: "plain" },
         filterValueGetter: (p: ValueGetterParams<GridReportRow>) =>
-          p.data?.crew_type ? titleize(p.data.crew_type) : "",
+          p.data?.crew_type
+            ? (crewTypeLabel(p.data.crew_type, crewTypes) ??
+              titleize(p.data.crew_type))
+            : "",
         initialWidth: 150,
         minWidth: 130,
       },
@@ -1287,7 +1307,7 @@ export function WorkOrderGrid({
         },
       },
     ],
-    [deptOptions, crewOptions, currency],
+    [deptOptions, crewOptions, crewTypes, currency],
   );
 
   const defaultColDef = useMemo<ColDef<GridReportRow>>(

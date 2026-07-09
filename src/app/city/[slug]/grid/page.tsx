@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { WorkOrderGrid } from "@/components/city/work-order-grid";
+import type { CrewTypeDef } from "@/lib/crew-types";
+import { DEFAULT_CREW_TYPES } from "@/lib/crew-types";
 import { fetchCity as fetchCityMock } from "@/lib/dashboard-data";
+import { fetchCityCrewTypes } from "@/lib/db/crew-types";
 import { getCityCrewOptions, getGridRows } from "@/lib/dashboard-grid-data";
 import { fetchCity as fetchCityFromDb } from "@/lib/dashboard-queries";
 import { DEMO_CITY } from "@/lib/demo-auth";
@@ -68,6 +71,17 @@ export default async function CityGridPage({ params }: PageProps) {
   const canAssign = await isStaffForCity(slug);
   const crews = canAssign ? await getCityCrewOptions(city.id) : [];
 
+  // Per-city crew-type catalog (031) so the grid's crew filter + edit dropdown
+  // can show/select custom types even before any work order uses them. Degrades
+  // to the built-in defaults on a pre-031 DB (fetch returns a tagged failure).
+  const crewTypesResult = await fetchCityCrewTypes(city.id);
+  const crewTypes: CrewTypeDef[] =
+    crewTypesResult.ok && crewTypesResult.types.length > 0
+      ? crewTypesResult.types
+          .filter((t) => t.active)
+          .map((t) => ({ key: t.key, label: t.label, description: t.description }))
+      : DEFAULT_CREW_TYPES;
+
   return (
     // Full-bleed: the grid owns the entire content area (toolbar padding lives
     // inside WorkOrderGrid). Mobile keeps the fixed-CityHeader offset; md+
@@ -80,6 +94,7 @@ export default async function CityGridPage({ params }: PageProps) {
         rows={rows}
         cityId={city.id}
         crews={crews}
+        crewTypes={crewTypes}
         canAssign={canAssign}
       />
     </div>
