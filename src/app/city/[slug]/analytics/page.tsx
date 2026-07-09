@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AnalyticsInteractive } from "@/components/analytics/analytics-interactive";
+import { SurgeBanner } from "@/components/analytics/surge-banner";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
 import { fetchCity } from "@/lib/dashboard-queries";
 
@@ -44,6 +45,8 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
             it&apos;s happening.
           </p>
         </section>
+
+        <SurgeBanner />
 
         <AnalyticsInteractive />
       </div>
