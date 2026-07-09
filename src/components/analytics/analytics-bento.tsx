@@ -47,6 +47,7 @@ import type {
   StatusFunnelStep,
   TrendPoint,
 } from "@/lib/analytics-data";
+import type { SlaRisk } from "@/lib/filters/derive";
 import { cn } from "@/lib/utils/cn";
 import { formatHours } from "@/lib/utils/time-ago";
 
@@ -3834,3 +3835,86 @@ function RecurringHotspotsCardInner({ data }: RecurringHotspotsProps) {
 }
 
 export const RecurringHotspotsCard = memo(RecurringHotspotsCardInner);
+
+/* ==================================================================
+   SLA risk (OUTFLANK #14 — SLA breach alerts, staff)
+   ================================================================== */
+
+interface SlaRiskProps {
+  data: SlaRisk;
+}
+
+function SlaRiskCardInner({ data }: SlaRiskProps) {
+  const total = data.on_track + data.at_risk + data.breached;
+  const pct = (n: number) => (total === 0 ? 0 : (n / total) * 100);
+  const segments = [
+    {
+      key: "breached",
+      label: "Breached",
+      count: data.breached,
+      color: "var(--color-danger)",
+    },
+    {
+      key: "at_risk",
+      label: "At risk",
+      count: data.at_risk,
+      color: "var(--color-warning)",
+    },
+    {
+      key: "on_track",
+      label: "On track",
+      count: data.on_track,
+      color: "var(--color-success)",
+    },
+  ];
+
+  return (
+    <Tile
+      title="SLA risk"
+      subtitle={total > 0 ? `${total} open` : undefined}
+      className="lg:col-span-4"
+    >
+      {total === 0 ? (
+        <EmptyState message="No open backlog to assess" />
+      ) : (
+        <div className="flex flex-col gap-4">
+          {/* Segmented bar: breached | at-risk | on-track */}
+          <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-overlay">
+            {segments.map((s) =>
+              s.count > 0 ? (
+                <div
+                  key={s.key}
+                  style={{ width: `${pct(s.count)}%`, background: s.color }}
+                  title={`${s.label}: ${s.count}`}
+                />
+              ) : null,
+            )}
+          </div>
+          <ul className="grid grid-cols-3 gap-2 text-center">
+            {segments.map((s) => (
+              <li key={s.key} className="flex flex-col items-center gap-1">
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: s.color }}
+                  aria-hidden
+                />
+                <span className="text-[20px] font-semibold tabular-nums text-foreground">
+                  {s.count}
+                </span>
+                <span className="text-[11px] text-faint">{s.label}</span>
+              </li>
+            ))}
+          </ul>
+          {data.breached > 0 && (
+            <p className="text-[12px] text-[var(--color-danger)]">
+              {data.breached} report{data.breached === 1 ? "" : "s"} past their
+              SLA window — prioritize these.
+            </p>
+          )}
+        </div>
+      )}
+    </Tile>
+  );
+}
+
+export const SlaRiskCard = memo(SlaRiskCardInner);
