@@ -30,7 +30,10 @@ export async function fetchCustomCategoryDefs(
   const rows = await fetchCityIssueTypes(cityId);
   return rows
     .filter((r) => r.description && r.description.trim() !== "")
-    .map((r) => ({ key: r.key, description: (r.description as string).trim() }));
+    .map((r) => ({
+      key: r.key,
+      description: (r.description as string).trim(),
+    }));
 }
 
 /** Raw issue_types rows for a city (active set); [] on any failure. */

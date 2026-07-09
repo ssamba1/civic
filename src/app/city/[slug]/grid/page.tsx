@@ -4,9 +4,9 @@ import { WorkOrderGrid } from "@/components/city/work-order-grid";
 import type { CrewTypeDef } from "@/lib/crew-types";
 import { DEFAULT_CREW_TYPES } from "@/lib/crew-types";
 import { fetchCity as fetchCityMock } from "@/lib/dashboard-data";
-import { fetchCityCrewTypes } from "@/lib/db/crew-types";
 import { getCityCrewOptions, getGridRows } from "@/lib/dashboard-grid-data";
 import { fetchCity as fetchCityFromDb } from "@/lib/dashboard-queries";
+import { fetchCityCrewTypes } from "@/lib/db/crew-types";
 import { DEMO_CITY } from "@/lib/demo-auth";
 import { isStaffForCity } from "@/lib/staff-access";
 
@@ -79,7 +79,11 @@ export default async function CityGridPage({ params }: PageProps) {
     crewTypesResult.ok && crewTypesResult.types.length > 0
       ? crewTypesResult.types
           .filter((t) => t.active)
-          .map((t) => ({ key: t.key, label: t.label, description: t.description }))
+          .map((t) => ({
+            key: t.key,
+            label: t.label,
+            description: t.description,
+          }))
       : DEFAULT_CREW_TYPES;
 
   return (

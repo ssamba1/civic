@@ -61,8 +61,18 @@ describe("pickCrew", () => {
 
   it("breaks a load tie by fewest open work orders", () => {
     // Equal per-capita load (0), differ only in raw open count.
-    const many = candidate({ id: "many", name: "A", memberCount: 2, openWorkOrders: 4 });
-    const few = candidate({ id: "few", name: "Z", memberCount: 2, openWorkOrders: 1 });
+    const many = candidate({
+      id: "many",
+      name: "A",
+      memberCount: 2,
+      openWorkOrders: 4,
+    });
+    const few = candidate({
+      id: "few",
+      name: "Z",
+      memberCount: 2,
+      openWorkOrders: 1,
+    });
     expect(pickCrew([many, few])?.id).toBe("few");
   });
 

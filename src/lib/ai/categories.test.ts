@@ -29,7 +29,9 @@ describe("mergeCategoryDefs", () => {
       "collision — should be ignored",
     );
     // no duplicate custom
-    expect(keys.filter((k) => k === "custom_abandoned_vehicle")).toHaveLength(1);
+    expect(keys.filter((k) => k === "custom_abandoned_vehicle")).toHaveLength(
+      1,
+    );
     // 'other' stays last
     expect(keys.at(-1)).toBe("other");
   });
@@ -86,8 +88,6 @@ describe("dynamic classification schema accepts a custom category", () => {
   it("puts the custom key into the Gemini responseSchema enum", () => {
     const schema = buildGeminiClassificationSchema(keys);
     const categoryProp = schema.properties?.category as { enum?: string[] };
-    expect(categoryProp.enum).toContain(
-      "custom_abandoned_vehicle",
-    );
+    expect(categoryProp.enum).toContain("custom_abandoned_vehicle");
   });
 });

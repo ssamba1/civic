@@ -47,8 +47,8 @@ import { teamIcon } from "@/components/teams/team-icon";
 import {
   type CrewTypeDef,
   crewTypeLabel,
-  DEFAULT_CREW_TYPES,
   DEFAULT_CREW_TYPE_KEYS,
+  DEFAULT_CREW_TYPES,
 } from "@/lib/crew-types";
 import { type CurrencyConfig, formatCost } from "@/lib/currency";
 import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
@@ -1074,10 +1074,7 @@ export function WorkOrderGrid({
   // types appear/select even with no work order yet; buildOptions still folds
   // in any orphan key a live row carries. Labels resolve via crewTypeLabel,
   // matching the crew dialog and the members page.
-  const crewTypeKeys = useMemo(
-    () => crewTypes.map((t) => t.key),
-    [crewTypes],
-  );
+  const crewTypeKeys = useMemo(() => crewTypes.map((t) => t.key), [crewTypes]);
   const crewOptions = useMemo(
     () =>
       buildOptions(

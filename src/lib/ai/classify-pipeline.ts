@@ -1,3 +1,4 @@
+import { mergeCategoryDefs } from "@/lib/ai/categories";
 import {
   AI_CREW_ASSIGN,
   AI_WORK_ORDER,
@@ -5,7 +6,6 @@ import {
   DEDUP_REPORTS,
   GEMINI_MODEL,
 } from "@/lib/ai/config";
-import { mergeCategoryDefs } from "@/lib/ai/categories";
 import { autoAssignCrew } from "@/lib/ai/crew-assign";
 import { findDuplicate } from "@/lib/ai/dedup";
 import { classifyPhoto } from "@/lib/ai/gemini";

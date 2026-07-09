@@ -172,12 +172,14 @@ export async function autoAssignCrew(
       const DEAD_STATUSES = new Set(["closed", "merged", "rejected"]);
       // Double cast: supabase-js infers the reports embed as an array, but the
       // work_orders→reports FK is many-to-one so PostgREST returns an object.
-      const liveOrders = ((woData ?? []) as unknown as {
-        assigned_crew_id: string | null;
-        est_minutes: number | null;
-        created_at: string | null;
-        reports: { status: string } | null;
-      }[]).filter(
+      const liveOrders = (
+        (woData ?? []) as unknown as {
+          assigned_crew_id: string | null;
+          est_minutes: number | null;
+          created_at: string | null;
+          reports: { status: string } | null;
+        }[]
+      ).filter(
         (w) =>
           w.assigned_crew_id &&
           !(w.reports && DEAD_STATUSES.has(w.reports.status)),
@@ -199,13 +201,17 @@ export async function autoAssignCrew(
       for (const w of liveOrders) {
         const crewId = w.assigned_crew_id as string;
         openCounts.set(crewId, (openCounts.get(crewId) ?? 0) + 1);
-        const minutes = w.est_minutes != null && w.est_minutes > 0 ? w.est_minutes : median;
+        const minutes =
+          w.est_minutes != null && w.est_minutes > 0 ? w.est_minutes : median;
         openMinutes.set(crewId, (openMinutes.get(crewId) ?? 0) + minutes);
         const ts = w.created_at ? Date.parse(w.created_at) : NaN;
         if (!Number.isNaN(ts)) {
           lastAssignedAt.set(
             crewId,
-            Math.max(lastAssignedAt.get(crewId) ?? Number.NEGATIVE_INFINITY, ts),
+            Math.max(
+              lastAssignedAt.get(crewId) ?? Number.NEGATIVE_INFINITY,
+              ts,
+            ),
           );
         }
       }

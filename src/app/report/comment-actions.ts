@@ -195,9 +195,9 @@ export async function hideComment(
   // otherwise a resident could enumerate valid comment ids by observing
   // "comment_not_found" vs "forbidden". Moderation requires REAL staff (a
   // public-bundle "demo" session must not hide real residents' comments).
-  // biome-ignore lint/suspicious/noExplicitAny: Supabase join typing is loose
   const citySlug = comment
-    ? ((comment.reports as any)?.cities?.slug ?? null)
+    ? // biome-ignore lint/suspicious/noExplicitAny: Supabase join typing is loose
+      ((comment.reports as any)?.cities?.slug ?? null)
     : null;
   const staffAccess = citySlug ? await getStaffAccessForCity(citySlug) : null;
   if (!comment || staffAccess !== "real") {

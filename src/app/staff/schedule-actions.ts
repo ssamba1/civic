@@ -126,7 +126,7 @@ export async function scheduleWorkOrder(
       .select("id, reports!inner(city_id)")
       .eq("id", workOrderId)
       .single();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- PostgREST shape cast
+    // biome-ignore lint/suspicious/noExplicitAny: PostgREST join shape cast
     const reportCityId = (wo?.reports as any)?.city_id ?? null;
     if (reportCityId !== staff.city_id) {
       return { ok: false, error: "forbidden" };
@@ -183,7 +183,7 @@ export async function unscheduleWorkOrder(
       .select("id, reports!inner(city_id)")
       .eq("id", workOrderId)
       .single();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- PostgREST shape cast
+    // biome-ignore lint/suspicious/noExplicitAny: PostgREST join shape cast
     const reportCityId = (wo?.reports as any)?.city_id ?? null;
     if (reportCityId !== staff.city_id) {
       return { ok: false, error: "forbidden" };
