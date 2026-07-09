@@ -19,6 +19,7 @@
     "db:migrate": "supabase db push",
     "db:apply-012": "node scripts/apply-012.mjs",
     "db:seed": "tsx supabase/seed/index.ts",
+    "db:seed:demo-crews": "node supabase/seed/demo-crews.mjs",
     "eval": "tsx scripts/eval-classify.ts",
     "health": "curl http://localhost:3000/api/health"
   },
