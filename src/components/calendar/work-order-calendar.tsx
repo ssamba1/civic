@@ -2,7 +2,8 @@
 
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { TipChip, TipRow, useHoverTip } from "@/components/analytics/hover-tip";
 import { MenuSelect } from "@/components/ui/menu-select";
 import {
   addMonths,
@@ -22,9 +23,12 @@ import { cn } from "@/lib/utils/cn";
    RSC refetch, no client data fetching. The four filters are pure
    client state narrowing the already-fetched month.
 
-   Grayscale staff tokens only (border-hairline, bg-surface/overlay,
-   text-subtle/faint, --radius-*). The one data-driven color is a
-   chip's left border, tinted with its division color from `teams`.
+   Grayscale staff tokens for the frame (border-hairline, bg-surface/
+   overlay, text-subtle/faint, --radius-*). Chips carry their division
+   color: a theme-aware `color-mix` tint of `--surface` for the fill +
+   border, a solid leading dot, and a deeper tint on hover. Hovering a
+   chip opens the shared analytics hover-tip (division, crew, category,
+   status, dispatch date) via `useHoverTip`.
    ================================================================== */
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -117,6 +121,51 @@ export function WorkOrderCalendar({
     for (const t of teams) m.set(t.id, t.color);
     return m;
   }, [teams]);
+  const teamLabel = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const t of teams) m.set(t.id, t.label);
+    return m;
+  }, [teams]);
+
+  // Shared analytics hover-tip: deeper per-order context on chip hover,
+  // matching the tiles' interaction. Returns the pointer/focus handlers to
+  // spread onto a chip; `<tip.Portal />` renders the floating card once below.
+  const tip = useHoverTip();
+  const bindTip = useCallback(
+    (
+      order: CalendarWorkOrder,
+      color: string,
+    ): React.DOMAttributes<HTMLAnchorElement> =>
+      tip.bindTarget(() => ({
+        title: order.title,
+        accent: color,
+        body: (
+          <div className="flex flex-col gap-1.5">
+            <TipRow
+              label="Division"
+              value={teamLabel.get(order.teamKey ?? "") ?? "Unassigned"}
+              accent={color}
+            />
+            {order.crewName && <TipRow label="Crew" value={order.crewName} />}
+            {order.category && (
+              <TipRow label="Category" value={prettyCategory(order.category)} />
+            )}
+            <TipRow
+              label="Status"
+              value={
+                <TipChip
+                  tone={order.status === "completed" ? "good" : "neutral"}
+                >
+                  {order.status === "completed" ? "Completed" : "Open"}
+                </TipChip>
+              }
+            />
+          </div>
+        ),
+        footer: longDate(order.calendarDate),
+      })),
+    [tip, teamLabel],
+  );
 
   const filtered = useMemo(
     () =>
@@ -158,10 +207,7 @@ export function WorkOrderCalendar({
   const onCurrentMonth = monthISO.slice(0, 7) === todayParam;
 
   const hasFilter = Boolean(
-    fTeam ||
-      (!lockedCrewType && fType) ||
-      (!lockedCrewId && fCrew) ||
-      fStatus,
+    fTeam || (!lockedCrewType && fType) || (!lockedCrewId && fCrew) || fStatus,
   );
   function clearFilters() {
     setFTeam(null);
@@ -297,6 +343,7 @@ export function WorkOrderCalendar({
               orders={byDay.get(cell.iso) ?? []}
               slug={slug}
               teamColor={teamColor}
+              bindTip={bindTip}
               onShowMore={() => setOpenDay(cell.iso)}
             />
           ))}
@@ -320,6 +367,8 @@ export function WorkOrderCalendar({
           onClose={() => setOpenDay(null)}
         />
       )}
+
+      <tip.Portal />
     </div>
   );
 }
@@ -348,12 +397,17 @@ function DayCell({
   orders,
   slug,
   teamColor,
+  bindTip,
   onShowMore,
 }: {
   cell: CalendarCell;
   orders: CalendarWorkOrder[];
   slug: string;
   teamColor: Map<string, string>;
+  bindTip: (
+    order: CalendarWorkOrder,
+    color: string,
+  ) => React.DOMAttributes<HTMLAnchorElement>;
   onShowMore: () => void;
 }) {
   const visible = orders.slice(0, MAX_VISIBLE_PER_DAY);
@@ -382,7 +436,13 @@ function DayCell({
         {dayNum}
       </div>
       {visible.map((o) => (
-        <Chip key={o.id} order={o} slug={slug} teamColor={teamColor} />
+        <Chip
+          key={o.id}
+          order={o}
+          slug={slug}
+          teamColor={teamColor}
+          bindTip={bindTip}
+        />
       ))}
       {overflow > 0 && (
         <button
@@ -402,25 +462,65 @@ function Chip({
   order,
   slug,
   teamColor,
+  bindTip,
 }: {
   order: CalendarWorkOrder;
   slug: string;
   teamColor: Map<string, string>;
+  /** When present, wires the analytics hover-tip and drops the native title
+   *  (so the two tooltips don't stack). Absent inside the day modal. */
+  bindTip?: (
+    order: CalendarWorkOrder,
+    color: string,
+  ) => React.DOMAttributes<HTMLAnchorElement>;
 }) {
   const color =
     (order.teamKey && teamColor.get(order.teamKey)) || "var(--border-hairline)";
   const completed = order.status === "completed";
+  const tipHandlers = bindTip?.(order, color);
   return (
     <Link
       href={`/city/${slug}/grid`}
-      title={`${order.title}${order.crewName ? ` · ${order.crewName}` : ""}`}
-      style={{ borderLeftColor: color }}
+      {...tipHandlers}
+      title={
+        tipHandlers
+          ? undefined
+          : `${order.title}${order.crewName ? ` · ${order.crewName}` : ""}`
+      }
+      // Division color drives a theme-aware tint (mixed into --surface so it
+      // reads in light and dark), a solid dot, and a deeper hover fill.
+      style={
+        {
+          "--chip": color,
+          "--chip-bg": `color-mix(in srgb, ${color} 14%, var(--surface))`,
+          "--chip-bg-hover": `color-mix(in srgb, ${color} 26%, var(--surface))`,
+          "--chip-bd": `color-mix(in srgb, ${color} 34%, transparent)`,
+          "--chip-bd-hover": `color-mix(in srgb, ${color} 60%, transparent)`,
+        } as React.CSSProperties
+      }
       className={cn(
-        "block truncate rounded-[calc(var(--radius-md)-2px)] border-l-2 bg-overlay px-1.5 py-0.5 text-[11px] leading-tight text-foreground outline-none transition-colors duration-150 hover:bg-overlay-strong focus-visible:ring-2 focus-visible:ring-accent/60",
-        completed && "text-subtle line-through opacity-60",
+        "relative flex items-center gap-1.5 truncate rounded-[calc(var(--radius-md)-2px)] border px-1.5 py-0.5 text-[11px] leading-tight text-foreground outline-none",
+        "border-[var(--chip-bd)] bg-[var(--chip-bg)]",
+        "transition-[background-color,border-color,transform,box-shadow] duration-150 ease-out",
+        "hover:-translate-y-px hover:border-[var(--chip-bd-hover)] hover:bg-[var(--chip-bg-hover)] hover:shadow-[var(--shadow-card)]",
+        "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+        "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+        completed && "opacity-70",
       )}
     >
-      {order.title}
+      <span
+        aria-hidden
+        className="h-1.5 w-1.5 flex-shrink-0 rounded-full ring-1 ring-inset ring-black/10"
+        style={{ background: "var(--chip)" }}
+      />
+      <span
+        className={cn(
+          "min-w-0 truncate",
+          completed && "text-subtle line-through",
+        )}
+      >
+        {order.title}
+      </span>
     </Link>
   );
 }
@@ -487,6 +587,11 @@ function DayModal({
       </div>
     </div>
   );
+}
+
+/** "sidewalk_damage" → "Sidewalk Damage" for the hover tip's Category row. */
+function prettyCategory(c: string): string {
+  return c.replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
 }
 
 /** "Wednesday, July 1, 2026" — UTC-formatted so it matches the ISO key. */
