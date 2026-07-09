@@ -57,7 +57,7 @@ export function sanitizeCommentBody(body: string): string {
       // Remove C0 control chars except \t (0x09) and \n (0x0A)
       .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "")
       // Remove C1 control chars U+0080 through U+009F
-      .replace(/[-]/g, "")
+      .replace(/[\u0080-\u009F]/g, "")
       // Collapse runs of 3+ newlines to 2 paragraph breaks
       .replace(/\n{3,}/g, "\n\n")
       // Collapse horizontal whitespace (spaces/tabs) within a line to single space,

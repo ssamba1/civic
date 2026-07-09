@@ -73,7 +73,15 @@ CREATE POLICY report_comments_insert ON report_comments
   FOR INSERT
   TO authenticated
   WITH CHECK (
-    EXISTS (
+    -- Role integrity: a resident may only claim 'resident'; a staffer for the
+    -- report's city may claim 'staff'. 'system' is service-role only (bypasses
+    -- RLS), so it can never be claimed here. Without this, a resident could POST
+    -- author_role='staff' directly via PostgREST, impersonating an official reply.
+    (
+      author_role = 'resident'
+      OR (author_role = 'staff' AND is_staff())
+    )
+    AND EXISTS (
       SELECT 1 FROM reports r
       WHERE r.id = report_comments.report_id
         AND (
@@ -83,11 +91,25 @@ CREATE POLICY report_comments_insert ON report_comments
     )
   );
 
--- UPDATE: staff may flip the hidden flag (moderation). Restrict to only the
--- hidden column by requiring that all other columns remain unchanged.
+-- UPDATE: staff may flip the hidden flag (moderation) ONLY for reports in their
+-- own city — a staffer must not moderate another city's threads.
 -- Non-staff users may never UPDATE a comment (no policy = deny).
 CREATE POLICY report_comments_update_hidden ON report_comments
   FOR UPDATE
   TO authenticated
-  USING (is_staff())
-  WITH CHECK (is_staff());
+  USING (
+    is_staff()
+    AND EXISTS (
+      SELECT 1 FROM reports r
+      WHERE r.id = report_comments.report_id
+        AND r.city_id = current_user_city_id()
+    )
+  )
+  WITH CHECK (
+    is_staff()
+    AND EXISTS (
+      SELECT 1 FROM reports r
+      WHERE r.id = report_comments.report_id
+        AND r.city_id = current_user_city_id()
+    )
+  );

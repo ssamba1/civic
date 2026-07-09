@@ -18,7 +18,7 @@ import { getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
 import { redactPII } from "@/lib/privacy/pii-redact";
 import { sanitizeCommentBody, validateComment } from "@/lib/comments/moderate";
-import { getStaffAccessForCity } from "@/lib/staff-access";
+import { getStaffAccessForCity, type StaffAccess } from "@/lib/staff-access";
 import type { Result } from "@/lib/types";
 
 const logger = createLogger("[comment-actions]");
@@ -34,7 +34,9 @@ const logger = createLogger("[comment-actions]");
 async function resolveReportAccess(
   reportId: string,
   userId: string,
-): Promise<Result<{ citySlug: string; reporterOwns: boolean }>> {
+): Promise<
+  Result<{ citySlug: string; reporterOwns: boolean; staffAccess: StaffAccess }>
+> {
   const db = createServerClient();
   const { data: report, error } = await db
     .from("reports")
@@ -66,7 +68,12 @@ async function resolveReportAccess(
     return { ok: false, error: "forbidden" };
   }
 
-  return { ok: true, data: { citySlug: citySlug ?? "", reporterOwns } };
+  // Return the resolved staffAccess so the caller reuses it (no second lookup —
+  // avoids a TOCTOU where the two calls disagree).
+  return {
+    ok: true,
+    data: { citySlug: citySlug ?? "", reporterOwns, staffAccess },
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -107,9 +114,12 @@ export async function postComment(
     return { ok: false, error: accessResult.error };
   }
 
-  const { citySlug } = accessResult.data;
-  const staffAccess = citySlug ? await getStaffAccessForCity(citySlug) : null;
-  const authorRole = staffAccess !== null ? "staff" : "resident";
+  // author_role is "staff" ONLY for a verified REAL staff session. "demo" access
+  // is public-bundle-baked (proves nothing about the visitor), so a demo user
+  // must never be able to post an official-looking "staff" reply — they post as
+  // "resident". Reuse the staffAccess already resolved above (no second call).
+  const { staffAccess } = accessResult.data;
+  const authorRole = staffAccess === "real" ? "staff" : "resident";
 
   // 6. Insert (service-role client bypasses RLS; access already checked above)
   const db = createServerClient();
@@ -175,19 +185,16 @@ export async function hideComment(
     }
     return { ok: false, error: "database_error" };
   }
-  if (!comment) {
-    return { ok: false, error: "comment_not_found" };
-  }
 
+  // Existence must not leak to non-staff. A missing comment, a comment with no
+  // resolvable city, and a non-staff caller all return the SAME "forbidden" —
+  // otherwise a resident could enumerate valid comment ids by observing
+  // "comment_not_found" vs "forbidden". Moderation requires REAL staff (a
+  // public-bundle "demo" session must not hide real residents' comments).
   // biome-ignore lint/suspicious/noExplicitAny: Supabase join typing is loose
-  const citySlug = (comment.reports as any)?.cities?.slug ?? null;
-  if (!citySlug) {
-    return { ok: false, error: "city_not_found" };
-  }
-
-  // 3. Staff-only gate
-  const staffAccess = await getStaffAccessForCity(citySlug);
-  if (!staffAccess) {
+  const citySlug = comment ? ((comment.reports as any)?.cities?.slug ?? null) : null;
+  const staffAccess = citySlug ? await getStaffAccessForCity(citySlug) : null;
+  if (!comment || staffAccess !== "real") {
     return { ok: false, error: "forbidden" };
   }
 

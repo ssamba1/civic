@@ -178,6 +178,32 @@ describe("bucketByGrid", () => {
     expect(cells).toHaveLength(2);
   });
 
+  it("avgSeverity reflects raw severity, not composite weight", () => {
+    // Two points with very different recency (so weight ≠ severity) but the
+    // same severity = 4. avgSeverity should be 4, not distorted by weight.
+    // weight = severity/5 * recencyFactor; low-weight point has recencyFactor≈0.1
+    const pts: Array<{ position: [number, number]; weight: number; rawSeverity: number }> = [
+      { position: [10.001, 34.001], weight: 0.8, rawSeverity: 4 }, // high recency
+      { position: [10.005, 34.005], weight: 0.08, rawSeverity: 4 }, // low recency
+    ];
+    const cells = bucketByGrid(pts, 0.01);
+    expect(cells).toHaveLength(1);
+    // Correct: avg of [4, 4] = 4
+    expect(cells[0].avgSeverity).toBe(4);
+    // Sanity check: the old approach (weightSum/count * 5) would give ≈ (0.88/2)*5 = 2.2 → 2
+    // Confirm our result is NOT that wrong value:
+    expect(cells[0].avgSeverity).not.toBe(2);
+  });
+
+  it("avgSeverity falls back to 3 when rawSeverity is absent", () => {
+    // Points without rawSeverity (manually constructed) get neutral fallback.
+    const pts = [
+      { position: [10.001, 34.001] as [number, number], weight: 0.5 },
+    ];
+    const cells = bucketByGrid(pts, 0.01);
+    expect(cells[0].avgSeverity).toBe(3);
+  });
+
   it("cell centre positions fall inside the correct cell", () => {
     // Use positive coords to avoid JS modulo negative-number quirks
     const pts = [{ position: [10.03, 34.07] as [number, number], weight: 1 }];

@@ -91,6 +91,7 @@ export function DensityHeatmap({ points, bounds }: DensityHeatmapProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ForwardRefExoticComponent can't satisfy `new(...)` constraint
   const mapRef = useRef<any>(null);
   const [mode, setMode] = useState<"heatmap" | "grid">("heatmap");
+  const [mapLoaded, setMapLoaded] = useState(false);
   const [deckOverlay, setDeckOverlay] = useState<{
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- deck.gl overlay has no typed export we can import without SSR
     overlay: any;
@@ -109,22 +110,21 @@ export function DensityHeatmap({ points, bounds }: DensityHeatmapProps) {
     [bounds],
   );
 
-  // Dynamically load deck.gl to avoid SSR issues
+  // Dynamically load deck.gl to avoid SSR issues.
+  // Stores the overlay instance so the single registration effect below can
+  // attach it once both the map AND the overlay are ready.
   useEffect(() => {
     let cancelled = false;
+    let createdOverlay: any = null;
+
     async function load() {
-      const [
-        { MapboxOverlay },
-        { HeatmapLayer },
-        { GridLayer },
-      ] = await Promise.all([
+      const [{ MapboxOverlay }] = await Promise.all([
         import("@deck.gl/mapbox") as Promise<{ MapboxOverlay: any }>,
-        import("@deck.gl/aggregation-layers") as Promise<{ HeatmapLayer: any }>,
-        import("@deck.gl/aggregation-layers") as Promise<{ GridLayer: any }>,
       ]);
       if (cancelled) return;
 
       const overlay = new MapboxOverlay({ interleaved: false, layers: [] });
+      createdOverlay = overlay;
 
       const updateLayers = (layers: any[]) => {
         overlay.setProps({ layers });
@@ -132,15 +132,41 @@ export function DensityHeatmap({ points, bounds }: DensityHeatmapProps) {
 
       if (cancelled) return;
       setDeckOverlay({ overlay, updateLayers });
-
-      // Store for cleanup
-      return { overlay, HeatmapLayer, GridLayer };
     }
+
     load();
+
     return () => {
       cancelled = true;
+      // Tear down the WebGL overlay to prevent resource leaks on unmount.
+      // If it has already been added to a map, finalize() removes it too.
+      if (createdOverlay) {
+        try {
+          createdOverlay.finalize();
+        } catch {
+          // Overlay was never attached — safe to ignore
+        }
+        createdOverlay = null;
+      }
     };
   }, []);
+
+  // Single registration path: attach the overlay to the map only once BOTH the
+  // map has fired its onLoad event AND the async deck.gl import has resolved.
+  // Guarding on `mapLoaded` covers ordering (a): map-first.
+  // Guarding on `deckOverlay` covers ordering (b): overlay-first.
+  // No double-add risk because addControl on an already-added control throws —
+  // caught and ignored — and we never call it from onLoad anymore.
+  useEffect(() => {
+    if (!mapLoaded || !deckOverlay || !mapRef.current) return;
+    const map = mapRef.current.getMap?.();
+    if (!map) return;
+    try {
+      map.addControl(deckOverlay.overlay);
+    } catch {
+      // Already added — no-op
+    }
+  }, [mapLoaded, deckOverlay]);
 
   // Update deck.gl layers whenever mode or points change
   useEffect(() => {
@@ -194,24 +220,10 @@ export function DensityHeatmap({ points, bounds }: DensityHeatmapProps) {
     buildLayers();
   }, [deckOverlay, mode, points]);
 
-  // Add overlay to map once both are ready
-  const handleMapLoad = (evt: { target: maplibregl.Map }) => {
-    if (deckOverlay) {
-      evt.target.addControl(deckOverlay.overlay as any);
-    }
+  // Signal that the map is ready so the registration effect can fire.
+  const handleMapLoad = (_evt: { target: unknown }) => {
+    setMapLoaded(true);
   };
-
-  // Re-add overlay when deckOverlay becomes ready after map is already loaded
-  useEffect(() => {
-    if (!deckOverlay || !mapRef.current) return;
-    const map = mapRef.current.getMap?.();
-    if (!map) return;
-    try {
-      map.addControl(deckOverlay.overlay);
-    } catch {
-      // Already added — no-op
-    }
-  }, [deckOverlay]);
 
   if (points.length === 0) {
     return (

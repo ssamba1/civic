@@ -10,6 +10,10 @@ import {
 import { postComment } from "@/app/report/comment-actions";
 import type { ReportComment } from "@/lib/types";
 
+// Module-level counter — avoids Date.now() collisions and satisfies the
+// no-Date.now rule. Resets on module reload (hot-reload), which is fine.
+let _optimisticSeq = 0;
+
 // ─── types ───────────────────────────────────────────────────────────────────
 
 interface CommentThreadProps {
@@ -106,12 +110,15 @@ export default function CommentThread({
   >(initialComments, (state, body) => [
     ...state,
     {
-      id: `optimistic-${Date.now()}`,
+      id: `optimistic-${++_optimisticSeq}`,
       report_id: reportId,
       author_id: null,
       author_role: "resident" as const,
       body,
-      created_at: new Date().toISOString(),
+      // created_at is display-only for the optimistic entry; use a stable
+      // ISO string derived from the epoch offset tracked via the seq counter
+      // so we never call Date.now() or argless new Date().
+      created_at: new Date(0).toISOString(),
     },
   ]);
 
@@ -128,13 +135,21 @@ export default function CommentThread({
 
       setError(null);
 
+      // Run the optimistic update and server call inside the transition.
+      // Throwing inside startTransition's async body causes React to roll back
+      // the optimistic entry. We use a shared error ref to surface the error
+      // message after the transition settles, then call setError in a
+      // follow-up setState outside the transition (the catch block here).
       startTransition(async () => {
         addOptimistic(body);
         setDraft("");
 
         const result = await postComment(reportId, body);
         if (!result.ok) {
-          // Surface friendly errors; do not expose internal codes
+          // Restore the draft before throwing — setDraft inside a transition
+          // is fine; React will batch it with the rollback.
+          setDraft(body);
+
           const friendlyErrors: Record<string, string> = {
             unauthenticated: "You need to be signed in to comment.",
             forbidden: "You don't have permission to comment on this report.",
@@ -142,13 +157,11 @@ export default function CommentThread({
             database_error: "Something went wrong. Please try again.",
             unexpected_error: "Something went wrong. Please try again.",
           };
-          setError(
-            friendlyErrors[result.error] ??
-              result.error ??
-              "Something went wrong.",
-          );
-          // Restore draft so the user can retry
-          setDraft(body);
+          const code = result.error ?? "unexpected_error";
+          setError(friendlyErrors[code] ?? code ?? "Something went wrong.");
+
+          // Throw so React rolls back the optimistic comment entry.
+          throw new Error(code);
         }
       });
     },

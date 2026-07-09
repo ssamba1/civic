@@ -76,7 +76,8 @@ export function validateBulkSelection(ids: unknown): Result<string[]> {
 
   for (const id of deduped) {
     if (!isUuid(id)) {
-      return { ok: false, error: `invalid_uuid:${id}` };
+      // Do NOT echo the raw id back — it's untrusted input that lands in toasts.
+      return { ok: false, error: "invalid_uuid" };
     }
   }
 

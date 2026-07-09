@@ -27,6 +27,14 @@ export interface HeatmapPoint {
   position: [lng: number, lat: number];
   /** Normalised weight in (0, 1]. Used by deck.gl HeatmapLayer `getWeight`. */
   weight: number;
+  /**
+   * Raw severity (1–5) from the source report, carried through so that
+   * `bucketByGrid` can compute a true average severity rather than backing
+   * it out of the composite weight (which is severity × recency and therefore
+   * systematically understated). Optional for callers that construct points
+   * manually; `bucketByGrid` falls back to 3 when absent.
+   */
+  rawSeverity?: number;
 }
 
 export interface ViewportBounds {
@@ -77,6 +85,7 @@ export function toHeatmapPoints(
       return {
         position: [r.location.lng, r.location.lat] as [number, number],
         weight,
+        rawSeverity: r.severity ?? 3,
       };
     });
 }
@@ -132,34 +141,39 @@ export function bucketByGrid(
 ): GridCell[] {
   if (points.length === 0) return [];
 
-  // For severity-weighted averages we need severity per point; we proxy it from
-  // the weight if the caller passes plain HeatmapPoints.  GridLayer only needs
-  // position + count + totalWeight for visualisation.
+  // Accumulate raw severity per cell so avgSeverity reflects true severity
+  // (1–5) rather than the composite weight (severity × recency), which is
+  // systematically understated due to the recency multiplier.
   const cells = new Map<
     string,
-    { lngSum: number; latSum: number; count: number; weightSum: number }
+    { lngSum: number; latSum: number; count: number; weightSum: number; rawSeveritySum: number }
   >();
 
-  for (const { position: [lng, lat], weight } of points) {
+  for (const { position: [lng, lat], weight, rawSeverity } of points) {
     const col = Math.floor(lng / cellDegrees);
     const row = Math.floor(lat / cellDegrees);
     const key = `${col}:${row}`;
     const cellLng = (col + 0.5) * cellDegrees;
     const cellLat = (row + 0.5) * cellDegrees;
+    // rawSeverity is present on points produced by toHeatmapPoints; fall back
+    // to 3 (neutral) for any HeatmapPoint constructed outside that path.
+    const sev = rawSeverity ?? 3;
     const existing = cells.get(key);
     if (existing) {
       existing.count += 1;
       existing.weightSum += weight;
+      existing.rawSeveritySum += sev;
     } else {
-      cells.set(key, { lngSum: cellLng, latSum: cellLat, count: 1, weightSum: weight });
+      cells.set(key, { lngSum: cellLng, latSum: cellLat, count: 1, weightSum: weight, rawSeveritySum: sev });
     }
   }
 
-  return Array.from(cells.values()).map(({ lngSum, latSum, count, weightSum }) => ({
+  return Array.from(cells.values()).map(({ lngSum, latSum, count, weightSum, rawSeveritySum }) => ({
     position: [lngSum, latSum] as [number, number],
     count,
     totalWeight: weightSum,
-    // avgSeverity proxied from average weight * 5 (inverse of the weight formula).
-    avgSeverity: Math.round(Math.min(5, Math.max(1, (weightSum / count) * 5))),
+    // avgSeverity is the arithmetic mean of raw severity values (1–5),
+    // rounded to the nearest integer and clamped to the valid range.
+    avgSeverity: Math.round(Math.min(5, Math.max(1, rawSeveritySum / count))),
   }));
 }
