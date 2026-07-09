@@ -1,3 +1,5 @@
+import { BUILTIN_CATEGORY_DEFS, type CategoryDef } from "./categories";
+
 /**
  * System instruction: establishes the model's role and analytical lens.
  * Kept separate from the user prompt so the model treats it as persistent context.
@@ -10,24 +12,23 @@ export const CLASSIFICATION_SYSTEM_PROMPT =
   `Your classifications feed directly into work-order routing and emergency dispatch.`;
 
 /**
- * User-facing classification prompt.
- * Sent alongside the inline photo as the task description.
+ * User-facing classification prompt, built per request from the effective
+ * category set (built-ins ∪ a city's custom issue types, issue #6). The CATEGORY
+ * menu is rendered from data so a runtime-added type is offered to the model
+ * with no code change; the rest of the prompt is fixed. Descriptions are
+ * admin-authored free text for customs — whitespace is flattened so a multi-line
+ * description can't break out of its list item into a new instruction block.
  */
-export const CLASSIFICATION_PROMPT = `Analyze the attached citizen photo and classify the infrastructure issue it depicts.
+export function buildClassificationPrompt(
+  categories: readonly CategoryDef[],
+): string {
+  const menu = categories
+    .map((c) => `- ${c.key} — ${c.description.replace(/\s+/g, " ").trim()}`)
+    .join("\n");
+  return `Analyze the attached citizen photo and classify the infrastructure issue it depicts.
 
 ## CATEGORY — choose the single best match
-- pothole            Road surface hole, depression, or severe cracking in asphalt/concrete roadway
-- streetlight        Street or traffic light outage, broken fixture, or damaged/leaning pole
-- downed_sign        Traffic or street sign fallen, missing, bent, or knocked off its post
-- graffiti           Unauthorized markings on public surfaces: walls, sidewalks, benches, bridges
-- illegal_dump       Household items, appliances, or bulk waste dumped on public land
-- water_leak         Active main break, gushing hydrant, or pavement pooling from underground pipes
-- sidewalk_damage    Heaved, sunken, cracked, or missing sidewalk or curb sections
-- tree_down          Fallen or dangerously leaning tree / large branch on public property or roadway
-- debris             Loose litter, construction waste, or scattered material on road or path
-- drainage           Blocked storm drain, flooded roadway, or standing water from drainage failure
-- faded_signage      Worn, sun-bleached, or barely-legible traffic/street signs still upright
-- other              Any infrastructure issue that clearly does not fit the above categories
+${menu}
 
 ## SEVERITY SCALE (1–5)
 1 — Cosmetic only. No safety risk. Routine maintenance cycle.
@@ -69,7 +70,7 @@ system cannot be sure which crew should own it.
 No markdown. No code fences. No prose before or after the JSON. Every field required.
 
 {
-  "category": "<one of the 12 strings listed above>",
+  "category": "<one of the category keys listed above>",
   "subcategory": "<3–7 words, e.g. 'deep asphalt pothole with exposed base' or 'broken streetlight arm over lane'>",
   "severity": <integer 1–5>,
   "hazard_radius_m": <non-negative number>,
@@ -80,6 +81,15 @@ No markdown. No code fences. No prose before or after the JSON. Every field requ
   "no_issue_detected": <true only if no actual infrastructure problem is visible in the photo>,
   "alternate_categories": [<0–2 other category strings that could also plausibly apply; [] if confident in a single category>]
 }`;
+}
+
+/**
+ * Built-in classification prompt — the 12-category default, for callers without
+ * a city context (and byte-identical to the pre-#6 prompt for those 12).
+ */
+export const CLASSIFICATION_PROMPT = buildClassificationPrompt(
+  BUILTIN_CATEGORY_DEFS,
+);
 
 export interface CorrectionExample {
   original_category: string;

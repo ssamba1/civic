@@ -47,6 +47,7 @@ function persistIssueType(
         : actions.saveIssueType({
             key: c.id,
             label: c.label,
+            description: c.description,
             color: c.color,
             teamKey: c.team,
           }),
@@ -65,6 +66,10 @@ export interface CustomCategory {
   /** Always `custom_<slug>` so it never collides with a built-in key. */
   id: string;
   label: string;
+  /** AI-facing description (issue #6) — what a photo of this issue looks like.
+   *  Empty when the dispatcher didn't supply one; then the type routes only on
+   *  a manual pick, never AI auto-classification. */
+  description?: string;
   color: string;
   team: TeamId;
 }
@@ -141,6 +146,7 @@ interface UseCustomCategoriesReturn {
   categories: CustomCategory[];
   addCustomCategory: (input: {
     label: string;
+    description?: string;
     color: string;
     team: TeamId;
   }) => string;
@@ -160,11 +166,22 @@ export function useCustomCategories(): UseCustomCategoriesReturn {
   );
 
   const addCustomCategory = useCallback(
-    (input: { label: string; color: string; team: TeamId }) => {
+    (input: {
+      label: string;
+      description?: string;
+      color: string;
+      team: TeamId;
+    }) => {
       const label = input.label.trim();
       const team = input.team === "all" ? "general_admin" : input.team;
       const id = uniqueId(label, snapshot);
-      const created = { id, label, color: input.color, team };
+      const created: CustomCategory = {
+        id,
+        label,
+        description: input.description?.trim() || undefined,
+        color: input.color,
+        team,
+      };
       snapshot = [...snapshot, created];
       writeStorage(snapshot);
       emit();

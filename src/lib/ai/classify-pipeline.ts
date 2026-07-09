@@ -5,6 +5,7 @@ import {
   DEDUP_REPORTS,
   GEMINI_MODEL,
 } from "@/lib/ai/config";
+import { mergeCategoryDefs } from "@/lib/ai/categories";
 import { autoAssignCrew } from "@/lib/ai/crew-assign";
 import { findDuplicate } from "@/lib/ai/dedup";
 import { classifyPhoto } from "@/lib/ai/gemini";
@@ -14,6 +15,7 @@ import { generateWorkOrder } from "@/lib/ai/work-order-rules";
 import { fetchCorrectionExamples } from "@/lib/db/classification-feedback";
 import { createServerClient } from "@/lib/db/client";
 import { fetchActiveCrewTypeDefs } from "@/lib/db/crew-types";
+import { fetchCustomCategoryDefs } from "@/lib/db/issue-types";
 import { fetchSlaHours } from "@/lib/db/sla-targets";
 import { sniffImageMime } from "@/lib/image/sniff-mime";
 import { createLogger } from "@/lib/logger";
@@ -231,7 +233,23 @@ export async function runClassifyPipeline(
         pairs: corrections.length,
       });
     }
-    classificationResult = await classifyPhoto(imageBase64, sniffed, guidance);
+    // Issue #6 — offer this city's custom issue types (with AI descriptions)
+    // alongside the built-ins, so a runtime-added category can be auto-classified.
+    // Best-effort: [] on any failure keeps classification to the 12 built-ins.
+    const customCategories = await fetchCustomCategoryDefs(report.city_id);
+    if (customCategories.length > 0) {
+      log.info("classify_custom_categories", {
+        reportId,
+        count: customCategories.length,
+      });
+    }
+    const categories = mergeCategoryDefs(customCategories);
+    classificationResult = await classifyPhoto(
+      imageBase64,
+      sniffed,
+      guidance,
+      categories,
+    );
   }
 
   // Resilience: if Gemini fails (network/rate/latency), DON'T abort the

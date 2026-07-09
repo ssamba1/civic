@@ -15,6 +15,9 @@ import { isValidTeamId } from "@/lib/teams";
 export const CustomCategorySchema = z.object({
   id: z.string().regex(/^custom_/, "id must start with 'custom_'"),
   label: z.string().min(1, "label is required"),
+  // AI-facing routing signal (issue #6). Optional so entries created before it
+  // existed still validate; the DB (issue_types) is the source for classification.
+  description: z.string().optional(),
   color: z.string(),
   team: z
     .string()

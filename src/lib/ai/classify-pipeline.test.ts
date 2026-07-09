@@ -274,6 +274,9 @@ describe("runClassifyPipeline", () => {
       "image/jpeg",
       // OUTFLANK #7 — per-city correction guidance (empty here: no feedback rows)
       expect.any(String),
+      // Issue #6 — effective category set (built-ins ∪ city customs). No custom
+      // issue types in this fixture, so it's the 12 built-ins.
+      expect.any(Array),
     );
     // Gemini failure persisted as fallback.
     expect(tables.classifications.upsert).toHaveBeenCalledWith(
