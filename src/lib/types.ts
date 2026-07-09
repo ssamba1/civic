@@ -131,6 +131,19 @@ export interface Report {
   updated_at: string;
 }
 
+/** One row from the report_photos child table (migration 050). */
+export interface ReportPhoto {
+  id: string;
+  report_id: string;
+  /** 0-based position; idx 0 mirrors reports.photo_public_url. */
+  idx: number;
+  public_url: string;
+  raw_url: string | null;
+  phash: string | null;
+  blur_version: number | null;
+  created_at: string;
+}
+
 export type WorkOrderSource = "ai" | "rules";
 
 export interface WorkOrder {

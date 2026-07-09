@@ -57,14 +57,18 @@ type GpsStatus = "acquiring" | "found" | "manual";
 
 type Step =
   | { name: "camera" }
-  | { name: "preview"; photo: File }
-  | { name: "submitting"; photo: File }
+  // `photos` is the full array; photo is the primary (idx 0) — kept for
+  // backward-compat with PhotoPreview which still shows a single preview.
+  | { name: "preview"; photo: File; photos: File[] }
+  | { name: "submitting"; photo: File; photos: File[] }
   | {
       name: "duplicate_check";
       photo: File;
-      photoBlurred: string;
-      photoOriginal: string;
-      phash: string;
+      photos: File[];
+      photosBlurred: string[];
+      photosOriginal: string[];
+      phashes: string[];
+      /** Data-URL of the primary (idx 0) blurred photo, for the dupe UI. */
       newPhotoDataUrl: string;
       description: string | null;
       tags: string[];
@@ -197,32 +201,60 @@ export default function ReportPage() {
     };
   }, []);
 
+  // handleCapture: called by CameraCapture with the primary photo.
+  // The photo strip below allows adding more (up to 6 total) after capture.
   const handleCapture = useCallback((file: File) => {
-    setStep({ name: "preview", photo: file });
+    setStep({ name: "preview", photo: file, photos: [file] });
   }, []);
 
   const handleRetake = useCallback(() => {
     setStep({ name: "camera" });
   }, []);
 
+  // Add extra photos (up to 6 total) from the thumbnail strip.
+  const handleAddPhotos = useCallback(
+    (newFiles: File[]) => {
+      if (step.name !== "preview") return;
+      const combined = [...step.photos, ...newFiles].slice(0, 6);
+      setStep({ ...step, photos: combined });
+    },
+    [step],
+  );
+
+  // Remove a photo at the given index (primary at 0 can also be replaced if
+  // there is more than one photo; removing the last one returns to camera).
+  const handleRemovePhoto = useCallback(
+    (idx: number) => {
+      if (step.name !== "preview") return;
+      const next = step.photos.filter((_, i) => i !== idx);
+      if (next.length === 0) {
+        setStep({ name: "camera" });
+        return;
+      }
+      setStep({ ...step, photos: next, photo: next[0] });
+    },
+    [step],
+  );
+
   const doSubmit = useCallback(
     async (
-      photo: File,
-      photoBlurred: string,
-      photoOriginal: string,
-      phash: string,
+      photos: File[],
+      photosBlurred: string[],
+      photosOriginal: string[],
+      phashes: string[],
       description: string | null,
       tags: string[],
     ) => {
+      const photo = photos[0];
       try {
         const result = await submitReport({
-          photoBlurred,
-          photoOriginal,
+          photosBlurred,
+          photosOriginal,
           location,
           address,
           description,
           tags,
-          phash,
+          phashes,
         });
 
         if (!result.ok) {
@@ -235,7 +267,7 @@ export default function ReportPage() {
               ? "Session not ready yet. Please tap Submit again in a moment."
               : (result.error ?? "Submission failed. Please try again."),
           );
-          setStep({ name: "preview", photo });
+          setStep({ name: "preview", photo, photos });
           return;
         }
 
@@ -266,7 +298,7 @@ export default function ReportPage() {
             ? e.message
             : "Unexpected error. Please try again.",
         );
-        setStep({ name: "preview", photo });
+        setStep({ name: "preview", photo, photos });
       }
     },
     [location, address],
@@ -280,53 +312,72 @@ export default function ReportPage() {
     ) => {
       if (step.name !== "preview") return;
 
-      const photo = step.photo;
-      setStep({ name: "submitting", photo });
+      const { photos } = step;
+      const photo = photos[0];
+      setStep({ name: "submitting", photo, photos });
       setManualIssueType(issueType);
       setError(null);
 
-      let photoBlurred: string;
-      let photoOriginal: string;
-      try {
-        const { blurred, original } = await blurFacesAndPlates(photo);
-        [photoBlurred, photoOriginal] = await Promise.all([
-          blobToBase64(blurred),
-          blobToBase64(original),
-        ]);
-      } catch {
-        setError(
-          "Could not process that image format. Please try a JPEG/PNG or retake the photo.",
-        );
-        setStep({ name: "preview", photo });
-        return;
+      // Process each photo through blurFacesAndPlates. If ANY photo fails to
+      // blur, surface the error and skip that file — never upload an unblurred
+      // image. If the primary (idx 0) fails, abort the whole submission.
+      const photosBlurredArr: string[] = [];
+      const photosOriginalArr: string[] = [];
+      const phashesArr: string[] = [];
+      const processedFiles: File[] = [];
+
+      for (let i = 0; i < photos.length; i++) {
+        try {
+          const { blurred, original } = await blurFacesAndPlates(photos[i]);
+          const [blurredB64, originalB64] = await Promise.all([
+            blobToBase64(blurred),
+            blobToBase64(original),
+          ]);
+          const hash = await computeAHash(`data:image/webp;base64,${blurredB64}`);
+          photosBlurredArr.push(blurredB64);
+          photosOriginalArr.push(originalB64);
+          phashesArr.push(hash);
+          processedFiles.push(photos[i]);
+        } catch {
+          if (i === 0) {
+            // Primary photo failed — cannot continue.
+            setError(
+              "Could not process that image format. Please try a JPEG/PNG or retake the photo.",
+            );
+            setStep({ name: "preview", photo, photos });
+            return;
+          }
+          // Non-primary photo failed — warn and skip.
+          setError(
+            `Photo ${i + 1} could not be processed and was skipped. The rest will be submitted.`,
+          );
+        }
       }
 
       const session = await ensureAnonSession();
       if (!session.ok) {
         setError(session.error);
-        setStep({ name: "preview", photo });
+        setStep({ name: "preview", photo, photos });
         return;
       }
 
-      const phash = await computeAHash(
-        `data:image/webp;base64,${photoBlurred}`,
-      );
-
+      // Duplicate check uses the primary (idx 0) phash.
       if (location) {
         const dupResult = await checkPotentialDuplicate({
           lat: location.lat,
           lng: location.lng,
-          phash,
+          phash: phashesArr[0],
           category: issueType,
         });
         if (dupResult.ok && dupResult.data.length > 0) {
           setStep({
             name: "duplicate_check",
             photo,
-            photoBlurred,
-            photoOriginal,
-            phash,
-            newPhotoDataUrl: `data:image/webp;base64,${photoBlurred}`,
+            photos: processedFiles,
+            photosBlurred: photosBlurredArr,
+            photosOriginal: photosOriginalArr,
+            phashes: phashesArr,
+            newPhotoDataUrl: `data:image/webp;base64,${photosBlurredArr[0]}`,
             description,
             tags,
             issueType,
@@ -337,10 +388,10 @@ export default function ReportPage() {
       }
 
       await doSubmit(
-        photo,
-        photoBlurred,
-        photoOriginal,
-        phash,
+        processedFiles,
+        photosBlurredArr,
+        photosOriginalArr,
+        phashesArr,
         description,
         tags,
       );
@@ -358,14 +409,14 @@ export default function ReportPage() {
 
   const handleDenyDuplicate = useCallback(async () => {
     if (step.name !== "duplicate_check") return;
-    const { photo, photoBlurred, photoOriginal, phash, description, tags } =
+    const { photos, photosBlurred, photosOriginal, phashes, description, tags } =
       step;
-    setStep({ name: "submitting", photo });
+    setStep({ name: "submitting", photo: photos[0], photos });
     await doSubmit(
-      photo,
-      photoBlurred,
-      photoOriginal,
-      phash,
+      photos,
+      photosBlurred,
+      photosOriginal,
+      phashes,
       description,
       tags,
     );
@@ -574,15 +625,70 @@ export default function ReportPage() {
       {step.name === "camera" && <CameraCapture onCapture={handleCapture} />}
 
       {(step.name === "preview" || step.name === "submitting") && (
-        <PhotoPreview
-          photo={step.photo}
-          gpsStatus={gpsStatus}
-          address={address}
-          onAddressChange={setAddress}
-          onRetake={handleRetake}
-          onSubmit={handleSubmit}
-          submitting={step.name === "submitting"}
-        />
+        <>
+          <PhotoPreview
+            photo={step.photo}
+            gpsStatus={gpsStatus}
+            address={address}
+            onAddressChange={setAddress}
+            onRetake={handleRetake}
+            onSubmit={handleSubmit}
+            submitting={step.name === "submitting"}
+          />
+          {/* Multi-photo thumbnail strip — shown below the primary preview.
+              Allows adding up to 6 photos total; each thumbnail has a remove button.
+              Hidden while submitting to avoid state changes mid-flight. */}
+          {step.name === "preview" && (
+            <div className="absolute bottom-0 left-0 right-0 z-20 pb-safe">
+              <div className="flex items-center gap-2 overflow-x-auto px-4 py-3 bg-black/40 backdrop-blur-sm">
+                {step.photos.map((f, i) => {
+                  const objUrl = URL.createObjectURL(f);
+                  return (
+                    <div key={`${f.name}-${i}`} className="relative flex-shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={objUrl}
+                        alt={`Photo ${i + 1}`}
+                        className="h-14 w-14 rounded-lg object-cover border-2 border-white/30"
+                        onLoad={() => URL.revokeObjectURL(objUrl)}
+                      />
+                      <button
+                        type="button"
+                        aria-label={`Remove photo ${i + 1}`}
+                        onClick={() => handleRemovePhoto(i)}
+                        className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white text-[11px] leading-none"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  );
+                })}
+                {/* Add-more button — only shown when < 6 photos */}
+                {step.photos.length < 6 && (
+                  <label
+                    aria-label="Add more photos"
+                    className="flex-shrink-0 flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-white/40 text-white/70 hover:border-white/70 hover:text-white transition-colors"
+                  >
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="sr-only"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files ?? []);
+                        if (files.length > 0) handleAddPhotos(files);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {step.name === "duplicate_check" && (
