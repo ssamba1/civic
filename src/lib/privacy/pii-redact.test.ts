@@ -131,7 +131,9 @@ describe("redactPII – multiple and overlapping", () => {
   });
 
   it("returns empty spans for clean text", () => {
-    const { spans, redacted } = redactPII("Pothole on the corner of 5th and Main.");
+    const { spans, redacted } = redactPII(
+      "Pothole on the corner of 5th and Main.",
+    );
     expect(spans).toHaveLength(0);
     expect(redacted).toBe("Pothole on the corner of 5th and Main.");
   });

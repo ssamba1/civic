@@ -1,7 +1,7 @@
-import { createServerClient } from "@/lib/db/client";
 import { ComplianceReportView } from "@/components/admin/compliance-report";
 import { PrintButton } from "@/components/admin/print-button";
 import { buildComplianceReport } from "@/lib/compliance/report";
+import { createServerClient } from "@/lib/db/client";
 import { RAW_PHOTO_TTL_DAYS } from "@/lib/privacy/retention";
 
 export const dynamic = "force-dynamic";

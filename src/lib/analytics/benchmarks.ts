@@ -37,7 +37,9 @@ export function rankCities(
   const sorted = [...rows].sort((a, b) => {
     const av = a[metric] ?? 0;
     const bv = b[metric] ?? 0;
-    return ascending ? (av as number) - (bv as number) : (bv as number) - (av as number);
+    return ascending
+      ? (av as number) - (bv as number)
+      : (bv as number) - (av as number);
   });
 
   let rank = 1;

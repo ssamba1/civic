@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PublicTrending } from "@/components/resident/public-trending";
-import { getReportCorpus, KNOWN_CITIES, type DashboardReport } from "@/lib/dashboard-data";
+import {
+  type DashboardReport,
+  getReportCorpus,
+  KNOWN_CITIES,
+} from "@/lib/dashboard-data";
 import { rankTrending } from "@/lib/trending";
 
 /** Deterministic demo upvote count — mirrors baseUpvoteCount from upvotes.ts.
@@ -29,7 +33,9 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const city = KNOWN_CITIES[slug];
   const name = city?.name ?? slug;
@@ -50,7 +56,9 @@ export default async function PublicTrendingPage({ params }: PageProps) {
     // Also try live DB lookup for provisioned cities
     let cityOk = false;
     try {
-      const { fetchCity: fetchCityFromDb } = await import("@/lib/dashboard-queries");
+      const { fetchCity: fetchCityFromDb } = await import(
+        "@/lib/dashboard-queries"
+      );
       const city = await fetchCityFromDb(slug);
       cityOk = city != null;
     } catch {
@@ -100,7 +108,10 @@ export default async function PublicTrendingPage({ params }: PageProps) {
 
         <p className="mt-8 text-[12px] text-faint">
           Powered by{" "}
-          <a href="/" className="underline underline-offset-2 hover:text-foreground">
+          <a
+            href="/"
+            className="underline underline-offset-2 hover:text-foreground"
+          >
             Civic
           </a>{" "}
           · Open311 compatible · Public data

@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import {
-  CONTRACTOR_STATUSES,
-  CONTRACTOR_STATUS_LABEL,
-  canTransition,
-  type ContractorStatus,
-} from "@/lib/contractor/status";
-import { updateWorkOrderProgress } from "@/app/contractor/actions";
 import type { ContractorWorkOrder } from "@/app/contractor/actions";
+import { updateWorkOrderProgress } from "@/app/contractor/actions";
+import {
+  CONTRACTOR_STATUS_LABEL,
+  CONTRACTOR_STATUSES,
+  type ContractorStatus,
+  canTransition,
+} from "@/lib/contractor/status";
 
 interface Props {
   workOrder: ContractorWorkOrder;

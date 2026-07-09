@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 // Client wrapper does the ssr:false dynamic import — not allowed here (server).
 import { DensityHeatmapLoader as DensityHeatmap } from "@/components/analytics/density-heatmap-loader";
-import { bucketByGrid, computeBounds, toHeatmapPoints } from "@/lib/analytics/heatmap";
-import { fetchCity, fetchCorpus } from "@/lib/dashboard-queries";
+import {
+  bucketByGrid,
+  computeBounds,
+  toHeatmapPoints,
+} from "@/lib/analytics/heatmap";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
+import { fetchCity, fetchCorpus } from "@/lib/dashboard-queries";
 
 export function generateStaticParams() {
   return Object.keys(KNOWN_CITIES).map((slug) => ({ slug }));
@@ -14,7 +18,9 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const city = await fetchCity(slug);
   if (!city) return { title: "City not found | Civic" };
@@ -60,7 +66,10 @@ export default async function HeatmapPage({ params }: PageProps) {
 
         {/* Stats row */}
         <div className="mb-4 flex flex-wrap gap-4">
-          <StatCard label="Total reports" value={reports.length.toLocaleString()} />
+          <StatCard
+            label="Total reports"
+            value={reports.length.toLocaleString()}
+          />
           <StatCard
             label="Weighted points"
             value={points.length.toLocaleString()}
@@ -104,8 +113,13 @@ export default async function HeatmapPage({ params }: PageProps) {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {topCells.map((cell, i) => (
-                    <tr key={`${cell.position[0]}-${cell.position[1]}`} className="bg-card">
-                      <td className="px-4 py-2 text-muted-foreground">#{i + 1}</td>
+                    <tr
+                      key={`${cell.position[0]}-${cell.position[1]}`}
+                      className="bg-card"
+                    >
+                      <td className="px-4 py-2 text-muted-foreground">
+                        #{i + 1}
+                      </td>
                       <td className="px-4 py-2 font-mono text-xs">
                         {cell.position[1].toFixed(4)},{" "}
                         {cell.position[0].toFixed(4)}

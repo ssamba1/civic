@@ -1,14 +1,14 @@
 "use server";
 
 import "server-only";
+import {
+  type ContractorStatus,
+  canTransition,
+  validateProgressUpdate,
+} from "@/lib/contractor/status";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
-import {
-  canTransition,
-  validateProgressUpdate,
-  type ContractorStatus,
-} from "@/lib/contractor/status";
 import type { Result } from "@/lib/types";
 
 const log = createLogger("contractor-actions");

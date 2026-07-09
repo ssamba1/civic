@@ -16,8 +16,8 @@ import { getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
 import {
   canMerge,
-  rankDuplicateCandidates,
   type ReportForMerge,
+  rankDuplicateCandidates,
   type ScoredCandidate,
 } from "@/lib/staff/merge";
 import type { Result } from "@/lib/types";
@@ -60,7 +60,7 @@ async function getStaffUser() {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-async function reportInStaffCity(
+async function _reportInStaffCity(
   db: ReturnType<typeof createServerClient>,
   reportId: string,
   cityId: string | null,
@@ -97,12 +97,16 @@ export async function findDuplicateCandidates(
   // Fetch the target report for scoring context.
   const { data: target, error: targetError } = await db
     .from("reports")
-    .select("id, city_id, photo_phash, category:classifications(category), created_at, address, status, merged_into")
+    .select(
+      "id, city_id, photo_phash, category:classifications(category), created_at, address, status, merged_into",
+    )
     .eq("id", reportId)
     .maybeSingle();
 
   if (targetError) {
-    logger.warn("Failed to fetch target report", { error: targetError.message });
+    logger.warn("Failed to fetch target report", {
+      error: targetError.message,
+    });
     return { ok: true, data: [] };
   }
   if (!target) return { ok: false, error: "Report not found" };
@@ -132,10 +136,10 @@ export async function findDuplicateCandidates(
 
   // Resolve classification join (Supabase returns array or object).
   const targetCategoryRaw = target.category;
-  const targetCategory =
-    Array.isArray(targetCategoryRaw)
-      ? (targetCategoryRaw[0] as { category?: string } | undefined)?.category ?? null
-      : (targetCategoryRaw as { category?: string } | null)?.category ?? null;
+  const targetCategory = Array.isArray(targetCategoryRaw)
+    ? ((targetCategoryRaw[0] as { category?: string } | undefined)?.category ??
+      null)
+    : ((targetCategoryRaw as { category?: string } | null)?.category ?? null);
 
   const candidates: ReportForMerge[] = (rows ?? []).map(
     (row: {
@@ -198,7 +202,9 @@ export async function mergeReports(
     .in("id", [canonicalId, mergedId]);
 
   if (fetchError) {
-    logger.error("Failed to fetch reports for merge", { error: fetchError.message });
+    logger.error("Failed to fetch reports for merge", {
+      error: fetchError.message,
+    });
     return { ok: false, error: "db_unavailable" };
   }
 
@@ -221,8 +227,18 @@ export async function mergeReports(
   }
 
   const guard = canMerge(
-    { id: canonical.id, city_id: canonical.city_id, merged_into: canonical.merged_into, status: canonical.status },
-    { id: merged.id, city_id: merged.city_id, merged_into: merged.merged_into, status: merged.status },
+    {
+      id: canonical.id,
+      city_id: canonical.city_id,
+      merged_into: canonical.merged_into,
+      status: canonical.status,
+    },
+    {
+      id: merged.id,
+      city_id: merged.city_id,
+      merged_into: merged.merged_into,
+      status: merged.status,
+    },
   );
   if (!guard.ok) return { ok: false, error: guard.error };
 
@@ -239,7 +255,9 @@ export async function mergeReports(
     .single();
 
   if (auditError) {
-    logger.error("Failed to insert report_merges row", { error: auditError.message });
+    logger.error("Failed to insert report_merges row", {
+      error: auditError.message,
+    });
     return { ok: false, error: "db_unavailable" };
   }
 
@@ -250,7 +268,9 @@ export async function mergeReports(
     .eq("id", mergedId);
 
   if (updateError) {
-    logger.error("Failed to update merged report status", { error: updateError.message });
+    logger.error("Failed to update merged report status", {
+      error: updateError.message,
+    });
     // Best-effort rollback of the audit row.
     await db.from("report_merges").delete().eq("id", mergeRow.id);
     return { ok: false, error: "db_unavailable" };
@@ -295,9 +315,7 @@ export async function mergeReports(
  * Clears `merged_into` and resets status to 'open', and deletes the audit row.
  * Does NOT move upvotes back (impractical — the data no longer tracks origin).
  */
-export async function unmergeReports(
-  mergedId: string,
-): Promise<Result<void>> {
+export async function unmergeReports(mergedId: string): Promise<Result<void>> {
   const staff = await getStaffUser();
   if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
 
@@ -332,10 +350,7 @@ export async function unmergeReports(
   }
 
   // Delete audit record (best-effort — non-fatal if already gone).
-  await db
-    .from("report_merges")
-    .delete()
-    .eq("merged_report_id", mergedId);
+  await db.from("report_merges").delete().eq("merged_report_id", mergedId);
 
   logger.info("Report unmerged", { mergedId, by: staff.id });
   return { ok: true, data: undefined };

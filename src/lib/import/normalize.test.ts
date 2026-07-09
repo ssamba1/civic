@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { importFromText, mapLegacyRecord, DEFAULT_CSV_CONFIG } from "./normalize";
+import { importFromText, mapLegacyRecord } from "./normalize";
 
 describe("mapLegacyRecord (seeclickfix_json)", () => {
   it("normalizes a full SeeClickFix row", () => {
@@ -14,18 +14,18 @@ describe("mapLegacyRecord (seeclickfix_json)", () => {
     };
     const result = mapLegacyRecord(row, "seeclickfix_json");
     expect(result).not.toBeNull();
-    expect(result!.location).toEqual({ lat: 34.27, lng: -84.07 });
-    expect(result!.category).toBe("pothole");
-    expect(result!.status).toBe("open");
-    expect(result!.sourceExternalId).toBe("42");
-    expect(result!.source).toBe("open311");
+    expect(result?.location).toEqual({ lat: 34.27, lng: -84.07 });
+    expect(result?.category).toBe("pothole");
+    expect(result?.status).toBe("open");
+    expect(result?.sourceExternalId).toBe("42");
+    expect(result?.source).toBe("open311");
   });
 
   it("uses latitude/longitude fallback fields", () => {
     const row = { latitude: 34.27, longitude: -84.07, status: "Closed" };
     const result = mapLegacyRecord(row, "seeclickfix_json");
     expect(result).not.toBeNull();
-    expect(result!.status).toBe("closed");
+    expect(result?.status).toBe("closed");
   });
 
   it("returns null for missing coordinates", () => {
@@ -35,12 +35,12 @@ describe("mapLegacyRecord (seeclickfix_json)", () => {
 
   it("maps Archived status to closed", () => {
     const row = { lat: 1, lng: 1, status: "Archived" };
-    expect(mapLegacyRecord(row, "seeclickfix_json")!.status).toBe("closed");
+    expect(mapLegacyRecord(row, "seeclickfix_json")?.status).toBe("closed");
   });
 
   it("maps unknown status to open", () => {
     const row = { lat: 1, lng: 1, status: "Pending Review" };
-    expect(mapLegacyRecord(row, "seeclickfix_json")!.status).toBe("open");
+    expect(mapLegacyRecord(row, "seeclickfix_json")?.status).toBe("open");
   });
 });
 
@@ -48,7 +48,7 @@ describe("importFromText (csv)", () => {
   const csvText = [
     "id,latitude,longitude,category,status,created_at,address,severity",
     '1,34.27,-84.07,pothole,open,2026-01-01T00:00:00Z,"100 Main St",3',
-    '2,34.28,-84.08,graffiti,closed,2026-02-01T00:00:00Z,,2',
+    "2,34.28,-84.08,graffiti,closed,2026-02-01T00:00:00Z,,2",
     "3,bad,coords,pothole,open,,, ", // skipped — invalid coords
   ].join("\n");
 
@@ -62,8 +62,8 @@ describe("importFromText (csv)", () => {
   it("maps category correctly", () => {
     const result = importFromText(csvText, "csv");
     if (!result.ok) throw new Error();
-    expect(result.data[0]!.category).toBe("pothole");
-    expect(result.data[1]!.category).toBe("graffiti");
+    expect(result.data[0]?.category).toBe("pothole");
+    expect(result.data[1]?.category).toBe("graffiti");
   });
 
   it("skips rows with invalid coordinates", () => {
@@ -77,14 +77,20 @@ describe("importFromText (csv)", () => {
 describe("importFromText (seeclickfix_json)", () => {
   it("parses a JSON array", () => {
     const data = JSON.stringify([
-      { id: 1, lat: 34.27, lng: -84.07, status: "Open", request_type: { title: "Graffiti" } },
+      {
+        id: 1,
+        lat: 34.27,
+        lng: -84.07,
+        status: "Open",
+        request_type: { title: "Graffiti" },
+      },
       { id: 2, lat: 34.28, lng: -84.08, status: "Closed" },
     ]);
     const result = importFromText(data, "seeclickfix_json");
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error();
     expect(result.data).toHaveLength(2);
-    expect(result.data[0]!.category).toBe("graffiti");
+    expect(result.data[0]?.category).toBe("graffiti");
   });
 
   it("parses { issues: [...] } shape", () => {

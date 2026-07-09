@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { matchDomainToTenant, parseSamlConfig } from "./sso";
 import type { SsoConfig } from "./sso";
+import { matchDomainToTenant, parseSamlConfig } from "./sso";
 
 const VALID_INPUT = {
   entityId: "https://idp.example.com/saml",
   ssoUrl: "https://idp.example.com/sso",
-  x509cert: "-----BEGIN CERTIFICATE-----\nMIICfTCCAWUCBgF...\n-----END CERTIFICATE-----",
+  x509cert:
+    "-----BEGIN CERTIFICATE-----\nMIICfTCCAWUCBgF...\n-----END CERTIFICATE-----",
   domain: "example.com",
 };
 
@@ -32,7 +33,10 @@ describe("parseSamlConfig", () => {
   });
 
   it("rejects non-https ssoUrl", () => {
-    const r = parseSamlConfig({ ...VALID_INPUT, ssoUrl: "http://idp.example.com/sso" });
+    const r = parseSamlConfig({
+      ...VALID_INPUT,
+      ssoUrl: "http://idp.example.com/sso",
+    });
     expect(r.ok).toBe(false);
     if (r.ok) throw new Error();
     expect(r.error).toMatch(/HTTPS/);
@@ -86,7 +90,7 @@ describe("matchDomainToTenant", () => {
   it("matches by email domain", () => {
     const match = matchDomainToTenant("alice@example.com", configs);
     expect(match).not.toBeNull();
-    expect(match!.domain).toBe("example.com");
+    expect(match?.domain).toBe("example.com");
   });
 
   it("returns null when no match", () => {
@@ -104,6 +108,6 @@ describe("matchDomainToTenant", () => {
   it("is case-insensitive on domain", () => {
     const match = matchDomainToTenant("dave@ACME.COM", configs);
     expect(match).not.toBeNull();
-    expect(match!.domain).toBe("acme.com");
+    expect(match?.domain).toBe("acme.com");
   });
 });

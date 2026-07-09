@@ -8,9 +8,9 @@ import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import type { ImportSource } from "@/lib/import/normalize";
 import { importFromText } from "@/lib/import/normalize";
+import type { NormalizedReport } from "@/lib/onboarding/ingest/types";
 import { ingestReports } from "@/lib/onboarding/ingest/writer";
 import type { Result } from "@/lib/types";
-import type { NormalizedReport } from "@/lib/onboarding/ingest/types";
 
 async function requireAdmin(): Promise<boolean> {
   if (DEMO_MODE) {
@@ -49,10 +49,16 @@ export async function previewImportAction(input: {
 
   const parsed = parseSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "invalid_input" };
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "invalid_input",
+    };
   }
 
-  const result = importFromText(parsed.data.text, parsed.data.source as ImportSource);
+  const result = importFromText(
+    parsed.data.text,
+    parsed.data.source as ImportSource,
+  );
   if (!result.ok) return result;
 
   return {
@@ -80,7 +86,10 @@ export async function confirmImportAction(input: {
 
   const parsed = confirmSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "invalid_input" };
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "invalid_input",
+    };
   }
 
   const parseResult = importFromText(
@@ -95,7 +104,10 @@ export async function confirmImportAction(input: {
 
   // Graceful degrade: if DB is unavailable, return a clear error rather than crash
   try {
-    const ingestResult = await ingestReports(parsed.data.cityId, parseResult.data);
+    const ingestResult = await ingestReports(
+      parsed.data.cityId,
+      parseResult.data,
+    );
     if (!ingestResult.ok) return ingestResult;
     return { ok: true, data: { inserted: ingestResult.data.inserted } };
   } catch (err) {

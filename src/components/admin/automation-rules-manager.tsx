@@ -1,14 +1,20 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
+import type { AutomationRuleRow } from "@/app/admin/automation/actions";
 import {
   createRuleAction,
-  updateRuleAction,
-  toggleRuleAction,
   deleteRuleAction,
+  toggleRuleAction,
 } from "@/app/admin/automation/actions";
-import type { AutomationRuleRow } from "@/app/admin/automation/actions";
-import type { Condition, Action, ConditionField, ConditionOp, ActionType, Priority } from "@/lib/automation/rules";
+import type {
+  Action,
+  ActionType,
+  Condition,
+  ConditionField,
+  ConditionOp,
+  Priority,
+} from "@/lib/automation/rules";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -39,9 +45,18 @@ const ACTION_TYPES: { value: ActionType; label: string }[] = [
 
 const PRIORITY_OPTIONS: Priority[] = ["low", "medium", "high", "critical"];
 const CATEGORIES = [
-  "pothole", "streetlight", "downed_sign", "graffiti", "illegal_dump",
-  "water_leak", "sidewalk_damage", "tree_down", "debris", "drainage",
-  "faded_signage", "other",
+  "pothole",
+  "streetlight",
+  "downed_sign",
+  "graffiti",
+  "illegal_dump",
+  "water_leak",
+  "sidewalk_damage",
+  "tree_down",
+  "debris",
+  "drainage",
+  "faded_signage",
+  "other",
 ];
 
 // ---------------------------------------------------------------------------
@@ -53,7 +68,9 @@ const CATEGORIES = [
 // producing unique keys within the page lifecycle.  Read-only display chips
 // in RulesTable can stay index-keyed because they are never reordered in place.
 let _seq = 0;
-function nextId() { return ++_seq; }
+function nextId() {
+  return ++_seq;
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -79,7 +96,14 @@ function conditionValueInput(
           className={inputCls}
           placeholder="pothole,graffiti"
           value={arr.join(",")}
-          onChange={(e) => onChange(e.target.value.split(",").map((s) => s.trim()).filter(Boolean))}
+          onChange={(e) =>
+            onChange(
+              e.target.value
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean),
+            )
+          }
         />
       );
     }
@@ -90,7 +114,9 @@ function conditionValueInput(
         onChange={(e) => onChange(e.target.value)}
       >
         {CATEGORIES.map((c) => (
-          <option key={c} value={c}>{c}</option>
+          <option key={c} value={c}>
+            {c}
+          </option>
         ))}
       </select>
     );
@@ -142,7 +168,9 @@ function actionValueInput(
         onChange={(e) => onChange(e.target.value)}
       >
         {PRIORITY_OPTIONS.map((p) => (
-          <option key={p} value={p}>{p}</option>
+          <option key={p} value={p}>
+            {p}
+          </option>
         ))}
       </select>
     );
@@ -160,9 +188,7 @@ function actionValueInput(
     );
   }
   if (action.type === "auto_acknowledge") {
-    return (
-      <span className="text-sm text-zinc-500 italic">always true</span>
-    );
+    return <span className="text-sm text-zinc-500 italic">always true</span>;
   }
   return (
     <input
@@ -192,21 +218,30 @@ type ConditionWithId = Condition & { _id: number };
 type ActionWithId = Action & { _id: number };
 
 function RuleBuilderForm({ cityId, onCreated }: BuilderProps) {
+  const formId = useId();
   const [name, setName] = useState("");
   const [priority, setPriority] = useState(0);
-  const [conditions, setConditions] = useState<ConditionWithId[]>([defaultCondition()]);
+  const [conditions, setConditions] = useState<ConditionWithId[]>([
+    defaultCondition(),
+  ]);
   const [actions, setActions] = useState<ActionWithId[]>([defaultAction()]);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   function updateCondition(i: number, patch: Partial<Condition>) {
-    setConditions((prev) =>
-      prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c)) as ConditionWithId[],
+    setConditions(
+      (prev) =>
+        prev.map((c, idx) =>
+          idx === i ? { ...c, ...patch } : c,
+        ) as ConditionWithId[],
     );
   }
   function updateAction(i: number, patch: Partial<Action>) {
-    setActions((prev) =>
-      prev.map((a, idx) => (idx === i ? { ...a, ...patch } : a)) as ActionWithId[],
+    setActions(
+      (prev) =>
+        prev.map((a, idx) =>
+          idx === i ? { ...a, ...patch } : a,
+        ) as ActionWithId[],
     );
   }
 
@@ -214,7 +249,9 @@ function RuleBuilderForm({ cityId, onCreated }: BuilderProps) {
     e.preventDefault();
     setError(null);
     // Strip UI-only _id fields before sending to the server action.
-    const plainConditions: Condition[] = conditions.map(({ _id: _ignored, ...c }) => c);
+    const plainConditions: Condition[] = conditions.map(
+      ({ _id: _ignored, ...c }) => c,
+    );
     const plainActions: Action[] = actions.map(({ _id: _ignored, ...a }) => a);
     startTransition(async () => {
       const result = await createRuleAction({
@@ -250,8 +287,14 @@ function RuleBuilderForm({ cityId, onCreated }: BuilderProps) {
       {/* Name + priority */}
       <div className="flex gap-3">
         <div className="flex-1">
-          <label className="block text-xs font-medium text-zinc-500 mb-1">Rule name</label>
+          <label
+            htmlFor={`${formId}-name`}
+            className="block text-xs font-medium text-zinc-500 mb-1"
+          >
+            Rule name
+          </label>
           <input
+            id={`${formId}-name`}
             className={`${inputCls} w-full`}
             placeholder="e.g. Pothole high-severity escalate"
             value={name}
@@ -260,8 +303,14 @@ function RuleBuilderForm({ cityId, onCreated }: BuilderProps) {
           />
         </div>
         <div className="w-24">
-          <label className="block text-xs font-medium text-zinc-500 mb-1">Priority</label>
+          <label
+            htmlFor={`${formId}-priority`}
+            className="block text-xs font-medium text-zinc-500 mb-1"
+          >
+            Priority
+          </label>
           <input
+            id={`${formId}-priority`}
             type="number"
             className={`${inputCls} w-full`}
             value={priority}
@@ -273,11 +322,18 @@ function RuleBuilderForm({ cityId, onCreated }: BuilderProps) {
       {/* Conditions */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-zinc-500">IF (all conditions)</span>
+          <span className="text-xs font-medium text-zinc-500">
+            IF (all conditions)
+          </span>
           <button
             type="button"
             className="text-xs text-blue-600 hover:text-blue-800"
-            onClick={() => setConditions((prev) => [...prev, defaultCondition() as ConditionWithId])}
+            onClick={() =>
+              setConditions((prev) => [
+                ...prev,
+                defaultCondition() as ConditionWithId,
+              ])
+            }
           >
             + Add condition
           </button>
@@ -291,29 +347,44 @@ function RuleBuilderForm({ cityId, onCreated }: BuilderProps) {
                 onChange={(e) =>
                   updateCondition(i, {
                     field: e.target.value as ConditionField,
-                    value: e.target.value === "severity" ? 3 : e.target.value === "is_emergency" ? false : "pothole",
+                    value:
+                      e.target.value === "severity"
+                        ? 3
+                        : e.target.value === "is_emergency"
+                          ? false
+                          : "pothole",
                   })
                 }
               >
                 {CONDITION_FIELDS.map((f) => (
-                  <option key={f.value} value={f.value}>{f.label}</option>
+                  <option key={f.value} value={f.value}>
+                    {f.label}
+                  </option>
                 ))}
               </select>
               <select
                 className={inputCls}
                 value={cond.op}
-                onChange={(e) => updateCondition(i, { op: e.target.value as ConditionOp })}
+                onChange={(e) =>
+                  updateCondition(i, { op: e.target.value as ConditionOp })
+                }
               >
                 {CONDITION_OPS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
                 ))}
               </select>
-              {conditionValueInput(cond, (v) => updateCondition(i, { value: v }))}
+              {conditionValueInput(cond, (v) =>
+                updateCondition(i, { value: v }),
+              )}
               {conditions.length > 1 && (
                 <button
                   type="button"
                   className="text-xs text-red-400 hover:text-red-600"
-                  onClick={() => setConditions((prev) => prev.filter((_, idx) => idx !== i))}
+                  onClick={() =>
+                    setConditions((prev) => prev.filter((_, idx) => idx !== i))
+                  }
                 >
                   ✕
                 </button>
@@ -326,33 +397,46 @@ function RuleBuilderForm({ cityId, onCreated }: BuilderProps) {
       {/* Actions */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-zinc-500">THEN (actions)</span>
+          <span className="text-xs font-medium text-zinc-500">
+            THEN (actions)
+          </span>
           <button
             type="button"
             className="text-xs text-blue-600 hover:text-blue-800"
-            onClick={() => setActions((prev) => [...prev, defaultAction() as ActionWithId])}
+            onClick={() =>
+              setActions((prev) => [...prev, defaultAction() as ActionWithId])
+            }
           >
             + Add action
           </button>
         </div>
         <div className="space-y-2">
           {actions.map((action, i) => (
-            <div key={(action as ActionWithId)._id} className="flex items-center gap-2">
+            <div
+              key={(action as ActionWithId)._id}
+              className="flex items-center gap-2"
+            >
               <select
                 className={inputCls}
                 value={action.type}
                 onChange={(e) =>
                   updateAction(i, {
                     type: e.target.value as ActionType,
-                    value: e.target.value === "auto_acknowledge" ? true
-                      : e.target.value === "set_priority" ? "medium"
-                      : e.target.value === "set_severity" ? 3
-                      : "",
+                    value:
+                      e.target.value === "auto_acknowledge"
+                        ? true
+                        : e.target.value === "set_priority"
+                          ? "medium"
+                          : e.target.value === "set_severity"
+                            ? 3
+                            : "",
                   })
                 }
               >
                 {ACTION_TYPES.map((a) => (
-                  <option key={a.value} value={a.value}>{a.label}</option>
+                  <option key={a.value} value={a.value}>
+                    {a.label}
+                  </option>
                 ))}
               </select>
               {actionValueInput(action, (v) => updateAction(i, { value: v }))}
@@ -360,7 +444,9 @@ function RuleBuilderForm({ cityId, onCreated }: BuilderProps) {
                 <button
                   type="button"
                   className="text-xs text-red-400 hover:text-red-600"
-                  onClick={() => setActions((prev) => prev.filter((_, idx) => idx !== i))}
+                  onClick={() =>
+                    setActions((prev) => prev.filter((_, idx) => idx !== i))
+                  }
                 >
                   ✕
                 </button>
@@ -401,7 +487,9 @@ function RulesTable({ rules, onChange }: TableProps) {
     setBusy(id);
     const result = await toggleRuleAction(id, !current);
     if (result.ok) {
-      onChange(rules.map((r) => (r.id === id ? { ...r, enabled: !current } : r)));
+      onChange(
+        rules.map((r) => (r.id === id ? { ...r, enabled: !current } : r)),
+      );
     }
     setBusy(null);
   }
@@ -432,11 +520,21 @@ function RulesTable({ rules, onChange }: TableProps) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-zinc-200 dark:border-zinc-700 text-left">
-            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">Name</th>
-            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">Priority</th>
-            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">Conditions</th>
-            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">Actions</th>
-            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">Status</th>
+            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">
+              Name
+            </th>
+            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">
+              Priority
+            </th>
+            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">
+              Conditions
+            </th>
+            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">
+              Actions
+            </th>
+            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">
+              Status
+            </th>
             <th className="pb-2 font-medium text-zinc-600 dark:text-zinc-400" />
           </tr>
         </thead>
@@ -449,12 +547,15 @@ function RulesTable({ rules, onChange }: TableProps) {
               <td className="py-2 pr-4 text-zinc-500">{rule.priority}</td>
               <td className="py-2 pr-4">
                 <div className="flex flex-wrap gap-1">
-                  {(rule.conditions as Condition[]).map((c, i) => (
+                  {(rule.conditions as Condition[]).map((c) => (
                     <span
-                      key={i}
+                      key={`${c.field}-${c.op}-${String(c.value)}`}
                       className="rounded bg-blue-50 px-1.5 py-0.5 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                     >
-                      {c.field} {c.op} {Array.isArray(c.value) ? c.value.join(",") : String(c.value)}
+                      {c.field} {c.op}{" "}
+                      {Array.isArray(c.value)
+                        ? c.value.join(",")
+                        : String(c.value)}
                     </span>
                   ))}
                   {(rule.conditions as Condition[]).length === 0 && (
@@ -464,9 +565,9 @@ function RulesTable({ rules, onChange }: TableProps) {
               </td>
               <td className="py-2 pr-4">
                 <div className="flex flex-wrap gap-1">
-                  {(rule.actions as Action[]).map((a, i) => (
+                  {(rule.actions as Action[]).map((a) => (
                     <span
-                      key={i}
+                      key={`${a.type}-${String(a.value)}`}
                       className="rounded bg-green-50 px-1.5 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-300"
                     >
                       {a.type}={String(a.value)}
@@ -526,7 +627,11 @@ export function AutomationRulesManager({ cityId, initialRules }: Props) {
         </h2>
         <RuleBuilderForm
           cityId={cityId}
-          onCreated={(rule) => setRules((prev) => [...prev, rule].sort((a, b) => a.priority - b.priority))}
+          onCreated={(rule) =>
+            setRules((prev) =>
+              [...prev, rule].sort((a, b) => a.priority - b.priority),
+            )
+          }
         />
       </section>
 

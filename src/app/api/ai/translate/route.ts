@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
-import {
-  isLangCode,
-  translateText,
-} from "@/lib/ai/translate";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
+import { isLangCode, translateText } from "@/lib/ai/translate";
 
 /* ==================================================================
    POST /api/ai/translate (NEXT_100 #9 / #31)
@@ -38,10 +35,7 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: "invalid_json" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
 
   if (
@@ -60,7 +54,10 @@ export async function POST(request: Request) {
 
   if (!isLangCode(targetLang)) {
     return NextResponse.json(
-      { error: "unsupported_lang", supported: ["en", "es", "fr", "vi", "zh", "ko"] },
+      {
+        error: "unsupported_lang",
+        supported: ["en", "es", "fr", "vi", "zh", "ko"],
+      },
       { status: 400 },
     );
   }

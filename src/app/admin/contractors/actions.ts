@@ -27,7 +27,10 @@ export interface ContractorRow {
 // Returns the acting admin's city_id, or null if unauthorized.
 // ---------------------------------------------------------------------------
 
-async function requireAdmin(): Promise<{ adminId: string; cityId: string } | null> {
+async function requireAdmin(): Promise<{
+  adminId: string;
+  cityId: string;
+} | null> {
   const devBypass =
     process.env.NODE_ENV === "development" &&
     process.env.DEV_AUTH_BYPASS === "1";
@@ -215,10 +218,7 @@ export async function assignContractorToWorkOrder(
       return { ok: false, error: "invalid_work_order_id" };
     }
 
-    if (
-      contractorId !== null &&
-      !/^[0-9a-f-]{36}$/i.test(contractorId)
-    ) {
+    if (contractorId !== null && !/^[0-9a-f-]{36}$/i.test(contractorId)) {
       return { ok: false, error: "invalid_contractor_id" };
     }
 
@@ -238,7 +238,8 @@ export async function assignContractorToWorkOrder(
         return { ok: false, error: "db_error" };
       }
       if (!contractor) return { ok: false, error: "contractor_not_found" };
-      if (!contractor.active) return { ok: false, error: "contractor_inactive" };
+      if (!contractor.active)
+        return { ok: false, error: "contractor_inactive" };
     }
 
     // Verify the work order exists and its report belongs to the admin's city.
@@ -266,7 +267,8 @@ export async function assignContractorToWorkOrder(
         contractor_status: contractorId !== null ? "assigned" : null,
         contractor_note: null,
         contractor_photo_url: null,
-        contractor_updated_at: contractorId !== null ? new Date().toISOString() : null,
+        contractor_updated_at:
+          contractorId !== null ? new Date().toISOString() : null,
       })
       .eq("id", workOrderId);
 

@@ -10,17 +10,17 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import CommentThread from "@/components/report/comment-thread";
+import PhotoGallery from "@/components/report/photo-gallery";
 import { ReportCsat } from "@/components/resident/report-csat";
 import {
   ReportPhoto,
   ReportTimeline,
 } from "@/components/resident/report-timeline";
-import PhotoGallery from "@/components/report/photo-gallery";
 import { currencyForCitySlug, formatCost } from "@/lib/currency";
 import { CATEGORY_META, KNOWN_CITIES } from "@/lib/dashboard-data";
 import { listComments } from "@/lib/db/comments";
 import { getReportPhotos } from "@/lib/db/report-photos";
-import CommentThread from "@/components/report/comment-thread";
 import { publicToken } from "@/lib/public-report";
 import {
   getCurrentResident,
@@ -72,9 +72,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
   // Build the gallery URL array from the child table when >1 photo, or fall
   // back to the primary report column for single-photo backward-compat.
   const galleryUrls =
-    extraPhotos.length > 1
-      ? extraPhotos.map((p) => p.public_url)
-      : null; // null → use existing single-img path
+    extraPhotos.length > 1 ? extraPhotos.map((p) => p.public_url) : null; // null → use existing single-img path
 
   const steps = await getReportTimeline(citySlug, reportId);
   const meta = CATEGORY_META[report.category];
@@ -172,10 +170,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
         ) : galleryUrls ? (
           // Multi-photo gallery (>1 photo from report_photos child table).
           <div className="p-3">
-            <PhotoGallery
-              urls={galleryUrls}
-              altPrefix={meta.label}
-            />
+            <PhotoGallery urls={galleryUrls} altPrefix={meta.label} />
           </div>
         ) : (
           // Single photo — backward-compatible path.

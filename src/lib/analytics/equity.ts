@@ -1,7 +1,7 @@
 import "server-only";
 
-import { fetchDistrictRollups } from "@/lib/db/districts";
 import type { DistrictRollup } from "@/lib/db/districts";
+import { fetchDistrictRollups } from "@/lib/db/districts";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("equity");

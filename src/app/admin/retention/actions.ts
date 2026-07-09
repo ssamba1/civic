@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { z } from "zod/v4";
 import { createServerClient } from "@/lib/db/client";
+import { getAuthUser } from "@/lib/db/ssr-client";
 import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
 import { DEMO_MODE } from "@/lib/demo-mode";
-import { getAuthUser } from "@/lib/db/ssr-client";
 import type { Result } from "@/lib/types";
 import {
   type RetentionInput,

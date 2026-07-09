@@ -20,8 +20,8 @@ import { z } from "zod";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
-import { validateBulkAction, validateBulkSelection } from "@/lib/staff/bulk";
 import type { BulkAction } from "@/lib/staff/bulk";
+import { validateBulkAction, validateBulkSelection } from "@/lib/staff/bulk";
 import type { Result } from "@/lib/types";
 
 const logger = createLogger("[bulk-actions]");
@@ -50,7 +50,8 @@ async function getStaffUser(): Promise<StaffUser | null> {
         .in("role", [...STAFF_ROLES])
         .limit(1)
         .single();
-      return devStaff && STAFF_ROLES.includes(devStaff.role as (typeof STAFF_ROLES)[number])
+      return devStaff &&
+        STAFF_ROLES.includes(devStaff.role as (typeof STAFF_ROLES)[number])
         ? devStaff
         : null;
     }
@@ -63,7 +64,10 @@ async function getStaffUser(): Promise<StaffUser | null> {
     .eq("id", user.id)
     .single();
 
-  if (!profile || !STAFF_ROLES.includes(profile.role as (typeof STAFF_ROLES)[number])) {
+  if (
+    !profile ||
+    !STAFF_ROLES.includes(profile.role as (typeof STAFF_ROLES)[number])
+  ) {
     return null;
   }
   return profile;

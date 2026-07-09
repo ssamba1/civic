@@ -2,15 +2,15 @@
 
 import { useCallback, useMemo, useState, useTransition } from "react";
 import {
+  type ScheduledWorkOrderRow,
   scheduleWorkOrder,
   unscheduleWorkOrder,
-  type ScheduledWorkOrderRow,
 } from "@/app/staff/schedule-actions";
 import {
   detectConflicts,
   groupByDay,
-  validateSchedule,
   type ScheduleConflict,
+  validateSchedule,
 } from "@/lib/staff/schedule";
 
 // ---------------------------------------------------------------------------
@@ -182,6 +182,9 @@ function ScheduleModal({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onClose();
+      }}
     >
       <div className="w-full max-w-sm rounded-[var(--radius-lg)] border border-hairline bg-surface p-6 shadow-[var(--shadow-popover)]">
         <h2
@@ -238,9 +241,7 @@ function ScheduleModal({
           </label>
         )}
 
-        {error && (
-          <p className="mb-3 text-[13px] text-destructive">{error}</p>
-        )}
+        {error && <p className="mb-3 text-[13px] text-destructive">{error}</p>}
 
         <div className="flex items-center justify-between gap-2">
           {workOrder.scheduledFor && (
@@ -420,9 +421,7 @@ export function ScheduleCalendar({
               ].join(" ")}
             >
               {dayWOs.length === 0 ? (
-                <p className="text-center text-[11px] text-faint/50 mt-8">
-                  —
-                </p>
+                <p className="text-center text-[11px] text-faint/50 mt-8">—</p>
               ) : (
                 dayWOs.map((wo) => (
                   <WorkOrderCard

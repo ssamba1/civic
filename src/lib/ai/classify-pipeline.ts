@@ -312,7 +312,10 @@ export async function runClassifyPipeline(
     try {
       const bytes = new Uint8Array(await photoBlob.arrayBuffer());
       const imageBase64 = Buffer.from(bytes).toString("base64");
-      const hazardResult = await gradeHazard({ imageBase64, mimeType: sniffed });
+      const hazardResult = await gradeHazard({
+        imageBase64,
+        mimeType: sniffed,
+      });
       if (hazardResult.ok) {
         const patch = {
           hazard_severity: hazardResult.data.severity,
@@ -323,7 +326,10 @@ export async function runClassifyPipeline(
           .update(patch)
           .eq("id", reportId);
         if (hazardErr) {
-          log.warn("hazard_grade_stamp_failed", { reportId, error: hazardErr.message });
+          log.warn("hazard_grade_stamp_failed", {
+            reportId,
+            error: hazardErr.message,
+          });
         } else {
           log.info("hazard_grade_stamped", {
             reportId,
@@ -332,12 +338,18 @@ export async function runClassifyPipeline(
           });
         }
       } else {
-        log.warn("hazard_grade_failed", { reportId, error: hazardResult.error });
+        log.warn("hazard_grade_failed", {
+          reportId,
+          error: hazardResult.error,
+        });
       }
     } catch (hazardThrow) {
       log.warn("hazard_grade_threw", {
         reportId,
-        error: hazardThrow instanceof Error ? hazardThrow.message : String(hazardThrow),
+        error:
+          hazardThrow instanceof Error
+            ? hazardThrow.message
+            : String(hazardThrow),
       });
     }
   }

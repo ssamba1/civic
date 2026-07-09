@@ -9,7 +9,10 @@ import { validateRetention } from "@/app/admin/retention/validate";
 
 describe("validateRetention", () => {
   it("accepts valid input", () => {
-    const result = validateRetention({ raw_photo_ttl_days: 30, freetext_ttl_days: 365 });
+    const result = validateRetention({
+      raw_photo_ttl_days: 30,
+      freetext_ttl_days: 365,
+    });
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.raw_photo_ttl_days).toBe(30);
@@ -18,22 +21,34 @@ describe("validateRetention", () => {
   });
 
   it("rejects raw_photo_ttl_days < 1", () => {
-    const result = validateRetention({ raw_photo_ttl_days: 0, freetext_ttl_days: 365 });
+    const result = validateRetention({
+      raw_photo_ttl_days: 0,
+      freetext_ttl_days: 365,
+    });
     expect(result.ok).toBe(false);
   });
 
   it("rejects freetext_ttl_days < 1", () => {
-    const result = validateRetention({ raw_photo_ttl_days: 30, freetext_ttl_days: 0 });
+    const result = validateRetention({
+      raw_photo_ttl_days: 30,
+      freetext_ttl_days: 0,
+    });
     expect(result.ok).toBe(false);
   });
 
   it("rejects TTL exceeding 3650 days", () => {
-    const result = validateRetention({ raw_photo_ttl_days: 9999, freetext_ttl_days: 365 });
+    const result = validateRetention({
+      raw_photo_ttl_days: 9999,
+      freetext_ttl_days: 365,
+    });
     expect(result.ok).toBe(false);
   });
 
   it("rejects non-integer TTL", () => {
-    const result = validateRetention({ raw_photo_ttl_days: 30.5, freetext_ttl_days: 365 });
+    const result = validateRetention({
+      raw_photo_ttl_days: 30.5,
+      freetext_ttl_days: 365,
+    });
     expect(result.ok).toBe(false);
   });
 
@@ -48,7 +63,10 @@ describe("validateRetention", () => {
   });
 
   it("accepts boundary values 1 and 3650", () => {
-    const result = validateRetention({ raw_photo_ttl_days: 1, freetext_ttl_days: 3650 });
+    const result = validateRetention({
+      raw_photo_ttl_days: 1,
+      freetext_ttl_days: 3650,
+    });
     expect(result.ok).toBe(true);
   });
 });

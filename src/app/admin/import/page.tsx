@@ -19,8 +19,8 @@ export default async function AdminImportPage() {
         <p className="mt-1 max-w-2xl text-sm text-[var(--color-muted)]">
           Migrate historical report data from CSV exports or SeeClickFix JSON
           into Civic. Records are normalized through the standard ingest
-          adapters and bulk-inserted with placeholder classifications.
-          Rows with invalid coordinates are silently skipped.
+          adapters and bulk-inserted with placeholder classifications. Rows with
+          invalid coordinates are silently skipped.
         </p>
       </div>
 

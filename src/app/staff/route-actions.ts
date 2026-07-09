@@ -3,13 +3,14 @@
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
-import { normalizeLocation } from "@/lib/types";
-import {
-  optimizeRoute,
-  routeStats,
+import type {
+  OrderedStop,
+  RouteStats,
+  RouteStop,
 } from "@/lib/staff/route-optimize";
-import type { RouteStop, OrderedStop, RouteStats } from "@/lib/staff/route-optimize";
+import { optimizeRoute, routeStats } from "@/lib/staff/route-optimize";
 import type { Result } from "@/lib/types";
+import { normalizeLocation } from "@/lib/types";
 
 const logger = createLogger("[route-actions]");
 
@@ -203,10 +204,7 @@ export async function getOptimizedRouteForCrew(
           location: unknown;
           status: string;
           city_id: string;
-          classifications:
-            | { category: string }
-            | { category: string }[]
-            | null;
+          classifications: { category: string } | { category: string }[] | null;
         }
       | {
           id: string;
@@ -214,10 +212,7 @@ export async function getOptimizedRouteForCrew(
           location: unknown;
           status: string;
           city_id: string;
-          classifications:
-            | { category: string }
-            | { category: string }[]
-            | null;
+          classifications: { category: string } | { category: string }[] | null;
         }[]
       | null;
   };
@@ -227,7 +222,12 @@ export async function getOptimizedRouteForCrew(
   const stops: RouteStop[] = [];
   const metaMap = new Map<
     string,
-    { workOrderId: string; category: string | null; status: string; scheduledFor: string }
+    {
+      workOrderId: string;
+      category: string | null;
+      status: string;
+      scheduledFor: string;
+    }
   >();
 
   for (const row of rows) {

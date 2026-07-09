@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { IntakeDraft, ChatMessage } from "@/lib/ai/intake-chat";
+import type { ChatMessage, IntakeDraft } from "@/lib/ai/intake-chat";
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -58,7 +58,7 @@ export function ChatIntake({ onDraft, className = "" }: ChatIntakeProps) {
   // Scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, []);
 
   const sendMessage = useCallback(async () => {
     const trimmed = input.trim();
@@ -81,9 +81,9 @@ export function ChatIntake({ onDraft, className = "" }: ChatIntakeProps) {
       });
 
       if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as
-          | { error?: string }
-          | null;
+        const data = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
         throw new Error(data?.error ?? `HTTP ${res.status}`);
       }
 
@@ -125,9 +125,7 @@ export function ChatIntake({ onDraft, className = "" }: ChatIntakeProps) {
     >
       {/* Header */}
       <div className="border-b border-gray-100 px-4 py-3">
-        <h2 className="text-sm font-semibold text-gray-800">
-          Report an Issue
-        </h2>
+        <h2 className="text-sm font-semibold text-gray-800">Report an Issue</h2>
         <p className="text-xs text-gray-500">
           Tell us what you see — I&apos;ll help fill out the details.
         </p>
@@ -136,6 +134,7 @@ export function ChatIntake({ onDraft, className = "" }: ChatIntakeProps) {
       {/* Message list */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-[260px] max-h-[420px]">
         {messages.map((msg, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: chat log is append-only, messages are never reordered
           <MessageBubble key={i} message={msg} />
         ))}
 

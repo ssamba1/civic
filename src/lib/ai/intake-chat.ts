@@ -6,8 +6,7 @@
  * prompts and parses responses.
  */
 
-import type { ReportCategory } from "@/lib/types";
-import type { Result } from "@/lib/types";
+import type { ReportCategory, Result } from "@/lib/types";
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -130,10 +129,8 @@ export function stripCodeFences(raw: string): string {
  * Tolerant JSON parse: strips fences, catches parse errors, returns ok:false
  * so the caller can fall back gracefully.
  */
-export function parseIntakeResponse(
-  raw: string,
-): Result<IntakeResponse> {
-  if (!raw || !raw.trim()) {
+export function parseIntakeResponse(raw: string): Result<IntakeResponse> {
+  if (!raw?.trim()) {
     return { ok: false, error: "Empty response from model" };
   }
 
@@ -202,7 +199,11 @@ function validateDraft(raw: unknown): Result<IntakeDraft> {
     };
   }
 
-  if (!obj.description || typeof obj.description !== "string" || !obj.description.trim()) {
+  if (
+    !obj.description ||
+    typeof obj.description !== "string" ||
+    !obj.description.trim()
+  ) {
     return { ok: false, error: "Draft missing description" };
   }
 
@@ -220,7 +221,9 @@ function validateDraft(raw: unknown): Result<IntakeDraft> {
       category: obj.category as ReportCategory,
       description: String(obj.description).trim().slice(0, 500),
       location_hint:
-        obj.location_hint && typeof obj.location_hint === "string" && obj.location_hint.trim()
+        obj.location_hint &&
+        typeof obj.location_hint === "string" &&
+        obj.location_hint.trim()
           ? obj.location_hint.trim()
           : null,
       severity_hint: severityRaw as 1 | 2 | 3 | 4 | 5,

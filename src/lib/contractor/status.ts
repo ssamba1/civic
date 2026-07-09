@@ -33,14 +33,16 @@ export const CONTRACTOR_STATUS_LABEL: Record<ContractorStatus, string> = {
 };
 
 /** Valid transitions: from → set of allowed targets. */
-const VALID_TRANSITIONS: Record<ContractorStatus, ReadonlySet<ContractorStatus>> =
-  {
-    assigned: new Set<ContractorStatus>(["accepted", "declined"]),
-    accepted: new Set<ContractorStatus>(["in_progress", "declined"]),
-    declined: new Set<ContractorStatus>([]), // terminal — staff must re-assign
-    in_progress: new Set<ContractorStatus>(["complete"]),
-    complete: new Set<ContractorStatus>([]), // terminal
-  };
+const VALID_TRANSITIONS: Record<
+  ContractorStatus,
+  ReadonlySet<ContractorStatus>
+> = {
+  assigned: new Set<ContractorStatus>(["accepted", "declined"]),
+  accepted: new Set<ContractorStatus>(["in_progress", "declined"]),
+  declined: new Set<ContractorStatus>([]), // terminal — staff must re-assign
+  in_progress: new Set<ContractorStatus>(["complete"]),
+  complete: new Set<ContractorStatus>([]), // terminal
+};
 
 /**
  * Returns true if transitioning from `from` to `to` is a legal move.

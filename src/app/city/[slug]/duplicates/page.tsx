@@ -8,24 +8,26 @@
  * to login for non-staff; demo city is always readable.
  */
 
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
+import { findDuplicateCandidates } from "@/app/staff/merge-actions";
 import DuplicateMergePanel from "@/components/staff/duplicate-merge-panel";
-import { createServerClient } from "@/lib/db/client";
 import { fetchCity as fetchCityMock } from "@/lib/dashboard-data";
 import { fetchCity as fetchCityFromDb } from "@/lib/dashboard-queries";
+import { createServerClient } from "@/lib/db/client";
 import { DEMO_CITY } from "@/lib/demo-auth";
-import { findDuplicateCandidates } from "@/app/staff/merge-actions";
-import { isStaffForCity } from "@/lib/staff-access";
 import type { ScoredCandidate } from "@/lib/staff/merge";
+import { isStaffForCity } from "@/lib/staff-access";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { slug } = await params;
   let city = null;
   try {
@@ -68,9 +70,7 @@ async function fetchReportsWithDuplicates(
 
   const { data: reports, error } = await db
     .from("reports")
-    .select(
-      "id, address, created_at, category:classifications(category)",
-    )
+    .select("id, address, created_at, category:classifications(category)")
     .eq("city_id", cityId)
     .eq("status", "open")
     .is("merged_into", null)
@@ -83,10 +83,9 @@ async function fetchReportsWithDuplicates(
   const results = await Promise.allSettled(
     reports.map(async (r) => {
       const catRaw = r.category;
-      const category =
-        Array.isArray(catRaw)
-          ? (catRaw[0] as { category?: string } | undefined)?.category ?? null
-          : (catRaw as { category?: string } | null)?.category ?? null;
+      const category = Array.isArray(catRaw)
+        ? ((catRaw[0] as { category?: string } | undefined)?.category ?? null)
+        : ((catRaw as { category?: string } | null)?.category ?? null);
 
       const result = await findDuplicateCandidates(r.id);
       const candidates = result.ok ? result.data : [];
@@ -143,7 +142,9 @@ function ReportRow({ report }: { report: ReportWithCandidates }) {
             </span>
           </div>
           {report.address && (
-            <p className="mt-1 truncate text-sm font-medium">{report.address}</p>
+            <p className="mt-1 truncate text-sm font-medium">
+              {report.address}
+            </p>
           )}
           <p className="font-mono text-xs text-muted-foreground">{report.id}</p>
         </div>

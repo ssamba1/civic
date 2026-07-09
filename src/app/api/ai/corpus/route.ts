@@ -78,9 +78,7 @@ export async function GET(request: Request) {
     });
 
     // Serialize as JSONL (one JSON object per line).
-    const jsonl = examples
-      .map((ex) => JSON.stringify(ex))
-      .join("\n");
+    const jsonl = examples.map((ex) => JSON.stringify(ex)).join("\n");
 
     // Return as downloadable JSONL with stats in headers.
     return new NextResponse(jsonl, {

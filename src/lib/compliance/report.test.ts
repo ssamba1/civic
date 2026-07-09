@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { buildComplianceReport } from "./report";
 import type { ComplianceData } from "./report";
+import { buildComplianceReport } from "./report";
 
 const baseData: ComplianceData = {
   blurCoveragePercent: 99.5,
@@ -43,22 +43,34 @@ describe("buildComplianceReport", () => {
   });
 
   it("handles null blurCoveragePercent", () => {
-    const report = buildComplianceReport({ ...baseData, blurCoveragePercent: null });
+    const report = buildComplianceReport({
+      ...baseData,
+      blurCoveragePercent: null,
+    });
     expect(report.privacy.blurCoveragePercent).toBeNull();
   });
 
   it("handles null rlsEnabledTablesCount", () => {
-    const report = buildComplianceReport({ ...baseData, rlsEnabledTablesCount: null });
+    const report = buildComplianceReport({
+      ...baseData,
+      rlsEnabledTablesCount: null,
+    });
     expect(report.security.rlsEnabledTablesCount).toBeNull();
   });
 
   it("sets piiRedactionEnabled false when disabled", () => {
-    const report = buildComplianceReport({ ...baseData, piiRedactionEnabled: false });
+    const report = buildComplianceReport({
+      ...baseData,
+      piiRedactionEnabled: false,
+    });
     expect(report.privacy.piiRedactionEnabled).toBe(false);
   });
 
   it("sets open311 conformance false when disabled", () => {
-    const report = buildComplianceReport({ ...baseData, open311ConformanceEnabled: false });
+    const report = buildComplianceReport({
+      ...baseData,
+      open311ConformanceEnabled: false,
+    });
     expect(report.open311.conformanceEnabled).toBe(false);
   });
 

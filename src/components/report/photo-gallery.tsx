@@ -66,50 +66,49 @@ export default function PhotoGallery({
   return (
     <>
       {/* Thumbnail grid */}
-      <div
+      <ul
         className="grid gap-2"
         style={{
           gridTemplateColumns: `repeat(${Math.min(urls.length, 3)}, 1fr)`,
         }}
-        role="list"
         aria-label="Report photos"
       >
         {urls.map((url, i) => (
-          <button
-            key={url}
-            type="button"
-            role="listitem"
-            aria-label={`${altPrefix} ${i + 1} — tap to enlarge`}
-            onClick={() => openLightbox(i)}
-            className="group relative aspect-square overflow-hidden rounded-lg border border-hairline bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={url}
-              alt={`${altPrefix} ${i + 1}`}
-              className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-              loading={i === 0 ? "eager" : "lazy"}
-            />
-            {/* Overlay hint */}
-            <span className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
-              <svg
-                className="h-8 w-8 text-white drop-shadow"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.75}
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6"
-                />
-              </svg>
-            </span>
-          </button>
+          <li key={url} className="contents">
+            <button
+              type="button"
+              aria-label={`${altPrefix} ${i + 1} — tap to enlarge`}
+              onClick={() => openLightbox(i)}
+              className="group relative aspect-square overflow-hidden rounded-lg border border-hairline bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={url}
+                alt={`${altPrefix} ${i + 1}`}
+                className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                loading={i === 0 ? "eager" : "lazy"}
+              />
+              {/* Overlay hint */}
+              <span className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+                <svg
+                  className="h-8 w-8 text-white drop-shadow"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.75}
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6"
+                  />
+                </svg>
+              </span>
+            </button>
+          </li>
         ))}
-      </div>
+      </ul>
 
       {/* Lightbox overlay */}
       {lightboxIdx !== null && (
@@ -118,14 +117,16 @@ export default function PhotoGallery({
           aria-modal="true"
           aria-label={`Photo ${lightboxIdx + 1} of ${urls.length}`}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
-          onClick={closeLightbox}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeLightbox();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") closeLightbox();
+          }}
         >
-          {/* Stop propagation on the inner container so clicks on nav buttons
-              don't close the lightbox unintentionally. */}
-          <div
-            className="relative max-h-full max-w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
+          {/* Backdrop click (target === currentTarget) closes; clicks on the
+              image or nav buttons don't reach here. */}
+          <div className="relative max-h-full max-w-full">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={urls[lightboxIdx]}
@@ -148,8 +149,19 @@ export default function PhotoGallery({
             onClick={closeLightbox}
             className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
 
@@ -158,11 +170,25 @@ export default function PhotoGallery({
             <button
               type="button"
               aria-label="Previous photo"
-              onClick={(e) => { e.stopPropagation(); goPrev(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                goPrev();
+              }}
               className="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 19.5L8.25 12l7.5-7.5"
+                />
               </svg>
             </button>
           )}
@@ -172,11 +198,25 @@ export default function PhotoGallery({
             <button
               type="button"
               aria-label="Next photo"
-              onClick={(e) => { e.stopPropagation(); goNext(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                goNext();
+              }}
               className="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                />
               </svg>
             </button>
           )}

@@ -17,8 +17,8 @@
  * NOTE: No PII in URLs — the draft travels via sessionStorage, not query params.
  */
 
-import { useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useCallback } from "react";
 import { ChatIntake } from "@/components/report/chat-intake";
 import type { IntakeDraft } from "@/lib/ai/intake-chat";
 

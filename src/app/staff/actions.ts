@@ -8,7 +8,6 @@ import { AI_CREW_ASSIGN } from "@/lib/ai/config";
 import { autoAssignCrew } from "@/lib/ai/crew-assign";
 import { draftClosureExplanation } from "@/lib/ai/draft-closure";
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
-import { isGenericClosure } from "@/lib/staff/closure-quality";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
@@ -16,8 +15,8 @@ import { notifyReportStatus } from "@/lib/notify/status-notify";
 import { resolveTeamKeyForCategory } from "@/lib/onboarding/city-teams";
 import { stripImageMetadata } from "@/lib/privacy/exif-strip";
 import { publicToken } from "@/lib/public-report";
+import { isGenericClosure } from "@/lib/staff/closure-quality";
 import { TEAMS, type TeamId } from "@/lib/teams";
-import { emitWebhook } from "@/lib/webhooks/deliver";
 import type {
   CategoryCostStats,
   Classification,
@@ -25,6 +24,7 @@ import type {
   Result,
   WorkOrderWithDetails,
 } from "@/lib/types";
+import { emitWebhook } from "@/lib/webhooks/deliver";
 
 const logger = createLogger("[staff-actions]");
 

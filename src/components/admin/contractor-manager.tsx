@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import {
+  type ContractorRow,
   createContractor,
   deactivateContractor,
   reactivateContractor,
-  type ContractorRow,
 } from "@/app/admin/contractors/actions";
 
 interface Props {
@@ -24,7 +24,10 @@ export function ContractorManager({ contractors: initial }: Props) {
     e.preventDefault();
     setCreateError(null);
     setCreating(true);
-    const result = await createContractor({ name: name.trim(), email: email.trim() });
+    const result = await createContractor({
+      name: name.trim(),
+      email: email.trim(),
+    });
     setCreating(false);
 
     if (!result.ok) {
@@ -41,7 +44,9 @@ export function ContractorManager({ contractors: initial }: Props) {
       active: true,
       created_at: new Date().toISOString(),
     };
-    setContractors((prev) => [...prev, newRow].sort((a, b) => a.name.localeCompare(b.name)));
+    setContractors((prev) =>
+      [...prev, newRow].sort((a, b) => a.name.localeCompare(b.name)),
+    );
     setName("");
     setEmail("");
   }
@@ -148,10 +153,7 @@ export function ContractorManager({ contractors: initial }: Props) {
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {contractors.map((c) => (
-                <tr
-                  key={c.id}
-                  className="bg-white dark:bg-zinc-900"
-                >
+                <tr key={c.id} className="bg-white dark:bg-zinc-900">
                   <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
                     {c.name}
                   </td>

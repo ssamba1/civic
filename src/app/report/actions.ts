@@ -94,14 +94,8 @@ export async function submitReport(
   if (!parsed.success) {
     return { ok: false, error: z.prettifyError(parsed.error) };
   }
-  const {
-    photosBlurred,
-    photosOriginal,
-    location,
-    address,
-    tags,
-    phashes,
-  } = parsed.data;
+  const { photosBlurred, photosOriginal, location, address, tags, phashes } =
+    parsed.data;
 
   // Both arrays must be the same length (validated here, not just in schema).
   if (photosBlurred.length !== photosOriginal.length) {
@@ -205,7 +199,10 @@ export async function submitReport(
         await service.storage.from(PUBLIC_BUCKET).remove(uploadedPublicPaths);
       if (uploadedRawPaths.length > 0)
         await service.storage.from(RAW_BUCKET).remove(uploadedRawPaths);
-      return { ok: false, error: `Photo ${i} upload failed: ${pubErr.message}` };
+      return {
+        ok: false,
+        error: `Photo ${i} upload failed: ${pubErr.message}`,
+      };
     }
     uploadedPublicPaths.push(publicPath);
 
@@ -220,7 +217,10 @@ export async function submitReport(
       await service.storage.from(PUBLIC_BUCKET).remove(uploadedPublicPaths);
       if (uploadedRawPaths.length > 0)
         await service.storage.from(RAW_BUCKET).remove(uploadedRawPaths);
-      return { ok: false, error: `Raw photo ${i} upload failed: ${rawErr.message}` };
+      return {
+        ok: false,
+        error: `Raw photo ${i} upload failed: ${rawErr.message}`,
+      };
     }
     uploadedRawPaths.push(rawPath);
   }
@@ -284,7 +284,8 @@ export async function submitReport(
   const photoRows = paths.map((p, i) => ({
     report_id: reportId,
     idx: i,
-    public_url: service.storage.from(PUBLIC_BUCKET).getPublicUrl(p.publicPath).data.publicUrl,
+    public_url: service.storage.from(PUBLIC_BUCKET).getPublicUrl(p.publicPath)
+      .data.publicUrl,
     raw_url: `${RAW_BUCKET}/${p.rawPath}`,
     phash: phashes?.[i] ?? null,
     blur_version: 1,
@@ -293,11 +294,14 @@ export async function submitReport(
     .from("report_photos")
     .insert(photoRows);
   if (photosInsertErr) {
-    logger.warn("report_photos insert failed (degrade: primary photo still intact)", {
-      reportId,
-      code: photosInsertErr.code,
-      message: photosInsertErr.message,
-    });
+    logger.warn(
+      "report_photos insert failed (degrade: primary photo still intact)",
+      {
+        reportId,
+        code: photosInsertErr.code,
+        message: photosInsertErr.message,
+      },
+    );
   }
 
   // Outbound webhooks (#79): notify registered integrations that a report was

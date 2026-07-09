@@ -108,7 +108,9 @@ export async function gradeHazard(input: {
         model.generateContent(
           [
             HAZARD_PROMPT,
-            { inlineData: { data: input.imageBase64, mimeType: input.mimeType } },
+            {
+              inlineData: { data: input.imageBase64, mimeType: input.mimeType },
+            },
           ],
           { signal, timeout: AI_TIMEOUT_MS },
         ),
@@ -117,7 +119,10 @@ export async function gradeHazard(input: {
 
     const rawText = result.response?.text?.() ?? "";
     if (!rawText.trim()) {
-      return { ok: false, error: "Gemini returned empty response for hazard grade" };
+      return {
+        ok: false,
+        error: "Gemini returned empty response for hazard grade",
+      };
     }
 
     const cleaned = stripCodeFences(rawText);
@@ -125,16 +130,25 @@ export async function gradeHazard(input: {
     try {
       parsed = JSON.parse(cleaned);
     } catch {
-      return { ok: false, error: `Hazard grade: invalid JSON from Gemini: ${cleaned.slice(0, 200)}` };
+      return {
+        ok: false,
+        error: `Hazard grade: invalid JSON from Gemini: ${cleaned.slice(0, 200)}`,
+      };
     }
 
     if (typeof parsed !== "object" || parsed === null) {
-      return { ok: false, error: "Hazard grade: unexpected non-object from Gemini" };
+      return {
+        ok: false,
+        error: "Hazard grade: unexpected non-object from Gemini",
+      };
     }
 
     const obj = parsed as Record<string, unknown>;
     const severity = normalizeSeverity(String(obj.severity ?? "medium"));
-    const rationale = typeof obj.rationale === "string" ? obj.rationale.slice(0, 500) : "No rationale provided.";
+    const rationale =
+      typeof obj.rationale === "string"
+        ? obj.rationale.slice(0, 500)
+        : "No rationale provided.";
     const publicSafetyRisk = Boolean(obj.publicSafetyRisk);
 
     return { ok: true, data: { severity, rationale, publicSafetyRisk } };

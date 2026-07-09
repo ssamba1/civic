@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { registerWebhookAction } from "@/app/admin/webhooks/actions";
 
 const ALL_EVENTS = [
@@ -20,6 +20,7 @@ interface Props {
 }
 
 export function WebhookForm({ cities, onCreated }: Props) {
+  const formId = useId();
   const [label, setLabel] = useState("");
   const [url, setUrl] = useState("");
   const [cityId, setCityId] = useState<string>("");
@@ -89,10 +90,14 @@ export function WebhookForm({ cities, onCreated }: Props) {
       )}
 
       <div>
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label
+          htmlFor={`${formId}-label`}
+          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+        >
           Label
         </label>
         <input
+          id={`${formId}-label`}
           required
           value={label}
           onChange={(e) => setLabel(e.target.value)}
@@ -102,10 +107,14 @@ export function WebhookForm({ cities, onCreated }: Props) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label
+          htmlFor={`${formId}-url`}
+          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+        >
           Endpoint URL (HTTPS)
         </label>
         <input
+          id={`${formId}-url`}
           required
           type="url"
           value={url}
@@ -116,10 +125,14 @@ export function WebhookForm({ cities, onCreated }: Props) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label
+          htmlFor={`${formId}-city`}
+          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+        >
           City scope (optional — blank = all cities)
         </label>
         <select
+          id={`${formId}-city`}
           value={cityId}
           onChange={(e) => setCityId(e.target.value)}
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900"

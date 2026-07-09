@@ -1,6 +1,6 @@
 "use client";
 
-import type { CrewRouteStop, CrewRouteResult } from "@/app/staff/route-actions";
+import type { CrewRouteResult, CrewRouteStop } from "@/app/staff/route-actions";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -25,7 +25,10 @@ interface SvgRouteSketchProps {
  * No map tiles, no external dependencies.
  */
 function SvgRouteSketch({ stops }: SvgRouteSketchProps) {
-  const located = stops.filter((s) => s.location !== null);
+  const located = stops.filter(
+    (s): s is typeof s & { location: NonNullable<typeof s.location> } =>
+      s.location !== null,
+  );
   if (located.length < 2) {
     return (
       <div className="flex h-40 items-center justify-center rounded-[var(--radius-md)] border border-hairline bg-surface text-[13px] text-faint">
@@ -34,8 +37,8 @@ function SvgRouteSketch({ stops }: SvgRouteSketchProps) {
     );
   }
 
-  const lats = located.map((s) => s.location!.lat);
-  const lngs = located.map((s) => s.location!.lng);
+  const lats = located.map((s) => s.location.lat);
+  const lngs = located.map((s) => s.location.lng);
   const minLat = Math.min(...lats);
   const maxLat = Math.max(...lats);
   const minLng = Math.min(...lngs);
@@ -57,7 +60,7 @@ function SvgRouteSketch({ stops }: SvgRouteSketchProps) {
     return [x, y];
   }
 
-  const points = located.map((s) => toSvg(s.location!.lat, s.location!.lng));
+  const points = located.map((s) => toSvg(s.location.lat, s.location.lng));
   const polyline = points.map(([x, y]) => `${x},${y}`).join(" ");
 
   // Index of each stop in located[] for label positioning.
@@ -86,7 +89,13 @@ function SvgRouteSketch({ stops }: SvgRouteSketchProps) {
       {/* Dots + sequence labels */}
       {labels.map(({ x, y, seq }) => (
         <g key={seq}>
-          <circle cx={x} cy={y} r={8} fill="hsl(var(--color-brand))" opacity="0.15" />
+          <circle
+            cx={x}
+            cy={y}
+            r={8}
+            fill="hsl(var(--color-brand))"
+            opacity="0.15"
+          />
           <circle cx={x} cy={y} r={4} fill="hsl(var(--color-brand))" />
           <text
             x={x + 7}
@@ -126,7 +135,9 @@ function StopCard({ stop }: StopCardProps) {
 
         <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[12px] text-faint">
           {stop.category && (
-            <span className="capitalize">{stop.category.replace(/_/g, " ")}</span>
+            <span className="capitalize">
+              {stop.category.replace(/_/g, " ")}
+            </span>
           )}
           <span className="capitalize">{stop.status.replace(/_/g, " ")}</span>
           {stop.sequence > 1 && (
@@ -158,7 +169,9 @@ export function RoutePlan({ route, crewName }: RoutePlanProps) {
   if (!route || route.stops.length === 0) {
     return (
       <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface px-6 py-16 text-center shadow-[var(--shadow-card)]">
-        <p className="text-sm font-medium text-foreground">No stops scheduled</p>
+        <p className="text-sm font-medium text-foreground">
+          No stops scheduled
+        </p>
         <p className="mt-1.5 text-[13px] text-faint">
           {crewName
             ? `${crewName} has no work orders scheduled for this day.`

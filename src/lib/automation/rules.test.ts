@@ -1,11 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  matchesCondition,
-  evaluateRules,
-  validateRule,
   type AutomationRule,
-  type RuleReport,
   type Condition,
+  evaluateRules,
+  matchesCondition,
+  type RuleReport,
+  validateRule,
 } from "./rules";
 
 // ---------------------------------------------------------------------------
@@ -19,7 +19,8 @@ const baseReport: RuleReport = {
 };
 
 function makeRule(
-  overrides: Partial<AutomationRule> & Pick<AutomationRule, "conditions" | "actions">,
+  overrides: Partial<AutomationRule> &
+    Pick<AutomationRule, "conditions" | "actions">,
 ): AutomationRule {
   return {
     id: "test-id",
@@ -112,20 +113,32 @@ describe("matchesCondition", () => {
   });
 
   it("contains — handles missing tags (undefined)", () => {
-    const r: RuleReport = { category: "pothole", severity: 3, is_emergency: false };
+    const r: RuleReport = {
+      category: "pothole",
+      severity: 3,
+      is_emergency: false,
+    };
     const c: Condition = { field: "tag", op: "contains", value: "urgent" };
     expect(matchesCondition(r, c)).toBe(false);
   });
 
   it("unknown field returns false", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const c: Condition = { field: "unknown_field" as any, op: "eq", value: "x" };
+    const c: Condition = {
+      field: "unknown_field" as any,
+      op: "eq",
+      value: "x",
+    };
     expect(matchesCondition(baseReport, c)).toBe(false);
   });
 
   it("unknown op returns false", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const c: Condition = { field: "category", op: "regex" as any, value: "pot" };
+    const c: Condition = {
+      field: "category",
+      op: "regex" as any,
+      value: "pot",
+    };
     expect(matchesCondition(baseReport, c)).toBe(false);
   });
 });
@@ -300,14 +313,14 @@ describe("evaluateRules", () => {
       priority: 1,
       conditions: [{ field: "severity", op: "gte", value: 1 }],
       actions: [
-        { type: "set_priority", value: "low" },  // ignored (already set)
+        { type: "set_priority", value: "low" }, // ignored (already set)
         { type: "set_severity", value: 5 },
       ],
     });
     const result = evaluateRules(baseReport, [r1, r2]);
-    expect(result.priority).toBe("high");       // r1 won
+    expect(result.priority).toBe("high"); // r1 won
     expect(result.assign_team).toBe("streets"); // r1
-    expect(result.set_severity).toBe(5);         // r2 (first to set it)
+    expect(result.set_severity).toBe(5); // r2 (first to set it)
   });
 });
 
@@ -316,13 +329,21 @@ describe("evaluateRules", () => {
 // ---------------------------------------------------------------------------
 describe("validateRule", () => {
   it("rejects empty name", () => {
-    const r = validateRule({ name: "", conditions: [], actions: [{ type: "auto_acknowledge", value: true }] });
+    const r = validateRule({
+      name: "",
+      conditions: [],
+      actions: [{ type: "auto_acknowledge", value: true }],
+    });
     expect(r.ok).toBe(false);
   });
 
   it("rejects non-array conditions", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const r = validateRule({ name: "Test", conditions: "bad" as any, actions: [{ type: "auto_acknowledge", value: true }] });
+    const r = validateRule({
+      name: "Test",
+      conditions: "bad" as any,
+      actions: [{ type: "auto_acknowledge", value: true }],
+    });
     expect(r.ok).toBe(false);
   });
 

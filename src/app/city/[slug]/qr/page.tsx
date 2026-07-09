@@ -26,7 +26,9 @@ interface PageProps {
   }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const city = KNOWN_CITIES[slug];
   const name = city?.name ?? slug;
@@ -78,8 +80,8 @@ export default async function CityQrPage({ params, searchParams }: PageProps) {
             <kbd className="rounded bg-overlay px-1.5 py-0.5 font-mono text-[11px]">
               ⌘P
             </kbd>{" "}
-            to print. Select "Fit to page" for best results. Laminate and
-            affix to the asset or kiosk.
+            to print. Select "Fit to page" for best results. Laminate and affix
+            to the asset or kiosk.
           </p>
           <p className="mt-2 text-[12px] text-faint">
             Location: {lat.toFixed(5)}, {lng.toFixed(5)}

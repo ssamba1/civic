@@ -97,7 +97,10 @@ export interface ResolvedActions {
 // Core: matchesCondition
 // ---------------------------------------------------------------------------
 
-export function matchesCondition(report: RuleReport, condition: Condition): boolean {
+export function matchesCondition(
+  report: RuleReport,
+  condition: Condition,
+): boolean {
   const { field, op, value } = condition;
 
   let fieldValue: string | number | boolean | string[] | undefined;
@@ -216,7 +219,12 @@ export function evaluateRules(
 // Validation
 // ---------------------------------------------------------------------------
 
-const VALID_FIELDS: ConditionField[] = ["category", "severity", "is_emergency", "tag"];
+const VALID_FIELDS: ConditionField[] = [
+  "category",
+  "severity",
+  "is_emergency",
+  "tag",
+];
 const VALID_OPS: ConditionOp[] = ["eq", "gte", "lte", "in", "contains"];
 const VALID_ACTION_TYPES: ActionType[] = [
   "set_priority",
@@ -258,7 +266,10 @@ function validateAction(a: unknown, idx: number): string | null {
     return `actions[${idx}].type: must be one of ${VALID_ACTION_TYPES.join(", ")}`;
   }
   const type = obj.type as ActionType;
-  if (type === "set_priority" && !VALID_PRIORITIES.includes(obj.value as Priority)) {
+  if (
+    type === "set_priority" &&
+    !VALID_PRIORITIES.includes(obj.value as Priority)
+  ) {
     return `actions[${idx}].value: must be one of ${VALID_PRIORITIES.join(", ")} for type=set_priority`;
   }
   if (type === "set_severity") {

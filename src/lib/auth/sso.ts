@@ -43,9 +43,7 @@ export interface SsoConfig {
  * Validate an SSO config shape.
  * Returns ok:true with the coerced config, or ok:false with an error message.
  */
-export function parseSamlConfig(
-  input: unknown,
-): Result<SsoConfig> {
+export function parseSamlConfig(input: unknown): Result<SsoConfig> {
   if (!input || typeof input !== "object") {
     return { ok: false, error: "input_not_object" };
   }
@@ -78,9 +76,8 @@ export function parseSamlConfig(
     };
   }
 
-  const domain = typeof obj.domain === "string"
-    ? obj.domain.trim().toLowerCase()
-    : "";
+  const domain =
+    typeof obj.domain === "string" ? obj.domain.trim().toLowerCase() : "";
   if (!domain) return { ok: false, error: "domain is required" };
   // Simple domain format check
   if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain)) {

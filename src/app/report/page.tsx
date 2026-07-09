@@ -358,7 +358,9 @@ export default function ReportPage() {
             blobToBase64(blurred),
             blobToBase64(original),
           ]);
-          const hash = await computeAHash(`data:image/webp;base64,${blurredB64}`);
+          const hash = await computeAHash(
+            `data:image/webp;base64,${blurredB64}`,
+          );
           photosBlurredArr.push(blurredB64);
           photosOriginalArr.push(originalB64);
           phashesArr.push(hash);
@@ -434,8 +436,14 @@ export default function ReportPage() {
 
   const handleDenyDuplicate = useCallback(async () => {
     if (step.name !== "duplicate_check") return;
-    const { photos, photosBlurred, photosOriginal, phashes, description, tags } =
-      step;
+    const {
+      photos,
+      photosBlurred,
+      photosOriginal,
+      phashes,
+      description,
+      tags,
+    } = step;
     setStep({ name: "submitting", photo: photos[0], photos });
     await doSubmit(
       photos,
@@ -669,11 +677,14 @@ export default function ReportPage() {
                 {step.photos.map((f, i) => {
                   const objUrl = URL.createObjectURL(f);
                   return (
-                    <div key={`${f.name}-${i}`} className="relative flex-shrink-0">
+                    <div
+                      key={`${f.name}-${f.size}-${f.lastModified}`}
+                      className="relative flex-shrink-0"
+                    >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={objUrl}
-                        alt={`Photo ${i + 1}`}
+                        alt={`Attachment ${i + 1}`}
                         className="h-14 w-14 rounded-lg object-cover border-2 border-white/30"
                         onLoad={() => URL.revokeObjectURL(objUrl)}
                       />
@@ -694,8 +705,19 @@ export default function ReportPage() {
                     aria-label="Add more photos"
                     className="flex-shrink-0 flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-white/40 text-white/70 hover:border-white/70 hover:text-white transition-colors"
                   >
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    <svg
+                      className="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 4.5v15m7.5-7.5h-15"
+                      />
                     </svg>
                     <input
                       type="file"

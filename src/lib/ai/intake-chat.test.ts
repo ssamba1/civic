@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  parseIntakeResponse,
-  stripCodeFences,
   buildIntakePrompt,
   buildIntakeSystemPrompt,
+  parseIntakeResponse,
+  stripCodeFences,
 } from "./intake-chat";
 
 // ── stripCodeFences ───────────────────────────────────────────────────────────
@@ -15,17 +15,17 @@ describe("stripCodeFences", () => {
   });
 
   it("strips ```json fences", () => {
-    const raw = "```json\n{\"a\":1}\n```";
+    const raw = '```json\n{"a":1}\n```';
     expect(stripCodeFences(raw)).toBe('{"a":1}');
   });
 
   it("strips plain ``` fences", () => {
-    const raw = "```\n{\"a\":1}\n```";
+    const raw = '```\n{"a":1}\n```';
     expect(stripCodeFences(raw)).toBe('{"a":1}');
   });
 
   it("handles fences with extra whitespace", () => {
-    const raw = "```json\n  {\"a\":1}  \n```";
+    const raw = '```json\n  {"a":1}  \n```';
     expect(stripCodeFences(raw)).toBe('{"a":1}');
   });
 });
@@ -88,7 +88,8 @@ describe("parseIntakeResponse — interim turns", () => {
   });
 
   it("handles multi-line conversational reply", () => {
-    const raw = "Thanks for reporting!\nCould you tell me how severe the issue is?";
+    const raw =
+      "Thanks for reporting!\nCould you tell me how severe the issue is?";
     const result = parseIntakeResponse(raw);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -172,9 +173,18 @@ describe("parseIntakeResponse — final draft", () => {
 
   it("works with all valid categories", () => {
     const categories = [
-      "pothole", "streetlight", "downed_sign", "graffiti",
-      "illegal_dump", "water_leak", "sidewalk_damage", "tree_down",
-      "debris", "drainage", "faded_signage", "other",
+      "pothole",
+      "streetlight",
+      "downed_sign",
+      "graffiti",
+      "illegal_dump",
+      "water_leak",
+      "sidewalk_damage",
+      "tree_down",
+      "debris",
+      "drainage",
+      "faded_signage",
+      "other",
     ] as const;
     for (const category of categories) {
       const draftJSON = JSON.stringify({

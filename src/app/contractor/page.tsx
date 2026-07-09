@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { listMyWorkOrders } from "./actions";
 import { ContractorDashboard } from "@/components/contractor/contractor-dashboard";
+import { listMyWorkOrders } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "My Work Orders – Contractor Portal" };
@@ -18,7 +18,8 @@ export default function ContractorPage() {
           My Work Orders
         </h1>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
-          Only work orders assigned to you are shown. Update your progress below.
+          Only work orders assigned to you are shown. Update your progress
+          below.
         </p>
       </div>
 

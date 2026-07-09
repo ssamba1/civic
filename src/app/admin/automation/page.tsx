@@ -7,8 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminAutomationPage() {
   const cities = await listCities();
   // Default to the first active city, or the first city overall
-  const defaultCity =
-    cities.find((c) => c.active) ?? cities[0] ?? null;
+  const defaultCity = cities.find((c) => c.active) ?? cities[0] ?? null;
 
   const rulesResult = defaultCity
     ? await listRulesAction(defaultCity.id)
@@ -25,11 +24,15 @@ export default async function AdminAutomationPage() {
         <p className="mt-1 max-w-2xl text-sm text-[var(--color-muted)]">
           Configure IF/THEN rules evaluated when a report is classified. Rules
           are matched in priority order (lower number = higher precedence).
-          First-match wins per action type; tags accumulate from all matching rules.
+          First-match wins per action type; tags accumulate from all matching
+          rules.
         </p>
         {defaultCity && (
           <p className="mt-1 text-xs text-zinc-400">
-            City: <span className="font-medium text-zinc-600 dark:text-zinc-300">{defaultCity.name}</span>
+            City:{" "}
+            <span className="font-medium text-zinc-600 dark:text-zinc-300">
+              {defaultCity.name}
+            </span>
           </p>
         )}
         {!defaultCity && (
@@ -40,10 +43,7 @@ export default async function AdminAutomationPage() {
       </div>
 
       {defaultCity ? (
-        <AutomationRulesManager
-          cityId={defaultCity.id}
-          initialRules={rules}
-        />
+        <AutomationRulesManager cityId={defaultCity.id} initialRules={rules} />
       ) : (
         <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-12 text-center">
           <p className="text-sm text-zinc-500">

@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DashboardReport } from "@/lib/dashboard-data";
-import {
-  bucketByGrid,
-  computeBounds,
-  toHeatmapPoints,
-} from "./heatmap";
+import { bucketByGrid, computeBounds, toHeatmapPoints } from "./heatmap";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -14,7 +10,7 @@ function makeReport(
   overrides: Partial<DashboardReport> & { lng: number; lat: number },
 ): DashboardReport {
   return {
-    id: "r-" + Math.random(),
+    id: `r-${Math.random()}`,
     category: "pothole",
     severity: 3,
     status: "open",
@@ -48,8 +44,18 @@ describe("toHeatmapPoints", () => {
   });
 
   it("assigns higher weight to more severe reports (same date)", () => {
-    const low = makeReport({ lng: 0, lat: 0, severity: 1, created_at: NOW.toISOString() });
-    const high = makeReport({ lng: 0, lat: 0, severity: 5, created_at: NOW.toISOString() });
+    const low = makeReport({
+      lng: 0,
+      lat: 0,
+      severity: 1,
+      created_at: NOW.toISOString(),
+    });
+    const high = makeReport({
+      lng: 0,
+      lat: 0,
+      severity: 5,
+      created_at: NOW.toISOString(),
+    });
     const [ptLow] = toHeatmapPoints([low], NOW);
     const [ptHigh] = toHeatmapPoints([high], NOW);
     expect(ptHigh.weight).toBeGreaterThan(ptLow.weight);
@@ -62,7 +68,12 @@ describe("toHeatmapPoints", () => {
       severity: 3,
       created_at: new Date("2023-01-01").toISOString(),
     });
-    const recent = makeReport({ lng: 0, lat: 0, severity: 3, created_at: NOW.toISOString() });
+    const recent = makeReport({
+      lng: 0,
+      lat: 0,
+      severity: 3,
+      created_at: NOW.toISOString(),
+    });
     const [ptOld] = toHeatmapPoints([old], NOW);
     const [ptRecent] = toHeatmapPoints([recent], NOW);
     expect(ptRecent.weight).toBeGreaterThan(ptOld.weight);
@@ -102,8 +113,8 @@ describe("computeBounds", () => {
     const pts = [{ position: [-84.0, 34.1] as [number, number], weight: 1 }];
     const bounds = computeBounds(pts);
     expect(bounds).not.toBeNull();
-    expect(bounds!.center).toEqual([-84.0, 34.1]);
-    expect(bounds!.bbox).toHaveLength(4);
+    expect(bounds?.center).toEqual([-84.0, 34.1]);
+    expect(bounds?.bbox).toHaveLength(4);
   });
 
   it("computes correct bbox for multiple points", () => {
@@ -112,12 +123,12 @@ describe("computeBounds", () => {
       { position: [-84.0, 34.5] as [number, number], weight: 1 },
     ];
     const bounds = computeBounds(pts);
-    expect(bounds!.bbox[0]).toBe(-84.5); // west
-    expect(bounds!.bbox[1]).toBe(34.0);  // south
-    expect(bounds!.bbox[2]).toBe(-84.0); // east
-    expect(bounds!.bbox[3]).toBe(34.5);  // north
-    expect(bounds!.center[0]).toBeCloseTo(-84.25, 5);
-    expect(bounds!.center[1]).toBeCloseTo(34.25, 5);
+    expect(bounds?.bbox[0]).toBe(-84.5); // west
+    expect(bounds?.bbox[1]).toBe(34.0); // south
+    expect(bounds?.bbox[2]).toBe(-84.0); // east
+    expect(bounds?.bbox[3]).toBe(34.5); // north
+    expect(bounds?.center[0]).toBeCloseTo(-84.25, 5);
+    expect(bounds?.center[1]).toBeCloseTo(34.25, 5);
   });
 
   it("zoom is clamped between 9 and 14", () => {
@@ -150,7 +161,9 @@ describe("bucketByGrid", () => {
   });
 
   it("places a single point into exactly one cell", () => {
-    const pts = [{ position: [-84.055, 34.123] as [number, number], weight: 0.8 }];
+    const pts = [
+      { position: [-84.055, 34.123] as [number, number], weight: 0.8 },
+    ];
     const cells = bucketByGrid(pts, 0.01);
     expect(cells).toHaveLength(1);
     expect(cells[0].count).toBe(1);
@@ -182,7 +195,11 @@ describe("bucketByGrid", () => {
     // Two points with very different recency (so weight ≠ severity) but the
     // same severity = 4. avgSeverity should be 4, not distorted by weight.
     // weight = severity/5 * recencyFactor; low-weight point has recencyFactor≈0.1
-    const pts: Array<{ position: [number, number]; weight: number; rawSeverity: number }> = [
+    const pts: Array<{
+      position: [number, number];
+      weight: number;
+      rawSeverity: number;
+    }> = [
       { position: [10.001, 34.001], weight: 0.8, rawSeverity: 4 }, // high recency
       { position: [10.005, 34.005], weight: 0.08, rawSeverity: 4 }, // low recency
     ];

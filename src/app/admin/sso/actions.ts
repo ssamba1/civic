@@ -3,11 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { z } from "zod";
+import { parseSamlConfig } from "@/lib/auth/sso";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
 import { DEMO_MODE } from "@/lib/demo-mode";
-import { parseSamlConfig } from "@/lib/auth/sso";
 import { createLogger } from "@/lib/logger";
 import type { Result } from "@/lib/types";
 

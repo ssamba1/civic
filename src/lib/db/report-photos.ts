@@ -10,12 +10,16 @@ const logger = createLogger("[report-photos]");
  * - the report has no child rows (single-photo submissions before #18)
  * - any unexpected query error
  */
-export async function getReportPhotos(reportId: string): Promise<ReportPhoto[]> {
+export async function getReportPhotos(
+  reportId: string,
+): Promise<ReportPhoto[]> {
   const service = createServerClient();
   try {
     const { data, error } = await service
       .from("report_photos")
-      .select("id, report_id, idx, public_url, raw_url, phash, blur_version, created_at")
+      .select(
+        "id, report_id, idx, public_url, raw_url, phash, blur_version, created_at",
+      )
       .eq("report_id", reportId)
       .order("idx", { ascending: true });
 
@@ -32,7 +36,10 @@ export async function getReportPhotos(reportId: string): Promise<ReportPhoto[]> 
 
     return (data ?? []) as ReportPhoto[];
   } catch (err) {
-    logger.warn("getReportPhotos: unexpected error (degrade to [])", { reportId, err });
+    logger.warn("getReportPhotos: unexpected error (degrade to [])", {
+      reportId,
+      err,
+    });
     return [];
   }
 }

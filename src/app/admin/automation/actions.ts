@@ -3,13 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { z } from "zod";
+import type { Action, AutomationRule, Condition } from "@/lib/automation/rules";
+import { validateRule } from "@/lib/automation/rules";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
 import { DEMO_MODE } from "@/lib/demo-mode";
-import { validateRule } from "@/lib/automation/rules";
 import { createLogger } from "@/lib/logger";
-import type { AutomationRule, Condition, Action } from "@/lib/automation/rules";
 import type { Result } from "@/lib/types";
 
 const log = createLogger("admin-automation-actions");
@@ -118,7 +118,10 @@ export async function createRuleAction(input: {
       .single();
 
     if (error || !data) {
-      if (error) log.error("createRuleAction insert failed", error, { cityId: input.cityId });
+      if (error)
+        log.error("createRuleAction insert failed", error, {
+          cityId: input.cityId,
+        });
       return { ok: false, error: "db_error" };
     }
 

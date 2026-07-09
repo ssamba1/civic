@@ -13,11 +13,11 @@
  *     we return a descriptive error rather than crashing.
  */
 
+import { sanitizeCommentBody, validateComment } from "@/lib/comments/moderate";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
 import { redactPII } from "@/lib/privacy/pii-redact";
-import { sanitizeCommentBody, validateComment } from "@/lib/comments/moderate";
 import { getStaffAccessForCity, type StaffAccess } from "@/lib/staff-access";
 import type { Result } from "@/lib/types";
 
@@ -46,7 +46,10 @@ async function resolveReportAccess(
 
   if (error) {
     // 42P01 = table not found is not expected for reports, but handle it.
-    logger.warn("resolveReportAccess: query error", { reportId, code: error.code });
+    logger.warn("resolveReportAccess: query error", {
+      reportId,
+      code: error.code,
+    });
     return { ok: false, error: "database_error" };
   }
   if (!report) {
@@ -60,8 +63,7 @@ async function resolveReportAccess(
   const reporterOwns = report.reporter_id === userId;
 
   // Check staff access for this city (handles demo + real paths)
-  const staffAccess =
-    citySlug ? await getStaffAccessForCity(citySlug) : null;
+  const staffAccess = citySlug ? await getStaffAccessForCity(citySlug) : null;
   const isStaff = staffAccess !== null;
 
   if (!reporterOwns && !isStaff) {
@@ -138,7 +140,9 @@ export async function postComment(
     if (error) {
       // 42P01 = table doesn't exist (migration 055 not applied)
       if (error.code === "42P01") {
-        logger.warn("postComment: report_comments table absent (migration 055 not applied)");
+        logger.warn(
+          "postComment: report_comments table absent (migration 055 not applied)",
+        );
         return { ok: false, error: "feature_unavailable" };
       }
       logger.error("postComment: insert failed", error, { reportId });
@@ -192,7 +196,9 @@ export async function hideComment(
   // "comment_not_found" vs "forbidden". Moderation requires REAL staff (a
   // public-bundle "demo" session must not hide real residents' comments).
   // biome-ignore lint/suspicious/noExplicitAny: Supabase join typing is loose
-  const citySlug = comment ? ((comment.reports as any)?.cities?.slug ?? null) : null;
+  const citySlug = comment
+    ? ((comment.reports as any)?.cities?.slug ?? null)
+    : null;
   const staffAccess = citySlug ? await getStaffAccessForCity(citySlug) : null;
   if (!comment || staffAccess !== "real") {
     return { ok: false, error: "forbidden" };

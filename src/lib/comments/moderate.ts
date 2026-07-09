@@ -55,8 +55,10 @@ export function sanitizeCommentBody(body: string): string {
   return (
     body
       // Remove C0 control chars except \t (0x09) and \n (0x0A)
+      // biome-ignore lint/suspicious/noControlCharactersInRegex: matching control chars is the point \u2014 this strips them from user input
       .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "")
       // Remove C1 control chars U+0080 through U+009F
+      // biome-ignore lint/suspicious/noControlCharactersInRegex: matching control chars is the point \u2014 this strips them from user input
       .replace(/[\u0080-\u009F]/g, "")
       // Collapse runs of 3+ newlines to 2 paragraph breaks
       .replace(/\n{3,}/g, "\n\n")

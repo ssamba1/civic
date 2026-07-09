@@ -68,7 +68,9 @@ export function ComplianceReportView({ report }: Props) {
             value={
               <StatusBadge
                 ok={report.privacy.piiRedactionEnabled}
-                label={report.privacy.piiRedactionEnabled ? "Enabled" : "Disabled"}
+                label={
+                  report.privacy.piiRedactionEnabled ? "Enabled" : "Disabled"
+                }
               />
             }
           />
@@ -103,7 +105,9 @@ export function ComplianceReportView({ report }: Props) {
             value={
               <StatusBadge
                 ok={report.open311.conformanceEnabled}
-                label={report.open311.conformanceEnabled ? "Active" : "Inactive"}
+                label={
+                  report.open311.conformanceEnabled ? "Active" : "Inactive"
+                }
               />
             }
           />

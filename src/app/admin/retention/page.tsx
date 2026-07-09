@@ -1,5 +1,5 @@
-import { createServerClient } from "@/lib/db/client";
 import { RetentionForm } from "@/components/admin/retention-form";
+import { createServerClient } from "@/lib/db/client";
 import { getRetentionSettings } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -59,7 +59,8 @@ export default async function RetentionPage() {
             <code className="rounded bg-zinc-200 px-1 dark:bg-zinc-800">
               photos-raw
             </code>{" "}
-            bucket and deleted by a nightly pg_cron job after the configured TTL.
+            bucket and deleted by a nightly pg_cron job after the configured
+            TTL.
           </li>
           <li>
             Report descriptions are stored as-is and soft-cleared after the

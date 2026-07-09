@@ -57,7 +57,9 @@ export async function EquityPanel({ cityId }: Props) {
             <tr className="border-b border-hairline text-left text-faint">
               <th className="pb-2 pr-3 font-medium">District</th>
               <th className="pb-2 pr-3 font-medium text-right">Reports</th>
-              <th className="pb-2 pr-3 font-medium text-right">Avg resolution</th>
+              <th className="pb-2 pr-3 font-medium text-right">
+                Avg resolution
+              </th>
               <th className="pb-2 font-medium text-right">Open rate</th>
             </tr>
           </thead>
@@ -74,6 +76,7 @@ export async function EquityPanel({ cityId }: Props) {
                   <div className="flex items-center gap-2">
                     {r.underserved && (
                       <span
+                        role="img"
                         aria-label="underserved"
                         className="inline-block h-2 w-2 rounded-full bg-destructive shrink-0"
                       />

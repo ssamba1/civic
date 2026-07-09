@@ -46,14 +46,13 @@ const VALID_EVENTS = [
 
 const registerSchema = z.object({
   label: z.string().trim().min(1).max(120),
-  url: z.url("Must be a valid HTTPS URL").refine(
-    (u) => u.startsWith("https://"),
-    { message: "Webhook URL must use HTTPS" },
-  ),
+  url: z
+    .url("Must be a valid HTTPS URL")
+    .refine((u) => u.startsWith("https://"), {
+      message: "Webhook URL must use HTTPS",
+    }),
   cityId: z.string().uuid().nullable(),
-  events: z
-    .array(z.enum(VALID_EVENTS))
-    .min(1, "Select at least one event"),
+  events: z.array(z.enum(VALID_EVENTS)).min(1, "Select at least one event"),
 });
 
 export interface WebhookEndpointRow {
@@ -119,9 +118,7 @@ export async function registerWebhookAction(input: {
   return { ok: true, data: { id: data.id as string, secret } };
 }
 
-export async function deleteWebhookAction(
-  id: string,
-): Promise<Result<void>> {
+export async function deleteWebhookAction(id: string): Promise<Result<void>> {
   if (!(await requireAdmin())) return { ok: false, error: "unauthorized" };
 
   const parsed = z.string().uuid().safeParse(id);

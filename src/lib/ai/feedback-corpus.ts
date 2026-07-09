@@ -110,7 +110,8 @@ export function corpusStats(examples: CorpusExample[]): CorpusStats {
   const confidences: number[] = [];
 
   for (const ex of examples) {
-    byCorrectedCategory[ex.expected] = (byCorrectedCategory[ex.expected] ?? 0) + 1;
+    byCorrectedCategory[ex.expected] =
+      (byCorrectedCategory[ex.expected] ?? 0) + 1;
     if (ex.confidence !== null) confidences.push(ex.confidence);
   }
 

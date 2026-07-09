@@ -64,6 +64,7 @@ describe("sanitizeCommentBody", () => {
   it("strips C0 control chars except tab and newline", () => {
     const body = "hello\x01\x02world\x0Bend";
     const result = sanitizeCommentBody(body);
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: asserting control chars were stripped
     expect(result).not.toMatch(/[\x00-\x08\x0B\x0C\x0E-\x1F]/);
     expect(result).toContain("helloworld");
   });

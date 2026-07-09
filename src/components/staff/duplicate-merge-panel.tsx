@@ -105,9 +105,15 @@ function CandidateCard({ candidate, onMerge, merging }: CandidateCardProps) {
       {/* Score breakdown */}
       {expanded && (
         <div className="mt-3 space-y-1.5 rounded-md bg-muted/50 p-3">
-          <ScoreBar value={candidate.score_breakdown.location} label="Location" />
+          <ScoreBar
+            value={candidate.score_breakdown.location}
+            label="Location"
+          />
           <ScoreBar value={candidate.score_breakdown.visual} label="Visual" />
-          <ScoreBar value={candidate.score_breakdown.category} label="Category" />
+          <ScoreBar
+            value={candidate.score_breakdown.category}
+            label="Category"
+          />
           <ScoreBar value={candidate.score_breakdown.time} label="Time" />
         </div>
       )}
@@ -210,7 +216,9 @@ export default function DuplicateMergePanel({
   );
   const [loaded, setLoaded] = useState(!!initialCandidates);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [confirmTarget, setConfirmTarget] = useState<ScoredCandidate | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<ScoredCandidate | null>(
+    null,
+  );
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -239,7 +247,7 @@ export default function DuplicateMergePanel({
       loadCandidates();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadCandidates, initialCandidates]);
 
   const handleMergeClick = (candidate: ScoredCandidate) => {
     setConfirmTarget(candidate);
@@ -255,9 +263,7 @@ export default function DuplicateMergePanel({
       const result = await mergeReports(reportId, targetId, reason);
       if (result.ok) {
         setCandidates((prev) => prev.filter((c) => c.id !== targetId));
-        setSuccessMsg(
-          `Report ${targetId} merged successfully.`,
-        );
+        setSuccessMsg(`Report ${targetId} merged successfully.`);
       } else {
         setErrorMsg(`Merge failed: ${result.error}`);
       }
@@ -354,7 +360,10 @@ interface UnmergeButtonProps {
   onSuccess?: () => void;
 }
 
-export function UnmergeButton({ mergedReportId, onSuccess }: UnmergeButtonProps) {
+export function UnmergeButton({
+  mergedReportId,
+  onSuccess,
+}: UnmergeButtonProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);

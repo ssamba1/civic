@@ -47,7 +47,11 @@ describe("dedupeCorpus", () => {
   it("keeps unique examples unchanged", () => {
     const examples = buildCorpus([
       makeRow({ report_id: "r-1" }),
-      makeRow({ report_id: "r-2", original_category: "graffiti", corrected_category: "illegal_dump" }),
+      makeRow({
+        report_id: "r-2",
+        original_category: "graffiti",
+        corrected_category: "illegal_dump",
+      }),
     ]);
     expect(dedupeCorpus(examples)).toHaveLength(2);
   });
@@ -57,7 +61,11 @@ describe("dedupeCorpus", () => {
       makeRow({ id: "fb-1", created_at: "2026-07-01T10:00:00Z" }),
     ])[0];
     const late = buildCorpus([
-      makeRow({ id: "fb-2", created_at: "2026-07-02T10:00:00Z", original_confidence: 0.5 }),
+      makeRow({
+        id: "fb-2",
+        created_at: "2026-07-02T10:00:00Z",
+        original_confidence: 0.5,
+      }),
     ])[0];
     const result = dedupeCorpus([early, late]);
     expect(result).toHaveLength(1);
@@ -79,14 +87,18 @@ describe("corpusStats", () => {
   it("counts by corrected category", () => {
     const rows = [
       makeRow({ corrected_category: "sidewalk_damage" }),
-      makeRow({ id: "fb-2", report_id: "r-2", corrected_category: "sidewalk_damage" }),
+      makeRow({
+        id: "fb-2",
+        report_id: "r-2",
+        corrected_category: "sidewalk_damage",
+      }),
       makeRow({ id: "fb-3", report_id: "r-3", corrected_category: "graffiti" }),
     ];
     const stats = corpusStats(buildCorpus(rows));
     expect(stats.total).toBe(3);
     expect(stats.uniqueCategories).toBe(2);
-    expect(stats.byCorrectedCategory["sidewalk_damage"]).toBe(2);
-    expect(stats.byCorrectedCategory["graffiti"]).toBe(1);
+    expect(stats.byCorrectedCategory.sidewalk_damage).toBe(2);
+    expect(stats.byCorrectedCategory.graffiti).toBe(1);
   });
 
   it("computes average confidence excluding nulls", () => {

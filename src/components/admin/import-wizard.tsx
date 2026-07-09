@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import {
   confirmImportAction,
   previewImportAction,
@@ -21,6 +21,7 @@ interface Props {
 type Step = "upload" | "preview" | "done";
 
 export function ImportWizard({ cities }: Props) {
+  const formId = useId();
   const [step, setStep] = useState<Step>("upload");
   const [source, setSource] = useState<Source>("csv");
   const [text, setText] = useState("");
@@ -112,10 +113,14 @@ export function ImportWizard({ cities }: Props) {
       {step === "upload" && (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label
+              htmlFor={`${formId}-source`}
+              className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            >
               Source format
             </label>
             <select
+              id={`${formId}-source`}
               value={source}
               onChange={(e) => setSource(e.target.value as Source)}
               className="mt-1 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
@@ -126,22 +131,32 @@ export function ImportWizard({ cities }: Props) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label
+              htmlFor={`${formId}-file`}
+              className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            >
               Upload file
             </label>
             <input
+              id={`${formId}-file`}
               type="file"
-              accept={source === "csv" ? ".csv,text/csv" : ".json,application/json"}
+              accept={
+                source === "csv" ? ".csv,text/csv" : ".json,application/json"
+              }
               onChange={handleFileUpload}
               className="mt-1 block text-sm text-zinc-600 dark:text-zinc-400"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label
+              htmlFor={`${formId}-paste`}
+              className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            >
               Or paste data
             </label>
             <textarea
+              id={`${formId}-paste`}
               rows={8}
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -155,10 +170,14 @@ export function ImportWizard({ cities }: Props) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label
+              htmlFor={`${formId}-city`}
+              className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            >
               Target city
             </label>
             <select
+              id={`${formId}-city`}
               value={cityId}
               onChange={(e) => setCityId(e.target.value)}
               className="mt-1 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
@@ -193,16 +212,22 @@ export function ImportWizard({ cities }: Props) {
             <table className="w-full text-xs">
               <thead className="bg-zinc-50 dark:bg-zinc-800">
                 <tr>
-                  {["Source ID", "Category", "Status", "Severity", "Lat", "Lng", "Date"].map(
-                    (h) => (
-                      <th
-                        key={h}
-                        className="px-3 py-2 text-left font-medium text-zinc-600 dark:text-zinc-400"
-                      >
-                        {h}
-                      </th>
-                    ),
-                  )}
+                  {[
+                    "Source ID",
+                    "Category",
+                    "Status",
+                    "Severity",
+                    "Lat",
+                    "Lng",
+                    "Date",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="px-3 py-2 text-left font-medium text-zinc-600 dark:text-zinc-400"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -220,7 +245,9 @@ export function ImportWizard({ cities }: Props) {
                     <td className="px-3 py-1.5">{r.location.lat.toFixed(4)}</td>
                     <td className="px-3 py-1.5">{r.location.lng.toFixed(4)}</td>
                     <td className="px-3 py-1.5">
-                      {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "—"}
+                      {r.createdAt
+                        ? new Date(r.createdAt).toLocaleDateString()
+                        : "—"}
                     </td>
                   </tr>
                 ))}

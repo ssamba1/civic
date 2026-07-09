@@ -103,7 +103,9 @@ export function computeBounds(points: HeatmapPoint[]): ViewportBounds | null {
   let minLat = Infinity;
   let maxLat = -Infinity;
 
-  for (const { position: [lng, lat] } of points) {
+  for (const {
+    position: [lng, lat],
+  } of points) {
     if (lng < minLng) minLng = lng;
     if (lng > maxLng) maxLng = lng;
     if (lat < minLat) minLat = lat;
@@ -116,7 +118,15 @@ export function computeBounds(points: HeatmapPoint[]): ViewportBounds | null {
   // Rough zoom heuristic: wider span → lower zoom.
   const spanDeg = Math.max(maxLng - minLng, maxLat - minLat);
   const zoom =
-    spanDeg < 0.01 ? 14 : spanDeg < 0.05 ? 13 : spanDeg < 0.2 ? 12 : spanDeg < 1 ? 11 : 10;
+    spanDeg < 0.01
+      ? 14
+      : spanDeg < 0.05
+        ? 13
+        : spanDeg < 0.2
+          ? 12
+          : spanDeg < 1
+            ? 11
+            : 10;
 
   return {
     bbox: [minLng, minLat, maxLng, maxLat],
@@ -146,10 +156,20 @@ export function bucketByGrid(
   // systematically understated due to the recency multiplier.
   const cells = new Map<
     string,
-    { lngSum: number; latSum: number; count: number; weightSum: number; rawSeveritySum: number }
+    {
+      lngSum: number;
+      latSum: number;
+      count: number;
+      weightSum: number;
+      rawSeveritySum: number;
+    }
   >();
 
-  for (const { position: [lng, lat], weight, rawSeverity } of points) {
+  for (const {
+    position: [lng, lat],
+    weight,
+    rawSeverity,
+  } of points) {
     const col = Math.floor(lng / cellDegrees);
     const row = Math.floor(lat / cellDegrees);
     const key = `${col}:${row}`;
@@ -164,16 +184,24 @@ export function bucketByGrid(
       existing.weightSum += weight;
       existing.rawSeveritySum += sev;
     } else {
-      cells.set(key, { lngSum: cellLng, latSum: cellLat, count: 1, weightSum: weight, rawSeveritySum: sev });
+      cells.set(key, {
+        lngSum: cellLng,
+        latSum: cellLat,
+        count: 1,
+        weightSum: weight,
+        rawSeveritySum: sev,
+      });
     }
   }
 
-  return Array.from(cells.values()).map(({ lngSum, latSum, count, weightSum, rawSeveritySum }) => ({
-    position: [lngSum, latSum] as [number, number],
-    count,
-    totalWeight: weightSum,
-    // avgSeverity is the arithmetic mean of raw severity values (1–5),
-    // rounded to the nearest integer and clamped to the valid range.
-    avgSeverity: Math.round(Math.min(5, Math.max(1, rawSeveritySum / count))),
-  }));
+  return Array.from(cells.values()).map(
+    ({ lngSum, latSum, count, weightSum, rawSeveritySum }) => ({
+      position: [lngSum, latSum] as [number, number],
+      count,
+      totalWeight: weightSum,
+      // avgSeverity is the arithmetic mean of raw severity values (1–5),
+      // rounded to the nearest integer and clamped to the valid range.
+      avgSeverity: Math.round(Math.min(5, Math.max(1, rawSeveritySum / count))),
+    }),
+  );
 }

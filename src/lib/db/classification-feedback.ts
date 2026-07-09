@@ -1,7 +1,7 @@
 import "server-only";
 
-import type { CorrectionExample } from "@/lib/ai/prompt";
 import type { FeedbackRow } from "@/lib/ai/feedback-corpus";
+import type { CorrectionExample } from "@/lib/ai/prompt";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
 
@@ -20,11 +20,15 @@ export async function listFeedbackForCorpus(
     const db = createServerClient();
     const { data, error } = await db
       .from("classification_feedback")
-      .select("id, report_id, original_category, corrected_category, original_confidence, created_at")
+      .select(
+        "id, report_id, original_category, corrected_category, original_confidence, created_at",
+      )
       .order("created_at", { ascending: true })
       .limit(limit);
     if (error) {
-      logger.warn("listFeedbackForCorpus query failed", { error: error.message });
+      logger.warn("listFeedbackForCorpus query failed", {
+        error: error.message,
+      });
       return [];
     }
     return (data ?? []).map((r) => ({

@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-
+import { getOptimizedRouteForCrew } from "@/app/staff/route-actions";
 import { RoutePlan } from "@/components/staff/route-plan";
 import { fetchCity as fetchCityMock } from "@/lib/dashboard-data";
 import { fetchCity as fetchCityFromDb } from "@/lib/dashboard-queries";
 import { fetchCityCrews } from "@/lib/db/crews";
 import { getStaffAccessForCity } from "@/lib/staff-access";
-import { getOptimizedRouteForCrew } from "@/app/staff/route-actions";
 
 // Auth-gated per-request — never cache or prerender.
 export const dynamic = "force-dynamic";
@@ -20,7 +19,9 @@ interface PageProps {
   searchParams: Promise<{ date?: string; crew?: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { slug } = await params;
   let city = null;
   try {
@@ -49,7 +50,10 @@ function todayISO(): string {
 // Page
 // ---------------------------------------------------------------------------
 
-export default async function CrewRoutePage({ params, searchParams }: PageProps) {
+export default async function CrewRoutePage({
+  params,
+  searchParams,
+}: PageProps) {
   const { slug, teamId } = await params;
   const { date: dateParam, crew: crewParam } = await searchParams;
 
@@ -75,7 +79,12 @@ export default async function CrewRoutePage({ params, searchParams }: PageProps)
   // Demo / synthetic cities have no real DB data.
   if (!dbCity) {
     return (
-      <RoutePageShell slug={slug} teamId={teamId} date={date} crewParam={crewParam}>
+      <RoutePageShell
+        slug={slug}
+        teamId={teamId}
+        date={date}
+        crewParam={crewParam}
+      >
         <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface px-6 py-16 text-center shadow-[var(--shadow-card)]">
           <p className="text-sm font-medium text-foreground">
             No route data for demo cities
@@ -90,9 +99,7 @@ export default async function CrewRoutePage({ params, searchParams }: PageProps)
 
   // Load crews so the page can show a picker and resolve the selected crew name.
   const crewsResult = await fetchCityCrews(dbCity.id);
-  const crews = crewsResult.ok
-    ? crewsResult.crews.filter((c) => c.active)
-    : [];
+  const crews = crewsResult.ok ? crewsResult.crews.filter((c) => c.active) : [];
 
   const selectedCrewId = crewParam ?? crews[0]?.id ?? null;
   const selectedCrew = crews.find((c) => c.id === selectedCrewId) ?? null;
@@ -200,23 +207,23 @@ function RoutePageShell({
 
         {/* Crew picker */}
         {crews.length > 0 && (
-          <div className="mb-4 flex flex-wrap gap-2" role="list" aria-label="Crew selector">
+          <ul className="mb-4 flex flex-wrap gap-2" aria-label="Crew selector">
             {crews.map((c) => (
-              <a
-                key={c.id}
-                href={href(date, c.id)}
-                role="listitem"
-                className={[
-                  "rounded-full border px-3 py-1 text-[13px] font-medium transition-colors",
-                  c.id === selectedCrewId
-                    ? "border-brand bg-brand text-white"
-                    : "border-hairline text-faint hover:bg-surface-hover",
-                ].join(" ")}
-              >
-                {c.name}
-              </a>
+              <li key={c.id} className="contents">
+                <a
+                  href={href(date, c.id)}
+                  className={[
+                    "rounded-full border px-3 py-1 text-[13px] font-medium transition-colors",
+                    c.id === selectedCrewId
+                      ? "border-brand bg-brand text-white"
+                      : "border-hairline text-faint hover:bg-surface-hover",
+                  ].join(" ")}
+                >
+                  {c.name}
+                </a>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
 
         {/* Content */}

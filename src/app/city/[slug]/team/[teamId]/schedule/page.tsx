@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { getScheduledWorkOrders } from "@/app/staff/schedule-actions";
 import { ScheduleCalendar } from "@/components/staff/schedule-calendar";
 import { fetchCity as fetchCityMock } from "@/lib/dashboard-data";
 import { fetchCity as fetchCityFromDb } from "@/lib/dashboard-queries";
 import { fetchCityCrews } from "@/lib/db/crews";
 import { getStaffAccessForCity } from "@/lib/staff-access";
-import { getScheduledWorkOrders } from "@/app/staff/schedule-actions";
 
 // Auth-gated per-request — do not cache or prerender.
 export const dynamic = "force-dynamic";
@@ -109,12 +109,11 @@ export default async function TeamSchedulePage({
     : [{ ok: true as const, data: [] }, null];
 
   const workOrders = scheduledResult.ok ? scheduledResult.data : [];
-  const crews =
-    crewsResult?.ok
-      ? crewsResult.crews
-          .filter((c) => c.active)
-          .map((c) => ({ id: c.id, name: c.name }))
-      : [];
+  const crews = crewsResult?.ok
+    ? crewsResult.crews
+        .filter((c) => c.active)
+        .map((c) => ({ id: c.id, name: c.name }))
+    : [];
 
   return (
     <div className="relative flex flex-col min-h-dvh bg-background">

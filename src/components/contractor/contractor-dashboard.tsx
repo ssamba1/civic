@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { WorkOrderCard } from "./work-order-card";
 import type { ContractorWorkOrder } from "@/app/contractor/actions";
+import { WorkOrderCard } from "./work-order-card";
 
 interface Props {
   initialWorkOrders: ContractorWorkOrder[];

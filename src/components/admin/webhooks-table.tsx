@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { deleteWebhookAction, toggleWebhookAction } from "@/app/admin/webhooks/actions";
 import type { WebhookEndpointRow } from "@/app/admin/webhooks/actions";
+import {
+  deleteWebhookAction,
+  toggleWebhookAction,
+} from "@/app/admin/webhooks/actions";
 
 interface Props {
   endpoints: WebhookEndpointRow[];
@@ -32,9 +35,7 @@ export function WebhooksTable({ endpoints: initial }: Props) {
 
   if (endpoints.length === 0) {
     return (
-      <p className="text-sm text-zinc-500">
-        No endpoints registered yet.
-      </p>
+      <p className="text-sm text-zinc-500">No endpoints registered yet.</p>
     );
   }
 
@@ -43,10 +44,18 @@ export function WebhooksTable({ endpoints: initial }: Props) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-zinc-200 dark:border-zinc-700 text-left">
-            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">Label</th>
-            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">URL</th>
-            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">Events</th>
-            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">Status</th>
+            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">
+              Label
+            </th>
+            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">
+              URL
+            </th>
+            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">
+              Events
+            </th>
+            <th className="pb-2 pr-4 font-medium text-zinc-600 dark:text-zinc-400">
+              Status
+            </th>
             <th className="pb-2 font-medium text-zinc-600 dark:text-zinc-400" />
           </tr>
         </thead>

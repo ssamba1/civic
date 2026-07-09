@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
+import type { SsoConfigRow } from "./actions";
 import {
   deleteSsoConfigAction,
   listSsoConfigsAction,
   saveSsoConfigAction,
 } from "./actions";
-import type { SsoConfigRow } from "./actions";
 
 export default function AdminSsoPage() {
+  const formId = useId();
   const [configs, setConfigs] = useState<SsoConfigRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -93,10 +94,14 @@ export default function AdminSsoPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label
+                htmlFor={`${formId}-domain`}
+                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              >
                 Email domain
               </label>
               <input
+                id={`${formId}-domain`}
                 required
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
@@ -106,10 +111,14 @@ export default function AdminSsoPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label
+                htmlFor={`${formId}-entity`}
+                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              >
                 IdP Entity ID
               </label>
               <input
+                id={`${formId}-entity`}
                 required
                 value={entityId}
                 onChange={(e) => setEntityId(e.target.value)}
@@ -119,10 +128,14 @@ export default function AdminSsoPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label
+                htmlFor={`${formId}-url`}
+                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              >
                 SSO URL
               </label>
               <input
+                id={`${formId}-url`}
                 required
                 type="url"
                 value={ssoUrl}
@@ -133,10 +146,14 @@ export default function AdminSsoPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label
+                htmlFor={`${formId}-cert`}
+                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              >
                 x509 Certificate (PEM)
               </label>
               <textarea
+                id={`${formId}-cert`}
                 required
                 rows={6}
                 value={x509cert}

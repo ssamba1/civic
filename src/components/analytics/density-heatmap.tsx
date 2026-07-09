@@ -10,7 +10,6 @@
 
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type Map from "react-map-gl/maplibre";
 import { Map as MapGL } from "react-map-gl/maplibre";
 import type { HeatmapPoint, ViewportBounds } from "@/lib/analytics/heatmap";
 
@@ -70,7 +69,7 @@ function EmptyState() {
         viewBox="0 0 24 24"
         stroke="currentColor"
         strokeWidth={1.5}
-        aria-hidden
+        aria-hidden="true"
       >
         <path
           strokeLinecap="round"

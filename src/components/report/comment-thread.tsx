@@ -49,7 +49,7 @@ function CommentItem({ comment }: { comment: ReportComment }) {
   const isStaff = comment.author_role === "staff";
 
   return (
-    <div
+    <article
       className={`flex gap-3 ${isStaff ? "flex-row-reverse" : ""}`}
       aria-label={`Comment from ${comment.author_role}`}
     >
@@ -65,9 +65,13 @@ function CommentItem({ comment }: { comment: ReportComment }) {
         {isStaff ? "S" : "R"}
       </div>
 
-      <div className={`min-w-0 flex-1 ${isStaff ? "items-end" : "items-start"} flex flex-col`}>
+      <div
+        className={`min-w-0 flex-1 ${isStaff ? "items-end" : "items-start"} flex flex-col`}
+      >
         {/* Header */}
-        <div className={`mb-1 flex items-center gap-1.5 ${isStaff ? "flex-row-reverse" : ""}`}>
+        <div
+          className={`mb-1 flex items-center gap-1.5 ${isStaff ? "flex-row-reverse" : ""}`}
+        >
           <RoleBadge role={comment.author_role} />
           <time
             dateTime={comment.created_at}
@@ -94,7 +98,7 @@ function CommentItem({ comment }: { comment: ReportComment }) {
           {comment.body}
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -201,7 +205,10 @@ export default function CommentThread({
       )}
 
       {/* Add comment form */}
-      <form onSubmit={handleSubmit} className="mt-3 border-t border-hairline pt-4">
+      <form
+        onSubmit={handleSubmit}
+        className="mt-3 border-t border-hairline pt-4"
+      >
         <label htmlFor="comment-body" className="sr-only">
           Add a comment
         </label>
@@ -220,7 +227,10 @@ export default function CommentThread({
         />
 
         {error && (
-          <p role="alert" className="mt-1.5 text-[12px] text-[var(--color-error,#ef4444)]">
+          <p
+            role="alert"
+            className="mt-1.5 text-[12px] text-[var(--color-error,#ef4444)]"
+          >
             {error}
           </p>
         )}

@@ -2,11 +2,10 @@
 // Maps a raw record from CSV or SeeClickFix JSON to NormalizedReport.
 // Pure — no DB deps; unit-tested in normalize.test.ts.
 
-import type { ReportCategory, ReportStatus } from "@/lib/types";
-import type { NormalizedReport } from "@/lib/onboarding/ingest/types";
-import { parseCsvReports } from "@/lib/onboarding/ingest/csv";
 import type { CsvConfig } from "@/lib/onboarding/ingest/csv";
-import type { Result } from "@/lib/types";
+import { parseCsvReports } from "@/lib/onboarding/ingest/csv";
+import type { NormalizedReport } from "@/lib/onboarding/ingest/types";
+import type { ReportCategory, ReportStatus, Result } from "@/lib/types";
 
 export type ImportSource = "csv" | "seeclickfix_json";
 
@@ -77,9 +76,12 @@ const VALID_STATUSES: ReadonlySet<string> = new Set([
 ]);
 
 function mapScfStatus(raw: unknown): ReportStatus {
-  const s = String(raw ?? "").toLowerCase().replace(/\s+/g, "_");
+  const s = String(raw ?? "")
+    .toLowerCase()
+    .replace(/\s+/g, "_");
   if (VALID_STATUSES.has(s)) return s as ReportStatus;
-  const closed = s === "closed" || s === "archived" || s === "closed-unresolved";
+  const closed =
+    s === "closed" || s === "archived" || s === "closed-unresolved";
   return closed ? "closed" : "open";
 }
 
@@ -169,12 +171,11 @@ export function importFromText(
       return { ok: false, error: "invalid_json" };
     }
 
-    const rows: unknown[] =
-      Array.isArray(parsed)
-        ? parsed
-        : Array.isArray((parsed as Record<string, unknown>)?.issues)
-          ? (parsed as { issues: unknown[] }).issues
-          : [];
+    const rows: unknown[] = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray((parsed as Record<string, unknown>)?.issues)
+        ? (parsed as { issues: unknown[] }).issues
+        : [];
 
     if (rows.length === 0) {
       return { ok: true, data: [] };
@@ -183,7 +184,10 @@ export function importFromText(
     const out: NormalizedReport[] = [];
     for (const row of rows) {
       if (typeof row !== "object" || row === null) continue;
-      const normalized = mapLegacyRecord(row as Record<string, unknown>, source);
+      const normalized = mapLegacyRecord(
+        row as Record<string, unknown>,
+        source,
+      );
       if (normalized) out.push(normalized);
     }
     return { ok: true, data: out };

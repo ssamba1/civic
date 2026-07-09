@@ -14,7 +14,9 @@ interface RetentionFormProps {
 
 export function RetentionForm({ cityId, initial }: RetentionFormProps) {
   const [rawDays, setRawDays] = useState(String(initial.raw_photo_ttl_days));
-  const [freetextDays, setFreetextDays] = useState(String(initial.freetext_ttl_days));
+  const [freetextDays, setFreetextDays] = useState(
+    String(initial.freetext_ttl_days),
+  );
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isPending, startTransition] = useTransition();

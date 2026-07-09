@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { bulkUpdateReports } from "@/app/staff/bulk-actions";
-import { BULK_ACTIONS, type BulkAction } from "@/lib/staff/bulk";
 import { useToast } from "@/components/ui/toast";
+import { BULK_ACTIONS, type BulkAction } from "@/lib/staff/bulk";
 import { cn } from "@/lib/utils/cn";
 
 // ---------------------------------------------------------------------------
@@ -125,9 +125,7 @@ export function BulkActionBar({
       aria-label="Bulk actions"
     >
       {/* Selection count badge */}
-      <span className="font-semibold text-blue-700">
-        {count} selected
-      </span>
+      <span className="font-semibold text-blue-700">{count} selected</span>
 
       <div className="h-4 w-px bg-blue-200" aria-hidden />
 

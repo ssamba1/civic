@@ -1,11 +1,10 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import {
-  CONTRACTOR_STATUSES,
   CONTRACTOR_STATUS_LABEL,
+  CONTRACTOR_STATUSES,
   canTransition,
   validateProgressUpdate,
-  type ContractorStatus,
 } from "./status";
 
 const VALID_UUID = "123e4567-e89b-12d3-a456-426614174000";

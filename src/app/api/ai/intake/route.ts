@@ -15,8 +15,8 @@ import { NextResponse } from "next/server";
 import { AI_TIMEOUT_MS, GEMINI_MODEL } from "@/lib/ai/config";
 import {
   buildIntakePrompt,
-  parseIntakeResponse,
   type ChatMessage,
+  parseIntakeResponse,
 } from "@/lib/ai/intake-chat";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 import { checkAndRecordGeminiCall } from "@/lib/ai/rate-limiter";
@@ -116,7 +116,9 @@ export async function POST(request: Request) {
   // ── global Gemini budget ───────────────────────────────────────────────────
   const budget = checkAndRecordGeminiCall();
   if (!budget.allowed) {
-    logger.warn("Gemini rate limit hit on intake route", { reason: budget.reason });
+    logger.warn("Gemini rate limit hit on intake route", {
+      reason: budget.reason,
+    });
     // Fall back gracefully — don't surface "rate limited" to the resident.
     return NextResponse.json(scriptedFallback(messages));
   }
@@ -145,10 +147,7 @@ export async function POST(request: Request) {
     }));
 
     const abortController = new AbortController();
-    const timeoutId = setTimeout(
-      () => abortController.abort(),
-      AI_TIMEOUT_MS,
-    );
+    const timeoutId = setTimeout(() => abortController.abort(), AI_TIMEOUT_MS);
 
     let rawText: string;
     try {
