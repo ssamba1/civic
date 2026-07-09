@@ -40,6 +40,7 @@ import type {
   CategoryResolution,
   HeatCell,
   NeighborhoodVolume,
+  RecurringHotspot,
   ReporterVelocity,
   ResolutionBucket,
   SeveritySlice,
@@ -3766,3 +3767,70 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
 }
 
 export const ReporterVelocityCard = memo(ReporterVelocityCardInner);
+
+/* ==================================================================
+   Recurring hotspots (OUTFLANK #41 — recurring-problem detection)
+   ================================================================== */
+
+interface RecurringHotspotsProps {
+  data: RecurringHotspot[];
+}
+
+function RecurringHotspotsCardInner({ data }: RecurringHotspotsProps) {
+  const top = data.slice(0, 6);
+  const maxEpisodes = Math.max(1, ...top.map((h) => h.episodes));
+
+  return (
+    <Tile
+      title="Recurring hotspots"
+      subtitle={
+        data.length
+          ? `${data.length} repeat ${data.length === 1 ? "site" : "sites"}`
+          : undefined
+      }
+      className="lg:col-span-4"
+    >
+      {top.length === 0 ? (
+        <EmptyState message="No recurring problem sites yet" />
+      ) : (
+        <ul className="flex flex-col gap-2.5">
+          {top.map((h) => (
+            <li
+              key={`${h.category}-${h.lng.toFixed(4)}-${h.lat.toFixed(4)}`}
+              className="flex flex-col gap-1"
+            >
+              <div className="flex items-center justify-between gap-2 text-[13px]">
+                <span className="inline-flex items-center gap-2 min-w-0">
+                  <span
+                    className="h-2 w-2 rounded-full flex-shrink-0"
+                    style={{ background: h.color }}
+                    aria-hidden
+                  />
+                  <span className="truncate text-subtle">{h.label}</span>
+                </span>
+                <span className="tabular-nums text-faint flex-shrink-0">
+                  {h.episodes}× weeks · {h.total} reports
+                </span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-overlay">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${(h.episodes / maxEpisodes) * 100}%`,
+                    background: h.color,
+                    opacity: 0.8,
+                  }}
+                />
+              </div>
+              <span className="text-[11px] text-faint tabular-nums">
+                {h.open_count} still open · {h.first_seen} → {h.last_seen}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Tile>
+  );
+}
+
+export const RecurringHotspotsCard = memo(RecurringHotspotsCardInner);

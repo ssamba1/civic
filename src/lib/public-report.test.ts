@@ -70,6 +70,24 @@ describe("getPublicReport", () => {
     expect(getPublicReport(publicToken("e"))?.publicStatus).toBe("closed");
   });
 
+  it("estimates a fix-by date for open reports (filed + category SLA window)", () => {
+    // pothole SLA = 72h; filed 2026-06-01T00:00Z -> due 2026-06-04T00:00Z
+    corpus.reports = [
+      report({ id: "fb", status: "open", category: "pothole" }),
+    ];
+    const view = getPublicReport(publicToken("fb"));
+    expect(view?.estimatedFixBy).toBe("2026-06-04T00:00:00.000Z");
+  });
+
+  it("omits the fix-by date once resolved", () => {
+    corpus.reports = [
+      report({ id: "done", status: "closed", category: "pothole" }),
+    ];
+    expect(
+      getPublicReport(publicToken("done"))?.estimatedFixBy,
+    ).toBeUndefined();
+  });
+
   it("surfaces the resolution photo only when resolved", () => {
     corpus.reports = [
       report({

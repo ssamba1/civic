@@ -3,10 +3,12 @@ import "server-only";
 import { createHash } from "node:crypto";
 import {
   CATEGORY_META,
+  CATEGORY_SLA_TARGETS,
   type DashboardReport,
   getReportCorpus,
 } from "@/lib/dashboard-data";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
+import { HOUR_MS } from "@/lib/utils/time-constants";
 
 /* ==================================================================
    Public, account-less report status — the tokenized status page that lets an
@@ -58,8 +60,31 @@ export interface PublicReportView {
   filedAt: string;
   resolvedAt?: string;
   resolutionPhotoUrl?: string;
+  /**
+   * Target fix-by date for a still-open report (OUTFLANK #4). Uses the work
+   * order's stamped due_at when available (per-city SLA), else falls back to
+   * filed date + the category's SLA window. Omitted once resolved.
+   */
+  estimatedFixBy?: string;
   /** Real status history (report_updates) — live reports only, PII-safe. */
   updates?: PublicUpdate[];
+}
+
+// Fix-by estimate for a resident: nothing once resolved; otherwise the stamped
+// due_at (per-city SLA target) if present, else filed + category SLA window.
+function computeFixBy(
+  status: ReportStatus,
+  category: ReportCategory,
+  filedAt: string,
+  dueAt?: string | null,
+): string | undefined {
+  if (status === "closed" || status === "merged" || status === "rejected") {
+    return undefined;
+  }
+  if (dueAt) return dueAt;
+  const targetHours = CATEGORY_SLA_TARGETS[category];
+  if (!targetHours) return undefined;
+  return new Date(Date.parse(filedAt) + targetHours * HOUR_MS).toISOString();
 }
 
 // Internal lifecycle → the two-value-plus public surface. open/dispatched/
@@ -96,6 +121,11 @@ function toView(report: DashboardReport): PublicReportView {
     filedAt: report.created_at,
     resolvedAt: report.completed_at,
     resolutionPhotoUrl: report.afterPhoto,
+    estimatedFixBy: computeFixBy(
+      report.status,
+      report.category,
+      report.created_at,
+    ),
   };
 }
 
@@ -121,8 +151,16 @@ interface LiveTokenRow {
     | { category: ReportCategory | null }
     | null;
   work_orders:
-    | { completed_at: string | null; resolution_photo_url: string | null }[]
-    | { completed_at: string | null; resolution_photo_url: string | null }
+    | {
+        completed_at: string | null;
+        resolution_photo_url: string | null;
+        due_at: string | null;
+      }[]
+    | {
+        completed_at: string | null;
+        resolution_photo_url: string | null;
+        due_at: string | null;
+      }
     | null;
   report_updates:
     | { status: ReportStatus; note: string | null; created_at: string }[]
@@ -156,7 +194,7 @@ export async function resolvePublicReport(
     const { data, error } = await db
       .from("reports")
       .select(
-        "id, status, address, photo_public_url, created_at, classifications ( category ), work_orders ( completed_at, resolution_photo_url ), report_updates ( status, note, created_at )",
+        "id, status, address, photo_public_url, created_at, classifications ( category ), work_orders ( completed_at, resolution_photo_url, due_at ), report_updates ( status, note, created_at )",
       )
       .eq("public_token", token)
       .maybeSingle<LiveTokenRow>();
@@ -185,6 +223,12 @@ export async function resolvePublicReport(
       filedAt: data.created_at,
       resolvedAt: wo?.completed_at ?? undefined,
       resolutionPhotoUrl: wo?.resolution_photo_url ?? undefined,
+      estimatedFixBy: computeFixBy(
+        data.status,
+        category,
+        data.created_at,
+        wo?.due_at,
+      ),
       updates: (data.report_updates ?? [])
         .slice()
         .sort((a, b) => a.created_at.localeCompare(b.created_at))
