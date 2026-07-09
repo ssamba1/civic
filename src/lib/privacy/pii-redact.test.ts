@@ -156,3 +156,37 @@ describe("redactPII – false-positive guards", () => {
     expect(redacted).toBe(text);
   });
 });
+
+describe("redactPII – ReDoS / adversarial input", () => {
+  it("completes within 500 ms on a 50k-char adversarial address-like string", () => {
+    // Construct a string designed to stress ADDRESS_RE: many capitalised words
+    // separated by spaces with no valid street suffix, forcing backtracking.
+    const chunk = "Aaaa Bbbb Cccc Dddd Eeee Ffff Gggg Hhhh Iiii Jjjj ";
+    const adversarial = chunk.repeat(1000); // ~51 000 chars
+    const start = Date.now();
+    const { redacted } = redactPII(adversarial);
+    const elapsed = Date.now() - start;
+    expect(elapsed).toBeLessThan(500);
+    // No spurious redactions
+    expect(redacted).not.toContain("[ADDRESS]");
+  });
+
+  it("still redacts phone PII appearing in the first 10k chars of a large string", () => {
+    const pii = "Call 800-555-1234 for help. ";
+    const padding = "x".repeat(50_000);
+    const input = pii + padding;
+    const { redacted, spans } = redactPII(input);
+    expect(spans.some((s) => s.type === "PHONE")).toBe(true);
+    expect(redacted).toContain("[PHONE]");
+  });
+
+  it("passes text beyond 10k chars through unmodified", () => {
+    const prefix = "Normal text. ";
+    // Fill exactly past the 10k boundary
+    const body = "a".repeat(10_000 - prefix.length);
+    const suffix = " tail content";
+    const input = prefix + body + suffix;
+    const { redacted } = redactPII(input);
+    expect(redacted.endsWith(suffix)).toBe(true);
+  });
+});

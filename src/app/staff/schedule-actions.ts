@@ -117,7 +117,10 @@ export async function scheduleWorkOrder(
 
   // City-scope guard: the staff user may only modify work orders that belong to
   // their city. We verify via the reports join (same pattern as actions.ts).
-  if (staff.city_id) {
+  // Fail closed: a staffer with no city_id has no city scope, so no access
+  // (matches the workOrderInStaffCity/reportInStaffCity convention in actions.ts).
+  if (!staff.city_id) return { ok: false, error: "forbidden" };
+  {
     const { data: wo } = await db
       .from("work_orders")
       .select("id, reports!inner(city_id)")
@@ -171,7 +174,10 @@ export async function unscheduleWorkOrder(
     return { ok: false, error: "feature_not_migrated" };
   }
 
-  if (staff.city_id) {
+  // Fail closed: a staffer with no city_id has no city scope, so no access
+  // (matches the workOrderInStaffCity/reportInStaffCity convention in actions.ts).
+  if (!staff.city_id) return { ok: false, error: "forbidden" };
+  {
     const { data: wo } = await db
       .from("work_orders")
       .select("id, reports!inner(city_id)")

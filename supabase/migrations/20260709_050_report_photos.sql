@@ -8,7 +8,7 @@
 -- (including the primary at idx 0). Single-photo submissions still work.
 -- =============================================================================
 
-CREATE TABLE report_photos (
+CREATE TABLE IF NOT EXISTS report_photos (
   id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   report_id    uuid        NOT NULL REFERENCES reports (id) ON DELETE CASCADE,
   idx          int         NOT NULL,          -- 0-based; idx 0 mirrors the primary

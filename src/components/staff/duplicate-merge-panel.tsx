@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import {
   findDuplicateCandidates,
   mergeReports,
@@ -229,12 +229,17 @@ export default function DuplicateMergePanel({
     });
   }, [reportId]);
 
-  // Load on first render if no initialCandidates provided.
-  const [didLoad, setDidLoad] = useState(false);
-  if (!didLoad && !initialCandidates) {
-    setDidLoad(true);
-    loadCandidates();
-  }
+  // Load on first mount if no initialCandidates provided.
+  // Previously this was a render-phase setState (fired during render body),
+  // which caused a double DB call under React strict mode due to the
+  // double-invoke of render functions.  A useEffect with an empty dep array
+  // runs once after mount and is the correct pattern for one-time side effects.
+  useEffect(() => {
+    if (!initialCandidates) {
+      loadCandidates();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleMergeClick = (candidate: ScoredCandidate) => {
     setConfirmTarget(candidate);

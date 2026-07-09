@@ -3,7 +3,8 @@
 -- Staff can activate surge mode to automatically reprioritise affected reports.
 
 CREATE TABLE IF NOT EXISTS surge_state (
-  city_id     TEXT        NOT NULL,
+  -- uuid to match cities.id — a TEXT column would fail the FK type check.
+  city_id     uuid        NOT NULL,
   active      BOOLEAN     NOT NULL DEFAULT FALSE,
   categories  TEXT[]      NOT NULL DEFAULT '{}',
   reason      TEXT        NOT NULL DEFAULT '',

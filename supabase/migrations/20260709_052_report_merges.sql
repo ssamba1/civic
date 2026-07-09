@@ -126,7 +126,13 @@ AS $$
   LIMIT 20;
 $$;
 
+-- Service role ONLY. This RPC returns other users' report addresses + phash
+-- within a radius; granting it to `authenticated` would let any resident
+-- enumerate nearby reporters' addresses. The staff merge action calls it via
+-- the service-role client after its own is_staff() check.
 GRANT EXECUTE ON FUNCTION public.find_staff_duplicate_candidates(uuid, numeric, int)
-  TO authenticated, service_role;
+  TO service_role;
+REVOKE EXECUTE ON FUNCTION public.find_staff_duplicate_candidates(uuid, numeric, int)
+  FROM authenticated, public;
 
 COMMIT;

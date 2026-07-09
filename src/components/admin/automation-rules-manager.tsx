@@ -45,15 +45,26 @@ const CATEGORIES = [
 ];
 
 // ---------------------------------------------------------------------------
+// Stable-id helpers
+// ---------------------------------------------------------------------------
+
+// Module-level counter for generating stable row ids.  Using a simple
+// incrementing integer avoids Math.random/Date.now (banned) while still
+// producing unique keys within the page lifecycle.  Read-only display chips
+// in RulesTable can stay index-keyed because they are never reordered in place.
+let _seq = 0;
+function nextId() { return ++_seq; }
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function defaultCondition(): Condition {
-  return { field: "category", op: "eq", value: "pothole" };
+function defaultCondition(): Condition & { _id: number } {
+  return { _id: nextId(), field: "category", op: "eq", value: "pothole" };
 }
 
-function defaultAction(): Action {
-  return { type: "set_priority", value: "medium" };
+function defaultAction(): Action & { _id: number } {
+  return { _id: nextId(), type: "set_priority", value: "medium" };
 }
 
 function conditionValueInput(
@@ -177,35 +188,41 @@ interface BuilderProps {
   onCreated: (rule: AutomationRuleRow) => void;
 }
 
+type ConditionWithId = Condition & { _id: number };
+type ActionWithId = Action & { _id: number };
+
 function RuleBuilderForm({ cityId, onCreated }: BuilderProps) {
   const [name, setName] = useState("");
   const [priority, setPriority] = useState(0);
-  const [conditions, setConditions] = useState<Condition[]>([defaultCondition()]);
-  const [actions, setActions] = useState<Action[]>([defaultAction()]);
+  const [conditions, setConditions] = useState<ConditionWithId[]>([defaultCondition()]);
+  const [actions, setActions] = useState<ActionWithId[]>([defaultAction()]);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   function updateCondition(i: number, patch: Partial<Condition>) {
     setConditions((prev) =>
-      prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c)),
+      prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c)) as ConditionWithId[],
     );
   }
   function updateAction(i: number, patch: Partial<Action>) {
     setActions((prev) =>
-      prev.map((a, idx) => (idx === i ? { ...a, ...patch } : a)),
+      prev.map((a, idx) => (idx === i ? { ...a, ...patch } : a)) as ActionWithId[],
     );
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    // Strip UI-only _id fields before sending to the server action.
+    const plainConditions: Condition[] = conditions.map(({ _id: _ignored, ...c }) => c);
+    const plainActions: Action[] = actions.map(({ _id: _ignored, ...a }) => a);
     startTransition(async () => {
       const result = await createRuleAction({
         cityId,
         name,
         priority,
-        conditions,
-        actions,
+        conditions: plainConditions,
+        actions: plainActions,
       });
       if (!result.ok) {
         setError(result.error);
@@ -222,8 +239,8 @@ function RuleBuilderForm({ cityId, onCreated }: BuilderProps) {
         name,
         enabled: true,
         priority,
-        conditions,
-        actions,
+        conditions: plainConditions,
+        actions: plainActions,
       });
     });
   }
@@ -260,14 +277,14 @@ function RuleBuilderForm({ cityId, onCreated }: BuilderProps) {
           <button
             type="button"
             className="text-xs text-blue-600 hover:text-blue-800"
-            onClick={() => setConditions((prev) => [...prev, defaultCondition()])}
+            onClick={() => setConditions((prev) => [...prev, defaultCondition() as ConditionWithId])}
           >
             + Add condition
           </button>
         </div>
         <div className="space-y-2">
           {conditions.map((cond, i) => (
-            <div key={i} className="flex items-center gap-2">
+            <div key={cond._id} className="flex items-center gap-2">
               <select
                 className={inputCls}
                 value={cond.field}
@@ -313,14 +330,14 @@ function RuleBuilderForm({ cityId, onCreated }: BuilderProps) {
           <button
             type="button"
             className="text-xs text-blue-600 hover:text-blue-800"
-            onClick={() => setActions((prev) => [...prev, defaultAction()])}
+            onClick={() => setActions((prev) => [...prev, defaultAction() as ActionWithId])}
           >
             + Add action
           </button>
         </div>
         <div className="space-y-2">
           {actions.map((action, i) => (
-            <div key={i} className="flex items-center gap-2">
+            <div key={(action as ActionWithId)._id} className="flex items-center gap-2">
               <select
                 className={inputCls}
                 value={action.type}

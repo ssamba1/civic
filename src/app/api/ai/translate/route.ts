@@ -3,6 +3,7 @@ import {
   isLangCode,
   translateText,
 } from "@/lib/ai/translate";
+import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 
 /* ==================================================================
    POST /api/ai/translate (NEXT_100 #9 / #31)
@@ -20,6 +21,19 @@ import {
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  // ── per-IP rate limit ──────────────────────────────────────────────────────
+  const ip = clientIp(request);
+  const rl = checkRateLimit(`translate:${ip}`);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests — please wait a moment." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)) },
+      },
+    );
+  }
+
   let body: unknown;
   try {
     body = await request.json();

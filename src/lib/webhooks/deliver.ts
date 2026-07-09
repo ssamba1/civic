@@ -36,7 +36,12 @@ async function deliverOne(
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const res = await fetch(url, { method: "POST", headers, body });
+      const res = await fetch(url, {
+        method: "POST",
+        headers,
+        body,
+        signal: AbortSignal.timeout(10_000),
+      });
       if (res.ok) return { ok: true, status: res.status };
       // 4xx = caller error; don't retry (except 429)
       if (res.status !== 429 && res.status < 500) {
@@ -115,7 +120,15 @@ export async function emitWebhook(
       if (!result.ok) {
         logger.warn(`Webhook delivery failed for endpoint ${ep.id}`, result);
       } else {
-        logger.info(`Webhook delivered to ${ep.id} (${ep.url})`);
+        // Strip query string from logged URL to avoid leaking secrets/tokens.
+        let safeUrl = ep.url;
+        try {
+          const u = new URL(ep.url);
+          safeUrl = u.origin + u.pathname;
+        } catch {
+          // unparseable — log as-is (already a non-sensitive fallback)
+        }
+        logger.info(`Webhook delivered to ${ep.id} (${safeUrl})`);
       }
     }),
   );

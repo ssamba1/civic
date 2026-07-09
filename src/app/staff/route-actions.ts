@@ -141,7 +141,9 @@ export async function getOptimizedRouteForCrew(
   }
 
   // City-scope guard: verify the crew belongs to the staffer's city.
-  if (staff.city_id) {
+  // Fail closed when the staffer has no city_id (matches actions.ts convention).
+  if (!staff.city_id) return { ok: false, error: "crew_not_found" };
+  {
     const { data: crew } = await db
       .from("crews")
       .select("id, city_id")

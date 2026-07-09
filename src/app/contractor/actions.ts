@@ -48,8 +48,8 @@ async function resolveContractorId(): Promise<string | null> {
     .from("contractors")
     .select("id")
     .eq("active", true)
-    // Case-insensitive email match (mirrors the DB index on LOWER(email))
-    .ilike("email", user.email)
+    // Exact match on normalized email (DB has UNIQUE + LOWER(email) index)
+    .eq("email", user.email.toLowerCase())
     .maybeSingle<{ id: string }>();
 
   if (error) {

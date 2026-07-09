@@ -82,14 +82,35 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     if (!Array.isArray(body?.messages)) {
-      return NextResponse.json(
-        { error: "messages must be an array" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "invalid_request" }, { status: 400 });
     }
-    messages = body.messages as ChatMessage[];
+    const raw: unknown[] = body.messages;
+
+    // Validate length bounds
+    if (raw.length === 0 || raw.length > 20) {
+      return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+    }
+
+    // PROMPT-INJECTION FIX: only accept user-role messages from the client.
+    // Server-side assistant turns are injected by buildIntakePrompt; we never
+    // trust assistant/model turns supplied by the caller.
+    for (const msg of raw) {
+      if (
+        typeof msg !== "object" ||
+        msg === null ||
+        (msg as Record<string, unknown>).role !== "user" ||
+        typeof (msg as Record<string, unknown>).content !== "string"
+      ) {
+        return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+      }
+      if (((msg as Record<string, unknown>).content as string).length > 2000) {
+        return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+      }
+    }
+
+    messages = raw as ChatMessage[];
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
 
   // ── global Gemini budget ───────────────────────────────────────────────────

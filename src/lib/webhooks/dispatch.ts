@@ -2,7 +2,7 @@
 // Pure functions: buildWebhookPayload + signPayload.
 // No DB deps — safe to import in both server and test contexts.
 
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import type { ReportStatus } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
@@ -71,7 +71,6 @@ export function verifySignature(
   secret: string,
   receivedHex: string,
 ): boolean {
-  const { timingSafeEqual } = require("node:crypto") as typeof import("node:crypto");
   const expected = Buffer.from(signPayload(payload, secret), "hex");
   let received: Buffer;
   try {

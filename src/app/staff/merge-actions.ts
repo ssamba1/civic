@@ -107,8 +107,8 @@ export async function findDuplicateCandidates(
   }
   if (!target) return { ok: false, error: "Report not found" };
 
-  // City-scope guard.
-  if (target.city_id !== staff.city_id && staff.city_id !== null) {
+  // City-scope guard — fail closed on null city_id (actions.ts convention).
+  if (!staff.city_id || target.city_id !== staff.city_id) {
     return { ok: false, error: "Unauthorized: report not in your city" };
   }
 
@@ -209,8 +209,15 @@ export async function mergeReports(
   if (!merged) return { ok: false, error: "Merged report not found" };
 
   // City-scope guard (service-role bypasses RLS; manual check required).
-  if (staff.city_id && canonical.city_id !== staff.city_id) {
-    return { ok: false, error: "Unauthorized: canonical report not in your city" };
+  // Fail closed on null city_id, and verify BOTH reports belong to the
+  // staffer's city — otherwise a staffer could pull a foreign-city report into
+  // one of their own (canMerge also blocks cross-city, this is defense in depth).
+  if (
+    !staff.city_id ||
+    canonical.city_id !== staff.city_id ||
+    merged.city_id !== staff.city_id
+  ) {
+    return { ok: false, error: "Unauthorized: report not in your city" };
   }
 
   const guard = canMerge(

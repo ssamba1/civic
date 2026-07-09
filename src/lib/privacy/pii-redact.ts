@@ -51,23 +51,29 @@ const EMAIL_RE =
  *   Parens: (800) 555-1234 or (800)555-1234
  *   With country code: +1 800-555-1234
  * Guard: SSN already consumed ddd-dd-dddd, so remaining ddd-ddd-dddd is safe.
+ * Digit groups use exact counts so the engine cannot backtrack pathologically.
  */
 const PHONE_RE =
   /(?<![/\w@])(\+?1[\s\-.]?)?(\(?\d{3}\)?[\s\-.]?\d{3}[\s\-.]?\d{4})(?!\d)/g;
 
 /**
- * Street addresses: one or more digits followed by a street name (1+ words)
+ * Street addresses: one or more digits followed by a street name (1–4 words)
  * and a recognised suffix.  Guards:
  *  - Requires the digit token to start at a word boundary (not mid-URL).
  *  - Won't match a lone ordinal like "42nd Street" without a preceding number
  *    (the pattern requires at least one pure digit cluster).
  *  - "42nd Street" with no house number → no match (no leading bare-digit group).
+ *
+ * ReDoS hardening: the original `([A-Z][a-zA-Z'\-]*\s+){1,4}` allowed the
+ * engine to try many splits when the suffix didn't match.  Fixed by bounding
+ * each word to 20 chars and using a non-capturing group so there is no
+ * sub-expression overlap with the surrounding quantifier.
  */
 const STREET_SUFFIXES =
   "St(?:reet)?|Ave(?:nue)?|Rd|Road|Blvd|Boulevard|Dr(?:ive)?|Ln|Lane|Way|Ct|Court|Pl(?:ace)?|Terr(?:ace)?|Ter|Cir(?:cle)?|Pkwy|Parkway|Hwy|Highway";
 
 const ADDRESS_RE = new RegExp(
-  `(?<![\\w/])(\\d+\\s+(?:[A-Z][a-zA-Z'\\-]*\\s+){1,4}(?:${STREET_SUFFIXES})(?:\\s+(?:Apt|Ste|Suite|Unit|#)\\s*[\\w\\-]+)?)(?![\\w/])`,
+  `(?<![\\w/])(\\d+\\s+(?:[A-Z][a-zA-Z'\\-]{0,20}\\s+){1,4}(?:${STREET_SUFFIXES})(?:\\s+(?:Apt|Ste|Suite|Unit|#)\\s*[\\w\\-]+)?)(?![\\w/])`,
   "g",
 );
 
@@ -100,16 +106,25 @@ interface RawMatch {
  * Overlapping matches are skipped (first-match wins by start index).
  */
 export function redactPII(text: string): RedactResult {
+  // ReDoS safety: cap the string fed to regexes.  Adversarial inputs longer
+  // than 10 000 chars can cause catastrophic backtracking on ADDRESS_RE even
+  // after per-word length bounds.  We match only the first 10 000 chars and
+  // append the remainder verbatim so that legitimate PII near the start is
+  // still redacted while the worst-case regex work stays O(1) in input length.
+  const MATCH_LIMIT = 10_000;
+  const matchText = text.length > MATCH_LIMIT ? text.slice(0, MATCH_LIMIT) : text;
+  const tail = text.length > MATCH_LIMIT ? text.slice(MATCH_LIMIT) : "";
+
   const raw: RawMatch[] = [];
 
   function collect(re: RegExp, type: string) {
     re.lastIndex = 0;
     let m: RegExpExecArray | null;
-    while ((m = re.exec(text)) !== null) {
+    while ((m = re.exec(matchText)) !== null) {
       const start = m.index;
       const original = m[0];
       const end = start + original.length;
-      if (!insideUrl(text, start)) {
+      if (!insideUrl(matchText, start)) {
         raw.push({ start, end, original, type });
       }
     }
@@ -132,19 +147,20 @@ export function redactPII(text: string): RedactResult {
     cursor = m.end;
   }
 
-  // Build output.
+  // Build output (over the bounded match window, then append the raw tail).
   const spans: RedactedSpan[] = [];
   let result = "";
   let pos = 0;
 
   for (const m of merged) {
-    result += text.slice(pos, m.start);
+    result += matchText.slice(pos, m.start);
     const placeholder = `[${m.type}]`;
     spans.push({ start: result.length, end: result.length + placeholder.length, type: m.type, original: m.original });
     result += placeholder;
     pos = m.end;
   }
-  result += text.slice(pos);
+  result += matchText.slice(pos);
+  result += tail; // characters beyond MATCH_LIMIT passed through unmodified
 
   return { redacted: result, spans };
 }

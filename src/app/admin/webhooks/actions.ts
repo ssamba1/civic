@@ -8,7 +8,11 @@ import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
 import { DEMO_MODE } from "@/lib/demo-mode";
+import { createLogger } from "@/lib/logger";
 import type { Result } from "@/lib/types";
+import { isBlockedWebhookHost } from "@/lib/webhooks/url-guard";
+
+const logger = createLogger("[webhooks/actions]");
 
 // Mirror the requireAdmin pattern from admin/onboard/actions.ts
 async function requireAdmin(): Promise<boolean> {
@@ -78,6 +82,18 @@ export async function registerWebhookAction(input: {
     };
   }
 
+  // SSRF guard: reject URLs pointing at internal/private hosts.
+  // DNS-rebinding is a residual risk (the hostname could resolve to a private IP
+  // after this check) — acceptable for MVP.
+  try {
+    const { hostname } = new URL(parsed.data.url);
+    if (isBlockedWebhookHost(hostname)) {
+      return { ok: false, error: "url_not_allowed" };
+    }
+  } catch {
+    return { ok: false, error: "url_not_allowed" };
+  }
+
   // Generate a random secret — shown once to the admin
   const secret = `whsec_${randomBytes(32).toString("hex")}`;
 
@@ -95,7 +111,8 @@ export async function registerWebhookAction(input: {
     .single();
 
   if (error || !data) {
-    return { ok: false, error: error?.message ?? "insert_failed" };
+    logger.error("webhook register db error", error);
+    return { ok: false, error: "db_error" };
   }
 
   revalidatePath("/admin/webhooks");
@@ -116,7 +133,10 @@ export async function deleteWebhookAction(
     .delete()
     .eq("id", parsed.data);
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    logger.error("webhook delete db error", error);
+    return { ok: false, error: "db_error" };
+  }
   revalidatePath("/admin/webhooks");
   return { ok: true, data: undefined };
 }
@@ -136,7 +156,10 @@ export async function toggleWebhookAction(
     .update({ active })
     .eq("id", parsed.data);
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    logger.error("webhook toggle db error", error);
+    return { ok: false, error: "db_error" };
+  }
   revalidatePath("/admin/webhooks");
   return { ok: true, data: undefined };
 }
@@ -152,6 +175,9 @@ export async function listWebhooksAction(): Promise<
     .select("id, label, url, city_id, events, active, created_at")
     .order("created_at", { ascending: false });
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    logger.error("webhook list db error", error);
+    return { ok: false, error: "db_error" };
+  }
   return { ok: true, data: (data ?? []) as WebhookEndpointRow[] };
 }

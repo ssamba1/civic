@@ -2,13 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
+import { z } from "zod";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { validateRule } from "@/lib/automation/rules";
+import { createLogger } from "@/lib/logger";
 import type { AutomationRule, Condition, Action } from "@/lib/automation/rules";
 import type { Result } from "@/lib/types";
+
+const log = createLogger("admin-automation-actions");
 
 // ---------------------------------------------------------------------------
 // Admin guard — mirrors pattern from admin/webhooks/actions.ts
@@ -49,15 +53,21 @@ export async function listRulesAction(
 ): Promise<Result<AutomationRuleRow[]>> {
   if (!(await requireAdmin())) return { ok: false, error: "unauthorized" };
 
+  const parsedCityId = z.string().uuid().safeParse(cityId);
+  if (!parsedCityId.success) return { ok: false, error: "invalid_id" };
+
   try {
     const db = createServerClient();
     const { data, error } = await db
       .from("automation_rules")
       .select("*")
-      .eq("city_id", cityId)
+      .eq("city_id", parsedCityId.data)
       .order("priority", { ascending: true });
 
-    if (error) return { ok: false, error: error.message };
+    if (error) {
+      log.error("listRulesAction query failed", error, { cityId });
+      return { ok: false, error: "db_error" };
+    }
     return { ok: true, data: (data ?? []) as AutomationRuleRow[] };
   } catch (err) {
     // Graceful degrade if table doesn't exist yet
@@ -65,7 +75,8 @@ export async function listRulesAction(
     if (msg.includes("relation") && msg.includes("does not exist")) {
       return { ok: true, data: [] };
     }
-    return { ok: false, error: msg };
+    log.error("listRulesAction threw", err, { cityId });
+    return { ok: false, error: "db_error" };
   }
 }
 
@@ -81,6 +92,9 @@ export async function createRuleAction(input: {
 }): Promise<Result<{ id: string }>> {
   if (!(await requireAdmin())) return { ok: false, error: "unauthorized" };
 
+  const parsedCityId = z.string().uuid().safeParse(input.cityId);
+  if (!parsedCityId.success) return { ok: false, error: "invalid_id" };
+
   const validation = validateRule({
     name: input.name,
     conditions: input.conditions,
@@ -93,7 +107,7 @@ export async function createRuleAction(input: {
     const { data, error } = await db
       .from("automation_rules")
       .insert({
-        city_id: input.cityId,
+        city_id: parsedCityId.data,
         name: input.name.trim(),
         priority: input.priority ?? 0,
         conditions: input.conditions,
@@ -103,12 +117,16 @@ export async function createRuleAction(input: {
       .select("id")
       .single();
 
-    if (error || !data) return { ok: false, error: error?.message ?? "insert_failed" };
+    if (error || !data) {
+      if (error) log.error("createRuleAction insert failed", error, { cityId: input.cityId });
+      return { ok: false, error: "db_error" };
+    }
 
     revalidatePath("/admin/automation");
     return { ok: true, data: { id: data.id as string } };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    log.error("createRuleAction threw", err, { cityId: input.cityId });
+    return { ok: false, error: "db_error" };
   }
 }
 
@@ -127,6 +145,9 @@ export async function updateRuleAction(
 ): Promise<Result<void>> {
   if (!(await requireAdmin())) return { ok: false, error: "unauthorized" };
 
+  const parsed = z.string().uuid().safeParse(id);
+  if (!parsed.success) return { ok: false, error: "invalid_id" };
+
   // Validate if conditions/actions are being updated
   if (input.conditions !== undefined || input.actions !== undefined) {
     // We need name too — fetch it if not provided
@@ -136,7 +157,7 @@ export async function updateRuleAction(
       const { data } = await db
         .from("automation_rules")
         .select("name")
-        .eq("id", id)
+        .eq("id", parsed.data)
         .maybeSingle<{ name: string }>();
       name = data?.name ?? "rule";
     }
@@ -160,14 +181,18 @@ export async function updateRuleAction(
     const { error } = await db
       .from("automation_rules")
       .update(updates)
-      .eq("id", id);
+      .eq("id", parsed.data);
 
-    if (error) return { ok: false, error: error.message };
+    if (error) {
+      log.error("updateRuleAction failed", error, { id });
+      return { ok: false, error: "db_error" };
+    }
 
     revalidatePath("/admin/automation");
     return { ok: true, data: undefined };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    log.error("updateRuleAction threw", err, { id });
+    return { ok: false, error: "db_error" };
   }
 }
 
@@ -180,19 +205,26 @@ export async function toggleRuleAction(
 ): Promise<Result<void>> {
   if (!(await requireAdmin())) return { ok: false, error: "unauthorized" };
 
+  const parsed = z.string().uuid().safeParse(id);
+  if (!parsed.success) return { ok: false, error: "invalid_id" };
+
   try {
     const db = createServerClient();
     const { error } = await db
       .from("automation_rules")
       .update({ enabled })
-      .eq("id", id);
+      .eq("id", parsed.data);
 
-    if (error) return { ok: false, error: error.message };
+    if (error) {
+      log.error("toggleRuleAction failed", error, { id });
+      return { ok: false, error: "db_error" };
+    }
 
     revalidatePath("/admin/automation");
     return { ok: true, data: undefined };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    log.error("toggleRuleAction threw", err, { id });
+    return { ok: false, error: "db_error" };
   }
 }
 
@@ -202,18 +234,25 @@ export async function toggleRuleAction(
 export async function deleteRuleAction(id: string): Promise<Result<void>> {
   if (!(await requireAdmin())) return { ok: false, error: "unauthorized" };
 
+  const parsed = z.string().uuid().safeParse(id);
+  if (!parsed.success) return { ok: false, error: "invalid_id" };
+
   try {
     const db = createServerClient();
     const { error } = await db
       .from("automation_rules")
       .delete()
-      .eq("id", id);
+      .eq("id", parsed.data);
 
-    if (error) return { ok: false, error: error.message };
+    if (error) {
+      log.error("deleteRuleAction failed", error, { id });
+      return { ok: false, error: "db_error" };
+    }
 
     revalidatePath("/admin/automation");
     return { ok: true, data: undefined };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    log.error("deleteRuleAction threw", err, { id });
+    return { ok: false, error: "db_error" };
   }
 }
