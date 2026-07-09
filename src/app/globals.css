@@ -26,7 +26,7 @@
   --background: #f7f7f8;
   --foreground: #141415; /* primary text  (was text-white / zinc-100) */
   --subtle: #52525b; /* secondary text (was zinc-300 / zinc-400) */
-  --faint: #6f6f76; /* tertiary text — holds WCAG AA (≥4.5:1) as 11–13px functional copy on both --background #f7f7f8 and --surface #fff */
+  --faint: #67676e; /* tertiary text — holds WCAG AA (≥4.5:1) as 11–13px functional copy on --background #f7f7f8, --surface #fff, AND the #ededee raised/overlay wash (darkened from #6f6f76 which was only 4.26:1 on #ededee) */
 
   /* surfaces */
   --surface: #ffffff; /* cards / panels (was #1c1c1e / zinc-900)   */

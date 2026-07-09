@@ -82,7 +82,14 @@ export function TeamPicker({
         </span>
         <span
           className="truncate"
-          style={{ maxWidth: labelMaxWidth, color: team.color }}
+          // Darken the brand hue ~32% for the label text so it clears WCAG AA
+          // (≥4.5:1) on the light surface — several team colors (e.g. #ad8434,
+          // #b0574c, #7c6f9c) fail as small text at full brightness. The icon
+          // tint chip (line 79) keeps the full brand color.
+          style={{
+            maxWidth: labelMaxWidth,
+            color: `color-mix(in srgb, ${team.color}, #000 32%)`,
+          }}
         >
           {team.shortLabel}
         </span>

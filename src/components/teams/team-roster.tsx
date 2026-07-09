@@ -226,7 +226,7 @@ function TeamCard({
           with its own pointer events, so it intercepts the click. */}
       <Link
         href={`/city/${citySlug}/team/${workload.teamId}`}
-        aria-label={`View ${team.label} dashboard`}
+        aria-label={`View team dashboard for ${team.label}`}
         className={cn(
           "relative z-10 mt-0.5 flex w-full items-center justify-between gap-1 rounded-lg px-2.5 py-1.5",
           "border border-hairline bg-overlay text-[11px] font-medium text-subtle",
