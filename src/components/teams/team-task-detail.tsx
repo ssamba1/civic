@@ -171,6 +171,7 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
   const { markDone, reopen } = useTaskCompletion();
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
   const [actualCost, setActualCost] = useState("");
+  const [closureReason, setClosureReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -210,19 +211,34 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
       setError("Enter the actual cost spent (a dollar amount above zero).");
       return;
     }
+    // No-generic-closures (#5): a resolution reason and an after-photo are both
+    // required before the reporter gets a resolution notice.
+    if (!closureReason.trim()) {
+      setError("Enter what was done to resolve this — the reporter sees it.");
+      return;
+    }
+    if (!pendingPhoto) {
+      setError("Add an after photo before marking this done.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
       const result = await closeReportWorkOrder(
         report.id,
         Math.round(cost * 100) / 100,
+        closureReason.trim(),
         pendingPhoto ?? undefined,
       );
       if (!result.ok) {
         setError(
           result.error === "work_order_not_found"
             ? "No work order exists for this report yet — dispatch it first."
-            : result.error,
+            : result.error === "after_photo_required"
+              ? "Add an after photo before marking this done."
+              : result.error === "closure_reason_required"
+                ? "Enter what was done to resolve this — the reporter sees it."
+                : result.error,
         );
         return;
       }
@@ -231,6 +247,7 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
       markDone(report, pendingPhoto ?? undefined);
       setPendingPhoto(null);
       setActualCost("");
+      setClosureReason("");
     } finally {
       setBusy(false);
     }
@@ -333,23 +350,42 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
           </label>
 
           {!DEMO_MODE && (
-            <label className="flex flex-col gap-1.5">
-              <span className="text-[12px] font-medium text-subtle">
-                Actual cost spent ($) <span aria-hidden="true">*</span>
-              </span>
-              <input
-                type="number"
-                inputMode="decimal"
-                min="0"
-                step="0.01"
-                required
-                value={actualCost}
-                onChange={(e) => setActualCost(e.target.value)}
-                placeholder="e.g. 240"
-                aria-label="Actual cost spent in dollars"
-                className="h-11 rounded-[var(--radius-md)] border border-hairline-strong bg-overlay px-3 text-[14px] text-foreground placeholder:text-faint focus-visible:outline-2 focus-visible:outline-[var(--color-primary)]"
-              />
-            </label>
+            <>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[12px] font-medium text-subtle">
+                  Actual cost spent ($) <span aria-hidden="true">*</span>
+                </span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  required
+                  value={actualCost}
+                  onChange={(e) => setActualCost(e.target.value)}
+                  placeholder="e.g. 240"
+                  aria-label="Actual cost spent in dollars"
+                  className="h-11 rounded-[var(--radius-md)] border border-hairline-strong bg-overlay px-3 text-[14px] text-foreground placeholder:text-faint focus-visible:outline-2 focus-visible:outline-[var(--color-primary)]"
+                />
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[12px] font-medium text-subtle">
+                  What was done <span aria-hidden="true">*</span>
+                </span>
+                <textarea
+                  rows={2}
+                  required
+                  value={closureReason}
+                  onChange={(e) => setClosureReason(e.target.value)}
+                  placeholder="e.g. Filled and compacted the pothole; repaved the patch."
+                  aria-label="What was done to resolve this report"
+                  className="resize-none rounded-[var(--radius-md)] border border-hairline-strong bg-overlay px-3 py-2 text-[14px] text-foreground placeholder:text-faint focus-visible:outline-2 focus-visible:outline-[var(--color-primary)]"
+                />
+                <span className="text-[11px] text-faint">
+                  Rewritten in plain language and sent to the reporter.
+                </span>
+              </label>
+            </>
           )}
 
           <Button size="lg" onClick={handleMarkDone} disabled={busy}>
@@ -363,7 +399,7 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
           <p className="text-center text-[12px] text-faint">
             {DEMO_MODE
               ? "Photo optional — adds a before/after record."
-              : "Photo optional — it's sent to the reporter with the resolution notice."}
+              : "After photo required — it's sent to the reporter with the resolution notice."}
           </p>
         </div>
       )}

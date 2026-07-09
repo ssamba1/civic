@@ -20,6 +20,8 @@ export interface GridReportRow {
   subcategory: string | null;
   severity: number | null;
   is_emergency: boolean;
+  /** AI-estimated hazard-zone radius in metres (classification signal, #27). */
+  hazard_radius_m: number | null;
   /** Report status drives the Status column (work_orders has no status column). */
   status: string;
   address: string | null;
@@ -112,7 +114,8 @@ export async function getGridRows(cityId: string): Promise<GridReportRow[]> {
         category,
         subcategory,
         severity,
-        is_emergency
+        is_emergency,
+        hazard_radius_m
       ),
       work_orders (
         id,
@@ -162,6 +165,8 @@ export async function getGridRows(cityId: string): Promise<GridReportRow[]> {
       subcategory: (cls?.subcategory as string) ?? null,
       severity: (cls?.severity as number) ?? null,
       is_emergency: Boolean(cls?.is_emergency),
+      hazard_radius_m:
+        cls?.hazard_radius_m != null ? Number(cls.hazard_radius_m) : null,
       status: row.status as string,
       address: (row.address as string) ?? null,
       photo_public_url: (row.photo_public_url as string) ?? null,

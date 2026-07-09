@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, FileText, HeartPulse } from "lucide-react";
+import { Camera, FileText, HeartPulse, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { EnvSwitch } from "@/components/env-switch";
@@ -16,6 +16,11 @@ export function UserNav({ citySlug }: { citySlug?: string }) {
       label: "My Reports",
       href: "/user/my-reports",
       icon: FileText,
+    },
+    {
+      label: "Trending",
+      href: "/user/trending",
+      icon: TrendingUp,
     },
     {
       label: "Pulse",

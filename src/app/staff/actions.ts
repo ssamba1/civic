@@ -6,6 +6,7 @@ import { after } from "next/server";
 import { classificationSchema } from "@/lib/ai/classification-schema";
 import { AI_CREW_ASSIGN } from "@/lib/ai/config";
 import { autoAssignCrew } from "@/lib/ai/crew-assign";
+import { draftClosureExplanation } from "@/lib/ai/draft-closure";
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
@@ -250,6 +251,7 @@ export async function assignCrewToReport(
 export async function closeReportWorkOrder(
   reportId: string,
   actualCost: number,
+  reason: string,
   resolutionPhotoDataUrl?: string,
 ): Promise<Result<void>> {
   const staff = await getStaffUser();
@@ -263,7 +265,13 @@ export async function closeReportWorkOrder(
     .maybeSingle<{ id: string }>();
   if (error || !wo) return { ok: false, error: "work_order_not_found" };
 
-  return closeWorkOrder(wo.id, actualCost, undefined, resolutionPhotoDataUrl);
+  return closeWorkOrder(
+    wo.id,
+    actualCost,
+    reason,
+    undefined,
+    resolutionPhotoDataUrl,
+  );
 }
 
 /** Re-host a client-downscaled data-URL photo into the public photos bucket. */
@@ -298,11 +306,18 @@ async function uploadResolutionPhoto(
 export async function closeWorkOrder(
   workOrderId: string,
   actualCost: number,
+  reason: string,
   resolutionPhotoUrl?: string,
   resolutionPhotoDataUrl?: string,
 ): Promise<Result<void>> {
   const staff = await getStaffUser();
   if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
+
+  // No-generic-closures (NEXT_100 #5): a resolution reason and an after-photo
+  // are both mandatory — the "no evidence observed" complaint dies here.
+  if (!reason.trim()) return { ok: false, error: "closure_reason_required" };
+  if (!resolutionPhotoUrl && !resolutionPhotoDataUrl)
+    return { ok: false, error: "after_photo_required" };
 
   // Validate actual_cost: whole dollars, > 0, <= $5,000,000, max 2 decimal places.
   if (
@@ -327,7 +342,7 @@ export async function closeWorkOrder(
   // compute the median from accepted actuals.
   const { data: woMeta, error: woMetaErr } = await supabase
     .from("work_orders")
-    .select("report_id, reports(city_id), classifications(category)")
+    .select("report_id, reports(city_id, address), classifications(category)")
     .eq("id", workOrderId)
     .single();
 
@@ -336,7 +351,10 @@ export async function closeWorkOrder(
   // PostgREST returns to-one embeds as objects at runtime, but the untyped
   // client infers arrays — normalize both shapes instead of asserting one.
   const rels = woMeta as unknown as {
-    reports: { city_id: string } | { city_id: string }[] | null;
+    reports:
+      | { city_id: string; address: string | null }
+      | { city_id: string; address: string | null }[]
+      | null;
     classifications: { category: string } | { category: string }[] | null;
   };
   const reportRel = Array.isArray(rels.reports)
@@ -346,6 +364,7 @@ export async function closeWorkOrder(
     ? rels.classifications[0]
     : rels.classifications;
   const cityId = reportRel?.city_id;
+  const address = reportRel?.address ?? null;
   const category = classificationRel?.category;
 
   let actualCostExcluded = false;
@@ -423,13 +442,22 @@ export async function closeWorkOrder(
     .eq("id", wo.report_id);
   if (reportError) return { ok: false, error: "status_update_failed" };
 
+  // No-generic-closures (#5): turn the staff reason into a warm, plain-language
+  // explanation for the resident. Falls back to the raw reason if AI is down —
+  // never blocks the close.
+  const closureNote = await draftClosureExplanation({
+    category: category ?? "issue",
+    reason,
+    address,
+  });
+
   // Append-only timeline row (migration 025) — feeds the resident timeline and
   // the Open311 service-request-updates projection. Best-effort: the close
   // itself already committed.
   const { error: updateRowErr } = await supabase.from("report_updates").insert({
     report_id: wo.report_id,
     status: "closed",
-    note: "Work completed and the report closed out.",
+    note: closureNote,
     photo_url: photoUrl,
     actor: "staff",
   });

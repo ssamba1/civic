@@ -10,6 +10,22 @@ LF and is authoritative-green. #12/#13 merge CI ran full pipeline (incl build)
 green; #14/#15 merge runs registered 0 jobs (concurrency cancellation from 4
 rapid merges), not a code failure — content == verified #15 tip.
 
+## 2026-07-09 — OUTFLANK wave 3 (4 features, PRs #21/#22/#23 all merged)
+
+- **#14 SLA breach visibility** — `SlaRiskCard` bento tile surfaces the
+  already-computed but unrendered `deriveSlaRisk` (breached/at-risk/on-track).
+- **#34 finish** — migration `039` raw-photo 30-day TTL (pg_cron, OWNER-APPLY,
+  not auto-run: destructive + enables extension); migration `040` +
+  `reports.blur_version` stamped at submit + blur-coverage % in `/admin/privacy`.
+- **#22 shareable social cards** — `opengraph-image` route for `/r/[token]`
+  (next/og, zero infra): resolved → "Fixed in N days", open → live status.
+- **#16 council-district turf rollups** — migration `041` `council_districts`
+  table (public-read RLS) + `district_rollups` point-in-polygon RPC +
+  `/admin/districts` turf-report page. 2 demo districts seeded for Cumming.
+
+Migrations 040/041 applied to live via MCP (036/037/038 earlier). 039 is
+owner-apply. Verify: typecheck 0 · test 731 pass · build 0 · all CI green.
+
 ## 2026-07-09 — OUTFLANK fast-follow (branch feat/outflank-fast-follow)
 
 Investigated the next candidate set (#7 feedback, #16 districts, #34 privacy).

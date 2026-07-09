@@ -7,6 +7,7 @@ import {
   FileText,
   HeartPulse,
   Map as MapIcon,
+  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -35,6 +36,12 @@ const TABS: TabItem[] = [
     href: "/user/map",
     icon: MapIcon,
     isActive: (p) => p.startsWith("/user/map"),
+  },
+  {
+    label: "Trending",
+    href: "/user/trending",
+    icon: TrendingUp,
+    isActive: (p) => p.startsWith("/user/trending"),
   },
   {
     label: "Pulse",

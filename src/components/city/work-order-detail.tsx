@@ -369,6 +369,13 @@ export function WorkOrderDetail({
           value={row.severity != null ? `Sev ${row.severity}` : "—"}
           hint={row.severity != null ? SEVERITY_DESC[row.severity] : undefined}
         />
+        {row.hazard_radius_m != null && row.hazard_radius_m > 0 && (
+          <Stat
+            label="Hazard zone"
+            value={`~${Math.round(row.hazard_radius_m)}m`}
+            hint="AI-estimated radius of the affected/unsafe area from the photo."
+          />
+        )}
         <Stat
           label="Status"
           value={
