@@ -139,6 +139,30 @@ export default async function PublicReportPage({
           )}
         </div>
 
+        {/* Estimated fix-by target for still-open reports (OUTFLANK #4) */}
+        {!isResolved && report.estimatedFixBy && (
+          <section className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-5">
+            {(() => {
+              const overdue = Date.parse(report.estimatedFixBy) < Date.now();
+              return (
+                <>
+                  <h2 className="text-[13px] font-medium uppercase tracking-[0.08em] text-faint">
+                    {overdue ? "Target date passed" : "Estimated fix by"}
+                  </h2>
+                  <p className="mt-1.5 text-[20px] font-semibold tracking-tight text-foreground">
+                    {fmtDate(report.estimatedFixBy)}
+                  </p>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-subtle">
+                    {overdue
+                      ? "This is past its target service window. The crew is still on it — check back for updates."
+                      : "Based on the typical service window for this issue type. Weather and priority can shift the date."}
+                  </p>
+                </>
+              );
+            })()}
+          </section>
+        )}
+
         {/* Resolved confirmation */}
         {isResolved && (
           <section className="rounded-[var(--radius-lg)] border border-[var(--color-success)]/25 bg-[var(--color-success)]/[0.06] p-5">
