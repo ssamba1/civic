@@ -27,8 +27,8 @@ import {
   MIN_TYPE_DESCRIPTION_WORDS,
   normalizeCrewTypeKey,
 } from "@/lib/crew-types";
-import type { CrewRow } from "@/lib/db/crews";
 import type { CrewWorkload } from "@/lib/db/crew-workloads";
+import type { CrewRow } from "@/lib/db/crews";
 import { isValidTeamId, TEAM_LIST, TEAMS } from "@/lib/teams";
 import { cn } from "@/lib/utils/cn";
 
