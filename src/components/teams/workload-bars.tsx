@@ -110,9 +110,11 @@ function WorkloadBarsInner({
                   if (selectable) onSelectTeam(w.teamId);
                 }}
                 aria-pressed={selectable ? isSelected : undefined}
-                aria-label={
-                  selectable ? `Scope view to ${team.label}` : team.label
-                }
+                // No aria-label: the button's own content (team name + workload
+                // count) is the accessible name. A "Scope view to …" aria-label
+                // would not contain the visible numeric count, tripping WCAG
+                // 2.5.3 (label-content-name-mismatch). aria-pressed conveys the
+                // toggle. title (via tipRest) still gives the hover hint.
                 className={cn(
                   "grid w-full grid-cols-[minmax(0,1fr)_56px] items-center gap-2",
                   "sm:grid-cols-[140px_minmax(0,1fr)_56px] sm:gap-3",

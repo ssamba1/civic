@@ -226,7 +226,7 @@ function TeamCard({
           with its own pointer events, so it intercepts the click. */}
       <Link
         href={`/city/${citySlug}/team/${workload.teamId}`}
-        aria-label={`View ${team.label} dashboard`}
+        aria-label={`View team dashboard for ${team.label}`}
         className={cn(
           "relative z-10 mt-0.5 flex w-full items-center justify-between gap-1 rounded-lg px-2.5 py-1.5",
           "border border-hairline bg-overlay text-[11px] font-medium text-subtle",
@@ -256,7 +256,7 @@ function AddTeamCard({ onClick }: { onClick: () => void }) {
         "outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "min-h-[108px]",
       )}
-      aria-label="Set up a new team"
+      aria-label="Add Team — set up a new team"
     >
       <span className="flex h-8 w-8 items-center justify-center rounded-full border border-hairline-strong bg-overlay text-subtle transition-colors group-hover:border-hairline-strong group-hover:text-foreground">
         <Plus className="h-4 w-4" strokeWidth={2} />

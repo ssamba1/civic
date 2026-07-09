@@ -36,6 +36,28 @@
 BEGIN;
 
 -- ---------------------------------------------------------------------------
+-- 0. is_admin() helper — defined FIRST because the contractor RLS policies
+--    below reference it. No earlier migration defines it, so without this the
+--    CREATE POLICY ... USING (is_admin()) calls fail on a fresh deploy
+--    (42883: function is_admin() does not exist). CREATE OR REPLACE = idempotent.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM users
+    WHERE id = auth.uid()
+      AND role = 'admin'
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated, service_role;
+
+-- ---------------------------------------------------------------------------
 -- 1. contractors table
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS contractors (
@@ -187,26 +209,7 @@ ALTER TABLE work_orders
   ADD COLUMN IF NOT EXISTS contractor_photo_url text,
   ADD COLUMN IF NOT EXISTS contractor_updated_at timestamptz;
 
--- ---------------------------------------------------------------------------
--- 7. is_admin() helper (if not already defined by a prior migration)
---
--- Mirrors is_staff() pattern — checks the users table for role='admin'.
--- Using CREATE OR REPLACE so it is idempotent.
--- ---------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS boolean
-LANGUAGE sql
-SECURITY DEFINER
-STABLE
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM users
-    WHERE id = auth.uid()
-      AND role = 'admin'
-  );
-$$;
-
-GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated, service_role;
+-- (is_admin() is defined at the top of this migration, section 0, because the
+-- contractor RLS policies above reference it.)
 
 COMMIT;

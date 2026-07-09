@@ -138,7 +138,7 @@ export function SidebarNav({
                   onClick={() => setOpen((o) => ({ ...o, [href]: !expanded }))}
                   aria-expanded={expanded}
                   aria-label={`${expanded ? "Hide" : "Show"} ${label} sub-tabs`}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-1 text-faint outline-none transition-colors hover:bg-overlay hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60"
+                  className="absolute right-1 top-1/2 inline-flex h-[28px] w-[28px] -translate-y-1/2 items-center justify-center rounded-md text-faint outline-none transition-colors hover:bg-overlay hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60"
                 >
                   <ChevronRight
                     className={cn(

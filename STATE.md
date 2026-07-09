@@ -1,7 +1,30 @@
 # Loop State — Civic / Social Impact
 
-Last run: 2026-07-09 (analytics 036 + stack merge to main)
-Branch: `main` — PRs #12→#13→#14→#15 all MERGED.
+Last run: 2026-07-09 (PRs #26-#29 merged + live migrations 044-055 applied)
+Branch: `main` — PRs #12→#15 and #26→#29 all MERGED.
+
+## 2026-07-09 — PR wave merge + live migration apply (feat/infra-migrations-lighthouse)
+
+- **PRs #26/#27/#28/#29 merged.** #29 was blocked: TS2339 in categories.test
+  (narrowed Schema property via cast) + 9 biome lint errors from the merged
+  waves (eslint-disable comments biome ignores → converted to biome-ignore;
+  dropped unused vars; `.at(-1)` for non-null assertion). Main was itself
+  lint-red from the #26 merge (concurrency-cancellation let it through) — #29's
+  fix repaired it. Post-merge main CI: success.
+- **Live migrations 044-055 applied via Supabase MCP** (12 migrations: hazard
+  grade cols, surge_state, retention_settings, webhook_endpoints, sso_configs,
+  count_rls_enabled_tables RPC, report_photos, wo scheduling cols, report_merges
+  + find_staff_duplicate_candidates RPC, contractors + is_admin/current_contractor_id,
+  automation_rules, report_comments). All new tables RLS-enabled; security
+  advisor shows NO new errors (8 pre-existing: 7 analytics security_definer_view
+  + spatial_ref_sys PostGIS system table). Migration 039 raw-photo TTL still
+  OWNER-APPLY (destructive pg_cron), NOT applied.
+- **053 file bug FIXED** — is_admin() was defined AFTER the policies that call
+  it (only definition in the whole migration set); fresh deploy would fail
+  `42883: function is_admin() does not exist`. Moved to section 0.
+- **Still owner-blocked:** Resend secret (deliver.ts coded, RESEND_API_KEY unset),
+  golden-set photos (tests/golden/images/ empty — needs real labeled photos),
+  Lighthouse (needs clean prod server; :3000 dev server stale/404s all routes).
 
 Verify status (2026-07-09): `typecheck` ✅ · `test` ✅ 652 pass / 63 skip ·
 `lint` LF-clean at each tip (biome exit 0). NOTE: `biome check` shows CRLF
