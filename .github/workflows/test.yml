@@ -9,9 +9,17 @@ on:
   pull_request:
   push:
 
+# Cancel superseded runs ONLY for PR iterations (pushing a new commit to an open
+# PR supersedes the prior run — cheap to drop). NEVER cancel push runs on a
+# branch: rapid merges to main were cancelling each other's post-merge run, so
+# a merge could land with its authoritative test run cancelled — GitHub then
+# shows no failing check and the branch reads "green" even though CI never
+# completed on that commit (this masked real lint failures on main). Per-SHA
+# grouping + no-cancel on branch pushes guarantees every merged commit gets a
+# definitive pass/fail.
 concurrency:
-  group: test-${{ github.ref }}
-  cancel-in-progress: true
+  group: test-${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
