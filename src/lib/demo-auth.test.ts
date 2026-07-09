@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
+import { DEFAULT_CREW_TYPES } from "@/lib/crew-types";
 import { TEAM_LIST } from "@/lib/teams";
 import {
   authenticateDemo,
@@ -11,8 +12,10 @@ import {
 const OPERATIONAL_TEAMS = TEAM_LIST.filter((t) => t.id !== "all");
 
 describe("DEMO_ACCOUNTS", () => {
-  it("has one resident, one admin, and one account per operational team", () => {
-    expect(DEMO_ACCOUNTS).toHaveLength(2 + OPERATIONAL_TEAMS.length);
+  it("has one resident, one admin, one account per operational team, and one per crew type", () => {
+    expect(DEMO_ACCOUNTS).toHaveLength(
+      2 + OPERATIONAL_TEAMS.length + DEFAULT_CREW_TYPES.length,
+    );
     expect(OPERATIONAL_TEAMS).toHaveLength(11);
   });
 
@@ -29,9 +32,27 @@ describe("DEMO_ACCOUNTS", () => {
     });
   });
 
+  it("maps crewtest{n} to DEFAULT_CREW_TYPES order with a /city/cumming/crew/{crewType} home", () => {
+    DEFAULT_CREW_TYPES.forEach((type, i) => {
+      const account = DEMO_ACCOUNTS.find(
+        (a) => a.username === `crewtest${i + 1}`,
+      );
+      expect(account, `crewtest${i + 1} exists`).toBeDefined();
+      expect(account?.role).toBe("crew");
+      expect(account?.crewType).toBe(type.key);
+      expect(account?.home).toBe(`/city/cumming/crew/${type.key}`);
+      expect(account?.password).toBe("crewtest");
+    });
+  });
+
   it("routes the resident and admin personas to their surfaces", () => {
     expect(findDemoAccount("usertest")?.home).toBe("/user/pulse");
     expect(findDemoAccount("admintest")?.home).toBe("/city/cumming");
+  });
+
+  it("has no duplicate usernames", () => {
+    const usernames = DEMO_ACCOUNTS.map((a) => a.username);
+    expect(new Set(usernames).size).toBe(usernames.length);
   });
 });
 
@@ -43,6 +64,13 @@ describe("authenticateDemo", () => {
     );
   });
 
+  it("accepts a crew persona and resolves its crew type + portal home", () => {
+    const account = authenticateDemo("crewtest1", "crewtest");
+    expect(account?.role).toBe("crew");
+    expect(account?.crewType).toBe("paving");
+    expect(account?.home).toBe("/city/cumming/crew/paving");
+  });
+
   it("rejects a wrong password or unknown username", () => {
     expect(authenticateDemo("usertest", "nope")).toBeNull();
     expect(authenticateDemo("ghost", "teamtest")).toBeNull();
@@ -50,9 +78,10 @@ describe("authenticateDemo", () => {
 });
 
 describe("isDemoStaffAccount", () => {
-  it("treats admin and team personas as staff", () => {
+  it("treats admin, team, and crew personas as staff", () => {
     expect(isDemoStaffAccount(findDemoAccount("admintest"))).toBe(true);
     expect(isDemoStaffAccount(findDemoAccount("teamtest1"))).toBe(true);
+    expect(isDemoStaffAccount(findDemoAccount("crewtest1"))).toBe(true);
   });
 
   it("never treats a Resident (or a missing account) as staff", () => {
