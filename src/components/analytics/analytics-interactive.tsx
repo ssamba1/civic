@@ -13,6 +13,7 @@ import {
   StatusFunnel,
   TopNeighborhoods,
 } from "@/components/analytics/analytics-bento";
+import { BacklogAge, NeedsAttention } from "@/components/analytics/ops-rail";
 import { useReasoningHover } from "@/components/analytics/reasoning-hover";
 import { ReportsExplorer } from "@/components/analytics/reports-explorer";
 import { RecentReports } from "@/components/dashboard/recent-reports";
@@ -22,9 +23,11 @@ import {
   usePreviousWindowReports,
 } from "@/lib/filters/context";
 import {
+  deriveBacklogAgeDistribution,
   deriveCategoryResolution,
   deriveHourlyHeatmap,
   deriveKpis,
+  deriveNeedsAttention,
   deriveReporterVelocity,
   deriveResolutionDistribution,
   deriveSeverityDistribution,
@@ -74,6 +77,14 @@ export function AnalyticsInteractive() {
     [filtered],
   );
   const velocity = useMemo(() => deriveReporterVelocity(filtered), [filtered]);
+  const needsAttention = useMemo(
+    () => deriveNeedsAttention(filtered),
+    [filtered],
+  );
+  const backlogAge = useMemo(
+    () => deriveBacklogAgeDistribution(filtered),
+    [filtered],
+  );
 
   return (
     <div className="space-y-4 animate-in fade-in duration-500">
@@ -110,9 +121,10 @@ export function AnalyticsInteractive() {
             </div>
           </div>
 
-          {/* Live report feed — sticky rail on lg+, stacked below charts on mobile.
-           self-start collapses the column height so position:sticky engages. */}
-          <div className="lg:col-span-4 flex flex-col gap-4 lg:sticky lg:top-20 lg:self-start">
+          {/* Right column: live feed + ops widgets, stacked and scrolling with
+           the page. Was sticky, but a sticky rail only fits one short panel — a
+           stack has to scroll, so the widgets can live below the feed. */}
+          <div className="lg:col-span-4 flex flex-col gap-4">
             <RecentReports
               reports={filtered.slice(0, 20)}
               focusedId={focusedReportId}
@@ -120,6 +132,12 @@ export function AnalyticsInteractive() {
               onExpand={() => setExplorerOpen(true)}
               bindReportHover={reasoning.bindReport}
             />
+            <NeedsAttention
+              items={needsAttention}
+              focusedId={focusedReportId}
+              onClickReport={setFocusedReportId}
+            />
+            <BacklogAge buckets={backlogAge} />
           </div>
         </div>
       </div>

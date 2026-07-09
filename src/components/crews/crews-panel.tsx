@@ -1,7 +1,6 @@
 "use client";
 
-import { HardHat, Pencil, Plus, Star } from "lucide-react";
-import Link from "next/link";
+import { HardHat, Plus, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useMemo, useState, useTransition } from "react";
 import { inviteMember } from "@/app/city/[slug]/members/actions";
@@ -12,6 +11,7 @@ import {
   setCrewMembers,
   updateCrew,
 } from "@/app/city/[slug]/members/crew-actions";
+import { CrewStatCard } from "@/components/crews/crew-stat-card";
 import {
   CONTROL_CLASS,
   FormError,
@@ -20,7 +20,6 @@ import {
 } from "@/components/members/member-modal";
 import { Button } from "@/components/ui/button";
 import { MenuSelect } from "@/components/ui/menu-select";
-import { isPortalCrewType } from "@/lib/crew-portal";
 import {
   type CrewTypeDef,
   DEFAULT_CREW_TYPES,
@@ -29,6 +28,7 @@ import {
   normalizeCrewTypeKey,
 } from "@/lib/crew-types";
 import type { CrewRow } from "@/lib/db/crews";
+import type { CrewWorkload } from "@/lib/db/crew-workloads";
 import { isValidTeamId, TEAM_LIST, TEAMS } from "@/lib/teams";
 import { cn } from "@/lib/utils/cn";
 
@@ -76,6 +76,7 @@ export function CrewsPanel({
   members,
   canManage,
   crewTypes = DEFAULT_CREW_TYPES,
+  crewWorkloads = {},
 }: {
   slug: string;
   crews: CrewRow[];
@@ -84,6 +85,9 @@ export function CrewsPanel({
   /** The city's crew-type catalog (031) — feeds the type select and the type
    *  badges. Defaults to the built-in list for pre-031 DBs. */
   crewTypes?: CrewTypeDef[];
+  /** Per-crew work-order rollup, keyed by crew id — feeds each card's total,
+   *  status bar, and repair-speed stats. Missing crew ⇒ card renders zeros. */
+  crewWorkloads?: Record<string, CrewWorkload>;
 }) {
   const [dialog, setDialog] = useState<DialogState>(null);
 
@@ -163,83 +167,18 @@ export function CrewsPanel({
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {group.crews.map((crew) => (
-                  <div
+                  <CrewStatCard
                     key={crew.id}
-                    className="flex flex-col gap-2 rounded-[var(--radius-lg)] border border-hairline bg-surface p-4 shadow-[var(--shadow-card)]"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <HardHat
-                          className="h-4 w-4 flex-shrink-0 text-subtle"
-                          strokeWidth={1.75}
-                        />
-                        {crew.crewType && isPortalCrewType(crew.crewType) ? (
-                          <Link
-                            href={`/city/${slug}/crew/${crew.crewType}/analytics?crew=${encodeURIComponent(crew.name)}`}
-                            aria-label={`View ${crew.name} analytics`}
-                            className="truncate rounded-sm text-[14px] font-medium text-foreground underline-offset-2 outline-none transition-colors duration-150 hover:text-accent hover:underline focus-visible:ring-2 focus-visible:ring-accent/60"
-                          >
-                            {crew.name}
-                          </Link>
-                        ) : (
-                          <span className="truncate text-[14px] font-medium text-foreground">
-                            {crew.name}
-                          </span>
-                        )}
-                        {!crew.active && (
-                          <span className="flex-shrink-0 rounded-md border border-hairline bg-overlay px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-faint">
-                            Inactive
-                          </span>
-                        )}
-                      </div>
-                      {canManage && (
-                        <button
-                          type="button"
-                          aria-label={`Edit ${crew.name}`}
-                          onClick={() => setDialog({ mode: "edit", crew })}
-                          className="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[var(--radius-md)] text-faint outline-none transition-colors duration-150 hover:bg-overlay-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
-                        >
-                          <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
-                        </button>
-                      )}
-                    </div>
-                    {crew.crewType && (
-                      <span
-                        className="w-fit rounded-md border border-hairline bg-overlay px-1.5 py-0.5 text-[11px] font-medium text-subtle"
-                        title={
-                          crewTypes.find((t) => t.key === crew.crewType)
-                            ?.description
-                        }
-                      >
-                        {typeLabel(crew.crewType, crewTypes)}
-                      </span>
-                    )}
-                    <div className="text-[12px] leading-relaxed text-faint">
-                      {crew.members.length === 0
-                        ? "No members yet — work can still route here"
-                        : crew.members.map((m, i) => (
-                            <span key={m.userId}>
-                              {i > 0 && ", "}
-                              <span
-                                className={
-                                  m.isLead
-                                    ? "font-medium text-subtle"
-                                    : undefined
-                                }
-                              >
-                                {m.displayName ?? "Unnamed"}
-                                {m.isLead && (
-                                  <Star
-                                    className="ml-0.5 inline h-3 w-3 -translate-y-px"
-                                    strokeWidth={2}
-                                    aria-label="Crew lead"
-                                  />
-                                )}
-                              </span>
-                            </span>
-                          ))}
-                    </div>
-                  </div>
+                    crew={crew}
+                    workload={crewWorkloads[crew.id]}
+                    slug={slug}
+                    crewTypes={crewTypes}
+                    onEdit={
+                      canManage
+                        ? () => setDialog({ mode: "edit", crew })
+                        : undefined
+                    }
+                  />
                 ))}
               </div>
             </div>
