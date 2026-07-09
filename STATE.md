@@ -10,6 +10,29 @@ LF and is authoritative-green. #12/#13 merge CI ran full pipeline (incl build)
 green; #14/#15 merge runs registered 0 jobs (concurrency cancellation from 4
 rapid merges), not a code failure — content == verified #15 tip.
 
+## 2026-07-09 — OUTFLANK fast-follow (branch feat/outflank-fast-follow)
+
+Investigated the next candidate set (#7 feedback, #16 districts, #34 privacy).
+Built the two with clear value + bounded scope:
+
+- **#7 human-in-the-loop feedback loop (NEW).** Staff category corrections
+  already persist to `classification_feedback`; this closes the loop. Migration
+  `038` adds `classification_correction_examples` RPC (top per-city
+  original→corrected pairs); the classify pipeline fetches them and
+  `buildCorrectionGuidance` injects a "## PAST CORRECTIONS IN THIS CITY" few-shot
+  block into the classification prompt. Best-effort (empty on fresh city/error →
+  base prompt unchanged). A per-city compounding moat.
+- **#34 privacy-audit dashboard (NEW).** `auditAllCities()` rolls up per-city
+  bucket audit (public photos scanned, size-match raw-leak flags, pass/fail);
+  admin-gated `/admin/privacy` page + client-side JSON export for legal/records.
+  Makes the previously CLI-only `pnpm audit:privacy` visible.
+- **#16 council-district rollups — DEFERRED.** Entirely unbuilt and L-effort
+  (needs a districts table + TIGER boundary seeding + spatial rollup RPC + UI).
+  Not started; documented as the next big-rock.
+
+Migrations 037 (build-now) + 038 applied to live via MCP + verified.
+Verify: typecheck 0 · test 727 pass / 63 skip · build 0.
+
 ## 2026-07-09 — OUTFLANK build-now features (branch feat/outflank-build-now)
 
 Investigated the OUTFLANK build-now set; most was already built by prior sweeps.

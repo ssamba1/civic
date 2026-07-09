@@ -70,3 +70,57 @@ export async function auditPublicBucket(
 
   return { violations };
 }
+
+export interface CityPrivacyAudit {
+  cityId: string;
+  cityName: string;
+  publicScanned: number;
+  violations: string[];
+  ok: boolean;
+}
+
+export interface PrivacyAuditReport {
+  generatedAt: string;
+  cities: CityPrivacyAudit[];
+  totalViolations: number;
+  ok: boolean;
+}
+
+/**
+ * OUTFLANK #34 — whole-deployment privacy audit for the admin dashboard + a
+ * legal-exportable JSON. Runs {@link auditPublicBucket} for every city and rolls
+ * up a pass/fail summary. `generatedAt` is passed in (callers stamp it) so the
+ * function stays deterministic/testable.
+ */
+export async function auditAllCities(
+  generatedAt: string,
+): Promise<PrivacyAuditReport> {
+  const supabase = createServerClient();
+  const { data: cities } = await supabase
+    .from("cities")
+    .select("id, name")
+    .order("name");
+
+  const results: CityPrivacyAudit[] = [];
+  for (const city of cities ?? []) {
+    const { data: publicFiles } = await supabase.storage
+      .from(PUBLIC_BUCKET)
+      .list(city.id, { limit: 1000 });
+    const { violations } = await auditPublicBucket(city.id);
+    results.push({
+      cityId: city.id,
+      cityName: city.name ?? city.id,
+      publicScanned: publicFiles?.length ?? 0,
+      violations,
+      ok: violations.length === 0,
+    });
+  }
+
+  const totalViolations = results.reduce((s, c) => s + c.violations.length, 0);
+  return {
+    generatedAt,
+    cities: results,
+    totalViolations,
+    ok: totalViolations === 0,
+  };
+}

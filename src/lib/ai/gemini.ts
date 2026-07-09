@@ -41,6 +41,10 @@ function stripCodeFences(raw: string): string {
 export async function classifyPhoto(
   imageBase64: string,
   mimeType: string,
+  // OUTFLANK #7 — optional per-city correction guidance (from
+  // buildCorrectionGuidance) appended to the base prompt. Empty string = base
+  // prompt unchanged, so a fresh city classifies exactly as before.
+  correctionGuidance = "",
 ): Promise<Result<{ classification: Classification; rawText: string }>> {
   const rateCheck = checkAndRecordGeminiCall();
   if (!rateCheck.allowed) {
@@ -62,7 +66,7 @@ export async function classifyPhoto(
     });
 
     const request = [
-      CLASSIFICATION_PROMPT,
+      CLASSIFICATION_PROMPT + correctionGuidance,
       {
         inlineData: {
           data: imageBase64,

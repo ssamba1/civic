@@ -1,5 +1,41 @@
 import { describe, expect, it } from "vitest";
-import { buildWorkOrderPrompt, type PromptCrew } from "./prompt";
+import {
+  buildCorrectionGuidance,
+  buildWorkOrderPrompt,
+  type PromptCrew,
+} from "./prompt";
+
+describe("buildCorrectionGuidance", () => {
+  it("returns empty string with no corrections (base prompt unchanged)", () => {
+    expect(buildCorrectionGuidance([])).toBe("");
+  });
+
+  it("ignores no-op pairs where original equals corrected", () => {
+    expect(
+      buildCorrectionGuidance([
+        { original_category: "pothole", corrected_category: "pothole", n: 4 },
+      ]),
+    ).toBe("");
+  });
+
+  it("emits a per-city correction block for real correction pairs", () => {
+    const block = buildCorrectionGuidance([
+      { original_category: "pothole", corrected_category: "drainage", n: 3 },
+    ]);
+    expect(block).toContain("PAST CORRECTIONS IN THIS CITY");
+    expect(block).toContain('"pothole"');
+    expect(block).toContain('"drainage"');
+    expect(block).toContain("3 times");
+  });
+
+  it("singularizes a single correction", () => {
+    const block = buildCorrectionGuidance([
+      { original_category: "debris", corrected_category: "illegal_dump", n: 1 },
+    ]);
+    expect(block).toContain("1 time.");
+    expect(block).not.toContain("1 times");
+  });
+});
 
 describe("buildWorkOrderPrompt", () => {
   it("lists each crew type as 'key — description'", () => {

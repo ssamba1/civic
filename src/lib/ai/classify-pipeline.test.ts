@@ -272,6 +272,8 @@ describe("runClassifyPipeline", () => {
     expect(classifyPhotoMock).toHaveBeenCalledWith(
       expect.any(String),
       "image/jpeg",
+      // OUTFLANK #7 — per-city correction guidance (empty here: no feedback rows)
+      expect.any(String),
     );
     // Gemini failure persisted as fallback.
     expect(tables.classifications.upsert).toHaveBeenCalledWith(
