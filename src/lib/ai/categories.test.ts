@@ -85,7 +85,8 @@ describe("dynamic classification schema accepts a custom category", () => {
 
   it("puts the custom key into the Gemini responseSchema enum", () => {
     const schema = buildGeminiClassificationSchema(keys);
-    expect(schema.properties?.category.enum).toContain(
+    const categoryProp = schema.properties?.category as { enum?: string[] };
+    expect(categoryProp.enum).toContain(
       "custom_abandoned_vehicle",
     );
   });
