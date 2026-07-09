@@ -43,7 +43,9 @@ export function NavRefreshButton() {
       onClick={onClick}
       aria-pressed={active}
       aria-label={
-        active ? "Refresh — remove live demo report" : "Refresh — add live demo report"
+        active
+          ? "Refresh — remove live demo report"
+          : "Refresh — add live demo report"
       }
       title={
         active ? "Remove the live report (demo)" : "Add a live report (demo)"
