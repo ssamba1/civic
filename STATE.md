@@ -1,31 +1,47 @@
 # Loop State — Civic / Social Impact
 
-Last run: 2026-07-01 (daily-triage, L1 report-only)
-Branch scanned: `civic-ahilyanagar`
+Last run: 2026-07-08 (backlog sweep session)
+Branch scanned: `main` @ e8280eb (PRs #9, #10, #11 all merged)
 
-## High Priority (loop is acting or waiting on human)
+## High Priority (waiting on human)
 
-- **Large uncommitted working tree at risk of loss.** 11 modified files + ~7 new untracked features sitting on `civic-ahilyanagar`: whole `src/lib/currency.ts` + `use-currency.ts`, `src/app/staff/grid/`, `src/app/teams/`, `src/components/staff/work-order-grid.tsx`, `src/components/map/satellite-style.{ts,test.ts}`, plus edits to `report-map.tsx`, `dashboard-queries.ts`, `reasoning/route.ts`.
-  - *Why:* a full currency subsystem + staff work-order grid + teams route are unversioned. One bad `git checkout` loses a day+ of work.
-  - *Next action (human):* commit in logical chunks (currency / staff-grid / map-satellite / teams) or stash. No loop auto-commit at L1.
-  - *Effort:* 15 min.
+- **Live DB is 8+ migrations behind the repo.** `20260707_024_city_config.sql`
+  through `20260707_031_crew_types.sql` are authored, tested, and merged to
+  main but NOT applied to the live database. Close-the-loop, DB routing,
+  upvotes, api_keys, crews, and crew-types features all no-op or
+  graceful-degrade against live until applied.
+  - *Next action (human):* `DATABASE_URL='postgresql://…' node scripts/run-migrations.mjs`
+    (DB password is not in the repo — owner-held).
+  - *Effort:* 10 min + smoke test.
 
-- **No CI test gate on pushes.** Only 1 workflow run in repo history (a Copilot agent, 2026-05-29). The 102 vitest tests exist but nothing runs them on push to `main`. Solo-commits-to-main + no CI = regressions ship silently.
-  - *Why:* every merge to main is untested in CI; the Ahilyanagar live-DB drift bugs (root-caused 6-30) are exactly the class CI would catch.
-  - *Next action (human):* add `.github/workflows/test.yml` running `pnpm test` + `pnpm build` on push/PR.
-  - *Effort:* 20 min.
+- **Email leg dead: Resend env unset.** `RESEND_API_KEY`, `NOTIFY_FROM_EMAIL`
+  must be set (`NEXT_PUBLIC_SITE_URL` exists in `.env.local`). Resolution
+  emails + CSAT loop silently skip until then.
+
+- **Golden-set eval blocked on photos.** `tests/golden/images/` is empty;
+  manifest + runner (`pnpm eval`) exist. Owner must supply labeled photos.
+  Gates: category ≥85%, severity ±1 ≥90%, emergency FNR ≤5%.
 
 ## Watch List
 
-- **`civic-ahilyanagar` diverging from `main`.** Demo branch has 8 commits (6-30) not on main. Decide: merge back, or is main frozen for the demo? Longer it sits, harder the reconcile.
-- **`supabase/.temp/` is untracked.** Supabase CLI scratch dir — likely belongs in `.gitignore`, not committed.
-- **Issue #6 stale ~3 weeks** — `feat(classifier): make issue types data-driven so custom categories route end-to-end` (open since 2026-06-08). Real feature debt; not urgent.
-- **Live-DB drift pattern (from memory).** DB `gisoowyezwhdrozettbg` needed manual reconcile migration 021 on 6-30 (missing cols 010–018). Watch for the same drift on next feature that adds columns.
+- **ADR 0002 marked Accepted (segment A: US small cities, Open311-first)**
+  during the 2026-07-08 sweep, on the strength of the owner's "do all of it"
+  directive. Revert to Proposed if that read is wrong — landing copy and
+  priority ordering downstream depend on it.
+- **Two `023_*` migrations** (`cost_prediction`, `photo_phash`) share a number.
+  Runner sorts lexicographically so both apply, but the next migration author
+  should not reuse numbers.
+- **Live-DB drift pattern.** DB needed manual reconcile migration 021 on
+  6-30. The 024–031 batch is the biggest single apply yet — run against a
+  shadow DB first per BUILD_PLAN verification gates.
 
-## Recent Noise (ignored this run)
+## Resolved since last run (2026-07-01)
 
-- Loop scaffold files (`STATE.md`, `LOOP.md`, `loop-*.md`, `.claude/`) — untracked, expected, this run created them.
-- Gemini 503s — transient Google-side overload, not actionable (seed data carries the dashboard).
+- CI gate exists and runs green (`test` workflow, node 22 / pnpm 11).
+- `civic-ahilyanagar` divergence: superseded — its features were rebuilt on
+  main via the sidebar-shell line (PR #9).
+- Issue #6 (data-driven issue types): closed by migration 027 + issue_types
+  work in PR #9.
 
 ---
-Run log: 2026-07-01 — items_found: 6 (2 high / 4 watch), actions_taken: 0, outcome: report-only
+Run log: 2026-07-08 — PRs #10/#11 merged; backlog sweep branch `feat/backlog-sweep` carries EXIF strip, SLA due_at, a11y, supercluster, zone routing, landing reposition.

@@ -13,6 +13,7 @@ import { generateWorkOrderAI } from "@/lib/ai/work-order-ai";
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
 import { createServerClient } from "@/lib/db/client";
 import { fetchActiveCrewTypeDefs } from "@/lib/db/crew-types";
+import { fetchSlaHours } from "@/lib/db/sla-targets";
 import { sniffImageMime } from "@/lib/image/sniff-mime";
 import { createLogger } from "@/lib/logger";
 import { resolveTeamKeyForCategory } from "@/lib/onboarding/city-teams";
@@ -503,10 +504,41 @@ export async function runClassifyPipeline(
   // city's own city_teams config so per-city routing takes effect at creation.
   let resolvedTeamKey: string | null = null;
   try {
-    const teamKey = await resolveTeamKeyForCategory(
+    // Widened to string: a zone override may carry a custom per-city team_key
+    // that isn't in the static TeamId union, and the column is plain text.
+    let teamKey: string = await resolveTeamKeyForCategory(
       report.city_id,
       classification.category,
     );
+    // Geographic override (LCP-15, migration 033): if the report's point falls
+    // inside a routing_zone, that zone's team wins over the category default.
+    // No-op-safe — the RPC returns null (or errors on an un-migrated DB) unless
+    // the city has opted into zones, leaving category routing untouched.
+    try {
+      const { data: zoneTeam, error: zoneErr } = await supabase.rpc(
+        "resolve_zone_team",
+        { _report_id: reportId },
+      );
+      if (zoneErr) {
+        log.warn("resolve_zone_team_failed", {
+          reportId,
+          error: zoneErr.message,
+        });
+      } else if (typeof zoneTeam === "string" && zoneTeam.length > 0) {
+        log.info("team_key_zone_override", {
+          reportId,
+          categoryTeam: teamKey,
+          zoneTeam,
+        });
+        teamKey = zoneTeam;
+      }
+    } catch (zoneThrow) {
+      log.warn("resolve_zone_team_threw", {
+        reportId,
+        error:
+          zoneThrow instanceof Error ? zoneThrow.message : String(zoneThrow),
+      });
+    }
     const { error: teamErr } = await supabase
       .from("work_orders")
       .update({ team_key: teamKey })
@@ -521,6 +553,36 @@ export async function runClassifyPipeline(
     }
   } catch (err) {
     log.warn("work_order_team_key_resolve_threw", {
+      reportId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  // Stamp the SLA deadline (migration 032; no-op-safe on un-migrated DBs).
+  // due_at = now + the city's category SLA hours (static-map fallback). The
+  // overdue-escalation job reads this; a null due_at just means the read path
+  // falls back to CATEGORY_SLA_TARGETS derived from created_at.
+  try {
+    const slaHours = await fetchSlaHours(
+      supabase,
+      report.city_id,
+      classification.category,
+    );
+    const dueAt = new Date(Date.now() + slaHours * 3_600_000).toISOString();
+    const { error: dueErr } = await supabase
+      .from("work_orders")
+      .update({ due_at: dueAt })
+      .eq("id", insertedWorkOrder.id);
+    if (dueErr) {
+      log.warn("work_order_due_at_stamp_failed", {
+        reportId,
+        error: dueErr.message,
+      });
+    } else {
+      insertedWorkOrder.due_at = dueAt;
+    }
+  } catch (err) {
+    log.warn("work_order_due_at_stamp_threw", {
       reportId,
       error: err instanceof Error ? err.message : String(err),
     });

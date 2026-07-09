@@ -1,7 +1,8 @@
 # 0002 — Target segment: which customer Civic is for
 
-- Status: **Proposed** (decision is the owner's; this ADR frames it with the
-  evidence and a recommendation)
+- Status: **Accepted** (2026-07-08 — owner directed execution of the full
+  backlog including the segment-A downstream work; revert to Proposed if that
+  read is wrong)
 - Date: 2026-07-07
 - Branch: `feat/sidebar-shell`
 - Scope: go-to-market focus and everything downstream of it — landing copy,

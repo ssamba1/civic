@@ -343,10 +343,10 @@ const ORBIT_CARDS: OrbitCardData[] = [
     key: "route",
     pos: "bl",
     eyebrow: "03 · Route",
-    label: "Work order lands with the right crew",
-    body: "An Open311 work order is generated and dispatched to the right department.",
+    label: "A costed work order lands with the right crew",
+    body: "A priced Open311 work order is generated and dispatched to the right department.",
     longBody:
-      "Civic generates an Open311 GeoReport v2 work order and dispatches it to the right crew with the photo and exact location attached. Existing SeeClickFix, Tyler, Granicus, or in-house backends ingest it natively — zero rework, no rip-and-replace. The crew loads the right materials before they leave the yard because they can see the problem.",
+      "Civic drafts an Open311 GeoReport v2 work order with an estimated repair cost, the crew type, and the materials list already filled in, then dispatches it to the right crew with the photo and exact location attached. Existing SeeClickFix, Tyler, Granicus, or in-house backends ingest it natively — zero rework, no rip-and-replace. The crew loads the right materials before they leave the yard because they can see the problem and its price.",
     Mock: RouteMock,
   },
   {

@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils/cn";
 import { lockBodyScroll } from "@/lib/utils/scroll-lock";
+import { useFocusTrap } from "@/lib/utils/use-focus-trap";
 
 interface ModalProps {
   open: boolean;
@@ -59,6 +60,8 @@ export function Modal({
     return () => prevActive?.focus?.();
   }, [open]);
 
+  useFocusTrap(panelRef, open);
+
   if (!mounted || !open) return null;
 
   return createPortal(
@@ -95,7 +98,7 @@ export function Modal({
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className="-mr-1.5 -mt-1 flex size-9 shrink-0 items-center justify-center rounded-full text-[var(--color-muted)] outline-offset-2 transition-colors hover:bg-[var(--color-surface)] focus-visible:outline-2 focus-visible:outline-[var(--color-primary)]"
+            className="-mr-1.5 -mt-1 flex size-11 shrink-0 items-center justify-center rounded-full text-[var(--color-muted)] outline-offset-2 transition-colors hover:bg-[var(--color-surface)] focus-visible:outline-2 focus-visible:outline-[var(--color-primary)]"
           >
             <X className="size-5" />
           </button>

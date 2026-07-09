@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils/cn";
 import { lockBodyScroll } from "@/lib/utils/scroll-lock";
+import { useFocusTrap } from "@/lib/utils/use-focus-trap";
 
 interface BottomSheetProps {
   open: boolean;
@@ -57,6 +58,8 @@ export default function BottomSheet({
     panelRef.current?.focus();
     return () => prevActive?.focus?.();
   }, [open]);
+
+  useFocusTrap(panelRef, open);
 
   if (!mounted || !open) return null;
 

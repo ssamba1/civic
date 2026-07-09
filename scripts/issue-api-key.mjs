@@ -1,10 +1,10 @@
 // Mint a per-partner Open311 API key (api_keys table, migration 028).
 //
-//   node scripts/issue-api-key.mjs --label "Forsyth County GIS" --user <uuid> [--city <uuid>]
+//   node scripts/issue-api-key.mjs --label "Forsyth County GIS" --user <uuid> [--city <uuid>] [--scopes open311:read,open311:write]
 //
 // Prints the PLAINTEXT key exactly once — only its SHA-256 hash is stored.
 // Reads SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY from .env.local.
-// Revoke later with:  update api_keys set revoked_at = now() where id = '<id>';
+// Revoke later with:  node scripts/revoke-api-key.mjs --id <uuid>   (or --label)
 import { randomBytes, createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
@@ -18,10 +18,22 @@ function arg(name) {
 const label = arg("label");
 const userId = arg("user");
 const cityId = arg("city") ?? null;
+const VALID_SCOPES = new Set(["open311:read", "open311:write"]);
+const scopes = (arg("scopes") ?? "open311:write")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 if (!label || !userId) {
   console.error(
-    'Usage: node scripts/issue-api-key.mjs --label "Partner name" --user <users.id uuid> [--city <cities.id uuid>]',
+    'Usage: node scripts/issue-api-key.mjs --label "Partner name" --user <users.id uuid> [--city <cities.id uuid>] [--scopes open311:read,open311:write]',
+  );
+  process.exit(1);
+}
+const badScope = scopes.find((s) => !VALID_SCOPES.has(s));
+if (badScope) {
+  console.error(
+    `Unknown scope "${badScope}". Valid scopes: ${[...VALID_SCOPES].join(", ")}`,
   );
   process.exit(1);
 }
@@ -52,8 +64,14 @@ const keyHash = createHash("sha256").update(plaintext).digest("hex");
 
 const { data, error } = await admin
   .from("api_keys")
-  .insert({ key_hash: keyHash, label, user_id: userId, city_id: cityId })
-  .select("id, label, city_id, created_at")
+  .insert({
+    key_hash: keyHash,
+    label,
+    user_id: userId,
+    city_id: cityId,
+    scopes,
+  })
+  .select("id, label, city_id, scopes, created_at")
   .single();
 
 if (error) {
@@ -69,6 +87,7 @@ console.log("");
 console.log(`  id:      ${data.id}`);
 console.log(`  label:   ${data.label}`);
 console.log(`  city:    ${data.city_id ?? "(unpinned — jurisdiction_id rules apply)"}`);
+console.log(`  scopes:  ${(data.scopes ?? []).join(", ")}`);
 console.log(`  created: ${data.created_at}`);
 console.log("");
 console.log(`  KEY: ${plaintext}`);

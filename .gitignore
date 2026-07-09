@@ -60,3 +60,6 @@ graphify-out/
 # local QA screenshot artifacts + stray captures (kept out of the public repo)
 scripts/shots/
 /IMG_4622.jpg
+
+# playwright-mcp browser session artifacts
+.playwright-mcp/
