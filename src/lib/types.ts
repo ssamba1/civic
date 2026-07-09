@@ -144,6 +144,19 @@ export interface ReportPhoto {
   created_at: string;
 }
 
+/** Author role for a report_comments row. */
+export type CommentAuthorRole = "resident" | "staff" | "system";
+
+/** One row from the report_comments table (migration 055). */
+export interface ReportComment {
+  id: string;
+  report_id: string;
+  author_id: string | null;
+  author_role: CommentAuthorRole;
+  body: string;
+  created_at: string;
+}
+
 export type WorkOrderSource = "ai" | "rules";
 
 export interface WorkOrder {

@@ -18,7 +18,9 @@ import {
 import PhotoGallery from "@/components/report/photo-gallery";
 import { currencyForCitySlug, formatCost } from "@/lib/currency";
 import { CATEGORY_META, KNOWN_CITIES } from "@/lib/dashboard-data";
+import { listComments } from "@/lib/db/comments";
 import { getReportPhotos } from "@/lib/db/report-photos";
+import CommentThread from "@/components/report/comment-thread";
 import { publicToken } from "@/lib/public-report";
 import {
   getCurrentResident,
@@ -64,6 +66,9 @@ export default async function ReportDetailPage({ params }: PageProps) {
   // single-photo submissions). The primary photo always falls through to the
   // existing single <ReportPhoto> path.
   const extraPhotos = await getReportPhotos(reportId);
+
+  // Comments — gracefully returns [] when migration 055 hasn't been applied.
+  const comments = await listComments(reportId);
   // Build the gallery URL array from the child table when >1 photo, or fall
   // back to the primary report column for single-photo backward-compat.
   const galleryUrls =
@@ -290,6 +295,10 @@ export default async function ReportDetailPage({ params }: PageProps) {
         <Link2 className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         Public status link
       </Link>
+
+      {/* Comment thread — resident+staff Q&A. Gracefully absent when migration
+          055 hasn't been applied yet (listComments returns []). */}
+      <CommentThread reportId={report.id} initialComments={comments} />
     </div>
   );
 }
