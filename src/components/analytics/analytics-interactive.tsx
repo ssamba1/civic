@@ -11,6 +11,7 @@ import {
   ReportsTrend,
   ResolutionHistogram,
   SeverityDonut,
+  SlaRiskCard,
   StatusFunnel,
   TopNeighborhoods,
 } from "@/components/analytics/analytics-bento";
@@ -30,6 +31,7 @@ import {
   deriveReporterVelocity,
   deriveResolutionDistribution,
   deriveSeverityDistribution,
+  deriveSlaRisk,
   deriveStatusFunnel,
   deriveTopNeighborhoods,
   deriveTrend,
@@ -77,6 +79,7 @@ export function AnalyticsInteractive() {
   );
   const velocity = useMemo(() => deriveReporterVelocity(filtered), [filtered]);
   const hotspots = useMemo(() => deriveRecurringHotspots(filtered), [filtered]);
+  const slaRisk = useMemo(() => deriveSlaRisk(filtered), [filtered]);
 
   return (
     <div className="space-y-4 animate-in fade-in duration-500">
@@ -111,6 +114,7 @@ export function AnalyticsInteractive() {
               <TopNeighborhoods data={neighborhoods} />
               <CategoryResolutionTable data={categoryRes} />
               <RecurringHotspotsCard data={hotspots} />
+              <SlaRiskCard data={slaRisk} />
             </div>
           </div>
 

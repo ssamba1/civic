@@ -67,6 +67,7 @@ export default async function AdminPrivacyPage() {
             <tr>
               <th className="px-4 py-2 font-medium">City</th>
               <th className="px-4 py-2 font-medium">Public photos scanned</th>
+              <th className="px-4 py-2 font-medium">Blur coverage</th>
               <th className="px-4 py-2 font-medium">Status</th>
             </tr>
           </thead>
@@ -78,6 +79,24 @@ export default async function AdminPrivacyPage() {
                 </td>
                 <td className="px-4 py-3 tabular-nums text-subtle">
                   {c.publicScanned.toLocaleString()}
+                </td>
+                <td className="px-4 py-3 tabular-nums text-subtle">
+                  {c.blurCoverage.total === 0 ? (
+                    <span className="text-faint">—</span>
+                  ) : (
+                    <span
+                      className={
+                        c.blurCoverage.pct >= 99
+                          ? "text-[var(--color-success)]"
+                          : c.blurCoverage.pct >= 90
+                            ? "text-[var(--color-warning)]"
+                            : "text-[var(--color-danger)]"
+                      }
+                    >
+                      {c.blurCoverage.pct}% ({c.blurCoverage.withVersion}/
+                      {c.blurCoverage.total})
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   {c.ok ? (
@@ -99,7 +118,7 @@ export default async function AdminPrivacyPage() {
             ))}
             {report.cities.length === 0 && (
               <tr>
-                <td colSpan={3} className="px-4 py-6 text-center text-subtle">
+                <td colSpan={4} className="px-4 py-6 text-center text-subtle">
                   No cities to audit.
                 </td>
               </tr>

@@ -71,12 +71,19 @@ export async function auditPublicBucket(
   return { violations };
 }
 
+export interface BlurCoverage {
+  withVersion: number;
+  total: number;
+  pct: number;
+}
+
 export interface CityPrivacyAudit {
   cityId: string;
   cityName: string;
   publicScanned: number;
   violations: string[];
   ok: boolean;
+  blurCoverage: BlurCoverage;
 }
 
 export interface PrivacyAuditReport {
@@ -107,12 +114,33 @@ export async function auditAllCities(
       .from(PUBLIC_BUCKET)
       .list(city.id, { limit: 1000 });
     const { violations } = await auditPublicBucket(city.id);
+
+    // Blur coverage — share of the city's reports that recorded a blur_version
+    // (migration 040). Legacy rows are null (blur ran but pre-tracking); a
+    // healthy live deployment trends to 100% as new reports flow in.
+    const base = () =>
+      supabase
+        .from("reports")
+        .select("*", { count: "exact", head: true })
+        .eq("city_id", city.id);
+    const [{ count: total }, { count: withVersion }] = await Promise.all([
+      base(),
+      base().not("blur_version", "is", null),
+    ]);
+    const totalN = total ?? 0;
+    const withN = withVersion ?? 0;
+
     results.push({
       cityId: city.id,
       cityName: city.name ?? city.id,
       publicScanned: publicFiles?.length ?? 0,
       violations,
       ok: violations.length === 0,
+      blurCoverage: {
+        withVersion: withN,
+        total: totalN,
+        pct: totalN === 0 ? 0 : Math.round((withN / totalN) * 1000) / 10,
+      },
     });
   }
 

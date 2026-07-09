@@ -212,6 +212,13 @@ export async function submitReport(
     // insert is the bare reportRow — byte-identical to the original behavior.
     ...(ASYNC_CLASSIFY ? { classify_status: "pending" } : {}),
     ...(phash ? { photo_phash: phash } : {}),
+    // OUTFLANK #34 — record the blur pipeline version that ran client-side
+    // before this photo hit the public bucket, so the privacy-audit dashboard
+    // can report blur coverage. Literal mirrors lib/privacy/blur.ts BLUR_VERSION
+    // (not imported: that module carries client-only canvas deps). Bump both
+    // together when the blur pipeline version changes. Column ships in migration
+    // 040 — stamped unconditionally; the migration is part of the deploy set.
+    blur_version: 1,
   } as Record<string, unknown>;
   const { error: insertErr } = await ssr.from("reports").insert(reportRow);
   if (insertErr) {
