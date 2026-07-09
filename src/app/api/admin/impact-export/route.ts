@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 import { createServerClient } from "@/lib/db/client";
 import { createSSRClient, getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
@@ -804,8 +805,18 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
 // Route handler
 // ─────────────────────────────────────────────────────────────────────────────
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const rl = checkRateLimit(`impact_export:${clientIp(request)}`, {
+      windowMs: 60_000,
+      max: 20,
+    });
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded" },
+        { status: 429 },
+      );
+    }
     // Auth: require at minimum staff role. The middleware dev fast-path skips
     // Supabase auth, so also allow DEV_AUTH_BYPASS for local testing.
     const isDev = process.env.NODE_ENV === "development";

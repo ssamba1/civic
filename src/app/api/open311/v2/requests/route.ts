@@ -6,13 +6,14 @@ import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
 import { lookupApiKey } from "@/lib/open311/api-keys";
+import { wantsXml as negotiateXml, open311Error } from "@/lib/open311/http";
 import { getService } from "@/lib/open311/services";
 import {
   expandStatus,
   type Open311Request,
   reportToOpen311,
 } from "@/lib/open311/transform";
-import { toErrorXml, toOpen311Xml } from "@/lib/open311/xml";
+import { toOpen311Xml } from "@/lib/open311/xml";
 import {
   type City,
   type Classification,
@@ -57,11 +58,7 @@ export async function GET(request: NextRequest) {
       max: 60,
     });
     if (!rl.allowed) {
-      return errorResponse(
-        429,
-        "Rate limit exceeded",
-        requestWantsXml(request),
-      );
+      return open311Error(429, "Rate limit exceeded", negotiateXml(request));
     }
 
     const params = request.nextUrl.searchParams;
@@ -70,7 +67,7 @@ export async function GET(request: NextRequest) {
     const startDate = params.get("start_date");
     const endDate = params.get("end_date");
     const statusParam = params.get("status");
-    const wantsXml = requestWantsXml(request);
+    const wantsXml = negotiateXml(request);
 
     // Reject unknown status values — silently ignoring them violates spec
     if (
@@ -78,7 +75,7 @@ export async function GET(request: NextRequest) {
       statusParam !== "open" &&
       statusParam !== "closed"
     ) {
-      return errorResponse(400, "status must be 'open' or 'closed'", wantsXml);
+      return open311Error(400, "status must be 'open' or 'closed'", wantsXml);
     }
     const status = statusParam as "open" | "closed" | null;
 
@@ -140,7 +137,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       logger.error("Database query failed", error);
-      return errorResponse(500, "Database query failed", wantsXml);
+      return open311Error(500, "Database query failed", wantsXml);
     }
 
     // Validate row shape before transformation
@@ -196,11 +193,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(open311Requests);
   } catch (err) {
     logger.error("GET /requests unhandled error", err);
-    return errorResponse(
-      500,
-      "Internal server error",
-      requestWantsXml(request),
-    );
+    return open311Error(500, "Internal server error", negotiateXml(request));
   }
 }
 
@@ -218,7 +211,7 @@ export async function GET(request: NextRequest) {
  * externally-submitted requests. Wire a real user lookup later.
  */
 export async function POST(request: NextRequest) {
-  const wantsXml = requestWantsXml(request);
+  const wantsXml = negotiateXml(request);
 
   try {
     // Rate limit early, before body parsing or the API-key check, so a leaked
@@ -229,7 +222,7 @@ export async function POST(request: NextRequest) {
       max: 30,
     });
     if (!rl.allowed) {
-      return errorResponse(429, "Rate limit exceeded", wantsXml);
+      return open311Error(429, "Rate limit exceeded", wantsXml);
     }
 
     // Parse body (supports both JSON and form-encoded)
@@ -248,7 +241,7 @@ export async function POST(request: NextRequest) {
     // H10). Either path must succeed.
     const apiKey = body.api_key ?? request.nextUrl.searchParams.get("api_key");
     if (!apiKey) {
-      return errorResponse(
+      return open311Error(
         401,
         "API key is required and must be valid",
         wantsXml,
@@ -259,7 +252,7 @@ export async function POST(request: NextRequest) {
     const legacyOk =
       !!expectedKey && !partner && safeCompare(apiKey, expectedKey);
     if (!partner && !legacyOk) {
-      return errorResponse(
+      return open311Error(
         401,
         "API key is required and must be valid",
         wantsXml,
@@ -270,7 +263,7 @@ export async function POST(request: NextRequest) {
     // (e.g. scopes ['open311:read']) is rejected here with 403, not 401 — the
     // key is valid, it just lacks the permission.
     if (partner && !partner.scopes.includes("open311:write")) {
-      return errorResponse(
+      return open311Error(
         403,
         "API key lacks the open311:write scope required to submit requests",
         wantsXml,
@@ -280,7 +273,7 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     const serviceCode = body.service_code;
     if (!serviceCode || !getService(serviceCode)) {
-      return errorResponse(
+      return open311Error(
         400,
         `Invalid or missing service_code. Use GET /services for valid codes.`,
         wantsXml,
@@ -290,22 +283,22 @@ export async function POST(request: NextRequest) {
     const lat = parseFloat(body.lat);
     const lng = parseFloat(body.long);
     if (Number.isNaN(lat) || Number.isNaN(lng)) {
-      return errorResponse(
+      return open311Error(
         400,
         "lat and long are required numeric fields",
         wantsXml,
       );
     }
     if (lat < -90 || lat > 90) {
-      return errorResponse(400, "lat must be between -90 and 90", wantsXml);
+      return open311Error(400, "lat must be between -90 and 90", wantsXml);
     }
     if (lng < -180 || lng > 180) {
-      return errorResponse(400, "long must be between -180 and 180", wantsXml);
+      return open311Error(400, "long must be between -180 and 180", wantsXml);
     }
 
     const description = body.description ?? null;
     if (description && description.length > 2000) {
-      return errorResponse(
+      return open311Error(
         400,
         "description must be 2000 characters or fewer",
         wantsXml,
@@ -313,7 +306,7 @@ export async function POST(request: NextRequest) {
     }
     const addressString = body.address_string ?? null;
     if (addressString && addressString.length > 300) {
-      return errorResponse(
+      return open311Error(
         400,
         "address_string must be 300 characters or fewer",
         wantsXml,
@@ -336,7 +329,7 @@ export async function POST(request: NextRequest) {
         .eq("id", partner.cityId)
         .single();
       if (error || !data) {
-        return errorResponse(500, "API key's city no longer exists", wantsXml);
+        return open311Error(500, "API key's city no longer exists", wantsXml);
       }
       city = data as City;
     } else if (jurisdictionId) {
@@ -348,7 +341,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (error || !data) {
-        return errorResponse(400, "Unknown jurisdiction_id", wantsXml);
+        return open311Error(400, "Unknown jurisdiction_id", wantsXml);
       }
       city = data as City;
     } else {
@@ -366,7 +359,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (error || !data) {
-        return errorResponse(500, "No active city configured", wantsXml);
+        return open311Error(500, "No active city configured", wantsXml);
       }
       city = data as City;
     }
@@ -375,7 +368,7 @@ export async function POST(request: NextRequest) {
     // legacy shared system user.
     const reporterId = partner?.userId ?? process.env.OPEN311_SYSTEM_USER_ID;
     if (!reporterId) {
-      return errorResponse(
+      return open311Error(
         500,
         "Server misconfigured: OPEN311_SYSTEM_USER_ID not set",
         wantsXml,
@@ -388,10 +381,10 @@ export async function POST(request: NextRequest) {
       try {
         const parsed = new URL(mediaUrl);
         if (parsed.protocol !== "https:") {
-          return errorResponse(400, "media_url must use https://", wantsXml);
+          return open311Error(400, "media_url must use https://", wantsXml);
         }
       } catch {
-        return errorResponse(400, "media_url must be a valid URL", wantsXml);
+        return open311Error(400, "media_url must be a valid URL", wantsXml);
       }
     }
 
@@ -413,7 +406,7 @@ export async function POST(request: NextRequest) {
 
     if (insertError || !report) {
       logger.error("Report insert failed", insertError);
-      return errorResponse(500, "Failed to create service request", wantsXml);
+      return open311Error(500, "Failed to create service request", wantsXml);
     }
 
     // Trigger AI classification async — fire-and-forget (H2). Call the pipeline
@@ -459,7 +452,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(responseBody, { status: 201 });
   } catch (err) {
     logger.error("POST /requests unhandled error", err);
-    return errorResponse(500, "Internal server error", wantsXml);
+    return open311Error(500, "Internal server error", wantsXml);
   }
 }
 
@@ -474,24 +467,6 @@ function safeCompare(a: string, b: string): boolean {
   const ah = createHash("sha256").update(a).digest();
   const bh = createHash("sha256").update(b).digest();
   return timingSafeEqual(ah, bh);
-}
-
-function requestWantsXml(request: NextRequest): boolean {
-  const format = request.nextUrl.searchParams.get("format");
-  if (format === "xml") return true;
-  if (format === "json") return false;
-  const accept = request.headers.get("accept") ?? "";
-  return accept.includes("text/xml") || accept.includes("application/xml");
-}
-
-function errorResponse(code: number, description: string, xml: boolean) {
-  if (xml) {
-    return new NextResponse(toErrorXml(code, description), {
-      status: code,
-      headers: { "Content-Type": "text/xml; charset=utf-8" },
-    });
-  }
-  return NextResponse.json([{ code, description }], { status: code });
 }
 
 function escXml(value: string): string {

@@ -3,6 +3,7 @@ import "server-only";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
 import { type DeliveryResult, deliverEmail } from "@/lib/notify/deliver";
+import { stampNotificationOutcome } from "@/lib/notify/outbox";
 import { publicToken } from "@/lib/public-report";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 
@@ -165,7 +166,7 @@ export async function notifyReportStatus(
         break;
     }
 
-    return await deliverEmail({
+    const result = await deliverEmail({
       to,
       subject,
       heading,
@@ -174,6 +175,14 @@ export async function notifyReportStatus(
       reportUrl: url,
       actions,
     });
+
+    // Record the outcome on the matching notification row so a delivered email
+    // drops out of the drain and a transient failure stays visible for retry
+    // (migration 025 delivered_at/delivery_error). Best-effort — reuses the db
+    // handle already open here.
+    await stampNotificationOutcome(reportId, status, result, db);
+
+    return result;
   } catch (err) {
     logger.error("Notification composer threw", err, { reportId });
     return { sent: false, reason: "send-error" };

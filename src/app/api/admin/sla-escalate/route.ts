@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 import { createServerClient } from "@/lib/db/client";
 import { createSSRClient, getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
@@ -23,6 +24,16 @@ const BACKLOG_STATUSES = new Set(["open", "dispatched", "in_progress"]);
  * the self-hosted box can hit it headlessly. Mirrors the notify-drain pattern.
  */
 export async function POST(request: Request) {
+  // IP throttle atop the auth/bearer gate — a leaked secret or a compromised
+  // staff session still can't hammer the escalation scan.
+  const rl = checkRateLimit(`sla_escalate:${clientIp(request)}`, {
+    windowMs: 60_000,
+    max: 10,
+  });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+  }
+
   const cronSecret = process.env.SLA_CRON_SECRET;
   const authHeader = request.headers.get("authorization");
   const cronOk = !!cronSecret && authHeader === `Bearer ${cronSecret}`;

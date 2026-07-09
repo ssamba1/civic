@@ -2,8 +2,9 @@ import { type NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
+import { open311Error, wantsXml } from "@/lib/open311/http";
 import { reportToOpen311 } from "@/lib/open311/transform";
-import { toErrorXml, toOpen311SingleXml } from "@/lib/open311/xml";
+import { toOpen311SingleXml } from "@/lib/open311/xml";
 import {
   type City,
   type Classification,
@@ -32,7 +33,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const wantsXml = requestWantsXml(request);
+  const xml = wantsXml(request);
 
   try {
     // Rate limit: 60 requests/min per IP
@@ -41,14 +42,14 @@ export async function GET(
       max: 60,
     });
     if (!rl.allowed) {
-      return errorResponse(429, "Rate limit exceeded", wantsXml);
+      return open311Error(429, "Rate limit exceeded", xml);
     }
 
     const { id } = await params;
 
     // Validate UUID format before DB lookup to avoid reflected-input in error bodies
     if (!UUID_RE.test(id)) {
-      return errorResponse(404, "Service request not found", wantsXml);
+      return open311Error(404, "Service request not found", xml);
     }
 
     const db = createServerClient();
@@ -60,7 +61,7 @@ export async function GET(
       .single();
 
     if (error || !row) {
-      return errorResponse(404, "Service request not found", wantsXml);
+      return open311Error(404, "Service request not found", xml);
     }
 
     const report = rowToReport(row as ReportRow);
@@ -72,7 +73,7 @@ export async function GET(
 
     const open311Request = reportToOpen311(report, classification, city);
 
-    if (wantsXml) {
+    if (xml) {
       return new NextResponse(toOpen311SingleXml(open311Request), {
         status: 200,
         headers: { "Content-Type": "text/xml; charset=utf-8" },
@@ -82,30 +83,8 @@ export async function GET(
     return NextResponse.json([open311Request]);
   } catch (err) {
     logger.error("GET /requests/[id] unhandled error", err);
-    return errorResponse(500, "Internal server error", wantsXml);
+    return open311Error(500, "Internal server error", xml);
   }
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function requestWantsXml(request: NextRequest): boolean {
-  const format = request.nextUrl.searchParams.get("format");
-  if (format === "xml") return true;
-  if (format === "json") return false;
-  const accept = request.headers.get("accept") ?? "";
-  return accept.includes("text/xml") || accept.includes("application/xml");
-}
-
-function errorResponse(code: number, description: string, xml: boolean) {
-  if (xml) {
-    return new NextResponse(toErrorXml(code, description), {
-      status: code,
-      headers: { "Content-Type": "text/xml; charset=utf-8" },
-    });
-  }
-  return NextResponse.json([{ code, description }], { status: code });
 }
 
 // Only safe public columns are fetched — no description, no photo_raw_url, no reporter_id

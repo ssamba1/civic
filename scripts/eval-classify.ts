@@ -74,10 +74,16 @@ function stripCodeFences(raw: string): string {
   return m ? m[1].trim() : trimmed;
 }
 
+// Offline/CI mode: skip live Gemini + image bytes and echo the manifest's
+// expected labels as the "classification", so the scoring + report harness can
+// be exercised without an API key or golden photos. Enable with --mock or
+// EVAL_MOCK=1.
+const MOCK = process.argv.includes("--mock") || process.env.EVAL_MOCK === "1";
+
 async function main(): Promise<void> {
   loadEnvLocal();
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
+  if (!apiKey && !MOCK) {
     console.error("GEMINI_API_KEY not set (add to .env.local or env). Aborting.");
     process.exit(1);
   }
@@ -88,9 +94,14 @@ async function main(): Promise<void> {
   };
   const samples = manifest.samples ?? [];
 
-  // Only evaluate samples whose image file actually exists locally.
-  const present = samples.filter((s) => existsSync(join(IMAGES_DIR, s.image)));
-  const missing = samples.filter((s) => !existsSync(join(IMAGES_DIR, s.image)));
+  // In mock mode evaluate every manifest sample regardless of local images;
+  // otherwise only those whose image file exists locally.
+  const present = MOCK
+    ? samples
+    : samples.filter((s) => existsSync(join(IMAGES_DIR, s.image)));
+  const missing = MOCK
+    ? []
+    : samples.filter((s) => !existsSync(join(IMAGES_DIR, s.image)));
 
   if (missing.length) {
     console.log(
@@ -106,15 +117,20 @@ async function main(): Promise<void> {
     return;
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: MODEL,
-    systemInstruction: CLASSIFICATION_SYSTEM_PROMPT,
-    generationConfig: {
-      responseMimeType: "application/json",
-      responseSchema: GEMINI_CLASSIFICATION_SCHEMA,
-    },
-  });
+  if (MOCK) {
+    console.log("[mock] echoing expected labels — no Gemini call, no image reads.");
+  }
+
+  const model = MOCK
+    ? null
+    : new GoogleGenerativeAI(apiKey as string).getGenerativeModel({
+        model: MODEL,
+        systemInstruction: CLASSIFICATION_SYSTEM_PROMPT,
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: GEMINI_CLASSIFICATION_SCHEMA,
+        },
+      });
 
   interface Row {
     image: string;
@@ -131,9 +147,26 @@ async function main(): Promise<void> {
 
   const rows: Row[] = [];
   for (const s of present) {
+    // Mock: echo the expected labels — a deterministic 100%-accurate run that
+    // proves the scoring + report code without a model or image bytes.
+    if (MOCK) {
+      rows.push({
+        image: s.image,
+        expCategory: s.expected.category,
+        gotCategory: s.expected.category,
+        categoryOk: true,
+        expSeverity: s.expected.severity,
+        gotSeverity: s.expected.severity,
+        expEmergency: s.expected.is_emergency,
+        gotEmergency: s.expected.is_emergency,
+        confidence: 1,
+      });
+      console.log(`✓ [mock] ${s.image}  exp=got=${s.expected.category}/${s.expected.severity}`);
+      continue;
+    }
     const bytes = readFileSync(join(IMAGES_DIR, s.image));
     try {
-      const res = await model.generateContent([
+      const res = await (model as NonNullable<typeof model>).generateContent([
         CLASSIFICATION_PROMPT,
         {
           inlineData: {
