@@ -1,13 +1,29 @@
 # Loop State — Civic / Social Impact
 
-Last run: 2026-07-08 (notify-drain + api-keys sweep)
-Branch: `feat/notify-drain-api-keys` (30 commits ahead of `main`, clean, pushed)
+Last run: 2026-07-09 (analytics 036 + stack merge to main)
+Branch: `main` — PRs #12→#13→#14→#15 all MERGED.
 
-Verify status (2026-07-08): `typecheck` ✅ · `test` ✅ 649 pass / 63 skip ·
-`lint` content-clean (fixed 12 noNonNullAssertion in weather tests; remaining
-biome errors are Windows-CRLF format only — CI runs LF and is green).
+Verify status (2026-07-09): `typecheck` ✅ · `test` ✅ 652 pass / 63 skip ·
+`lint` LF-clean at each tip (biome exit 0). NOTE: `biome check` shows CRLF
+false-positives locally after a fresh `git pull` (git re-applies CRLF); CI runs
+LF and is authoritative-green. #12/#13 merge CI ran full pipeline (incl build)
+green; #14/#15 merge runs registered 0 jobs (concurrency cancellation from 4
+rapid merges), not a code failure — content == verified #15 tip.
 
-## Shipped this session (PRs open, stacked)
+## 2026-07-09 — analytics theater fixed + stack merged
+
+- **0.5 analytics theater FIXED** — migration `036_analytics_rpcs` (8 SECURITY
+  DEFINER per-city aggregate RPCs); `analytics-data.ts` calls them in live mode,
+  demo literals kept under DEMO_MODE. Applied via Supabase MCP + verified.
+- **DB reconciled** — migrations 024–036 confirmed APPLIED on live (all tables
+  present; tracking table stale but DB correct). The old "live DB 8 migrations
+  behind" blocker is RESOLVED.
+- **Stack merged to main** — the 4 stacked PRs were lint-red (biome format +
+  test-mock lint errors, not just CRLF). Fixed bottom-up (format + noThenProperty
+  biome-ignores + optional-chaining rewrites, test-only), re-based the stack,
+  merged #12→#13→#14→#15. Remote branches deleted.
+
+## Shipped in the backlog sweeps (PRs #12–#15, now merged)
 
 - **PR #12 `feat/backlog-sweep`** — EXIF strip, api-key scopes, SLA due_at +
   escalation, zone routing, a11y focus traps, landing reposition, ADR 0002
