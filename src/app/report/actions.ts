@@ -8,7 +8,9 @@ import { createServerClient } from "@/lib/db/client";
 import { createSSRClient } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
 import { stripImageMetadata } from "@/lib/privacy/exif-strip";
+import { redactPII } from "@/lib/privacy/pii-redact";
 import type { Classification, Result } from "@/lib/types";
+import { emitWebhook } from "@/lib/webhooks/deliver";
 
 const logger = createLogger("[submit-report]");
 
@@ -86,10 +88,16 @@ export async function submitReport(
     photoOriginal,
     location,
     address,
-    description,
     tags,
     phash,
   } = parsed.data;
+
+  // Redact PII from the public-facing description before it is stored.
+  // The raw (pre-redaction) text is intentionally not persisted — the
+  // description column is public-readable via Open311; no PII should land there.
+  const description = parsed.data.description
+    ? redactPII(parsed.data.description).redacted
+    : parsed.data.description;
 
   // reports.location is NOT NULL geography(POINT,4326). When GPS is unavailable,
   // fall back to the demo city center so submission never dead-ends.
@@ -229,6 +237,29 @@ export async function submitReport(
       error: `Failed to create report: ${insertErr.message}`,
     };
   }
+
+  // Outbound webhooks (#79): notify registered integrations that a report was
+  // created. Fire-and-forget via after() so it never delays the response and a
+  // dispatch failure can never fail the submission. emitWebhook self-degrades
+  // to a no-op if the webhook_endpoints table/migration isn't applied.
+  after(async () => {
+    try {
+      await emitWebhook("report.created", {
+        id: reportId,
+        city_id: cityId,
+        category: tags?.[0] ?? "uncategorized",
+        status: "open",
+        severity: null,
+        address: address ?? null,
+        lat: coord.lat,
+        lng: coord.lng,
+        created_at: new Date().toISOString(),
+        updated_at: null,
+      });
+    } catch (err) {
+      logger.error("emitWebhook(report.created) failed", err, { reportId });
+    }
+  });
 
   // OPTIONAL async path (NEXT_PUBLIC_ASYNC_CLASSIFY=1): do NOT await the
   // pipeline. Fire-and-forget so the UI shows the thanks screen instantly, then

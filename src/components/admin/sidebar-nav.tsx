@@ -2,12 +2,17 @@
 
 import {
   Building2,
+  FileCheck2,
+  Fingerprint,
   KeyRound,
   LandPlot,
   PlusCircle,
   QrCode,
   Shield,
   ShieldCheck,
+  Timer,
+  Upload,
+  Webhook,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -16,8 +21,13 @@ import { cn } from "@/lib/utils/cn";
 const navItems = [
   { href: "/admin/cities", label: "Cities", icon: Building2 },
   { href: "/admin/onboard", label: "Onboard a city", icon: PlusCircle },
+  { href: "/admin/import", label: "Import legacy data", icon: Upload },
   { href: "/admin/api-keys", label: "API keys", icon: KeyRound },
+  { href: "/admin/webhooks", label: "Webhooks", icon: Webhook },
+  { href: "/admin/sso", label: "SSO", icon: Fingerprint },
   { href: "/admin/privacy", label: "Privacy audit", icon: ShieldCheck },
+  { href: "/admin/retention", label: "Data retention", icon: Timer },
+  { href: "/admin/compliance", label: "Compliance report", icon: FileCheck2 },
   { href: "/admin/districts", label: "District rollups", icon: LandPlot },
   { href: "/admin/qr", label: "Walk-up QR", icon: QrCode },
   { href: "/staff", label: "Staff console", icon: Shield },

@@ -8,6 +8,7 @@ import { AI_CREW_ASSIGN } from "@/lib/ai/config";
 import { autoAssignCrew } from "@/lib/ai/crew-assign";
 import { draftClosureExplanation } from "@/lib/ai/draft-closure";
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
+import { isGenericClosure } from "@/lib/staff/closure-quality";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
@@ -16,6 +17,7 @@ import { resolveTeamKeyForCategory } from "@/lib/onboarding/city-teams";
 import { stripImageMetadata } from "@/lib/privacy/exif-strip";
 import { publicToken } from "@/lib/public-report";
 import { TEAMS, type TeamId } from "@/lib/teams";
+import { emitWebhook } from "@/lib/webhooks/deliver";
 import type {
   CategoryCostStats,
   Classification,
@@ -316,6 +318,10 @@ export async function closeWorkOrder(
   // No-generic-closures (NEXT_100 #5): a resolution reason and an after-photo
   // are both mandatory — the "no evidence observed" complaint dies here.
   if (!reason.trim()) return { ok: false, error: "closure_reason_required" };
+  // Reject single-word / boilerplate closures ("done", "fixed", "resolved",
+  // "no evidence observed", etc.) — residents deserve to know what actually happened.
+  if (isGenericClosure(reason))
+    return { ok: false, error: "closure_reason_too_generic" };
   if (!resolutionPhotoUrl && !resolutionPhotoDataUrl)
     return { ok: false, error: "after_photo_required" };
 
@@ -473,6 +479,26 @@ export async function closeWorkOrder(
       await notifyReportStatus(wo.report_id, "closed");
     } catch (err) {
       logger.error("Close notification failed", err, {
+        reportId: wo.report_id,
+      });
+    }
+    // Outbound webhooks (#79): report.closed. Best-effort; self-degrades if the
+    // webhook_endpoints table isn't applied.
+    try {
+      await emitWebhook("report.closed", {
+        id: wo.report_id,
+        city_id: cityId ?? null,
+        category: category ?? "uncategorized",
+        status: "closed",
+        severity: null,
+        address: address ?? null,
+        lat: null,
+        lng: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      logger.error("emitWebhook(report.closed) failed", err, {
         reportId: wo.report_id,
       });
     }

@@ -1,10 +1,50 @@
 import "server-only";
 
 import type { CorrectionExample } from "@/lib/ai/prompt";
+import type { FeedbackRow } from "@/lib/ai/feedback-corpus";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("classification-feedback");
+
+/**
+ * Fetch all classification_feedback rows for corpus building (#26).
+ * Returns rows ordered by created_at asc so dedupeCorpus keeps the latest.
+ * Gracefully degrades to [] on any DB error — the corpus endpoint returns an
+ * empty JSONL rather than a 500, keeping the route safe to call at any time.
+ */
+export async function listFeedbackForCorpus(
+  limit = 10_000,
+): Promise<FeedbackRow[]> {
+  try {
+    const db = createServerClient();
+    const { data, error } = await db
+      .from("classification_feedback")
+      .select("id, report_id, original_category, corrected_category, original_confidence, created_at")
+      .order("created_at", { ascending: true })
+      .limit(limit);
+    if (error) {
+      logger.warn("listFeedbackForCorpus query failed", { error: error.message });
+      return [];
+    }
+    return (data ?? []).map((r) => ({
+      id: String(r.id),
+      report_id: String(r.report_id),
+      original_category: String(r.original_category),
+      corrected_category: String(r.corrected_category),
+      original_confidence:
+        r.original_confidence !== null && r.original_confidence !== undefined
+          ? Number(r.original_confidence)
+          : null,
+      created_at: String(r.created_at),
+    }));
+  } catch (err) {
+    logger.warn("listFeedbackForCorpus threw", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return [];
+  }
+}
 
 /**
  * OUTFLANK #7 — fetch a city's most common staff correction pairs from
