@@ -1,12 +1,14 @@
 import "server-only";
 
 import { createServerClient } from "@/lib/db/client";
+import { syncToConnectors } from "@/lib/integrations/connectors";
 import { createLogger } from "@/lib/logger";
 import { type DeliveryResult, deliverEmail } from "@/lib/notify/deliver";
 import { deliverSms } from "@/lib/notify/deliver-sms";
 import { stampNotificationOutcome } from "@/lib/notify/outbox";
 import { publicToken } from "@/lib/public-report";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
+import { fireWebhook } from "@/lib/webhooks/outbound";
 
 const logger = createLogger("[notify-composer]");
 
@@ -59,6 +61,7 @@ const RESOLUTION_NOTES: Record<ReportCategory, string> = {
 interface NotifyRow {
   id: string;
   reporter_id: string;
+  address: string | null;
   classifications:
     | { category: ReportCategory | null }[]
     | { category: ReportCategory | null }
@@ -94,7 +97,7 @@ export async function notifyReportStatus(
     const { data, error } = await db
       .from("reports")
       .select(
-        "id, reporter_id, classifications ( category ), work_orders ( resolution_photo_url )",
+        "id, reporter_id, address, classifications ( category ), work_orders ( resolution_photo_url )",
       )
       .eq("id", reportId)
       .single<NotifyRow>();
@@ -115,6 +118,27 @@ export async function notifyReportStatus(
       : data.classifications;
     const category = (cl?.category ?? "other") as ReportCategory;
     const noun = CATEGORY_LABEL[category] || "issue";
+
+    // Outbound webhooks (#79): fan this status change out to any configured
+    // Zapier/Make/custom endpoint. Best-effort, env-gated, no-op when unset.
+    const occurredAt = new Date().toISOString();
+    void fireWebhook({
+      event: `report.${status}`,
+      reportId,
+      status,
+      category,
+      occurredAt,
+    });
+    // CMMS/ERP/GIS connectors (#74/#75/#76/#77/#78): same event, mapped per
+    // vendor. Each no-ops without its own env creds. Best-effort, never blocks.
+    void syncToConnectors({
+      event: `report.${status}`,
+      reportId,
+      status,
+      category,
+      address: data.address,
+      occurredAt,
+    });
 
     const wo = Array.isArray(data.work_orders)
       ? (data.work_orders[0] ?? null)

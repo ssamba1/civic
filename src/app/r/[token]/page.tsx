@@ -10,6 +10,8 @@ import {
 import { recordCsat } from "@/lib/notify/csat";
 import { type PublicStatus, resolvePublicReport } from "@/lib/public-report";
 import { type StatusTone, toneChipClass } from "@/lib/status";
+import { categoryToTeam, TEAMS } from "@/lib/teams";
+import { ReopenButton } from "./reopen-button";
 import { ShareActions } from "./share-actions";
 
 // Public, account-less status page — resolved per request from an opaque token.
@@ -69,6 +71,10 @@ const COPY = {
   csatPrompt: "How did the crew do?",
   history: "History",
   reported: "Reported",
+  handledBy: "Routed to",
+  reopenCta: "Still broken? Reopen this report",
+  reopenBusy: "Reopening…",
+  reopenDone: "Reopened — the crew will take another look.",
   footer:
     "This is a public status page. No account needed — bookmark this link to check back anytime.",
 } as const;
@@ -180,6 +186,10 @@ export default async function PublicReportPage({
           <p className="mt-2 text-[13px] text-subtle">
             {report.address} · {t.reported} {fmtDate(report.filedAt, lang)}
           </p>
+          {/* #13 — name the owning team so it reads as routed to a real human. */}
+          <p className="mt-1 text-[13px] text-faint">
+            {t.handledBy} {TEAMS[categoryToTeam(report.category)].label}
+          </p>
         </section>
 
         {/* Photo(s) */}
@@ -285,6 +295,15 @@ export default async function PublicReportPage({
                 </a>
               </p>
             )}
+            {/* #7 — reporter can reopen if it's not actually fixed. */}
+            <div className="mt-4 border-t border-[var(--color-success)]/20 pt-3">
+              <ReopenButton
+                token={token}
+                label={t.reopenCta}
+                confirmLabel={t.reopenBusy}
+                doneLabel={t.reopenDone}
+              />
+            </div>
           </section>
         )}
 

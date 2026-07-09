@@ -131,7 +131,14 @@ export async function POST(request: NextRequest) {
     return new NextResponse("sms not configured", { status: 503 });
   }
 
-  const from = params.From ?? "";
+  // Same Twilio webhook serves SMS/MMS and WhatsApp (#3); WhatsApp senders
+  // arrive as "whatsapp:+1...". Normalize the number and tag the channel so the
+  // report records how it came in; the TwiML reply routes back on the same
+  // channel automatically.
+  const rawFrom = params.From ?? "";
+  const isWhatsApp = rawFrom.startsWith("whatsapp:");
+  const from = rawFrom.replace(/^whatsapp:/, "");
+  const channel = isWhatsApp ? "WhatsApp" : "SMS";
   const bodyText = (params.Body ?? "").trim();
   const numMedia = Number(params.NumMedia ?? "0");
 
@@ -209,9 +216,9 @@ export async function POST(request: NextRequest) {
     photo_raw_url: rawUrl,
     address: bodyText || null,
     description: bodyText
-      ? `SMS from ${from}: ${bodyText}`
-      : `SMS from ${from}`,
-    tags: ["sms-intake"],
+      ? `${channel} from ${from}: ${bodyText}`
+      : `${channel} from ${from}`,
+    tags: [isWhatsApp ? "whatsapp-intake" : "sms-intake"],
     status: "open",
   });
   if (reportErr) {

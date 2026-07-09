@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AnalyticsInteractive } from "@/components/analytics/analytics-interactive";
+import { PeerBenchmarkCard } from "@/components/analytics/peer-benchmark-card";
 import { SurgeBanner } from "@/components/analytics/surge-banner";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
 import { fetchCity } from "@/lib/dashboard-queries";
@@ -47,6 +48,7 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
         </section>
 
         <SurgeBanner />
+        <PeerBenchmarkCard cityId={city.id} />
 
         <AnalyticsInteractive />
       </div>

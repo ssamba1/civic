@@ -20,6 +20,8 @@ const navItems = [
   { href: "/admin/privacy", label: "Privacy audit", icon: ShieldCheck },
   { href: "/admin/districts", label: "District rollups", icon: LandPlot },
   { href: "/admin/qr", label: "Walk-up QR", icon: QrCode },
+  { href: "/admin/compliance", label: "Compliance", icon: ShieldCheck },
+  { href: "/admin/retention", label: "Data retention", icon: Shield },
   { href: "/staff", label: "Staff console", icon: Shield },
 ] as const;
 
