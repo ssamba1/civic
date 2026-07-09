@@ -8,10 +8,7 @@ import { type CrewTypeDef, DEFAULT_CREW_TYPES } from "@/lib/crew-types";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
 import { fetchCity } from "@/lib/dashboard-queries";
 import { fetchCityCrewTypes } from "@/lib/db/crew-types";
-import {
-  type CrewWorkload,
-  fetchCrewWorkloads,
-} from "@/lib/db/crew-workloads";
+import { type CrewWorkload, fetchCrewWorkloads } from "@/lib/db/crew-workloads";
 import { type CrewRow, fetchCityCrews } from "@/lib/db/crews";
 import { getStaffAccessForCity } from "@/lib/staff-access";
 import { isValidTeamId, TEAMS } from "@/lib/teams";

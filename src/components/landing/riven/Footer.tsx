@@ -10,6 +10,7 @@ const FOOTER_LINKS = [
   { label: "Dashboard", href: "/city/cumming" },
   { label: "Report", href: "/report" },
   { label: "For cities", href: "/onboard" },
+  { label: "Requests", href: "/requests" },
   { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
 ];

@@ -99,7 +99,9 @@ export default async function CityMembersPage({ params }: PageProps) {
 
   // Per-crew workload metrics for the crew panel's load badges. Degrades to an
   // empty map (pre-030 DB, query error) so the panel still renders its roster.
-  const crewWorkloadsResult = dbCity ? await fetchCrewWorkloads(dbCity.id) : null;
+  const crewWorkloadsResult = dbCity
+    ? await fetchCrewWorkloads(dbCity.id)
+    : null;
   const crewWorkloads = crewWorkloadsResult?.ok
     ? crewWorkloadsResult.workloads
     : {};
