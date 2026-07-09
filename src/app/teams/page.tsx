@@ -1,4 +1,4 @@
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Inbox } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -31,6 +31,13 @@ export default function TeamsIndexPage() {
               aria-hidden="true"
             />
             Civic
+          </Link>
+          <Link
+            href="/requests"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-subtle outline-none transition-colors hover:bg-overlay hover:text-foreground focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
+          >
+            <Inbox className="size-4" aria-hidden="true" />
+            Request a feature / help
           </Link>
         </div>
       </header>

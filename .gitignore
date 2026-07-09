@@ -67,3 +67,4 @@ scripts/shots/
 # Playwright artifacts
 test-results/
 .mcp.json
+outreach/*

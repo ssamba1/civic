@@ -10,6 +10,8 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import CommentThread from "@/components/report/comment-thread";
+import PhotoGallery from "@/components/report/photo-gallery";
 import { ReportCsat } from "@/components/resident/report-csat";
 import {
   ReportPhoto,
@@ -17,6 +19,8 @@ import {
 } from "@/components/resident/report-timeline";
 import { currencyForCitySlug, formatCost } from "@/lib/currency";
 import { CATEGORY_META, KNOWN_CITIES } from "@/lib/dashboard-data";
+import { listComments } from "@/lib/db/comments";
+import { getReportPhotos } from "@/lib/db/report-photos";
 import { publicToken } from "@/lib/public-report";
 import {
   getCurrentResident,
@@ -56,6 +60,19 @@ export default async function ReportDetailPage({ params }: PageProps) {
 
   const report = await getMyReport(citySlug, reportId);
   if (!report) notFound();
+
+  // Multi-photo: fetch child report_photos rows. Gracefully returns [] when
+  // migration 050 hasn't been applied or the report has no child rows (older
+  // single-photo submissions). The primary photo always falls through to the
+  // existing single <ReportPhoto> path.
+  const extraPhotos = await getReportPhotos(reportId);
+
+  // Comments — gracefully returns [] when migration 055 hasn't been applied.
+  const comments = await listComments(reportId);
+  // Build the gallery URL array from the child table when >1 photo, or fall
+  // back to the primary report column for single-photo backward-compat.
+  const galleryUrls =
+    extraPhotos.length > 1 ? extraPhotos.map((p) => p.public_url) : null; // null → use existing single-img path
 
   const steps = await getReportTimeline(citySlug, reportId);
   const meta = CATEGORY_META[report.category];
@@ -124,9 +141,10 @@ export default async function ReportDetailPage({ params }: PageProps) {
         </a>
       </section>
 
-      {/* Photo(s) — show before/after when a resolution photo exists, else the
-          single report photo. The resolution photo is the operational-
-          transparency payoff: residents see the work that was done. */}
+      {/* Photo(s) — multi-photo gallery when >1 photo (migration 050 applied +
+          photos exist), before/after when resolved, else single primary photo.
+          The resolution photo is the operational-transparency payoff: residents
+          see the work that was done. */}
       <div className="mb-7 overflow-hidden rounded-xl border border-hairline bg-surface">
         {isResolved && report.afterPhoto ? (
           <div className="grid grid-cols-1 sm:grid-cols-2">
@@ -149,7 +167,13 @@ export default async function ReportDetailPage({ params }: PageProps) {
               </figcaption>
             </figure>
           </div>
+        ) : galleryUrls ? (
+          // Multi-photo gallery (>1 photo from report_photos child table).
+          <div className="p-3">
+            <PhotoGallery urls={galleryUrls} altPrefix={meta.label} />
+          </div>
         ) : (
+          // Single photo — backward-compatible path.
           <ReportPhoto
             src={report.photo_public_url}
             alt={`${meta.label} report at ${report.address}`}
@@ -266,6 +290,10 @@ export default async function ReportDetailPage({ params }: PageProps) {
         <Link2 className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         Public status link
       </Link>
+
+      {/* Comment thread — resident+staff Q&A. Gracefully absent when migration
+          055 hasn't been applied yet (listComments returns []). */}
+      <CommentThread reportId={report.id} initialComments={comments} />
     </div>
   );
 }

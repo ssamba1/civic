@@ -45,6 +45,11 @@ const STAFF_ROLES = ["staff_dispatcher", "staff_supervisor", "admin"];
 // Two same-type crews on streets_roads are deliberate — showcases the AI
 // crew_hint routing (descriptions differentiate them) and the load balancer
 // in src/lib/ai/crew-assign.ts when the hint misses.
+//
+// MUST stay in sync with CREW_UNIT_ROSTER in src/lib/demo-auth.ts — same
+// names/crew_type values, so each per-crew demo login's ?crew=<name> scope
+// resolves against a real seeded row instead of silently falling back to
+// the type-level portal.
 const CREW_ROSTER = [
   { name: "North Paving Crew", team_key: "streets_roads", crew_type: "paving", description: "Arterial roads, school zones, and everything north of the city core — fast pothole patch turnarounds." },
   { name: "South Paving Crew", team_key: "streets_roads", crew_type: "paving", description: "Downtown, the parks district, and southern subdivisions — larger resurfacing and prep jobs." },
@@ -107,11 +112,16 @@ async function seedCity(slug) {
   // succeed for a disabled/absent division and the UI would show a crew
   // under a division the city turned off.
   const teamRows = await ok(db.from("city_teams").select("team_key, enabled").eq("city_id", cityId), `city_teams lookup ${slug}`);
+  // A city with ZERO city_teams rows runs on the app's preset divisions
+  // (the UI falls back to TEAM_LIST — Cumming is in this state), so an empty
+  // table means "everything enabled", not "nothing enabled".
+  const hasTeamConfig = (teamRows ?? []).length > 0;
   const enabledTeamKeys = new Set((teamRows ?? []).filter((t) => t.enabled).map((t) => t.team_key));
+  const teamEnabled = (key) => !hasTeamConfig || enabledTeamKeys.has(key);
 
-  const toSeed = CREW_ROSTER.filter((c) => enabledTeamKeys.has(c.team_key));
+  const toSeed = CREW_ROSTER.filter((c) => teamEnabled(c.team_key));
   for (const c of CREW_ROSTER) {
-    if (!enabledTeamKeys.has(c.team_key)) log(`  skip crew "${c.name}" — team_key "${c.team_key}" not enabled for this city`);
+    if (!teamEnabled(c.team_key)) log(`  skip crew "${c.name}" — team_key "${c.team_key}" not enabled for this city`);
   }
 
   const crews = toSeed.length ? await upsertCrews(cityId, toSeed) : [];

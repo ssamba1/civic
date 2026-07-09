@@ -12,6 +12,9 @@ const serverEnvSchema = z
     RESEND_API_KEY: z.string().optional(),
     NOTIFY_FROM_EMAIL: z.string().optional(),
     NOTIFY_DISABLE: z.string().optional(),
+    TWILIO_ACCOUNT_SID: z.string().optional(),
+    TWILIO_AUTH_TOKEN: z.string().optional(),
+    TWILIO_FROM_NUMBER: z.string().optional(),
     DEV_AUTH_BYPASS: z.string().optional(),
     // The single request header that carries the real client IP for rate
     // limiting. Set to the platform-set, un-spoofable header for your deploy
@@ -61,6 +64,9 @@ function parseServerEnv() {
       RESEND_API_KEY: process.env.RESEND_API_KEY,
       NOTIFY_FROM_EMAIL: process.env.NOTIFY_FROM_EMAIL,
       NOTIFY_DISABLE: process.env.NOTIFY_DISABLE,
+      TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
+      TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
+      TWILIO_FROM_NUMBER: process.env.TWILIO_FROM_NUMBER,
       DEV_AUTH_BYPASS: process.env.DEV_AUTH_BYPASS,
       RATE_LIMIT_TRUSTED_HEADER: process.env.RATE_LIMIT_TRUSTED_HEADER,
     });

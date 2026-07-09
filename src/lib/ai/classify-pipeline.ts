@@ -9,6 +9,7 @@ import { mergeCategoryDefs } from "@/lib/ai/categories";
 import { autoAssignCrew } from "@/lib/ai/crew-assign";
 import { findDuplicate } from "@/lib/ai/dedup";
 import { classifyPhoto } from "@/lib/ai/gemini";
+import { gradeHazard } from "@/lib/ai/hazard-grade";
 import { buildCorrectionGuidance, type PromptCrew } from "@/lib/ai/prompt";
 import { generateWorkOrderAI } from "@/lib/ai/work-order-ai";
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
@@ -21,6 +22,7 @@ import { sniffImageMime } from "@/lib/image/sniff-mime";
 import { createLogger } from "@/lib/logger";
 import { resolveTeamKeyForCategory } from "@/lib/onboarding/city-teams";
 import { resolveOwningCity } from "@/lib/routing/jurisdiction";
+import { autoAssignUnit } from "@/lib/routing/org-units";
 import type {
   Classification,
   Result,
@@ -320,6 +322,55 @@ export async function runClassifyPipeline(
   }
 
   log.info("classification_persisted", { reportId });
+
+  // Optional hazard grading — best-effort; never blocks or aborts the pipeline.
+  // Stamps hazard_severity + hazard_rationale on the reports row (migration 044).
+  // Skipped gracefully on fallback classification (no image) or any Gemini error.
+  if (classificationResult.ok && photoBlob) {
+    try {
+      const bytes = new Uint8Array(await photoBlob.arrayBuffer());
+      const imageBase64 = Buffer.from(bytes).toString("base64");
+      const hazardResult = await gradeHazard({
+        imageBase64,
+        mimeType: sniffed,
+      });
+      if (hazardResult.ok) {
+        const patch = {
+          hazard_severity: hazardResult.data.severity,
+          hazard_rationale: hazardResult.data.rationale,
+        } as Record<string, unknown>;
+        const { error: hazardErr } = await supabase
+          .from("reports")
+          .update(patch)
+          .eq("id", reportId);
+        if (hazardErr) {
+          log.warn("hazard_grade_stamp_failed", {
+            reportId,
+            error: hazardErr.message,
+          });
+        } else {
+          log.info("hazard_grade_stamped", {
+            reportId,
+            severity: hazardResult.data.severity,
+            publicSafetyRisk: hazardResult.data.publicSafetyRisk,
+          });
+        }
+      } else {
+        log.warn("hazard_grade_failed", {
+          reportId,
+          error: hazardResult.error,
+        });
+      }
+    } catch (hazardThrow) {
+      log.warn("hazard_grade_threw", {
+        reportId,
+        error:
+          hazardThrow instanceof Error
+            ? hazardThrow.message
+            : String(hazardThrow),
+      });
+    }
+  }
 
   // Manual-review gate: hold the report at 'open' instead of auto-dispatching
   // when the AI itself signals it isn't confident enough to route this safely.
@@ -668,6 +719,23 @@ export async function runClassifyPipeline(
       teamKey: resolvedTeamKey,
       crewType,
       crewHint,
+      log,
+    });
+  }
+
+  // Advanced routing over the org_units tree (migration 042). Runs alongside
+  // the legacy crew pick during the transition: it stamps assigned_unit_id (the
+  // new source of truth) via cost/SLA-weighted load balance across internal
+  // crews + contractors. Best-effort and no-op-safe on an un-migrated DB (no
+  // org_units rows → no candidates → null). Gated identically to the crew pick.
+  if (AI_CREW_ASSIGN && !needsManualReview && crewType) {
+    await autoAssignUnit(supabase, {
+      workOrderId: insertedWorkOrder.id,
+      cityId: report.city_id,
+      category: classification.category,
+      crewType,
+      dueAt: insertedWorkOrder.due_at ?? null,
+      nowMs: Date.now(),
       log,
     });
   }

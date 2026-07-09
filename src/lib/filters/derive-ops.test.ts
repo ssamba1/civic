@@ -2,7 +2,11 @@
 import { describe, expect, it } from "vitest";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { HOUR_MS } from "@/lib/utils/time-constants";
-import { deriveBacklogAgeDistribution, deriveSlaRisk } from "./derive";
+import {
+  deriveBacklogAgeDistribution,
+  deriveNeedsAttention,
+  deriveSlaRisk,
+} from "./derive";
 
 const now = new Date("2026-06-14T12:00:00Z").getTime();
 
@@ -81,5 +85,49 @@ describe("deriveSlaRisk", () => {
       at_risk: 0,
       breached: 0,
     });
+  });
+});
+
+describe("deriveNeedsAttention", () => {
+  it("ranks severity first, then oldest within a tier", () => {
+    const reports = [
+      aged(2, { id: "fresh-sev5", severity: 5 }),
+      aged(200, { id: "stale-sev2", severity: 2 }),
+      aged(10, { id: "sev3-newer", severity: 3 }),
+      aged(50, { id: "sev3-older", severity: 3 }),
+    ];
+    const out = deriveNeedsAttention(reports, now);
+    // Sev 5 wins outright despite being newest; the Sev-2 sinks below the Sev-3
+    // tier despite being oldest overall; oldest-first inside the Sev-3 tier.
+    expect(out.map((i) => i.id)).toEqual([
+      "fresh-sev5",
+      "sev3-older",
+      "sev3-newer",
+      "stale-sev2",
+    ]);
+  });
+
+  it("includes only the open backlog and honours the limit", () => {
+    const reports = [
+      aged(5, { id: "a", status: "open", severity: 5 }),
+      aged(5, { id: "b", status: "closed", severity: 5 }),
+      aged(5, { id: "c", status: "dispatched", severity: 4 }),
+      aged(5, { id: "d", status: "in_progress", severity: 4 }),
+      aged(5, { id: "e", status: "rejected", severity: 5 }),
+    ];
+    const out = deriveNeedsAttention(reports, now, 2);
+    expect(out).toHaveLength(2);
+    expect(out.map((i) => i.id)).toEqual(["a", "c"]);
+  });
+
+  it("flags items past their category SLA window (pothole = 72h)", () => {
+    const byId = Object.fromEntries(
+      deriveNeedsAttention(
+        [aged(80, { id: "breached" }), aged(10, { id: "ok" })],
+        now,
+      ).map((i) => [i.id, i.breaches_sla]),
+    );
+    expect(byId.breached).toBe(true);
+    expect(byId.ok).toBe(false);
   });
 });

@@ -13,14 +13,14 @@ import { createReactiveStore } from "@/lib/utils/reactive-store";
    `@custom-variant dark`). A no-flash inline script in app/layout.tsx
    sets that class before first paint; this store keeps it in sync after.
 
-   Default = dark (preserves the app's established look; the toggle reveals
-   the light theme). No DB writes.
+   Default = light (first-open experience; the toggle reveals dark). No DB
+   writes.
    ================================================================== */
 
 export type Theme = "light" | "dark";
 
 const STORAGE_KEY = "civic.theme";
-const DEFAULT_THEME: Theme = "dark";
+const DEFAULT_THEME: Theme = "light";
 
 let theme: Theme = DEFAULT_THEME;
 let hydrated = false;

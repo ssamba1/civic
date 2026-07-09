@@ -3,6 +3,7 @@
 import {
   Check,
   CheckCircle2,
+  Flame,
   Inbox,
   ShieldCheck,
   Timer,
@@ -890,6 +891,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
   const ratio = totalCreated ? (totalClosed / totalCreated) * 100 : 0;
   const dailyAvgCreated = totalCreated / Math.max(data.length, 1);
   const dailyAvgClosed = totalClosed / Math.max(data.length, 1);
+  const keyPoints = buildTrendKeyPoints(data);
 
   const sliceCreated = slice.reduce((s, d) => s + d.created, 0);
   const sliceClosed = slice.reduce((s, d) => s + d.closed, 0);
@@ -1053,32 +1055,47 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
         className="lg:col-span-8 lg:row-span-2"
         onExpand={() => setOpen(true)}
       >
-        <div className="flex items-center gap-4 mb-2 text-[12px]">
-          <span
-            // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y — focus reveals a hover tooltip via tip.bindTarget
-            tabIndex={0}
-            className="rounded-md px-1 -mx-1 outline-none focus-visible:bg-overlay hover:bg-overlay transition-colors cursor-default"
-            {...tip.bindTarget(() => legendTip("created"))}
-          >
-            <Legend color="var(--accent)" label={`Created · ${totalCreated}`} />
-          </span>
-          <span
-            // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y — focus reveals a hover tooltip via tip.bindTarget
-            tabIndex={0}
-            className="rounded-md px-1 -mx-1 outline-none focus-visible:bg-overlay hover:bg-overlay transition-colors cursor-default"
-            {...tip.bindTarget(() => legendTip("closed"))}
-          >
-            <Legend color="var(--subtle)" label={`Resolved · ${totalClosed}`} />
-          </span>
+        <div className="flex h-full flex-col">
+          <div className="flex items-center gap-4 mb-2 text-[12px]">
+            <span
+              // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y — focus reveals a hover tooltip via tip.bindTarget
+              tabIndex={0}
+              className="rounded-md px-1 -mx-1 outline-none focus-visible:bg-overlay hover:bg-overlay transition-colors cursor-default"
+              {...tip.bindTarget(() => legendTip("created"))}
+            >
+              <Legend
+                color="var(--accent)"
+                label={`Created · ${totalCreated}`}
+              />
+            </span>
+            <span
+              // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y — focus reveals a hover tooltip via tip.bindTarget
+              tabIndex={0}
+              className="rounded-md px-1 -mx-1 outline-none focus-visible:bg-overlay hover:bg-overlay transition-colors cursor-default"
+              {...tip.bindTarget(() => legendTip("closed"))}
+            >
+              <Legend
+                color="var(--subtle)"
+                label={`Resolved · ${totalClosed}`}
+              />
+            </span>
+          </div>
+          {/* Chart flexes to absorb the tile's slack (it spans two grid rows).
+             The curve grows to fill, so the key-points strip below hugs the
+             x-axis with a fixed divider gap instead of floating far beneath it. */}
+          <TrendChart
+            data={data}
+            heightClass="flex-1 min-h-[180px] sm:min-h-[220px] lg:min-h-[260px]"
+            showCreated
+            showClosed
+            smooth
+            opts={{ hovered: hoveredDay, bindHover: bindDay }}
+          />
+          <TrendKeyPoints
+            points={keyPoints}
+            className="mt-3 border-t border-hairline pt-4"
+          />
         </div>
-        <TrendChart
-          data={data}
-          heightClass="h-[180px] sm:h-[220px] lg:h-[260px]"
-          showCreated
-          showClosed
-          smooth
-          opts={{ hovered: hoveredDay, bindHover: bindDay }}
-        />
         <tip.Portal />
       </Tile>
       <ExpandModal
@@ -1203,6 +1220,129 @@ function Legend({ color, label }: { color: string; label: string }) {
       />
       {label}
     </span>
+  );
+}
+
+/* ------------------------------------------------------------------
+   Key points — a compact insight strip that fills the trend tile's
+   slack vertical space (it spans two grid rows but the chart is a
+   fixed 260px, so ~100px sat empty below it). Three auto-derived
+   takeaways: net backlog, the peak intake day, and recent filing
+   momentum. Pure derivation off the same series the chart draws, so
+   the numbers can never drift from the curve above them.
+
+   This is the opinionated surface: which three signals matter, the
+   momentum window, and the good/bad tone thresholds are civic-ops
+   judgement calls — tune them here.
+   ------------------------------------------------------------------ */
+
+type TrendKeyPoint = {
+  key: string;
+  label: string;
+  value: string;
+  hint: string;
+  tone: "good" | "bad" | "neutral";
+  icon: "up" | "down" | "peak";
+};
+
+function buildTrendKeyPoints(data: TrendPoint[]): TrendKeyPoint[] {
+  if (data.length === 0) return [];
+
+  const totalCreated = data.reduce((s, d) => s + d.created, 0);
+  const totalClosed = data.reduce((s, d) => s + d.closed, 0);
+  const netBacklog = totalCreated - totalClosed;
+  const peak = data.reduce((p, d) => (d.created > p.created ? d : p), data[0]);
+
+  // Momentum: mean daily filings in the most recent window vs the window
+  // immediately before it. Window is capped at 7 days AND at half the range,
+  // so the two halves never overlap on short ranges (a 7d view compares 3d↔3d).
+  const win = Math.max(1, Math.min(7, Math.floor(data.length / 2)));
+  const meanCreated = (xs: TrendPoint[]) =>
+    xs.length ? xs.reduce((s, d) => s + d.created, 0) / xs.length : 0;
+  const recentMean = meanCreated(data.slice(-win));
+  const priorMean = meanCreated(data.slice(-2 * win, -win));
+  const momentumPct = priorMean
+    ? ((recentMean - priorMean) / priorMean) * 100
+    : 0;
+
+  return [
+    {
+      key: "backlog",
+      label: "Net backlog",
+      value: `${netBacklog > 0 ? "+" : ""}${netBacklog.toLocaleString()}`,
+      hint:
+        netBacklog > 0
+          ? "more filed than resolved"
+          : netBacklog < 0
+            ? "resolved past intake"
+            : "intake matched output",
+      // Growing backlog is the bad direction — mirrors the backlog KPI card.
+      tone: netBacklog > 0 ? "bad" : netBacklog < 0 ? "good" : "neutral",
+      icon: netBacklog > 0 ? "up" : "down",
+    },
+    {
+      key: "peak",
+      label: "Peak day",
+      value: peak.date.slice(5),
+      hint: `${peak.created.toLocaleString()} filed`,
+      tone: "neutral",
+      icon: "peak",
+    },
+    {
+      key: "momentum",
+      label: `Momentum · ${win}d`,
+      value: `${momentumPct >= 0 ? "+" : ""}${momentumPct.toFixed(0)}%`,
+      hint:
+        momentumPct >= 0
+          ? "filings rising vs prior"
+          : "filings easing vs prior",
+      tone: "neutral",
+      icon: momentumPct >= 0 ? "up" : "down",
+    },
+  ];
+}
+
+const KEY_POINT_TONE: Record<TrendKeyPoint["tone"], string> = {
+  good: "text-[var(--status-success-fg)]",
+  bad: "text-[var(--status-danger-fg)]",
+  neutral: "text-faint",
+};
+
+function keyPointIcon(icon: TrendKeyPoint["icon"]) {
+  const cls = "h-3.5 w-3.5";
+  if (icon === "peak") return <Flame className={cls} strokeWidth={2} />;
+  return icon === "up" ? (
+    <TrendingUp className={cls} strokeWidth={2} />
+  ) : (
+    <TrendingDown className={cls} strokeWidth={2} />
+  );
+}
+
+function TrendKeyPoints({
+  points,
+  className,
+}: {
+  points: TrendKeyPoint[];
+  className?: string;
+}) {
+  if (points.length === 0) return null;
+  return (
+    <dl className={cn("grid grid-cols-3 gap-3", className)}>
+      {points.map((p) => (
+        <div key={p.key} className="flex flex-col gap-1.5">
+          <dt className="text-[10px] font-medium uppercase tracking-[0.07em] text-faint leading-none">
+            {p.label}
+          </dt>
+          <dd className="flex items-center gap-1 text-[15px] font-semibold tabular-nums leading-none text-foreground">
+            <span className={KEY_POINT_TONE[p.tone]}>
+              {keyPointIcon(p.icon)}
+            </span>
+            {p.value}
+          </dd>
+          <p className="text-[11px] text-faint leading-snug">{p.hint}</p>
+        </div>
+      ))}
+    </dl>
   );
 }
 

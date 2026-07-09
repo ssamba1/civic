@@ -5,18 +5,30 @@ import { z } from "zod/v4";
 import { runClassifyPipeline } from "@/lib/ai/classify-pipeline";
 import { ASYNC_CLASSIFY } from "@/lib/ai/config";
 import { createServerClient } from "@/lib/db/client";
+import { buildPhotoPaths } from "@/lib/db/report-photos";
 import { createSSRClient } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
 import { stripImageMetadata } from "@/lib/privacy/exif-strip";
+import { redactPII } from "@/lib/privacy/pii-redact";
 import type { Classification, Result } from "@/lib/types";
+import { emitWebhook } from "@/lib/webhooks/deliver";
 
 const logger = createLogger("[submit-report]");
 
 const submitReportSchema = z.object({
-  // Both images are base64 (no data-URL prefix). Blurred → public bucket,
-  // original → raw bucket. Blur happens client-side before this runs.
-  photoBlurred: z.string().min(1, "Blurred photo is required"),
-  photoOriginal: z.string().min(1, "Original photo is required"),
+  // Multi-photo arrays (base64, no data-URL prefix). All photos are
+  // blurred client-side before reaching this action. Blurred → public bucket,
+  // original → raw bucket.  Min 1, max 6 photos per submission.
+  // idx 0 is the PRIMARY photo; it also populates reports.photo_public_url /
+  // photo_raw_url so all existing display sites keep working unchanged.
+  photosBlurred: z
+    .array(z.string().min(1))
+    .min(1, "At least one blurred photo is required")
+    .max(6, "Maximum 6 photos per report"),
+  photosOriginal: z
+    .array(z.string().min(1))
+    .min(1, "At least one original photo is required")
+    .max(6, "Maximum 6 photos per report"),
   location: z
     .object({
       lng: z.number().min(-180).max(180),
@@ -42,8 +54,9 @@ const submitReportSchema = z.object({
     .max(8)
     .default([])
     .transform((arr) => arr.map((t) => t.trim()).filter((t) => t.length > 0)),
-  // 16-char hex aHash computed client-side for duplicate detection.
-  phash: z.string().optional(),
+  // Per-photo aHash array computed client-side. First entry feeds dedup (same
+  // role as the former scalar phash). Optional for backward-compat.
+  phashes: z.array(z.string()).optional(),
 });
 
 type SubmitReportInput = z.infer<typeof submitReportSchema>;
@@ -81,15 +94,20 @@ export async function submitReport(
   if (!parsed.success) {
     return { ok: false, error: z.prettifyError(parsed.error) };
   }
-  const {
-    photoBlurred,
-    photoOriginal,
-    location,
-    address,
-    description,
-    tags,
-    phash,
-  } = parsed.data;
+  const { photosBlurred, photosOriginal, location, address, tags, phashes } =
+    parsed.data;
+
+  // Both arrays must be the same length (validated here, not just in schema).
+  if (photosBlurred.length !== photosOriginal.length) {
+    return { ok: false, error: "Photo arrays length mismatch" };
+  }
+
+  // Redact PII from the public-facing description before it is stored.
+  // The raw (pre-redaction) text is intentionally not persisted — the
+  // description column is public-readable via Open311; no PII should land there.
+  const description = parsed.data.description
+    ? redactPII(parsed.data.description).redacted
+    : parsed.data.description;
 
   // reports.location is NOT NULL geography(POINT,4326). When GPS is unavailable,
   // fall back to the demo city center so submission never dead-ends.
@@ -151,57 +169,86 @@ export async function submitReport(
   }
 
   const reportId = crypto.randomUUID();
-  const publicPath = `${cityId}/${reportId}.webp`;
-  const rawPath = `${cityId}/${reportId}.jpg`;
+  const photoCount = photosBlurred.length;
+  const paths = buildPhotoPaths(cityId, reportId, photoCount);
 
   // Upload via service role: storage RLS has no INSERT policy (folder-scoping
   // can't be set via the pooler), so the service role performs the writes.
   // Privacy is preserved because the blur already ran client-side; the
   // server-side EXIF strip is defense-in-depth against a non-canvas client
   // sneaking GPS/device metadata past the blur (LCP-20).
-  const { error: pubErr } = await service.storage
-    .from(PUBLIC_BUCKET)
-    .upload(
-      publicPath,
-      stripImageMetadata(Buffer.from(photoBlurred, "base64")),
-      {
-        contentType: "image/webp",
-        upsert: false,
-      },
-    );
-  if (pubErr) {
-    return { ok: false, error: `Photo upload failed: ${pubErr.message}` };
+  //
+  // Multi-photo: upload all photos. On any failure, clean up all already-uploaded
+  // objects for this report before returning the error.
+  const uploadedPublicPaths: string[] = [];
+  const uploadedRawPaths: string[] = [];
+
+  for (let i = 0; i < photoCount; i++) {
+    const { publicPath, rawPath } = paths[i];
+
+    const { error: pubErr } = await service.storage
+      .from(PUBLIC_BUCKET)
+      .upload(
+        publicPath,
+        stripImageMetadata(Buffer.from(photosBlurred[i], "base64")),
+        { contentType: "image/webp", upsert: false },
+      );
+    if (pubErr) {
+      // Roll back all uploads done so far.
+      if (uploadedPublicPaths.length > 0)
+        await service.storage.from(PUBLIC_BUCKET).remove(uploadedPublicPaths);
+      if (uploadedRawPaths.length > 0)
+        await service.storage.from(RAW_BUCKET).remove(uploadedRawPaths);
+      return {
+        ok: false,
+        error: `Photo ${i} upload failed: ${pubErr.message}`,
+      };
+    }
+    uploadedPublicPaths.push(publicPath);
+
+    const { error: rawErr } = await service.storage
+      .from(RAW_BUCKET)
+      .upload(
+        rawPath,
+        stripImageMetadata(Buffer.from(photosOriginal[i], "base64")),
+        { contentType: "image/jpeg", upsert: false },
+      );
+    if (rawErr) {
+      await service.storage.from(PUBLIC_BUCKET).remove(uploadedPublicPaths);
+      if (uploadedRawPaths.length > 0)
+        await service.storage.from(RAW_BUCKET).remove(uploadedRawPaths);
+      return {
+        ok: false,
+        error: `Raw photo ${i} upload failed: ${rawErr.message}`,
+      };
+    }
+    uploadedRawPaths.push(rawPath);
   }
 
-  const { error: rawErr } = await service.storage
-    .from(RAW_BUCKET)
-    .upload(rawPath, stripImageMetadata(Buffer.from(photoOriginal, "base64")), {
-      contentType: "image/jpeg",
-      upsert: false,
-    });
-  if (rawErr) {
-    await service.storage.from(PUBLIC_BUCKET).remove([publicPath]);
-    return { ok: false, error: `Raw upload failed: ${rawErr.message}` };
-  }
-
+  // Resolve the primary (idx 0) public URL for reports.photo_public_url.
   const {
     data: { publicUrl },
-  } = service.storage.from(PUBLIC_BUCKET).getPublicUrl(publicPath);
+  } = service.storage.from(PUBLIC_BUCKET).getPublicUrl(paths[0].publicPath);
 
   // Insert the report via the SSR client so RLS is the backstop
   // (reporter_id = auth.uid(), city_id = current_user_city_id()).
+  //
+  // PRIMARY photo fields (idx 0) keep the same shape as the single-photo path —
+  // backward-compatible: every existing display site that reads these columns
+  // keeps working unchanged.
   //
   // Flag-gated: the async path stamps classify_status:"pending" so the resident
   // UI can subscribe for the result. The classify_status column ships in
   // migration 007 (NOT auto-applied), so the synchronous default path must
   // NEVER reference it — keep the flag-off insert byte-identical to before.
+  const primaryPhash = phashes?.[0];
   const reportRow = {
     id: reportId,
     city_id: cityId,
     reporter_id: user.id,
     location: `SRID=4326;POINT(${coord.lng} ${coord.lat})`,
     photo_public_url: publicUrl,
-    photo_raw_url: `${RAW_BUCKET}/${rawPath}`,
+    photo_raw_url: `${RAW_BUCKET}/${paths[0].rawPath}`,
     address,
     description,
     tags,
@@ -211,7 +258,7 @@ export async function submitReport(
     // attach it via a typed-loose record only when async is ON. The flag-off
     // insert is the bare reportRow — byte-identical to the original behavior.
     ...(ASYNC_CLASSIFY ? { classify_status: "pending" } : {}),
-    ...(phash ? { photo_phash: phash } : {}),
+    ...(primaryPhash ? { photo_phash: primaryPhash } : {}),
     // OUTFLANK #34 — record the blur pipeline version that ran client-side
     // before this photo hit the public bucket, so the privacy-audit dashboard
     // can report blur coverage. Literal mirrors lib/privacy/blur.ts BLUR_VERSION
@@ -222,13 +269,63 @@ export async function submitReport(
   } as Record<string, unknown>;
   const { error: insertErr } = await ssr.from("reports").insert(reportRow);
   if (insertErr) {
-    await service.storage.from(PUBLIC_BUCKET).remove([publicPath]);
-    await service.storage.from(RAW_BUCKET).remove([rawPath]);
+    await service.storage.from(PUBLIC_BUCKET).remove(uploadedPublicPaths);
+    await service.storage.from(RAW_BUCKET).remove(uploadedRawPaths);
     return {
       ok: false,
       error: `Failed to create report: ${insertErr.message}`,
     };
   }
+
+  // Insert child report_photos rows (idx 0..n-1).
+  // Best-effort: if the table isn't applied yet (migration 050 not deployed),
+  // the report.photo_public_url primary still works and the UI degrades
+  // gracefully. We log a warn but never fail the submission.
+  const photoRows = paths.map((p, i) => ({
+    report_id: reportId,
+    idx: i,
+    public_url: service.storage.from(PUBLIC_BUCKET).getPublicUrl(p.publicPath)
+      .data.publicUrl,
+    raw_url: `${RAW_BUCKET}/${p.rawPath}`,
+    phash: phashes?.[i] ?? null,
+    blur_version: 1,
+  }));
+  const { error: photosInsertErr } = await service
+    .from("report_photos")
+    .insert(photoRows);
+  if (photosInsertErr) {
+    logger.warn(
+      "report_photos insert failed (degrade: primary photo still intact)",
+      {
+        reportId,
+        code: photosInsertErr.code,
+        message: photosInsertErr.message,
+      },
+    );
+  }
+
+  // Outbound webhooks (#79): notify registered integrations that a report was
+  // created. Fire-and-forget via after() so it never delays the response and a
+  // dispatch failure can never fail the submission. emitWebhook self-degrades
+  // to a no-op if the webhook_endpoints table/migration isn't applied.
+  after(async () => {
+    try {
+      await emitWebhook("report.created", {
+        id: reportId,
+        city_id: cityId,
+        category: tags?.[0] ?? "uncategorized",
+        status: "open",
+        severity: null,
+        address: address ?? null,
+        lat: coord.lat,
+        lng: coord.lng,
+        created_at: new Date().toISOString(),
+        updated_at: null,
+      });
+    } catch (err) {
+      logger.error("emitWebhook(report.created) failed", err, { reportId });
+    }
+  });
 
   // OPTIONAL async path (NEXT_PUBLIC_ASYNC_CLASSIFY=1): do NOT await the
   // pipeline. Fire-and-forget so the UI shows the thanks screen instantly, then

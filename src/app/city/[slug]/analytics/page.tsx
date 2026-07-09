@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AnalyticsInteractive } from "@/components/analytics/analytics-interactive";
+import { DistrictRollups } from "@/components/analytics/district-rollups";
+import { EquityPanel } from "@/components/analytics/equity-panel";
+import { PeerBenchmarkCard } from "@/components/analytics/peer-benchmark-card";
+import { SurgeBanner } from "@/components/analytics/surge-banner";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
 import { fetchCity } from "@/lib/dashboard-queries";
 
@@ -45,7 +49,17 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
           </p>
         </section>
 
+        <SurgeBanner />
+        <PeerBenchmarkCard cityId={city.id} />
+
         <AnalyticsInteractive />
+
+        {/* Server-rendered analytics panels — fetch independently so they
+            degrade gracefully when RPCs/tables are absent. */}
+        <div className="mt-6 space-y-4">
+          <DistrictRollups cityId={city.id} />
+          <EquityPanel cityId={city.id} />
+        </div>
       </div>
 
       <footer className="border-t border-hairline mt-10 pb-safe">
