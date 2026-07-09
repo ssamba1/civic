@@ -31,6 +31,10 @@ ALTER TABLE public.classifications
   ALTER COLUMN category TYPE text USING category::text;
 ALTER TABLE public.classifications
   ALTER COLUMN alternate_categories TYPE text[] USING alternate_categories::text[];
+-- The column DEFAULT ('{}'::classification_category[]) still pins the enum type,
+-- which would block DROP TYPE below. Re-point it at text[].
+ALTER TABLE public.classifications
+  ALTER COLUMN alternate_categories SET DEFAULT '{}'::text[];
 ALTER TABLE public.classification_feedback
   ALTER COLUMN original_category TYPE text USING original_category::text;
 ALTER TABLE public.classification_feedback
