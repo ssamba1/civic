@@ -18,6 +18,10 @@ function fakeSupabase(rows: unknown[]) {
       return builder;
     }),
     order: vi.fn(() => builder),
+    in: vi.fn((col: string, vals: unknown) => {
+      calls.filters.push([col, vals]);
+      return Promise.resolve({ data: rows, error: null });
+    }),
     limit: vi.fn((n: number) => {
       calls.limit = n;
       return Promise.resolve({ data: rows, error: null });
@@ -113,5 +117,60 @@ describe("buildChatTools", () => {
       results: { id: string }[];
     };
     expect(out.results[0]?.id).toBe("privacy-blur");
+  });
+
+  it("does NOT expose staff tools to resident/anon scope", () => {
+    const resident = buildChatTools(ctx({ role: "resident" }).context);
+    expect("getSlaOverdueReports" in resident).toBe(false);
+    expect("getTeamWorkload" in resident).toBe(false);
+    const anon = buildChatTools(ctx({ role: "anon", userId: null }).context);
+    expect("getSlaOverdueReports" in anon).toBe(false);
+  });
+
+  it("exposes staff tools to staff scope", () => {
+    const staff = buildChatTools(
+      ctx({ role: "staff_dispatcher" }).context,
+    ) as Record<string, unknown>;
+    expect("getSlaOverdueReports" in staff).toBe(true);
+    expect("getTeamWorkload" in staff).toBe(true);
+  });
+
+  it("getSlaOverdueReports filters overdue by category SLA in the staff's city", async () => {
+    const old = new Date(Date.now() - 1000 * 3_600_000).toISOString(); // 1000h old
+    const fresh = new Date().toISOString();
+    const { context, calls } = ctx({ role: "staff_supervisor" }, [
+      { id: "late", category: "pothole", status: "open", created_at: old },
+      { id: "ok", category: "pothole", status: "open", created_at: fresh },
+    ]);
+    const tools = buildChatTools(context) as unknown as Record<
+      string,
+      { execute: (a: unknown, b: unknown) => Promise<unknown> }
+    >;
+    const out = (await tools.getSlaOverdueReports.execute({}, {} as never)) as {
+      overdueCount: number;
+      reports: { id: string }[];
+      city: string;
+    };
+    expect(calls.table).toBe("dashboard_reports_view");
+    expect(calls.filters).toContainEqual(["city_slug", "cumming"]);
+    expect(out.overdueCount).toBe(1);
+    expect(out.reports[0].id).toBe("late");
+  });
+
+  it("getTeamWorkload groups open backlog by team_key", async () => {
+    const { context } = ctx({ role: "staff_dispatcher" }, [
+      { team_key: "streets_roads", status: "open" },
+      { team_key: "streets_roads", status: "dispatched" },
+      { team_key: null, status: "open" },
+    ]);
+    const tools = buildChatTools(context) as unknown as Record<
+      string,
+      { execute: (a: unknown, b: unknown) => Promise<unknown> }
+    >;
+    const out = (await tools.getTeamWorkload.execute({}, {} as never)) as {
+      workload: Record<string, number>;
+    };
+    expect(out.workload.streets_roads).toBe(2);
+    expect(out.workload.unassigned).toBe(1);
   });
 });

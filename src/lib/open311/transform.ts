@@ -1,3 +1,4 @@
+import { CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
 import type {
   City,
   Classification,
@@ -86,6 +87,19 @@ export function reportToOpen311(
 ): Open311Request {
   const category = (classification?.category ?? "other") as ReportCategory;
 
+  // expected_datetime: for still-open requests, project the resolution deadline
+  // from the category SLA window (created_at + N hours). Closed/merged/rejected
+  // requests are already resolved, so their expectation is null. Uses the same
+  // static CATEGORY_SLA_TARGETS the dashboard SLA metrics read — the public feed
+  // reports the target, not a per-city override.
+  const expectedDatetime =
+    mapStatus(report.status) === "open"
+      ? new Date(
+          Date.parse(report.created_at) +
+            CATEGORY_SLA_TARGETS[category] * 3_600_000,
+        ).toISOString()
+      : null;
+
   // D2: the public feed collapses to open/closed; the richer internal state
   // rides in status_notes so consumers can tell a fix from a merge/rejection.
   const statusNotes =
@@ -107,7 +121,7 @@ export function reportToOpen311(
     service_notice: "",
     requested_datetime: report.created_at,
     updated_datetime: report.updated_at,
-    expected_datetime: null,
+    expected_datetime: expectedDatetime,
     address: report.address ?? "",
     lat: coarsenCoord(report.location.lat),
     long: coarsenCoord(report.location.lng),

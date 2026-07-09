@@ -246,11 +246,16 @@ export default function SubmissionConfirmation({
               <span className="text-xs font-medium text-faint uppercase tracking-wide">
                 Severity
               </span>
-              <div className="flex gap-0.5">
+              <div
+                className="flex gap-0.5"
+                role="img"
+                aria-label={`Severity ${classification.severity} of 5`}
+              >
                 {Array.from({ length: 5 }).map((_, i) => (
                   <span
                     // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, fixed order
                     key={i}
+                    aria-hidden="true"
                     className={`w-2.5 h-2.5 rounded-full ${
                       i < classification.severity
                         ? "bg-[var(--color-warning)]"

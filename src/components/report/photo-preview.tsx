@@ -154,6 +154,7 @@ export default function PhotoPreview({
           }}
         >
           <span
+            aria-hidden="true"
             className={`w-2 h-2 rounded-full ${gps.color} ${gpsStatus === "acquiring" ? "animate-pulse" : ""}`}
           />
           <span className="text-xs text-white font-medium">{gps.label}</span>
