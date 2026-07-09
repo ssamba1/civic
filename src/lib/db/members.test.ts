@@ -11,6 +11,7 @@ function makeBuilder(table: string) {
   for (const m of ["select", "eq", "order", "in", "limit"]) b[m] = () => b;
   b.maybeSingle = () =>
     Promise.resolve(single[table] ?? { data: null, error: null });
+  // biome-ignore lint/suspicious/noThenProperty: intentional thenable mock of the supabase query builder
   b.then = (resolve: (v: unknown) => unknown) =>
     resolve(list[table] ?? { data: [], error: null });
   return b;

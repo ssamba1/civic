@@ -9,6 +9,7 @@ function makeBuilder() {
   for (const m of ["select", "eq", "order"]) {
     builder[m] = () => builder;
   }
+  // biome-ignore lint/suspicious/noThenProperty: intentional thenable mock of the supabase query builder
   builder.then = (resolve: (v: unknown) => unknown) => resolve(result);
   return builder;
 }
