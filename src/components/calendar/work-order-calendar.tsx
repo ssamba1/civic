@@ -57,6 +57,7 @@ export function WorkOrderCalendar({
   teams,
   monthISO,
   todayISO,
+  lockedCrewType,
 }: {
   slug: string;
   orders: CalendarWorkOrder[];
@@ -66,12 +67,28 @@ export function WorkOrderCalendar({
   /** First-of-month ISO (YYYY-MM-01) the grid renders. */
   monthISO: string;
   todayISO: string;
+  /** Crew-portal scope (src/app/city/[slug]/crew/[crewType]/calendar/page.tsx):
+   *  pins the Crew-type filter to this key and hides its picker entirely — a
+   *  locked constant, not a default the user could nudge away from. Absent
+   *  (the city calendar route) → behavior is unchanged. */
+  lockedCrewType?: string;
 }) {
   const [fTeam, setFTeam] = useState<string | null>(null);
-  const [fType, setFType] = useState<string | null>(null);
+  const [fType, setFType] = useState<string | null>(lockedCrewType ?? null);
   const [fCrew, setFCrew] = useState<string | null>(null);
   const [fStatus, setFStatus] = useState<string | null>(null);
   const [openDay, setOpenDay] = useState<string | null>(null);
+
+  // The lock always wins over client state, regardless of how fType got set —
+  // a constant, not merely an initial value.
+  const effectiveType = lockedCrewType ?? fType;
+
+  // Month-nav links stay inside the crew portal when locked — otherwise
+  // "Next month" would silently drop the user onto the unscoped city
+  // calendar, losing the lock.
+  const calendarPath = lockedCrewType
+    ? `/city/${slug}/crew/${lockedCrewType}/calendar`
+    : `/city/${slug}/calendar`;
 
   const teamId = useId();
   const typeId = useId();
@@ -89,11 +106,11 @@ export function WorkOrderCalendar({
       orders.filter(
         (o) =>
           (!fTeam || o.teamKey === fTeam) &&
-          (!fType || o.crewType === fType) &&
+          (!effectiveType || o.crewType === effectiveType) &&
           (!fCrew || o.crewId === fCrew) &&
           (!fStatus || o.status === fStatus),
       ),
-    [orders, fTeam, fType, fCrew, fStatus],
+    [orders, fTeam, effectiveType, fCrew, fStatus],
   );
 
   // Bucket by calendarDate, each bucket sorted priority-desc, nulls last.
@@ -123,10 +140,12 @@ export function WorkOrderCalendar({
   const todayParam = todayISO.slice(0, 7);
   const onCurrentMonth = monthISO.slice(0, 7) === todayParam;
 
-  const hasFilter = Boolean(fTeam || fType || fCrew || fStatus);
+  const hasFilter = Boolean(
+    fTeam || (!lockedCrewType && fType) || fCrew || fStatus,
+  );
   function clearFilters() {
     setFTeam(null);
-    setFType(null);
+    if (!lockedCrewType) setFType(null);
     setFCrew(null);
     setFStatus(null);
   }
@@ -143,14 +162,14 @@ export function WorkOrderCalendar({
             aria-label="Change month"
           >
             <Link
-              href={`/city/${slug}/calendar?month=${monthParam(-1)}`}
+              href={`${calendarPath}?month=${monthParam(-1)}`}
               aria-label="Previous month"
               className={cn(NAV_BTN, "w-9 px-0")}
             >
               <ChevronLeft className="h-4 w-4" strokeWidth={2} aria-hidden />
             </Link>
             <Link
-              href={`/city/${slug}/calendar?month=${todayParam}`}
+              href={`${calendarPath}?month=${todayParam}`}
               aria-label="Jump to current month"
               aria-current={onCurrentMonth ? "date" : undefined}
               className={cn(NAV_BTN, onCurrentMonth && "text-faint")}
@@ -158,7 +177,7 @@ export function WorkOrderCalendar({
               Today
             </Link>
             <Link
-              href={`/city/${slug}/calendar?month=${monthParam(1)}`}
+              href={`${calendarPath}?month=${monthParam(1)}`}
               aria-label="Next month"
               className={cn(NAV_BTN, "w-9 px-0")}
             >
@@ -185,15 +204,20 @@ export function WorkOrderCalendar({
             }))}
           />
         </FilterField>
-        <FilterField id={typeId} label="Crew type">
-          <MenuSelect
-            id={typeId}
-            value={fType}
-            onChange={setFType}
-            placeholder="All crew types"
-            options={crewTypes.map((t) => ({ value: t.key, label: t.label }))}
-          />
-        </FilterField>
+        {!lockedCrewType && (
+          <FilterField id={typeId} label="Crew type">
+            <MenuSelect
+              id={typeId}
+              value={fType}
+              onChange={setFType}
+              placeholder="All crew types"
+              options={crewTypes.map((t) => ({
+                value: t.key,
+                label: t.label,
+              }))}
+            />
+          </FilterField>
+        )}
         <FilterField id={crewId} label="Crew">
           <MenuSelect
             id={crewId}
