@@ -4,8 +4,11 @@ import type { ChatContext } from "@/lib/ai/chat/context";
 import { isRouteAllowed } from "@/lib/ai/chat/navigation";
 import { searchCorpus } from "@/lib/ai/chat/retrieval";
 import { isStaffRole } from "@/lib/ai/chat/scope";
+import { CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
+import type { ReportCategory } from "@/lib/types";
 
 const REPORT_LIMIT = 20;
+const BACKLOG_STATUSES = ["open", "dispatched", "in_progress"];
 
 /**
  * Build the read/navigate tool set bound to a request's ChatContext. All data
@@ -14,7 +17,7 @@ const REPORT_LIMIT = 20;
  * recover conversationally.
  */
 export function buildChatTools(ctx: ChatContext) {
-  return {
+  const base = {
     searchHelpDocs: tool({
       description:
         "Search Civic's help/FAQ knowledge base for how the product works (privacy, blur, Open311, cost, status updates, how to report). Use this for any 'how does X work' question before answering.",
@@ -123,9 +126,81 @@ export function buildChatTools(ctx: ChatContext) {
       },
     }),
   };
+
+  // Resident/anon scope stops here. Staff roles get read-only operational tools
+  // scoped to their own city (default) — all reads still run under the caller's
+  // RLS-scoped client, so the gate widens the toolset, never the data access.
+  if (!scopeAllowsStaffReads(ctx)) return base;
+
+  return {
+    ...base,
+
+    getSlaOverdueReports: tool({
+      description:
+        "STAFF ONLY. List open backlog reports past their category SLA window in a city (defaults to the staff member's own city). Use for 'what's overdue' / 'what needs attention'.",
+      inputSchema: z.object({
+        slug: z
+          .string()
+          .optional()
+          .describe("city slug; omit to use the staff member's city"),
+      }),
+      execute: async ({ slug }) => {
+        const citySlug = slug ?? ctx.citySlug;
+        if (!citySlug) return { error: "No city in scope to check." };
+        const { data, error } = await ctx.supabase
+          .from("dashboard_reports_view")
+          .select("id, category, status, address, created_at")
+          .eq("city_slug", citySlug)
+          .in("status", BACKLOG_STATUSES);
+        if (error) return { error: "Could not load the backlog right now." };
+        const now = Date.now();
+        const overdue = (data ?? [])
+          .filter((r) => {
+            const target =
+              CATEGORY_SLA_TARGETS[r.category as ReportCategory] ??
+              CATEGORY_SLA_TARGETS.other;
+            const ageH = (now - Date.parse(r.created_at)) / 3_600_000;
+            return ageH >= target;
+          })
+          .slice(0, REPORT_LIMIT);
+        return {
+          city: citySlug,
+          overdueCount: overdue.length,
+          reports: overdue,
+        };
+      },
+    }),
+
+    getTeamWorkload: tool({
+      description:
+        "STAFF ONLY. Count open backlog reports grouped by owning team in a city (defaults to the staff member's own city). Use for 'which team is busiest' / workload questions.",
+      inputSchema: z.object({
+        slug: z
+          .string()
+          .optional()
+          .describe("city slug; omit to use the staff member's city"),
+      }),
+      execute: async ({ slug }) => {
+        const citySlug = slug ?? ctx.citySlug;
+        if (!citySlug) return { error: "No city in scope to check." };
+        const { data, error } = await ctx.supabase
+          .from("dashboard_reports_view")
+          .select("team_key, status")
+          .eq("city_slug", citySlug)
+          .in("status", BACKLOG_STATUSES);
+        if (error) return { error: "Could not load team workload right now." };
+        const byTeam: Record<string, number> = {};
+        for (const r of data ?? []) {
+          const key = (r.team_key as string) ?? "unassigned";
+          byTeam[key] = (byTeam[key] ?? 0) + 1;
+        }
+        return { city: citySlug, workload: byTeam };
+      },
+    }),
+  };
 }
 
-/** Whether the current scope may use staff-only reads (future staff tier). */
+/** Whether the current scope may use staff-only reads. */
 export function scopeAllowsStaffReads(ctx: ChatContext): boolean {
   return isStaffRole(ctx.role);
 }

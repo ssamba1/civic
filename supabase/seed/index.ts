@@ -6,12 +6,18 @@
  *  - 3 test users: 1 resident, 1 staff_dispatcher, 1 admin
  *  - 5 sample reports with classifications and work orders
  *
- * Run via: npx tsx supabase/seed/index.ts
+ * Run via: npx tsx supabase/seed/index.ts [--dry-run]
  * Requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars.
+ *
+ * Idempotent: city + users upsert on conflict; reports are skipped when one
+ * with the same (city, address) already exists, so re-running never duplicates
+ * the sample corpus. --dry-run prints the plan and writes nothing.
  */
 
 import { randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+
+const DRY_RUN = process.argv.includes("--dry-run");
 
 const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -19,7 +25,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error(
     "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars.\n" +
-      "Export them before running the seed."
+      "Export them before running the seed.",
   );
   process.exit(1);
 }
@@ -55,7 +61,7 @@ function pointWKT(lng: number, lat: number): string {
 
 async function assertOk<T>(
   promise: PromiseLike<{ data: T | null; error: unknown }>,
-  label: string
+  label: string,
 ): Promise<NonNullable<T>> {
   const { data, error } = await promise;
   if (error || data == null) {
@@ -91,11 +97,11 @@ async function seedCity(): Promise<string> {
           open311_jurisdiction_id: "cumming.ga.gov",
           active: true,
         },
-        { onConflict: "slug" }
+        { onConflict: "slug" },
       )
       .select("id")
       .limit(1),
-    "cities.upsert"
+    "cities.upsert",
   );
   console.log(`City seeded: ${city.id}`);
   return city.id;
@@ -151,7 +157,7 @@ async function seedUsers(cityId: string): Promise<Record<string, string>> {
       // User may already exist — try to look them up
       const { data: listData } = await supabase.auth.admin.listUsers();
       const existing = listData?.users?.find(
-        (existing) => existing.email === u.email
+        (existing) => existing.email === u.email,
       );
       if (!existing) {
         console.error(`Cannot create or find auth user ${u.email}:`, authError);
@@ -164,17 +170,20 @@ async function seedUsers(cityId: string): Promise<Record<string, string>> {
 
     // Upsert public.users row
     await assertOk(
-      supabase.from("users").upsert(
-        {
-          id: userId,
-          city_id: cityId,
-          role: u.role,
-          email: u.email,
-          display_name: u.displayName,
-        },
-        { onConflict: "id" }
-      ).select("id"),
-      `users.upsert(${u.email})`
+      supabase
+        .from("users")
+        .upsert(
+          {
+            id: userId,
+            city_id: cityId,
+            role: u.role,
+            email: u.email,
+            display_name: u.displayName,
+          },
+          { onConflict: "id" },
+        )
+        .select("id"),
+      `users.upsert(${u.email})`,
     );
 
     userIds[u.role] = userId;
@@ -354,11 +363,22 @@ const SEED_REPORTS: SeedReport[] = [
   },
 ];
 
-async function seedReports(
-  cityId: string,
-  reporterId: string
-): Promise<void> {
+async function seedReports(cityId: string, reporterId: string): Promise<void> {
+  // Idempotency: skip seed reports whose address already exists in this city,
+  // so re-running the seed never duplicates the sample corpus.
+  const { data: existing } = await supabase
+    .from("reports")
+    .select("address")
+    .eq("city_id", cityId);
+  const seenAddresses = new Set(
+    (existing ?? []).map((r) => (r as { address: string | null }).address),
+  );
+
   for (const sr of SEED_REPORTS) {
+    if (seenAddresses.has(sr.address)) {
+      console.log(`Report skipped (already seeded): ${sr.address}`);
+      continue;
+    }
     // Insert report
     const [report] = await assertOk(
       supabase
@@ -375,44 +395,50 @@ async function seedReports(
         })
         .select("id")
         .limit(1),
-      `reports.insert(${sr.address})`
+      `reports.insert(${sr.address})`,
     );
 
     const reportId = report.id;
 
     // Insert classification
     await assertOk(
-      supabase.from("classifications").insert({
-        report_id: reportId,
-        category: sr.classification.category,
-        subcategory: sr.classification.subcategory,
-        severity: sr.classification.severity,
-        hazard_radius_m: sr.classification.hazardRadiusM,
-        visible_size_estimate: sr.classification.visibleSizeEstimate,
-        is_emergency: sr.classification.isEmergency,
-        confidence: sr.classification.confidence,
-        reasoning: sr.classification.reasoning,
-        model_version: "gemini-2.5-flash-v1",
-        raw_response: sr.classification,
-      }).select("id"),
-      `classifications.insert(${sr.classification.category})`
+      supabase
+        .from("classifications")
+        .insert({
+          report_id: reportId,
+          category: sr.classification.category,
+          subcategory: sr.classification.subcategory,
+          severity: sr.classification.severity,
+          hazard_radius_m: sr.classification.hazardRadiusM,
+          visible_size_estimate: sr.classification.visibleSizeEstimate,
+          is_emergency: sr.classification.isEmergency,
+          confidence: sr.classification.confidence,
+          reasoning: sr.classification.reasoning,
+          model_version: "gemini-2.5-flash-v1",
+          raw_response: sr.classification,
+        })
+        .select("id"),
+      `classifications.insert(${sr.classification.category})`,
     );
 
     // Insert work order
     await assertOk(
-      supabase.from("work_orders").insert({
-        report_id: reportId,
-        department: sr.workOrder.department,
-        crew_type: sr.workOrder.crewType,
-        priority_score: sr.workOrder.priorityScore,
-        est_minutes: sr.workOrder.estMinutes,
-        materials: sr.workOrder.materials,
-      }).select("id"),
-      `work_orders.insert(${sr.workOrder.department})`
+      supabase
+        .from("work_orders")
+        .insert({
+          report_id: reportId,
+          department: sr.workOrder.department,
+          crew_type: sr.workOrder.crewType,
+          priority_score: sr.workOrder.priorityScore,
+          est_minutes: sr.workOrder.estMinutes,
+          materials: sr.workOrder.materials,
+        })
+        .select("id"),
+      `work_orders.insert(${sr.workOrder.department})`,
     );
 
     console.log(
-      `Report seeded: ${sr.classification.category} at ${sr.address} — ${reportId}`
+      `Report seeded: ${sr.classification.category} at ${sr.address} — ${reportId}`,
     );
   }
 }
@@ -423,6 +449,20 @@ async function seedReports(
 
 async function main() {
   console.log("--- Civic seed: start ---\n");
+
+  if (DRY_RUN) {
+    console.log("[dry-run] no writes will be made. Plan:");
+    console.log("  • upsert city: cumming (Cumming, GA)");
+    console.log(`  • upsert ${TEST_USERS.length} users:`);
+    for (const u of TEST_USERS) console.log(`      - ${u.role}: ${u.email}`);
+    console.log(
+      `  • seed up to ${SEED_REPORTS.length} reports (skipping any address already present):`,
+    );
+    for (const sr of SEED_REPORTS)
+      console.log(`      - ${sr.classification.category} @ ${sr.address}`);
+    console.log("\n--- Civic seed: dry-run complete (nothing written) ---");
+    return;
+  }
 
   const cityId = await seedCity();
   const userIds = await seedUsers(cityId);

@@ -16,9 +16,7 @@ import { dispatchWorkOrderForReport } from "@/app/staff/actions";
 import type { MarkerColorMode } from "@/components/map/pin-icons";
 import type { MapTheme } from "@/components/map/report-map";
 import { ReportMapLazy as ReportMap } from "@/components/map/report-map-lazy";
-// Upvote disabled for now — client-only/no durable backend yet (see
-// lib/upvotes.ts + migration 005). Re-enable with the import below.
-// import { UpvoteButton } from "@/components/resident/upvote-button";
+import { UpvoteButton } from "@/components/resident/upvote-button";
 import BottomSheet from "@/components/ui/bottom-sheet";
 import {
   glassChrome,
@@ -784,7 +782,6 @@ export function FullscreenMapOrchestrator({
                       </div>
                     )}
                   </div>
-                  {/* Upvote disabled for now (no durable backend). Re-enable:
                   {readOnly && (
                     <UpvoteButton
                       reportId={report.id}
@@ -792,7 +789,7 @@ export function FullscreenMapOrchestrator({
                       size="sm"
                       className="self-center shrink-0"
                     />
-                  )} */}
+                  )}
                 </div>
               );
             })

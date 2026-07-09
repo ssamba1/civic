@@ -21,6 +21,7 @@
     "db:seed": "tsx supabase/seed/index.ts",
     "db:seed:demo-crews": "node supabase/seed/demo-crews.mjs",
     "eval": "tsx scripts/eval-classify.ts",
+    "audit:privacy": "tsx scripts/audit-privacy.ts",
     "health": "curl http://localhost:3000/api/health"
   },
   "dependencies": {
@@ -51,6 +52,7 @@
     "react-dom": "19.2.4",
     "react-map-gl": "^8.1.1",
     "react-markdown": "^10.1.0",
+    "supercluster": "^8.0.1",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"
   },
@@ -60,12 +62,14 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/supercluster": "^7.1.3",
     "@vitejs/plugin-react": "^6.0.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "pg": "^8.21.0",
     "playwright": "^1.60.0",
     "tailwindcss": "^4",
+    "tsx": "^4.8.1",
     "typescript": "^5",
     "vitest": "^4.1.7"
   }

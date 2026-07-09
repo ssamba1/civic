@@ -9,6 +9,7 @@ import {
   deriveReporterVelocity,
   deriveResolutionDistribution,
   deriveSeverityDistribution,
+  deriveSlaRisk,
   deriveStatusFunnel,
   deriveTopNeighborhoods,
   deriveTrend,
@@ -30,6 +31,60 @@ function makeReport(overrides: Partial<DashboardReport> = {}): DashboardReport {
     ...overrides,
   };
 }
+
+describe("deriveSlaRisk", () => {
+  // pothole SLA target = 72h; at-risk threshold = 0.8 * 72 = 57.6h.
+  const hoursAgo = (h: number) =>
+    new Date(now - h * 60 * 60 * 1000).toISOString();
+
+  it("buckets open backlog into on_track / at_risk / breached", () => {
+    const reports = [
+      makeReport({ id: "ontrack", created_at: hoursAgo(10) }),
+      makeReport({ id: "atrisk", created_at: hoursAgo(60) }),
+      makeReport({ id: "breached", created_at: hoursAgo(80) }),
+    ];
+    expect(deriveSlaRisk(reports, now)).toEqual({
+      on_track: 1,
+      at_risk: 1,
+      breached: 1,
+    });
+  });
+
+  it("treats the exact 80%-of-window boundary as at_risk", () => {
+    // 57.6h is the threshold; 58h age (just past) must count as at_risk.
+    const reports = [makeReport({ created_at: hoursAgo(58) })];
+    expect(deriveSlaRisk(reports, now)).toMatchObject({
+      at_risk: 1,
+      breached: 0,
+    });
+  });
+
+  it("counts age >= target as breached", () => {
+    const reports = [makeReport({ created_at: hoursAgo(72) })];
+    expect(deriveSlaRisk(reports, now).breached).toBe(1);
+  });
+
+  it("excludes non-backlog statuses (closed/merged/rejected)", () => {
+    const reports = [
+      makeReport({ id: "c", status: "closed", created_at: hoursAgo(80) }),
+      makeReport({ id: "m", status: "merged", created_at: hoursAgo(80) }),
+      makeReport({ id: "r", status: "rejected", created_at: hoursAgo(80) }),
+    ];
+    expect(deriveSlaRisk(reports, now)).toEqual({
+      on_track: 0,
+      at_risk: 0,
+      breached: 0,
+    });
+  });
+
+  it("returns all-zero for an empty set", () => {
+    expect(deriveSlaRisk([], now)).toEqual({
+      on_track: 0,
+      at_risk: 0,
+      breached: 0,
+    });
+  });
+});
 
 describe("deriveKpis", () => {
   it("calculates resolution_rate = (closed / total) * 100", () => {

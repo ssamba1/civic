@@ -45,7 +45,8 @@ import { fetchCategoryCostStats } from "@/app/staff/actions";
 import { WorkOrderExplorer } from "@/components/city/work-order-explorer";
 import { teamIcon } from "@/components/teams/team-icon";
 import { DEFAULT_CREW_TYPE_KEYS } from "@/lib/crew-types";
-import { CATEGORY_META } from "@/lib/dashboard-data";
+import { type CurrencyConfig, formatCost } from "@/lib/currency";
+import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
 import type { GridCrewOption, GridReportRow } from "@/lib/dashboard-grid-data";
 import { categoryToTeam, TEAMS } from "@/lib/teams";
 import { useTheme } from "@/lib/theme";
@@ -54,6 +55,7 @@ import type {
   Department,
   ReportCategory,
 } from "@/lib/types";
+import { useCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils/cn";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -287,6 +289,8 @@ function OptionGlyph({
   if (kind === "status") {
     return (
       <span
+        role="img"
+        aria-label={`status: ${String(value).replace(/_/g, " ")}`}
         className={cn(
           "h-2.5 w-2.5 shrink-0 rounded-full",
           STATUS_DOT[value as string] ?? STATUS_DOT.open,
@@ -571,6 +575,7 @@ function StatusCell({ data }: ICellRendererParams<GridReportRow>) {
     <span className="flex flex-wrap items-center gap-1">
       <EditPill className="h-8 pl-2.5">
         <span
+          aria-hidden="true"
           className={cn(
             "h-2 w-2 shrink-0 rounded-full",
             STATUS_DOT[data.status] ?? STATUS_DOT.open,
@@ -587,10 +592,86 @@ function StatusCell({ data }: ICellRendererParams<GridReportRow>) {
       </EditPill>
       {data.needs_manual_review && (
         <span className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-hairline bg-overlay px-1.5 py-0.5 text-[10px] font-bold text-[var(--status-warning-fg)]">
-          <span className="size-1.5 rounded-full bg-[var(--color-warning)]" />
+          <span
+            aria-hidden="true"
+            className="size-1.5 rounded-full bg-[var(--color-warning)]"
+          />
           Review
         </span>
       )}
+    </span>
+  );
+}
+
+// ── SLA column ──────────────────────────────────────────────────────────────
+// Derived client-side from category + created_at (NOT the work_orders.due_at
+// column) so it renders on databases that haven't applied migration 032 yet —
+// same computation as deriveSlaRisk. The due_at column drives the server-side
+// escalation job; this surfaces the same status to the operator in the grid.
+const SLA_BACKLOG_STATUSES = new Set(["open", "dispatched", "in_progress"]);
+const SLA_AT_RISK_FRACTION = 0.2; // within the last 20% of the window
+
+interface SlaState {
+  /** Hours remaining to the deadline; negative = overdue. null = not applicable. */
+  remaining: number | null;
+  tier: "overdue" | "due_soon" | "on_track" | "na";
+  label: string;
+}
+
+function computeSla(row: GridReportRow): SlaState {
+  if (!row.category || !SLA_BACKLOG_STATUSES.has(row.status)) {
+    return { remaining: null, tier: "na", label: "—" };
+  }
+  const target = CATEGORY_SLA_TARGETS[row.category as ReportCategory];
+  if (!target) return { remaining: null, tier: "na", label: "—" };
+  const ageH = Math.max(
+    0,
+    (Date.now() - Date.parse(row.created_at)) / 3_600_000,
+  );
+  const remaining = target - ageH;
+  if (remaining <= 0) {
+    const overdueH = Math.round(-remaining);
+    const disp =
+      overdueH >= 48 ? `${Math.round(overdueH / 24)}d` : `${overdueH}h`;
+    return { remaining, tier: "overdue", label: `${disp} over` };
+  }
+  const leftH = Math.round(remaining);
+  const disp = leftH >= 48 ? `${Math.round(leftH / 24)}d` : `${leftH}h`;
+  if (remaining <= target * SLA_AT_RISK_FRACTION) {
+    return { remaining, tier: "due_soon", label: `${disp} left` };
+  }
+  return { remaining, tier: "on_track", label: `${disp} left` };
+}
+
+const SLA_TIER_STYLE: Record<SlaState["tier"], string> = {
+  overdue: "text-[var(--status-danger-fg)]",
+  due_soon: "text-[var(--status-warning-fg)]",
+  on_track: "text-muted",
+  na: "text-faint",
+};
+const SLA_TIER_DOT: Record<SlaState["tier"], string> = {
+  overdue: "bg-[var(--color-danger)]",
+  due_soon: "bg-[var(--color-warning)]",
+  on_track: "bg-[var(--color-success)]",
+  na: "bg-transparent",
+};
+
+function SlaCell({ data }: ICellRendererParams<GridReportRow>) {
+  if (!data) return null;
+  const sla = computeSla(data);
+  if (sla.tier === "na") {
+    return <span className="text-[13px] text-faint">—</span>;
+  }
+  return (
+    <span className="flex items-center gap-1.5">
+      <span
+        aria-hidden="true"
+        className={cn("h-2 w-2 shrink-0 rounded-full", SLA_TIER_DOT[sla.tier])}
+      />
+      <span className={cn("text-[13px] font-medium", SLA_TIER_STYLE[sla.tier])}>
+        {sla.tier === "overdue" ? "Overdue " : ""}
+        {sla.label}
+      </span>
     </span>
   );
 }
@@ -630,9 +711,6 @@ function SourceCell({ value }: ICellRendererParams<GridReportRow, string>) {
   );
 }
 
-const usd = (p: ValueFormatterParams<GridReportRow, number | null>) =>
-  p.value == null ? "—" : `$${p.value.toLocaleString()}`;
-
 /* ── Predicted cost (category_cost_stats RPC) ──
    Cold-start rule from the cost-prediction design: a category needs 5+
    accepted actuals before a prediction shows; below that the cell reads as an
@@ -666,9 +744,11 @@ function PredictedCostCell({
   data,
   context,
 }: ICellRendererParams<GridReportRow>) {
-  const statsRef = (
-    context as { costStatsRef: { current: Map<string, CategoryCostStats> } }
-  ).costStatsRef;
+  const ctx = context as {
+    costStatsRef: { current: Map<string, CategoryCostStats> };
+    currency: CurrencyConfig;
+  };
+  const statsRef = ctx.costStatsRef;
   const s = data?.category ? statsRef.current.get(data.category) : undefined;
   const predicted = predictFromStats(data, statsRef.current);
   if (predicted == null) {
@@ -687,7 +767,9 @@ function PredictedCostCell({
   }
   return (
     <span className="inline-flex items-baseline gap-1.5">
-      <span className="tabular-nums">${predicted.toLocaleString()}</span>
+      <span className="tabular-nums">
+        {formatCost(predicted, ctx.currency)}
+      </span>
       <span
         className={cn(
           "font-mono text-[10px] uppercase tracking-[0.08em]",
@@ -837,6 +919,10 @@ export function WorkOrderGrid({
 }) {
   const { theme } = useTheme();
   const gridTheme = theme === "dark" ? gridThemeDark : gridThemeLight;
+  // City currency (INR for ahilyanagar, USD default). Threaded into the cost
+  // column formatters + the predicted-cost cell via grid context so a non-USD
+  // city renders ₹ with the right grouping instead of a hardcoded $.
+  const currency = useCurrency();
 
   // Predicted-cost stats live in a ref (not state) so their arrival can't
   // rebuild columnDefs — AG Grid re-applies colDef sort/width on columnDefs
@@ -890,8 +976,8 @@ export function WorkOrderGrid({
   }, []);
 
   const gridContext = useMemo(
-    () => ({ costStatsRef, openDetail }),
-    [openDetail],
+    () => ({ costStatsRef, openDetail, currency }),
+    [openDetail, currency],
   );
   useEffect(() => {
     if (!cityId) return;
@@ -1095,6 +1181,19 @@ export function WorkOrderGrid({
         minWidth: 150,
       },
       {
+        colId: "sla",
+        headerName: "SLA",
+        // Sort/filter on hours-remaining (overdue = most negative sorts first
+        // on asc). Not editable — it's a derived read-only signal.
+        valueGetter: (p: ValueGetterParams<GridReportRow>) =>
+          p.data ? computeSla(p.data).remaining : null,
+        cellRenderer: SlaCell,
+        comparator: (a, b) =>
+          (a ?? Number.POSITIVE_INFINITY) - (b ?? Number.POSITIVE_INFINITY),
+        initialWidth: 130,
+        minWidth: 110,
+      },
+      {
         colId: "department",
         headerName: "Dept",
         field: "department",
@@ -1128,7 +1227,9 @@ export function WorkOrderGrid({
         colId: "est_cost",
         headerName: "Est. Cost",
         field: "est_cost",
-        valueFormatter: usd,
+        valueFormatter: (
+          p: ValueFormatterParams<GridReportRow, number | null>,
+        ) => (p.value == null ? "—" : formatCost(p.value, currency)),
         type: "rightAligned",
         initialWidth: 120,
         minWidth: 100,
@@ -1186,7 +1287,7 @@ export function WorkOrderGrid({
         },
       },
     ],
-    [deptOptions, crewOptions],
+    [deptOptions, crewOptions, currency],
   );
 
   const defaultColDef = useMemo<ColDef<GridReportRow>>(

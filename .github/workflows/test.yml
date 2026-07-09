@@ -16,6 +16,12 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # The `secrets` context is NOT available in step-level `if:` expressions —
+    # referencing it there makes the whole workflow fail to compile (0 jobs
+    # created, "workflow file issue"). Hoist the gate into a job-level env var,
+    # which IS allowed in `if:`.
+    env:
+      HAS_TEST_DB: ${{ secrets.SUPABASE_TEST_URL != '' && '1' || '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -69,3 +75,28 @@ jobs:
           # still succeeds; these never reach a deployed artifact from CI.
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL || 'https://placeholder.supabase.co' }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY || 'placeholder-anon-key' }}
+
+      # E2E only runs when a real test database is configured — several specs
+      # hit DB-backed API routes that 500 against placeholder credentials. Same
+      # secret gate as the RLS tests above.
+      - name: Install Playwright browser
+        if: ${{ env.HAS_TEST_DB != '' }}
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: E2E tests
+        if: ${{ env.HAS_TEST_DB != '' }}
+        run: pnpm test:e2e
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_TEST_SERVICE_ROLE_KEY }}
+
+      # Privacy audit gate (agents.md DoD) — needs the service role to list
+      # buckets, so it too is gated on the test DB secret.
+      - name: Privacy audit
+        if: ${{ env.HAS_TEST_DB != '' }}
+        run: pnpm audit:privacy
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_TEST_SERVICE_ROLE_KEY }}

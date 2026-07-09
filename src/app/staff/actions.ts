@@ -12,6 +12,7 @@ import { getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
 import { notifyReportStatus } from "@/lib/notify/status-notify";
 import { resolveTeamKeyForCategory } from "@/lib/onboarding/city-teams";
+import { stripImageMetadata } from "@/lib/privacy/exif-strip";
 import { publicToken } from "@/lib/public-report";
 import { TEAMS, type TeamId } from "@/lib/teams";
 import type {
@@ -278,9 +279,11 @@ async function uploadResolutionPhoto(
   // Downscaled client-side to ~1280px; cap the decoded payload defensively.
   if (b64.length > 1_500_000) return null;
   const path = `${cityId}/resolutions/${workOrderId}.${ext === "jpeg" ? "jpg" : ext}`;
+  // Strip EXIF/GPS server-side before the photo lands in the public bucket
+  // (LCP-20) — the client downscale re-encodes via canvas, this is the backstop.
   const { error } = await supabase.storage
     .from("photos-public")
-    .upload(path, Buffer.from(b64, "base64"), {
+    .upload(path, stripImageMetadata(Buffer.from(b64, "base64")), {
       contentType: `image/${ext}`,
       upsert: true,
     });

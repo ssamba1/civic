@@ -6,10 +6,12 @@ import type {
   ReasoningResponse,
   ReasoningSection,
 } from "@/app/api/ai/reasoning/route";
+import { type CurrencyConfig, formatCost } from "@/lib/currency";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import type { ReportStatus } from "@/lib/types";
+import { useCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils/cn";
 import { timeAgo } from "@/lib/utils/time-ago";
 
@@ -161,16 +163,19 @@ type ReasoningState =
 // structure /api/ai/reasoning returns so both columns render fully.
 function buildDemoReasoningResponse(
   report: DashboardReport,
+  currency: CurrencyConfig,
 ): ReasoningResponse {
+  // USD-base demo line items, formatted into the city's currency at render.
+  const c = (usd: number) => formatCost(usd, currency);
   return {
     reportId: report.id,
     reasoning: report.ai_reasoning ?? "",
     costBreakdown: [
-      { title: "Chainsaw crew (2 workers, 1 hr)", value: "$220" },
-      { title: "Wood chipper rental", value: "$80" },
-      { title: "Hazard cones + safety tape", value: "$15" },
-      { title: "Debris hauling / dump fee", value: "$45" },
-      { title: "Estimated total", value: "$360" },
+      { title: "Chainsaw crew (2 workers, 1 hr)", value: c(220) },
+      { title: "Wood chipper rental", value: c(80) },
+      { title: "Hazard cones + safety tape", value: c(15) },
+      { title: "Debris hauling / dump fee", value: c(45) },
+      { title: "Estimated total", value: c(360) },
     ] satisfies ReasoningSection[],
     scoringExplanation: [
       {
@@ -185,7 +190,10 @@ function buildDemoReasoningResponse(
   };
 }
 
-function useReasoning(report: DashboardReport | null): ReasoningState {
+function useReasoning(
+  report: DashboardReport | null,
+  currency: CurrencyConfig,
+): ReasoningState {
   const cache = useRef<Map<string, ReasoningResponse>>(new Map());
   const [state, setState] = useState<ReasoningState>({ phase: "loading" });
   const reportId = report?.id ?? null;
@@ -199,7 +207,10 @@ function useReasoning(report: DashboardReport | null): ReasoningState {
 
     // Demo report: return baked reasoning instantly, no network call.
     if (report.demo && report.ai_reasoning) {
-      setState({ phase: "ready", data: buildDemoReasoningResponse(report) });
+      setState({
+        phase: "ready",
+        data: buildDemoReasoningResponse(report, currency),
+      });
       return;
     }
 
@@ -268,7 +279,8 @@ function ReportImage({ src, alt }: { src: string; alt: string }) {
 }
 
 export function ReportDetail({ report }: { report: DashboardReport | null }) {
-  const reasoning = useReasoning(report);
+  const currency = useCurrency();
+  const reasoning = useReasoning(report, currency);
 
   if (!report) {
     return (

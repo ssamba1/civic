@@ -163,6 +163,10 @@ export interface WorkOrder {
   actual_cost: number | null;
   /** True when actual_cost exceeded 5× the category running median at capture — excluded from training, pending supervisor review. */
   actual_cost_excluded: boolean;
+  /** SLA deadline stamped at creation (created_at + category SLA hours). Null on un-migrated DBs or cities without sla_targets — read paths fall back to the static CATEGORY_SLA_TARGETS map. (migration 032) */
+  due_at: string | null;
+  /** Set once when the overdue-escalation job first acts on this breached, still-open work order. Keeps escalation idempotent. (migration 032) */
+  escalated_at: string | null;
 }
 
 /** One row from category_cost_stats(_city_id) RPC. */

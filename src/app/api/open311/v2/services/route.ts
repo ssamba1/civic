@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
+import { open311Error, wantsXml } from "@/lib/open311/http";
 import { getAllServices } from "@/lib/open311/services";
-import { toErrorXml, toServicesXml } from "@/lib/open311/xml";
+import { toServicesXml } from "@/lib/open311/xml";
 
 /**
  * GET /api/open311/v2/services
@@ -14,11 +16,17 @@ import { toErrorXml, toServicesXml } from "@/lib/open311/xml";
  * can map /services.json → /services?format=json if needed.
  */
 export async function GET(request: NextRequest) {
+  const xml = wantsXml(request);
   try {
-    const services = getAllServices();
-    const wantsXml = requestWantsXml(request);
+    const rl = checkRateLimit(`open311_services:${clientIp(request)}`, {
+      windowMs: 60_000,
+      max: 120,
+    });
+    if (!rl.allowed) return open311Error(429, "Rate limit exceeded", xml);
 
-    if (wantsXml) {
+    const services = getAllServices();
+
+    if (xml) {
       return new NextResponse(toServicesXml(services), {
         status: 200,
         headers: {
@@ -33,28 +41,6 @@ export async function GET(request: NextRequest) {
       headers: { "Cache-Control": "public, max-age=3600" },
     });
   } catch {
-    return errorResponse(
-      500,
-      "Internal server error",
-      requestWantsXml(request),
-    );
+    return open311Error(500, "Internal server error", xml);
   }
-}
-
-function requestWantsXml(request: NextRequest): boolean {
-  const format = request.nextUrl.searchParams.get("format");
-  if (format === "xml") return true;
-  if (format === "json") return false;
-  const accept = request.headers.get("accept") ?? "";
-  return accept.includes("text/xml") || accept.includes("application/xml");
-}
-
-function errorResponse(code: number, description: string, xml: boolean) {
-  if (xml) {
-    return new NextResponse(toErrorXml(code, description), {
-      status: code,
-      headers: { "Content-Type": "text/xml; charset=utf-8" },
-    });
-  }
-  return NextResponse.json([{ code, description }], { status: code });
 }
