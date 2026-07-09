@@ -8,6 +8,7 @@ import {
   Table,
   Users,
   UsersRound,
+  Workflow,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -83,6 +84,12 @@ export function CitySidebar({
             href: `/city/${slug}/members`,
             icon: Users,
             active: pathname === `/city/${slug}/members`,
+          },
+          {
+            label: "Routing",
+            href: `/city/${slug}/routing`,
+            icon: Workflow,
+            active: pathname === `/city/${slug}/routing`,
           },
         ]
       : []),

@@ -15,6 +15,7 @@ import {
   Timer,
   Upload,
   Webhook,
+  Workflow,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -33,6 +34,7 @@ const navItems = [
   { href: "/admin/compliance", label: "Compliance report", icon: FileCheck2 },
   { href: "/admin/districts", label: "District rollups", icon: LandPlot },
   { href: "/admin/org-tree", label: "Routing org tree", icon: Network },
+  { href: "/admin/routing", label: "Routing flow", icon: Workflow },
   { href: "/admin/qr", label: "Walk-up QR", icon: QrCode },
   { href: "/staff", label: "Staff console", icon: Shield },
 ] as const;
