@@ -3,6 +3,7 @@ import "server-only";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
 import { type DeliveryResult, deliverEmail } from "@/lib/notify/deliver";
+import { deliverSms } from "@/lib/notify/deliver-sms";
 import { stampNotificationOutcome } from "@/lib/notify/outbox";
 import { publicToken } from "@/lib/public-report";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
@@ -103,10 +104,11 @@ export async function notifyReportStatus(
     // skipped downstream (deliverEmail returns no-recipient).
     const { data: userRow } = await db
       .from("users")
-      .select("email")
+      .select("email, phone")
       .eq("id", data.reporter_id)
-      .maybeSingle<{ email: string | null }>();
+      .maybeSingle<{ email: string | null; phone: string | null }>();
     const to = userRow?.email ?? null;
+    const toPhone = userRow?.phone ?? null;
 
     const cl = Array.isArray(data.classifications)
       ? (data.classifications[0] ?? null)
@@ -175,6 +177,19 @@ export async function notifyReportStatus(
       reportUrl: url,
       actions,
     });
+
+    // SMS companion (#1/#2): the same close-the-loop beat, one line + the
+    // status link, for reporters who left a phone. Independent of the email
+    // leg — a reporter may have one channel, both, or (anonymous) neither.
+    // Best-effort: an SMS miss never affects the email result or the status
+    // update. deliverSms no-ops without a recipient or Twilio creds.
+    if (toPhone) {
+      const smsBody = url ? `Civic: ${subject}. ${url}` : `Civic: ${subject}.`;
+      const smsResult = await deliverSms({ to: toPhone, body: smsBody });
+      if (!smsResult.sent && smsResult.reason === "send-error") {
+        logger.warn("status_sms_failed", { reportId, status });
+      }
+    }
 
     // Record the outcome on the matching notification row so a delivered email
     // drops out of the drain and a transient failure stays visible for retry
