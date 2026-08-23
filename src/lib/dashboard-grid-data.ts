@@ -1,4 +1,5 @@
 import { createServerClient } from "@/lib/db/client";
+import type { LiabilityVerdict } from "@/lib/liability/types";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("[city-grid]");
@@ -39,6 +40,26 @@ export interface GridReportRow {
   est_cost: number | null;
   wo_source: string | null;
   needs_manual_review: boolean;
+  /** Liability verdict for this report, null until the engine has evaluated it
+   *  (or on a database that predates migration 062). */
+  liability: GridLiability | null;
+}
+
+/** The report_liability row the detail pane needs, plus the resolved names the
+ *  badge shows. Kept structurally identical to LiabilityEvaluation so the badge
+ *  takes it directly. */
+export interface GridLiability {
+  verdict: LiabilityVerdict;
+  capitalJobId: string | null;
+  warrantyId: string | null;
+  utilityPermitId: string | null;
+  liableContractorId: string | null;
+  windowEndsOn: string | null;
+  matchDistanceM: number | null;
+  confidence: number;
+  contractorName: string | null;
+  contractRef: string | null;
+  permitRef: string | null;
 }
 
 /** One assignable crew for the grid's crew control (no roster — the grid
@@ -154,6 +175,14 @@ export async function getGridRows(cityId: string): Promise<GridReportRow[]> {
       crewNameById.set(c.id, c.name);
   }
 
+  // Liability verdicts, fetched separately for the same reason as crew names:
+  // migration 062 may not be applied, and a missing table must degrade the
+  // badge to absent rather than blank the whole grid.
+  const liabilityByReport = await fetchLiability(
+    db,
+    (data ?? []).map((r) => (r as Record<string, unknown>).id as string),
+  );
+
   return (data ?? []).map((row: Record<string, unknown>): GridReportRow => {
     const cls = firstOf(row.classifications as Record<string, unknown>);
     const wo = firstOf(row.work_orders as Record<string, unknown>);
@@ -183,6 +212,123 @@ export async function getGridRows(cityId: string): Promise<GridReportRow[]> {
       est_cost: (wo?.est_cost as number) ?? null,
       wo_source: (wo?.wo_source as string) ?? null,
       needs_manual_review: Boolean(wo?.needs_manual_review),
+      liability: liabilityByReport.get(row.id as string) ?? null,
     };
   });
+}
+
+/**
+ * report_liability rows for a page of reports, with contractor names and the
+ * matched contract/permit references resolved. Returns an empty map on any
+ * failure — including the table not existing yet (migration 062) — so the
+ * liability badge simply does not render.
+ */
+async function fetchLiability(
+  db: ReturnType<typeof createServerClient>,
+  reportIds: string[],
+): Promise<Map<string, GridLiability>> {
+  const out = new Map<string, GridLiability>();
+  if (reportIds.length === 0) return out;
+
+  // report_liability has no city_id (it scopes through its report), so the
+  // filter is an id list. Chunked because a busy city's grid can carry
+  // thousands of report ids and PostgREST takes them in the query string.
+  const rows: Record<string, unknown>[] = [];
+  for (let i = 0; i < reportIds.length; i += 200) {
+    const { data, error } = await db
+      .from("report_liability")
+      .select(
+        "report_id, verdict, capital_job_id, warranty_id, utility_permit_id, liable_contractor_id, window_ends_on, match_distance_m, confidence",
+      )
+      .in("report_id", reportIds.slice(i, i + 200));
+    if (error) {
+      logger.error("Liability fetch failed", error);
+      return out;
+    }
+    rows.push(...((data ?? []) as Record<string, unknown>[]));
+  }
+  if (rows.length === 0) return out;
+
+  const contractorNames = new Map<string, string>();
+  const contractorIds = [
+    ...new Set(
+      rows
+        .map((r) => r.liable_contractor_id as string | null)
+        .filter((v): v is string => Boolean(v)),
+    ),
+  ];
+  if (contractorIds.length > 0) {
+    const { data: cData } = await db
+      .from("contractors")
+      .select("id, name")
+      .in("id", contractorIds);
+    for (const c of (cData ?? []) as { id: string; name: string }[]) {
+      contractorNames.set(c.id, c.name);
+    }
+  }
+
+  const contractRefs = new Map<string, string | null>();
+  const jobIds = [
+    ...new Set(
+      rows
+        .map((r) => r.capital_job_id as string | null)
+        .filter((v): v is string => Boolean(v)),
+    ),
+  ];
+  if (jobIds.length > 0) {
+    const { data: jData } = await db
+      .from("capital_jobs")
+      .select("id, contract_ref")
+      .in("id", jobIds);
+    for (const j of (jData ?? []) as {
+      id: string;
+      contract_ref: string | null;
+    }[]) {
+      contractRefs.set(j.id, j.contract_ref);
+    }
+  }
+
+  const permitRefs = new Map<string, string | null>();
+  const permitIds = [
+    ...new Set(
+      rows
+        .map((r) => r.utility_permit_id as string | null)
+        .filter((v): v is string => Boolean(v)),
+    ),
+  ];
+  if (permitIds.length > 0) {
+    const { data: pData } = await db
+      .from("utility_permits")
+      .select("id, permit_ref")
+      .in("id", permitIds);
+    for (const p of (pData ?? []) as {
+      id: string;
+      permit_ref: string | null;
+    }[]) {
+      permitRefs.set(p.id, p.permit_ref);
+    }
+  }
+
+  for (const r of rows) {
+    const jobId = (r.capital_job_id as string) ?? null;
+    const permitId = (r.utility_permit_id as string) ?? null;
+    const contractorId = (r.liable_contractor_id as string) ?? null;
+    out.set(r.report_id as string, {
+      verdict: (r.verdict as LiabilityVerdict) ?? "unknown",
+      capitalJobId: jobId,
+      warrantyId: (r.warranty_id as string) ?? null,
+      utilityPermitId: permitId,
+      liableContractorId: contractorId,
+      windowEndsOn: (r.window_ends_on as string) ?? null,
+      matchDistanceM:
+        r.match_distance_m != null ? Number(r.match_distance_m) : null,
+      confidence: r.confidence != null ? Number(r.confidence) : 0,
+      contractorName: contractorId
+        ? (contractorNames.get(contractorId) ?? null)
+        : null,
+      contractRef: jobId ? (contractRefs.get(jobId) ?? null) : null,
+      permitRef: permitId ? (permitRefs.get(permitId) ?? null) : null,
+    });
+  }
+  return out;
 }

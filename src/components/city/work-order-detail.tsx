@@ -3,6 +3,7 @@
 import { ImageOff, MapPin, Wrench } from "lucide-react";
 import { useState, useTransition } from "react";
 import { assignCrewToReport } from "@/app/staff/actions";
+import { LiabilityBadge } from "@/components/liability/liability-badge";
 import { teamIcon } from "@/components/teams/team-icon";
 import { formatCost } from "@/lib/currency";
 import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
@@ -375,6 +376,22 @@ export function WorkOrderDetail({
             value={`~${Math.round(row.hazard_radius_m)}m`}
             hint="AI-estimated radius of the affected/unsafe area from the photo."
           />
+        )}
+        {/* Liability verdict — only when the engine has actually written a
+            report_liability row. Absent data shows nothing at all rather than
+            implying the city owns the cost. */}
+        {row.liability && (
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] uppercase tracking-wider text-faint">
+              Liability
+            </span>
+            <LiabilityBadge
+              evaluation={row.liability}
+              contractorName={row.liability.contractorName}
+              contractRef={row.liability.contractRef}
+              permitRef={row.liability.permitRef}
+            />
+          </div>
         )}
         <Stat
           label="Status"

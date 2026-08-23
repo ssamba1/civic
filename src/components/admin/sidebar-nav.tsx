@@ -3,7 +3,9 @@
 import {
   Building2,
   FileCheck2,
+  FileWarning,
   Fingerprint,
+  Gavel,
   Inbox,
   KeyRound,
   LandPlot,
@@ -32,6 +34,8 @@ const navItems = [
   { href: "/admin/privacy", label: "Privacy audit", icon: ShieldCheck },
   { href: "/admin/retention", label: "Data retention", icon: Timer },
   { href: "/admin/compliance", label: "Compliance report", icon: FileCheck2 },
+  { href: "/admin/liability", label: "Liability & warranties", icon: Gavel },
+  { href: "/admin/claims", label: "Contractor claims", icon: FileWarning },
   { href: "/admin/districts", label: "District rollups", icon: LandPlot },
   { href: "/admin/org-tree", label: "Routing org tree", icon: Network },
   { href: "/admin/routing", label: "Routing flow", icon: Workflow },

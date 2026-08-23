@@ -7,6 +7,7 @@ import { ASYNC_CLASSIFY } from "@/lib/ai/config";
 import { createServerClient } from "@/lib/db/client";
 import { buildPhotoPaths } from "@/lib/db/report-photos";
 import { createSSRClient } from "@/lib/db/ssr-client";
+import { evaluateReportLiability } from "@/lib/liability/evaluate";
 import { createLogger } from "@/lib/logger";
 import { stripImageMetadata } from "@/lib/privacy/exif-strip";
 import { redactPII } from "@/lib/privacy/pii-redact";
@@ -85,6 +86,27 @@ function fallbackClassification(reason: string): Classification {
     no_issue_detected: false,
     alternate_categories: [],
   };
+}
+
+/**
+ * Liability attribution (spec §3.2) runs after classification, because the
+ * warranty join needs the report's category. Strictly best-effort: it is only
+ * ever called post-response, it swallows every failure, and a missing verdict
+ * degrades the UI to an "unknown" badge. A resident's report must never fail
+ * because the city has no paving schedule loaded.
+ */
+async function evaluateLiabilityBestEffort(reportId: string): Promise<void> {
+  try {
+    const result = await evaluateReportLiability(reportId);
+    if (!result.ok) {
+      logger.warn("liability evaluation returned an error", {
+        reportId,
+        error: result.error,
+      });
+    }
+  } catch (err) {
+    logger.error("liability evaluation threw", err, { reportId });
+  }
 }
 
 export async function submitReport(
@@ -380,6 +402,10 @@ export async function submitReport(
           );
         }
       }
+      // Liability attribution — runs whether or not classification succeeded
+      // (an unclassified report still joins on location and date). Already
+      // inside after(), so this awaits without delaying the response.
+      await evaluateLiabilityBestEffort(reportId);
     });
     return {
       ok: true,
@@ -402,6 +428,10 @@ export async function submitReport(
       "Classification service unavailable",
     );
   }
+
+  // Liability attribution on the synchronous path: scheduled with after() so
+  // the spatial join never adds latency to — or can fail — the submission.
+  after(() => evaluateLiabilityBestEffort(reportId));
 
   return { ok: true, data: { id: reportId, classification } };
 }
