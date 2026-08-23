@@ -108,8 +108,8 @@ interface TileProps {
   onExpand?: () => void;
   /** Position in the bento grid — drives staggered reveal delay. */
   index?: number;
-  /** Subtle 3D tilt-on-hover (reduced-motion safe). On by default; pass false
-   *  to opt a surface out. */
+  /** Subtle 3D tilt-on-hover (reduced-motion safe). Off by default; pass true
+   *  to opt a surface in. */
   tilt?: boolean;
 }
 
@@ -120,7 +120,7 @@ export function Tile({
   children,
   onExpand,
   index,
-  tilt = true,
+  tilt = false,
 }: TileProps) {
   const revealRef = useReveal<HTMLDivElement>(index);
   // useTiltHover authors its own ref + pointer handlers; merge it onto the same

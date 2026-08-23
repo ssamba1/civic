@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, CheckCircle2, Clock } from "lucide-react";
+import { Camera, CheckCircle2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   TaskDetailPane,
@@ -10,7 +10,7 @@ import { ResizableSplit } from "@/components/ui/resizable-split";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import { useReportCorpus } from "@/lib/filters/context";
-import { STATUS_LABEL, statusChipClass } from "@/lib/status";
+import { STATUS_LABEL, STATUS_TONE, toneTextClass } from "@/lib/status";
 import type { TeamId } from "@/lib/teams";
 import { getReportTeam } from "@/lib/teams-overrides";
 import type { ReportStatus } from "@/lib/types";
@@ -122,7 +122,7 @@ export function TeamTasksInteractive({ teamId }: TeamTasksInteractiveProps) {
         className="gap-1"
         left={
           visible.length === 0 ? (
-            <div className="rounded-xl border border-hairline bg-surface p-8 text-center">
+            <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-8 text-center">
               <p className="text-sm text-subtle">
                 {tab === "todo"
                   ? "No open tasks. Nice — the queue is clear."
@@ -132,16 +132,31 @@ export function TeamTasksInteractive({ teamId }: TeamTasksInteractiveProps) {
               </p>
             </div>
           ) : (
-            <ul key={tab} className="fade-up flex flex-col gap-2">
-              {visible.map((report) => (
-                <TaskRow
-                  key={report.id}
-                  report={report}
-                  selected={report.id === selectedId}
-                  onClick={() => setSelectedId(report.id)}
-                />
-              ))}
-            </ul>
+            <div
+              key={tab}
+              className="fade-up overflow-clip rounded-[var(--radius-lg)] border border-hairline bg-surface"
+            >
+              {/* Column header — sticky, quiet, Linear-register */}
+              <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-hairline bg-surface px-3 py-1.5 text-[11px] font-medium text-faint">
+                <span className="w-5 shrink-0" aria-hidden />
+                <span className="min-w-0 flex-1">Task</span>
+                <span className="hidden w-[104px] shrink-0 lg:block">
+                  Status
+                </span>
+                <span className="w-6 shrink-0" aria-hidden />
+                <span className="w-[64px] shrink-0 text-right">Age</span>
+              </div>
+              <ul className="flex flex-col">
+                {visible.map((report) => (
+                  <TaskRow
+                    key={report.id}
+                    report={report}
+                    selected={report.id === selectedId}
+                    onClick={() => setSelectedId(report.id)}
+                  />
+                ))}
+              </ul>
+            </div>
           )
         }
         right={
@@ -166,6 +181,69 @@ export function TeamTasksInteractive({ teamId }: TeamTasksInteractiveProps) {
   );
 }
 
+// Inner-arc fill fraction per status; -1 = check glyph, -2 = x glyph.
+// Inner circle r=2 → circumference ≈ 12.57 for the dasharray math.
+const RING_PROGRESS: Record<ReportStatus, number> = {
+  open: 0,
+  dispatched: 0.25,
+  in_progress: 0.5,
+  closed: -1,
+  merged: 1,
+  rejected: -2,
+};
+
+const INNER_CIRCUMFERENCE = 2 * Math.PI * 2;
+
+function StatusRing({ status }: { status: ReportStatus }) {
+  const progress = RING_PROGRESS[status];
+
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill="none"
+      aria-hidden
+      className={cn("shrink-0", toneTextClass(STATUS_TONE[status]))}
+    >
+      <circle
+        cx="7"
+        cy="7"
+        r="6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeDasharray={status === "open" ? "1.4 1.74" : undefined}
+      />
+      {progress === -1 ? (
+        <path
+          d="M4.5 7L6.5 9L9.5 5"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ) : progress === -2 ? (
+        <path
+          d="M5 5L9 9M9 5L5 9"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      ) : progress > 0 ? (
+        <circle
+          cx="7"
+          cy="7"
+          r="2"
+          stroke="currentColor"
+          strokeWidth="4"
+          strokeDasharray={`${progress * INNER_CIRCUMFERENCE} 100`}
+          transform="rotate(-90 7 7)"
+        />
+      ) : null}
+    </svg>
+  );
+}
+
 function TaskRow({
   report,
   selected,
@@ -180,23 +258,47 @@ function TaskRow({
   const hasAfter = !!report.afterPhoto;
 
   return (
-    <li>
+    <li className="border-b border-hairline last:border-b-0">
       <button
         type="button"
         onClick={onClick}
         aria-current={selected}
         className={cn(
-          "group flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors",
-          "outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]",
+          "group flex w-full items-center gap-3 px-3 py-2 text-left transition-colors",
+          "outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]",
           selected
-            ? "border-[color-mix(in_srgb,var(--color-primary)_40%,transparent)] bg-[color-mix(in_srgb,var(--color-primary)_8%,transparent)]"
-            : "border-hairline bg-surface hover:bg-overlay",
+            ? "bg-[color-mix(in_srgb,var(--color-primary)_8%,transparent)]"
+            : "hover:bg-overlay",
           isDemo && "demo-glow",
         )}
       >
-        {/* Thumbnail */}
-        <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-hairline bg-surface">
-          {/* biome-ignore lint/performance/noImgElement: tiny lazy thumbnail; next/image is overkill for a 48px list cell. */}
+        <span className="flex w-5 shrink-0 items-center justify-center">
+          <StatusRing status={report.status} />
+        </span>
+
+        {/* Title + address share the flexible cell, single line */}
+        <span className="flex min-w-0 flex-1 items-baseline gap-2">
+          <span className="shrink-0 text-[13px] font-medium text-foreground">
+            {meta.label}
+          </span>
+          <span className="truncate text-[12px] text-faint">
+            {report.address}
+          </span>
+          {report.status !== "closed" && (
+            <Camera
+              className="hidden h-3 w-3 shrink-0 self-center text-faint opacity-0 transition-opacity group-hover:opacity-100 sm:block"
+              strokeWidth={1.75}
+            />
+          )}
+        </span>
+
+        <span className="hidden w-[104px] shrink-0 truncate text-[12px] text-subtle lg:block">
+          {STATUS_LABEL[report.status]}
+        </span>
+
+        {/* Thumbnail — compact evidence cell */}
+        <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded-[var(--radius-sm)] border border-hairline bg-overlay">
+          {/* biome-ignore lint/performance/noImgElement: tiny lazy thumbnail; next/image is overkill for a 24px list cell. */}
           <img
             src={report.photo_public_url || undefined}
             alt={`${meta.label} report photo, ${report.address}`}
@@ -204,45 +306,15 @@ function TaskRow({
             loading="lazy"
           />
           {hasAfter && (
-            <span className="absolute bottom-0 right-0 inline-flex h-4 w-4 items-center justify-center rounded-tl-md bg-[var(--color-success)] text-white">
+            <span className="absolute inset-0 inline-flex items-center justify-center bg-[color-mix(in_srgb,var(--color-success)_55%,transparent)] text-white">
               <CheckCircle2 className="h-3 w-3" strokeWidth={2.5} />
             </span>
           )}
         </span>
 
-        <span className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="flex items-center justify-between gap-2">
-            <span className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-foreground">
-              <span
-                className="h-2 w-2 shrink-0 rounded-full bg-faint"
-                aria-hidden
-              />
-              <span className="truncate">{meta.label}</span>
-            </span>
-            <span
-              className={cn(
-                "shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-medium",
-                statusChipClass(report.status),
-              )}
-            >
-              {STATUS_LABEL[report.status]}
-            </span>
-          </span>
-          <span className="flex items-center justify-between gap-3 text-[12px] text-faint">
-            <span className="truncate">{report.address}</span>
-            <span className="inline-flex shrink-0 items-center gap-1">
-              <Clock className="h-3 w-3" strokeWidth={1.75} />
-              {timeAgo(report.created_at)}
-            </span>
-          </span>
+        <span className="w-[64px] shrink-0 text-right text-[11px] tabular-nums text-faint">
+          {timeAgo(report.created_at)}
         </span>
-
-        {/* Affordance hint */}
-        {report.status !== "closed" && (
-          <span className="hidden shrink-0 items-center text-faint sm:inline-flex">
-            <Camera className="h-3.5 w-3.5" strokeWidth={1.75} />
-          </span>
-        )}
       </button>
     </li>
   );

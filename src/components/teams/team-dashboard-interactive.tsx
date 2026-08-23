@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { RoutingChangesLog } from "@/components/teams/routing-changes-log";
 import { RoutingMatrix } from "@/components/teams/routing-matrix";
+import { TeamTasksInteractive } from "@/components/teams/team-tasks-interactive";
 import { WorkloadBars } from "@/components/teams/workload-bars";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { useReportCorpus, useServerNow } from "@/lib/filters/context";
@@ -87,6 +88,13 @@ export function TeamDashboardInteractive({
           <RoutingChangesLog />
         </div>
       </div>
+
+      <section
+        aria-label="Task queue"
+        style={{ "--stagger-index": 2 } as React.CSSProperties}
+      >
+        <TeamTasksInteractive teamId={teamId} />
+      </section>
     </div>
   );
 }
