@@ -22,7 +22,8 @@ function CategoryChartInner({
   // zero in the bar-width math below.
   const maxCount = Math.max(1, ...data.map((d) => d.count));
 
-  const panelClass = "rounded-xl bg-surface border border-hairline";
+  const panelClass =
+    "rounded-[var(--radius-lg)] bg-surface border border-hairline";
 
   if (data.length === 0) {
     return (
@@ -109,10 +110,17 @@ function CategoryChartInner({
                   className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${pct}%`,
-                    backgroundColor: meta.color,
-                    // Full strength when this bar is the active selection or
-                    // nothing is selected; muted when another row is focused.
-                    opacity: isDimmed ? 0.55 : isSelected ? 1 : 0.85,
+                    // Single-series pastel: soft sky fill at rest, sky-strong
+                    // when the row is the active selection. color-mix keeps the
+                    // "soft" opaque and theme-aware (the raw --pastel-* soft
+                    // tokens are alpha in dark mode and would ghost against the
+                    // overlay track). Category identity stays on the meta.color
+                    // dot next to the label, matching the map pins.
+                    backgroundColor: isSelected
+                      ? "var(--pastel-sky-strong)"
+                      : "color-mix(in srgb, var(--pastel-sky-strong) 55%, var(--surface))",
+                    // Muted when another row is focused.
+                    opacity: isDimmed ? 0.55 : 1,
                   }}
                   role="meter"
                   aria-valuenow={count}

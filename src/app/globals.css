@@ -100,6 +100,23 @@
   --fg-emerald-glow: #4d8a6a;
   --fg-amber-pulse: #ad8434;
   --fg-cyan-burst: #5f8ba6;
+
+  /* Pastel accent ramp — soft = fills / chips / chart areas, strong = strokes /
+     deltas / small emphasis. Decorative + data accents ONLY: body text stays on
+     --foreground/--subtle (pastels don't clear AA as copy). Matched lightness
+     across hues so mixed charts read as one family. Flipped per-theme below. */
+  --pastel-mint: #d3ecdd;
+  --pastel-mint-strong: #35845c;
+  --pastel-sky: #d6e6f5;
+  --pastel-sky-strong: #4577a8;
+  --pastel-lavender: #e2ddf3;
+  --pastel-lavender-strong: #6c5fa8;
+  --pastel-blush: #f5dde2;
+  --pastel-blush-strong: #ad5468;
+  --pastel-butter: #f4ecd2;
+  --pastel-butter-strong: #96772a;
+  --pastel-peach: #f7e3d4;
+  --pastel-peach-strong: #b06a3d;
 }
 
 /* DARK theme — overrides only the values that flip. */
@@ -153,6 +170,22 @@
   --status-neutral-fg: #98989f;
 
   --color-muted: #86868b;
+
+  /* Pastel ramp, dark: translucent tint fills so the surface shows through
+     (opaque light-theme pastels would glow like stickers on near-black);
+     strong variants lift toward pastel-lightness for strokes/deltas. */
+  --pastel-mint: rgba(122, 200, 160, 0.16);
+  --pastel-mint-strong: #8fd4af;
+  --pastel-sky: rgba(122, 170, 220, 0.16);
+  --pastel-sky-strong: #96bfe8;
+  --pastel-lavender: rgba(160, 150, 220, 0.16);
+  --pastel-lavender-strong: #b3a7e6;
+  --pastel-blush: rgba(220, 140, 160, 0.16);
+  --pastel-blush-strong: #e3a4b4;
+  --pastel-butter: rgba(220, 190, 110, 0.16);
+  --pastel-butter-strong: #dcc687;
+  --pastel-peach: rgba(230, 160, 110, 0.16);
+  --pastel-peach-strong: #e6ae85;
 }
 
 @theme inline {
@@ -184,6 +217,30 @@
   --color-emerald-glow: var(--fg-emerald-glow);
   --color-amber-pulse: var(--fg-amber-pulse);
   --color-cyan-burst: var(--fg-cyan-burst);
+
+  --color-pastel-mint: var(--pastel-mint);
+  --color-pastel-mint-strong: var(--pastel-mint-strong);
+  --color-pastel-sky: var(--pastel-sky);
+  --color-pastel-sky-strong: var(--pastel-sky-strong);
+  --color-pastel-lavender: var(--pastel-lavender);
+  --color-pastel-lavender-strong: var(--pastel-lavender-strong);
+  --color-pastel-blush: var(--pastel-blush);
+  --color-pastel-blush-strong: var(--pastel-blush-strong);
+  --color-pastel-butter: var(--pastel-butter);
+  --color-pastel-butter-strong: var(--pastel-butter-strong);
+  --color-pastel-peach: var(--pastel-peach);
+  --color-pastel-peach-strong: var(--pastel-peach-strong);
+}
+
+/* ── Bento flat grid (efferd register) ────────────────────────────────
+   One continuous bordered surface subdivided by 1px hairlines: the grid
+   container carries border+radius and a hairline background showing through
+   gap-px seams; child tiles drop their own card chrome so cells read as one
+   sheet, not floating cards. */
+.bento-flat > * {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 /* ── Accordion (radix) ── */

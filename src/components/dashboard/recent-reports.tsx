@@ -46,7 +46,8 @@ function RecentReportsInner({
     }
   }, [focusedId]);
 
-  const panelClass = "rounded-xl bg-surface border border-hairline";
+  const panelClass =
+    "rounded-[var(--radius-lg)] bg-surface border border-hairline";
 
   if (reports.length === 0) {
     return (

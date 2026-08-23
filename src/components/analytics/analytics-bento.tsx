@@ -576,30 +576,17 @@ function renderTrendChart(
       aria-label="Reports created vs resolved over time"
     >
       <defs>
-        {/* Created = primary series, ink area fade. */}
+        {/* Created = primary series — sky soft area fade under a sky-strong line. */}
         <linearGradient id={gCreated} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
+          <stop offset="0%" stopColor="var(--pastel-sky)" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="var(--pastel-sky)" stopOpacity="0" />
         </linearGradient>
-        {/* Resolved = secondary series — grayscale hatch, not a color fill, so
-           the two series read apart without introducing hue. */}
-        <pattern
-          id={pClosed}
-          width="6"
-          height="6"
-          patternTransform="rotate(45)"
-          patternUnits="userSpaceOnUse"
-        >
-          <line
-            x1="0"
-            y1="0"
-            x2="0"
-            y2="6"
-            stroke="var(--subtle)"
-            strokeWidth="1.5"
-            strokeOpacity="0.4"
-          />
-        </pattern>
+        {/* Resolved = secondary series — mint soft area fade under a
+           mint-strong line, so the two series read apart by hue. */}
+        <linearGradient id={pClosed} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor="var(--pastel-mint)" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="var(--pastel-mint)" stopOpacity="0" />
+        </linearGradient>
       </defs>
       {yTicks.map((t, i) => {
         const y = pad.t + innerH - (t / max) * innerH;
@@ -632,7 +619,7 @@ function renderTrendChart(
           <path
             d={linePath("created")}
             fill="none"
-            stroke="var(--accent)"
+            stroke="var(--pastel-sky-strong)"
             strokeWidth={1.75}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -645,7 +632,7 @@ function renderTrendChart(
           <path
             d={linePath("closed")}
             fill="none"
-            stroke="var(--subtle)"
+            stroke="var(--pastel-mint-strong)"
             strokeWidth={1.75}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -691,7 +678,7 @@ function renderTrendChart(
                 x2={w - pad.r}
                 y1={avgY}
                 y2={avgY}
-                stroke="var(--accent)"
+                stroke="var(--pastel-sky-strong)"
                 strokeOpacity={0.3}
                 strokeWidth={1}
                 strokeDasharray="3 3"
@@ -700,7 +687,7 @@ function renderTrendChart(
                 cx={p.x}
                 cy={p.y}
                 r={4}
-                fill="var(--accent)"
+                fill="var(--pastel-sky-strong)"
                 stroke="var(--surface)"
                 strokeWidth={1.5}
               />
@@ -728,7 +715,7 @@ function renderTrendChart(
               x2={w - pad.r}
               y1={avgY}
               y2={avgY}
-              stroke="var(--subtle)"
+              stroke="var(--pastel-mint-strong)"
               strokeOpacity={0.5}
               strokeWidth={1}
               strokeDasharray="3 3"
@@ -752,7 +739,7 @@ function renderTrendChart(
               cx={xy(hoveredIdx, data[hoveredIdx].created).x}
               cy={xy(hoveredIdx, data[hoveredIdx].created).y}
               r={3.5}
-              fill="var(--accent)"
+              fill="var(--pastel-sky-strong)"
               stroke="var(--surface)"
               strokeWidth={1.5}
             />
@@ -762,7 +749,7 @@ function renderTrendChart(
               cx={xy(hoveredIdx, data[hoveredIdx].closed).x}
               cy={xy(hoveredIdx, data[hoveredIdx].closed).y}
               r={3.5}
-              fill="var(--subtle)"
+              fill="var(--pastel-mint-strong)"
               stroke="var(--surface)"
               strokeWidth={1.5}
             />
@@ -911,18 +898,18 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
     const netDelta = deltaCreated - deltaClosed;
     return {
       title: d.date,
-      accent: "var(--accent)",
+      accent: "var(--pastel-sky-strong)",
       body: (
         <div className="flex flex-col gap-1.5">
           <TipRow
             label="Created"
             value={d.created.toLocaleString()}
-            accent="var(--accent)"
+            accent="var(--pastel-sky-strong)"
           />
           <TipRow
             label="Resolved"
             value={d.closed.toLocaleString()}
-            accent="var(--subtle)"
+            accent="var(--pastel-mint-strong)"
           />
           <TipRow label="Throughput" value={`${dayRatio.toFixed(0)}%`} muted />
           {prev && (
@@ -1018,7 +1005,9 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
 
   const legendTip = (series: "created" | "closed") => {
     const isCreated = series === "created";
-    const color = isCreated ? "var(--accent)" : "var(--subtle)";
+    const color = isCreated
+      ? "var(--pastel-sky-strong)"
+      : "var(--pastel-mint-strong)";
     const total = isCreated ? totalCreated : totalClosed;
     const avg = isCreated ? dailyAvgCreated : dailyAvgClosed;
     return {
@@ -1064,7 +1053,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
               {...tip.bindTarget(() => legendTip("created"))}
             >
               <Legend
-                color="var(--accent)"
+                color="var(--pastel-sky-strong)"
                 label={`Created · ${totalCreated}`}
               />
             </span>
@@ -1075,7 +1064,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
               {...tip.bindTarget(() => legendTip("closed"))}
             >
               <Legend
-                color="var(--subtle)"
+                color="var(--pastel-mint-strong)"
                 label={`Resolved · ${totalClosed}`}
               />
             </span>
@@ -1107,11 +1096,11 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-4 text-[12px]">
               <Legend
-                color="var(--accent)"
+                color="var(--pastel-sky-strong)"
                 label={`Created · ${sliceCreated}`}
               />
               <Legend
-                color="var(--subtle)"
+                color="var(--pastel-mint-strong)"
                 label={`Resolved · ${sliceClosed}`}
               />
             </div>
@@ -1146,13 +1135,13 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
                 label="Created"
                 value={showCreated}
                 onChange={setShowCreated}
-                dotColor="var(--accent)"
+                dotColor="var(--pastel-sky-strong)"
               />
               <Toggle
                 label="Resolved"
                 value={showClosed}
                 onChange={setShowClosed}
-                dotColor="var(--subtle)"
+                dotColor="var(--pastel-mint-strong)"
               />
             </div>
             <div className="flex flex-col gap-2 pt-2 border-t border-hairline">
@@ -1354,16 +1343,17 @@ interface SeverityDonutProps {
   data: SeveritySlice[];
 }
 
-// Ordinal urgency ramp (cool → alarm) built from the spec's muted enterprise
-// tokens — severity IS a status field, so hue is warranted here, but it
-// stays inside the approved palette rather than the old saturated Apple hues.
-// Mirrored byte-for-byte in report-detail.tsx's SEVERITY_COLORS.
+// Ordinal urgency ramp (cool → warm) on the pastel-strong accent tokens —
+// severity IS a status field, so hue is warranted, and the ramp walks the
+// pastel wheel from calm sky to alarmed blush.
+// NOTE: no longer mirrors report-detail.tsx's SEVERITY_COLORS (that stays on
+// the semantic status tokens); dashboard-only recolor.
 const SEVERITY_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: "var(--fg-cyan-burst)",
-  2: "var(--color-success)",
-  3: "var(--color-warning)",
-  4: "var(--fg-neon-coral)",
-  5: "var(--color-danger)",
+  1: "var(--pastel-sky-strong)",
+  2: "var(--pastel-mint-strong)",
+  3: "var(--pastel-butter-strong)",
+  4: "var(--pastel-peach-strong)",
+  5: "var(--pastel-blush-strong)",
 };
 
 const SEVERITY_DESC: Record<1 | 2 | 3 | 4 | 5, string> = {
@@ -1700,15 +1690,22 @@ interface StatusFunnelProps {
   data: StatusFunnelStep[];
 }
 
-// Aligned to lib/status.ts's STATUS_TONE (the single source of truth for
-// status hues) so this funnel never drifts from the chip colors used
-// elsewhere: open=warning, dispatched/in_progress share the info tone
-// (their label is what distinguishes them, not color), closed=success.
+// Pastel stage ramp for the funnel (dashboard-only; chips elsewhere keep
+// lib/status.ts's STATUS_TONE): open=butter, dispatched/in_progress share
+// sky (their label is what distinguishes them, not color), closed=mint.
+// Soft tints fill the bars; the -strong twins carry edges and tooltips.
 const STATUS_COLOR: Record<string, string> = {
-  open: "var(--color-warning)",
-  dispatched: "var(--fg-electric-indigo)",
-  in_progress: "var(--fg-electric-indigo)",
-  closed: "var(--color-success)",
+  open: "var(--pastel-butter)",
+  dispatched: "var(--pastel-sky)",
+  in_progress: "var(--pastel-sky)",
+  closed: "var(--pastel-mint)",
+};
+
+const STATUS_COLOR_STRONG: Record<string, string> = {
+  open: "var(--pastel-butter-strong)",
+  dispatched: "var(--pastel-sky-strong)",
+  in_progress: "var(--pastel-sky-strong)",
+  closed: "var(--pastel-mint-strong)",
 };
 
 function renderFunnelBars(
@@ -1732,6 +1729,7 @@ function renderFunnelBars(
       {data.map((step, i) => {
         const pct = (step.count / max) * 100;
         const color = STATUS_COLOR[step.status] ?? "var(--faint)";
+        const edge = STATUS_COLOR_STRONG[step.status] ?? "var(--subtle)";
         const prev = i > 0 ? data[i - 1].count : null;
         const conv = prev ? Math.round((step.count / prev) * 100) : null;
         const bind = opts?.bindHover?.(step);
@@ -1773,6 +1771,7 @@ function renderFunnelBars(
                 style={{
                   width: `${pct}%`,
                   background: color,
+                  boxShadow: `inset 0 0 0 1px ${edge}`,
                   opacity: isActive ? 1 : isDim ? 0.55 : 0.85,
                 }}
                 role="meter"
@@ -1818,7 +1817,7 @@ function StatusFunnelInner({ data }: StatusFunnelProps) {
         ? Math.round((step.count / prev.count) * 100)
         : null;
     const pct = (step.count / totalSafe) * 100;
-    const color = STATUS_COLOR[step.status] ?? "var(--faint)";
+    const color = STATUS_COLOR_STRONG[step.status] ?? "var(--faint)";
     const interp = STATUS_INTERPRETATION[step.status] ?? {
       label: "Stage",
       tone: "neutral" as const,
@@ -2055,7 +2054,9 @@ function renderHistogram(
               data-bento-bar
               className={cn(
                 "w-full rounded-md transition-colors duration-300",
-                isHovered ? "bg-accent" : "bg-accent/70",
+                isHovered || isMedian
+                  ? "bg-pastel-lavender-strong"
+                  : "bg-pastel-lavender",
               )}
               style={
                 {
@@ -2161,12 +2162,12 @@ function ResolutionHistogramInner({ data }: ResolutionHistogramProps) {
     const meaning = bucketMeaning(b);
     return {
       title: `${b.label} resolution`,
-      accent: "var(--accent)",
+      accent: "var(--pastel-lavender-strong)",
       body: (
         <div className="flex flex-col gap-1.5">
           <TipRow label="Reports" value={b.count.toLocaleString()} />
           <TipRow label="Share" value={`${pct.toFixed(1)}%`} />
-          <TipBar pct={pct} color="var(--accent)" />
+          <TipBar pct={pct} color="var(--pastel-lavender-strong)" />
           <TipRow label="Cumulative" value={`${cum.toFixed(0)}%`} muted />
           <p className="text-[11px] text-faint leading-snug mt-1">
             {meaning.text}
@@ -2424,12 +2425,12 @@ function renderHeatmap(
                     )}
                     style={{
                       height: cellHeight,
-                      background: `color-mix(in srgb, var(--accent) ${Math.round((baseAlpha + intensity * (peakAlpha - baseAlpha)) * 100)}%, transparent)`,
+                      background: `color-mix(in srgb, var(--pastel-mint-strong) ${Math.round((baseAlpha + intensity * (peakAlpha - baseAlpha)) * 100)}%, transparent)`,
                       opacity: isDim ? 0.4 : 1,
                       transform: isCellActive ? "scale(1.18)" : "scale(1)",
                       transformOrigin: "center",
                       boxShadow: isCellActive
-                        ? "0 0 0 1.5px var(--surface), 0 2px 10px var(--accent-soft)"
+                        ? "0 0 0 1.5px var(--surface), 0 2px 10px color-mix(in srgb, var(--pastel-mint-strong) 30%, transparent)"
                         : isPeak
                           ? "inset 0 0 0 1.5px var(--surface)"
                           : "none",
@@ -2463,7 +2464,7 @@ function renderHeatmap(
                       "cursor-default focus-visible:ring-1 focus-visible:ring-hairline-strong",
                   )}
                   style={{
-                    background: `color-mix(in srgb, var(--accent) ${o * 100}%, transparent)`,
+                    background: `color-mix(in srgb, var(--pastel-mint-strong) ${o * 100}%, transparent)`,
                     transform: isLegendActive ? "scale(1.35)" : "scale(1)",
                     boxShadow: isLegendActive
                       ? "0 0 0 1px var(--surface)"
@@ -2546,12 +2547,12 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
     const intensityPct = (cell.count / max168) * 100;
     return {
       title: `${DAY_LABELS[cell.day]} ${String(cell.hour).padStart(2, "0")}:00`,
-      accent: "var(--accent)",
+      accent: "var(--pastel-mint-strong)",
       body: (
         <div className="flex flex-col gap-1.5">
           <TipRow label="Reports" value={cell.count.toLocaleString()} />
           <TipRow label="% of week" value={`${pct.toFixed(2)}%`} />
-          <TipBar pct={intensityPct} color="var(--accent)" />
+          <TipBar pct={intensityPct} color="var(--pastel-mint-strong)" />
           <TipRow
             label="Intensity"
             value={`${intensityPct.toFixed(0)}% of peak`}
@@ -2579,12 +2580,12 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
     const isWeekend = day === 0 || day === 6;
     return {
       title: `${DAY_LABELS[day]} — daily summary`,
-      accent: "var(--accent)",
+      accent: "var(--pastel-mint-strong)",
       body: (
         <div className="flex flex-col gap-1.5">
           <TipRow label="Reports" value={dayTotal.toLocaleString()} />
           <TipRow label="Share of week" value={`${weekShare.toFixed(1)}%`} />
-          <TipBar pct={weekShare} color="var(--accent)" />
+          <TipBar pct={weekShare} color="var(--pastel-mint-strong)" />
           {peakForDay && (
             <TipRow
               label="Peak hour"
@@ -2615,14 +2616,14 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
     const highPct = Math.min(100, intensityFrac * 100 + 12);
     return {
       title: `Intensity bucket ${idx + 1} of 5`,
-      accent: `color-mix(in srgb, var(--accent) ${o * 100}%, transparent)`,
+      accent: `color-mix(in srgb, var(--pastel-mint-strong) ${o * 100}%, transparent)`,
       body: (
         <div className="flex flex-col gap-1.5">
           <TipRow
             label="Approx range"
             value={`${lowPct.toFixed(0)}% – ${highPct.toFixed(0)}% of peak`}
           />
-          <TipBar pct={intensityFrac * 100} color="var(--accent)" />
+          <TipBar pct={intensityFrac * 100} color="var(--pastel-mint-strong)" />
           <p className="text-[11px] text-faint leading-snug mt-1">
             Each cell's color maps its report count to a fraction of the single
             peak slot ({peak.count} reports).
@@ -2943,7 +2944,7 @@ function renderNeighborhoods(
                   background:
                     sortBy === "open"
                       ? "var(--color-warning)"
-                      : "var(--subtle)",
+                      : "var(--pastel-sky-strong)",
                   opacity: isActive
                     ? sortBy === "open"
                       ? 1
@@ -2993,7 +2994,8 @@ function TopNeighborhoodsInner({ data }: TopNeighborhoodsProps) {
     const closedCount = Math.max(n.count - n.open, 0);
     const pctClosed = n.count > 0 ? (closedCount / n.count) * 100 : 0;
     const aboveMedian = n.open > medianOpen;
-    const accent = sortBy === "open" ? "var(--color-warning)" : "var(--accent)";
+    const accent =
+      sortBy === "open" ? "var(--color-warning)" : "var(--pastel-sky-strong)";
     return {
       title: n.name,
       accent,
@@ -3540,8 +3542,8 @@ function renderSpark(
     >
       <defs>
         <linearGradient id={gVelocity} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="var(--subtle)" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="var(--subtle)" stopOpacity="0" />
+          <stop offset="0%" stopColor="var(--pastel-peach)" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="var(--pastel-peach)" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path
@@ -3555,7 +3557,7 @@ function renderSpark(
       <polyline
         points={points}
         fill="none"
-        stroke="var(--subtle)"
+        stroke="var(--pastel-peach-strong)"
         strokeWidth={1.5}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -3578,7 +3580,7 @@ function renderSpark(
                   cx={p.x}
                   cy={p.y}
                   r={isActive ? 3.5 : 2.25}
-                  fill="var(--subtle)"
+                  fill="var(--pastel-peach-strong)"
                   style={{
                     opacity: isDim ? 0.3 : isActive ? 1 : 0.85,
                     transition: "r 140ms ease-out, opacity 140ms ease-out",
@@ -3623,7 +3625,7 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
 
   const bigNumberTip = (): Parameters<typeof tip.show>[0] => ({
     title: "Reporter activity",
-    accent: "var(--subtle)",
+    accent: "var(--pastel-peach-strong)",
     body: (
       <div className="flex flex-col gap-1.5">
         <TipRow
@@ -3703,12 +3705,15 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
     const deltaPct = sparkAvg ? (delta / sparkAvg) * 100 : 0;
     return {
       title: `Day ${i + 1}`,
-      accent: "var(--subtle)",
+      accent: "var(--pastel-peach-strong)",
       body: (
         <div className="flex flex-col gap-1.5">
           <TipRow label="Reporters" value={v.toLocaleString()} />
           <TipRow label="Window avg" value={sparkAvg.toFixed(1)} muted />
-          <TipBar pct={(v / Math.max(peak, 1)) * 100} color="var(--subtle)" />
+          <TipBar
+            pct={(v / Math.max(peak, 1)) * 100}
+            color="var(--pastel-peach-strong)"
+          />
           <p className="text-[11px] text-faint leading-snug mt-1">
             {i === 0
               ? "First day in window."

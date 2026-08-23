@@ -6,26 +6,26 @@ import { stackedBarLayers } from "@/lib/utils/stacked-bar";
    cards and crew cards alike.
    ================================================================== */
 
-// Mirrors STATUS_PALETTE in workload-bars.tsx (kept byte-identical). Deliberately
-// diverges from lib/status.ts's STATUS_TONE: chips encode status via TEXT
-// (a11y-tuned per-theme fg tokens), this bar encodes status via FILL AREA —
-// different constraint, so a separate local map. Enterprise-gray direction:
-// amber is the only hue (open = the one actionable state); everything else is
-// a gray ramp. dispatched/in_progress are flat, non-theme-adaptive hex rather
-// than var(--subtle)/var(--faint) — those two tokens invert their relative
-// lightness between light and dark (tuned for text contrast against opposite
-// backgrounds, not for fill-vs-fill ordering), so a live var() would render
-// in_progress *darker* than dispatched in dark mode. Flat hex keeps
-// in_progress reliably lighter than dispatched in both themes. closed uses
-// --elevated so resolved work recedes into the surface instead of a "success"
-// color celebrating completion.
+// Mirrors STATUS_PALETTE in workload-bars.tsx (kept byte-identical).
+// Deliberately diverges from lib/status.ts's STATUS_TONE: chips encode status
+// via TEXT (a11y-tuned per-theme fg tokens), this bar encodes status via FILL
+// AREA — different constraint, so a separate local map. Pastel efferd ramp:
+// open = butter-strong (warning-ish, the one actionable state, pops);
+// dispatched/in_progress share the sky (info) hue — dispatched is a
+// color-mix-softened sky, in_progress full sky-strong, so their relative
+// weight ordering holds in both themes without raw hex. Segments overpaint
+// each other (absolute right-0 layers), and the raw --pastel-* soft tokens
+// are alpha in dark mode, so every fill must stay opaque: color-mix against
+// --surface stands in for "soft". closed = softened mint (success-ish) that
+// still recedes; merged stays neutral gray; rejected = blush-strong.
 export const STATUS_COLORS = {
-  open: "var(--color-warning)",
-  dispatched: "#52525b",
-  in_progress: "#85858c",
-  closed: "var(--elevated)",
+  open: "var(--pastel-butter-strong)",
+  dispatched:
+    "color-mix(in srgb, var(--pastel-sky-strong) 45%, var(--surface))",
+  in_progress: "var(--pastel-sky-strong)",
+  closed: "color-mix(in srgb, var(--pastel-mint-strong) 40%, var(--surface))",
   merged: "var(--color-muted)",
-  rejected: "var(--color-danger)",
+  rejected: "var(--pastel-blush-strong)",
 } as const;
 
 interface StatusMiniBarProps {
