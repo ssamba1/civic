@@ -97,7 +97,9 @@ export function SidebarNav({
                 aria-current={active ? "page" : undefined}
                 title={collapsed ? label : undefined}
                 className={cn(
-                  "group relative flex h-10 w-full items-center gap-3 rounded-[10px] text-[14px]",
+                  // Efferd register: compact 32px rows, 13px labels, quiet
+                  // elevated pill on the active row — no inverted icon chip.
+                  "group relative flex h-8 w-full items-center gap-2.5 rounded-md text-[13px]",
                   "transition-colors duration-150 outline-none",
                   "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-0",
                   collapsed
@@ -106,30 +108,20 @@ export function SidebarNav({
                       ? "pl-2.5 pr-8"
                       : "px-2.5",
                   active
-                    ? "bg-elevated font-semibold text-foreground"
+                    ? "bg-elevated font-medium text-foreground"
                     : "font-medium text-subtle hover:bg-overlay hover:text-foreground",
                 )}
               >
-                {active ? (
-                  // Inverted-dot look from the sidebar reference: the active
-                  // row's icon sits in a filled --foreground circle with a
-                  // --surface glyph, instead of just recoloring the glyph.
-                  <span
-                    aria-hidden="true"
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground"
-                  >
-                    <Icon
-                      className="h-3.5 w-3.5 text-surface"
-                      strokeWidth={2}
-                    />
-                  </span>
-                ) : (
-                  <Icon
-                    className="h-4 w-4 shrink-0 text-faint transition-colors duration-150 group-hover:text-subtle"
-                    strokeWidth={2}
-                    aria-hidden="true"
-                  />
-                )}
+                <Icon
+                  className={cn(
+                    "h-4 w-4 shrink-0 transition-colors duration-150",
+                    active
+                      ? "text-foreground"
+                      : "text-faint group-hover:text-subtle",
+                  )}
+                  strokeWidth={1.75}
+                  aria-hidden="true"
+                />
                 {!collapsed && label}
               </Link>
               {sub && !collapsed && (
@@ -225,7 +217,10 @@ export function SidebarShell({
     <SidebarCollapsedContext.Provider value={collapsed}>
       <aside
         className={cn(
-          "sticky top-0 z-30 hidden h-dvh shrink-0 flex-col border-r border-hairline bg-background md:flex",
+          // h-dvh resolves BEFORE the html zoom scales it (see --app-zoom in
+          // globals.css) — divide it back out or the rail (and the map layout
+          // that keys off it) paints 10% short, leaving a dead band.
+          "sticky top-0 z-30 hidden h-[calc(100dvh/var(--app-zoom,1))] shrink-0 flex-col border-r border-hairline bg-background md:flex",
           "transition-[width] duration-200 ease-out motion-reduce:transition-none",
           collapsed ? "w-14" : "w-56",
         )}
@@ -272,7 +267,10 @@ export function SidebarShell({
         </div>
         {footer ? (
           <div
-            className={cn("shrink-0 pb-3 pt-1", collapsed ? "px-2" : "px-3")}
+            className={cn(
+              "shrink-0 border-t border-hairline pb-3 pt-3",
+              collapsed ? "px-2" : "px-3",
+            )}
           >
             {footer}
           </div>

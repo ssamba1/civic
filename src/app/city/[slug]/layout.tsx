@@ -51,7 +51,10 @@ export default async function CityDashboardLayout({
   return (
     // Column on mobile (fixed CityHeader on top); row on md+ where the
     // sticky CitySidebar owns the left rail and flexbox owns content width.
-    <div className="flex min-h-dvh flex-col bg-background text-foreground md:flex-row">
+    // dvh is resolved before the html zoom (globals.css --app-zoom) scales
+    // it — divide back out so full-viewport routes (map) reach the bottom
+    // instead of stopping 10% short.
+    <div className="flex min-h-[calc(100dvh/var(--app-zoom,1))] flex-col bg-background text-foreground md:flex-row">
       <CityHeader
         slug={slug}
         cityName={city?.name ?? null}

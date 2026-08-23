@@ -45,7 +45,9 @@ export function CitySidebar({
 }: CitySidebarProps) {
   const pathname = usePathname();
 
-  const items = [
+  // Efferd-style grouped rail: city surfaces up top, staff workspace tools in
+  // their own captioned section beneath.
+  const viewItems = [
     {
       label: "Teams",
       href: `/city/${slug}`,
@@ -79,18 +81,6 @@ export function CitySidebar({
             icon: CalendarDays,
             active: pathname === `/city/${slug}/calendar`,
           },
-          {
-            label: "Members",
-            href: `/city/${slug}/members`,
-            icon: Users,
-            active: pathname === `/city/${slug}/members`,
-          },
-          {
-            label: "Routing",
-            href: `/city/${slug}/routing`,
-            icon: Workflow,
-            active: pathname === `/city/${slug}/routing`,
-          },
         ]
       : []),
     {
@@ -100,6 +90,23 @@ export function CitySidebar({
       active: pathname === `/city/${slug}/analytics`,
     },
   ];
+
+  const workspaceItems = isStaff
+    ? [
+        {
+          label: "Members",
+          href: `/city/${slug}/members`,
+          icon: Users,
+          active: pathname === `/city/${slug}/members`,
+        },
+        {
+          label: "Routing",
+          href: `/city/${slug}/routing`,
+          icon: Workflow,
+          active: pathname === `/city/${slug}/routing`,
+        },
+      ]
+    : [];
 
   const reportBtn = (compact: boolean) => (
     <Link
@@ -162,7 +169,12 @@ export function CitySidebar({
         </>
       }
     >
-      <SidebarNav heading="City views" items={items} />
+      <div className="flex flex-col gap-6">
+        <SidebarNav heading="City views" items={viewItems} />
+        {workspaceItems.length > 0 && (
+          <SidebarNav heading="Workspace" items={workspaceItems} />
+        )}
+      </div>
     </SidebarShell>
   );
 }
