@@ -217,13 +217,13 @@ const STATUS_CHIP_ACTIVE: Record<string, string> = {
 const gridThemeLight = themeQuartz.withParams({
   accentColor: "#18181b", // --accent (light)
   backgroundColor: "#ffffff", // --surface (light)
-  headerBackgroundColor: "#ededf0", // --elevated (light)
+  headerBackgroundColor: "#ffffff", // --surface (light) — quiet borderless header
   headerTextColor: "#6f6f76", // --faint (light)
   headerFontWeight: 600,
   foregroundColor: "#141415", // --foreground (light)
   fontFamily: "inherit",
   fontSize: 13,
-  cellHorizontalPadding: 14,
+  cellHorizontalPadding: 12,
   rowHoverColor: "rgba(0, 0, 0, 0.04)", // --overlay (light)
   selectedRowBackgroundColor: "rgba(24, 24, 27, 0.07)", // --accent-soft (light)
   borderColor: "rgba(0, 0, 0, 0.08)", // --hairline (light)
@@ -232,14 +232,14 @@ const gridThemeLight = themeQuartz.withParams({
 });
 const gridThemeDark = themeQuartz.withParams({
   accentColor: "#f4f4f5", // --accent (dark)
-  backgroundColor: "#161619", // --surface (dark)
-  headerBackgroundColor: "#26262a", // --elevated (dark)
+  backgroundColor: "#101012", // --surface (dark)
+  headerBackgroundColor: "#101012", // --surface (dark) — quiet borderless header
   headerTextColor: "#85858c", // --faint (dark)
   headerFontWeight: 600,
-  foregroundColor: "#f5f5f6", // --foreground (dark)
+  foregroundColor: "#ffffff", // --foreground (dark)
   fontFamily: "inherit",
   fontSize: 13,
-  cellHorizontalPadding: 14,
+  cellHorizontalPadding: 12,
   rowHoverColor: "rgba(255, 255, 255, 0.04)", // --overlay (dark)
   selectedRowBackgroundColor: "rgba(255, 255, 255, 0.09)", // --accent-soft (dark)
   borderColor: "rgba(255, 255, 255, 0.09)", // --hairline (dark)
@@ -249,13 +249,13 @@ const gridThemeDark = themeQuartz.withParams({
 
 // Neutral icon tile for category glyphs — category color stays off chrome
 // here (only map data layers and chart series carry category hue).
-const ICON_TILE = "bg-elevated text-subtle";
+const ICON_TILE = "text-subtle";
 
 // Team icon tile — a soft alpha-tinted tile in the team's own color (the
 // "filled" icon read; lucide ships outline-only glyphs, so the fill lives on
 // the tile, not the icon color).
 function iconTileStyle(color: string): React.CSSProperties {
-  return { backgroundColor: `${color}1f`, color };
+  return { color };
 }
 
 // ── Custom dropdown editor ──────────────────────────────────────────────────
@@ -457,7 +457,10 @@ function EditPill({
   return (
     <span
       className={cn(
-        "inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-[var(--radius-md)] border border-hairline-strong bg-surface py-1 pl-2 pr-1.5 shadow-[var(--shadow-card)] transition-colors hover:border-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]",
+        // Quiet ghost affordance: chrome only appears on hover, so the grid
+        // reads as calm text until you reach for a cell (was an always-on
+        // bordered+shadowed pill — too loud at table density).
+        "inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-[var(--radius-md)] border border-transparent bg-transparent py-1 pl-2 pr-1.5 transition-colors hover:border-hairline-strong hover:bg-overlay",
         className,
       )}
     >
@@ -473,24 +476,17 @@ function CategoryCell({ data }: ICellRendererParams<GridReportRow>) {
   const meta = CATEGORY_META[cat] ?? CATEGORY_META.other;
   const Icon = CATEGORY_ICON[meta.icon] ?? HelpCircle;
   return (
-    <EditPill className="h-11 rounded-[var(--radius-lg)] pl-1.5">
+    <EditPill className="h-8 pl-1.5">
       <span
         className={cn(
-          "flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-md)]",
+          "flex h-5 w-5 shrink-0 items-center justify-center rounded-[var(--radius-sm)]",
           ICON_TILE,
         )}
       >
-        <Icon className="h-[18px] w-[18px]" strokeWidth={2.25} />
+        <Icon className="h-3.5 w-3.5" strokeWidth={2} />
       </span>
-      <span className="flex min-w-0 flex-col leading-tight">
-        <span className="truncate text-[13px] font-medium text-foreground">
-          {data.category ? meta.label : "Unclassified"}
-        </span>
-        {data.subcategory && (
-          <span className="truncate text-[11px] text-subtle">
-            {data.subcategory}
-          </span>
-        )}
+      <span className="truncate text-[13px] font-medium text-foreground">
+        {data.category ? meta.label : "Unclassified"}
       </span>
     </EditPill>
   );
@@ -1405,8 +1401,8 @@ export function WorkOrderGrid({
           rowData={filtered}
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
-          rowHeight={64}
-          headerHeight={44}
+          rowHeight={44}
+          headerHeight={36}
           getRowId={(p) => p.data.report_id}
           context={gridContext}
           onGridReady={(e: GridReadyEvent<GridReportRow>) => {

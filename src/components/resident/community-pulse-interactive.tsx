@@ -726,7 +726,7 @@ export function CommunityPulseInteractive({
                 <span
                   className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
                   style={{
-                    background: `${CATEGORY_META[fastest.category].color}1f`,
+                    
                   }}
                 >
                   <Zap

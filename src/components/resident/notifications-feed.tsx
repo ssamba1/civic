@@ -214,7 +214,7 @@ export function NotificationsFeed({
                       !meta.color && "bg-elevated",
                     )}
                     style={
-                      meta.color ? { background: `${meta.color}1f` } : undefined
+                      meta.color ? { color: meta.color } : undefined
                     }
                   >
                     <Icon

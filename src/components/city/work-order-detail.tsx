@@ -407,7 +407,7 @@ export function WorkOrderDetail({
           <span className="flex items-center gap-1.5 text-[15px] font-medium text-foreground leading-tight">
             <span
               className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)]"
-              style={{ backgroundColor: `${team.color}1f`, color: team.color }}
+              style={{ color: team.color }}
             >
               <TeamIcon className="h-3 w-3" strokeWidth={2.25} />
             </span>

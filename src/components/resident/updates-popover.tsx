@@ -476,7 +476,7 @@ function UpdatesFeedBody({
                   !meta.color && "bg-elevated",
                 )}
                 style={
-                  meta.color ? { background: `${meta.color}1f` } : undefined
+                  meta.color ? { color: meta.color } : undefined
                 }
               >
                 <Icon
@@ -691,7 +691,7 @@ function DetailModal({
                 "inline-flex h-6 w-6 items-center justify-center rounded-md",
                 !meta.color && "bg-elevated",
               )}
-              style={meta.color ? { background: `${meta.color}1f` } : undefined}
+              style={meta.color ? { color: meta.color } : undefined}
             >
               <Icon
                 className={cn("h-3.5 w-3.5", !meta.color && "text-subtle")}

@@ -82,7 +82,7 @@ export function Modal({
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-background)] shadow-[0_20px_60px_-12px_rgba(0,0,0,0.4)] outline-none",
+          "relative z-10 w-full max-w-md overflow-hidden rounded-2xl bg-[var(--color-background)] shadow-[0_20px_60px_-12px_rgba(0,0,0,0.4)] outline-none",
           "animate-[fade-up_0.24s_cubic-bezier(0.22,1,0.36,1)] motion-reduce:animate-none",
           className,
         )}
