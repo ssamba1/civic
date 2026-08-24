@@ -74,5 +74,8 @@
     "tsx": "^4.8.1",
     "typescript": "^5",
     "vitest": "^4.1.7"
+  },
+  "optionalDependencies": {
+    "onnxruntime-node": "^1.27.0"
   }
 }

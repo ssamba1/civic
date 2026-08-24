@@ -68,3 +68,6 @@ scripts/shots/
 test-results/
 .mcp.json
 outreach/*
+
+# video pipeline model weights (fetch with scripts/fetch-video-model.mjs)
+/models/

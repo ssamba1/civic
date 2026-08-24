@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" role="img" aria-label="Detected from city camera feed — evidence photo restricted">
+  <rect width="640" height="480" fill="#1c2430"/>
+  <g fill="none" stroke="#5b6b80" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="200" y="170" width="180" height="120" rx="16"/>
+    <path d="M380 205 L450 175 v130 L380 275"/>
+    <circle cx="290" cy="230" r="34"/>
+  </g>
+  <text x="320" y="360" text-anchor="middle" fill="#8fa0b5" font-family="system-ui, sans-serif" font-size="24">Detected from city camera feed</text>
+  <text x="320" y="392" text-anchor="middle" fill="#5b6b80" font-family="system-ui, sans-serif" font-size="18">Evidence photo restricted to staff</text>
+</svg>
