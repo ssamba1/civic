@@ -68,3 +68,10 @@ scripts/shots/
 test-results/
 .mcp.json
 outreach/*
+
+# detector demo artifacts (AGPL venv + media stay local)
+services/detector/.venv/
+services/detector/model/
+services/detector/sample_video.mp4
+services/detector/demo_output*.mp4
+services/detector/runs/
