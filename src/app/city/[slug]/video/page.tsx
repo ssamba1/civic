@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { KNOWN_CITIES } from "@/lib/dashboard-data";
 import { createServerClient } from "@/lib/db/client";
 import { getStaffAccessForCity } from "@/lib/staff-access";
 import { VIDEO_PIPELINE } from "@/lib/video/config";
@@ -54,30 +55,40 @@ export default async function VideoPipelinePage({ params }: PageProps) {
   const access = await getStaffAccessForCity(slug);
   if (access !== "real") notFound();
 
+  // DB first (provisioned cities), then the KNOWN_CITIES fallback (demo
+  // deploy / local dev without a database) — same convention as the team
+  // pages. Without a DB row there is no city id, so the tables render empty
+  // and uploads fail with a visible error rather than the page 404ing.
   const db = createServerClient();
-  const { data: city } = await db
+  const { data: dbCity } = await db
     .from("cities")
     .select("id, name")
     .eq("slug", slug)
     .maybeSingle<{ id: string; name: string }>();
-  if (!city) notFound();
+  const known = KNOWN_CITIES[slug];
+  if (!dbCity && !known) notFound();
+  const city = dbCity ?? { id: null, name: known.name };
 
-  const [{ data: clips }, { data: clusters }] = await Promise.all([
-    db
-      .from("video_clips")
-      .select("id, status, created_at, frames_sampled, detections_found, error")
-      .eq("city_id", city.id)
-      .order("created_at", { ascending: false })
-      .limit(20),
-    db
-      .from("detection_clusters")
-      .select(
-        "id, class, max_confidence, frame_count, status, decision, decision_rationale, best_detection_id, report_id, merged_report_id",
-      )
-      .eq("city_id", city.id)
-      .order("created_at", { ascending: false })
-      .limit(50),
-  ]);
+  const [{ data: clips }, { data: clusters }] = city.id
+    ? await Promise.all([
+        db
+          .from("video_clips")
+          .select(
+            "id, status, created_at, frames_sampled, detections_found, error",
+          )
+          .eq("city_id", city.id)
+          .order("created_at", { ascending: false })
+          .limit(20),
+        db
+          .from("detection_clusters")
+          .select(
+            "id, class, max_confidence, frame_count, status, decision, decision_rationale, best_detection_id, report_id, merged_report_id",
+          )
+          .eq("city_id", city.id)
+          .order("created_at", { ascending: false })
+          .limit(50),
+      ])
+    : [{ data: [] }, { data: [] }];
 
   // Resolve the evidence-frame path of each cluster's best detection so the
   // "View frame" control can mint a signed URL for it.
