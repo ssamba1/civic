@@ -1,6 +1,7 @@
 "use client";
 
 import type { Promotion } from "@/lib/camera-demo/promotions";
+import { contractFor } from "@/lib/camera-demo/vendors";
 
 /**
  * Sidebar: one card per promoted cluster, each walking the real pipeline's
@@ -13,18 +14,6 @@ interface Stage {
   detail: (p: Promotion) => string;
   /** Seconds after promotion at which this stage completes. */
   doneAt: number;
-}
-
-// Deterministic vendor pick so cards don't shuffle between renders.
-const VENDORS = [
-  { name: "Blackshear Paving Co.", contract: "#2024-17", daysLeft: 47 },
-  { name: "North GA Asphalt LLC", contract: "#2023-42", daysLeft: 152 },
-  { name: "Sawnee Utilities (permit)", contract: "P-8821", daysLeft: 301 },
-];
-
-function vendorFor(p: Promotion) {
-  const n = Number.parseInt(p.id.replace(/\D/g, ""), 10) || 0;
-  return VENDORS[n % VENDORS.length];
 }
 
 const STAGES: Stage[] = [
@@ -51,8 +40,8 @@ const STAGES: Stage[] = [
   {
     label: "Liability check",
     detail: (p) => {
-      const v = vendorFor(p);
-      return `${v.name} · ${v.contract} · warranty ${v.daysLeft}d left`;
+      const v = contractFor(p);
+      return `${v.vendor} · ${v.contractRef} · warranty ${v.daysLeft}d left`;
     },
     doneAt: 3.6,
   },
@@ -102,9 +91,11 @@ function StageRow({
 export function AgentFeed({
   promotions,
   now,
+  onSelect,
 }: {
   promotions: Promotion[];
   now: number;
+  onSelect: (p: Promotion) => void;
 }) {
   const live = promotions.filter((p) => p.time <= now);
   return (
@@ -131,7 +122,14 @@ export function AgentFeed({
         return (
           <section
             key={p.id}
-            className="rounded-md border bg-card p-3 shadow-sm"
+            className="cursor-pointer rounded-md border bg-card p-3 shadow-sm transition-colors hover:bg-muted/40"
+            onClick={() => onSelect(p)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") onSelect(p);
+            }}
+            role="button"
+            tabIndex={0}
+            aria-label={`Open claim detail for ${p.id}`}
           >
             <div className="flex items-center justify-between">
               <span className="font-medium text-xs">

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Map as MapGL, Marker } from "react-map-gl/maplibre";
 
 import { AgentFeed } from "@/components/camera-demo/agent-feed";
+import { ClaimDetail } from "@/components/camera-demo/claim-detail";
 import { SATELLITE_STYLE } from "@/components/map/satellite-style";
 import type { DetectionExport, Promotion } from "@/lib/camera-demo/promotions";
 import { derivePromotions } from "@/lib/camera-demo/promotions";
@@ -31,6 +32,14 @@ export function CameraDemo() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [data, setData] = useState<DetectionExport | null>(null);
   const [now, setNow] = useState(0);
+  const [selected, setSelected] = useState<Promotion | null>(null);
+
+  // Opening a claim pauses the feed so the evidence frame matches what the
+  // viewer just saw; closing does not auto-resume (their call).
+  const openClaim = (p: Promotion) => {
+    videoRef.current?.pause();
+    setSelected(p);
+  };
 
   useEffect(() => {
     let alive = true;
@@ -184,9 +193,12 @@ export function CameraDemo() {
               longitude={p.location.lng}
               latitude={p.location.lat}
             >
-              <span
+              <button
+                type="button"
+                onClick={() => openClaim(p)}
                 title={`cluster ${p.id} · conf ${(p.peakConf * 100).toFixed(0)}%`}
-                className="block size-3 rounded-full border-2 border-white bg-foreground shadow"
+                aria-label={`Open claim detail for ${p.id}`}
+                className="block size-3 cursor-pointer rounded-full border-2 border-white bg-foreground shadow"
               />
             </Marker>
           ))}
@@ -201,8 +213,16 @@ export function CameraDemo() {
 
       {/* Agents */}
       <section className="overflow-hidden rounded-lg border bg-card p-3">
-        <AgentFeed promotions={promotions} now={now} />
+        <AgentFeed promotions={promotions} now={now} onSelect={openClaim} />
       </section>
+
+      {selected && data && (
+        <ClaimDetail
+          promotion={selected}
+          data={data}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </div>
   );
 }

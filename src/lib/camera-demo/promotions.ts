@@ -25,6 +25,10 @@ export interface Promotion {
   /** Strongest box at promotion time — shown as evidence confidence. */
   peakConf: number;
   observationCount: number;
+  /** Frame the promotion fired on — the evidence screenshot. */
+  frameIndex: number;
+  /** The strongest box in that frame — the one the evidence shot highlights. */
+  bestBox: DetectionBox;
 }
 
 /**
@@ -65,12 +69,15 @@ export function derivePromotions(
       hits >= minFramesWithHits &&
       t - lastPromo >= cooldownS
     ) {
+      const bestBox = frame.boxes.reduce((a, b) => (b.conf > a.conf ? b : a));
       out.push({
         id: `promo-${frame.i}`,
         time: t,
         location: positionAt(t / duration),
         peakConf: peak,
         observationCount: hits,
+        frameIndex: frame.i,
+        bestBox,
       });
       lastPromo = t;
       hits = 0;
