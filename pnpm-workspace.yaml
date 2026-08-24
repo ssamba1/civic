@@ -1,8 +1,16 @@
 allowBuilds:
   '@sentry/cli': true
+  # explicit deny: onnxruntime-node ships prebuilt CPU binaries in the npm
+  # package; its postinstall only fetches optional extras (GPU libs). Denying
+  # keeps installs deterministic and offline-safe (pnpm 11 errors on build
+  # scripts with no explicit decision).
+  onnxruntime-node: false
   esbuild: true
   sharp: true
   unrs-resolver: true
 ignoredBuiltDependencies:
+  # onnxruntime-node ships prebuilt CPU binaries in the npm package; its
+  # postinstall only fetches optional extras (GPU libs) — safe to skip.
+  - onnxruntime-node
   - sharp
   - unrs-resolver
