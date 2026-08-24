@@ -75,3 +75,5 @@ services/detector/model/
 services/detector/sample_video.mp4
 services/detector/demo_output*.mp4
 services/detector/runs/
+# video pipeline model weights (fetch with scripts/fetch-video-model.mjs)
+/models/
