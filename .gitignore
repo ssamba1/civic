@@ -77,3 +77,6 @@ services/detector/demo_output*.mp4
 services/detector/runs/
 # video pipeline model weights (fetch with scripts/fetch-video-model.mjs)
 /models/
+
+# local demo video artifact (42MB, never commit)
+/public/demo/

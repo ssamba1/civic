@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -48,6 +50,33 @@ const STATUS_LABEL: Record<string, string> = {
   dismissed: "Dismissed",
   merged: "Merged",
 };
+
+/**
+ * Local demo: the detector's rendered overlay clip, if present. The 42 MB mp4
+ * is a gitignored local artifact (public/demo/ — see .gitignore), so this card
+ * simply disappears on deploys that don't carry it.
+ */
+function DemoClipCard() {
+  const demoPath = join(process.cwd(), "public", "demo", "civic-demo-clip.mp4");
+  if (!existsSync(demoPath)) return null;
+  return (
+    <section className="rounded-xl border border-border bg-surface p-4">
+      <h2 className="mb-1 text-sm font-semibold">Demo clip</h2>
+      <p className="mb-3 text-xs opacity-70">
+        Sample dashcam pass with the detector&apos;s damage overlays rendered in
+        — click play to watch the pipeline&apos;s output. Seed matching table
+        rows with <code>node scripts/seed-demo-video.mjs</code>.
+      </p>
+      {/* biome-ignore lint/a11y/useMediaCaption: synthetic demo footage has no dialogue */}
+      <video
+        src="/demo/civic-demo-clip.mp4"
+        controls
+        preload="metadata"
+        className="w-full max-w-2xl rounded-lg border border-border"
+      />
+    </section>
+  );
+}
 
 export default async function VideoPipelinePage({ params }: PageProps) {
   const { slug } = await params;
@@ -118,6 +147,8 @@ export default async function VideoPipelinePage({ params }: PageProps) {
           dispatch decisions create reports.
         </p>
       </header>
+
+      <DemoClipCard />
 
       <UploadClip slug={slug} />
 
