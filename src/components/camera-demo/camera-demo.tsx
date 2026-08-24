@@ -141,6 +141,13 @@ export function CameraDemo() {
             // rAF pauses when the tab isn't composited; timeupdate (~4Hz) keeps
             // the map + agent clock honest even in a backgrounded tab.
             onTimeUpdate={(e) => setNow(e.currentTarget.currentTime)}
+            // Click anywhere on the feed to pause/resume (native control-bar
+            // clicks don't reach the element, so no double-toggle).
+            onClick={(e) => {
+              const v = e.currentTarget;
+              if (v.paused) void v.play();
+              else v.pause();
+            }}
           />
           <canvas
             ref={canvasRef}
