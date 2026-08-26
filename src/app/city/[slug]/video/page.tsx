@@ -109,7 +109,7 @@ export default async function VideoPipelinePage({ params }: PageProps) {
           .order("created_at", { ascending: false })
           .limit(20),
         db
-          .from("detection_clusters")
+          .from("video_detection_clusters")
           .select(
             "id, class, max_confidence, frame_count, status, decision, decision_rationale, best_detection_id, report_id, merged_report_id",
           )

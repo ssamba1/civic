@@ -337,7 +337,7 @@ export async function decideCluster(
   const supabase = createServerClient();
 
   const { data: cluster, error: clusterErr } = await supabase
-    .from("detection_clusters")
+    .from("video_detection_clusters")
     .select(
       "id, city_id, class, max_confidence, frame_count, location, status, best_detection_id",
     )
@@ -436,7 +436,7 @@ export async function decideCluster(
   }
 
   const { error: persistErr } = await supabase
-    .from("detection_clusters")
+    .from("video_detection_clusters")
     .update({
       status: clusterStatus,
       decision: decision.decision,

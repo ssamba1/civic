@@ -128,7 +128,7 @@ const [clip] = await rest("POST", "video_clips", {
 });
 
 for (const c of clusters) {
-  await rest("POST", "detection_clusters", {
+  await rest("POST", "video_detection_clusters", {
     city_id: city.id,
     location: `SRID=4326;POINT(${CENTER.lng + c.dLng} ${CENTER.lat + c.dLat})`,
     class: c.klass,

@@ -74,7 +74,7 @@ CREATE INDEX IF NOT EXISTS idx_video_clips_feed ON video_clips (feed_id, created
 CREATE INDEX IF NOT EXISTS idx_video_clips_city_status ON video_clips (city_id, status);
 
 -- Clusters before detections: damage_detections.cluster_id references this.
-CREATE TABLE IF NOT EXISTS detection_clusters (
+CREATE TABLE IF NOT EXISTS video_detection_clusters (
   id                  uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   city_id             uuid        NOT NULL REFERENCES cities (id) ON DELETE CASCADE,
   -- Representative point (best detection's location); NULL when the source
@@ -111,9 +111,9 @@ CREATE TABLE IF NOT EXISTS detection_clusters (
 );
 
 CREATE INDEX IF NOT EXISTS idx_detection_clusters_city_status
-  ON detection_clusters (city_id, status);
+  ON video_detection_clusters (city_id, status);
 CREATE INDEX IF NOT EXISTS idx_detection_clusters_location
-  ON detection_clusters USING gist (location);
+  ON video_detection_clusters USING gist (location);
 
 CREATE TABLE IF NOT EXISTS damage_detections (
   id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS damage_detections (
   bbox        jsonb,
   -- 16-char hex aHash of the frame, for visual near-dup grouping.
   phash       text,
-  cluster_id  uuid        REFERENCES detection_clusters (id) ON DELETE SET NULL,
+  cluster_id  uuid        REFERENCES video_detection_clusters (id) ON DELETE SET NULL,
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 
@@ -143,7 +143,7 @@ CREATE INDEX IF NOT EXISTS idx_damage_detections_cluster ON damage_detections (c
 
 ALTER TABLE video_feeds        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE video_clips        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE detection_clusters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE video_detection_clusters ENABLE ROW LEVEL SECURITY;
 ALTER TABLE damage_detections  ENABLE ROW LEVEL SECURITY;
 
 -- SELECT: staff of the owning city. Camera positions, GPS tracks, and raw
@@ -158,8 +158,8 @@ CREATE POLICY video_clips_select_staff ON video_clips
   FOR SELECT TO authenticated
   USING (is_staff() AND city_id = current_user_city_id());
 
-DROP POLICY IF EXISTS detection_clusters_select_staff ON detection_clusters;
-CREATE POLICY detection_clusters_select_staff ON detection_clusters
+DROP POLICY IF EXISTS detection_clusters_select_staff ON video_detection_clusters;
+CREATE POLICY detection_clusters_select_staff ON video_detection_clusters
   FOR SELECT TO authenticated
   USING (is_staff() AND city_id = current_user_city_id());
 
@@ -225,7 +225,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
   SELECT dc.id
-  FROM detection_clusters dc
+  FROM video_detection_clusters dc
   WHERE dc.city_id = _city_id
     AND dc.class = _class
     AND dc.status IN ('candidate', 'escalated', 'monitoring')
@@ -252,5 +252,5 @@ COMMENT ON TABLE video_clips IS
   'Uploaded/captured video segments awaiting or having completed LLM-free damage detection.';
 COMMENT ON TABLE damage_detections IS
   'Per-frame detector hits (class/confidence/bbox) from the local ONNX road-damage model. No LLM involved at this stage.';
-COMMENT ON TABLE detection_clusters IS
+COMMENT ON TABLE video_detection_clusters IS
   'Geo/visually grouped detections. Escalation runs the Gemini decision stage and persists the decision + supporting dossier here; dispatch decisions link the spun-off report.';

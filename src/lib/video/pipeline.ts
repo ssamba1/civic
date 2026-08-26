@@ -117,13 +117,13 @@ async function upsertCluster(
 
   if (existingId) {
     const { data: row } = await supabase
-      .from("detection_clusters")
+      .from("video_detection_clusters")
       .select("frame_count, max_confidence")
       .eq("id", existingId)
       .single<{ frame_count: number; max_confidence: number }>();
     const better = (row?.max_confidence ?? 0) < group.maxConfidence;
     const { error } = await supabase
-      .from("detection_clusters")
+      .from("video_detection_clusters")
       .update({
         frame_count: (row?.frame_count ?? 0) + memberCount,
         max_confidence: Math.max(row?.max_confidence ?? 0, group.maxConfidence),
@@ -136,7 +136,7 @@ async function upsertCluster(
   }
 
   const { data: inserted, error } = await supabase
-    .from("detection_clusters")
+    .from("video_detection_clusters")
     .insert({
       city_id: cityId,
       class: group.class,

@@ -201,7 +201,7 @@ export async function escalateClusterNow(
 
   const db = createServerClient();
   const { data: cluster } = await db
-    .from("detection_clusters")
+    .from("video_detection_clusters")
     .select("id, city_id")
     .eq("id", parsed.data.clusterId)
     .maybeSingle<{ id: string; city_id: string }>();
