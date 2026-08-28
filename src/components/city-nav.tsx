@@ -3,6 +3,7 @@
 import {
   BarChart3,
   Camera,
+  Clapperboard,
   Map as MapIcon,
   RefreshCw,
   Table,
@@ -86,9 +87,17 @@ interface CityNavProps {
   /** Server-computed staff status (or demo city) — hides Grid for non-staff so
    *  the nav never links to a page that just bounces them to /login. */
   isStaff: boolean;
+  /** Server-computed VIDEO_PIPELINE flag — the tab never links to a route that
+   *  404s when the pipeline ships dark. */
+  videoEnabled?: boolean;
 }
 
-export function CityNav({ slug, mobileSlot, isStaff }: CityNavProps) {
+export function CityNav({
+  slug,
+  mobileSlot,
+  isStaff,
+  videoEnabled = false,
+}: CityNavProps) {
   const pathname = usePathname();
 
   const items = [
@@ -124,6 +133,16 @@ export function CityNav({ slug, mobileSlot, isStaff }: CityNavProps) {
             icon: Users,
             active: pathname === `/city/${slug}/members`,
           },
+          ...(videoEnabled
+            ? [
+                {
+                  label: "Video",
+                  href: `/city/${slug}/video`,
+                  icon: Clapperboard,
+                  active: pathname === `/city/${slug}/video`,
+                },
+              ]
+            : []),
         ]
       : []),
     {

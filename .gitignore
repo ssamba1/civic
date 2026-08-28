@@ -78,5 +78,6 @@ services/detector/runs/
 # video pipeline model weights (fetch with scripts/fetch-video-model.mjs)
 /models/
 
-# local demo video artifact (42MB, never commit)
-/public/demo/
+# local demo video artifact (42MB, never commit) — the small detections.json
+# sidecar IS committed so the playback overlay works on deploys.
+/public/demo/*.mp4

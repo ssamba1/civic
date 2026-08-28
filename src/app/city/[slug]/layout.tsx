@@ -61,6 +61,7 @@ export default async function CityDashboardLayout({
         cityName={city?.name ?? null}
         cityState={city?.state ?? null}
         isStaff={isStaff}
+        videoEnabled={VIDEO_PIPELINE}
       />
       <CitySidebar
         slug={slug}
