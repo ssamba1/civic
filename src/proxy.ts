@@ -90,6 +90,10 @@ function buildCsp(nonce: string, isDev: boolean, useNonce: boolean): string {
     // maplibre canvas/tile blobs.
     "img-src 'self' data: blob: https://*.supabase.co https://*.openstreetmap.org https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.arcgisonline.com https://picsum.photos https://fastly.picsum.photos",
     "font-src 'self'",
+    // Clip playback: the video theater streams signed mp4s straight from the
+    // private supabase bucket. Without this, media falls back to default-src
+    // 'self' and the <video> fails with MEDIA_ELEMENT_ERROR code 4.
+    "media-src 'self' blob: https://*.supabase.co",
     // data: — deck.gl's IconLayer fetch()es the SVG pin icons generated as
     // data: URLs by components/map/pin-icons.ts; fetch is governed by
     // connect-src (img-src data: does not cover it). data: here adds no

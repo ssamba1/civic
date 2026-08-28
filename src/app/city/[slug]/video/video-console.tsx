@@ -71,43 +71,45 @@ export function UploadClip({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-4 sm:p-5">
-      <h2 className="mb-2 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-faint">Upload a clip</h2>
+    <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface px-3 py-2.5">
       <div className="flex flex-wrap items-center gap-2">
+        <span className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-faint">
+          Upload
+        </span>
         <input
           ref={fileRef}
           type="file"
           accept="video/mp4,video/quicktime,video/webm,video/x-matroska"
           aria-label="Video clip file"
-          className="text-sm"
+          className="min-w-0 flex-1 text-[13px]"
         />
         <input
           value={lat}
           onChange={(e) => setLat(e.target.value)}
-          placeholder="Start lat (optional)"
+          placeholder="Lat"
           aria-label="Clip start latitude"
-          className="h-8 w-40 rounded-md border border-hairline-strong bg-transparent px-2 text-[13px] text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60"
+          className="h-8 w-24 rounded-md border border-hairline-strong bg-transparent px-2 text-[13px] text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60"
         />
         <input
           value={lng}
           onChange={(e) => setLng(e.target.value)}
-          placeholder="Start lng (optional)"
+          placeholder="Lng"
           aria-label="Clip start longitude"
-          className="h-8 w-40 rounded-md border border-hairline-strong bg-transparent px-2 text-[13px] text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60"
+          className="h-8 w-24 rounded-md border border-hairline-strong bg-transparent px-2 text-[13px] text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60"
         />
         <button
           type="button"
           onClick={upload}
           disabled={busy}
-          className="inline-flex h-8 items-center rounded-md bg-accent px-3 text-[13px] font-medium text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="inline-flex h-8 flex-shrink-0 items-center rounded-md bg-accent px-3 text-[13px] font-medium text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {busy ? "Uploading…" : "Upload & process"}
         </button>
       </div>
-      {message && <p className="mt-2 text-[13px] text-subtle">{message}</p>}
-      <p className="mt-2 text-xs text-faint">
+      {message && <p className="mt-1.5 text-[13px] text-subtle">{message}</p>}
+      <p className="mt-1.5 text-[11px] text-faint">
         Without a start location (or GPS track) detections can only be grouped
-        visually and cannot auto-dispatch — a location is strongly recommended.
+        visually and cannot auto-dispatch.
       </p>
     </div>
   );
@@ -164,7 +166,9 @@ export function ClusterRowActions({
           View frame
         </button>
       )}
-      {error && <span className="text-xs text-[var(--status-danger-fg)]">{error}</span>}
+      {error && (
+        <span className="text-xs text-[var(--status-danger-fg)]">{error}</span>
+      )}
     </span>
   );
 }
