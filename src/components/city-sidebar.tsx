@@ -4,6 +4,7 @@ import {
   BarChart3,
   CalendarDays,
   Camera,
+  Clapperboard,
   Map as MapIcon,
   Table,
   Users,
@@ -33,6 +34,9 @@ interface CitySidebarProps {
   /** Server-computed staff status (or demo city) — hides Grid for non-staff so
    *  the rail never links to a page that just bounces them to /login. */
   isStaff: boolean;
+  /** Server-computed VIDEO_PIPELINE flag — the rail never links to a route
+   *  that 404s when the pipeline ships dark. */
+  videoEnabled?: boolean;
 }
 
 /** Desktop (md+) enterprise left rail for the city dashboard. Mobile keeps
@@ -42,6 +46,7 @@ export function CitySidebar({
   cityName,
   cityState,
   isStaff,
+  videoEnabled = false,
 }: CitySidebarProps) {
   const pathname = usePathname();
 
@@ -93,6 +98,16 @@ export function CitySidebar({
 
   const workspaceItems = isStaff
     ? [
+        ...(videoEnabled
+          ? [
+              {
+                label: "Video",
+                href: `/city/${slug}/video`,
+                icon: Clapperboard,
+                active: pathname === `/city/${slug}/video`,
+              },
+            ]
+          : []),
         {
           label: "Members",
           href: `/city/${slug}/members`,

@@ -208,9 +208,9 @@ function DemoClipCard() {
   const demoPath = join(process.cwd(), "public", "demo", "civic-demo-clip.mp4");
   if (!existsSync(demoPath)) return null;
   return (
-    <section className="rounded-xl border border-border bg-surface p-4">
-      <h2 className="mb-1 text-sm font-semibold">Demo clip</h2>
-      <p className="mb-3 text-xs opacity-70">
+    <section className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-4 sm:p-5">
+      <h2 className="mb-1 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-faint">Demo clip</h2>
+      <p className="mb-3 text-xs text-subtle">
         Sample dashcam pass with the detector&apos;s damage overlays rendered in
         — click play to watch the pipeline&apos;s output. Seed matching table
         rows with <code>node scripts/seed-demo-video.mjs</code>.
@@ -220,7 +220,7 @@ function DemoClipCard() {
         src="/demo/civic-demo-clip.mp4"
         controls
         preload="metadata"
-        className="aspect-video w-full rounded-lg border border-border"
+        className="aspect-video w-full rounded-[var(--radius-lg)] border border-hairline"
       />
     </section>
   );
@@ -357,7 +357,7 @@ export default async function VideoPipelinePage({ params }: PageProps) {
         <h1 className="text-xl font-semibold">
           Video damage mapping — {city.name}
         </h1>
-        <p className="mt-1 text-sm opacity-70">
+        <p className="mt-1 text-sm text-subtle">
           Clips are scanned by a local detector (no AI-model cost); only
           confident detection clusters trigger an AI decision run, and only
           dispatch decisions create reports.
@@ -369,35 +369,35 @@ export default async function VideoPipelinePage({ params }: PageProps) {
       <UploadClip slug={slug} />
 
       <section>
-        <h2 className="mb-2 text-sm font-semibold">Recent clips</h2>
-        <div className="overflow-x-auto rounded-xl border border-border">
-          <table className="w-full text-left text-sm">
+        <h2 className="mb-2 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-faint">Recent clips</h2>
+        <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-hairline bg-surface">
+          <table className="w-full text-left text-[13px]">
             <thead>
-              <tr className="border-b border-border">
-                <th className="px-3 py-2">Uploaded</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2">Frames</th>
-                <th className="px-3 py-2">Detections</th>
-                <th className="px-3 py-2">Error</th>
+              <tr className="border-b border-hairline">
+                <th className="px-3 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-faint">Uploaded</th>
+                <th className="px-3 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-faint">Status</th>
+                <th className="px-3 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-faint">Frames</th>
+                <th className="px-3 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-faint">Detections</th>
+                <th className="px-3 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-faint">Error</th>
               </tr>
             </thead>
             <tbody>
               {((clips ?? []) as ClipRow[]).map((clip) => (
-                <tr key={clip.id} className="border-b border-border/50">
+                <tr key={clip.id} className="border-b border-hairline transition-colors hover:bg-overlay">
                   <td className="px-3 py-2">
                     {new Date(clip.created_at).toLocaleString()}
                   </td>
                   <td className="px-3 py-2">{clip.status}</td>
                   <td className="px-3 py-2">{clip.frames_sampled ?? "—"}</td>
                   <td className="px-3 py-2">{clip.detections_found ?? "—"}</td>
-                  <td className="max-w-80 truncate px-3 py-2 text-xs opacity-70">
+                  <td className="max-w-80 truncate px-3 py-2 text-xs text-subtle">
                     {clip.error ?? ""}
                   </td>
                 </tr>
               ))}
               {(clips ?? []).length === 0 && (
                 <tr>
-                  <td className="px-3 py-3 opacity-70" colSpan={5}>
+                  <td className="px-3 py-3 text-faint" colSpan={5}>
                     No clips yet.
                   </td>
                 </tr>
@@ -408,24 +408,24 @@ export default async function VideoPipelinePage({ params }: PageProps) {
       </section>
 
       <section>
-        <h2 className="mb-2 text-sm font-semibold">Detection clusters</h2>
-        <div className="overflow-x-auto rounded-xl border border-border">
-          <table className="w-full text-left text-sm">
+        <h2 className="mb-2 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-faint">Detection clusters</h2>
+        <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-hairline bg-surface">
+          <table className="w-full text-left text-[13px]">
             <thead>
-              <tr className="border-b border-border">
-                <th className="px-3 py-2">Class</th>
-                <th className="px-3 py-2">Confidence</th>
-                <th className="px-3 py-2">Frames</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2">Decision</th>
-                <th className="px-3 py-2">Actions</th>
+              <tr className="border-b border-hairline">
+                <th className="px-3 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-faint">Class</th>
+                <th className="px-3 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-faint">Confidence</th>
+                <th className="px-3 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-faint">Frames</th>
+                <th className="px-3 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-faint">Status</th>
+                <th className="px-3 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-faint">Decision</th>
+                <th className="px-3 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-faint">Actions</th>
               </tr>
             </thead>
             <tbody>
               {((clusters ?? []) as ClusterRow[]).map((cluster) => (
                 <tr
                   key={cluster.id}
-                  className="border-b border-border/50 align-top"
+                  className="border-b border-hairline transition-colors hover:bg-overlay align-top"
                 >
                   <td className="px-3 py-2">{cluster.class}</td>
                   <td className="px-3 py-2">
@@ -476,7 +476,7 @@ export default async function VideoPipelinePage({ params }: PageProps) {
               ))}
               {(clusters ?? []).length === 0 && (
                 <tr>
-                  <td className="px-3 py-3 opacity-70" colSpan={6}>
+                  <td className="px-3 py-3 text-faint" colSpan={6}>
                     No detections yet — upload a clip above.
                   </td>
                 </tr>

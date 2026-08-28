@@ -12,6 +12,7 @@ import { DEMO_CITY } from "@/lib/demo-auth";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { FilterProvider } from "@/lib/filters/context";
 import { isStaffForCity } from "@/lib/staff-access";
+import { VIDEO_PIPELINE } from "@/lib/video/config";
 
 export default async function CityDashboardLayout({
   children,
@@ -66,6 +67,7 @@ export default async function CityDashboardLayout({
         cityName={city?.name ?? null}
         cityState={city?.state ?? null}
         isStaff={isStaff}
+        videoEnabled={VIDEO_PIPELINE}
       />
 
       <Suspense fallback={null}>

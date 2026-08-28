@@ -71,8 +71,8 @@ export function UploadClip({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4">
-      <h2 className="mb-2 text-sm font-semibold">Upload a clip</h2>
+    <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-4 sm:p-5">
+      <h2 className="mb-2 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-faint">Upload a clip</h2>
       <div className="flex flex-wrap items-center gap-2">
         <input
           ref={fileRef}
@@ -86,26 +86,26 @@ export function UploadClip({ slug }: { slug: string }) {
           onChange={(e) => setLat(e.target.value)}
           placeholder="Start lat (optional)"
           aria-label="Clip start latitude"
-          className="w-40 rounded-lg border border-border bg-transparent px-2 py-1 text-sm"
+          className="h-8 w-40 rounded-md border border-hairline-strong bg-transparent px-2 text-[13px] text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60"
         />
         <input
           value={lng}
           onChange={(e) => setLng(e.target.value)}
           placeholder="Start lng (optional)"
           aria-label="Clip start longitude"
-          className="w-40 rounded-lg border border-border bg-transparent px-2 py-1 text-sm"
+          className="h-8 w-40 rounded-md border border-hairline-strong bg-transparent px-2 text-[13px] text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60"
         />
         <button
           type="button"
           onClick={upload}
           disabled={busy}
-          className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+          className="inline-flex h-8 items-center rounded-md bg-accent px-3 text-[13px] font-medium text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {busy ? "Uploading…" : "Upload & process"}
         </button>
       </div>
-      {message && <p className="mt-2 text-sm">{message}</p>}
-      <p className="mt-2 text-xs opacity-70">
+      {message && <p className="mt-2 text-[13px] text-subtle">{message}</p>}
+      <p className="mt-2 text-xs text-faint">
         Without a start location (or GPS track) detections can only be grouped
         visually and cannot auto-dispatch — a location is strongly recommended.
       </p>
@@ -144,7 +144,7 @@ export function ClusterRowActions({
               router.refresh();
             })
           }
-          className="rounded-lg border border-border px-2 py-1 text-xs disabled:opacity-50"
+          className="inline-flex h-7 items-center rounded-md border border-hairline-strong px-2 text-xs text-subtle transition-colors hover:bg-overlay hover:text-foreground disabled:opacity-50"
         >
           {pending ? "Deciding…" : "Run decision"}
         </button>
@@ -159,12 +159,12 @@ export function ClusterRowActions({
               else setError(signed.error);
             })
           }
-          className="rounded-lg border border-border px-2 py-1 text-xs"
+          className="inline-flex h-7 items-center rounded-md border border-hairline-strong px-2 text-xs text-subtle transition-colors hover:bg-overlay hover:text-foreground"
         >
           View frame
         </button>
       )}
-      {error && <span className="text-xs text-red-500">{error}</span>}
+      {error && <span className="text-xs text-[var(--status-danger-fg)]">{error}</span>}
     </span>
   );
 }
