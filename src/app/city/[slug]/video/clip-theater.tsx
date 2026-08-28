@@ -11,7 +11,14 @@
  * the teammate's section order is untouched.
  */
 
-import { HelpCircle } from "lucide-react";
+import {
+  HelpCircle,
+  Pause,
+  Play,
+  RotateCcw,
+  SkipBack,
+  SkipForward,
+} from "lucide-react";
 import {
   createContext,
   type ReactNode,
@@ -64,6 +71,15 @@ const EYEBROW =
   "font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-faint";
 const TH =
   "px-3 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-faint";
+const TRANSPORT_BTN =
+  "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-hairline text-subtle outline-none transition-colors hover:bg-overlay hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60";
+
+/** mm:ss for the transport readout; NaN duration before metadata loads. */
+function formatClock(seconds: number): string {
+  if (!Number.isFinite(seconds)) return "0:00";
+  const total = Math.max(0, Math.floor(seconds));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
 
 /** How long a detection stays in the "generating" state after its timestamp. */
 const DETECTING_WINDOW_S = 0.8;
@@ -154,6 +170,7 @@ export function ClipStage() {
 function StageBody({ clip }: { clip: TheaterClip }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [time, setTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [mediaError, setMediaError] = useState(false);
   const [track, setTrack] = useState<DetectionTrack | null>(null);
@@ -206,6 +223,33 @@ function StageBody({ clip }: { clip: TheaterClip }) {
     });
   }, []);
 
+  // Transport controls. The overlay covers the frame, so the browser's own
+  // hover-revealed control bar is easy to miss — this bar is always visible
+  // and carries the scrub/skip affordances the native one would.
+  const togglePlay = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) void video.play().catch(() => {});
+    else video.pause();
+  }, []);
+
+  const nudge = useCallback((delta: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = Math.min(
+      video.duration || Number.POSITIVE_INFINITY,
+      Math.max(0, video.currentTime + delta),
+    );
+    setTime(video.currentTime);
+  }, []);
+
+  const restart = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = 0;
+    setTime(0);
+  }, []);
+
   const boxes = boxesAt(track, time);
   const playable = clip.videoUrl && !mediaError;
 
@@ -226,6 +270,7 @@ function StageBody({ clip }: { clip: TheaterClip }) {
               onEnded={() => setPlaying(false)}
               onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
               onSeeked={(e) => setTime(e.currentTarget.currentTime)}
+              onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
               onError={() => setMediaError(true)}
               className="absolute inset-0 h-full w-full"
             />
@@ -278,6 +323,68 @@ function StageBody({ clip }: { clip: TheaterClip }) {
               This clip has no stored video object — its detections are still
               listed below.
             </p>
+          </div>
+        )}
+        {playable && (
+          <div className="mt-2 flex items-center gap-2 rounded-[var(--radius-md)] border border-hairline bg-surface px-2 py-1.5">
+            <button
+              type="button"
+              onClick={restart}
+              aria-label="Restart clip"
+              title="Restart"
+              className={TRANSPORT_BTN}
+            >
+              <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} />
+            </button>
+            <button
+              type="button"
+              onClick={() => nudge(-5)}
+              aria-label="Back 5 seconds"
+              title="Back 5s"
+              className={TRANSPORT_BTN}
+            >
+              <SkipBack className="h-3.5 w-3.5" strokeWidth={1.75} />
+            </button>
+            <button
+              type="button"
+              onClick={togglePlay}
+              aria-label={playing ? "Pause" : "Play"}
+              title={playing ? "Pause" : "Play"}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-accent text-accent-contrast outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-accent/60"
+            >
+              {playing ? (
+                <Pause className="h-3.5 w-3.5" strokeWidth={2} />
+              ) : (
+                <Play className="h-3.5 w-3.5" strokeWidth={2} />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => nudge(5)}
+              aria-label="Forward 5 seconds"
+              title="Forward 5s"
+              className={TRANSPORT_BTN}
+            >
+              <SkipForward className="h-3.5 w-3.5" strokeWidth={1.75} />
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={duration || 0}
+              step={0.05}
+              value={Math.min(time, duration || 0)}
+              onChange={(e) => {
+                const next = Number(e.target.value);
+                const video = videoRef.current;
+                if (video) video.currentTime = next;
+                setTime(next);
+              }}
+              aria-label="Seek"
+              className="h-1 min-w-0 flex-1 cursor-pointer appearance-none rounded-full bg-overlay-strong accent-[var(--accent)]"
+            />
+            <span className="shrink-0 font-mono text-[11px] tabular-nums text-faint">
+              {formatClock(time)} / {formatClock(duration)}
+            </span>
           </div>
         )}
         <p className="mt-2 text-[12px] text-faint">
