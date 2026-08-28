@@ -4,6 +4,7 @@ import {
   BarChart3,
   Camera,
   Clapperboard,
+  FileText,
   Map as MapIcon,
   RefreshCw,
   Table,
@@ -126,6 +127,12 @@ export function CityNav({
             href: `/city/${slug}/grid`,
             icon: Table,
             active: pathname === `/city/${slug}/grid`,
+          },
+          {
+            label: "Documents",
+            href: `/city/${slug}/documents`,
+            icon: FileText,
+            active: pathname === `/city/${slug}/documents`,
           },
           {
             label: "Members",

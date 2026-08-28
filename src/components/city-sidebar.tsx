@@ -5,6 +5,7 @@ import {
   CalendarDays,
   Camera,
   Clapperboard,
+  FileText,
   Map as MapIcon,
   Table,
   Users,
@@ -108,6 +109,12 @@ export function CitySidebar({
               },
             ]
           : []),
+        {
+          label: "Documents",
+          href: `/city/${slug}/documents`,
+          icon: FileText,
+          active: pathname === `/city/${slug}/documents`,
+        },
         {
           label: "Members",
           href: `/city/${slug}/members`,
