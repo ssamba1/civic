@@ -941,3 +941,28 @@ video::-webkit-media-controls-overlay-play-button {
   /* biome-ignore lint/complexity/noImportantStyles: override maplibre-gl injected close-button hover styles */
   color: white !important;
 }
+
+/* ── Clip theater: detection scan progress ──
+   The rail replays a pipeline run that already happened, so the bar is a
+   determinate fill across the ~0.8s assess window rather than an open-ended
+   spinner. A negative animation-delay (set inline from the playhead offset)
+   drops a mid-window seek straight into the matching fill position. Reduced
+   motion renders the finished bar with no animation. */
+@keyframes clip-scan-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.clip-scan-bar {
+  transform-origin: left center;
+  transform: scaleX(1);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .clip-scan-bar {
+    animation: clip-scan-fill var(--clip-scan-duration, 0.8s) linear both;
+    animation-delay: var(--clip-scan-delay, 0s);
+  }
+}

@@ -3,8 +3,18 @@
 /**
  * Clip playback theater: pick a clip from the recent-clips list, watch it play
  * with the detector's per-frame boxes drawn over it, and follow each detection
- * as the playhead crosses it — pending → detecting → report created — with the
- * generated report expandable inline in the rail.
+ * as the playhead crosses it — waiting → analyzing → drafting → settled — with
+ * the generated report expandable inline in the rail.
+ *
+ * This is a REPLAY of a pipeline run that already completed on the server; the
+ * rail narrates that run against the playhead, it does not run inference now.
+ *
+ * Render discipline: the playhead itself never lives in React state. A single
+ * `syncTime` writes it to a ref and pushes it into two imperative handles (the
+ * overlay, the rail) plus two DOM nodes (the seek slider, the clock). Each of
+ * those decides for itself whether anything actually changed, so a 60 Hz rAF
+ * costs at most ~25 tiny overlay renders/sec and a handful of rail renders per
+ * clip instead of re-rendering the whole stage every frame.
  *
  * Selection state is shared between the stage (top of the page) and the clip
  * list (bottom) through a context provider that wraps the page's children, so
@@ -21,10 +31,13 @@ import {
 } from "lucide-react";
 import {
   createContext,
+  memo,
   type ReactNode,
+  type Ref,
   useCallback,
   useContext,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
@@ -67,6 +80,11 @@ interface DetectionTrack {
   byFrame: Map<number, Box[]>;
 }
 
+/** Anything the playhead drives without going through the parent's render. */
+interface ScrubHandle {
+  sync: (time: number) => void;
+}
+
 const EYEBROW =
   "font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-faint";
 const TH =
@@ -81,8 +99,8 @@ function formatClock(seconds: number): string {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
-/** How long a detection stays in the "generating" state after its timestamp. */
-const DETECTING_WINDOW_S = 0.8;
+/** How long the replayed assess-and-write step is stretched over, in seconds. */
+const ASSESS_WINDOW_S = 0.8;
 
 interface StudioContext {
   clips: TheaterClip[];
@@ -127,10 +145,9 @@ function useStudio(): StudioContext {
 }
 
 /** Nearest frame within ±1 index, so boxes hold instead of strobing. */
-function boxesAt(track: DetectionTrack | null, time: number): Box[] {
+function boxesAtFrame(track: DetectionTrack | null, index: number): Box[] {
   if (!track) return [];
-  const idx = Math.round(time * track.fps);
-  for (const candidate of [idx, idx - 1, idx + 1]) {
+  for (const candidate of [index, index - 1, index + 1]) {
     const boxes = track.byFrame.get(candidate);
     if (boxes?.length) return boxes;
   }
@@ -169,11 +186,17 @@ export function ClipStage() {
 
 function StageBody({ clip }: { clip: TheaterClip }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [mediaError, setMediaError] = useState(false);
   const [track, setTrack] = useState<DetectionTrack | null>(null);
+
+  // Playhead consumers. None of these re-render StageBody.
+  const timeRef = useRef(0);
+  const overlayRef = useRef<ScrubHandle>(null);
+  const railRef = useRef<ScrubHandle>(null);
+  const seekRef = useRef<HTMLInputElement>(null);
+  const clockRef = useRef<HTMLSpanElement>(null);
 
   const detectionsUrl = clip.detectionsUrl;
   useEffect(() => {
@@ -200,28 +223,44 @@ function StageBody({ clip }: { clip: TheaterClip }) {
     };
   }, [detectionsUrl]);
 
+  /** The single funnel every playhead source goes through. Ref-only, stable. */
+  const syncTime = useCallback((seconds: number) => {
+    timeRef.current = seconds;
+    overlayRef.current?.sync(seconds);
+    railRef.current?.sync(seconds);
+    // The slider and clock are written imperatively: at 60 Hz these would
+    // otherwise be the one thing forcing a full stage render every frame.
+    const slider = seekRef.current;
+    if (slider && document.activeElement !== slider)
+      slider.value = String(seconds);
+    if (clockRef.current) clockRef.current.textContent = formatClock(seconds);
+  }, []);
+
   // rAF while playing: `timeupdate` fires ~4x/s, far too coarse for boxes.
   useEffect(() => {
     if (!playing) return;
     let raf = 0;
     const tick = () => {
       const video = videoRef.current;
-      if (video) setTime(video.currentTime);
+      if (video) syncTime(video.currentTime);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing]);
+  }, [playing, syncTime]);
 
-  const seekTo = useCallback((seconds: number) => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.currentTime = Math.max(0, seconds);
-    setTime(video.currentTime);
-    void video.play().catch(() => {
-      /* autoplay refusal is harmless — the seek still landed */
-    });
-  }, []);
+  const seekTo = useCallback(
+    (seconds: number) => {
+      const video = videoRef.current;
+      if (!video) return;
+      video.currentTime = Math.max(0, seconds);
+      syncTime(video.currentTime);
+      void video.play().catch(() => {
+        /* autoplay refusal is harmless — the seek still landed */
+      });
+    },
+    [syncTime],
+  );
 
   // Transport controls. The overlay covers the frame, so the browser's own
   // hover-revealed control bar is easy to miss — this bar is always visible
@@ -233,29 +272,31 @@ function StageBody({ clip }: { clip: TheaterClip }) {
     else video.pause();
   }, []);
 
-  const nudge = useCallback((delta: number) => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.currentTime = Math.min(
-      video.duration || Number.POSITIVE_INFINITY,
-      Math.max(0, video.currentTime + delta),
-    );
-    setTime(video.currentTime);
-  }, []);
+  const nudge = useCallback(
+    (delta: number) => {
+      const video = videoRef.current;
+      if (!video) return;
+      video.currentTime = Math.min(
+        video.duration || Number.POSITIVE_INFINITY,
+        Math.max(0, video.currentTime + delta),
+      );
+      syncTime(video.currentTime);
+    },
+    [syncTime],
+  );
 
   const restart = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
     video.currentTime = 0;
-    setTime(0);
-  }, []);
+    syncTime(0);
+  }, [syncTime]);
 
-  const boxes = boxesAt(track, time);
   const playable = clip.videoUrl && !mediaError;
 
   return (
-    <div className="flex flex-col gap-4 lg:flex-row">
-      <div className="min-w-0 flex-1">
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
+      <div className="flex min-w-0 flex-1 flex-col">
         {playable ? (
           <div className="relative aspect-video w-full overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-overlay">
             {/* biome-ignore lint/a11y/useMediaCaption: dashcam footage has no dialogue */}
@@ -265,55 +306,17 @@ function StageBody({ clip }: { clip: TheaterClip }) {
               controls
               playsInline
               preload="metadata"
+              data-testid="clip-video"
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}
               onEnded={() => setPlaying(false)}
-              onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
-              onSeeked={(e) => setTime(e.currentTarget.currentTime)}
+              onTimeUpdate={(e) => syncTime(e.currentTarget.currentTime)}
+              onSeeked={(e) => syncTime(e.currentTarget.currentTime)}
               onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
               onError={() => setMediaError(true)}
               className="absolute inset-0 h-full w-full"
             />
-            <svg
-              viewBox="0 0 1 1"
-              preserveAspectRatio="none"
-              aria-hidden
-              className="pointer-events-none absolute inset-0 h-full w-full"
-            >
-              <title>Detector overlay</title>
-              {boxes.map((box) => (
-                <rect
-                  key={`${box.x}-${box.y}-${box.w}`}
-                  x={box.x}
-                  y={box.y}
-                  width={box.w}
-                  height={box.h}
-                  rx={0.004}
-                  fill="color-mix(in srgb, var(--pastel-blush-strong) 12%, transparent)"
-                  stroke="var(--pastel-blush-strong)"
-                  strokeWidth={1}
-                  vectorEffect="non-scaling-stroke"
-                />
-              ))}
-            </svg>
-            {/* Labels live in HTML, not SVG — a 0..1 viewBox with
-                preserveAspectRatio="none" would stretch <text> glyphs. */}
-            <div className="pointer-events-none absolute inset-0">
-              {boxes.map((box) => (
-                <span
-                  key={`label-${box.x}-${box.y}-${box.w}`}
-                  className="absolute -translate-y-full rounded-t-[3px] px-1 font-mono text-[10px] leading-[1.4] text-[var(--pastel-blush-strong)]"
-                  style={{
-                    left: `${box.x * 100}%`,
-                    top: `${box.y * 100}%`,
-                    backgroundColor:
-                      "color-mix(in srgb, var(--pastel-blush-strong) 16%, transparent)",
-                  }}
-                >
-                  {box.conf.toFixed(2)}
-                </span>
-              ))}
-            </div>
+            <DetectionOverlay ref={overlayRef} track={track} />
           </div>
         ) : (
           <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-[var(--radius-lg)] border border-dashed border-hairline-strong bg-overlay text-center">
@@ -326,7 +329,10 @@ function StageBody({ clip }: { clip: TheaterClip }) {
           </div>
         )}
         {playable && (
-          <div className="mt-2 flex items-center gap-2 rounded-[var(--radius-md)] border border-hairline bg-surface px-2 py-1.5">
+          <div
+            data-testid="clip-transport"
+            className="mt-2 flex items-center gap-2 rounded-[var(--radius-md)] border border-hairline bg-surface px-2 py-1.5"
+          >
             <button
               type="button"
               onClick={restart}
@@ -367,23 +373,25 @@ function StageBody({ clip }: { clip: TheaterClip }) {
             >
               <SkipForward className="h-3.5 w-3.5" strokeWidth={1.75} />
             </button>
+            {/* Uncontrolled on purpose — `syncTime` writes `.value` directly. */}
             <input
+              ref={seekRef}
               type="range"
               min={0}
               max={duration || 0}
               step={0.05}
-              value={Math.min(time, duration || 0)}
+              defaultValue={0}
               onChange={(e) => {
                 const next = Number(e.target.value);
                 const video = videoRef.current;
                 if (video) video.currentTime = next;
-                setTime(next);
+                syncTime(next);
               }}
               aria-label="Seek"
               className="h-1 min-w-0 flex-1 cursor-pointer appearance-none rounded-full bg-overlay-strong accent-[var(--accent)]"
             />
             <span className="shrink-0 font-mono text-[11px] tabular-nums text-faint">
-              {formatClock(time)} / {formatClock(duration)}
+              <span ref={clockRef}>0:00</span> / {formatClock(duration)}
             </span>
           </div>
         )}
@@ -397,69 +405,237 @@ function StageBody({ clip }: { clip: TheaterClip }) {
         </p>
       </div>
 
-      <div className="flex w-full flex-shrink-0 flex-col gap-2 lg:w-[320px]">
-        <h3 className={EYEBROW}>Detection feed</h3>
-        {clip.events.length === 0 ? (
-          <p className="rounded-[var(--radius-md)] border border-hairline bg-overlay p-3 text-[13px] text-subtle">
-            No clustered detections on this clip.
-          </p>
-        ) : (
-          <ol className="flex flex-col gap-2">
-            {clip.events.map((event) => (
-              <li key={event.clusterId}>
-                <EventCard
-                  event={event}
-                  time={time}
-                  onSeek={() => seekTo(event.tsSeconds - 0.5)}
-                  seekable={Boolean(playable)}
-                />
-              </li>
-            ))}
-          </ol>
-        )}
-      </div>
+      <DetectionRail
+        ref={railRef}
+        events={clip.events}
+        onSeek={seekTo}
+        seekable={Boolean(playable)}
+        paused={!playing}
+      />
     </div>
   );
 }
 
-type EventPhase = "pending" | "detecting" | "reported";
+/**
+ * Detector boxes for the current frame. Owns its own frame index so the
+ * playhead can drive it at video fps without touching the stage or the rail.
+ */
+function DetectionOverlay({
+  track,
+  ref,
+}: {
+  track: DetectionTrack | null;
+  ref: Ref<ScrubHandle>;
+}) {
+  const [frameIdx, setFrameIdx] = useState(0);
+  const fps = track?.fps ?? 25;
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      sync(seconds: number) {
+        const next = Math.round(seconds * fps);
+        setFrameIdx((prev) => (prev === next ? prev : next));
+      },
+    }),
+    [fps],
+  );
+
+  const boxes = useMemo(() => boxesAtFrame(track, frameIdx), [track, frameIdx]);
+
+  return (
+    <>
+      <svg
+        viewBox="0 0 1 1"
+        preserveAspectRatio="none"
+        aria-hidden
+        data-testid="detector-overlay"
+        className="pointer-events-none absolute inset-0 h-full w-full"
+      >
+        <title>Detector overlay</title>
+        {boxes.map((box) => (
+          <rect
+            key={`${box.x}-${box.y}-${box.w}`}
+            x={box.x}
+            y={box.y}
+            width={box.w}
+            height={box.h}
+            rx={0.004}
+            fill="color-mix(in srgb, var(--pastel-blush-strong) 12%, transparent)"
+            stroke="var(--pastel-blush-strong)"
+            strokeWidth={1}
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
+      </svg>
+      {/* Labels live in HTML, not SVG — a 0..1 viewBox with
+          preserveAspectRatio="none" would stretch <text> glyphs. */}
+      <div className="pointer-events-none absolute inset-0">
+        {boxes.map((box) => (
+          <span
+            key={`label-${box.x}-${box.y}-${box.w}`}
+            className="absolute -translate-y-full rounded-t-[3px] px-1 font-mono text-[10px] leading-[1.4] text-[var(--pastel-blush-strong)]"
+            style={{
+              left: `${box.x * 100}%`,
+              top: `${box.y * 100}%`,
+              backgroundColor:
+                "color-mix(in srgb, var(--pastel-blush-strong) 16%, transparent)",
+            }}
+          >
+            {box.conf.toFixed(2)}
+          </span>
+        ))}
+      </div>
+    </>
+  );
+}
+
+/**
+ * Phase buckets a detection walks through as the playhead crosses it. Only
+ * bucket *changes* reach React, so a 20-item rail renders a few times per
+ * clip rather than once per animation frame.
+ */
+type EventPhase = "waiting" | "analyzing" | "drafting" | "settled";
 
 function phaseOf(time: number, tsSeconds: number): EventPhase {
-  if (time < tsSeconds) return "pending";
-  if (time < tsSeconds + DETECTING_WINDOW_S) return "detecting";
-  return "reported";
+  if (time < tsSeconds) return "waiting";
+  if (time < tsSeconds + ASSESS_WINDOW_S / 2) return "analyzing";
+  if (time < tsSeconds + ASSESS_WINDOW_S) return "drafting";
+  return "settled";
+}
+
+function DetectionRail({
+  events,
+  onSeek,
+  seekable,
+  paused,
+  ref,
+}: {
+  events: TheaterEvent[];
+  onSeek: (seconds: number) => void;
+  seekable: boolean;
+  paused: boolean;
+  ref: Ref<ScrubHandle>;
+}) {
+  const [phases, setPhases] = useState<EventPhase[]>(() =>
+    events.map(() => "waiting" as EventPhase),
+  );
+  const phasesRef = useRef(phases);
+  // How far past its timestamp an item was when it entered the assess window.
+  // Written only at a bucket change, so reading it in render is stable and
+  // never invalidates a memoized card mid-playback.
+  const offsetsRef = useRef<number[]>(events.map(() => 0));
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      sync(seconds: number) {
+        const prev = phasesRef.current;
+        let changed = false;
+        const next = events.map((event, i) => {
+          const phase = phaseOf(seconds, event.tsSeconds);
+          if (phase !== prev[i]) {
+            changed = true;
+            offsetsRef.current[i] = Math.max(0, seconds - event.tsSeconds);
+          }
+          return phase;
+        });
+        if (!changed) return;
+        phasesRef.current = next;
+        setPhases(next);
+      },
+    }),
+    [events],
+  );
+
+  return (
+    <div className="flex w-full min-w-0 flex-col gap-2 lg:w-[320px] lg:flex-shrink-0">
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className={EYEBROW}>Detection feed</h3>
+        <span className="font-mono text-[11px] tabular-nums text-faint">
+          {events.length}
+        </span>
+      </div>
+      <p className="text-[12px] leading-snug text-faint">
+        Replay of a completed run — detected → assessed → report created.
+      </p>
+      {events.length === 0 ? (
+        <p className="rounded-[var(--radius-md)] border border-hairline bg-overlay p-3 text-[13px] text-subtle">
+          No clustered detections on this clip.
+        </p>
+      ) : (
+        // The rail never sets the row height: on desktop it fills the video
+        // column and scrolls inside it, so 20 items don't stretch the page.
+        <div className="relative min-h-0 flex-1">
+          <ol
+            data-testid="detection-rail"
+            className="flex max-h-[46vh] flex-col gap-2 overflow-y-auto pr-1 lg:absolute lg:inset-0 lg:max-h-none"
+          >
+            {events.map((event, i) => (
+              <li key={event.clusterId}>
+                <EventCard
+                  event={event}
+                  phase={phases[i] ?? "waiting"}
+                  scanOffset={offsetsRef.current[i] ?? 0}
+                  paused={paused}
+                  onSeek={onSeek}
+                  seekable={seekable}
+                />
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+    </div>
+  );
 }
 
 const PHASE_RING: Record<EventPhase, string> = {
-  pending: "border-hairline",
-  detecting: "border-[var(--pastel-sky-strong)]",
-  reported: "border-[var(--pastel-mint-strong)]",
+  waiting: "border-hairline",
+  analyzing: "border-[var(--pastel-sky-strong)]",
+  drafting: "border-[var(--pastel-sky-strong)]",
+  settled: "border-hairline-strong",
 };
 
-function EventCard({
+const EventCard = memo(function EventCard({
   event,
-  time,
+  phase,
+  scanOffset,
+  paused,
   onSeek,
   seekable,
 }: {
   event: TheaterEvent;
-  time: number;
-  onSeek: () => void;
+  phase: EventPhase;
+  /** Seconds into the assess window when this card entered it. */
+  scanOffset: number;
+  paused: boolean;
+  onSeek: (seconds: number) => void;
   seekable: boolean;
 }) {
-  const phase = phaseOf(time, event.tsSeconds);
+  const scanning = phase === "analyzing" || phase === "drafting";
+  const dispatched = Boolean(event.report);
+  const ring =
+    phase === "settled" && dispatched
+      ? "border-[var(--pastel-mint-strong)]"
+      : PHASE_RING[phase];
 
   return (
     <div
-      className={`overflow-hidden rounded-[var(--radius-md)] border bg-surface transition-colors ${PHASE_RING[phase]} ${phase === "pending" ? "opacity-60" : ""}`}
+      data-testid="detection-item"
+      data-phase={phase}
+      className={`overflow-hidden rounded-[var(--radius-md)] border bg-surface transition-colors ${ring} ${phase === "waiting" ? "opacity-60" : ""}`}
     >
       <button
         type="button"
-        onClick={onSeek}
+        onClick={() => onSeek(event.tsSeconds - 0.5)}
         disabled={!seekable}
         className="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-overlay disabled:cursor-default"
       >
-        <span className="font-mono text-[11px] tabular-nums text-faint">
+        <span
+          data-testid="detection-ts"
+          className="font-mono text-[11px] tabular-nums text-faint"
+        >
           {event.tsSeconds.toFixed(2)}s
         </span>
         <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-foreground">
@@ -470,36 +646,66 @@ function EventCard({
         </span>
       </button>
 
-      <p className="px-3 pb-2 text-[12px] leading-tight">
-        {phase === "pending" && <span className="text-faint">Queued</span>}
-        {phase === "detecting" && (
-          <span className="inline-flex items-center gap-1.5 text-[var(--pastel-sky-strong)] motion-safe:animate-pulse">
+      <div className="px-3 pb-2 text-[12px] leading-tight">
+        {phase === "waiting" && (
+          <span className="text-faint">Waiting for playhead</span>
+        )}
+        {scanning && (
+          <span className="inline-flex items-center gap-1.5 text-[var(--pastel-sky-strong)]">
             <span
               className="h-1.5 w-1.5 rounded-full bg-[var(--pastel-sky-strong)]"
               aria-hidden
             />
-            Generating report…
+            {phase === "analyzing" ? "Analyzing frame…" : "Drafting report…"}
           </span>
         )}
-        {phase === "reported" && (
-          <span className="inline-flex items-center gap-1.5 text-[var(--pastel-mint-strong)]">
+        {phase === "settled" && (
+          <span
+            className={`inline-flex items-center gap-1.5 ${dispatched ? "text-[var(--pastel-mint-strong)]" : "text-subtle"}`}
+          >
             <span
-              className="h-1.5 w-1.5 rounded-full bg-[var(--pastel-mint-strong)]"
+              className={`h-1.5 w-1.5 rounded-full ${dispatched ? "bg-[var(--pastel-mint-strong)]" : "bg-[var(--pastel-butter-strong)]"}`}
               aria-hidden
             />
-            {event.report ? "Report created" : "No report — cluster reviewed"}
+            {dispatched
+              ? "Report created"
+              : "Monitoring — below dispatch threshold"}
           </span>
         )}
-      </p>
+        {scanning && (
+          // Determinate: the window is a known 0.8s, and a negative delay
+          // drops a mid-window seek straight into the matching fill position.
+          // prefers-reduced-motion renders the bar full, with no animation.
+          <span
+            data-testid="scan-progress"
+            aria-hidden
+            className="mt-1.5 block h-[3px] w-full overflow-hidden rounded-full bg-overlay-strong"
+          >
+            <span
+              className="clip-scan-bar block h-full w-full rounded-full bg-[var(--pastel-sky-strong)]"
+              style={
+                {
+                  "--clip-scan-duration": `${ASSESS_WINDOW_S}s`,
+                  "--clip-scan-delay": `-${scanOffset.toFixed(2)}s`,
+                  animationPlayState: paused ? "paused" : "running",
+                } as React.CSSProperties
+              }
+            />
+          </span>
+        )}
+      </div>
 
-      {event.report && phase !== "pending" && (
+      {event.report && phase !== "waiting" && (
         <details className="border-t border-hairline">
           <summary
             className={`${EYEBROW} cursor-pointer select-none px-3 py-2 transition-colors hover:text-subtle`}
           >
             Report
           </summary>
-          <div className="flex flex-col gap-2 border-t border-hairline px-3 py-2">
+          <div
+            data-testid="report-body"
+            className="flex flex-col gap-2 border-t border-hairline px-3 py-2"
+          >
             {(event.frameUrl ?? event.report.imageUrl) && (
               // biome-ignore lint/performance/noImgElement: signed one-off URLs
               <img
@@ -514,7 +720,7 @@ function EventCard({
       )}
     </div>
   );
-}
+});
 
 /** The recent-clips log — same five columns, now a clip picker. */
 export function ClipList() {
@@ -550,6 +756,7 @@ export function ClipList() {
               return (
                 <tr
                   key={clip.id}
+                  data-testid="clip-row"
                   className={`border-b border-hairline transition-colors hover:bg-overlay ${active ? "bg-overlay" : ""}`}
                 >
                   <td className="px-3 py-2">
