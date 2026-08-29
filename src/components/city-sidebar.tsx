@@ -3,7 +3,6 @@
 import {
   BarChart3,
   CalendarDays,
-  Camera,
   Clapperboard,
   FileText,
   Map as MapIcon,
@@ -12,20 +11,16 @@ import {
   UsersRound,
   Workflow,
 } from "lucide-react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CitySwitcher } from "@/components/city/city-switcher";
-import { NavRefreshButton } from "@/components/city-nav";
 import {
   SidebarNav,
   SidebarShell,
   SidebarWhenCollapsed,
   SidebarWhenExpanded,
 } from "@/components/dashboard/sidebar-shell";
-import { EnvSwitch } from "@/components/env-switch";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ViewSwitch } from "@/components/view-switch";
-import { DEMO_MODE } from "@/lib/demo-mode";
 import { TEAM_LIST } from "@/lib/teams";
 
 interface CitySidebarProps {
@@ -130,29 +125,6 @@ export function CitySidebar({
       ]
     : [];
 
-  const reportBtn = (compact: boolean) => (
-    <Link
-      href="/report"
-      aria-label="Report"
-      title="Report"
-      className={[
-        compact
-          ? "inline-flex h-9 w-full items-center justify-center rounded-lg"
-          : "inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-lg px-3",
-        "bg-accent text-[13px] font-medium text-accent-contrast",
-        "transition-opacity duration-150 outline-none hover:opacity-90",
-        "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-      ].join(" ")}
-    >
-      <Camera
-        className="h-3.5 w-3.5 shrink-0"
-        strokeWidth={2}
-        aria-hidden="true"
-      />
-      {!compact && "Report"}
-    </Link>
-  );
-
   return (
     <SidebarShell
       context={
@@ -167,27 +139,15 @@ export function CitySidebar({
       footer={
         <>
           <SidebarWhenExpanded>
-            <div className="flex flex-col gap-2">
-              {reportBtn(false)}
-              <div className="flex flex-col gap-2 pt-1">
-                {/* User|City segment — full-width row, segments split evenly */}
-                <div className="flex h-8 w-full items-center [&>div]:h-8 [&>div]:w-full [&_a]:h-full [&_a]:flex-1">
-                  <ViewSwitch citySlug={slug} />
-                </div>
-                {/* Deployment switch + theme toggle — share one row */}
-                <div className="flex h-8 w-full items-center gap-2 [&>a]:h-full [&>a]:flex-1 [&>a]:justify-center">
-                  <EnvSwitch />
-                  <ThemeToggle className="h-8 w-8 shrink-0" />
-                </div>
-                {DEMO_MODE && (
-                  <div className="flex h-8 w-full items-center [&>button]:h-full [&>button]:w-full [&>button]:justify-center">
-                    <NavRefreshButton />
-                  </div>
-                )}
-              </div>
+            {/* User|City segment + theme toggle — one row. */}
+            <div className="flex h-8 w-full items-center gap-2 [&>div:first-child]:h-8 [&>div:first-child]:min-w-0 [&>div:first-child]:flex-1 [&_a]:h-full [&_a]:flex-1">
+              <ViewSwitch citySlug={slug} />
+              <ThemeToggle className="h-8 w-8 shrink-0" />
             </div>
           </SidebarWhenExpanded>
-          <SidebarWhenCollapsed>{reportBtn(true)}</SidebarWhenCollapsed>
+          <SidebarWhenCollapsed>
+            <ThemeToggle className="h-9 w-full" />
+          </SidebarWhenCollapsed>
         </>
       }
     >

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { CrewTypesPanel } from "@/components/crews/crew-types-panel";
-import { type CrewCandidate, CrewsPanel } from "@/components/crews/crews-panel";
 import { InviteMemberModal } from "@/components/members/invite-member-modal";
 import type { CrewOption } from "@/components/members/member-modal";
 import { MembersTable } from "@/components/members/members-table";
@@ -153,13 +152,6 @@ export default async function CityMembersPage({ params }: PageProps) {
       ? (typeByKey.get(c.crewType)?.description ?? null)
       : null,
   }));
-  const crewCandidates: CrewCandidate[] = members.map((m) => ({
-    id: m.id,
-    displayName: m.displayName,
-    teamKey: m.teamKey,
-    role: m.role,
-  }));
-
   return (
     <div className="relative flex flex-col min-h-dvh bg-background">
       <div className="relative flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
@@ -195,14 +187,9 @@ export default async function CityMembersPage({ params }: PageProps) {
               canManage={canManage}
               crews={crewOptions}
               contractors={contractors}
-            />
-            <CrewsPanel
-              slug={slug}
-              crews={crews}
-              members={crewCandidates}
-              canManage={canManage}
-              crewTypes={activeCrewTypes}
+              crewRows={crews}
               crewWorkloads={crewWorkloads}
+              crewTypes={activeCrewTypes}
             />
             <CrewTypesPanel
               slug={slug}

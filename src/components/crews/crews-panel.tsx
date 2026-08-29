@@ -11,7 +11,6 @@ import {
   setCrewMembers,
   updateCrew,
 } from "@/app/city/[slug]/members/crew-actions";
-import { CrewStatCard } from "@/components/crews/crew-stat-card";
 import {
   CONTROL_CLASS,
   FormError,
@@ -22,25 +21,20 @@ import { Button } from "@/components/ui/button";
 import { MenuSelect } from "@/components/ui/menu-select";
 import {
   type CrewTypeDef,
-  DEFAULT_CREW_TYPES,
   descriptionWordCount,
   MIN_TYPE_DESCRIPTION_WORDS,
   normalizeCrewTypeKey,
 } from "@/lib/crew-types";
-import type { CrewWorkload } from "@/lib/db/crew-workloads";
 import type { CrewRow } from "@/lib/db/crews";
 import { isValidTeamId, TEAM_LIST, TEAMS } from "@/lib/teams";
 import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
-   Crews panel — the org level below a division. Lives on the members
-   page (same admin gate as invite/edit member); team dashboards read
-   the same crews but management happens here, next to the people it
-   assigns.
-
-   Crews group by division in TEAM_LIST order. The dialog reuses the
-   member-modal chrome so create/edit crew feels identical to
-   invite/edit member.
+   Crew dialog — create/edit a crew (the org level below a division).
+   Opened from the Crews rows on the members roster; the dialog reuses
+   the member-modal chrome so create/edit crew feels identical to
+   invite/edit member. The old card-grid CrewsPanel is gone — crews
+   render as roster rows behind a filter chip in members-table.
    ================================================================== */
 
 /** Roster candidate — a city member as the crew dialog sees them. */
@@ -64,143 +58,12 @@ function typeLabel(key: string, crewTypes: CrewTypeDef[]): string {
 function teamShortLabel(teamKey: string): string {
   return isValidTeamId(teamKey) ? TEAMS[teamKey].shortLabel : teamKey;
 }
-function teamColor(teamKey: string): string {
-  return isValidTeamId(teamKey) ? TEAMS[teamKey].color : "#91919b";
-}
 
-type DialogState = { mode: "create" } | { mode: "edit"; crew: CrewRow } | null;
+export type CrewDialogState =
+  | { mode: "create" }
+  | { mode: "edit"; crew: CrewRow };
 
-export function CrewsPanel({
-  slug,
-  crews,
-  members,
-  canManage,
-  crewTypes = DEFAULT_CREW_TYPES,
-  crewWorkloads = {},
-}: {
-  slug: string;
-  crews: CrewRow[];
-  members: CrewCandidate[];
-  canManage: boolean;
-  /** The city's crew-type catalog (031) — feeds the type select and the type
-   *  badges. Defaults to the built-in list for pre-031 DBs. */
-  crewTypes?: CrewTypeDef[];
-  /** Per-crew work-order rollup, keyed by crew id — feeds each card's total,
-   *  status bar, and repair-speed stats. Missing crew ⇒ card renders zeros. */
-  crewWorkloads?: Record<string, CrewWorkload>;
-}) {
-  const [dialog, setDialog] = useState<DialogState>(null);
-
-  // Division sections in canonical team order; a division appears only when
-  // it has crews.
-  const groups = useMemo(() => {
-    const byTeam = new Map<string, CrewRow[]>();
-    for (const c of crews) {
-      const list = byTeam.get(c.teamKey) ?? [];
-      list.push(c);
-      byTeam.set(c.teamKey, list);
-    }
-    const ordered: { teamKey: string; crews: CrewRow[] }[] = [];
-    for (const t of TEAM_OPTIONS) {
-      const list = byTeam.get(t.id);
-      if (list) {
-        ordered.push({ teamKey: t.id, crews: list });
-        byTeam.delete(t.id);
-      }
-    }
-    // Anything with an unknown team key still renders (data beats layout).
-    for (const [teamKey, list] of byTeam)
-      ordered.push({ teamKey, crews: list });
-    return ordered;
-  }, [crews]);
-
-  return (
-    <section className="mt-8 flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <div className="flex items-baseline gap-2">
-          <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
-            Crews
-          </h2>
-          <span className="text-[13px] tabular-nums text-faint">
-            {crews.length}
-          </span>
-        </div>
-        {canManage && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setDialog({ mode: "create" })}
-          >
-            <Plus className="h-4 w-4" strokeWidth={2} />
-            New crew
-          </Button>
-        )}
-      </div>
-
-      {crews.length === 0 ? (
-        <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface px-6 py-12 text-center shadow-[var(--shadow-card)]">
-          <p className="text-sm font-medium text-foreground">No crews yet</p>
-          <p className="mt-1.5 text-[13px] text-faint">
-            Crews are the units inside a division that work orders get assigned
-            to — “North Paving Crew”, “Sign Shop”.
-            {canManage
-              ? " Create the first one to start assigning people and work."
-              : " An admin can create them from this page."}
-          </p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-5">
-          {groups.map((group) => (
-            <div key={group.teamKey} className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: teamColor(group.teamKey) }}
-                  aria-hidden
-                />
-                <h3 className="text-[13px] font-medium text-subtle">
-                  {teamShortLabel(group.teamKey)}
-                </h3>
-                <span className="text-[12px] tabular-nums text-faint">
-                  {group.crews.length}
-                </span>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {group.crews.map((crew) => (
-                  <CrewStatCard
-                    key={crew.id}
-                    crew={crew}
-                    workload={crewWorkloads[crew.id]}
-                    slug={slug}
-                    crewTypes={crewTypes}
-                    onEdit={
-                      canManage
-                        ? () => setDialog({ mode: "edit", crew })
-                        : undefined
-                    }
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {canManage && dialog && (
-        <CrewDialog
-          key={dialog.mode === "edit" ? dialog.crew.id : "create"}
-          slug={slug}
-          state={dialog}
-          members={members}
-          crewTypes={crewTypes}
-          onClose={() => setDialog(null)}
-        />
-      )}
-    </section>
-  );
-}
-
-function CrewDialog({
+export function CrewDialog({
   slug,
   state,
   members,
@@ -208,7 +71,7 @@ function CrewDialog({
   onClose,
 }: {
   slug: string;
-  state: NonNullable<DialogState>;
+  state: CrewDialogState;
   members: CrewCandidate[];
   crewTypes: CrewTypeDef[];
   onClose: () => void;

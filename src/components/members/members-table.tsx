@@ -1,8 +1,13 @@
 "use client";
 
-import { LayoutGrid, Pencil, Search, Users } from "lucide-react";
+import { LayoutGrid, Pencil, Plus, Search, Users } from "lucide-react";
 import Link from "next/link";
 import { useId, useMemo, useState } from "react";
+import {
+  type CrewCandidate,
+  CrewDialog,
+  type CrewDialogState,
+} from "@/components/crews/crews-panel";
 import { EditMemberModal } from "@/components/members/edit-member-modal";
 import {
   MemberNameLink,
@@ -11,8 +16,12 @@ import {
 } from "@/components/members/member-badges";
 import type { CrewOption } from "@/components/members/member-modal";
 import { TeamAccessView } from "@/components/members/team-access-view";
+import type { CrewTypeDef } from "@/lib/crew-types";
 import type { ContractorListRow } from "@/lib/db/contractors";
+import type { CrewWorkload } from "@/lib/db/crew-workloads";
+import type { CrewRow } from "@/lib/db/crews";
 import type { MemberRow } from "@/lib/db/members";
+import { isValidTeamId, TEAMS } from "@/lib/teams";
 import { cn } from "@/lib/utils/cn";
 
 interface MembersTableProps {
@@ -22,9 +31,15 @@ interface MembersTableProps {
   crews: CrewOption[];
   /** City vendors — rendered as their own roster under the Contractors chip. */
   contractors?: ContractorListRow[];
+  /** Full crew rows — rendered as their own roster under the Crews chip. */
+  crewRows?: CrewRow[];
+  /** Per-crew work-order rollup for the Crews rows (open, oldest, MTTR). */
+  crewWorkloads?: Record<string, CrewWorkload>;
+  /** Crew-type catalog for type labels + the crew dialog's type select. */
+  crewTypes?: CrewTypeDef[];
 }
 
-type RoleFilter = "all" | MemberRow["role"] | "contractors";
+type RoleFilter = "all" | MemberRow["role"] | "contractors" | "crews";
 type ViewMode = "people" | "team";
 
 const FILTERS: ReadonlyArray<{ key: RoleFilter; label: string }> = [
@@ -33,6 +48,7 @@ const FILTERS: ReadonlyArray<{ key: RoleFilter; label: string }> = [
   { key: "staff_supervisor", label: "Supervisors" },
   { key: "staff_dispatcher", label: "Dispatchers" },
   { key: "resident", label: "Residents" },
+  { key: "crews", label: "Crews" },
   { key: "contractors", label: "Contractors" },
 ];
 
@@ -82,12 +98,28 @@ export function MembersTable({
   canManage,
   crews,
   contractors = [],
+  crewRows = [],
+  crewWorkloads = {},
+  crewTypes = [],
 }: MembersTableProps) {
   const [view, setView] = useState<ViewMode>("people");
   const [role, setRole] = useState<RoleFilter>("all");
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<MemberRow | null>(null);
+  const [crewDialog, setCrewDialog] = useState<CrewDialogState | null>(null);
   const searchId = useId();
+
+  // Roster candidates for the crew dialog — city members as it expects them.
+  const crewCandidates = useMemo<CrewCandidate[]>(
+    () =>
+      members.map((m) => ({
+        id: m.id,
+        displayName: m.displayName,
+        teamKey: m.teamKey,
+        role: m.role,
+      })),
+    [members],
+  );
 
   // Crew names render under the Team cell — resolve ids once per crews prop.
   const crewNameById = useMemo(
@@ -103,6 +135,7 @@ export function MembersTable({
       staff_dispatcher: 0,
       resident: 0,
       contractors: contractors.length,
+      crews: crewRows.length,
     };
     for (const m of members) {
       map[m.role] += 1;
@@ -111,10 +144,10 @@ export function MembersTable({
       if (m.role !== "resident") map.all += 1;
     }
     return map;
-  }, [members, contractors]);
+  }, [members, contractors, crewRows]);
 
   const filtered = useMemo(() => {
-    if (role === "contractors") return [];
+    if (role === "contractors" || role === "crews") return [];
     const needle = query.trim().toLowerCase();
     return members.filter((m) => {
       if (role === "all") {
@@ -141,6 +174,15 @@ export function MembersTable({
         (c.email ?? "").toLowerCase().includes(needle),
     );
   }, [contractors, role, query]);
+
+  // Crew roster under the Crews chip — same search box applies.
+  const filteredCrews = useMemo(() => {
+    if (role !== "crews") return [];
+    const needle = query.trim().toLowerCase();
+    return crewRows.filter(
+      (c) => !needle || c.name.toLowerCase().includes(needle),
+    );
+  }, [crewRows, role, query]);
 
   // Member, Phone, Role, Team, Reports, Last active, Last sign-in (+ Actions).
   const colCount = canManage ? 8 : 7;
@@ -184,25 +226,37 @@ export function MembersTable({
         </div>
 
         {view === "people" && (
-          <div className="relative sm:w-64">
-            <Search
-              className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-faint"
-              strokeWidth={2}
-              aria-hidden="true"
-            />
-            <input
-              id={searchId}
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search name or email"
-              aria-label="Search members by name or email"
-              className={[
-                "h-8 w-full rounded-[var(--radius-md)] border border-hairline bg-surface pl-8 pr-2.5 text-[13px] text-foreground",
-                "placeholder:text-faint outline-none transition-colors duration-150",
-                "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-              ].join(" ")}
-            />
+          <div className="flex items-center gap-2">
+            {role === "crews" && canManage && (
+              <button
+                type="button"
+                onClick={() => setCrewDialog({ mode: "create" })}
+                className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border border-hairline bg-overlay px-2.5 text-[13px] font-medium text-subtle outline-none transition-colors duration-150 hover:bg-overlay-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+              >
+                <Plus className="h-3.5 w-3.5" strokeWidth={2} />
+                New crew
+              </button>
+            )}
+            <div className="relative sm:w-64">
+              <Search
+                className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-faint"
+                strokeWidth={2}
+                aria-hidden="true"
+              />
+              <input
+                id={searchId}
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search name or email"
+                aria-label="Search members by name or email"
+                className={[
+                  "h-8 w-full rounded-[var(--radius-md)] border border-hairline bg-surface pl-8 pr-2.5 text-[13px] text-foreground",
+                  "placeholder:text-faint outline-none transition-colors duration-150",
+                  "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                ].join(" ")}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -255,6 +309,139 @@ export function MembersTable({
           canManage={canManage}
           onEdit={setEditing}
         />
+      ) : role === "crews" ? (
+        <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-card)]">
+          <table className="w-full min-w-[860px] border-collapse text-left text-[13px]">
+            <thead>
+              <tr className="border-b border-hairline text-[11px] uppercase tracking-wide text-faint">
+                <th scope="col" className="px-4 py-3 font-medium">
+                  Crew
+                </th>
+                <th scope="col" className="px-4 py-3 font-medium">
+                  Type
+                </th>
+                <th scope="col" className="px-4 py-3 text-right font-medium">
+                  Members
+                </th>
+                <th scope="col" className="px-4 py-3 text-right font-medium">
+                  Open work
+                </th>
+                <th scope="col" className="px-4 py-3 font-medium">
+                  Oldest open
+                </th>
+                <th scope="col" className="px-4 py-3 font-medium">
+                  MTTR
+                </th>
+                <th scope="col" className="px-4 py-3 font-medium">
+                  Lead
+                </th>
+                {canManage && (
+                  <th scope="col" className="px-4 py-3 text-right font-medium">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredCrews.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={canManage ? 8 : 7}
+                    className="px-4 py-16 text-center"
+                  >
+                    <p className="text-sm font-medium text-foreground">
+                      {crewRows.length === 0
+                        ? "No crews yet"
+                        : "No crews match"}
+                    </p>
+                    <p className="mt-1 text-[13px] text-faint">
+                      {crewRows.length === 0
+                        ? "Crews are the units inside a division that work orders get assigned to."
+                        : "Clear the search to see every crew."}
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                filteredCrews.map((c) => {
+                  const load = crewWorkloads[c.id];
+                  const lead = c.members.find((m) => m.isLead);
+                  const typeMeta = c.crewType
+                    ? (crewTypes.find((t) => t.key === c.crewType) ?? null)
+                    : null;
+                  return (
+                    <tr
+                      key={c.id}
+                      className="border-b border-hairline last:border-b-0 transition-colors duration-150 hover:bg-overlay"
+                    >
+                      <td className="px-4 py-3 align-middle">
+                        <div className="flex items-center gap-2 font-medium text-foreground">
+                          <span
+                            className="h-2 w-2 shrink-0 rounded-full"
+                            style={{
+                              backgroundColor: isValidTeamId(c.teamKey)
+                                ? TEAMS[c.teamKey].color
+                                : "#91919b",
+                            }}
+                            aria-hidden
+                          />
+                          {c.name}
+                          {!c.active && (
+                            <span className="inline-flex items-center rounded-[var(--radius-md)] border border-hairline bg-overlay px-1.5 py-px text-[10px] font-medium text-faint">
+                              Inactive
+                            </span>
+                          )}
+                        </div>
+                        <div className="pl-4 text-[12px] text-faint">
+                          {isValidTeamId(c.teamKey)
+                            ? TEAMS[c.teamKey].shortLabel
+                            : c.teamKey}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 align-middle text-subtle">
+                        {typeMeta?.label ??
+                          c.crewType?.replace(/_/g, " ") ??
+                          "—"}
+                      </td>
+                      <td className="px-4 py-3 align-middle text-right tabular-nums text-foreground">
+                        {c.members.length}
+                      </td>
+                      <td className="px-4 py-3 align-middle text-right tabular-nums text-foreground">
+                        {load?.openCount ?? 0}
+                      </td>
+                      <td className="px-4 py-3 align-middle tabular-nums text-subtle">
+                        {load?.oldestOpenAgeDays != null
+                          ? `${Math.round(load.oldestOpenAgeDays)}d`
+                          : "—"}
+                      </td>
+                      <td className="px-4 py-3 align-middle tabular-nums text-subtle">
+                        {load?.mttrHours != null
+                          ? `${Math.round(load.mttrHours)}h`
+                          : "—"}
+                      </td>
+                      <td className="px-4 py-3 align-middle text-subtle">
+                        {lead?.displayName ?? "—"}
+                      </td>
+                      {canManage && (
+                        <td className="px-4 py-3 align-middle text-right">
+                          <button
+                            type="button"
+                            aria-label={`Edit ${c.name}`}
+                            onClick={() =>
+                              setCrewDialog({ mode: "edit", crew: c })
+                            }
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-md)] text-faint outline-none transition-colors duration-150 hover:bg-overlay-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+                          >
+                            <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       ) : role === "contractors" ? (
         <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-card)]">
           <table className="w-full min-w-[860px] border-collapse text-left text-[13px]">
@@ -482,6 +669,17 @@ export function MembersTable({
           slug={slug}
           crews={crews}
           onClose={() => setEditing(null)}
+        />
+      )}
+
+      {canManage && crewDialog && (
+        <CrewDialog
+          key={crewDialog.mode === "edit" ? crewDialog.crew.id : "create"}
+          slug={slug}
+          state={crewDialog}
+          members={crewCandidates}
+          crewTypes={crewTypes}
+          onClose={() => setCrewDialog(null)}
         />
       )}
     </div>

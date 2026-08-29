@@ -14,7 +14,8 @@ const CHIPS = [
   { k: "c3", w: "w-24" },
   { k: "c4", w: "w-24" },
   { k: "c5", w: "w-20" },
-  { k: "c6", w: "w-24" },
+  { k: "c6", w: "w-16" },
+  { k: "c7", w: "w-24" },
 ];
 
 export default function Loading() {

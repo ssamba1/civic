@@ -2,79 +2,17 @@
 
 import {
   BarChart3,
-  Camera,
   Clapperboard,
   FileText,
   Map as MapIcon,
-  RefreshCw,
   Table,
   Users,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useState } from "react";
-import { EnvSwitch } from "@/components/env-switch";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { DEMO_MODE } from "@/lib/demo-mode";
-import { useDemoReports } from "@/lib/demo-reports";
 import { useSlidingPill } from "@/lib/hooks/use-sliding-pill";
-
-/**
- * Demo Refresh — toggles the live fallen-tree report in the shared overlay
- * store (src/lib/demo-reports.ts). First click injects the data point (lighting
- * up every city surface: teams, map, analytics, browse) and the button goes
- * solid; a second click removes it. Sits left of the segmented nav track. No
- * separate reset control — the same button is the on/off switch.
- */
-export function NavRefreshButton() {
-  const { demoReports, add, reset } = useDemoReports();
-  const active = demoReports.length > 0;
-  const [spinning, setSpinning] = useState(false);
-
-  const onClick = useCallback(() => {
-    if (active) reset();
-    else add();
-    setSpinning(true);
-    window.setTimeout(() => setSpinning(false), 600);
-  }, [active, add, reset]);
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      aria-label={
-        active
-          ? "Refresh — remove live demo report"
-          : "Refresh — add live demo report"
-      }
-      title={
-        active ? "Remove the live report (demo)" : "Add a live report (demo)"
-      }
-      className={[
-        "group inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2 sm:px-2.5 text-[13px] font-medium",
-        "transition-colors duration-150 outline-none",
-        "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-0",
-        active
-          ? "border-accent bg-accent-soft text-accent-text hover:opacity-85"
-          : "border-hairline-strong bg-overlay text-subtle hover:bg-overlay-strong hover:text-foreground",
-      ].join(" ")}
-    >
-      <RefreshCw
-        className={[
-          "h-3.5 w-3.5 shrink-0",
-          spinning && "motion-safe:animate-spin",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-        strokeWidth={2}
-        aria-hidden="true"
-      />
-      <span className="hidden md:inline">Refresh</span>
-    </button>
-  );
-}
 
 interface CityNavProps {
   slug: string;
@@ -227,31 +165,11 @@ export function CityNav({
     );
   }
 
-  // ── Mobile slot: action buttons only (Report + My View) ───────────────
+  // ── Mobile slot: action buttons only (theme toggle) ───────────────────
   if (mobileSlot === "actions") {
     return (
       <div className="flex items-center gap-2">
-        <EnvSwitch />
         <ThemeToggle />
-        <Link
-          href="/report"
-          aria-label="Report"
-          title="Report"
-          className={[
-            // min-h-11 / min-w-11 = 44px touch target
-            "inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-accent px-3 text-[13px] font-medium text-accent-contrast",
-            "transition-opacity duration-150 outline-none",
-            "hover:opacity-90",
-            "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-          ].join(" ")}
-        >
-          <Camera
-            className="h-4 w-4 shrink-0"
-            strokeWidth={2}
-            aria-hidden="true"
-          />
-          <span className="sr-only">Report</span>
-        </Link>
       </div>
     );
   }
@@ -262,13 +180,8 @@ export function CityNav({
       className="flex min-w-0 shrink items-center gap-2"
       aria-label="City views"
     >
-      {/* Demo ⇄ Testing deployment switch — leftmost action */}
-      <EnvSwitch />
       {/* Light ⇄ dark theme toggle */}
       <ThemeToggle />
-      {/* Demo Refresh — left of the Teams tab. Demo deployments only: the
-          injected tree report is sample data, not for the live site. */}
-      {DEMO_MODE && <NavRefreshButton />}
 
       {/* Segmented control track */}
       <div
@@ -316,25 +229,6 @@ export function CityNav({
           </Link>
         ))}
       </div>
-
-      <Link
-        href="/report"
-        aria-label="Report"
-        title="Report"
-        className={[
-          "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] bg-accent px-2.5 sm:px-3 text-[13px] font-medium text-accent-contrast",
-          "transition-opacity duration-150 outline-none",
-          "hover:opacity-90",
-          "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        ].join(" ")}
-      >
-        <Camera
-          className="h-3.5 w-3.5 shrink-0"
-          strokeWidth={2}
-          aria-hidden="true"
-        />
-        <span className="hidden sm:inline">Report</span>
-      </Link>
     </nav>
   );
 }
