@@ -29,6 +29,7 @@ import {
   SkipBack,
   SkipForward,
 } from "lucide-react";
+import Link from "next/link";
 import {
   createContext,
   memo,
@@ -42,6 +43,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { type DetectionBox, EvidenceFrameButton } from "./evidence-frame";
 import { type GeneratedReport, ReportInline } from "./report-inline";
 
 export interface TheaterEvent {
@@ -51,6 +53,10 @@ export interface TheaterEvent {
   class: string;
   confidence: number;
   frameUrl: string | null;
+  /** Detector box for `frameUrl`, normalized 0..1 top-left. */
+  frameBox: DetectionBox | null;
+  /** e.g. "pothole · 0.87" — drawn on the box in the full-frame modal. */
+  frameLabel: string | null;
   report: GeneratedReport | null;
 }
 
@@ -104,6 +110,8 @@ const ASSESS_WINDOW_S = 0.8;
 
 interface StudioContext {
   clips: TheaterClip[];
+  /** City slug — the rail links reports into that city's work-order grid. */
+  slug: string;
   selectedId: string | null;
   /** Bumped only by user clicks, so the default selection never scrolls. */
   scrollToken: number;
@@ -114,9 +122,11 @@ const Ctx = createContext<StudioContext | null>(null);
 
 export function ClipStudioProvider({
   clips,
+  slug,
   children,
 }: {
   clips: TheaterClip[];
+  slug: string;
   children: ReactNode;
 }) {
   const initial = useMemo(
@@ -132,8 +142,8 @@ export function ClipStudioProvider({
   }, []);
 
   const value = useMemo<StudioContext>(
-    () => ({ clips, selectedId, scrollToken, select }),
-    [clips, selectedId, scrollToken, select],
+    () => ({ clips, slug, selectedId, scrollToken, select }),
+    [clips, slug, selectedId, scrollToken, select],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -155,7 +165,7 @@ function boxesAtFrame(track: DetectionTrack | null, index: number): Box[] {
 }
 
 export function ClipStage() {
-  const { clips, selectedId, scrollToken } = useStudio();
+  const { clips, slug, selectedId, scrollToken } = useStudio();
   const sectionRef = useRef<HTMLElement>(null);
   const clip = clips.find((c) => c.id === selectedId) ?? null;
 
@@ -179,12 +189,12 @@ export function ClipStage() {
         </p>
       </div>
       {/* Remount per clip so playhead, overlay track and media errors reset. */}
-      <StageBody key={clip.id} clip={clip} />
+      <StageBody key={clip.id} clip={clip} slug={slug} />
     </section>
   );
 }
 
-function StageBody({ clip }: { clip: TheaterClip }) {
+function StageBody({ clip, slug }: { clip: TheaterClip; slug: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [duration, setDuration] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -406,6 +416,7 @@ function StageBody({ clip }: { clip: TheaterClip }) {
       </div>
 
       <DetectionRail
+        slug={slug}
         ref={railRef}
         events={clip.events}
         onSeek={seekTo}
@@ -506,12 +517,14 @@ function phaseOf(time: number, tsSeconds: number): EventPhase {
 
 function DetectionRail({
   events,
+  slug,
   onSeek,
   seekable,
   paused,
   ref,
 }: {
   events: TheaterEvent[];
+  slug: string;
   onSeek: (seconds: number) => void;
   seekable: boolean;
   paused: boolean;
@@ -575,6 +588,7 @@ function DetectionRail({
               <li key={event.clusterId}>
                 <EventCard
                   event={event}
+                  slug={slug}
                   phase={phases[i] ?? "waiting"}
                   scanOffset={offsetsRef.current[i] ?? 0}
                   paused={paused}
@@ -599,6 +613,7 @@ const PHASE_RING: Record<EventPhase, string> = {
 
 const EventCard = memo(function EventCard({
   event,
+  slug,
   phase,
   scanOffset,
   paused,
@@ -606,6 +621,7 @@ const EventCard = memo(function EventCard({
   seekable,
 }: {
   event: TheaterEvent;
+  slug: string;
   phase: EventPhase;
   /** Seconds into the assess window when this card entered it. */
   scanOffset: number;
@@ -626,25 +642,51 @@ const EventCard = memo(function EventCard({
       data-phase={phase}
       className={`overflow-hidden rounded-[var(--radius-md)] border bg-surface transition-colors ${ring} ${phase === "waiting" ? "opacity-60" : ""}`}
     >
-      <button
-        type="button"
-        onClick={() => onSeek(event.tsSeconds - 0.5)}
-        disabled={!seekable}
-        className="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-overlay disabled:cursor-default"
-      >
-        <span
+      {/* Two affordances, deliberately split: the timestamp scrubs the clip,
+          the rest of the header opens the thing the detection became. A
+          detection with no report has nothing to open, so there the body
+          seeks too. Siblings, not nested — an anchor cannot contain a
+          button. */}
+      <div className="flex w-full items-center gap-2 px-3 py-2">
+        <button
+          type="button"
+          onClick={() => onSeek(event.tsSeconds - 0.5)}
+          disabled={!seekable}
+          aria-label={`Seek clip to ${event.tsSeconds.toFixed(2)} seconds`}
           data-testid="detection-ts"
-          className="font-mono text-[11px] tabular-nums text-faint"
+          className="-mx-1 shrink-0 rounded px-1 font-mono text-[11px] tabular-nums text-faint outline-none transition-colors hover:bg-overlay hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-default disabled:hover:bg-transparent disabled:hover:text-faint"
         >
           {event.tsSeconds.toFixed(2)}s
-        </span>
-        <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-foreground">
-          {event.class}
-        </span>
-        <span className="font-mono text-[11px] tabular-nums text-subtle">
-          {event.confidence.toFixed(2)}
-        </span>
-      </button>
+        </button>
+        {event.report ? (
+          <Link
+            href={`/city/${slug}/grid?report=${event.report.id}`}
+            data-testid="detection-open"
+            className="-my-2 flex min-w-0 flex-1 items-center gap-2 py-2 text-left outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60"
+          >
+            <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-foreground">
+              {event.class}
+            </span>
+            <span className="font-mono text-[11px] tabular-nums text-subtle">
+              {event.confidence.toFixed(2)}
+            </span>
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onSeek(event.tsSeconds - 0.5)}
+            disabled={!seekable}
+            className="-my-2 flex min-w-0 flex-1 items-center gap-2 py-2 text-left transition-colors disabled:cursor-default"
+          >
+            <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-foreground">
+              {event.class}
+            </span>
+            <span className="font-mono text-[11px] tabular-nums text-subtle">
+              {event.confidence.toFixed(2)}
+            </span>
+          </button>
+        )}
+      </div>
 
       <div className="px-3 pb-2 text-[12px] leading-tight">
         {phase === "waiting" && (
@@ -707,11 +749,14 @@ const EventCard = memo(function EventCard({
             className="flex flex-col gap-2 border-t border-hairline px-3 py-2"
           >
             {(event.frameUrl ?? event.report.imageUrl) && (
-              // biome-ignore lint/performance/noImgElement: signed one-off URLs
-              <img
+              <EvidenceFrameButton
                 src={event.frameUrl ?? event.report.imageUrl ?? ""}
+                box={event.frameBox}
+                label={event.frameLabel ?? undefined}
                 alt={`Evidence frame for ${event.class}`}
-                className="h-24 w-full rounded-[var(--radius-md)] border border-hairline object-cover"
+                title={event.class}
+                subtitle={`${event.confidence.toFixed(2)} confidence at ${event.tsSeconds.toFixed(2)}s`}
+                className="h-24 w-full rounded-[var(--radius-md)] border border-hairline"
               />
             )}
             <ReportInline report={event.report} clampDescription={false} />

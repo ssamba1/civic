@@ -641,6 +641,15 @@
 .wo-grid .ag-row-hover {
   box-shadow: inset 2px 0 0 var(--color-primary);
 }
+/* Deep-link landing flag (?report=<id> from the video console). Painted for a
+   few seconds so an operator can see WHICH row the link dropped them on; the
+   accent bar matches the hover affordance, doubled in width to read as
+   deliberate rather than as a stray hover. */
+.wo-grid .ag-row.wo-row-focus {
+  background-color: var(--accent-soft);
+  box-shadow: inset 4px 0 0 var(--color-primary);
+}
+
 /* FLIP row animation on sort/filter. The base .ag-row rule above (for the hover
    accent) omits `transform`, which clobbers the Theming API's own
    `.ag-row-animation .ag-row { transition: transform .4s, top .4s, opacity .2s }`

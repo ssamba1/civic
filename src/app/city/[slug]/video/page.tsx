@@ -16,6 +16,7 @@ import {
   type TheaterClip,
   type TheaterEvent,
 } from "./clip-theater";
+import { type DetectionBox, EvidenceFrameButton } from "./evidence-frame";
 import { type GeneratedReport, ReportInline } from "./report-inline";
 import { ClusterRowActions, UploadClip } from "./video-console";
 
@@ -51,6 +52,37 @@ interface ClusterRow {
   best_detection_id: string | null;
   report_id: string | null;
   merged_report_id: string | null;
+}
+
+interface DetectionRow {
+  id: string;
+  frame_path: string;
+  /** jsonb — normalized 0..1 top-left, `{x,y,w,h,conf}`. */
+  bbox: unknown;
+  class: string;
+  confidence: number;
+}
+
+/** Evidence a cluster's frame carries: signed URL + the box drawn on it. */
+interface FrameEvidence {
+  url: string;
+  box: DetectionBox | null;
+  label: string;
+}
+
+/**
+ * `bbox` is jsonb: a legacy or half-written row can hold null, a string, or
+ * partial keys. Anything that isn't four finite numbers yields no box at all —
+ * a NaN-positioned overlay would be worse than showing the bare frame.
+ */
+function parseBox(raw: unknown): DetectionBox | null {
+  if (!raw || typeof raw !== "object") return null;
+  const b = raw as Record<string, unknown>;
+  const nums = (["x", "y", "w", "h"] as const).map((k) => Number(b[k]));
+  if (!nums.every((n) => Number.isFinite(n))) return null;
+  const [x, y, w, h] = nums as [number, number, number, number];
+  const conf = Number(b.conf);
+  return { x, y, w, h, conf: Number.isFinite(conf) ? conf : undefined };
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -175,31 +207,48 @@ export default async function VideoPipelinePage({ params }: PageProps) {
     .map((c) => c.best_detection_id)
     .filter((id): id is string => !!id);
   const framePathById = new Map<string, string>();
+  // Detector box + label per best detection, so the modal can draw the box on
+  // the frame it actually belongs to (the cluster's max_confidence can come
+  // from a different frame than the one being shown).
+  const evidenceByDetection = new Map<
+    string,
+    { box: DetectionBox | null; label: string }
+  >();
   if (bestIds.length > 0) {
     const { data: dets } = await db
       .from("damage_detections")
-      .select("id, frame_path")
+      .select("id, frame_path, bbox, class, confidence")
       .in("id", bestIds);
-    for (const d of (dets ?? []) as { id: string; frame_path: string }[]) {
+    for (const d of (dets ?? []) as DetectionRow[]) {
       framePathById.set(d.id, d.frame_path);
+      evidenceByDetection.set(d.id, {
+        box: parseBox(d.bbox),
+        label: `${d.class} · ${Number(d.confidence).toFixed(2)}`,
+      });
     }
   }
 
   // Evidence frames live in the private video-frames bucket. Mint a
   // short-lived signed URL for EVERY cluster that has one — the row renders it
   // as a thumbnail, so an operator never has to click through to see it.
-  const frameUrlByCluster = new Map<string, string>();
+  const frameByCluster = new Map<string, FrameEvidence>();
   await Promise.all(
     clusterRows.map(async (cluster) => {
-      const path = cluster.best_detection_id
-        ? framePathById.get(cluster.best_detection_id)
-        : undefined;
-      if (!path) return;
+      const detectionId = cluster.best_detection_id;
+      const path = detectionId ? framePathById.get(detectionId) : undefined;
+      if (!path || !detectionId) return;
       const { data: signed } = await db.storage
         .from("video-frames")
         .createSignedUrl(path, 600);
-      if (signed?.signedUrl)
-        frameUrlByCluster.set(cluster.id, signed.signedUrl);
+      if (!signed?.signedUrl) return;
+      const evidence = evidenceByDetection.get(detectionId);
+      frameByCluster.set(cluster.id, {
+        url: signed.signedUrl,
+        box: evidence?.box ?? null,
+        label:
+          evidence?.label ??
+          `${cluster.class} · ${cluster.max_confidence.toFixed(2)}`,
+      });
     }),
   );
 
@@ -220,9 +269,9 @@ export default async function VideoPipelinePage({ params }: PageProps) {
 
     const frameUrlByReport = new Map<string, string>();
     for (const cluster of clusterRows) {
-      const url = frameUrlByCluster.get(cluster.id);
-      if (cluster.report_id && url)
-        frameUrlByReport.set(cluster.report_id, url);
+      const evidence = frameByCluster.get(cluster.id);
+      if (cluster.report_id && evidence)
+        frameUrlByReport.set(cluster.report_id, evidence.url);
     }
 
     type Classification = { category: string; severity: number };
@@ -300,13 +349,16 @@ export default async function VideoPipelinePage({ params }: PageProps) {
       if (existing && existing.tsSeconds <= ts) continue;
       const cluster = clusterById.get(row.cluster_id);
       const reportId = cluster?.report_id ?? null;
+      const evidence = frameByCluster.get(row.cluster_id) ?? null;
       firstByKey.set(key, {
         clipId: row.clip_id,
         clusterId: row.cluster_id,
         tsSeconds: ts,
         class: cluster?.class ?? row.class,
         confidence: cluster?.max_confidence ?? row.confidence,
-        frameUrl: frameUrlByCluster.get(row.cluster_id) ?? null,
+        frameUrl: evidence?.url ?? null,
+        frameBox: evidence?.box ?? null,
+        frameLabel: evidence?.label ?? null,
         report: reportId ? (reportById.get(reportId) ?? null) : null,
       });
     }
@@ -351,7 +403,7 @@ export default async function VideoPipelinePage({ params }: PageProps) {
   ];
 
   return (
-    <ClipStudioProvider clips={theaterClips}>
+    <ClipStudioProvider clips={theaterClips} slug={slug}>
       <main className="mx-auto max-w-5xl space-y-6 p-6">
         <header>
           <h1 className="text-xl font-semibold">
@@ -377,11 +429,11 @@ export default async function VideoPipelinePage({ params }: PageProps) {
           {clusterRows.length > 0 ? (
             <div className="overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface">
               {clusterRows.map((cluster, idx) => {
-                const frameUrl = frameUrlByCluster.get(cluster.id) ?? null;
+                const evidence = frameByCluster.get(cluster.id) ?? null;
                 const report = cluster.report_id
                   ? (reportById.get(cluster.report_id) ?? null)
                   : null;
-                const thumbUrl = frameUrl ?? report?.imageUrl ?? null;
+                const thumbUrl = evidence?.url ?? report?.imageUrl ?? null;
                 return (
                   <div
                     key={cluster.id}
@@ -389,14 +441,17 @@ export default async function VideoPipelinePage({ params }: PageProps) {
                   >
                     <div className="relative h-20 w-28 flex-shrink-0 overflow-hidden rounded-[var(--radius-md)] border border-hairline bg-overlay">
                       {thumbUrl ? (
-                        // Signed private-bucket frames aren't in next/image
-                        // remotePatterns — a plain img keeps this staff surface
-                        // free of config churn.
-                        // biome-ignore lint/performance/noImgElement: signed one-off URLs
-                        <img
+                        // Click opens the WHOLE frame with the detector's box
+                        // drawn back on it — the thumbnail crops away the
+                        // context that makes the box readable.
+                        <EvidenceFrameButton
                           src={thumbUrl}
+                          box={evidence?.box ?? null}
+                          label={evidence?.label}
                           alt={`Evidence frame for ${cluster.class}`}
-                          className="h-full w-full object-cover"
+                          title={cluster.class}
+                          subtitle={`${cluster.max_confidence.toFixed(2)} confidence · ${cluster.frame_count} frames`}
+                          className="h-full w-full"
                         />
                       ) : (
                         <span className="flex h-full w-full items-center justify-center text-faint">

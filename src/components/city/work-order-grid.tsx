@@ -9,6 +9,7 @@ import {
   type GridReadyEvent,
   type ICellRendererParams,
   ModuleRegistry,
+  type RowClassRules,
   themeQuartz,
   type ValueFormatterParams,
   type ValueGetterParams,
@@ -913,6 +914,7 @@ export function WorkOrderGrid({
   crews = [],
   crewTypes = DEFAULT_CREW_TYPES,
   canAssign = false,
+  focusReportId = null,
 }: {
   rows: GridReportRow[];
   cityId?: string;
@@ -921,6 +923,8 @@ export function WorkOrderGrid({
   // filter/edit dropdown can show and select custom types with no work order.
   crewTypes?: CrewTypeDef[];
   canAssign?: boolean;
+  /** `?report=<id>` deep link (video console rail) — scroll to it and flag it. */
+  focusReportId?: string | null;
 }) {
   const { theme } = useTheme();
   const gridTheme = theme === "dark" ? gridThemeDark : gridThemeLight;
@@ -1011,6 +1015,30 @@ export function WorkOrderGrid({
 
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  // Deep-link focus. `gridReady` exists because gridApiRef is a ref: without a
+  // state flip the focus effect can run before onGridReady and silently no-op.
+  const [gridReady, setGridReady] = useState(false);
+  const [focusId, setFocusId] = useState<string | null>(focusReportId ?? null);
+  const [focusMissId, setFocusMissId] = useState<string | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const rowClassRules = useMemo<RowClassRules<GridReportRow>>(
+    () => ({ "wo-row-focus": (p) => p.data?.report_id === highlightId }),
+    [highlightId],
+  );
+
+  useEffect(() => {
+    setFocusId(focusReportId ?? null);
+    setFocusMissId(null);
+  }, [focusReportId]);
+
+  useEffect(
+    () => () => {
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    },
+    [],
+  );
   // Page size: base 25, user-selectable 25/50/100/All. "all" resolves to the
   // current filtered row count so pagination collapses to one page.
   const [pageChoice, setPageChoice] = useState<PageChoice>(25);
@@ -1044,6 +1072,54 @@ export function WorkOrderGrid({
   // "All" ⇒ one page holding every filtered row (min 1 — AG Grid rejects 0).
   const effectivePageSize =
     pageChoice === "all" ? Math.max(filtered.length, 1) : pageChoice;
+
+  // Land the `?report=` deep link: page to the row, scroll it into view, flag
+  // it briefly. Membership in the full row set is checked FIRST, so an id this
+  // city simply doesn't have produces a notice instead of clearing the
+  // operator's filters for nothing.
+  useEffect(() => {
+    const api = gridApiRef.current;
+    if (!focusId || !gridReady || !api) return;
+    if (!data.some((r) => r.report_id === focusId)) {
+      setFocusMissId(focusId);
+      setFocusId(null);
+      return;
+    }
+    if (!filtered.some((r) => r.report_id === focusId)) {
+      // Present but filtered out — widen back to everything; this effect
+      // re-runs on the recomputed `filtered` and finishes the job.
+      setQuery("");
+      setStatusFilter("");
+      return;
+    }
+    setHighlightId(focusId);
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    highlightTimerRef.current = setTimeout(() => setHighlightId(null), 4000);
+    setFocusId(null);
+  }, [focusId, gridReady, data, filtered]);
+
+  // Page to the flagged row and paint it. Keyed on `filtered`/page size too,
+  // so a later row-data or filter change re-lands it instead of leaving the
+  // operator on page 1 with nothing flagged. AG Grid evaluates rowClassRules
+  // only when it BUILDS a row, hence the explicit redraw.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `filtered` is a re-run trigger, not a read — the row set changing under a live highlight has to re-land it
+  useEffect(() => {
+    const api = gridApiRef.current;
+    if (!highlightId || !api) return;
+    // A frame's grace: AG Grid applies new rowData on its own schedule, and a
+    // goToPage issued before that is clamped back to page 0.
+    const raf = requestAnimationFrame(() => {
+      const node = api.getRowNode(highlightId);
+      // rowIndex is the DISPLAYED index (sort applied) — paging off the
+      // `filtered` array index would land on whatever row sorted into that
+      // slot instead.
+      if (!node || node.rowIndex === null) return;
+      api.paginationGoToPage(Math.floor(node.rowIndex / effectivePageSize));
+      api.ensureNodeVisible(node, "middle");
+      api.redrawRows();
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [highlightId, filtered, effectivePageSize]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -1395,6 +1471,29 @@ export function WorkOrderGrid({
         </div>
       </div>
 
+      {focusMissId && (
+        // The deep link pointed at a report this city's grid doesn't hold
+        // (wrong city, or deleted) — say it quietly rather than doing nothing.
+        <div
+          role="status"
+          data-testid="grid-focus-missing"
+          className="mx-3 flex items-center gap-2 rounded-[var(--radius-md)] border border-hairline bg-overlay px-3 py-2 text-xs text-subtle sm:mx-4 lg:mx-6"
+        >
+          <CircleAlert className="h-3.5 w-3.5 shrink-0 text-faint" />
+          <span className="min-w-0 flex-1">
+            Report <span className="font-mono">{focusMissId.slice(0, 8)}</span>{" "}
+            isn&apos;t in this grid.
+          </span>
+          <button
+            type="button"
+            onClick={() => setFocusMissId(null)}
+            className="shrink-0 underline underline-offset-2 transition-colors hover:text-foreground"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       <div ref={gridWrapRef} className="wo-grid relative min-h-0 flex-1">
         <AgGridReact<GridReportRow>
           theme={gridTheme}
@@ -1404,9 +1503,11 @@ export function WorkOrderGrid({
           rowHeight={44}
           headerHeight={36}
           getRowId={(p) => p.data.report_id}
+          rowClassRules={rowClassRules}
           context={gridContext}
           onGridReady={(e: GridReadyEvent<GridReportRow>) => {
             gridApiRef.current = e.api;
+            setGridReady(true);
             mountPagingSlot();
           }}
           onPaginationChanged={mountPagingSlot}

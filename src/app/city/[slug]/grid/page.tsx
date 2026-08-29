@@ -12,6 +12,8 @@ import { isStaffForCity } from "@/lib/staff-access";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  /** `?report=<id>` — deep link from the video console's detection rail. */
+  searchParams?: Promise<{ report?: string }>;
 }
 
 export async function generateMetadata({
@@ -46,8 +48,12 @@ async function requireStaffFor(slug: string): Promise<void> {
   redirect(`/login?redirect=/city/${slug}/grid`);
 }
 
-export default async function CityGridPage({ params }: PageProps) {
+export default async function CityGridPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { slug } = await params;
+  const { report: focusReportId } = (await searchParams) ?? {};
 
   // Resolve the city the same way the dashboard page does: real DB row first,
   // falling back to the synthetic KNOWN_CITIES entry so demo slugs still resolve.
@@ -100,6 +106,7 @@ export default async function CityGridPage({ params }: PageProps) {
         crews={crews}
         crewTypes={crewTypes}
         canAssign={canAssign}
+        focusReportId={focusReportId ?? null}
       />
     </div>
   );

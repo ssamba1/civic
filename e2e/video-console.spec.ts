@@ -142,3 +142,64 @@ test("the detector overlay draws boxes while the clip plays", async ({
     .poll(() => rects.count(), { timeout: 25_000 })
     .toBeGreaterThan(0);
 });
+
+test("clicking a rail card with a report opens it in the work-order grid", async ({
+  page,
+}) => {
+  await openTheater(page);
+
+  // Count-agnostic, like the rest of this spec: take whichever rail card the
+  // seed gave a dispatched report to. Candidate clusters have nothing to open
+  // and deliberately render no link.
+  const opener = page.locator('[data-testid="detection-open"]').first();
+  test.skip(
+    (await opener.count()) === 0,
+    "no seeded detection produced a report",
+  );
+  const href = await opener.getAttribute("href");
+  expect(href).toMatch(/\/city\/cumming\/grid\?report=[0-9a-f-]+$/);
+
+  await opener.click();
+  await page.waitForURL(/\/grid\?report=/);
+  // The landing row is flagged, not merely scrolled to.
+  await expect(page.locator(".wo-row-focus").first()).toBeVisible({
+    timeout: 20_000,
+  });
+});
+
+test("clicking the timestamp seeks instead of navigating away", async ({
+  page,
+}) => {
+  await openTheater(page);
+  const items = railItems(page);
+  const count = await items.count();
+  const target = items.nth(Math.min(count - 1, Math.floor(count / 2)));
+  const ts = Number.parseFloat(
+    (await target.locator('[data-testid="detection-ts"]').textContent()) ?? "",
+  );
+  expect(Number.isFinite(ts)).toBe(true);
+
+  await target.locator('[data-testid="detection-ts"]').click();
+
+  await expect
+    .poll(() => currentTime(page), { timeout: 15_000 })
+    .toBeGreaterThan(ts - 0.75);
+  // Seeking must not have followed the card's report link.
+  expect(new URL(page.url()).pathname).toBe(VIDEO_PATH);
+});
+
+test("opening an evidence thumbnail shows the full frame with its box", async ({
+  page,
+}) => {
+  await openTheater(page);
+
+  const thumb = page
+    .getByRole("button", { name: /^Open evidence frame for/ })
+    .first();
+  test.skip((await thumb.count()) === 0, "no cluster has a signed frame URL");
+  await thumb.click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator('[data-testid="evidence-box"]')).toHaveCount(1);
+});
