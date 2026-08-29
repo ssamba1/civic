@@ -2,6 +2,18 @@ import { getCategoryOverridesSnapshot } from "@/lib/category-overrides";
 import type { ReportCategory } from "@/lib/types";
 
 /* ------------------------------------------------------------------
+   Team palette: 10 chromatic identities generated in OKLCH at a constant
+   L=0.63 with C = min(0.185, 90% of the in-gamut maximum for that hue), so
+   no single team out-shouts the rest while each stays vivid enough to read
+   as a 6px dot on both --surface values (#fff / #101012). Hues keep their
+   semantic anchor (water=cyan, stormwater=blue, parks=green, lighting=gold).
+   Code Enforcement is the one reassignment: it had no meaningful hue (near-
+   grey #b6b6bc, indistinguishable from All Teams and General Admin), so it
+   took the open teal slot. All Teams and General Admin stay deliberately
+   neutral (aggregate / triage) and are separated by lightness, not hue.
+   Used as TEXT anywhere? Mix toward --team-text-mix (see globals.css) —
+   the raw hues sit at ~3.3-3.9:1 on white, which is graphic-only contrast.
+
    Civil teams — based on US municipal department research.
    Each team owns specific report categories and auto-receives reports
    matching their assigned categories via categoryToTeam().
@@ -36,7 +48,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "all",
     label: "All Teams (Admin View)",
     shortLabel: "All Teams",
-    color: "#9a9aa0",
+    color: "#91919b",
     icon: "users",
     duties: "Citywide oversight across every department.",
     categories: [],
@@ -45,7 +57,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "streets_roads",
     label: "Streets & Roads Division",
     shortLabel: "Streets & Roads",
-    color: "#b0574c",
+    color: "#e35044",
     icon: "construction",
     duties:
       "Pothole repair, milling, repaving, full street reconstruction. Curb/gutter, lane markings, asphalt and concrete maintenance.",
@@ -55,7 +67,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "sidewalks_ada",
     label: "Sidewalk & ADA Compliance Division",
     shortLabel: "Sidewalks & ADA",
-    color: "#c07a3c",
+    color: "#c57124",
     icon: "footprints",
     duties:
       "Sidewalk repair and replacement. Curb ramp installation and upgrades. ADA accessibility audits and trip hazard remediation.",
@@ -65,7 +77,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "stormwater",
     label: "Stormwater / Drainage Division",
     shortLabel: "Stormwater",
-    color: "#5b6b8c",
+    color: "#5082f4",
     icon: "waves",
     duties:
       "Catch basin cleaning, storm pipe maintenance, flood mitigation. 24/7 emergency response to localized flooding and stormwater pollution.",
@@ -75,7 +87,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "water_utilities",
     label: "Water & Utilities Division",
     shortLabel: "Water & Utilities",
-    color: "#5f8ba6",
+    color: "#2995c0",
     icon: "droplets",
     duties:
       "Water main breaks, leak detection, fire hydrant maintenance. Potable and reclaimed water distribution systems.",
@@ -85,7 +97,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "street_lighting",
     label: "Street Lighting Division",
     shortLabel: "Street Lighting",
-    color: "#ad8434",
+    color: "#a48525",
     icon: "lightbulb",
     duties:
       "Streetlight repair, replacement, new installations. Energy efficiency upgrades and outage response.",
@@ -95,7 +107,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "traffic_engineering",
     label: "Traffic Engineering & Signals Division",
     shortLabel: "Traffic Engineering",
-    color: "#7c6f9c",
+    color: "#9c68e6",
     icon: "sign-post",
     duties:
       "Traffic signal installation/timing. Road pavement markings, signage, crosswalk safety, school zone systems.",
@@ -105,7 +117,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "parks_forestry",
     label: "Parks & Recreation / Urban Forestry",
     shortLabel: "Parks & Forestry",
-    color: "#4d8a6a",
+    color: "#2ba06e",
     icon: "tree-pine",
     duties:
       "Park facility maintenance. Right-of-way tree trimming, removal, planting. Irrigation, turf, landscaping.",
@@ -115,7 +127,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "graffiti_abatement",
     label: "Graffiti Abatement / Community Beautification",
     shortLabel: "Graffiti Abatement",
-    color: "#a3647e",
+    color: "#d052a8",
     icon: "spray-can",
     duties:
       "Graffiti removal from public infrastructure and city facilities. Coordinates with code enforcement and law enforcement.",
@@ -125,7 +137,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "code_enforcement",
     label: "Code Enforcement Division",
     shortLabel: "Code Enforcement",
-    color: "#b6b6bc",
+    color: "#2a9b9c",
     icon: "shield-alert",
     duties:
       "Property maintenance violations, illegal dumping, derelict buildings, inoperable vehicles, unpermitted construction.",
@@ -135,7 +147,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "environmental_services",
     label: "Environmental Services / Solid Waste",
     shortLabel: "Environmental Services",
-    color: "#7f8a45",
+    color: "#6a9a25",
     icon: "trash-2",
     duties:
       "Trash and recycling collection. Illegal dumping cleanup, bulky item pickup, household hazardous waste disposal, public debris.",
@@ -145,7 +157,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "general_admin",
     label: "General Administration / 311 Triage",
     shortLabel: "General Admin",
-    color: "#6f6f75",
+    color: "#787783",
     icon: "help-circle",
     duties:
       "Initial triage for uncategorized reports. Routes to appropriate department after manual review.",

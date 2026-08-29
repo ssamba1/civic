@@ -103,7 +103,7 @@ export function buildCategoryTeamDisplay(
       map[category] = {
         teamKey: owner.teamKey,
         label: owner.label,
-        color: TEAMS[owner.teamKey as TeamId]?.color ?? "#6f6f75",
+        color: TEAMS[owner.teamKey as TeamId]?.color ?? "#787783",
       };
       continue;
     }

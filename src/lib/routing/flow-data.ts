@@ -212,7 +212,7 @@ export async function fetchRoutingFlowData(
     teamMap.set(crew.teamKey, {
       key: crew.teamKey,
       label: meta?.shortLabel ?? crew.teamKey.replace(/_/g, " "),
-      color: meta?.color ?? "#9a9aa0",
+      color: meta?.color ?? "#91919b",
       categories: [],
     });
   }

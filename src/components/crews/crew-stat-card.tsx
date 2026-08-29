@@ -21,7 +21,7 @@ import { isValidTeamId, TEAMS } from "@/lib/teams";
    ================================================================== */
 
 function teamColor(teamKey: string): string {
-  return isValidTeamId(teamKey) ? TEAMS[teamKey].color : "#9a9aa0";
+  return isValidTeamId(teamKey) ? TEAMS[teamKey].color : "#91919b";
 }
 
 /** Catalog label for a type key; orphan keys (deleted catalog row) fall back

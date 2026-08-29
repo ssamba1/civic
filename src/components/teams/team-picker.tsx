@@ -82,14 +82,14 @@ export function TeamPicker({
         </span>
         <span
           className="truncate"
-          // Darken the brand hue ~42% for the label text so it clears WCAG AA
-          // (≥4.5:1) on the light surface — several team colors fail as small
-          // text at full brightness, and the light-gray ones (e.g. Code
-          // Enforcement #b6b6bc) still sat at 3.81:1 at 32%. The icon tint chip
-          // (line 79) keeps the full brand color.
+          // Pull the brand hue toward --team-text-mix so the label clears WCAG
+          // AA (≥4.5:1) on --surface in BOTH themes: black on light, white on
+          // dark. The old hardcoded `#000 42%` was only right on white and
+          // rendered near-invisible dark-on-dark. The icon tint chip (above)
+          // keeps the full brand color — it is a graphic, not text.
           style={{
             maxWidth: labelMaxWidth,
-            color: `color-mix(in srgb, ${team.color}, #000 42%)`,
+            color: `color-mix(in srgb, ${team.color}, var(--team-text-mix) var(--team-text-amount))`,
           }}
         >
           {team.shortLabel}

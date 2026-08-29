@@ -65,7 +65,7 @@ function teamShortLabel(teamKey: string): string {
   return isValidTeamId(teamKey) ? TEAMS[teamKey].shortLabel : teamKey;
 }
 function teamColor(teamKey: string): string {
-  return isValidTeamId(teamKey) ? TEAMS[teamKey].color : "#9a9aa0";
+  return isValidTeamId(teamKey) ? TEAMS[teamKey].color : "#91919b";
 }
 
 type DialogState = { mode: "create" } | { mode: "edit"; crew: CrewRow } | null;
