@@ -78,66 +78,71 @@ export function UploadDocument({
     <section className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-4">
       <h2 className={`${EYEBROW} mb-3`}>Add document</h2>
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_10rem]">
-        <div>
-          <label className="sr-only" htmlFor={titleId}>
-            Document title
-          </label>
-          <input
-            id={titleId}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Title (defaults to the filename)"
-            className={FIELD}
-          />
+      {/* One field group — title/kind row, contractor, file — on a single
+          uniform gap so the bolted-on contractor select reads as part of the
+          form rather than an afterthought. */}
+      <div className="space-y-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_10rem]">
+          <div>
+            <label className="sr-only" htmlFor={titleId}>
+              Document title
+            </label>
+            <input
+              id={titleId}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Title (defaults to the filename)"
+              className={FIELD}
+            />
+          </div>
+          <div>
+            <label className="sr-only" htmlFor={kindId}>
+              Document kind
+            </label>
+            <select
+              id={kindId}
+              value={docKind}
+              onChange={(e) => setDocKind(e.target.value as DocKind)}
+              className={FIELD}
+            >
+              {DOC_KINDS.map((kind) => (
+                <option key={kind} value={kind}>
+                  {DOC_KIND_LABEL[kind]}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div>
-          <label className="sr-only" htmlFor={kindId}>
-            Document kind
-          </label>
-          <select
-            id={kindId}
-            value={docKind}
-            onChange={(e) => setDocKind(e.target.value as DocKind)}
-            className={FIELD}
-          >
-            {DOC_KINDS.map((kind) => (
-              <option key={kind} value={kind}>
-                {DOC_KIND_LABEL[kind]}
-              </option>
-            ))}
-          </select>
-        </div>
+
+        {contractors.length > 0 && (
+          <div>
+            <label className="sr-only" htmlFor={contractorId}>
+              Contractor this document concerns
+            </label>
+            <select
+              id={contractorId}
+              value={contractor}
+              onChange={(e) => setContractor(e.target.value)}
+              className={FIELD}
+            >
+              <option value="">No contractor — general city document</option>
+              {contractors.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".txt,.md,text/plain,text/markdown"
+          aria-label="Document file"
+          className="w-full text-[13px] text-subtle file:mr-2 file:h-7 file:rounded-md file:border file:border-hairline-strong file:bg-transparent file:px-2 file:text-[12px] file:text-foreground"
+        />
       </div>
-
-      {contractors.length > 0 && (
-        <div className="mt-2">
-          <label className="sr-only" htmlFor={contractorId}>
-            Contractor this document concerns
-          </label>
-          <select
-            id={contractorId}
-            value={contractor}
-            onChange={(e) => setContractor(e.target.value)}
-            className={FIELD}
-          >
-            <option value="">No contractor — general city document</option>
-            {contractors.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      <input
-        ref={fileRef}
-        type="file"
-        accept=".txt,.md,text/plain,text/markdown"
-        aria-label="Document file"
-        className="mt-2 w-full text-[13px] text-subtle file:mr-2 file:h-7 file:rounded-md file:border file:border-hairline-strong file:bg-transparent file:px-2 file:text-[12px] file:text-foreground"
-      />
 
       <label className={`${EYEBROW} mt-3 mb-1.5 block`} htmlFor={pasteId}>
         or paste text
@@ -288,12 +293,14 @@ export function RetrievalTester({ slug }: { slug: string }) {
 
       {results && results.length > 0 && (
         <ol className="mt-3 grid gap-2 2xl:grid-cols-2">
-          {results.map((chunk) => (
+          {results.map((chunk, idx) => (
             <li
               key={chunk.chunkId}
               className="rounded-[var(--radius-md)] border border-hairline bg-overlay/40 p-3"
             >
-              <div className="mb-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              {/* Title + section heading on one baseline; rank carries its
+                  ordinal so "0.0973" reads as a score, not a mystery. */}
+              <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <span className="text-[13px] font-medium text-foreground">
                   {chunk.documentTitle}
                 </span>
@@ -305,8 +312,11 @@ export function RetrievalTester({ slug }: { slug: string }) {
                 <span className={EYEBROW}>
                   {DOC_KIND_LABEL[chunk.docKind as DocKind]}
                 </span>
-                <span className="ml-auto font-mono text-[11px] tabular-nums text-faint">
-                  {chunk.rank.toFixed(4)}
+                <span
+                  className="ml-auto font-mono text-[11px] tabular-nums text-faint"
+                  title="Full-text match score — higher ranks first"
+                >
+                  #{idx + 1} · {chunk.rank.toFixed(3)}
                 </span>
               </div>
               <p className="max-w-[90ch] text-[13px] leading-relaxed whitespace-pre-wrap text-subtle">

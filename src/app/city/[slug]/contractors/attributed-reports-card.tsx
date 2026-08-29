@@ -66,14 +66,25 @@ function statusChip(status: string): { cls: string; label: string } {
   return { cls: toneChipClass("neutral"), label: titleize(status) };
 }
 
-function ReportRow({ r }: { r: ContractorLiableReport }) {
+function ReportRow({
+  r,
+  className,
+}: {
+  r: ContractorLiableReport;
+  className?: string;
+}) {
   const meta = r.category
     ? (CATEGORY_META[r.category as ReportCategory] ?? null)
     : null;
   const chip = statusChip(r.status);
   const verdictTone = VERDICT_TONE[r.verdict] ?? "neutral";
   return (
-    <li className="border-b border-hairline px-4 py-3 last:border-b-0 sm:px-5">
+    <li
+      className={cn(
+        "border-b border-hairline px-4 py-3 last:border-b-0 sm:px-5",
+        className,
+      )}
+    >
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
         <span className="flex items-center gap-1.5 font-medium text-foreground">
           <span
@@ -88,7 +99,7 @@ function ReportRow({ r }: { r: ContractorLiableReport }) {
         </span>
         <span
           className={cn(
-            "rounded-[var(--radius-md)] px-2 py-0.5 text-[11px] font-medium",
+            "shrink-0 rounded-[var(--radius-md)] px-2 py-0.5 text-[11px] font-medium",
             chip.cls,
           )}
         >
@@ -183,9 +194,10 @@ export function AttributedReportsCard({
         title={`Attributed reports (${reports.length})`}
         className="max-w-2xl"
       >
-        <ul className="custom-scrollbar -mx-5 max-h-[60vh] overflow-y-auto border-t border-hairline">
+        <ul className="custom-scrollbar -mx-5 -mb-5 max-h-[60vh] overflow-y-auto overscroll-contain border-t border-hairline">
           {reports.map((r) => (
-            <ReportRow key={r.reportId} r={r} />
+            // Match the modal's fixed p-5 gutter at every breakpoint.
+            <ReportRow key={r.reportId} r={r} className="px-5" />
           ))}
         </ul>
       </Modal>

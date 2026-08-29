@@ -76,7 +76,9 @@ function buildTip(w: TeamWorkload) {
     w.total > 0 ? Math.round((w.closedCount / w.total) * 100) : 0;
   return {
     title: team.label,
-    accent: team.color,
+    // Softened toward the surface so the tip's accent strip/dot reads as a
+    // quiet identity cue, not a hard saturated edge.
+    accent: `color-mix(in srgb, ${team.color} 60%, var(--surface))`,
     body: (
       <div className="flex flex-col gap-1.5">
         <p className="text-[11px] text-faint leading-snug">{team.duties}</p>
@@ -154,7 +156,10 @@ function TeamCard({
       style={
         isSelected
           ? {
-              boxShadow: `0 0 0 1px ${team.color}66, 0 8px 24px ${team.color}22`,
+              // Soft team-identity ring: color-mix keeps it a whisper of the
+              // team hue instead of a saturated border; elevation stays on
+              // the shared card shadow token.
+              boxShadow: `0 0 0 1px color-mix(in srgb, ${team.color} 28%, transparent), var(--shadow-card)`,
             }
           : undefined
       }

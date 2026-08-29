@@ -233,15 +233,18 @@ function buildTip(w: TeamWorkload) {
   const team = TEAMS[w.teamId];
   const closureRate =
     w.total > 0 ? Math.round((w.closedCount / w.total) * 100) : 0;
+  // Softened toward the surface — quiet identity cue, not a saturated edge.
+  // Mirrors team-roster's buildTip so both tips read identically.
+  const softAccent = `color-mix(in srgb, ${team.color} 60%, var(--surface))`;
   return {
     title: team.shortLabel,
-    accent: team.color,
+    accent: softAccent,
     body: (
       <div className="flex flex-col gap-1.5">
         <TipRow
           label="Total"
           value={w.total.toLocaleString()}
-          accent={team.color}
+          accent={softAccent}
         />
         <TipRow
           label="Open"

@@ -146,7 +146,11 @@ export default async function CityDocumentsPage({ params }: PageProps) {
                         <p className="truncate text-[13px] font-medium text-foreground">
                           {row.title}
                         </p>
-                        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-subtle">
+                        {/* One quiet metadata line — everything text-faint so
+                            the title above stays primary; the vendor link is
+                            a shade warmer with a hairline dotted underline
+                            instead of shouting over its neighbors. */}
+                        <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[12px] text-faint">
                           <span className={EYEBROW}>
                             {DOC_KIND_LABEL[row.doc_kind] ?? row.doc_kind}
                           </span>
@@ -157,17 +161,15 @@ export default async function CityDocumentsPage({ params }: PageProps) {
                             contractorName.has(row.contractor_id) && (
                               <Link
                                 href={`/city/${slug}/contractors/${row.contractor_id}`}
-                                className="underline decoration-dotted underline-offset-2 transition-colors hover:text-foreground"
+                                className="text-subtle underline decoration-hairline-strong decoration-dotted underline-offset-2 transition-colors hover:text-foreground hover:decoration-current"
                               >
                                 {contractorName.get(row.contractor_id)}
                               </Link>
                             )}
-                          <span className="tabular-nums text-faint">
+                          <span className="tabular-nums">
                             {timeAgo(row.created_at)}
                           </span>
-                          <span className="truncate text-faint">
-                            {row.filename}
-                          </span>
+                          <span className="truncate">{row.filename}</span>
                         </p>
                       </div>
                       <DeleteDocumentButton

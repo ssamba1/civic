@@ -209,24 +209,26 @@ export default async function ContractorDetailPage({ params }: PageProps) {
                         key={job.id}
                         className="border-b border-hairline px-4 py-3 last:border-b-0 sm:px-5"
                       >
-                        <p className="flex flex-wrap items-baseline gap-x-2 text-[13px] font-medium text-foreground">
-                          {job.contractRef && (
-                            <span className="font-mono">
-                              #{job.contractRef}
-                            </span>
-                          )}
-                          <span>{titleize(job.jobType)}</span>
-                          <span className="font-normal text-faint">
-                            completed {formatDate(job.completedAt)}
+                        <p className="flex items-baseline justify-between gap-x-3 text-[13px]">
+                          <span className="flex min-w-0 flex-wrap items-baseline gap-x-2 font-medium text-foreground">
+                            {job.contractRef && (
+                              <span className="font-mono">
+                                #{job.contractRef}
+                              </span>
+                            )}
+                            <span>{titleize(job.jobType)}</span>
                           </span>
                           {job.contractValueCents != null && (
-                            <span className="font-normal tabular-nums text-subtle">
+                            <span className="shrink-0 tabular-nums text-subtle">
                               $
                               {Math.round(
                                 job.contractValueCents / 100,
                               ).toLocaleString()}
                             </span>
                           )}
+                        </p>
+                        <p className="mt-0.5 text-[12px] text-faint">
+                          Completed {formatDate(job.completedAt)}
                         </p>
                         {job.description && (
                           <p className="mt-1 max-w-[90ch] text-[13px] leading-relaxed text-subtle">
@@ -245,13 +247,14 @@ export default async function ContractorDetailPage({ params }: PageProps) {
                                 >
                                   <WarrantyChip live={live} />
                                   <span>{titleize(w.warrantyType)}</span>
-                                  <span className="tabular-nums text-faint">
+                                  <span className="whitespace-nowrap tabular-nums text-faint">
                                     {formatDate(w.startsOn)} →{" "}
                                     {formatDate(w.endsOn)}
                                     {live && days != null && ` (${days}d left)`}
                                   </span>
                                   {w.coversCategories && (
                                     <span className="text-faint">
+                                      <span aria-hidden="true">·</span>
                                       covers{" "}
                                       {w.coversCategories
                                         .map(titleize)
@@ -259,7 +262,8 @@ export default async function ContractorDetailPage({ params }: PageProps) {
                                     </span>
                                   )}
                                   {w.bondRef && (
-                                    <span className="font-mono text-faint">
+                                    <span className="whitespace-nowrap font-mono text-faint">
+                                      <span aria-hidden="true">·</span>
                                       bond {w.bondRef}
                                     </span>
                                   )}
