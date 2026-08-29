@@ -40,18 +40,18 @@ export default async function CityContractorsPage({ params }: PageProps) {
   const cityName = dbCity?.name ?? known.name;
 
   return (
-    // Same page shell as the Documents tab: 1800px column, mobile header
-    // offset, hairline footer.
-    <div className="flex flex-col min-h-dvh bg-background">
-      <div className="flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
+    // Same page shell as the Members tab — the two rosters read as one
+    // surface.
+    <div className="relative flex flex-col min-h-dvh bg-background">
+      <div className="relative flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
         <section className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
             Contractors
           </h1>
-          <p className="max-w-[80ch] text-[13px] text-faint">
-            Vendors under agreement with {cityName}: their capital jobs,
-            warranty windows, filed documents, and the reports currently
-            attributed to them.
+          <p className="text-[13px] text-faint">
+            Vendors under agreement with {cityName} — capital jobs, warranty
+            windows, filed documents, attributed reports.
+            {access === "demo" && " Demo session — vendor emails are masked."}
           </p>
         </section>
 
@@ -61,13 +61,6 @@ export default async function CityContractorsPage({ params }: PageProps) {
           loadError={rows.ok ? null : rows.error}
         />
       </div>
-
-      <footer className="border-t border-hairline mt-10 pb-safe">
-        <div className="mx-auto flex max-w-[1800px] flex-col items-center justify-between gap-3 px-3 py-6 text-[13px] text-faint sm:flex-row sm:px-4 lg:px-6">
-          <span>Civic</span>
-          <span>&copy; {new Date().getFullYear()} · Open311 compatible</span>
-        </div>
-      </footer>
     </div>
   );
 }

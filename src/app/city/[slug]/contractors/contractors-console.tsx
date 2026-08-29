@@ -1,25 +1,35 @@
 "use client";
 
-/**
- * Client console for the Contractors workspace list: text search, status and
- * warranty filters over the server-fetched rows (vendor counts are tens, so
- * filtering is client-side), each row linking into the detail page.
- * Utilitarian staff ops surface, same register as the Documents console.
- */
-import { HardHat, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import Link from "next/link";
 import { useId, useMemo, useState } from "react";
 import type { ContractorListRow } from "@/lib/db/contractors";
+import { cn } from "@/lib/utils/cn";
 
-const EYEBROW =
-  "font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-faint";
-const FIELD =
-  "h-8 rounded-md border border-hairline-strong bg-transparent px-2 text-[13px] text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60";
+/* ==================================================================
+   Contractors roster — deliberately a copy of the Members roster
+   (members-table.tsx): same search box, same filter-chip row, same
+   table shell, so the two workspace tabs read as one surface. Vendor
+   counts are tens, so filtering is client-side over the server rows.
+   ================================================================== */
 
-type StatusFilter = "all" | "active" | "inactive";
-type WarrantyFilter = "all" | "live" | "none";
+interface ContractorsConsoleProps {
+  slug: string;
+  rows: ContractorListRow[];
+  loadError: string | null;
+}
 
-function formatDate(isoDate: string): string {
+type Filter = "all" | "active" | "inactive" | "warranty";
+
+const FILTERS: ReadonlyArray<{ key: Filter; label: string }> = [
+  { key: "all", label: "All" },
+  { key: "active", label: "Active" },
+  { key: "inactive", label: "Inactive" },
+  { key: "warranty", label: "Live warranty" },
+];
+
+function formatDate(isoDate: string | null): string {
+  if (!isoDate) return "—";
   const t = Date.parse(`${isoDate.slice(0, 10)}T00:00:00Z`);
   if (Number.isNaN(t)) return isoDate;
   return new Date(t).toLocaleDateString(undefined, {
@@ -30,178 +40,222 @@ function formatDate(isoDate: string): string {
   });
 }
 
+// Grayscale status badge — same fill-weight language as the members RoleBadge.
+function StatusBadge({ active }: { active: boolean }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-[var(--radius-md)] border px-2 py-0.5 text-[11px] font-medium",
+        active
+          ? "border-hairline-strong bg-overlay-strong text-foreground"
+          : "border-hairline bg-overlay text-faint",
+      )}
+    >
+      {active ? "Active" : "Inactive"}
+    </span>
+  );
+}
+
 export function ContractorsConsole({
   slug,
   rows,
   loadError,
-}: {
-  slug: string;
-  rows: ContractorListRow[];
-  loadError: string | null;
-}) {
-  const searchId = useId();
-  const statusId = useId();
-  const warrantyId = useId();
+}: ContractorsConsoleProps) {
+  const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<StatusFilter>("all");
-  const [warranty, setWarranty] = useState<WarrantyFilter>("all");
+  const searchId = useId();
+
+  const counts = useMemo(() => {
+    const map: Record<Filter, number> = {
+      all: rows.length,
+      active: 0,
+      inactive: 0,
+      warranty: 0,
+    };
+    for (const r of rows) {
+      if (r.active) map.active += 1;
+      else map.inactive += 1;
+      if (r.liveWarranties > 0) map.warranty += 1;
+    }
+    return map;
+  }, [rows]);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return rows.filter((row) => {
-      if (status === "active" && !row.active) return false;
-      if (status === "inactive" && row.active) return false;
-      if (warranty === "live" && row.liveWarranties === 0) return false;
-      if (warranty === "none" && row.liveWarranties > 0) return false;
-      if (
-        q &&
-        !row.name.toLowerCase().includes(q) &&
-        !(row.email ?? "").toLowerCase().includes(q)
-      )
-        return false;
-      return true;
+    const needle = query.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (filter === "active" && !r.active) return false;
+      if (filter === "inactive" && r.active) return false;
+      if (filter === "warranty" && r.liveWarranties === 0) return false;
+      if (!needle) return true;
+      return (
+        r.name.toLowerCase().includes(needle) ||
+        (r.email ?? "").toLowerCase().includes(needle)
+      );
     });
-  }, [rows, query, status, warranty]);
+  }, [rows, filter, query]);
+
+  if (loadError) {
+    return (
+      <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface px-6 py-16 text-center shadow-[var(--shadow-card)]">
+        <p className="text-sm font-medium text-foreground">
+          Couldn't load contractors
+        </p>
+        <p className="mt-1.5 text-[13px] text-faint">
+          Something went wrong fetching the vendor list ({loadError}). Refresh
+          to try again.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <section className="overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface">
-      {/* Filter row */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-hairline px-4 py-3">
-        <div className="relative min-w-0 flex-1 basis-56">
+    <div className="flex flex-col gap-4">
+      {/* Search — same control as the members roster. */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div
+          className="flex flex-wrap items-center gap-1.5"
+          role="toolbar"
+          aria-label="Filter contractors"
+          aria-orientation="horizontal"
+        >
+          {FILTERS.map(({ key, label }) => {
+            const active = filter === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setFilter(key)}
+                className={[
+                  "inline-flex items-center gap-1.5 rounded-[var(--radius-md)] border px-2.5 h-8 text-[13px] font-medium",
+                  "transition-colors duration-150 outline-none",
+                  "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                  active
+                    ? "border-transparent bg-accent-soft text-accent-text"
+                    : "border-hairline bg-overlay text-subtle hover:bg-overlay-strong hover:text-foreground",
+                ].join(" ")}
+              >
+                {label}
+                <span
+                  className={[
+                    "tabular-nums text-[11px]",
+                    active ? "text-accent-text/70" : "text-faint",
+                  ].join(" ")}
+                >
+                  {counts[key]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="relative sm:w-64">
           <Search
-            className="pointer-events-none absolute top-1/2 left-2 h-3.5 w-3.5 -translate-y-1/2 text-faint"
+            className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-faint"
             strokeWidth={2}
             aria-hidden="true"
           />
-          <label className="sr-only" htmlFor={searchId}>
-            Search contractors
-          </label>
           <input
             id={searchId}
+            type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search name or email"
-            className={`${FIELD} w-full pl-7`}
+            aria-label="Search contractors by name or email"
+            className={[
+              "h-8 w-full rounded-[var(--radius-md)] border border-hairline bg-surface pl-8 pr-2.5 text-[13px] text-foreground",
+              "placeholder:text-faint outline-none transition-colors duration-150",
+              "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+            ].join(" ")}
           />
         </div>
-        <label className="sr-only" htmlFor={statusId}>
-          Status filter
-        </label>
-        <select
-          id={statusId}
-          value={status}
-          onChange={(e) => setStatus(e.target.value as StatusFilter)}
-          className={FIELD}
-        >
-          <option value="all">All statuses</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
-        <label className="sr-only" htmlFor={warrantyId}>
-          Warranty filter
-        </label>
-        <select
-          id={warrantyId}
-          value={warranty}
-          onChange={(e) => setWarranty(e.target.value as WarrantyFilter)}
-          className={FIELD}
-        >
-          <option value="all">Any warranty state</option>
-          <option value="live">Live warranty</option>
-          <option value="none">No live warranty</option>
-        </select>
-        <span className="ml-auto font-mono text-[11px] tabular-nums text-faint">
-          {filtered.length} of {rows.length}
-        </span>
       </div>
 
-      {loadError && (
-        <p className="px-4 py-6 text-[13px] text-pastel-blush-strong">
-          Contractor list failed to load: {loadError}
-        </p>
-      )}
-
-      {!loadError && rows.length === 0 && (
-        <div className="px-4 py-10 text-center">
-          <HardHat
-            className="mx-auto mb-2 h-5 w-5 text-faint"
-            strokeWidth={1.75}
-            aria-hidden="true"
-          />
-          <p className="text-[13px] text-subtle">
-            No contractors on file. Vendors appear here once a paving schedule
-            or contract import creates them.
-          </p>
-        </div>
-      )}
-
-      {!loadError && rows.length > 0 && filtered.length === 0 && (
-        <p className="px-4 py-6 text-[13px] text-subtle">
-          No contractors match the current filters.
-        </p>
-      )}
-
-      {!loadError && filtered.length > 0 && (
-        <ul>
-          {filtered.map((row, idx) => (
-            <li
-              key={row.id}
-              className={idx > 0 ? "border-t border-hairline" : ""}
-            >
-              <Link
-                href={`/city/${slug}/contractors/${row.id}`}
-                className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 transition-colors hover:bg-overlay"
-              >
-                <div className="min-w-0 flex-1 basis-64">
-                  <p className="flex items-center gap-2 text-[13px] font-medium text-foreground">
-                    <span className="truncate">{row.name}</span>
-                    <span
-                      className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[10px] uppercase tracking-wider ${
-                        row.active
-                          ? "border-hairline-strong text-subtle"
-                          : "border-hairline text-faint"
-                      }`}
-                    >
-                      {row.active ? "Active" : "Inactive"}
-                    </span>
+      {/* Roster table — same shell as members-table. */}
+      <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-card)]">
+        <table className="w-full min-w-[860px] border-collapse text-left text-[13px]">
+          <thead>
+            <tr className="border-b border-hairline text-[11px] uppercase tracking-wide text-faint">
+              <th scope="col" className="px-4 py-3 font-medium">
+                Contractor
+              </th>
+              <th scope="col" className="px-4 py-3 font-medium">
+                Status
+              </th>
+              <th scope="col" className="px-4 py-3 text-right font-medium">
+                Jobs
+              </th>
+              <th scope="col" className="px-4 py-3 text-right font-medium">
+                Live warranties
+              </th>
+              <th scope="col" className="px-4 py-3 font-medium">
+                Next expiry
+              </th>
+              <th scope="col" className="px-4 py-3 text-right font-medium">
+                Documents
+              </th>
+              <th scope="col" className="px-4 py-3 text-right font-medium">
+                Attributed reports
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-16 text-center">
+                  <p className="text-sm font-medium text-foreground">
+                    {rows.length === 0
+                      ? "No contractors on file"
+                      : "No contractors match"}
                   </p>
-                  {row.email && (
-                    <p className="mt-0.5 truncate text-[12px] text-faint">
-                      {row.email}
-                    </p>
-                  )}
-                </div>
-                <dl className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[12px] text-subtle">
-                  <div className="flex items-baseline gap-1.5">
-                    <dt className={EYEBROW}>Jobs</dt>
-                    <dd className="tabular-nums">{row.jobCount}</dd>
-                  </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <dt className={EYEBROW}>Live warranties</dt>
-                    <dd className="tabular-nums">{row.liveWarranties}</dd>
-                  </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <dt className={EYEBROW}>Docs</dt>
-                    <dd className="tabular-nums">{row.documentCount}</dd>
-                  </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <dt className={EYEBROW}>Attributed reports</dt>
-                    <dd className="tabular-nums">{row.liableReports}</dd>
-                  </div>
-                  {row.nextExpiry && (
-                    <div className="flex items-baseline gap-1.5">
-                      <dt className={EYEBROW}>Next expiry</dt>
-                      <dd className="tabular-nums">
-                        {formatDate(row.nextExpiry)}
-                      </dd>
+                  <p className="mt-1 text-[13px] text-faint">
+                    {rows.length === 0
+                      ? "Vendors appear here once a paving schedule or contract import creates them."
+                      : "Try a different filter or clear the search."}
+                  </p>
+                </td>
+              </tr>
+            ) : (
+              filtered.map((r) => (
+                <tr
+                  key={r.id}
+                  className="border-b border-hairline last:border-b-0 transition-colors duration-150 hover:bg-overlay"
+                >
+                  <td className="px-4 py-3 align-middle">
+                    <Link
+                      href={`/city/${slug}/contractors/${r.id}`}
+                      className="rounded-sm font-medium text-foreground underline-offset-2 outline-none transition-colors hover:text-accent-text hover:underline focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+                    >
+                      {r.name}
+                    </Link>
+                    <div className="text-[12px] text-faint">
+                      {r.email ?? "—"}
                     </div>
-                  )}
-                </dl>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+                  </td>
+                  <td className="px-4 py-3 align-middle">
+                    <StatusBadge active={r.active} />
+                  </td>
+                  <td className="px-4 py-3 align-middle text-right tabular-nums text-foreground">
+                    {r.jobCount}
+                  </td>
+                  <td className="px-4 py-3 align-middle text-right tabular-nums text-foreground">
+                    {r.liveWarranties}
+                  </td>
+                  <td className="px-4 py-3 align-middle tabular-nums text-subtle">
+                    {formatDate(r.nextExpiry)}
+                  </td>
+                  <td className="px-4 py-3 align-middle text-right tabular-nums text-foreground">
+                    {r.documentCount}
+                  </td>
+                  <td className="px-4 py-3 align-middle text-right tabular-nums text-foreground">
+                    {r.liableReports}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
