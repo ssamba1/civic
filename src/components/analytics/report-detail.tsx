@@ -9,6 +9,7 @@ import type {
 import { type CurrencyConfig, formatCost } from "@/lib/currency";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
+import { SEVERITY_HUE } from "@/lib/severity-colors";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import type { ReportStatus } from "@/lib/types";
 import { useCurrency } from "@/lib/use-currency";
@@ -29,15 +30,10 @@ import { timeAgo } from "@/lib/utils/time-ago";
    are module-private and not exported.
    ================================================================== */
 
-// Mirrors analytics-bento.tsx SEVERITY_COLORS byte-for-byte — same ordinal
-// urgency ramp built from the spec's muted enterprise tokens.
-const SEVERITY_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: "var(--fg-cyan-burst)",
-  2: "var(--color-success)",
-  3: "var(--color-warning)",
-  4: "var(--fg-neon-coral)",
-  5: "var(--color-danger)",
-};
+// The app-wide ordinal severity ramp (@/lib/severity-colors) — same map the
+// analytics donut, the work-order grid and the field view read, so a severity
+// chip reads identically everywhere.
+const SEVERITY_COLORS = SEVERITY_HUE;
 
 const SEVERITY_DESC: Record<1 | 2 | 3 | 4 | 5, string> = {
   1: "Cosmetic",

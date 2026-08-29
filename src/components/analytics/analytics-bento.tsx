@@ -49,6 +49,7 @@ import type {
   TrendPoint,
 } from "@/lib/analytics-data";
 import type { SlaRisk } from "@/lib/filters/derive";
+import { SEVERITY_HUE } from "@/lib/severity-colors";
 import { cn } from "@/lib/utils/cn";
 import { formatHours } from "@/lib/utils/time-ago";
 
@@ -1343,18 +1344,14 @@ interface SeverityDonutProps {
   data: SeveritySlice[];
 }
 
-// Ordinal urgency ramp (cool → warm) on the pastel-strong accent tokens —
-// severity IS a status field, so hue is warranted, and the ramp walks the
-// pastel wheel from calm sky to alarmed blush.
-// NOTE: no longer mirrors report-detail.tsx's SEVERITY_COLORS (that stays on
-// the semantic status tokens); dashboard-only recolor.
-const SEVERITY_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: "var(--pastel-sky-strong)",
-  2: "var(--pastel-mint-strong)",
-  3: "var(--pastel-butter-strong)",
-  4: "var(--pastel-peach-strong)",
-  5: "var(--pastel-blush-strong)",
-};
+// Severity ramp — the app-wide semantic one (@/lib/severity-colors), shared
+// with the work-order grid, work-order detail, the field view and the report
+// drawer. The donut deliberately does NOT use the decorative pastel ramp the
+// rest of this dashboard uses for its categorical series: severity encodes
+// STATE, not category, so it needs a monotonic low→high green→red ramp you can
+// read at a glance without the legend. Arcs, legend dots and tooltip accents
+// all read this one map.
+const SEVERITY_COLORS = SEVERITY_HUE;
 
 const SEVERITY_DESC: Record<1 | 2 | 3 | 4 | 5, string> = {
   1: "Cosmetic — graffiti, faded paint, no safety risk",
@@ -1417,7 +1414,6 @@ function renderDonut(
             cy={size / 2}
             r={r}
             fill="none"
-            stroke={SEVERITY_COLORS[s.severity]}
             strokeWidth={isHovered ? stroke * 1.18 : stroke}
             strokeDasharray={`${dash} ${c - dash}`}
             strokeDashoffset={-offset}
@@ -1430,6 +1426,9 @@ function renderDonut(
                 : undefined
             }
             style={{
+              // Via `style`, not the `stroke` presentation attribute:
+              // `color-mix()` (levels 2 and 4) is not reliably parsed there.
+              stroke: SEVERITY_COLORS[s.severity],
               opacity: isDim ? 0.32 : 1,
               transition: "stroke-width 160ms ease-out, opacity 160ms ease-out",
               cursor: bind ? "pointer" : undefined,

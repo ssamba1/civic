@@ -4,17 +4,8 @@ import { CloudOff, MapPin, Navigation } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import { useReportCorpus } from "@/lib/filters/context";
+import { severityHue } from "@/lib/severity-colors";
 import { timeAgo } from "@/lib/utils/time-ago";
-
-// Mirrors the work-order grid's severity ramp (kept local — it's a small,
-// presentation-only map, same as the grid's own copy).
-const SEVERITY_HUE: Record<number, string> = {
-  1: "var(--status-success-fg)",
-  2: "color-mix(in srgb, var(--status-success-fg) 55%, var(--status-warning-fg))",
-  3: "var(--status-warning-fg)",
-  4: "color-mix(in srgb, var(--status-warning-fg) 50%, var(--status-danger-fg))",
-  5: "var(--status-danger-fg)",
-};
 
 /* ==================================================================
    Field-crew view (NEXT_100 #52).
@@ -82,7 +73,7 @@ export default function FieldViewPage() {
         <ol className="flex flex-col gap-2.5">
           {open.map((r) => {
             const meta = CATEGORY_META[r.category] ?? CATEGORY_META.other;
-            const hue = SEVERITY_HUE[r.severity] ?? SEVERITY_HUE[3];
+            const hue = severityHue(r.severity);
             const mapsHref = `https://www.google.com/maps/search/?api=1&query=${r.location.lat},${r.location.lng}`;
             return (
               <li

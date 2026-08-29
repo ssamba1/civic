@@ -1,13 +1,19 @@
 "use client";
 
 import { ImageOff, MapPin, Wrench } from "lucide-react";
-import { useState, useTransition } from "react";
+import { type ReactNode, useEffect, useState, useTransition } from "react";
+import { EvidenceFrame } from "@/app/city/[slug]/video/evidence-frame";
 import { assignCrewToReport } from "@/app/staff/actions";
+import {
+  getReportEvidenceFrame,
+  type ReportEvidence,
+} from "@/app/staff/evidence-actions";
 import { LiabilityBadge } from "@/components/liability/liability-badge";
 import { teamIcon } from "@/components/teams/team-icon";
 import { formatCost } from "@/lib/currency";
 import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
 import type { GridCrewOption, GridReportRow } from "@/lib/dashboard-grid-data";
+import { SEVERITY_HUE, severityHue } from "@/lib/severity-colors";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import { categoryToTeam, TEAMS, type TeamId } from "@/lib/teams";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
@@ -41,17 +47,6 @@ const SEVERITY_DESC: Record<number, string> = {
   3: "Moderate",
   4: "High",
   5: "Critical",
-};
-
-// Green→red traffic-light ramp — byte-for-byte the grid's SEVERITY_HUE so a
-// severity chip reads identically in the cell and here. Built from the AA-tuned
-// --status-*-fg tokens (see work-order-grid.tsx for the full rationale).
-const SEVERITY_HUE: Record<number, string> = {
-  1: "var(--status-success-fg)",
-  2: "color-mix(in srgb, var(--status-success-fg) 55%, var(--status-warning-fg))",
-  3: "var(--status-warning-fg)",
-  4: "color-mix(in srgb, var(--status-warning-fg) 50%, var(--status-danger-fg))",
-  5: "var(--status-danger-fg)",
 };
 
 function priorityHue(score: number): string {
@@ -130,6 +125,63 @@ function StatusPill({ status }: { status: string }) {
     >
       {STATUS_LABEL[known] ?? titleize(status)}
     </span>
+  );
+}
+
+/**
+ * Mirrors VIDEO_PLACEHOLDER_PUBLIC_PATH in src/lib/video/decide.ts. Duplicated
+ * rather than imported: decide.ts pulls the Gemini SDK and server env into
+ * whatever imports it, and this is a client component.
+ */
+const VIDEO_PLACEHOLDER_PUBLIC_PATH = "/video-detection-placeholder.svg";
+
+/**
+ * Camera-detected reports carry that placeholder as their PUBLIC photo — the
+ * real evidence is unblurred street footage that never leaves the private
+ * bucket. Staff get the real thing: a staff-gated action mints a short-lived
+ * signed URL for the whole captured frame and hands back the detector's own
+ * bounding box, which is drawn back on top by the video console's EvidenceFrame
+ * (same presentation, one place).
+ *
+ * The frame renders at its natural aspect, not the 16/9 crop the resident photo
+ * uses — the box coordinates only line up against the uncropped frame.
+ *
+ * Anything that doesn't resolve (older rows, a cluster with no best detection,
+ * a non-staff caller) falls back to `fallback`, i.e. the placeholder.
+ */
+function VideoEvidenceFrame({
+  reportId,
+  alt,
+  fallback,
+}: {
+  reportId: string;
+  alt: string;
+  fallback: ReactNode;
+}) {
+  const [evidence, setEvidence] = useState<ReportEvidence | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    getReportEvidenceFrame(reportId).then((res) => {
+      if (live && res.ok) setEvidence(res.data);
+    });
+    return () => {
+      live = false;
+    };
+  }, [reportId]);
+
+  if (!evidence) return <>{fallback}</>;
+
+  return (
+    <EvidenceFrame
+      src={evidence.url}
+      box={evidence.box}
+      label={evidence.label}
+      alt={alt}
+      // EvidenceFrame's img is h-full/object-cover for its fixed-aspect callers;
+      // here the wrapper has no height, so the child is released to its own.
+      className="w-full [&>img]:h-auto [&>img]:object-contain"
+    />
   );
 }
 
@@ -284,26 +336,39 @@ export function WorkOrderDetail({
     >
       {/* 1. Photo with overlaid severity + status */}
       <div className="relative overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface">
-        <WorkOrderImage
-          key={row.report_id}
-          src={row.photo_public_url ?? ""}
-          alt={`${label} report at ${row.address ?? "unknown location"}`}
-        />
+        {row.photo_public_url === VIDEO_PLACEHOLDER_PUBLIC_PATH ? (
+          <VideoEvidenceFrame
+            key={row.report_id}
+            reportId={row.report_id}
+            alt={`Camera evidence frame for ${label} at ${row.address ?? "unknown location"}`}
+            fallback={
+              <WorkOrderImage
+                src={row.photo_public_url}
+                alt={`${label} report at ${row.address ?? "unknown location"}`}
+              />
+            }
+          />
+        ) : (
+          <WorkOrderImage
+            key={row.report_id}
+            src={row.photo_public_url ?? ""}
+            alt={`${label} report at ${row.address ?? "unknown location"}`}
+          />
+        )}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-3">
           {row.severity != null ? (
             <span
               className="inline-flex items-center gap-1.5 rounded-md bg-black/40 px-2 py-1 text-[12px] font-medium text-white backdrop-blur-sm"
               style={{
-                boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${
-                  SEVERITY_HUE[row.severity] ?? SEVERITY_HUE[3]
-                } 45%, transparent)`,
+                boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${severityHue(
+                  row.severity,
+                )} 45%, transparent)`,
               }}
             >
               <span
                 className="h-2 w-2 rounded-full"
                 style={{
-                  backgroundColor:
-                    SEVERITY_HUE[row.severity] ?? SEVERITY_HUE[3],
+                  backgroundColor: severityHue(row.severity),
                 }}
                 aria-hidden
               />
