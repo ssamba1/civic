@@ -88,7 +88,7 @@ function buildCsp(nonce: string, isDev: boolean, useNonce: boolean): string {
     // picsum.photos (and its fastly redirect target) host seed/demo report
     // photos; production photos come from *.supabase.co storage. blob: covers
     // maplibre canvas/tile blobs.
-    "img-src 'self' data: blob: https://*.supabase.co https://*.openstreetmap.org https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.arcgisonline.com https://picsum.photos https://fastly.picsum.photos",
+    "img-src 'self' data: blob: https://*.supabase.co https://*.openstreetmap.org https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.arcgisonline.com https://picsum.photos https://fastly.picsum.photos https://assets.ion.cesium.com",
     "font-src 'self'",
     // Clip playback: the video theater streams signed mp4s straight from the
     // private supabase bucket. Without this, media falls back to default-src
@@ -98,8 +98,13 @@ function buildCsp(nonce: string, isDev: boolean, useNonce: boolean): string {
     // data: URLs by components/map/pin-icons.ts; fetch is governed by
     // connect-src (img-src data: does not cover it). data: here adds no
     // network destination — it only lets the page read its own inline URIs.
-    "connect-src 'self' data: https://*.supabase.co wss://*.supabase.co https://*.openstreetmap.org https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.arcgisonline.com https://*.sentry.io https://generativelanguage.googleapis.com",
-    // maplibre-gl parses vector tiles in a Web Worker created from a blob URL.
+    // Cesium globe: api.cesium.com resolves ion asset endpoints + tokens;
+    // assets.ion.cesium.com serves the World Terrain heightmaps and the OSM
+    // Buildings 3D tileset. Both are only hit when NEXT_PUBLIC_CESIUM_ION_TOKEN
+    // is set; the keyless globe uses the carto/arcgis hosts already listed.
+    "connect-src 'self' data: https://*.supabase.co wss://*.supabase.co https://*.openstreetmap.org https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.arcgisonline.com https://*.sentry.io https://generativelanguage.googleapis.com https://api.cesium.com https://assets.ion.cesium.com",
+    // maplibre-gl parses vector tiles in a Web Worker created from a blob URL;
+    // Cesium spawns its own worker pool from /cesium/Workers the same way.
     "worker-src 'self' blob:",
     "frame-ancestors 'none'",
   ].join("; ");

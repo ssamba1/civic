@@ -942,6 +942,36 @@ video::-webkit-media-controls-overlay-play-button {
   color: white !important;
 }
 
+/* Cesium globe popup — the same fixed-dark skin as the maplibre popup above.
+   renderPopupHTML is shared by both renderers and assumes a dark card, so the
+   globe's own popup container has to supply the identical surface. */
+/* Cesium injects its credit list with its own absolute positioning (bottom-0
+   left-0), which lands it under the map legend. Neutralising the position lets
+   our own centered container place it in the free strip between the legend and
+   the Dispatch panel, and shrinks the ion logo to chrome scale. */
+.civic-globe-credits .cesium-widget-credits {
+  position: static;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  line-height: 1.2;
+}
+.civic-globe-credits img {
+  height: 11px;
+  width: auto;
+}
+
+.civic-globe-popup {
+  background: rgba(28, 28, 30, 0.92);
+  color: #f5f5f7;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(20px) saturate(160%);
+  overflow: hidden;
+}
+
 /* ── Clip theater: detection scan progress ──
    The rail replays a pipeline run that already happened, so the bar is a
    determinate fill across the ~0.8s assess window rather than an open-ended

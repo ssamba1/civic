@@ -7,6 +7,7 @@ import { MapboxOverlay, type MapboxOverlayProps } from "@deck.gl/mapbox";
 import {
   Check,
   Flame,
+  Globe,
   Map as MapIcon,
   MapPin,
   Mountain,
@@ -16,6 +17,7 @@ import {
   Sliders,
   Star,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Map as MapLibreMap,
@@ -53,6 +55,17 @@ import { useCurrency } from "@/lib/use-currency";
 import { DAY_MS } from "@/lib/utils/time-constants";
 
 export type MapTheme = "dark" | "light" | "satellite";
+
+/** Which renderer draws the basemap + pins. Globe is the default. */
+export type MapRenderer = "globe" | "flat";
+
+// Cesium is a multi-megabyte dependency; keeping the globe behind its own
+// dynamic chunk means the flat-map fallback (and any route that never shows
+// the globe) never downloads it.
+const GlobeMapLazy = dynamic(
+  () => import("@/components/map/globe-map").then((m) => m.GlobeMap),
+  { ssr: false },
+);
 
 // Below this many visible reports the map draws every pin (demo/pilot size);
 // above it, supercluster aggregates to keep the IconLayer from choking.
@@ -145,6 +158,21 @@ function ReportMapInner({
   }, [appTheme, mapThemeProp]);
   const [is3D, setIs3D] = useState(true);
   const [viewMode, setViewMode] = useState<"markers" | "heatmap">("markers");
+  // Renderer: the Cesium globe by default, the MapLibre/deck.gl map as the
+  // fallback. Two things force `flat` regardless of this preference —
+  // the heatmap view (a deck.gl aggregation layer with no globe equivalent)
+  // and a failed Cesium/WebGL2 init (handleGlobeInitError below).
+  const [renderer, setRenderer] = useState<MapRenderer>("globe");
+  const globeFailedRef = useRef(false);
+  const handleGlobeInitError = useCallback((reason: string) => {
+    if (globeFailedRef.current) return;
+    globeFailedRef.current = true;
+    console.warn(
+      `[ReportMap] Cesium globe failed to initialise (${reason}) — falling back to the MapLibre renderer.`,
+    );
+    setRenderer("flat");
+  }, []);
+  const useGlobe = renderer === "globe" && viewMode === "markers";
   // Marker color mode — controlled by a parent when colorModeProp is set,
   // otherwise local (mirrors the mapTheme controlled/uncontrolled pattern).
   const [colorModeLocal, setColorModeLocal] =
@@ -568,63 +596,76 @@ function ReportMapInner({
       aria-label="Map showing infrastructure reports"
       className={containerClass}
     >
-      <MapLibreMap
-        ref={mapRef}
-        initialViewState={{
-          longitude: center[0],
-          latitude: center[1],
-          zoom,
-          pitch: 45,
-          bearing: -20,
-        }}
-        mapStyle={mapStyle}
-        attributionControl={false}
-        style={{ width: "100%", height: "100%" }}
-        // Smoothness levers ---------------------------------------------------
-        // reuseMaps: keep GL context alive when component remounts (e.g. theme
-        //   swap, route transition) — avoids re-init cost.
-        // maxTileCacheSize: bigger in-memory tile cache so panning back doesn't
-        //   re-download; cheap on RAM, huge on perceived smoothness.
-        // refreshExpiredTiles=false: stops periodic stale-checks on long
-        //   sessions. We're not consuming live imagery.
-        // fadeDuration: cuts label cross-fade time on zoom changes.
-        // localIdeographFontFamily: avoids fetching CJK glyph PBFs (we don't
-        //   render Asian-script labels for Cumming, GA).
-        reuseMaps
-        maxTileCacheSize={1000}
-        refreshExpiredTiles={false}
-        fadeDuration={150}
-        localIdeographFontFamily="sans-serif"
-        // Feed the live viewport to the clustering layer. onLoad seeds the
-        // first bounds; onMoveEnd re-queries after each pan/zoom settles
-        // (moveEnd, not move — clustering per animation frame is wasteful).
-        onLoad={syncViewFromMap}
-        onMoveEnd={syncViewFromMap}
-      >
-        {/* interleaved=true shares maplibre's WebGL context (single GPU canvas),
+      {useGlobe ? (
+        <GlobeMapLazy
+          reports={visibleReports}
+          center={center}
+          zoom={zoom}
+          focusId={focusId}
+          onSelectMarker={onSelectMarker}
+          colorMode={colorMode}
+          mapTheme={mapTheme}
+          onInitError={handleGlobeInitError}
+        />
+      ) : (
+        <MapLibreMap
+          ref={mapRef}
+          initialViewState={{
+            longitude: center[0],
+            latitude: center[1],
+            zoom,
+            pitch: 45,
+            bearing: -20,
+          }}
+          mapStyle={mapStyle}
+          attributionControl={false}
+          style={{ width: "100%", height: "100%" }}
+          // Smoothness levers ---------------------------------------------------
+          // reuseMaps: keep GL context alive when component remounts (e.g. theme
+          //   swap, route transition) — avoids re-init cost.
+          // maxTileCacheSize: bigger in-memory tile cache so panning back doesn't
+          //   re-download; cheap on RAM, huge on perceived smoothness.
+          // refreshExpiredTiles=false: stops periodic stale-checks on long
+          //   sessions. We're not consuming live imagery.
+          // fadeDuration: cuts label cross-fade time on zoom changes.
+          // localIdeographFontFamily: avoids fetching CJK glyph PBFs (we don't
+          //   render Asian-script labels for Cumming, GA).
+          reuseMaps
+          maxTileCacheSize={1000}
+          refreshExpiredTiles={false}
+          fadeDuration={150}
+          localIdeographFontFamily="sans-serif"
+          // Feed the live viewport to the clustering layer. onLoad seeds the
+          // first bounds; onMoveEnd re-queries after each pan/zoom settles
+          // (moveEnd, not move — clustering per animation frame is wasteful).
+          onLoad={syncViewFromMap}
+          onMoveEnd={syncViewFromMap}
+        >
+          {/* interleaved=true shares maplibre's WebGL context (single GPU canvas),
             avoiding a second compositor layer + second WebGL context. */}
-        <DeckGLOverlay layers={allLayers} interleaved={true} />
-        {popupReport && (
-          <Popup
-            longitude={popupReport.location.lng}
-            latitude={popupReport.location.lat}
-            // Pin tip sits on the location and the balloon head rises ~40px
-            // above it; offset clears the head so the popup doesn't cover it.
-            offset={44}
-            closeOnClick={false}
-            onClose={() => setPopupReport(null)}
-            maxWidth="min(300px, 90vw)"
-          >
-            {/* renderPopupHTML escapes all user-controlled fields via esc(); CATEGORY_META is a static constant. Do NOT pass un-sanitized strings here. */}
-            <div
-              // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is built by renderPopupHTML, which esc()-escapes every user-controlled field; inputs are a trusted static CATEGORY_META + escaped report fields.
-              dangerouslySetInnerHTML={{
-                __html: renderPopupHTML(popupReport, currency),
-              }}
-            />
-          </Popup>
-        )}
-      </MapLibreMap>
+          <DeckGLOverlay layers={allLayers} interleaved={true} />
+          {popupReport && (
+            <Popup
+              longitude={popupReport.location.lng}
+              latitude={popupReport.location.lat}
+              // Pin tip sits on the location and the balloon head rises ~40px
+              // above it; offset clears the head so the popup doesn't cover it.
+              offset={44}
+              closeOnClick={false}
+              onClose={() => setPopupReport(null)}
+              maxWidth="min(300px, 90vw)"
+            >
+              {/* renderPopupHTML escapes all user-controlled fields via esc(); CATEGORY_META is a static constant. Do NOT pass un-sanitized strings here. */}
+              <div
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is built by renderPopupHTML, which esc()-escapes every user-controlled field; inputs are a trusted static CATEGORY_META + escaped report fields.
+                dangerouslySetInnerHTML={{
+                  __html: renderPopupHTML(popupReport, currency),
+                }}
+              />
+            </Popup>
+          )}
+        </MapLibreMap>
+      )}
 
       <style>{`
         @keyframes rmPanelIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
@@ -739,6 +780,46 @@ function ReportMapInner({
                 </div>
               </div>
             )}
+
+            {/* Renderer — Cesium 3D globe (default) vs the MapLibre/deck.gl
+                flat map. Mirrors the Basemap grid below. The globe is
+                unavailable in the heatmap view (deck.gl aggregation has no
+                globe equivalent), and disabled outright once Cesium has
+                failed to initialise. */}
+            <div className="border-t border-white/5 pt-3">
+              <div className="flex items-center gap-1.5 text-xs text-zinc-300 mb-2">
+                <Globe className="h-3 w-3 text-zinc-300" />
+                Renderer
+              </div>
+              <div className="grid grid-cols-2 gap-1 bg-white/[0.04] rounded-lg p-0.5 border border-white/5">
+                {(
+                  [
+                    { key: "globe", label: "3D globe" },
+                    { key: "flat", label: "Flat map" },
+                  ] as const
+                ).map(({ key, label }) => (
+                  <button
+                    type="button"
+                    key={key}
+                    onClick={() => setRenderer(key)}
+                    disabled={key === "globe" && globeFailedRef.current}
+                    aria-pressed={renderer === key}
+                    className={`rounded-md py-3 text-xs transition-all min-h-[44px] lg:py-1.5 lg:min-h-0 disabled:opacity-40 disabled:cursor-not-allowed ${
+                      renderer === key
+                        ? "bg-white/15 text-white"
+                        : "text-zinc-300 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {renderer === "globe" && viewMode !== "markers" && (
+                <p className="text-[10.5px] text-zinc-500 mt-1.5 leading-tight">
+                  Heatmap renders on the flat map.
+                </p>
+              )}
+            </div>
 
             {/* Map theme */}
             <div className="border-t border-white/5 pt-3">

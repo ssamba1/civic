@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "postinstall": "node scripts/copy-cesium-assets.mjs",
+    "prebuild": "node scripts/copy-cesium-assets.mjs",
     "build": "next build",
     "start": "next start",
     "prod": "next build && npm run prod:assets && npm run start:prod",
@@ -45,6 +47,7 @@
     "ag-grid-community": "^35.3.1",
     "ag-grid-react": "^35.3.1",
     "ai": "^7.0.8",
+    "cesium": "^1.144.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
