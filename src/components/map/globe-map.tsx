@@ -1,6 +1,5 @@
 "use client";
 
-import "cesium/Build/Cesium/Widgets/widgets.css";
 import type * as CesiumNS from "cesium";
 import { useEffect, useRef, useState } from "react";
 import { renderPopupHTML } from "@/components/map/map-popup";
@@ -11,6 +10,68 @@ import {
 } from "@/components/map/pin-icons";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { useCurrency } from "@/lib/use-currency";
+
+/* ------------------------------------------------------------------
+   Cesium is loaded from its PREBUILT UMD bundle at /cesium/Cesium.js,
+   not imported through the app bundler.
+
+   `await import("cesium")` is the obvious approach and it is broken here:
+   Cesium inlines binary payloads as strings containing NUL escapes, and
+   the bundler re-emits those inside template literals, which is a hard
+   parse error ("Octal escape sequences are not allowed in template
+   strings"). That kills the whole 4.8 MB chunk — and with it every
+   client component on the page, so the map rendered nothing at all and
+   even the MapLibre fallback never got a chance to mount.
+
+   Loading the prebuilt file by URL sidesteps the bundler entirely, and
+   drops that chunk from the client payload as a bonus. The file is
+   copied out of node_modules by scripts/copy-cesium-assets.mjs.
+   ------------------------------------------------------------------ */
+
+declare global {
+  interface Window {
+    Cesium?: typeof CesiumNS;
+    CESIUM_BASE_URL?: string;
+  }
+}
+
+let cesiumLoader: Promise<typeof CesiumNS> | null = null;
+
+function loadCesium(): Promise<typeof CesiumNS> {
+  if (window.Cesium) return Promise.resolve(window.Cesium);
+  if (cesiumLoader) return cesiumLoader;
+
+  cesiumLoader = new Promise<typeof CesiumNS>((resolve, reject) => {
+    // Must be set before Cesium.js evaluates — it reads this to resolve
+    // its Workers/Assets/Widgets URLs.
+    window.CESIUM_BASE_URL = "/cesium";
+
+    if (!document.querySelector("link[data-cesium-widgets]")) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "/cesium/Widgets/widgets.css";
+      link.dataset.cesiumWidgets = "";
+      document.head.appendChild(link);
+    }
+
+    const script = document.createElement("script");
+    script.src = "/cesium/Cesium.js";
+    script.async = true;
+    script.onload = () => {
+      if (window.Cesium) resolve(window.Cesium);
+      else reject(new Error("Cesium.js loaded but window.Cesium is missing"));
+    };
+    script.onerror = () =>
+      reject(new Error("Failed to load /cesium/Cesium.js"));
+    document.head.appendChild(script);
+  });
+
+  // A failed load must not poison later attempts (renderer toggle, remount).
+  cesiumLoader.catch(() => {
+    cesiumLoader = null;
+  });
+  return cesiumLoader;
+}
 
 /* ==================================================================
    CesiumJS 3D globe renderer for the report map.
@@ -198,9 +259,7 @@ export function GlobeMap({
         // Cesium fetches its Workers/Assets/Widgets by URL at runtime; they
         // are copied to public/cesium by scripts/copy-cesium-assets.mjs. This
         // must be set before the module is evaluated.
-        (window as unknown as { CESIUM_BASE_URL?: string }).CESIUM_BASE_URL =
-          "/cesium";
-        const Cesium = await import("cesium");
+        const Cesium = await loadCesium();
         if (destroyed) return;
         cesiumRef.current = Cesium;
 

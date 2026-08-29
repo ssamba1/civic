@@ -9,7 +9,7 @@
  *
  * Node fs (not a shell copy) so it works identically on Windows and CI.
  */
-import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import { copyFileSync, cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -30,4 +30,11 @@ for (const dir of ["Workers", "Assets", "Widgets", "ThirdParty"]) {
   const from = join(src, dir);
   if (existsSync(from)) cpSync(from, join(dest, dir), { recursive: true });
 }
+
+// The prebuilt UMD bundle itself. globe-map.tsx loads this by URL rather than
+// importing the npm package: Cesium's inlined binary strings contain NUL
+// escapes that the bundler re-emits inside template literals, which is a parse
+// error that takes the entire chunk (and the page's hydration) down with it.
+const umd = join(src, "Cesium.js");
+if (existsSync(umd)) copyFileSync(umd, join(dest, "Cesium.js"));
 console.log(`[cesium-assets] copied Cesium runtime -> ${dest}`);
