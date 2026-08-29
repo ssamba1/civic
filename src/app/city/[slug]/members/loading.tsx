@@ -6,13 +6,15 @@
 const ROW_KEYS = ["r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8"];
 
 // Role chips vary in width in the real toolbar (All / Admins / Supervisors /
-// Dispatchers / Residents) — stagger the placeholder widths to match.
+// Dispatchers / Residents / Contractors) — stagger the placeholder widths to
+// match.
 const CHIPS = [
   { k: "c1", w: "w-14" },
   { k: "c2", w: "w-20" },
   { k: "c3", w: "w-24" },
   { k: "c4", w: "w-24" },
   { k: "c5", w: "w-20" },
+  { k: "c6", w: "w-24" },
 ];
 
 export default function Loading() {

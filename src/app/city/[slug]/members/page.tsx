@@ -78,11 +78,36 @@ export default async function CityMembersPage({ params }: PageProps) {
   const adminCtx = access === "real" ? await getCityAdminContext(slug) : null;
   const canManage = adminCtx !== null;
 
-  // Synthetic (non-DB) cities have no real member rows — render an empty state
-  // rather than querying a placeholder city id.
-  const result: CityMembersResult = dbCity
-    ? await fetchCityMembers(dbCity.id)
-    : { ok: true, members: [] };
+  // All five datasets depend only on the resolved city id — fetch them in
+  // parallel so the page waits one roundtrip, not a five-deep waterfall.
+  // Synthetic (non-DB) cities have no rows for any of them.
+  const [
+    result,
+    contractorsResult,
+    crewsResult,
+    crewWorkloadsResult,
+    crewTypesResult,
+  ] = dbCity
+    ? await Promise.all([
+        fetchCityMembers(dbCity.id),
+        // City vendors — the Contractors chip. Same PII rule as members:
+        // demo sessions get masked emails. Degrades to empty on error.
+        listContractors(dbCity.id, { maskPii: access === "demo" }),
+        // Crews — the panel below the roster plus the invite/edit pickers.
+        // Degrades to empty (e.g. before migration 030).
+        fetchCityCrews(dbCity.id),
+        // Per-crew workload metrics for the crew panel's load badges.
+        fetchCrewWorkloads(dbCity.id),
+        // Crew-type catalog (031); unreadable → built-in defaults below.
+        fetchCityCrewTypes(dbCity.id),
+      ])
+    : [
+        { ok: true, members: [] } satisfies CityMembersResult,
+        null,
+        null,
+        null,
+        null,
+      ];
   const members = result.ok
     ? access === "demo"
       ? result.members.map((m) => ({
@@ -92,31 +117,11 @@ export default async function CityMembersPage({ params }: PageProps) {
         }))
       : result.members
     : [];
-
-  // City vendors — the Contractors chip on the roster. Same PII rule as
-  // members: demo sessions get masked emails. Degrades to empty on error.
-  const contractorsResult = dbCity
-    ? await listContractors(dbCity.id, { maskPii: access === "demo" })
-    : null;
   const contractors = contractorsResult?.ok ? contractorsResult.data : [];
-
-  // Crews for this city — the panel below the roster plus the crew pickers in
-  // the invite/edit dialogs. Degrades to empty (e.g. before migration 030).
-  const crewsResult = dbCity ? await fetchCityCrews(dbCity.id) : null;
   const crews = crewsResult?.ok ? crewsResult.crews : [];
-
-  // Per-crew workload metrics for the crew panel's load badges. Degrades to an
-  // empty map (pre-030 DB, query error) so the panel still renders its roster.
-  const crewWorkloadsResult = dbCity
-    ? await fetchCrewWorkloads(dbCity.id)
-    : null;
   const crewWorkloads = crewWorkloadsResult?.ok
     ? crewWorkloadsResult.workloads
     : {};
-
-  // Crew-type catalog (031). When unreadable (pre-031 DB) the panels fall
-  // back to the built-in defaults and type editing is disabled.
-  const crewTypesResult = dbCity ? await fetchCityCrewTypes(dbCity.id) : null;
   const crewTypeCatalogAvailable = crewTypesResult?.ok ?? false;
   const crewTypeRows = crewTypesResult?.ok ? crewTypesResult.types : [];
   // Defaults apply only when the city has NO catalog (pre-031 DB or a city
