@@ -19,14 +19,23 @@ const FIELD =
 const BUTTON =
   "inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-md bg-accent px-3 text-[13px] font-medium text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-50";
 
-export function UploadDocument({ slug }: { slug: string }) {
+export function UploadDocument({
+  slug,
+  contractors = [],
+}: {
+  slug: string;
+  /** Active vendors for the optional "concerns contractor" link (066). */
+  contractors?: { id: string; name: string }[];
+}) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const titleId = useId();
   const kindId = useId();
   const pasteId = useId();
+  const contractorId = useId();
   const [title, setTitle] = useState("");
   const [docKind, setDocKind] = useState<DocKind>("policy");
+  const [contractor, setContractor] = useState("");
   const [pasted, setPasted] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -48,6 +57,7 @@ export function UploadDocument({ slug }: { slug: string }) {
         filename,
         docKind,
         text,
+        contractorId: contractor || null,
       });
       if (!result.ok) {
         setMessage(`Ingestion refused: ${result.error}`);
@@ -56,6 +66,7 @@ export function UploadDocument({ slug }: { slug: string }) {
       setMessage(`Stored — ${result.data.chunkCount} chunks indexed.`);
       setTitle("");
       setPasted("");
+      setContractor("");
       if (fileRef.current) fileRef.current.value = "";
       router.refresh();
     } finally {
@@ -98,6 +109,27 @@ export function UploadDocument({ slug }: { slug: string }) {
           </select>
         </div>
       </div>
+
+      {contractors.length > 0 && (
+        <div className="mt-2">
+          <label className="sr-only" htmlFor={contractorId}>
+            Contractor this document concerns
+          </label>
+          <select
+            id={contractorId}
+            value={contractor}
+            onChange={(e) => setContractor(e.target.value)}
+            className={FIELD}
+          >
+            <option value="">No contractor — general city document</option>
+            {contractors.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <input
         ref={fileRef}

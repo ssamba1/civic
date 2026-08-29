@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import type {
   LiabilityEvaluation,
@@ -27,6 +28,10 @@ export interface LiabilityBadgeProps {
   evaluation: LiabilityEvaluation;
   /** Resolved name for `evaluation.liableContractorId`, when known. */
   contractorName?: string | null;
+  /** When set, the contractor name renders as a link to this href (the
+   *  Contractors workspace detail page). Name-only link — the rest of the
+   *  meta line stays plain text. */
+  contractorHref?: string | null;
   /** City's contract/PO number from the matched capital job. */
   contractRef?: string | null;
   /** Permit number from the matched utility permit. */
@@ -79,6 +84,7 @@ function formatWindowDate(isoDate: string): string {
 export function LiabilityBadge({
   evaluation,
   contractorName,
+  contractorHref,
   contractRef,
   permitRef,
   className,
@@ -98,7 +104,6 @@ export function LiabilityBadge({
 
   const days = daysUntil(evaluation.windowEndsOn);
   const parts: string[] = [];
-  if (contractorName) parts.push(contractorName);
   if (verdict === "utility_restoration" && permitRef) {
     parts.push(`permit #${permitRef}`);
   } else if (contractRef) {
@@ -126,8 +131,20 @@ export function LiabilityBadge({
       <Badge variant={verdictVariant(verdict, days)}>
         {VERDICT_LABEL[verdict]}
       </Badge>
-      {parts.length > 0 && (
+      {(contractorName || parts.length > 0) && (
         <span className="text-[12px] text-subtle leading-snug">
+          {contractorName &&
+            (contractorHref ? (
+              <Link
+                href={contractorHref}
+                className="underline decoration-dotted underline-offset-2 transition-colors hover:text-foreground"
+              >
+                {contractorName}
+              </Link>
+            ) : (
+              <span>{contractorName}</span>
+            ))}
+          {contractorName && parts.length > 0 && " · "}
           {parts.join(" · ")}
         </span>
       )}

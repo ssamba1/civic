@@ -1,8 +1,10 @@
 import { FileText } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { KNOWN_CITIES } from "@/lib/dashboard-data";
 import { createServerClient } from "@/lib/db/client";
+import { listContractorOptions } from "@/lib/db/contractors";
 import { DOC_KIND_LABEL, type DocKind } from "@/lib/documents/kinds";
 import { getStaffAccessForCity } from "@/lib/staff-access";
 import { timeAgo } from "@/lib/utils/time-ago";
@@ -30,6 +32,7 @@ interface DocumentRow {
   doc_kind: DocKind;
   chunk_count: number;
   created_at: string;
+  contractor_id: string | null;
 }
 
 const EYEBROW =
@@ -54,17 +57,43 @@ export default async function CityDocumentsPage({ params }: PageProps) {
   if (!dbCity && !known) notFound();
   const city = dbCity ?? { id: null, name: known.name };
 
-  const { data: documents } = city.id
-    ? await db
-        .from("city_documents")
-        .select("id, title, filename, doc_kind, chunk_count, created_at")
-        .eq("city_id", city.id)
-        .order("created_at", { ascending: false })
-        .limit(100)
-    : { data: [] };
+  const [{ data: documents }, contractorOptions] = city.id
+    ? await Promise.all([
+        db
+          .from("city_documents")
+          .select(
+            "id, title, filename, doc_kind, chunk_count, created_at, contractor_id",
+          )
+          .eq("city_id", city.id)
+          .order("created_at", { ascending: false })
+          .limit(100),
+        listContractorOptions(city.id),
+      ])
+    : [{ data: [] }, [] as { id: string; name: string }[]];
 
   const rows = (documents ?? []) as DocumentRow[];
   const totalChunks = rows.reduce((sum, row) => sum + row.chunk_count, 0);
+
+  // Corpus rows may cite an inactive vendor the (active-only) dropdown no
+  // longer offers — resolve those names too so the link never goes blank.
+  const contractorName = new Map(contractorOptions.map((c) => [c.id, c.name]));
+  const unresolved = [
+    ...new Set(
+      rows
+        .map((r) => r.contractor_id)
+        .filter((id): id is string => Boolean(id && !contractorName.has(id))),
+    ),
+  ];
+  if (city.id && unresolved.length > 0) {
+    const { data: extra } = await db
+      .from("contractors")
+      .select("id, name")
+      .eq("city_id", city.id)
+      .in("id", unresolved);
+    for (const c of (extra ?? []) as { id: string; name: string }[]) {
+      contractorName.set(c.id, c.name);
+    }
+  }
 
   return (
     // Same page shell as the Teams/Analytics tabs: 1800px content column,
@@ -89,7 +118,7 @@ export default async function CityDocumentsPage({ params }: PageProps) {
             of the 1800px column. */}
         <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(340px,400px)_minmax(0,1fr)]">
           <div className="space-y-4">
-            <UploadDocument slug={slug} />
+            <UploadDocument slug={slug} contractors={contractorOptions} />
 
             <section className="overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface">
               <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
@@ -124,6 +153,15 @@ export default async function CityDocumentsPage({ params }: PageProps) {
                           <span className="tabular-nums">
                             {row.chunk_count} chunks
                           </span>
+                          {row.contractor_id &&
+                            contractorName.has(row.contractor_id) && (
+                              <Link
+                                href={`/city/${slug}/contractors/${row.contractor_id}`}
+                                className="underline decoration-dotted underline-offset-2 transition-colors hover:text-foreground"
+                              >
+                                {contractorName.get(row.contractor_id)}
+                              </Link>
+                            )}
                           <span className="tabular-nums text-faint">
                             {timeAgo(row.created_at)}
                           </span>

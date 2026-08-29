@@ -1,6 +1,7 @@
 "use client";
 
 import { ImageOff, MapPin, Wrench } from "lucide-react";
+import { useParams } from "next/navigation";
 import { type ReactNode, useEffect, useState, useTransition } from "react";
 import { EvidenceFrame } from "@/app/city/[slug]/video/evidence-frame";
 import { assignCrewToReport } from "@/app/staff/actions";
@@ -309,6 +310,10 @@ export function WorkOrderDetail({
   canAssign?: boolean;
 }) {
   const currency = useCurrency();
+  // Slug from the route (this pane only mounts under /city/[slug]/…) — used
+  // to link the liability contractor name into the Contractors workspace.
+  const params = useParams<{ slug?: string }>();
+  const citySlug = typeof params?.slug === "string" ? params.slug : null;
   if (!row) {
     return (
       <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-center">
@@ -453,6 +458,11 @@ export function WorkOrderDetail({
             <LiabilityBadge
               evaluation={row.liability}
               contractorName={row.liability.contractorName}
+              contractorHref={
+                citySlug && row.liability.liableContractorId
+                  ? `/city/${citySlug}/contractors/${row.liability.liableContractorId}`
+                  : null
+              }
               contractRef={row.liability.contractRef}
               permitRef={row.liability.permitRef}
             />

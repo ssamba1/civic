@@ -46,6 +46,9 @@ const ingestSchema = z.object({
   filename: z.string().min(1).max(200),
   docKind: z.enum(DOC_KINDS),
   text: z.string().min(1).max(MAX_DOC_CHARS),
+  /** Vendor this document concerns (066) — optional; null files it as a
+   *  general city document. */
+  contractorId: z.uuid().nullable().optional(),
 });
 
 /**
@@ -66,6 +69,21 @@ export async function ingestDocument(
   if (chunks.length === 0) return { ok: false, error: "no_text_content" };
 
   const db = createServerClient();
+
+  // The contractor link is taken only after proving the id belongs to THIS
+  // city — a forged id from another city must not attach, and contractors has
+  // no client-readable RLS to catch it (service role bypasses RLS).
+  let contractorId: string | null = null;
+  if (parsed.data.contractorId) {
+    const { data: contractor } = await db
+      .from("contractors")
+      .select("id")
+      .eq("id", parsed.data.contractorId)
+      .eq("city_id", cityId)
+      .maybeSingle<{ id: string }>();
+    if (!contractor) return { ok: false, error: "unknown_contractor" };
+    contractorId = contractor.id;
+  }
 
   // Storage first: a document row whose original is missing is worse than an
   // orphaned object, which the bucket lifecycle can sweep.
@@ -89,6 +107,7 @@ export async function ingestDocument(
       storage_path: storagePath,
       doc_kind: parsed.data.docKind,
       uploaded_by: userId,
+      contractor_id: contractorId,
       chunk_count: 0,
     })
     .select("id")

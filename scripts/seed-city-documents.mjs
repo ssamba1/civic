@@ -354,24 +354,32 @@ hundred percent of the final package value, secures these obligations until
 the warranty lapses. Claims are processed per Section 6 of the Road
 Maintenance Policy; notice contacts are on file with the City Clerk.`;
 
+// contractorEmail links the doc to its contractors row (066 contractor_id),
+// resolved at ingest time — null-safe when the vendor is not seeded yet
+// (scripts/seed-demo-contractor.mjs owns that row).
+const NORTHSIDE_EMAIL = "dispatch@northsidepaving.example";
+
 const DOCS = [
   {
     title: "Road Maintenance Policy & Contractor Responsibilities",
     filename: "road-maintenance-policy.md",
     doc_kind: "policy",
     text: POLICY_DOCUMENT,
+    contractorEmail: null,
   },
   {
     title: "Pavement Repair Services Agreement — Northside Paving LLC",
     filename: "pw-2025-041-services-agreement.md",
     doc_kind: "contract",
     text: CONTRACT_DOCUMENT,
+    contractorEmail: NORTHSIDE_EMAIL,
   },
   {
     title: "Completed Work & Warranty Certificate — Northside Paving LLC",
     filename: "pw-2025-041-warranty-certificate.md",
     doc_kind: "contract",
     text: WARRANTY_DOCUMENT,
+    contractorEmail: NORTHSIDE_EMAIL,
   },
 ];
 
@@ -383,7 +391,24 @@ if (!cities?.length) {
 }
 const city = cities[0];
 
-for (const { title, filename, doc_kind, text } of DOCS) {
+// Resolve vendor emails to contractor ids once, tolerating an unseeded vendor.
+const contractorIdByEmail = new Map();
+for (const email of new Set(
+  DOCS.map((d) => d.contractorEmail).filter(Boolean),
+)) {
+  const [row] =
+    (await rest(
+      "GET",
+      `contractors?email=eq.${encodeURIComponent(email)}&city_id=eq.${city.id}&select=id`,
+    )) ?? [];
+  if (row) contractorIdByEmail.set(email, row.id);
+  else
+    console.log(
+      `note: no contractors row for ${email} — docs seed without a vendor link (run scripts/seed-demo-contractor.mjs, then re-run this).`,
+    );
+}
+
+for (const { title, filename, doc_kind, text, contractorEmail } of DOCS) {
   const existing = await rest(
     "GET",
     `city_documents?city_id=eq.${city.id}&title=eq.${encodeURIComponent(title)}&select=id`,
@@ -404,6 +429,9 @@ for (const { title, filename, doc_kind, text } of DOCS) {
     // Seeded text has no uploaded original to keep in the bucket.
     storage_path: null,
     doc_kind,
+    contractor_id: contractorEmail
+      ? (contractorIdByEmail.get(contractorEmail) ?? null)
+      : null,
     chunk_count: 0,
   });
 
