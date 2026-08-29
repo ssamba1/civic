@@ -16,6 +16,7 @@ import { createServerClient } from "@/lib/db/client";
 import { fetchActiveCrewTypeDefs } from "@/lib/db/crew-types";
 import { fetchSlaHours } from "@/lib/db/sla-targets";
 import { serverEnv } from "@/lib/env";
+import { evaluateReportLiability } from "@/lib/liability/evaluate";
 import { createLogger } from "@/lib/logger";
 import {
   normalizeLocation,
@@ -321,6 +322,26 @@ async function dispatchReport(
       reportId,
       error: pipeline.error,
     });
+  } else {
+    // Liability attribution (spec §3.2), same best-effort contract as the
+    // resident path in app/report/actions.ts: it needs the classification's
+    // category (hence the pipeline.ok gate), and a missing verdict only
+    // degrades the badge to "unknown" — a camera dispatch must never fail
+    // because the city has no paving schedule loaded.
+    try {
+      const liability = await evaluateReportLiability(reportId);
+      if (!liability.ok) {
+        log.warn("video_dispatch_liability_failed", {
+          reportId,
+          error: liability.error,
+        });
+      }
+    } catch (err) {
+      log.warn("video_dispatch_liability_threw", {
+        reportId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
   }
   return { ok: true, data: { reportId } };
 }

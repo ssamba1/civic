@@ -90,6 +90,11 @@ export const CREW_UNIT_ROSTER: {
   name: string;
   crewType: string;
 }[] = [
+  {
+    username: "northsidellc",
+    name: "Northside Paving LLC",
+    crewType: "paving",
+  },
   { username: "northpaving", name: "North Paving Crew", crewType: "paving" },
   { username: "southpaving", name: "South Paving Crew", crewType: "paving" },
   { username: "flatwork", name: "Flatwork Crew", crewType: "concrete" },

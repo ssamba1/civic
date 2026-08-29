@@ -1,8 +1,11 @@
-// Seed one plausible municipal source document into the Documents workspace.
+// Seed plausible municipal source documents into the Documents workspace:
+// the road-maintenance policy plus the Northside Paving LLC contract pair
+// (services agreement + completed-work/warranty certificate) that backs the
+// pothole camera-demo's "under warranty" story.
 //
-// Writes the sample road-maintenance policy below through the SAME chunker the
-// app uses (src/lib/documents/chunk.ts) so the seeded corpus is byte-identical
-// to what an upload of this text would produce.
+// Writes each document below through the SAME chunker the app uses
+// (src/lib/documents/chunk.ts) so the seeded corpus is byte-identical to what
+// an upload of this text would produce.
 //
 // Idempotent: keyed on (city, title) — a re-run deletes the previous document
 // (chunks cascade) and re-ingests, so an edit to the text below is picked up.
@@ -35,8 +38,6 @@ if (!url || !key) {
 }
 
 const slug = process.argv[2] ?? "cumming";
-const TITLE = "Road Maintenance Policy & Contractor Responsibilities";
-const FILENAME = "road-maintenance-policy.md";
 
 const headers = {
   apikey: key,
@@ -57,10 +58,10 @@ async function rest(method, path, body) {
   return text ? JSON.parse(text) : null;
 }
 
-// ── the document ───────────────────────────────────────────────────────────
-// Deliberately written the way a real public-works policy reads: numbered
+// ── the documents ──────────────────────────────────────────────────────────
+// Deliberately written the way real public-works paper reads: numbered
 // sections, named road classes, explicit hour counts, and a claims clause.
-const DOCUMENT = `# Road Maintenance Policy and Contractor Responsibilities
+const POLICY_DOCUMENT = `# Road Maintenance Policy and Contractor Responsibilities
 
 Adopted by the Department of Public Works. This policy governs the inspection,
 repair, and warranty of publicly maintained roadway surfaces, and defines the
@@ -214,6 +215,166 @@ a repair must identify the road class, the assigned severity, the responsible
 party, the response time actually achieved, and the warranty class of the work
 performed.`;
 
+// The executed agreement the policy's Section 4 refers to. Contract ref
+// PW-2025-041 is the join key the demo uses everywhere: this document, the
+// warranty certificate below, capital_jobs.contract_ref (seeded by
+// scripts/seed-demo-contractor.mjs), and the liability badge on the pothole
+// camera-demo report all cite the same number.
+const CONTRACT_DOCUMENT = `# Pavement Repair Services Agreement — Contract PW-2025-041
+
+This Agreement is made between the City Department of Public Works ("the
+City") and Northside Paving LLC, 2180 Industrial Court, Suite B ("the
+Contractor"), for pothole repair and pavement restoration services on the
+City's arterial and collector road network. The term of this Agreement runs
+two years from the notice to proceed, with one optional one-year renewal at
+the City's sole discretion.
+
+## 1. Scope of services
+
+The Contractor shall furnish all labor, materials, equipment, traffic
+control, and supervision required for: full-depth asphalt patching; pothole
+repair by saw-cut, excavation, tack, and hot-mix backfill; milling and hot-mix
+overlay; crack routing and sealing incidental to a patch; and restoration of
+pavement markings disturbed by the work.
+
+The covered network comprises the arterial and collector roads defined in
+Section 1 of the Road Maintenance Policy, including Peachtree Industrial
+Boulevard, Buford Highway, Canton Highway, Atlanta Road, Tribble Gap Road,
+Pilgrim Mill Road, Bethelview Road, and Castleberry Road. Residential
+streets, alleys, and parking facilities are excluded.
+
+## 2. Response obligations
+
+Upon a Severity 1 dispatch on any arterial road the Contractor shall have a
+crew on site within four hours, on a twenty-four hour basis including
+weekends and holidays. Severity 2 dispatches require mobilization within
+twenty-four hours on arterial roads and forty-eight hours on collector roads.
+Severity 3 work is scheduled within ten business days. Failure to meet a
+response obligation is recorded against the Contractor under Section 5 of the
+Road Maintenance Policy and may be charged as liquidated damages of five
+hundred dollars per elapsed day.
+
+## 3. Compensation
+
+Work is compensated at the unit prices fixed in Exhibit B: full-depth patch,
+one hundred eighty-five dollars per square yard; mill and overlay, sixty-two
+dollars per square yard; saw-cut pothole repair, three hundred forty dollars
+per location up to two square yards; traffic control, per the lump-sum daily
+rate. Progress payments are made monthly against inspected and accepted
+quantities, less five percent retainage released at final acceptance.
+
+## 4. Warranty
+
+All work performed under this Agreement is warranted from the date of final
+acceptance, not the date of performance. Full-depth patching and hot-mix
+overlay carry a twenty-four month warranty against cracking, raveling,
+rutting, delamination, and recurrence of the repaired defect, including any
+pothole forming within the limits of the warranted work. Surface treatments
+and crack sealing carry a twelve month warranty. Temporary cold-patch placed
+by the Contractor carries a ninety day warranty.
+
+A defect appearing within the warranty window is remedied by the Contractor
+at no cost to the City, with mobilization inside the response targets of
+Section 2 of the Road Maintenance Policy for the severity assigned to the new
+defect. The warranty on a remedied area restarts for the full original
+duration. The warranty excludes damage from documented third-party events as
+defined in Section 5 of the Road Maintenance Policy; the burden of proof
+rests with the Contractor.
+
+## 5. Insurance and bond
+
+The Contractor maintains commercial general liability coverage of two million
+dollars per occurrence, automobile liability of one million dollars, and
+statutory workers' compensation. A maintenance bond equal to one hundred
+percent of the final contract value secures the warranty obligations of
+Section 4 and remains in force until the last warranty window lapses.
+
+## 6. Claims and disputes
+
+Warranty claims are noticed and processed under Section 6 of the Road
+Maintenance Policy. Written notice issues within five business days of
+inspection; the Contractor has ten business days to remedy or submit a
+third-party-cause defense. Unremedied claims are deducted from the next
+progress payment or drawn against the maintenance bond. Three sustained
+claims within twelve months trigger a performance review and possible
+suspension of this Agreement.`;
+
+// What the contractor actually did, and the live warranty on it. The project
+// limits deliberately cover 1245 Peachtree Industrial Blvd — the pothole
+// camera-demo report's address — and the warranty window brackets today, so
+// document retrieval, the capital-jobs seed, and the liability badge all tell
+// the same story.
+const WARRANTY_DOCUMENT = `# Completed Work Record and Warranty Certificate — Northside Paving LLC
+
+Contract PW-2025-041, Work Package 7: Peachtree Industrial Boulevard
+resurfacing, Station 0+00 at Market Place Boulevard to Station 84+50 at
+Bald Ridge Marina Road, including the full frontage of the 1100–1400 blocks.
+This record is retained under Section 7 of the Road Maintenance Policy.
+
+## 1. Work performed
+
+Between April 21 and May 15 of 2026 the Contractor milled one and one half
+inches of existing surface across both travel lanes and placed a one and one
+half inch hot-mix asphalt overlay, 12.5 millimeter Superpave mix, over the
+full package limits: approximately 21,400 square yards. Forty-one full-depth
+patches totaling 610 square yards were excavated and rebuilt ahead of the
+overlay where coring showed base failure, including three locations in the
+1200 block with recurring pothole history. Thermoplastic lane lines, turn
+arrows, and crosswalk markings were restored across the limits.
+
+## 2. Inspection and acceptance
+
+The City inspector performed density testing on nine cores; all met the
+ninety-two percent minimum. Ride quality measured within specification on
+both lanes. A punch list of two items — a low utility casting at Station
+12+80 and flushing at the Station 31+00 tie-in — was completed on May 27.
+Final acceptance was issued by the Department of Public Works on June 1,
+2026. Final contract value for the package: eight hundred ninety-one
+thousand dollars.
+
+## 3. Warranty certificate
+
+Pursuant to Section 4 of Contract PW-2025-041, all work in this package is
+warranted for twenty-four months from final acceptance. The warranty runs
+from June 1, 2026 through June 1, 2028.
+
+Covered defects within the package limits include cracking, raveling,
+rutting, delamination, and any pothole forming in the overlaid or patched
+surface. A defect reported within the window is repaired by Northside Paving
+LLC at no cost to the City, with mobilization inside the response targets of
+the Road Maintenance Policy for the severity assigned. Any pothole reported
+on Peachtree Industrial Boulevard between Market Place Boulevard and Bald
+Ridge Marina Road before June 1, 2028 is presumed to fall under this
+warranty unless a documented third-party cause is shown.
+
+## 4. Maintenance bond
+
+Maintenance bond number MB-88412, issued by Granite State Surety at one
+hundred percent of the final package value, secures these obligations until
+the warranty lapses. Claims are processed per Section 6 of the Road
+Maintenance Policy; notice contacts are on file with the City Clerk.`;
+
+const DOCS = [
+  {
+    title: "Road Maintenance Policy & Contractor Responsibilities",
+    filename: "road-maintenance-policy.md",
+    doc_kind: "policy",
+    text: POLICY_DOCUMENT,
+  },
+  {
+    title: "Pavement Repair Services Agreement — Northside Paving LLC",
+    filename: "pw-2025-041-services-agreement.md",
+    doc_kind: "contract",
+    text: CONTRACT_DOCUMENT,
+  },
+  {
+    title: "Completed Work & Warranty Certificate — Northside Paving LLC",
+    filename: "pw-2025-041-warranty-certificate.md",
+    doc_kind: "contract",
+    text: WARRANTY_DOCUMENT,
+  },
+];
+
 // ── ingest ─────────────────────────────────────────────────────────────────
 const cities = await rest("GET", `cities?slug=eq.${slug}&select=id,name`);
 if (!cities?.length) {
@@ -222,63 +383,66 @@ if (!cities?.length) {
 }
 const city = cities[0];
 
-const existing = await rest(
-  "GET",
-  `city_documents?city_id=eq.${city.id}&title=eq.${encodeURIComponent(TITLE)}&select=id`,
-);
-if (existing?.length) {
-  for (const doc of existing) {
-    await rest("DELETE", `city_documents?id=eq.${doc.id}`);
+for (const { title, filename, doc_kind, text } of DOCS) {
+  const existing = await rest(
+    "GET",
+    `city_documents?city_id=eq.${city.id}&title=eq.${encodeURIComponent(title)}&select=id`,
+  );
+  if (existing?.length) {
+    for (const doc of existing) {
+      await rest("DELETE", `city_documents?id=eq.${doc.id}`);
+    }
+    console.log(`removed ${existing.length} previous copy/copies of "${title}"`);
   }
-  console.log(`removed ${existing.length} previous copy/copies`);
+
+  const chunks = chunkDocument(text);
+
+  const [doc] = await rest("POST", "city_documents", {
+    city_id: city.id,
+    title,
+    filename,
+    // Seeded text has no uploaded original to keep in the bucket.
+    storage_path: null,
+    doc_kind,
+    chunk_count: 0,
+  });
+
+  await rest(
+    "POST",
+    "document_chunks",
+    chunks.map((chunk) => ({
+      document_id: doc.id,
+      city_id: city.id,
+      ordinal: chunk.ordinal,
+      content: chunk.content,
+      heading: chunk.heading,
+    })),
+  );
+
+  await rest("PATCH", `city_documents?id=eq.${doc.id}`, {
+    chunk_count: chunks.length,
+  });
+
+  console.log(
+    `seeded "${title}" for ${city.name} (${slug}): ${chunks.length} chunks`,
+  );
 }
 
-const chunks = chunkDocument(DOCUMENT);
-
-const [doc] = await rest("POST", "city_documents", {
-  city_id: city.id,
-  title: TITLE,
-  filename: FILENAME,
-  // Seeded text has no uploaded original to keep in the bucket.
-  storage_path: null,
-  doc_kind: "policy",
-  chunk_count: 0,
-});
-
-await rest(
-  "POST",
-  "document_chunks",
-  chunks.map((chunk) => ({
-    document_id: doc.id,
-    city_id: city.id,
-    ordinal: chunk.ordinal,
-    content: chunk.content,
-    heading: chunk.heading,
-  })),
-);
-
-await rest("PATCH", `city_documents?id=eq.${doc.id}`, {
-  chunk_count: chunks.length,
-});
-
-console.log(
-  `seeded "${TITLE}" for ${city.name} (${slug}): ${chunks.length} chunks`,
-);
-
 // Prove retrieval works end-to-end against what was just written.
-const probe = await fetch(`${url}/rest/v1/rpc/search_document_chunks`, {
-  method: "POST",
-  headers,
-  body: JSON.stringify({
-    _city_id: city.id,
-    _query: "pothole on Peachtree Industrial Blvd",
-    _limit: 3,
-  }),
-});
-const hits = await probe.json();
-console.log(
-  "retrieval probe 'pothole on Peachtree Industrial Blvd':",
-  Array.isArray(hits)
-    ? hits.map((h) => `${h.heading} (${Number(h.rank).toFixed(4)})`)
-    : hits,
-);
+for (const query of [
+  "pothole on Peachtree Industrial Blvd",
+  "Northside Paving warranty pothole",
+]) {
+  const probe = await fetch(`${url}/rest/v1/rpc/search_document_chunks`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ _city_id: city.id, _query: query, _limit: 3 }),
+  });
+  const hits = await probe.json();
+  console.log(
+    `retrieval probe '${query}':`,
+    Array.isArray(hits)
+      ? hits.map((h) => `${h.document_title} › ${h.heading} (${Number(h.rank).toFixed(4)})`)
+      : hits,
+  );
+}

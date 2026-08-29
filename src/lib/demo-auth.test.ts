@@ -21,7 +21,7 @@ describe("DEMO_ACCOUNTS", () => {
         CREW_UNIT_ROSTER.length,
     );
     expect(OPERATIONAL_TEAMS).toHaveLength(11);
-    expect(CREW_UNIT_ROSTER).toHaveLength(8);
+    expect(CREW_UNIT_ROSTER).toHaveLength(9);
   });
 
   it("maps teamtest{n} to TEAM_LIST order with a /city/cumming/team/{teamId} home", () => {

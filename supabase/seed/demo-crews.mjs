@@ -51,7 +51,8 @@ const STAFF_ROLES = ["staff_dispatcher", "staff_supervisor", "admin"];
 // resolves against a real seeded row instead of silently falling back to
 // the type-level portal.
 const CREW_ROSTER = [
-  { name: "North Paving Crew", team_key: "streets_roads", crew_type: "paving", description: "Arterial roads, school zones, and everything north of the city core — fast pothole patch turnarounds." },
+  { name: "Northside Paving LLC", team_key: "streets_roads", crew_type: "paving", description: "Contract pothole repair vendor under resurfacing agreement PW-2025-041. All pothole and pavement-failure work on the arterial corridors — Peachtree Industrial Blvd, Buford Hwy, Canton Hwy, Atlanta Road — routes here; repairs on those roads are covered by the vendor's 24-month warranty at no cost to the City." },
+  { name: "North Paving Crew", team_key: "streets_roads", crew_type: "paving", description: "City crew — school zones and everything north of the city core — fast pothole patch turnarounds on residential streets." },
   { name: "South Paving Crew", team_key: "streets_roads", crew_type: "paving", description: "Downtown, the parks district, and southern subdivisions — larger resurfacing and prep jobs." },
   { name: "Flatwork Crew", team_key: "sidewalks_ada", crew_type: "concrete", description: "Sidewalk panel replacement, curb ramps, and ADA compliance fixes citywide." },
   { name: "Storm Drain Crew", team_key: "stormwater", crew_type: "drain_crew", description: "Clogged inlets, culverts, jet-truck cleanouts, and standing-water calls." },
