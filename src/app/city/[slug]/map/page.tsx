@@ -23,6 +23,8 @@ export default async function FullscreenMapPage({ params }: PageProps) {
 
   // All-teams map: reads the same shared corpus as the team maps, so the city
   // view is always a superset of every team and reflects task completions.
+  // Cesium/ion resource hints live in this segment's layout.tsx so they flush
+  // ahead of the page body in the stream.
   return (
     <CorpusMapView
       center={center}

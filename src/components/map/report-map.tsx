@@ -158,11 +158,18 @@ function ReportMapInner({
   }, [appTheme, mapThemeProp]);
   const [is3D, setIs3D] = useState(true);
   const [viewMode, setViewMode] = useState<"markers" | "heatmap">("markers");
-  // Renderer: the Cesium globe by default, the MapLibre/deck.gl map as the
-  // fallback. Two things force `flat` regardless of this preference —
-  // the heatmap view (a deck.gl aggregation layer with no globe equivalent)
-  // and a failed Cesium/WebGL2 init (handleGlobeInitError below).
-  const [renderer, setRenderer] = useState<MapRenderer>("globe");
+  // Renderer: the MapLibre/deck.gl map by default, the Cesium globe opt-in via
+  // the gear panel. The globe costs 8.7 MB over 113 requests (1.7 MB
+  // Cesium.js + ~1 MB local assets + ~3.9 MB of ion terrain/OSM-building
+  // tiles) and ~10.5 s of main-thread blocking parsing b3dm tiles, against
+  // 2.3 MB / 63 requests flat — too much to spend before the operator has
+  // asked for 3D. It also cannot initialise under the production CSP today
+  // (Cesium.js calls eval at load), so defaulting to it meant every prod
+  // visitor paid a failed download before falling back here anyway.
+  // Two things still force `flat` regardless of preference: the heatmap view
+  // (a deck.gl aggregation layer with no globe equivalent) and a failed
+  // Cesium/WebGL2 init (handleGlobeInitError below).
+  const [renderer, setRenderer] = useState<MapRenderer>("flat");
   const globeFailedRef = useRef(false);
   const handleGlobeInitError = useCallback((reason: string) => {
     if (globeFailedRef.current) return;
