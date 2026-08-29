@@ -67,85 +67,101 @@ export default async function CityDocumentsPage({ params }: PageProps) {
   const totalChunks = rows.reduce((sum, row) => sum + row.chunk_count, 0);
 
   return (
-    <main className="mx-auto max-w-[92rem] space-y-6 p-6">
-      <header>
-        <h1 className="text-xl font-semibold">Documents — {city.name}</h1>
-        <p className="mt-1 text-sm text-subtle">
-          Policies, contracts, and specs that govern repair work. Uploaded text
-          is split into indexed chunks so the clause covering a given road or
-          defect can be pulled up next to the report it applies to.
-        </p>
-      </header>
+    // Same page shell as the Teams/Analytics tabs: 1800px content column,
+    // pt-city-content for the mobile fixed-header offset, hairline footer.
+    <div className="flex flex-col min-h-dvh bg-background">
+      <div className="flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
+        {/* Compact page header — single slim row, like every other tab. */}
+        <section className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
+            Documents
+          </h1>
+          <p className="max-w-[80ch] text-[13px] text-faint">
+            Policies, contracts, and specs that govern repair work in{" "}
+            {city.name}. Uploaded text is split into indexed chunks so the
+            clause covering a given road or defect can be pulled up next to the
+            report it applies to.
+          </p>
+        </section>
 
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-        {/* Left column: ingestion + the corpus it produces. */}
-        <div className="space-y-4">
-          <UploadDocument slug={slug} />
+        {/* Ingestion + corpus ride a fixed-width left rail; retrieval — the
+            surface whose output actually needs reading room — takes the rest
+            of the 1800px column. */}
+        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(340px,400px)_minmax(0,1fr)]">
+          <div className="space-y-4">
+            <UploadDocument slug={slug} />
 
-          <section className="overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface">
-            <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
-              <h2 className={EYEBROW}>Corpus</h2>
-              <span className="font-mono text-[11px] tabular-nums text-faint">
-                {rows.length} docs · {totalChunks} chunks
-              </span>
-            </div>
+            <section className="overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface">
+              <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
+                <h2 className={EYEBROW}>Corpus</h2>
+                <span className="font-mono text-[11px] tabular-nums text-faint">
+                  {rows.length} docs · {totalChunks} chunks
+                </span>
+              </div>
 
-            {rows.length > 0 ? (
-              <ul>
-                {rows.map((row, idx) => (
-                  <li
-                    key={row.id}
-                    className={`flex items-start gap-3 px-4 py-3 transition-colors hover:bg-overlay ${
-                      idx > 0 ? "border-t border-hairline" : ""
-                    }`}
-                  >
-                    <FileText
-                      className="mt-0.5 h-4 w-4 flex-shrink-0 text-faint"
-                      strokeWidth={1.75}
-                      aria-hidden="true"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-medium text-foreground">
-                        {row.title}
-                      </p>
-                      <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-subtle">
-                        <span className={EYEBROW}>
-                          {DOC_KIND_LABEL[row.doc_kind] ?? row.doc_kind}
-                        </span>
-                        <span className="tabular-nums">
-                          {row.chunk_count} chunks
-                        </span>
-                        <span className="tabular-nums text-faint">
-                          {timeAgo(row.created_at)}
-                        </span>
-                        <span className="truncate text-faint">
-                          {row.filename}
-                        </span>
-                      </p>
-                    </div>
-                    <DeleteDocumentButton
-                      slug={slug}
-                      documentId={row.id}
-                      title={row.title}
-                    />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="px-4 py-6 text-[13px] text-subtle">
-                No documents yet. Add a maintenance policy or a contractor
-                agreement above — retrieval has nothing to match against until
-                one is indexed.
-              </p>
-            )}
-          </section>
-        </div>
+              {rows.length > 0 ? (
+                <ul>
+                  {rows.map((row, idx) => (
+                    <li
+                      key={row.id}
+                      className={`flex items-start gap-3 px-4 py-3 transition-colors hover:bg-overlay ${
+                        idx > 0 ? "border-t border-hairline" : ""
+                      }`}
+                    >
+                      <FileText
+                        className="mt-0.5 h-4 w-4 flex-shrink-0 text-faint"
+                        strokeWidth={1.75}
+                        aria-hidden="true"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13px] font-medium text-foreground">
+                          {row.title}
+                        </p>
+                        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-subtle">
+                          <span className={EYEBROW}>
+                            {DOC_KIND_LABEL[row.doc_kind] ?? row.doc_kind}
+                          </span>
+                          <span className="tabular-nums">
+                            {row.chunk_count} chunks
+                          </span>
+                          <span className="tabular-nums text-faint">
+                            {timeAgo(row.created_at)}
+                          </span>
+                          <span className="truncate text-faint">
+                            {row.filename}
+                          </span>
+                        </p>
+                      </div>
+                      <DeleteDocumentButton
+                        slug={slug}
+                        documentId={row.id}
+                        title={row.title}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="px-4 py-6 text-[13px] text-subtle">
+                  No documents yet. Add a maintenance policy or a contractor
+                  agreement above — retrieval has nothing to match against until
+                  one is indexed.
+                </p>
+              )}
+            </section>
+          </div>
 
-        {/* Right column: proof the mechanism works, sticky beside the corpus. */}
-        <div className="lg:sticky lg:top-6">
+          {/* Right column: proof the mechanism works — wide enough that a
+              retrieved clause reads as prose, not as a squeezed column. */}
           <RetrievalTester slug={slug} />
         </div>
       </div>
-    </main>
+
+      <footer className="border-t border-hairline mt-10 pb-safe">
+        <div className="mx-auto flex max-w-[1800px] flex-col items-center justify-between gap-3 px-3 py-6 text-[13px] text-faint sm:flex-row sm:px-4 lg:px-6">
+          <span>Civic</span>
+          <span>&copy; {new Date().getFullYear()} · Open311 compatible</span>
+        </div>
+      </footer>
+    </div>
   );
 }

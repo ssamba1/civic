@@ -20,6 +20,7 @@ import {
   Waves,
 } from "lucide-react";
 import { CATEGORY_META } from "@/lib/dashboard-data";
+import { SEVERITY_HUE } from "@/lib/severity-colors";
 import {
   STATUS_LABEL as REPORT_STATUS_LABEL,
   statusChipClass,
@@ -57,15 +58,6 @@ export const CATEGORY_ICON: Record<string, LucideIcon> = {
   "help-circle": HelpCircle,
 };
 
-// Mirrors analytics-bento / report-detail SEVERITY_COLORS — same ordinal ramp.
-export const SEVERITY_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: "var(--fg-cyan-burst)",
-  2: "var(--color-success)",
-  3: "var(--color-warning)",
-  4: "var(--fg-neon-coral)",
-  5: "var(--color-danger)",
-};
-
 /**
  * Report facts folded inline into a detection row — same chips/typography the
  * standalone report card used, minus its own thumbnail and link wrapper (the
@@ -81,7 +73,9 @@ export function ReportInline({
 }) {
   const meta = CATEGORY_META[report.category];
   const Icon = CATEGORY_ICON[meta.icon] ?? HelpCircle;
-  const sevColor = SEVERITY_COLORS[report.severity];
+  // Canonical ordinal ramp (src/lib/severity-colors.ts) — the local copy this
+  // module used to carry was neither monotonic nor dark-theme correct.
+  const sevColor = SEVERITY_HUE[report.severity];
 
   return (
     <div className="flex min-w-0 flex-col gap-1">

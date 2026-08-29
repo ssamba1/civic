@@ -306,7 +306,7 @@ function StageBody({ clip, slug }: { clip: TheaterClip; slug: string }) {
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col 2xl:max-w-[1100px]">
         {playable ? (
           <div className="relative aspect-video w-full overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-overlay">
             {/* biome-ignore lint/a11y/useMediaCaption: dashcam footage has no dialogue */}
@@ -562,7 +562,7 @@ function DetectionRail({
   );
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-2 lg:w-[320px] lg:flex-shrink-0">
+    <div className="flex w-full min-w-0 flex-col gap-2 lg:w-[320px] lg:flex-shrink-0 xl:w-[380px] 2xl:w-[420px]">
       <div className="flex items-baseline justify-between gap-2">
         <h3 className={EYEBROW}>Detection feed</h3>
         <span className="font-mono text-[11px] tabular-nums text-faint">

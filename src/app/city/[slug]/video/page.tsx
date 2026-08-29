@@ -404,130 +404,155 @@ export default async function VideoPipelinePage({ params }: PageProps) {
 
   return (
     <ClipStudioProvider clips={theaterClips} slug={slug}>
-      <main className="mx-auto max-w-5xl space-y-6 p-6">
-        <header>
-          <h1 className="text-xl font-semibold">
-            Video damage mapping — {city.name}
-          </h1>
-          <p className="mt-1 text-sm text-subtle">
-            Clips are scanned by a local detector (no AI-model cost); only
-            confident detection clusters trigger an AI decision run, and only
-            dispatch decisions create reports.
-          </p>
-        </header>
-
-        <KpiStrip cells={kpis} />
-
-        <ClipStage />
-
-        {/* The pre-rendered overlay reel is only worth showing when no clip in
-          the table has a playable object to drive the live theater. */}
-        {!hasPlayableClip && <DemoClipCard />}
-
-        <section>
-          <h2 className={`${EYEBROW} mb-2`}>Detections</h2>
-          {clusterRows.length > 0 ? (
-            <div className="overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface">
-              {clusterRows.map((cluster, idx) => {
-                const evidence = frameByCluster.get(cluster.id) ?? null;
-                const report = cluster.report_id
-                  ? (reportById.get(cluster.report_id) ?? null)
-                  : null;
-                const thumbUrl = evidence?.url ?? report?.imageUrl ?? null;
-                return (
-                  <div
-                    key={cluster.id}
-                    className={`flex flex-wrap items-start gap-3 p-3 transition-colors hover:bg-overlay sm:flex-nowrap ${idx > 0 ? "border-t border-hairline" : ""}`}
-                  >
-                    <div className="relative h-20 w-28 flex-shrink-0 overflow-hidden rounded-[var(--radius-md)] border border-hairline bg-overlay">
-                      {thumbUrl ? (
-                        // Click opens the WHOLE frame with the detector's box
-                        // drawn back on it — the thumbnail crops away the
-                        // context that makes the box readable.
-                        <EvidenceFrameButton
-                          src={thumbUrl}
-                          box={evidence?.box ?? null}
-                          label={evidence?.label}
-                          alt={`Evidence frame for ${cluster.class}`}
-                          title={cluster.class}
-                          subtitle={`${cluster.max_confidence.toFixed(2)} confidence · ${cluster.frame_count} frames`}
-                          className="h-full w-full"
-                        />
-                      ) : (
-                        <span className="flex h-full w-full items-center justify-center text-faint">
-                          <HelpCircle className="h-5 w-5" strokeWidth={1.75} />
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-foreground leading-tight">
-                        <span className="font-medium">{cluster.class}</span>
-                        <span className="tabular-nums text-subtle">
-                          {cluster.max_confidence.toFixed(2)} conf
-                        </span>
-                        <span className="tabular-nums text-faint">
-                          {cluster.frame_count} frames
-                        </span>
-                        <span className={EYEBROW}>
-                          {STATUS_LABEL[cluster.status] ?? cluster.status}
-                        </span>
-                      </p>
-                      {report && <ReportInline report={report} />}
-                    </div>
-
-                    <div className="flex w-full flex-shrink-0 flex-col items-start gap-1.5 sm:w-64 sm:items-end">
-                      <ClusterRowActions
-                        slug={slug}
-                        clusterId={cluster.id}
-                        status={cluster.status}
-                        // Thumbnail already shows the frame; the pop-out button
-                        // only earns its place when no URL could be minted.
-                        framePath={
-                          thumbUrl || !cluster.best_detection_id
-                            ? null
-                            : (framePathById.get(cluster.best_detection_id) ??
-                              null)
-                        }
-                      />
-                      {cluster.decision && (
-                        <div className="text-xs sm:text-right">
-                          <span className="font-medium text-subtle">
-                            {cluster.decision}
-                          </span>
-                          {cluster.decision_rationale && (
-                            <p className="mt-0.5 line-clamp-3 text-faint">
-                              {cluster.decision_rationale}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                      {cluster.report_id && (
-                        // No per-report detail route exists yet — the grid is the
-                        // canonical staff surface for dispatched work orders.
-                        <Link
-                          className="text-xs text-faint underline transition-colors hover:text-foreground"
-                          href={`/city/${slug}/grid`}
-                        >
-                          Open in grid →
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-4 text-sm text-subtle">
-              No detections yet.
+      {/* Same page shell as the Teams/Analytics tabs: 1800px content column,
+          pt-city-content for the mobile fixed-header offset, hairline footer. */}
+      <div className="flex flex-col min-h-dvh bg-background">
+        <div className="flex-grow mx-auto w-full max-w-[1800px] space-y-4 px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
+          {/* Compact page header — single slim row, like every other tab. */}
+          <section className="mb-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
+              Video
+            </h1>
+            <p className="max-w-[80ch] text-[13px] text-faint">
+              Clips are scanned by a local detector (no AI-model cost); only
+              confident detection clusters trigger an AI decision run, and only
+              dispatch decisions create reports.
             </p>
-          )}
-        </section>
+          </section>
 
-        <UploadClip slug={slug} />
+          <KpiStrip cells={kpis} />
 
-        <ClipList />
-      </main>
+          <ClipStage />
+
+          {/* The pre-rendered overlay reel is only worth showing when no clip in
+          the table has a playable object to drive the live theater. */}
+          {!hasPlayableClip && <DemoClipCard />}
+
+          <section>
+            <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className={EYEBROW}>Detections</h2>
+              <span className="font-mono text-[11px] tabular-nums text-faint">
+                {clusterRows.length} clusters
+              </span>
+            </div>
+            {clusterRows.length > 0 ? (
+              // Cards, not one long list: past ~1500px a single full-width row
+              // strands its middle column, so the grid folds to two.
+              <div className="grid gap-3 2xl:grid-cols-2">
+                {clusterRows.map((cluster) => {
+                  const evidence = frameByCluster.get(cluster.id) ?? null;
+                  const report = cluster.report_id
+                    ? (reportById.get(cluster.report_id) ?? null)
+                    : null;
+                  const thumbUrl = evidence?.url ?? report?.imageUrl ?? null;
+                  return (
+                    <div
+                      key={cluster.id}
+                      className="flex flex-wrap items-start gap-3 rounded-[var(--radius-lg)] border border-hairline bg-surface p-3 transition-colors hover:bg-overlay sm:flex-nowrap"
+                    >
+                      <div className="relative h-20 w-28 flex-shrink-0 overflow-hidden rounded-[var(--radius-md)] border border-hairline bg-overlay">
+                        {thumbUrl ? (
+                          // Click opens the WHOLE frame with the detector's box
+                          // drawn back on it — the thumbnail crops away the
+                          // context that makes the box readable.
+                          <EvidenceFrameButton
+                            src={thumbUrl}
+                            box={evidence?.box ?? null}
+                            label={evidence?.label}
+                            alt={`Evidence frame for ${cluster.class}`}
+                            title={cluster.class}
+                            subtitle={`${cluster.max_confidence.toFixed(2)} confidence · ${cluster.frame_count} frames`}
+                            className="h-full w-full"
+                          />
+                        ) : (
+                          <span className="flex h-full w-full items-center justify-center text-faint">
+                            <HelpCircle
+                              className="h-5 w-5"
+                              strokeWidth={1.75}
+                            />
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-foreground leading-tight">
+                          <span className="font-medium">{cluster.class}</span>
+                          <span className="tabular-nums text-subtle">
+                            {cluster.max_confidence.toFixed(2)} conf
+                          </span>
+                          <span className="tabular-nums text-faint">
+                            {cluster.frame_count} frames
+                          </span>
+                          <span className={EYEBROW}>
+                            {STATUS_LABEL[cluster.status] ?? cluster.status}
+                          </span>
+                        </p>
+                        {report && <ReportInline report={report} />}
+                      </div>
+
+                      <div className="flex w-full flex-shrink-0 flex-col items-start gap-1.5 sm:w-64 sm:items-end">
+                        <ClusterRowActions
+                          slug={slug}
+                          clusterId={cluster.id}
+                          status={cluster.status}
+                          // Thumbnail already shows the frame; the pop-out button
+                          // only earns its place when no URL could be minted.
+                          framePath={
+                            thumbUrl || !cluster.best_detection_id
+                              ? null
+                              : (framePathById.get(cluster.best_detection_id) ??
+                                null)
+                          }
+                        />
+                        {cluster.decision && (
+                          <div className="text-xs sm:text-right">
+                            <span className="font-medium text-subtle">
+                              {cluster.decision}
+                            </span>
+                            {cluster.decision_rationale && (
+                              <p className="mt-0.5 line-clamp-3 text-faint">
+                                {cluster.decision_rationale}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                        {cluster.report_id && (
+                          // No per-report detail route exists yet — the grid is the
+                          // canonical staff surface for dispatched work orders.
+                          <Link
+                            className="text-xs text-faint underline transition-colors hover:text-foreground"
+                            href={`/city/${slug}/grid`}
+                          >
+                            Open in grid →
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-4 text-[13px] text-subtle">
+                No detections yet.
+              </p>
+            )}
+          </section>
+
+          {/* Ingest sits beside the run log rather than stacked above it —
+              both are narrow, and the log's table wants the wider half. */}
+          <div className="grid items-start gap-4 lg:grid-cols-[minmax(320px,1fr)_minmax(0,2fr)]">
+            <UploadClip slug={slug} />
+            <ClipList />
+          </div>
+        </div>
+
+        <footer className="border-t border-hairline mt-10 pb-safe">
+          <div className="mx-auto flex max-w-[1800px] flex-col items-center justify-between gap-3 px-3 py-6 text-[13px] text-faint sm:flex-row sm:px-4 lg:px-6">
+            <span>Civic</span>
+            <span>&copy; {new Date().getFullYear()} · Open311 compatible</span>
+          </div>
+        </footer>
+      </div>
     </ClipStudioProvider>
   );
 }

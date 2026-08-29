@@ -205,7 +205,7 @@ export function RetrievalTester({ slug }: { slug: string }) {
   return (
     <section className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-4">
       <h2 className={`${EYEBROW} mb-1`}>Test retrieval</h2>
-      <p className="mb-3 text-[13px] leading-relaxed text-subtle">
+      <p className="mb-3 max-w-[80ch] text-[13px] leading-relaxed text-subtle">
         Type a scenario the way a report would arrive. This runs the same
         city-scoped full-text lookup a report surface uses, so you can see which
         clause would be shown to the dispatcher.
@@ -237,6 +237,17 @@ export function RetrievalTester({ slug }: { slug: string }) {
         </p>
       )}
 
+      {!results && !error && (
+        <div className="mt-3 rounded-[var(--radius-md)] border border-dashed border-hairline-strong px-4 py-8 text-center">
+          <p className="text-[13px] text-subtle">
+            No lookup run yet — matched clauses appear here.
+          </p>
+          <p className="mt-1 text-[13px] text-faint">
+            Full-text ranked, city-scoped, top matches first.
+          </p>
+        </div>
+      )}
+
       {results && results.length === 0 && (
         <p className="mt-3 text-[13px] text-subtle">
           No matching guidance. Try the road name or the defect type on its own.
@@ -244,7 +255,7 @@ export function RetrievalTester({ slug }: { slug: string }) {
       )}
 
       {results && results.length > 0 && (
-        <ol className="mt-3 space-y-2">
+        <ol className="mt-3 grid gap-2 2xl:grid-cols-2">
           {results.map((chunk) => (
             <li
               key={chunk.chunkId}
@@ -266,7 +277,7 @@ export function RetrievalTester({ slug }: { slug: string }) {
                   {chunk.rank.toFixed(4)}
                 </span>
               </div>
-              <p className="text-[13px] leading-relaxed whitespace-pre-wrap text-subtle">
+              <p className="max-w-[90ch] text-[13px] leading-relaxed whitespace-pre-wrap text-subtle">
                 {chunk.content}
               </p>
             </li>
