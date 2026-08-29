@@ -572,7 +572,14 @@ export function CommunityPulseInteractive({
               </p>
               <p
                 className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-medium"
-                style={{ color: m.color }}
+                // The momentum hues are tuned as graphic fills (~3.0-3.6:1 on
+                // white), so as 13px label text they miss AA in one theme or
+                // the other. Pull them toward --team-text-mix — black on
+                // light, white on dark — the same fill-vs-text split the team
+                // and status tokens use. Takes this line to >=5.6:1 in both.
+                style={{
+                  color: `color-mix(in srgb, ${m.color}, var(--team-text-mix) var(--team-text-amount))`,
+                }}
               >
                 <m.Icon className="h-4 w-4" strokeWidth={2.25} />
                 {m.label}
@@ -723,12 +730,7 @@ export function CommunityPulseInteractive({
           <Tile title="Turned around fastest">
             {fastest ? (
               <div className="flex items-center gap-3">
-                <span
-                  className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
-                  style={{
-                    
-                  }}
-                >
+                <span className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full">
                   <Zap
                     className="h-5 w-5"
                     style={{ color: CATEGORY_META[fastest.category].color }}

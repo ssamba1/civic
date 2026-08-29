@@ -1005,3 +1005,43 @@ video::-webkit-media-controls-overlay-play-button {
     animation-delay: var(--clip-scan-delay, 0s);
   }
 }
+
+/* ── Team-color text companion ──
+   TEAM_LIST colors are tuned as GRAPHIC fills (dots, bars, pins): ~3.3-3.9:1
+   on white, which clears 3:1 for non-text but not 4.5:1 for small labels.
+   Anywhere a team hue is used as TEXT, mix it toward this token instead of a
+   hardcoded #000 — darkening is only correct on the light surface; on
+   #101012 the same mix produced near-invisible text. Same split the status
+   tokens already use (--color-* fill vs --status-*-fg text). */
+:root {
+  --team-text-mix: #000000;
+  --team-text-amount: 30%;
+}
+.dark {
+  --team-text-mix: #ffffff;
+  --team-text-amount: 18%;
+}
+
+/* ── Category token refresh (supersedes the --fg-* block near line 97) ──
+   Those five chromatic --fg-* values were byte-identical to five entries of
+   the old CATEGORY_META palette, so they were a second, unnamed copy of it.
+   Their comment up there ("map data layers + chart series") is now stale on
+   both counts: map pins only take progress / urgency / team fills
+   (MarkerColorMode in pin-icons.ts has no category mode) and the analytics
+   charts run on --pastel-* and the severity ramp. What actually consumes
+   these today is the resident Community Pulse severity bars and a couple of
+   accent dots. Rather than leave a stale duplicate at the old saturation
+   next to the freshly-raised category and team palettes on the same page,
+   they are restated here at the SAME hue angles, regenerated with the shared
+   recipe (OKLCH L=0.63, C = min(0.185, 90% of the hue's in-gamut max)). Hue
+   order is unchanged, so the cool→hot severity reading still holds.
+   Appended rather than edited in place because this file has concurrent
+   writers; the cascade makes the later declaration win. --fg-deep-void is
+   pure black and has no chroma to raise, so it is left alone. */
+:root {
+  --fg-electric-indigo: #5082f4; /* was #5b6b8c */
+  --fg-neon-coral: #e35044; /* was #b0574c */
+  --fg-emerald-glow: #2ba06e; /* was #4d8a6a */
+  --fg-amber-pulse: #a48525; /* was #ad8434 */
+  --fg-cyan-burst: #2995c0; /* was #5f8ba6 */
+}

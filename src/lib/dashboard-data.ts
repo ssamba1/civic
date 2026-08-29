@@ -171,28 +171,51 @@ export const MUNICIPALITIES: Municipality[] = [
 
 /* ------------------------------------------------------------------
    Category metadata — labels, colors, icons
+
+   Category palette: same generator as the team palette (@/lib/teams) —
+   OKLCH at a constant L=0.63 with C = min(0.185, 90% of that hue's in-gamut
+   maximum), so the eleven chromatic categories brighten as one family
+   instead of one entry out-shouting the rest at a 8px dot. Every entry keeps
+   its previous hue anchor except the two that had none:
+
+     - debris was #8a8a90 (C=0.009, a grey) and took the open teal slot.
+     - faded_signage was #b6b6bc (C=0.008, a grey at 2.0:1 on white — it
+       simply vanished) and took the open rose slot, deliberately far from
+       downed_sign, the only other category sharing the sign-post glyph.
+
+   Ten of these are byte-identical to their owning team's color (see
+   CATEGORY_TO_TEAM): a category dot and its department dot are the same
+   hue on purpose, because they are the same routing fact. Two are not, and
+   are cross-wired the same way the old palette was: illegal_dump keeps its
+   olive anchor (Environmental Services' hue) while Code Enforcement owns it,
+   and debris now wears Code Enforcement's teal while Environmental Services
+   owns it. Swapping them would trade a preserved hue for a routing pun.
+
+   These are GRAPHIC fills (dots, bars, glyph strokes) at ~3.3-3.9:1 on
+   white. Used as TEXT? Mix toward --team-text-mix / --team-text-amount
+   (globals.css), the same fill-vs-text split the status tokens use.
    ------------------------------------------------------------------ */
 
 export const CATEGORY_META: Record<
   ReportCategory,
   { label: string; color: string; icon: string }
 > = {
-  pothole: { label: "Pothole", color: "#b0574c", icon: "circle-alert" },
-  streetlight: { label: "Streetlight", color: "#ad8434", icon: "lightbulb" },
-  downed_sign: { label: "Downed Sign", color: "#7c6f9c", icon: "sign-post" },
-  graffiti: { label: "Graffiti", color: "#a3647e", icon: "spray-can" },
-  illegal_dump: { label: "Illegal Dump", color: "#7f8a45", icon: "trash-2" },
-  water_leak: { label: "Water Leak", color: "#5f8ba6", icon: "droplets" },
-  sidewalk_damage: { label: "Sidewalk", color: "#c07a3c", icon: "footprints" },
-  tree_down: { label: "Tree Down", color: "#4d8a6a", icon: "tree-pine" },
-  debris: { label: "Debris", color: "#8a8a90", icon: "construction" },
-  drainage: { label: "Drainage", color: "#5b6b8c", icon: "waves" },
+  pothole: { label: "Pothole", color: "#e35044", icon: "circle-alert" },
+  streetlight: { label: "Streetlight", color: "#a48525", icon: "lightbulb" },
+  downed_sign: { label: "Downed Sign", color: "#9c68e6", icon: "sign-post" },
+  graffiti: { label: "Graffiti", color: "#d052a8", icon: "spray-can" },
+  illegal_dump: { label: "Illegal Dump", color: "#6a9a25", icon: "trash-2" },
+  water_leak: { label: "Water Leak", color: "#2995c0", icon: "droplets" },
+  sidewalk_damage: { label: "Sidewalk", color: "#c57124", icon: "footprints" },
+  tree_down: { label: "Tree Down", color: "#2ba06e", icon: "tree-pine" },
+  debris: { label: "Debris", color: "#2a9b9c", icon: "construction" },
+  drainage: { label: "Drainage", color: "#5082f4", icon: "waves" },
   faded_signage: {
     label: "Faded Signage",
-    color: "#b6b6bc",
+    color: "#df4c7a",
     icon: "sign-post",
   },
-  other: { label: "Other", color: "#6f6f75", icon: "help-circle" },
+  other: { label: "Other", color: "#787783", icon: "help-circle" },
 };
 
 /* ------------------------------------------------------------------
