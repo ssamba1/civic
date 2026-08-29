@@ -96,7 +96,10 @@ export default async function CityGridPage({
     // Full-bleed: the grid owns the entire content area (toolbar padding lives
     // inside WorkOrderGrid). Mobile keeps the fixed-CityHeader offset; md+
     // (sidebar shell, no fixed header) is edge-to-edge.
-    <div className="flex h-dvh w-full flex-col pt-[calc(env(safe-area-inset-top)+8rem)] md:pt-0">
+    // Height is 100dvh divided back out of the html `zoom: 0.9` (--app-zoom):
+    // dvh resolves BEFORE the zoom scales it, so a plain h-dvh renders at 90%
+    // of the viewport and leaves a dead band under the pagination bar.
+    <div className="flex h-[calc(100dvh/var(--app-zoom,1))] w-full flex-col overflow-hidden pt-[calc(env(safe-area-inset-top)+8rem)] md:pt-0">
       {/* Visible title chrome removed to give the grid the full viewport;
           the h1 survives for a11y/SEO. */}
       <h1 className="sr-only">Work Order Grid</h1>

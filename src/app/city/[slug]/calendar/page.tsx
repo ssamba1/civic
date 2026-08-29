@@ -130,9 +130,13 @@ export default async function CityCalendarPage({
   }));
 
   return (
-    <div className="relative flex flex-col min-h-dvh bg-background">
-      <div className="relative flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
-        <section className="mb-5 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+    // md+ pins the shell to exactly one viewport so the calendar never needs a
+    // scroll to reach: dvh resolves BEFORE the html `zoom: 0.9` (--app-zoom)
+    // scales it, so divide the zoom back out. Mobile keeps the natural
+    // min-h-dvh flow (the fixed CityHeader offset would squeeze a hard height).
+    <div className="relative flex min-h-dvh flex-col bg-background md:h-[calc(100dvh/var(--app-zoom,1))] md:min-h-0 md:overflow-hidden">
+      <div className="relative mx-auto flex w-full max-w-[1800px] flex-grow flex-col px-3 pt-city-content pb-6 sm:px-4 lg:px-6 md:min-h-0 md:pb-4">
+        <section className="mb-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
               Calendar

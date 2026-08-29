@@ -1,10 +1,11 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, SlidersHorizontal, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { TipChip, TipRow, useHoverTip } from "@/components/analytics/hover-tip";
 import { MenuSelect } from "@/components/ui/menu-select";
+import { Modal } from "@/components/ui/modal";
 import {
   addMonths,
   type CalendarCell,
@@ -87,6 +88,7 @@ export function WorkOrderCalendar({
   const [fCrew, setFCrew] = useState<string | null>(lockedCrewId ?? null);
   const [fStatus, setFStatus] = useState<string | null>(null);
   const [openDay, setOpenDay] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // The locks always win over client state, regardless of how fType/fCrew got
   // set — constants, not merely initial values.
@@ -206,9 +208,15 @@ export function WorkOrderCalendar({
   const todayParam = todayISO.slice(0, 7);
   const onCurrentMonth = monthISO.slice(0, 7) === todayParam;
 
-  const hasFilter = Boolean(
-    fTeam || (!lockedCrewType && fType) || (!lockedCrewId && fCrew) || fStatus,
-  );
+  // Same terms as hasFilter so a locked crew-portal filter never inflates the
+  // badge on the Filters trigger (the picker for it isn't rendered at all).
+  const activeFilterCount = [
+    fTeam,
+    lockedCrewType ? null : fType,
+    lockedCrewId ? null : fCrew,
+    fStatus,
+  ].filter(Boolean).length;
+  const hasFilter = activeFilterCount > 0;
   function clearFilters() {
     setFTeam(null);
     if (!lockedCrewType) setFType(null);
@@ -217,7 +225,11 @@ export function WorkOrderCalendar({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    // min-h-0 + flex-1 let the month card absorb whatever height the page shell
+    // hands down (md+ pins that to one viewport). In the crew portal, whose
+    // wrapper is a plain block, flex-1 is inert and the grid falls back to the
+    // day cells' own min-height — same look as before.
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
@@ -251,76 +263,116 @@ export function WorkOrderCalendar({
             </Link>
           </nav>
         </div>
-        <span className="flex-shrink-0 text-[12px] tabular-nums text-faint">
-          {filtered.length} work {filtered.length === 1 ? "order" : "orders"}
-        </span>
+        <div className="flex flex-shrink-0 items-center gap-3">
+          <span className="text-[12px] tabular-nums text-faint">
+            {filtered.length} work {filtered.length === 1 ? "order" : "orders"}
+          </span>
+          {/* The filters themselves live in a modal so the month grid clears
+              the fold; the badge keeps the active ones visible from here. */}
+          <button
+            type="button"
+            onClick={() => setFiltersOpen(true)}
+            aria-haspopup="dialog"
+            aria-expanded={filtersOpen}
+            className={cn(NAV_BTN, "gap-1.5")}
+          >
+            <SlidersHorizontal
+              className="h-3.5 w-3.5"
+              strokeWidth={2}
+              aria-hidden
+            />
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold tabular-nums text-accent-contrast">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
-      <div className="flex flex-wrap items-end gap-2">
-        <FilterField id={teamId} label="Division">
-          <MenuSelect
-            id={teamId}
-            value={fTeam}
-            onChange={setFTeam}
-            placeholder="All divisions"
-            options={teams.map((t) => ({
-              value: t.id,
-              label: t.label,
-              swatch: t.color,
-            }))}
-          />
-        </FilterField>
-        {!lockedCrewType && (
-          <FilterField id={typeId} label="Crew type">
+      <Modal
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        title="Filter work orders"
+        description="Narrows the work orders plotted on this month."
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={clearFilters}
+              disabled={!hasFilter}
+              className={cn(NAV_BTN, "gap-1.5 disabled:opacity-40")}
+            >
+              <X className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+              Clear filters
+            </button>
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(false)}
+              className={cn(NAV_BTN, "bg-surface")}
+            >
+              Done
+            </button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-3">
+          <FilterField id={teamId} label="Division">
             <MenuSelect
-              id={typeId}
-              value={fType}
-              onChange={setFType}
-              placeholder="All crew types"
-              options={crewTypes.map((t) => ({
-                value: t.key,
+              id={teamId}
+              value={fTeam}
+              onChange={setFTeam}
+              placeholder="All divisions"
+              options={teams.map((t) => ({
+                value: t.id,
                 label: t.label,
+                swatch: t.color,
               }))}
             />
           </FilterField>
-        )}
-        {!lockedCrewId && (
-          <FilterField id={crewId} label="Crew">
+          {!lockedCrewType && (
+            <FilterField id={typeId} label="Crew type">
+              <MenuSelect
+                id={typeId}
+                value={fType}
+                onChange={setFType}
+                placeholder="All crew types"
+                options={crewTypes.map((t) => ({
+                  value: t.key,
+                  label: t.label,
+                }))}
+              />
+            </FilterField>
+          )}
+          {!lockedCrewId && (
+            <FilterField id={crewId} label="Crew">
+              <MenuSelect
+                id={crewId}
+                value={fCrew}
+                onChange={setFCrew}
+                placeholder="All crews"
+                options={crews.map((c) => ({ value: c.id, label: c.name }))}
+              />
+            </FilterField>
+          )}
+          <FilterField id={statusId} label="Status">
             <MenuSelect
-              id={crewId}
-              value={fCrew}
-              onChange={setFCrew}
-              placeholder="All crews"
-              options={crews.map((c) => ({ value: c.id, label: c.name }))}
+              id={statusId}
+              value={fStatus}
+              onChange={setFStatus}
+              placeholder="Any status"
+              options={[
+                { value: "open", label: "Open" },
+                { value: "completed", label: "Completed" },
+              ]}
             />
           </FilterField>
-        )}
-        <FilterField id={statusId} label="Status">
-          <MenuSelect
-            id={statusId}
-            value={fStatus}
-            onChange={setFStatus}
-            placeholder="Any status"
-            options={[
-              { value: "open", label: "Open" },
-              { value: "completed", label: "Completed" },
-            ]}
-          />
-        </FilterField>
-        {hasFilter && (
-          <button
-            type="button"
-            onClick={clearFilters}
-            className={cn(NAV_BTN, "gap-1.5")}
-          >
-            <X className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
-            Clear filters
-          </button>
-        )}
-      </div>
+        </div>
+      </Modal>
 
-      <div className="overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-card)]">
-        <div className="grid grid-cols-7 border-b border-hairline bg-overlay/50">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-card)]">
+        <div className="grid flex-shrink-0 grid-cols-7 border-b border-hairline bg-overlay/50">
           {WEEKDAYS.map((d) => (
             <div
               key={d}
@@ -334,7 +386,13 @@ export function WorkOrderCalendar({
         <div
           role="grid"
           aria-label={`${monthLabel(monthISO)} work orders`}
-          className="grid grid-cols-7"
+          // auto-rows-fr (not a fixed 6-row template — monthGrid returns 5
+          // rows for some months) so the weeks split whatever height the card
+          // has, and fall back to the cells' min-height when it has none.
+          // A dense day whose chips exceed that share pushes its row past the
+          // fr split; overflow-y-auto then scrolls INSIDE the card rather than
+          // clipping the chips or growing the page past one viewport.
+          className="grid min-h-0 flex-1 auto-rows-fr grid-cols-7 overflow-y-auto"
         >
           {cells.map((cell) => (
             <DayCell
@@ -351,7 +409,7 @@ export function WorkOrderCalendar({
       </div>
 
       {filtered.length === 0 && (
-        <p className="text-center text-[13px] text-faint">
+        <p className="flex-shrink-0 text-center text-[13px] text-faint">
           {hasFilter
             ? "No work orders match these filters this month."
             : "No work orders land in this month."}
@@ -383,8 +441,11 @@ function FilterField({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex w-full flex-col gap-1 sm:w-44">
-      <label htmlFor={id} className="text-[11px] font-medium text-faint">
+    <div className="flex w-full flex-col gap-1">
+      <label
+        htmlFor={id}
+        className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-faint"
+      >
         {label}
       </label>
       {children}
@@ -421,7 +482,7 @@ function DayCell({
       role="gridcell"
       aria-label={longDate(cell.iso)}
       className={cn(
-        "flex min-h-28 flex-col gap-1 border-r border-b border-hairline p-1.5",
+        "flex min-h-24 flex-col gap-1 overflow-hidden border-r border-b border-hairline p-1.5",
         !cell.inMonth && "bg-overlay/40",
         cell.isToday && "ring-1 ring-inset ring-accent",
       )}
