@@ -73,11 +73,17 @@ function isNonceCspRoute(pathname: string): boolean {
  * layout skip headers() and static routes prerender at all.
  */
 function buildCsp(nonce: string, isDev: boolean, useNonce: boolean): string {
+  // Cesium compiles WebAssembly (draco / basis decoders) at runtime, which the
+  // CSP counts as evaluating script. 'wasm-unsafe-eval' permits exactly that
+  // and nothing else — it does NOT re-enable eval() for JavaScript, so it is
+  // the narrow grant, not a loosening back to 'unsafe-eval'. Without it the
+  // globe throws CompileError on every decoder and falls back to MapLibre.
+  const WASM = "'wasm-unsafe-eval'";
   const scriptSrc = isDev
     ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
     : useNonce
-      ? `script-src 'self' 'nonce-${nonce}' ${SCRIPT_HASHES.themeInit} ${SCRIPT_HASHES.swRegister} 'strict-dynamic'`
-      : "script-src 'self' 'unsafe-inline'";
+      ? `script-src 'self' 'nonce-${nonce}' ${SCRIPT_HASHES.themeInit} ${SCRIPT_HASHES.swRegister} 'strict-dynamic' ${WASM}`
+      : `script-src 'self' 'unsafe-inline' ${WASM}`;
 
   return [
     "default-src 'self'",
