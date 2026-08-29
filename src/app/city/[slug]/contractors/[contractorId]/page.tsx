@@ -102,11 +102,11 @@ export default async function ContractorDetailPage({ params }: PageProps) {
           {/* Profile header — same card as the member detail page. */}
           <section className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-5 shadow-[var(--shadow-card)] sm:p-6">
             <Link
-              href={`/city/${slug}/contractors`}
+              href={`/city/${slug}/members`}
               className="mb-3 inline-flex items-center gap-1.5 text-[13px] text-faint transition-colors hover:text-foreground"
             >
               <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
-              Contractors
+              Members
             </Link>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">

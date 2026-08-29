@@ -6,7 +6,6 @@ import {
   Camera,
   Clapperboard,
   FileText,
-  HardHat,
   Map as MapIcon,
   Table,
   Users,
@@ -115,12 +114,6 @@ export function CitySidebar({
           href: `/city/${slug}/documents`,
           icon: FileText,
           active: pathname === `/city/${slug}/documents`,
-        },
-        {
-          label: "Contractors",
-          href: `/city/${slug}/contractors`,
-          icon: HardHat,
-          active: pathname?.startsWith(`/city/${slug}/contractors`) ?? false,
         },
         {
           label: "Members",

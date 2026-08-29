@@ -8,6 +8,7 @@ import { MembersTable } from "@/components/members/members-table";
 import { type CrewTypeDef, DEFAULT_CREW_TYPES } from "@/lib/crew-types";
 import { fetchCity as fetchCityMock } from "@/lib/dashboard-data";
 import { fetchCity as fetchCityFromDb } from "@/lib/dashboard-queries";
+import { listContractors } from "@/lib/db/contractors";
 import { fetchCityCrewTypes } from "@/lib/db/crew-types";
 import { fetchCrewWorkloads } from "@/lib/db/crew-workloads";
 import { fetchCityCrews } from "@/lib/db/crews";
@@ -91,6 +92,13 @@ export default async function CityMembersPage({ params }: PageProps) {
         }))
       : result.members
     : [];
+
+  // City vendors — the Contractors chip on the roster. Same PII rule as
+  // members: demo sessions get masked emails. Degrades to empty on error.
+  const contractorsResult = dbCity
+    ? await listContractors(dbCity.id, { maskPii: access === "demo" })
+    : null;
+  const contractors = contractorsResult?.ok ? contractorsResult.data : [];
 
   // Crews for this city — the panel below the roster plus the crew pickers in
   // the invite/edit dialogs. Degrades to empty (e.g. before migration 030).
@@ -181,6 +189,7 @@ export default async function CityMembersPage({ params }: PageProps) {
               slug={slug}
               canManage={canManage}
               crews={crewOptions}
+              contractors={contractors}
             />
             <CrewsPanel
               slug={slug}

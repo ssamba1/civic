@@ -1,6 +1,7 @@
 "use client";
 
 import { LayoutGrid, Pencil, Search, Users } from "lucide-react";
+import Link from "next/link";
 import { useId, useMemo, useState } from "react";
 import { EditMemberModal } from "@/components/members/edit-member-modal";
 import {
@@ -10,6 +11,7 @@ import {
 } from "@/components/members/member-badges";
 import type { CrewOption } from "@/components/members/member-modal";
 import { TeamAccessView } from "@/components/members/team-access-view";
+import type { ContractorListRow } from "@/lib/db/contractors";
 import type { MemberRow } from "@/lib/db/members";
 import { cn } from "@/lib/utils/cn";
 
@@ -18,9 +20,11 @@ interface MembersTableProps {
   slug: string;
   canManage: boolean;
   crews: CrewOption[];
+  /** City vendors — rendered as their own roster under the Contractors chip. */
+  contractors?: ContractorListRow[];
 }
 
-type RoleFilter = "all" | MemberRow["role"];
+type RoleFilter = "all" | MemberRow["role"] | "contractors";
 type ViewMode = "people" | "team";
 
 const FILTERS: ReadonlyArray<{ key: RoleFilter; label: string }> = [
@@ -29,7 +33,20 @@ const FILTERS: ReadonlyArray<{ key: RoleFilter; label: string }> = [
   { key: "staff_supervisor", label: "Supervisors" },
   { key: "staff_dispatcher", label: "Dispatchers" },
   { key: "resident", label: "Residents" },
+  { key: "contractors", label: "Contractors" },
 ];
+
+function formatDateOnly(isoDate: string | null): string {
+  if (!isoDate) return "—";
+  const t = Date.parse(`${isoDate.slice(0, 10)}T00:00:00Z`);
+  if (Number.isNaN(t)) return isoDate;
+  return new Date(t).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
 
 const VIEWS: ReadonlyArray<{
   key: ViewMode;
@@ -64,6 +81,7 @@ export function MembersTable({
   slug,
   canManage,
   crews,
+  contractors = [],
 }: MembersTableProps) {
   const [view, setView] = useState<ViewMode>("people");
   const [role, setRole] = useState<RoleFilter>("all");
@@ -84,6 +102,7 @@ export function MembersTable({
       staff_supervisor: 0,
       staff_dispatcher: 0,
       resident: 0,
+      contractors: contractors.length,
     };
     for (const m of members) {
       map[m.role] += 1;
@@ -92,9 +111,10 @@ export function MembersTable({
       if (m.role !== "resident") map.all += 1;
     }
     return map;
-  }, [members]);
+  }, [members, contractors]);
 
   const filtered = useMemo(() => {
+    if (role === "contractors") return [];
     const needle = query.trim().toLowerCase();
     return members.filter((m) => {
       if (role === "all") {
@@ -109,6 +129,18 @@ export function MembersTable({
       );
     });
   }, [members, role, query]);
+
+  // Vendor roster under the Contractors chip — same search box applies.
+  const filteredContractors = useMemo(() => {
+    if (role !== "contractors") return [];
+    const needle = query.trim().toLowerCase();
+    return contractors.filter(
+      (c) =>
+        !needle ||
+        c.name.toLowerCase().includes(needle) ||
+        (c.email ?? "").toLowerCase().includes(needle),
+    );
+  }, [contractors, role, query]);
 
   // Member, Phone, Role, Team, Reports, Last active, Last sign-in (+ Actions).
   const colCount = canManage ? 8 : 7;
@@ -223,6 +255,100 @@ export function MembersTable({
           canManage={canManage}
           onEdit={setEditing}
         />
+      ) : role === "contractors" ? (
+        <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-card)]">
+          <table className="w-full min-w-[860px] border-collapse text-left text-[13px]">
+            <thead>
+              <tr className="border-b border-hairline text-[11px] uppercase tracking-wide text-faint">
+                <th scope="col" className="px-4 py-3 font-medium">
+                  Contractor
+                </th>
+                <th scope="col" className="px-4 py-3 font-medium">
+                  Status
+                </th>
+                <th scope="col" className="px-4 py-3 text-right font-medium">
+                  Jobs
+                </th>
+                <th scope="col" className="px-4 py-3 text-right font-medium">
+                  Live warranties
+                </th>
+                <th scope="col" className="px-4 py-3 font-medium">
+                  Next expiry
+                </th>
+                <th scope="col" className="px-4 py-3 text-right font-medium">
+                  Documents
+                </th>
+                <th scope="col" className="px-4 py-3 text-right font-medium">
+                  Attributed reports
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredContractors.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-16 text-center">
+                    <p className="text-sm font-medium text-foreground">
+                      {contractors.length === 0
+                        ? "No contractors on file"
+                        : "No contractors match"}
+                    </p>
+                    <p className="mt-1 text-[13px] text-faint">
+                      {contractors.length === 0
+                        ? "Vendors appear here once a paving schedule or contract import creates them."
+                        : "Clear the search to see every vendor."}
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                filteredContractors.map((c) => (
+                  <tr
+                    key={c.id}
+                    className="border-b border-hairline last:border-b-0 transition-colors duration-150 hover:bg-overlay"
+                  >
+                    <td className="px-4 py-3 align-middle">
+                      <Link
+                        href={`/city/${slug}/contractors/${c.id}`}
+                        className="rounded-sm font-medium text-foreground underline-offset-2 outline-none transition-colors hover:text-accent-text hover:underline focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+                      >
+                        {c.name}
+                      </Link>
+                      <div className="text-[12px] text-faint">
+                        {c.email ?? "—"}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-[var(--radius-md)] border px-2 py-0.5 text-[11px] font-medium",
+                          c.active
+                            ? "border-hairline-strong bg-overlay-strong text-foreground"
+                            : "border-hairline bg-overlay text-faint",
+                        )}
+                      >
+                        {c.active ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 align-middle text-right tabular-nums text-foreground">
+                      {c.jobCount}
+                    </td>
+                    <td className="px-4 py-3 align-middle text-right tabular-nums text-foreground">
+                      {c.liveWarranties}
+                    </td>
+                    <td className="px-4 py-3 align-middle tabular-nums text-subtle">
+                      {formatDateOnly(c.nextExpiry)}
+                    </td>
+                    <td className="px-4 py-3 align-middle text-right tabular-nums text-foreground">
+                      {c.documentCount}
+                    </td>
+                    <td className="px-4 py-3 align-middle text-right tabular-nums text-foreground">
+                      {c.liableReports}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       ) : (
         <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-card)]">
           <table className="w-full min-w-[860px] border-collapse text-left text-[13px]">
