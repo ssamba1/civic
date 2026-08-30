@@ -43,8 +43,11 @@ import {
   useRef,
   useState,
 } from "react";
+import { toneChipClass, toneTextClass } from "@/lib/status";
+import { CLIP_TONE, CLUSTER_TONE, detectionHue } from "./detection-colors";
 import { type DetectionBox, EvidenceFrameButton } from "./evidence-frame";
 import { type GeneratedReport, ReportInline } from "./report-inline";
+import { ClusterRowActions } from "./video-console";
 
 export interface TheaterEvent {
   clusterId: string;
@@ -58,6 +61,21 @@ export interface TheaterEvent {
   /** e.g. "pothole · 0.87" — drawn on the box in the full-frame modal. */
   frameLabel: string | null;
   report: GeneratedReport | null;
+  /** Raw cluster status — drives whether a manual decision can be run. */
+  status: string;
+  /** Human label for `status` ("Needs manual dispatch", …). */
+  statusLabel: string;
+  frameCount: number;
+  decision: string | null;
+  decisionRationale: string | null;
+  /** Storage path of the best frame, only when no signed URL could be minted. */
+  framePath: string | null;
+  /**
+   * Cluster that no clip in the picker can replay (no clip association, an
+   * unusable timestamp, or a clip outside the recent-clips window). It is
+   * pinned to the end of every rail rather than being silently dropped.
+   */
+  unlinked?: boolean;
 }
 
 export interface TheaterClip {
@@ -110,22 +128,29 @@ const ASSESS_WINDOW_S = 0.8;
 
 interface StudioContext {
   clips: TheaterClip[];
+  /** Clusters no clip can replay — appended to whichever rail is on screen. */
+  orphanEvents: TheaterEvent[];
   /** City slug — the rail links reports into that city's work-order grid. */
   slug: string;
   selectedId: string | null;
   /** Bumped only by user clicks, so the default selection never scrolls. */
   scrollToken: number;
   select: (id: string) => void;
+  /** The rail's "on other clips" line expands the clip picker below. */
+  listOpen: boolean;
+  revealClipList: () => void;
 }
 
 const Ctx = createContext<StudioContext | null>(null);
 
 export function ClipStudioProvider({
   clips,
+  orphanEvents = [],
   slug,
   children,
 }: {
   clips: TheaterClip[];
+  orphanEvents?: TheaterEvent[];
   slug: string;
   children: ReactNode;
 }) {
@@ -135,15 +160,44 @@ export function ClipStudioProvider({
   );
   const [selectedId, setSelectedId] = useState<string | null>(initial);
   const [scrollToken, setScrollToken] = useState(0);
+  const [listOpen, setListOpen] = useState(false);
 
   const select = useCallback((id: string) => {
     setSelectedId(id);
     setScrollToken((n) => n + 1);
   }, []);
 
+  const revealClipList = useCallback(() => {
+    setListOpen(true);
+    // The <details> has to be open before it can be scrolled to meaningfully.
+    requestAnimationFrame(() =>
+      document
+        .getElementById("clip-list")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" }),
+    );
+  }, []);
+
   const value = useMemo<StudioContext>(
-    () => ({ clips, slug, selectedId, scrollToken, select }),
-    [clips, slug, selectedId, scrollToken, select],
+    () => ({
+      clips,
+      orphanEvents,
+      slug,
+      selectedId,
+      scrollToken,
+      select,
+      listOpen,
+      revealClipList,
+    }),
+    [
+      clips,
+      orphanEvents,
+      slug,
+      selectedId,
+      scrollToken,
+      select,
+      listOpen,
+      revealClipList,
+    ],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -185,7 +239,10 @@ export function ClipStage() {
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className={EYEBROW}>Clip theater</h2>
         <p className="font-mono text-[11px] text-faint">
-          {new Date(clip.createdAt).toLocaleString()} · {clip.status}
+          {new Date(clip.createdAt).toLocaleString()} ·{" "}
+          <span className={toneTextClass(CLIP_TONE[clip.status] ?? "neutral")}>
+            {clip.status}
+          </span>
         </p>
       </div>
       {/* Remount per clip so playhead, overlay track and media errors reset. */}
@@ -464,6 +521,9 @@ function DetectionOverlay({
         className="pointer-events-none absolute inset-0 h-full w-full"
       >
         <title>Detector overlay</title>
+        {/* The published per-frame track carries geometry and confidence only —
+            no class — so these boxes stay on the neutral detector blush rather
+            than claiming a class hue they cannot know. */}
         {boxes.map((box) => (
           <rect
             key={`${box.x}-${box.y}-${box.w}`}
@@ -530,14 +590,30 @@ function DetectionRail({
   paused: boolean;
   ref: Ref<ScrubHandle>;
 }) {
+  const { clips, orphanEvents, revealClipList, selectedId } = useStudio();
+  // Clip-bound detections first (they narrate the playhead), then the ones no
+  // clip can replay — deleting the standalone Detections list made this rail
+  // the only surface, so nothing may fall out of it.
+  const items = useMemo(
+    () => [...events, ...orphanEvents],
+    [events, orphanEvents],
+  );
+  // Clusters that belong to a DIFFERENT clip: reachable, just not from here.
+  const otherCount = clips.reduce(
+    (sum, clip) => sum + (clip.id === selectedId ? 0 : clip.events.length),
+    0,
+  );
+
+  const initialPhase = (event: TheaterEvent): EventPhase =>
+    event.unlinked ? "settled" : "waiting";
   const [phases, setPhases] = useState<EventPhase[]>(() =>
-    events.map(() => "waiting" as EventPhase),
+    items.map(initialPhase),
   );
   const phasesRef = useRef(phases);
   // How far past its timestamp an item was when it entered the assess window.
   // Written only at a bucket change, so reading it in render is stable and
   // never invalidates a memoized card mid-playback.
-  const offsetsRef = useRef<number[]>(events.map(() => 0));
+  const offsetsRef = useRef<number[]>(items.map(() => 0));
 
   useImperativeHandle(
     ref,
@@ -545,8 +621,12 @@ function DetectionRail({
       sync(seconds: number) {
         const prev = phasesRef.current;
         let changed = false;
-        const next = events.map((event, i) => {
-          const phase = phaseOf(seconds, event.tsSeconds);
+        const next = items.map((event, i) => {
+          // An unlinked cluster has no timestamp on this clip — it is already
+          // decided, and must never read as "waiting for playhead".
+          const phase = event.unlinked
+            ? "settled"
+            : phaseOf(seconds, event.tsSeconds);
           if (phase !== prev[i]) {
             changed = true;
             offsetsRef.current[i] = Math.max(0, seconds - event.tsSeconds);
@@ -558,21 +638,22 @@ function DetectionRail({
         setPhases(next);
       },
     }),
-    [events],
+    [items],
   );
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-2 lg:w-[320px] lg:flex-shrink-0 xl:w-[380px] 2xl:w-[420px]">
+    <div className="flex w-full min-w-0 flex-col gap-2 lg:w-[340px] lg:flex-shrink-0 xl:w-[420px] 2xl:w-[480px]">
       <div className="flex items-baseline justify-between gap-2">
         <h3 className={EYEBROW}>Detection feed</h3>
         <span className="font-mono text-[11px] tabular-nums text-faint">
-          {events.length}
+          {items.length}
         </span>
       </div>
       <p className="text-[12px] leading-snug text-faint">
-        Replay of a completed run — detected → assessed → report created.
+        Replay of a completed run — detected → assessed → report created. Expand
+        an item for its decision, evidence frame and controls.
       </p>
-      {events.length === 0 ? (
+      {items.length === 0 ? (
         <p className="rounded-[var(--radius-md)] border border-hairline bg-overlay p-3 text-[13px] text-subtle">
           No clustered detections on this clip.
         </p>
@@ -584,12 +665,19 @@ function DetectionRail({
             data-testid="detection-rail"
             className="flex max-h-[46vh] flex-col gap-2 overflow-y-auto pr-1 lg:absolute lg:inset-0 lg:max-h-none"
           >
-            {events.map((event, i) => (
+            {items.map((event, i) => (
               <li key={event.clusterId}>
+                {event.unlinked && i === events.length && (
+                  <p
+                    className={`${EYEBROW} mb-2 border-t border-hairline pt-2`}
+                  >
+                    Not tied to this clip
+                  </p>
+                )}
                 <EventCard
                   event={event}
                   slug={slug}
-                  phase={phases[i] ?? "waiting"}
+                  phase={phases[i] ?? initialPhase(event)}
                   scanOffset={offsetsRef.current[i] ?? 0}
                   paused={paused}
                   onSeek={onSeek}
@@ -600,16 +688,84 @@ function DetectionRail({
           </ol>
         </div>
       )}
+      {otherCount > 0 && (
+        // The feed is scoped to the clip on screen. With a second clip in the
+        // city this line is the only thing that says so — and the way out.
+        <button
+          type="button"
+          onClick={revealClipList}
+          data-testid="other-clip-clusters"
+          className="self-start text-left font-mono text-[11px] text-faint underline decoration-hairline-strong underline-offset-2 transition-colors hover:text-foreground"
+        >
+          {otherCount} more on other clips — pick a clip below
+        </button>
+      )}
     </div>
   );
 }
 
+/* A card carries TWO colors and they encode different things: the ring is the
+   replay STATE (working / settled / dispatched), so it draws from the semantic
+   --status-* tokens like every other state in the app; the 3px left edge is the
+   detector CLASS, so it draws from the categorical pastel ramp. State moved off
+   pastel-sky/mint deliberately — those hues now belong to two damage classes,
+   and one hue cannot mean both "transverse crack" and "analyzing". */
+// Mixed toward transparent: the raw --status-* tokens are system-bright and a
+// full-strength ring on every card turns the rail neon, especially on dark.
+const WORKING_RING =
+  "border-[color-mix(in_srgb,var(--status-info-fg)_55%,transparent)]";
+const DISPATCHED_RING =
+  "border-[color-mix(in_srgb,var(--status-success-fg)_42%,transparent)]";
+
 const PHASE_RING: Record<EventPhase, string> = {
   waiting: "border-hairline",
-  analyzing: "border-[var(--pastel-sky-strong)]",
-  drafting: "border-[var(--pastel-sky-strong)]",
+  analyzing: WORKING_RING,
+  drafting: WORKING_RING,
   settled: "border-hairline-strong",
 };
+
+/**
+ * Class dot · class name · confidence meter — the header line shared by the
+ * card's two mutually exclusive affordances (report link / seek button), so the
+ * two can never drift apart. The meter's LENGTH is the magnitude a bare
+ * two-decimal number makes you read; its hue repeats the class, which is why
+ * confidence needs no hue of its own.
+ */
+function EventHeadline({
+  event,
+  hue,
+}: {
+  event: TheaterEvent;
+  hue: { fill: string; strong: string };
+}) {
+  const pct = Math.max(0, Math.min(1, event.confidence)) * 100;
+  return (
+    <>
+      <span
+        className="h-2 w-2 shrink-0 rounded-full"
+        style={{ backgroundColor: hue.strong }}
+        aria-hidden
+      />
+      <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-foreground">
+        {event.class}
+      </span>
+      <span className="flex shrink-0 items-center gap-1.5">
+        <span
+          className="block h-1 w-8 overflow-hidden rounded-full bg-overlay-strong"
+          aria-hidden
+        >
+          <span
+            className="block h-full rounded-full"
+            style={{ width: `${pct}%`, backgroundColor: hue.strong }}
+          />
+        </span>
+        <span className="font-mono text-[11px] tabular-nums text-subtle">
+          {event.confidence.toFixed(2)}
+        </span>
+      </span>
+    </>
+  );
+}
 
 const EventCard = memo(function EventCard({
   event,
@@ -631,15 +787,19 @@ const EventCard = memo(function EventCard({
 }) {
   const scanning = phase === "analyzing" || phase === "drafting";
   const dispatched = Boolean(event.report);
+  const showReport = dispatched && phase !== "waiting";
+  const thumbUrl = event.frameUrl ?? event.report?.imageUrl ?? null;
   const ring =
-    phase === "settled" && dispatched
-      ? "border-[var(--pastel-mint-strong)]"
-      : PHASE_RING[phase];
+    phase === "settled" && dispatched ? DISPATCHED_RING : PHASE_RING[phase];
+  const hue = detectionHue(event.class);
 
   return (
     <div
       data-testid="detection-item"
       data-phase={phase}
+      // The class hue is carried by the dot beside the class name, not by a
+      // thick left edge on the card — a colored side tab is a stock
+      // AI-dashboard tell and it double-encodes what the dot already says.
       className={`overflow-hidden rounded-[var(--radius-md)] border bg-surface transition-colors ${ring} ${phase === "waiting" ? "opacity-60" : ""}`}
     >
       {/* Two affordances, deliberately split: the timestamp scrubs the clip,
@@ -651,12 +811,12 @@ const EventCard = memo(function EventCard({
         <button
           type="button"
           onClick={() => onSeek(event.tsSeconds - 0.5)}
-          disabled={!seekable}
+          disabled={!seekable || Boolean(event.unlinked)}
           aria-label={`Seek clip to ${event.tsSeconds.toFixed(2)} seconds`}
           data-testid="detection-ts"
           className="-mx-1 shrink-0 rounded px-1 font-mono text-[11px] tabular-nums text-faint outline-none transition-colors hover:bg-overlay hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-default disabled:hover:bg-transparent disabled:hover:text-faint"
         >
-          {event.tsSeconds.toFixed(2)}s
+          {event.unlinked ? "—" : `${event.tsSeconds.toFixed(2)}s`}
         </button>
         {event.report ? (
           <Link
@@ -664,12 +824,7 @@ const EventCard = memo(function EventCard({
             data-testid="detection-open"
             className="-my-2 flex min-w-0 flex-1 items-center gap-2 py-2 text-left outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60"
           >
-            <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-foreground">
-              {event.class}
-            </span>
-            <span className="font-mono text-[11px] tabular-nums text-subtle">
-              {event.confidence.toFixed(2)}
-            </span>
+            <EventHeadline event={event} hue={hue} />
           </Link>
         ) : (
           <button
@@ -678,12 +833,7 @@ const EventCard = memo(function EventCard({
             disabled={!seekable}
             className="-my-2 flex min-w-0 flex-1 items-center gap-2 py-2 text-left transition-colors disabled:cursor-default"
           >
-            <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-foreground">
-              {event.class}
-            </span>
-            <span className="font-mono text-[11px] tabular-nums text-subtle">
-              {event.confidence.toFixed(2)}
-            </span>
+            <EventHeadline event={event} hue={hue} />
           </button>
         )}
       </div>
@@ -693,9 +843,9 @@ const EventCard = memo(function EventCard({
           <span className="text-faint">Waiting for playhead</span>
         )}
         {scanning && (
-          <span className="inline-flex items-center gap-1.5 text-[var(--pastel-sky-strong)]">
+          <span className="inline-flex items-center gap-1.5 text-[var(--status-info-fg)]">
             <span
-              className="h-1.5 w-1.5 rounded-full bg-[var(--pastel-sky-strong)]"
+              className="h-1.5 w-1.5 rounded-full bg-[var(--status-info-fg)]"
               aria-hidden
             />
             {phase === "analyzing" ? "Analyzing frame…" : "Drafting report…"}
@@ -703,15 +853,16 @@ const EventCard = memo(function EventCard({
         )}
         {phase === "settled" && (
           <span
-            className={`inline-flex items-center gap-1.5 ${dispatched ? "text-[var(--pastel-mint-strong)]" : "text-subtle"}`}
+            className={`inline-flex items-center gap-1.5 ${dispatched ? "text-[var(--status-success-fg)]" : "text-[var(--status-warning-fg)]"}`}
           >
             <span
-              className={`h-1.5 w-1.5 rounded-full ${dispatched ? "bg-[var(--pastel-mint-strong)]" : "bg-[var(--pastel-butter-strong)]"}`}
+              className={`h-1.5 w-1.5 rounded-full ${dispatched ? "bg-[var(--status-success-fg)]" : "bg-[var(--status-warning-fg)]"}`}
               aria-hidden
             />
-            {dispatched
-              ? "Report created"
-              : "Monitoring — below dispatch threshold"}
+            {/* Never invent a state: an undispatched cluster reads out its
+                own status ("Candidate", "Needs manual dispatch", …) rather
+                than a blanket "monitoring". */}
+            {dispatched ? "Report created" : event.statusLabel}
           </span>
         )}
         {scanning && (
@@ -724,7 +875,7 @@ const EventCard = memo(function EventCard({
             className="mt-1.5 block h-[3px] w-full overflow-hidden rounded-full bg-overlay-strong"
           >
             <span
-              className="clip-scan-bar block h-full w-full rounded-full bg-[var(--pastel-sky-strong)]"
+              className="clip-scan-bar block h-full w-full rounded-full bg-[var(--status-info-fg)]"
               style={
                 {
                   "--clip-scan-duration": `${ASSESS_WINDOW_S}s`,
@@ -737,46 +888,101 @@ const EventCard = memo(function EventCard({
         )}
       </div>
 
-      {event.report && phase !== "waiting" && (
-        <details className="border-t border-hairline">
-          <summary
-            className={`${EYEBROW} cursor-pointer select-none px-3 py-2 transition-colors hover:text-subtle`}
-          >
-            Report
-          </summary>
-          <div
-            data-testid="report-body"
-            className="flex flex-col gap-2 border-t border-hairline px-3 py-2"
-          >
-            {(event.frameUrl ?? event.report.imageUrl) && (
-              <EvidenceFrameButton
-                src={event.frameUrl ?? event.report.imageUrl ?? ""}
-                box={event.frameBox}
-                label={event.frameLabel ?? undefined}
-                alt={`Evidence frame for ${event.class}`}
-                title={event.class}
-                subtitle={`${event.confidence.toFixed(2)} confidence at ${event.tsSeconds.toFixed(2)}s`}
-                className="h-24 w-full rounded-[var(--radius-md)] border border-hairline"
-              />
-            )}
+      {/* One disclosure per cluster, always present — it is the only place the
+          decision, the evidence frame and the manual controls live now that
+          the standalone Detections list is gone. The summary still says
+          "Report" once the playhead has passed a dispatched cluster, so the
+          replay keeps its reveal. */}
+      <details className="border-t border-hairline">
+        <summary
+          className={`${EYEBROW} cursor-pointer select-none px-3 py-2 transition-colors hover:text-subtle`}
+        >
+          {showReport ? "Report" : "Details"}
+        </summary>
+        <div
+          data-testid={showReport ? "report-body" : "cluster-details"}
+          className="flex flex-col gap-2 border-t border-hairline px-3 py-2"
+        >
+          {thumbUrl && (
+            <EvidenceFrameButton
+              src={thumbUrl}
+              box={event.frameBox}
+              label={event.frameLabel ?? undefined}
+              alt={`Evidence frame for ${event.class}`}
+              title={event.class}
+              subtitle={
+                event.unlinked
+                  ? `${event.confidence.toFixed(2)} confidence · ${event.frameCount} frames`
+                  : `${event.confidence.toFixed(2)} confidence at ${event.tsSeconds.toFixed(2)}s`
+              }
+              className="h-24 w-full rounded-[var(--radius-md)] border border-hairline"
+            />
+          )}
+
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-subtle leading-tight">
+            <span
+              className={`rounded-md px-1.5 py-0.5 text-[11px] font-medium ${toneChipClass(
+                CLUSTER_TONE[event.status] ?? "neutral",
+              )}`}
+            >
+              {event.statusLabel}
+            </span>
+            <span className="tabular-nums">
+              {event.confidence.toFixed(2)} conf
+            </span>
+            <span className="tabular-nums text-faint">
+              {event.frameCount} frames
+            </span>
+          </p>
+
+          {event.decision && (
+            <div className="text-[12px] leading-snug">
+              <span className="font-medium text-subtle">{event.decision}</span>
+              {event.decisionRationale && (
+                <p className="mt-0.5 text-faint">{event.decisionRationale}</p>
+              )}
+            </div>
+          )}
+
+          {showReport && event.report && (
             <ReportInline report={event.report} clampDescription={false} />
+          )}
+
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            {/* Manual stage-2 trigger + the frame pop-out fallback. Without
+                this a candidate cluster would have no way to be decided. */}
+            <ClusterRowActions
+              slug={slug}
+              clusterId={event.clusterId}
+              status={event.status}
+              framePath={event.framePath}
+            />
+            {event.report && (
+              <Link
+                className="text-xs text-faint underline decoration-hairline-strong underline-offset-2 transition-colors hover:text-foreground"
+                href={`/city/${slug}/grid?report=${event.report.id}`}
+              >
+                Open in grid →
+              </Link>
+            )}
           </div>
-        </details>
-      )}
+        </div>
+      </details>
     </div>
   );
 });
 
 /** The recent-clips log — same five columns, now a clip picker. */
 export function ClipList() {
-  const { clips, selectedId, select } = useStudio();
+  const { clips, selectedId, select, listOpen } = useStudio();
   const needsAttention = clips.some(
     (c) => c.status === "failed" || c.status === "processing",
   );
 
   return (
     <details
-      open={needsAttention || undefined}
+      id="clip-list"
+      open={needsAttention || listOpen || undefined}
       className="rounded-[var(--radius-lg)] border border-hairline bg-surface"
     >
       <summary
@@ -814,7 +1020,18 @@ export function ClipList() {
                       {new Date(clip.createdAt).toLocaleString()}
                     </button>
                   </td>
-                  <td className="px-3 py-2">{clip.status}</td>
+                  <td className="px-3 py-2">
+                    {/* Run state, not a category — the shared status tones, so
+                        a failed clip reads red here exactly as it would in the
+                        grid. */}
+                    <span
+                      className={toneTextClass(
+                        CLIP_TONE[clip.status] ?? "neutral",
+                      )}
+                    >
+                      {clip.status}
+                    </span>
+                  </td>
                   <td className="px-3 py-2 tabular-nums">
                     {clip.framesSampled ?? "—"}
                   </td>

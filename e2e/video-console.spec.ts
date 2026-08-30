@@ -193,6 +193,13 @@ test("opening an evidence thumbnail shows the full frame with its box", async ({
 }) => {
   await openTheater(page);
 
+  // The rail is the only detections surface now (the standalone Detections
+  // section was deleted), so every evidence thumbnail lives inside a rail
+  // item's disclosure — open one before it can be clicked.
+  const items = railItems(page);
+  const disclosure = items.nth((await items.count()) - 1).locator("summary");
+  await disclosure.click();
+
   const thumb = page
     .getByRole("button", { name: /^Open evidence frame for/ })
     .first();

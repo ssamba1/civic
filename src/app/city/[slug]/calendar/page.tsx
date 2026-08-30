@@ -78,18 +78,20 @@ export default async function CityCalendarPage({
 
   // Resolve the city the way members/grid do: real DB row first, falling
   // back to the synthetic KNOWN_CITIES entry so demo slugs still resolve.
-  let dbCity = null;
-  try {
-    dbCity = await fetchCityFromDb(slug);
-  } catch {
-    dbCity = null;
-  }
+  // The city lookup and the staff gate are independent reads; run them
+  // together instead of paying the auth round trip after the city round trip.
+  // The CHECK order below is unchanged — a missing city still 404s before the
+  // gate can redirect.
+  const [dbCityResult, access] = await Promise.all([
+    fetchCityFromDb(slug).catch(() => null),
+    getStaffAccessForCity(slug),
+  ]);
+  const dbCity = dbCityResult;
   const city = dbCity ?? (await fetchCityMock(slug));
   if (!city) notFound();
 
   // Staff-operational gate — calendar has no PII, so demo access is fine and
   // no admin requirement applies (unlike the Members roster).
-  const access = await getStaffAccessForCity(slug);
   if (!access) {
     redirect(`/login?redirect=/city/${slug}/calendar`);
   }

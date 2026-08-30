@@ -69,18 +69,23 @@ export default async function CityGridPage({
   // Public only for the demo city; every other city requires staff auth.
   if (slug !== DEMO_CITY) await requireStaffFor(slug);
 
-  const rows = await getGridRows(city.id);
-
   // Crew assignment is a staff control: the demo city renders publicly, so the
   // dropdown (and the crews list feeding it) only ships to staff sessions. The
   // server action re-checks staff + city on every call regardless.
+  // `isStaffForCity` is request-memoized, so this reuses the requireStaffFor
+  // answer above instead of re-running the auth round trip.
   const canAssign = await isStaffForCity(slug);
-  const crews = canAssign ? await getCityCrewOptions(city.id) : [];
 
-  // Per-city crew-type catalog (031) so the grid's crew filter + edit dropdown
-  // can show/select custom types even before any work order uses them. Degrades
-  // to the built-in defaults on a pre-031 DB (fetch returns a tagged failure).
-  const crewTypesResult = await fetchCityCrewTypes(city.id);
+  // The rows, the crew list, and the crew-type catalog are independent reads —
+  // running them serially made the grid wait out three round trips back to
+  // back. Per-city crew-type catalog (031) lets the grid's crew filter + edit
+  // dropdown show custom types even before any work order uses them; it
+  // degrades to the built-in defaults on a pre-031 DB (tagged failure).
+  const [rows, crews, crewTypesResult] = await Promise.all([
+    getGridRows(city.id),
+    canAssign ? getCityCrewOptions(city.id) : Promise.resolve([]),
+    fetchCityCrewTypes(city.id),
+  ]);
   const crewTypes: CrewTypeDef[] =
     crewTypesResult.ok && crewTypesResult.types.length > 0
       ? crewTypesResult.types

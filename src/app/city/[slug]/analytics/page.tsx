@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { AnalyticsInteractive } from "@/components/analytics/analytics-interactive";
 import { DistrictRollups } from "@/components/analytics/district-rollups";
 import { EquityPanel } from "@/components/analytics/equity-panel";
@@ -29,6 +30,19 @@ export async function generateMetadata({
   };
 }
 
+/** Streaming placeholder for the district/equity panels. Same card chrome and
+ *  heading weight as the real sections so the swap-in causes no shift. */
+function PanelSkeleton({ label }: { label: string }) {
+  return (
+    <section className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-5">
+      <h2 className="mb-1 text-[13px] font-semibold text-foreground">
+        {label}
+      </h2>
+      <div className="skeleton mt-2 h-3 w-48 rounded" />
+    </section>
+  );
+}
+
 export default async function CityAnalyticsPage({ params }: PageProps) {
   const { slug } = await params;
 
@@ -50,15 +64,28 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
         </section>
 
         <SurgeBanner />
-        <PeerBenchmarkCard cityId={city.id} />
+        {/* Suspense so the page shell + client analytics flush immediately
+            instead of waiting on these RPCs. Fallback is `null` because the
+            card renders nothing when there's no peer data — a placeholder box
+            would collapse on resolve and shift the page. */}
+        <Suspense fallback={null}>
+          <PeerBenchmarkCard cityId={city.id} />
+        </Suspense>
 
         <AnalyticsInteractive />
 
         {/* Server-rendered analytics panels — fetch independently so they
-            degrade gracefully when RPCs/tables are absent. */}
+            degrade gracefully when RPCs/tables are absent, and stream in
+            behind Suspense so a slow districts/equity RPC never holds up the
+            rest of the page. Both always render a card, so their fallbacks are
+            same-shaped skeletons and the swap is geometry-neutral. */}
         <div className="mt-6 space-y-4">
-          <DistrictRollups cityId={city.id} />
-          <EquityPanel cityId={city.id} />
+          <Suspense fallback={<PanelSkeleton label="Council Districts" />}>
+            <DistrictRollups cityId={city.id} />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton label="Response Equity" />}>
+            <EquityPanel cityId={city.id} />
+          </Suspense>
         </div>
       </div>
 

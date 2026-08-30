@@ -20,12 +20,19 @@ export default async function BrowsePage({ params }: PageProps) {
   if (!city) notFound();
 
   const known = KNOWN_CITIES[slug];
-  const stats = await fetchCityStats(city.id);
   // Center on the city itself: hardcoded coords for ship-with cities, else the
   // real geocoded center (city_center RPC / live geocode) so an onboarded city's
-  // dashboard map doesn't fall back to Cumming.
+  // dashboard map doesn't fall back to Cumming. Stats and center are
+  // independent of each other once the city resolves — fetch them together
+  // rather than paying two serial round trips.
+  const [stats, geocodedCenter] = await Promise.all([
+    fetchCityStats(city.id),
+    known?.center
+      ? Promise.resolve(null)
+      : fetchCityCenter(slug, city.name, city.state),
+  ]);
   const center: [number, number] = known?.center ??
-    (await fetchCityCenter(slug, city.name, city.state)) ?? [-84.14, 34.21];
+    geocodedCenter ?? [-84.14, 34.21];
 
   return (
     <div className="flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-[calc(2.5rem+env(safe-area-inset-bottom))] sm:px-4 lg:px-6">

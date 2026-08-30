@@ -16,6 +16,7 @@
 
 import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
+import { detectionHue } from "./detection-colors";
 
 export interface DetectionBox {
   x: number;
@@ -24,6 +25,14 @@ export interface DetectionBox {
   h: number;
   conf?: number;
 }
+
+/**
+ * Every stroke of the drawn box resolves through one custom property, so a
+ * caller that knows the detection's class can recolor the whole box (border,
+ * wash, label) by setting `--detect-hue` on any ancestor. Unset, it stays the
+ * blush the box has always been.
+ */
+const BOX_HUE = "var(--detect-hue, var(--pastel-blush-strong))";
 
 /** Normalized 0..1, so a malformed row can't blow the box off the frame. */
 function clamp01(n: number): number {
@@ -57,23 +66,27 @@ export function EvidenceFrame({
         <div
           aria-hidden
           data-testid="evidence-box"
-          className="pointer-events-none absolute rounded-[2px] border border-[var(--pastel-blush-strong)]"
+          className="pointer-events-none absolute rounded-[2px] border"
           style={{
             left: `${left}%`,
             top: `${top}%`,
             width: `${width}%`,
             height: `${height}%`,
-            backgroundColor:
-              "color-mix(in srgb, var(--pastel-blush-strong) 12%, transparent)",
+            // The box wears its detection's CLASS hue, so it matches the card
+            // that owns it. `--detect-hue` is set by whoever knows the class
+            // (EvidenceFrameButton below); callers that don't — e.g. the work
+            // order detail pane — keep the original blush.
+            borderColor: BOX_HUE,
+            backgroundColor: `color-mix(in srgb, ${BOX_HUE} 12%, transparent)`,
             boxShadow: "0 0 0 1px color-mix(in srgb, #000 35%, transparent)",
           }}
         >
           {label && (
             <span
-              className="absolute -top-[1.15rem] left-0 whitespace-nowrap rounded-t-[3px] px-1 font-mono text-[10px] leading-[1.4] text-[var(--pastel-blush-strong)]"
+              className="absolute -top-[1.15rem] left-0 whitespace-nowrap rounded-t-[3px] px-1 font-mono text-[10px] leading-[1.4]"
               style={{
-                backgroundColor:
-                  "color-mix(in srgb, var(--pastel-blush-strong) 18%, transparent)",
+                color: BOX_HUE,
+                backgroundColor: `color-mix(in srgb, ${BOX_HUE} 18%, transparent)`,
               }}
             >
               {label}
@@ -109,6 +122,10 @@ export function EvidenceFrameButton({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
+  // `title` is the detection's class at every call site (the modal heading is
+  // the class), and the Modal portals out of this subtree — so the hue has to
+  // be resolved here and planted inside the portal, not inherited.
+  const hue = detectionHue(title).strong;
 
   return (
     <>
@@ -132,13 +149,15 @@ export function EvidenceFrameButton({
         description={subtitle}
         className="max-w-3xl"
       >
-        <EvidenceFrame
-          src={src}
-          box={box}
-          label={label}
-          alt={alt}
-          className="w-full rounded-[var(--radius-md)] border border-hairline"
-        />
+        <div style={{ "--detect-hue": hue } as React.CSSProperties}>
+          <EvidenceFrame
+            src={src}
+            box={box}
+            label={label}
+            alt={alt}
+            className="w-full rounded-[var(--radius-md)] border border-hairline"
+          />
+        </div>
         <p className="mt-2 text-[12px] text-faint">
           Full captured frame; the box is the detector&apos;s own bounding box
           for this detection.

@@ -1,8 +1,6 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { HelpCircle } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CATEGORY_META, KNOWN_CITIES } from "@/lib/dashboard-data";
 import { createServerClient } from "@/lib/db/client";
@@ -16,9 +14,9 @@ import {
   type TheaterClip,
   type TheaterEvent,
 } from "./clip-theater";
-import { type DetectionBox, EvidenceFrameButton } from "./evidence-frame";
-import { type GeneratedReport, ReportInline } from "./report-inline";
-import { ClusterRowActions, UploadClip } from "./video-console";
+import type { DetectionBox } from "./evidence-frame";
+import type { GeneratedReport } from "./report-inline";
+import { UploadClip } from "./video-console";
 
 // Staff-gated per-request surface (cookies) — never prerender or cache.
 export const dynamic = "force-dynamic";
@@ -107,7 +105,11 @@ const KPI_BORDERS = [
   "",
 ];
 
-function KpiStrip({ cells }: { cells: { label: string; value: number }[] }) {
+function KpiStrip({
+  cells,
+}: {
+  cells: { label: string; value: number; hue: string }[];
+}) {
   return (
     <div className="overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-card)]">
       <div className="grid grid-cols-2 lg:grid-cols-5">
@@ -116,9 +118,18 @@ function KpiStrip({ cells }: { cells: { label: string; value: number }[] }) {
             key={cell.label}
             className={`px-4 py-4 sm:px-5 sm:py-5 min-h-[80px] transition-colors hover:bg-overlay ${KPI_BORDERS[idx]}`}
           >
+            {/* One quiet dot per cell, tied to what the number counts (raw
+                inputs stay grey, clusters carry the "being decided" info tone,
+                reports created carry success). The figure itself stays on
+                --foreground — this strip reports, it does not alarm. */}
             <span
-              className={`${EYEBROW} mb-2.5 block tracking-[0.08em] leading-none`}
+              className={`${EYEBROW} mb-2.5 flex items-center gap-1.5 tracking-[0.08em] leading-none`}
             >
+              <span
+                className="h-1.5 w-1.5 shrink-0 rounded-full"
+                style={{ backgroundColor: cell.hue }}
+                aria-hidden
+              />
               {cell.label}
             </span>
             <p className="text-[28px] font-semibold leading-none tracking-tight tabular-nums text-foreground">
@@ -202,6 +213,34 @@ export default async function VideoPipelinePage({ params }: PageProps) {
   const clipRows = (clips ?? []) as ClipRow[];
   const clusterRows = (clusters ?? []) as ClusterRow[];
 
+  // Everything below splits into two independent legs off the clips/clusters
+  // fetch. The cluster leg (evidence frames -> reports) used to run to
+  // completion before the clip leg even started its first round trip; kicking
+  // the clip work off here overlaps the two instead of stacking them.
+  const clipSignedUrlsPromise =
+    clipRows.length > 0
+      ? db.storage
+          .from("video-clips")
+          .createSignedUrls(
+            [...new Set(clipRows.map((c) => c.storage_path))],
+            3600,
+          )
+      : Promise.resolve({
+          data: [] as { path: string | null; signedUrl: string }[],
+        });
+  const clipDetectionsPromise =
+    clipRows.length > 0
+      ? (async () =>
+          db
+            .from("damage_detections")
+            .select("clip_id, cluster_id, frame_ts_s, class, confidence")
+            .in(
+              "clip_id",
+              clipRows.map((c) => c.id),
+            )
+            .not("cluster_id", "is", null))()
+      : Promise.resolve({ data: null });
+
   // Resolve the evidence-frame path of each cluster's best detection.
   const bestIds = clusterRows
     .map((c) => c.best_detection_id)
@@ -231,26 +270,42 @@ export default async function VideoPipelinePage({ params }: PageProps) {
   // Evidence frames live in the private video-frames bucket. Mint a
   // short-lived signed URL for EVERY cluster that has one — the row renders it
   // as a thumbnail, so an operator never has to click through to see it.
+  // Signed in ONE batch call: per-cluster createSignedUrl was up to 50 separate
+  // round trips to storage and dominated this page's server time.
   const frameByCluster = new Map<string, FrameEvidence>();
-  await Promise.all(
-    clusterRows.map(async (cluster) => {
+  const clusterFramePaths = [
+    ...new Set(
+      clusterRows
+        .map((c) =>
+          c.best_detection_id ? framePathById.get(c.best_detection_id) : null,
+        )
+        .filter((p): p is string => !!p),
+    ),
+  ];
+  if (clusterFramePaths.length > 0) {
+    const { data: signedList } = await db.storage
+      .from("video-frames")
+      .createSignedUrls(clusterFramePaths, 600);
+    const signedByPath = new Map<string, string>();
+    for (const entry of signedList ?? []) {
+      if (entry.path && entry.signedUrl)
+        signedByPath.set(entry.path, entry.signedUrl);
+    }
+    for (const cluster of clusterRows) {
       const detectionId = cluster.best_detection_id;
       const path = detectionId ? framePathById.get(detectionId) : undefined;
-      if (!path || !detectionId) return;
-      const { data: signed } = await db.storage
-        .from("video-frames")
-        .createSignedUrl(path, 600);
-      if (!signed?.signedUrl) return;
+      const url = path ? signedByPath.get(path) : undefined;
+      if (!url || !detectionId) continue;
       const evidence = evidenceByDetection.get(detectionId);
       frameByCluster.set(cluster.id, {
-        url: signed.signedUrl,
+        url,
         box: evidence?.box ?? null,
         label:
           evidence?.label ??
           `${cluster.class} · ${cluster.max_confidence.toFixed(2)}`,
       });
-    }),
-  );
+    }
+  }
 
   // Reports generated by dispatch decisions. Read straight off `reports`
   // (not dashboard_reports_view, which drops `description` for PII reasons) —
@@ -308,28 +363,56 @@ export default async function VideoPipelinePage({ params }: PageProps) {
   // Playable source for each clip. `createSignedUrl` fails for a path with no
   // object behind it, which is exactly the "no playable media" case.
   const videoUrlByClip = new Map<string, string>();
-  await Promise.all(
-    clipRows.map(async (clip) => {
-      const { data: signed } = await db.storage
-        .from("video-clips")
-        .createSignedUrl(clip.storage_path, 3600);
-      if (signed?.signedUrl) videoUrlByClip.set(clip.id, signed.signedUrl);
-    }),
-  );
+  {
+    const { data: signedClips } = await clipSignedUrlsPromise;
+    const clipUrlByPath = new Map<string, string>();
+    for (const entry of signedClips ?? []) {
+      if (entry.path && entry.signedUrl)
+        clipUrlByPath.set(entry.path, entry.signedUrl);
+    }
+    for (const clip of clipRows) {
+      const url = clipUrlByPath.get(clip.storage_path);
+      if (url) videoUrlByClip.set(clip.id, url);
+    }
+  }
+
+  /**
+   * Everything a rail item carries about the cluster itself — the fields the
+   * standalone Detections section used to own before the rail became the
+   * single surface. `framePath` keeps that section's rule: the pop-out button
+   * only earns its place when no thumbnail URL could be minted.
+   */
+  const clusterFacts = (cluster: ClusterRow) => {
+    const evidence = frameByCluster.get(cluster.id) ?? null;
+    const report = cluster.report_id
+      ? (reportById.get(cluster.report_id) ?? null)
+      : null;
+    const thumbUrl = evidence?.url ?? report?.imageUrl ?? null;
+    return {
+      class: cluster.class,
+      confidence: cluster.max_confidence,
+      frameUrl: evidence?.url ?? null,
+      frameBox: evidence?.box ?? null,
+      frameLabel: evidence?.label ?? null,
+      report,
+      status: cluster.status,
+      statusLabel: STATUS_LABEL[cluster.status] ?? cluster.status,
+      frameCount: cluster.frame_count,
+      decision: cluster.decision,
+      decisionRationale: cluster.decision_rationale,
+      framePath:
+        thumbUrl || !cluster.best_detection_id
+          ? null
+          : (framePathById.get(cluster.best_detection_id) ?? null),
+    };
+  };
 
   // Which cluster fires at which second of which clip — one query for all
   // clips, folded to the earliest sampled frame per cluster.
   const clusterById = new Map(clusterRows.map((c) => [c.id, c]));
   const eventsByClip = new Map<string, TheaterEvent[]>();
   if (clipRows.length > 0) {
-    const { data: detRows } = await db
-      .from("damage_detections")
-      .select("clip_id, cluster_id, frame_ts_s, class, confidence")
-      .in(
-        "clip_id",
-        clipRows.map((c) => c.id),
-      )
-      .not("cluster_id", "is", null);
+    const { data: detRows } = await clipDetectionsPromise;
 
     type DetRow = {
       clip_id: string;
@@ -347,19 +430,16 @@ export default async function VideoPipelinePage({ params }: PageProps) {
       const key = `${row.clip_id}|${row.cluster_id}`;
       const existing = firstByKey.get(key);
       if (existing && existing.tsSeconds <= ts) continue;
+      // A detection whose cluster fell outside the 50-row window is not a
+      // rail item — it would carry no status, decision or controls. Its
+      // cluster is not in `clusterRows` either, so no count disagrees.
       const cluster = clusterById.get(row.cluster_id);
-      const reportId = cluster?.report_id ?? null;
-      const evidence = frameByCluster.get(row.cluster_id) ?? null;
+      if (!cluster) continue;
       firstByKey.set(key, {
         clipId: row.clip_id,
         clusterId: row.cluster_id,
         tsSeconds: ts,
-        class: cluster?.class ?? row.class,
-        confidence: cluster?.max_confidence ?? row.confidence,
-        frameUrl: evidence?.url ?? null,
-        frameBox: evidence?.box ?? null,
-        frameLabel: evidence?.label ?? null,
-        report: reportId ? (reportById.get(reportId) ?? null) : null,
+        ...clusterFacts(cluster),
       });
     }
     for (const { clipId, ...event } of firstByKey.values()) {
@@ -388,22 +468,52 @@ export default async function VideoPipelinePage({ params }: PageProps) {
   }));
   const hasPlayableClip = theaterClips.some((c) => c.videoUrl);
 
+  // Clusters NO clip in the picker can replay: no clip association, an
+  // unusable frame timestamp, or a clip older than the 20 listed. They are
+  // appended to whichever rail is on screen instead of being orphaned — the
+  // rail is the only detections surface now, so it has to be complete.
+  const railed = new Set(
+    theaterClips.flatMap((c) => c.events.map((e) => e.clusterId)),
+  );
+  const orphanEvents: TheaterEvent[] = clusterRows
+    .filter((c) => !railed.has(c.id))
+    .map((cluster) => ({
+      clusterId: cluster.id,
+      tsSeconds: 0,
+      unlinked: true,
+      ...clusterFacts(cluster),
+    }));
+
   const kpis = [
-    { label: "Clips", value: clipRows.length },
+    { label: "Clips", value: clipRows.length, hue: "var(--faint)" },
     {
       label: "Frames scanned",
       value: clipRows.reduce((sum, c) => sum + (c.frames_sampled ?? 0), 0),
+      hue: "var(--faint)",
     },
     {
       label: "Detections",
       value: clipRows.reduce((sum, c) => sum + (c.detections_found ?? 0), 0),
+      hue: "var(--faint)",
     },
-    { label: "Clusters", value: clusterRows.length },
-    { label: "Reports created", value: reportIds.length },
+    {
+      label: "Clusters",
+      value: clusterRows.length,
+      hue: "var(--status-info-fg)",
+    },
+    {
+      label: "Reports created",
+      value: reportIds.length,
+      hue: "var(--status-success-fg)",
+    },
   ];
 
   return (
-    <ClipStudioProvider clips={theaterClips} slug={slug}>
+    <ClipStudioProvider
+      clips={theaterClips}
+      orphanEvents={orphanEvents}
+      slug={slug}
+    >
       {/* Same page shell as the Teams/Analytics tabs: 1800px content column,
           pt-city-content for the mobile fixed-header offset, hairline footer. */}
       <div className="flex flex-col min-h-dvh bg-background">
@@ -427,116 +537,6 @@ export default async function VideoPipelinePage({ params }: PageProps) {
           {/* The pre-rendered overlay reel is only worth showing when no clip in
           the table has a playable object to drive the live theater. */}
           {!hasPlayableClip && <DemoClipCard />}
-
-          <section>
-            <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className={EYEBROW}>Detections</h2>
-              <span className="font-mono text-[11px] tabular-nums text-faint">
-                {clusterRows.length} clusters
-              </span>
-            </div>
-            {clusterRows.length > 0 ? (
-              // Cards, not one long list: past ~1500px a single full-width row
-              // strands its middle column, so the grid folds to two.
-              <div className="grid gap-3 2xl:grid-cols-2">
-                {clusterRows.map((cluster) => {
-                  const evidence = frameByCluster.get(cluster.id) ?? null;
-                  const report = cluster.report_id
-                    ? (reportById.get(cluster.report_id) ?? null)
-                    : null;
-                  const thumbUrl = evidence?.url ?? report?.imageUrl ?? null;
-                  return (
-                    <div
-                      key={cluster.id}
-                      className="flex flex-wrap items-start gap-3 rounded-[var(--radius-lg)] border border-hairline bg-surface p-3 transition-colors hover:bg-overlay sm:flex-nowrap"
-                    >
-                      <div className="relative h-20 w-28 flex-shrink-0 overflow-hidden rounded-[var(--radius-md)] border border-hairline bg-overlay">
-                        {thumbUrl ? (
-                          // Click opens the WHOLE frame with the detector's box
-                          // drawn back on it — the thumbnail crops away the
-                          // context that makes the box readable.
-                          <EvidenceFrameButton
-                            src={thumbUrl}
-                            box={evidence?.box ?? null}
-                            label={evidence?.label}
-                            alt={`Evidence frame for ${cluster.class}`}
-                            title={cluster.class}
-                            subtitle={`${cluster.max_confidence.toFixed(2)} confidence · ${cluster.frame_count} frames`}
-                            className="h-full w-full"
-                          />
-                        ) : (
-                          <span className="flex h-full w-full items-center justify-center text-faint">
-                            <HelpCircle
-                              className="h-5 w-5"
-                              strokeWidth={1.75}
-                            />
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-foreground leading-tight">
-                          <span className="font-medium">{cluster.class}</span>
-                          <span className="tabular-nums text-subtle">
-                            {cluster.max_confidence.toFixed(2)} conf
-                          </span>
-                          <span className="tabular-nums text-faint">
-                            {cluster.frame_count} frames
-                          </span>
-                          <span className={EYEBROW}>
-                            {STATUS_LABEL[cluster.status] ?? cluster.status}
-                          </span>
-                        </p>
-                        {report && <ReportInline report={report} />}
-                      </div>
-
-                      <div className="flex w-full flex-shrink-0 flex-col items-start gap-1.5 sm:w-64 sm:items-end">
-                        <ClusterRowActions
-                          slug={slug}
-                          clusterId={cluster.id}
-                          status={cluster.status}
-                          // Thumbnail already shows the frame; the pop-out button
-                          // only earns its place when no URL could be minted.
-                          framePath={
-                            thumbUrl || !cluster.best_detection_id
-                              ? null
-                              : (framePathById.get(cluster.best_detection_id) ??
-                                null)
-                          }
-                        />
-                        {cluster.decision && (
-                          <div className="text-xs sm:text-right">
-                            <span className="font-medium text-subtle">
-                              {cluster.decision}
-                            </span>
-                            {cluster.decision_rationale && (
-                              <p className="mt-0.5 line-clamp-3 text-faint">
-                                {cluster.decision_rationale}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                        {cluster.report_id && (
-                          // No per-report detail route exists yet — the grid is the
-                          // canonical staff surface for dispatched work orders.
-                          <Link
-                            className="text-xs text-faint underline transition-colors hover:text-foreground"
-                            href={`/city/${slug}/grid`}
-                          >
-                            Open in grid →
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-4 text-[13px] text-subtle">
-                No detections yet.
-              </p>
-            )}
-          </section>
 
           {/* Ingest sits beside the run log rather than stacked above it —
               both are narrow, and the log's table wants the wider half. */}

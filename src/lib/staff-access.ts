@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import {
@@ -39,8 +40,14 @@ export type StaffAccess = "real" | "demo" | null;
  * This does NOT apply the demo-city-is-always-open bypass — callers whose
  * surface is meant to be public for the demo city must OR in their own
  * `slug === DEMO_CITY` bypass, same as the grid page does.
+ *
+ * Wrapped in React `cache()`: the layout, the page, and (on the grid) the page
+ * body all ask the same question during one render pass, which otherwise costs
+ * a `auth.getUser()` round trip plus two Postgres reads EACH time. `cache()` is
+ * scoped to a single server request — it is NOT a cross-request cache and can
+ * never hand one visitor's access level to another.
  */
-export async function getStaffAccessForCity(
+export const getStaffAccessForCity = cache(async function getStaffAccessForCity(
   slug: string,
 ): Promise<StaffAccess> {
   const devBypass =
@@ -94,7 +101,7 @@ export async function getStaffAccessForCity(
   if (demoStaff) return "demo";
 
   return null;
-}
+});
 
 /**
  * SERVER-ONLY. True iff the current request is operational staff for `slug`
