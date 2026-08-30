@@ -96,14 +96,35 @@ jobs:
             create schema if not exists auth;
             create schema if not exists storage;
             create schema if not exists extensions;
+            -- The helpers Supabase injects. Anything a migration calls has to
+            -- exist here or the file fails for a reason that is about this
+            -- harness, not about the migration.
             create or replace function auth.uid() returns uuid language sql stable as $$ select null::uuid $$;
             create or replace function auth.role() returns text language sql stable as $$ select 'service_role'::text $$;
-            create table if not exists auth.users (id uuid primary key default gen_random_uuid(), email text);
-            create table if not exists storage.buckets (id text primary key, name text, public boolean default false);
+            create or replace function auth.email() returns text language sql stable as $$ select null::text $$;
+            create or replace function auth.jwt() returns jsonb language sql stable as $$ select '{}'::jsonb $$;
+            create table if not exists auth.users (
+              id uuid primary key default gen_random_uuid(),
+              email text,
+              raw_user_meta_data jsonb default '{}'::jsonb,
+              created_at timestamptz default now()
+            );
+            create table if not exists storage.buckets (
+              id text primary key, name text, public boolean default false,
+              created_at timestamptz default now()
+            );
             create table if not exists storage.objects (
               id uuid primary key default gen_random_uuid(),
-              bucket_id text, name text, owner uuid, created_at timestamptz default now()
+              bucket_id text, name text, owner uuid,
+              created_at timestamptz default now(),
+              updated_at timestamptz default now(),
+              metadata jsonb default '{}'::jsonb
             );
+            -- storage.foldername('a/b/c.jpg') -> {a,b}; used by the folder-scoped
+            -- storage policies.
+            create or replace function storage.foldername(name text)
+              returns text[] language sql immutable as
+              $$ select string_to_array(regexp_replace(name, '/[^/]*$', ''), '/') $$;
           SQL
 
           failed=0
