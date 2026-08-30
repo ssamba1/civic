@@ -215,11 +215,32 @@ function parseFootprint(raw: string | null | undefined): string | null {
   return `SRID=4326;LINESTRING(${pairs.map(([x, y]) => `${x} ${y}`).join(", ")})`;
 }
 
+/**
+ * Read a spreadsheet cell as a CALENDAR date (no time, no zone).
+ *
+ * `Date.parse("3/5/2026")` is interpreted in the server's local timezone;
+ * `.toISOString()` then re-expresses it in UTC. West of UTC that lands on the
+ * previous day, so a warranty imported as 2026-03-05 was stored as 2026-03-04.
+ * These dates decide whether a defect is still under warranty, so a one-day
+ * drift silently changes liability at the boundary — and it moved with the
+ * deploy region, which makes it maddening to reproduce.
+ *
+ * A date-only string has no instant attached, so no conversion should happen:
+ * ISO input is taken verbatim, and anything else is read back through local
+ * calendar getters rather than a UTC re-projection.
+ */
 function parseDateOnly(value: string | undefined): string | null {
-  if (!value?.trim()) return null;
-  const t = Date.parse(value.trim());
+  const raw = value?.trim();
+  if (!raw) return null;
+
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+
+  const t = Date.parse(raw);
   if (Number.isNaN(t)) return null;
-  return new Date(t).toISOString().slice(0, 10);
+  const d = new Date(t);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 function parseCents(value: string | undefined): number | null {

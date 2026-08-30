@@ -117,6 +117,44 @@ describe("decodeYoloOutput", () => {
     expect(det.bbox.y).toBe(0);
   });
 
+  it("keeps the right edge put when the left edge clamps to 0", () => {
+    // cx=20, w=100 -> the true box spans [-30, 70] px. Clamping only the left
+    // edge and keeping w produced [0, 100] — the same width, translated right,
+    // pointing at a different part of the road. The right edge must stay at 70.
+    const n = 1;
+    const data = channelFirst(
+      [{ cx: 20, cy: 300, w: 100, h: 40, scores: [0, 0, 0, 0.9] }],
+      n,
+    );
+    const [det] = decodeYoloOutput(data, [1, ATTRS, n], CLASSES, 0.3, SIZE);
+    expect(det.bbox.x).toBe(0);
+    expect(det.bbox.x + det.bbox.w).toBeCloseTo(70 / SIZE, 6);
+    expect(det.bbox.w).toBeCloseTo(70 / SIZE, 6);
+  });
+
+  it("keeps the bottom edge put when the top edge clamps to 0", () => {
+    const n = 1;
+    const data = channelFirst(
+      [{ cx: 300, cy: 10, w: 40, h: 100, scores: [0, 0, 0, 0.9] }],
+      n,
+    );
+    const [det] = decodeYoloOutput(data, [1, ATTRS, n], CLASSES, 0.3, SIZE);
+    expect(det.bbox.y).toBe(0);
+    expect(det.bbox.y + det.bbox.h).toBeCloseTo(60 / SIZE, 6);
+  });
+
+  it("clamps the far edge without moving the near edge", () => {
+    // Box runs off the right of the frame: near edge stays, far edge clamps.
+    const n = 1;
+    const data = channelFirst(
+      [{ cx: 620, cy: 300, w: 80, h: 40, scores: [0, 0, 0, 0.9] }],
+      n,
+    );
+    const [det] = decodeYoloOutput(data, [1, ATTRS, n], CLASSES, 0.3, SIZE);
+    expect(det.bbox.x).toBeCloseTo(580 / SIZE, 6);
+    expect(det.bbox.x + det.bbox.w).toBeCloseTo(1, 6);
+  });
+
   it("returns [] for unrecognized dims", () => {
     expect(
       decodeYoloOutput(new Float32Array(8), [1, 2, 4], CLASSES, 0.3, SIZE),

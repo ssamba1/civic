@@ -21,6 +21,10 @@ const serverEnvSchema = z
     // (e.g. "x-real-ip" on Vercel/nginx). When set, ONLY this header is trusted,
     // so a client can't rotate the limiter key by forging x-forwarded-for.
     RATE_LIMIT_TRUSTED_HEADER: z.string().optional(),
+    // Salt for the opaque /r/[token] public status URLs. Report UUIDs are
+    // published through the Open311 API, so with a known salt every token is
+    // computable and the "unguessable" property is gone.
+    PUBLIC_TOKEN_SALT: z.string().optional(),
   })
   .superRefine((env, ctx) => {
     // In production the rate limiter MUST key off a platform-set, un-spoofable
@@ -37,6 +41,22 @@ const serverEnvSchema = z
         path: ["RATE_LIMIT_TRUSTED_HEADER"],
         message:
           "required in production: set to the platform's un-spoofable client-IP header (e.g. x-real-ip) so the rate-limit key cannot be forged",
+      });
+    }
+
+    // The public status token is sha256(salt + reportId). Report ids are public
+    // (Open311 GET /requests returns them), so a default salt means anyone can
+    // derive the status URL of every report in the system. Dev keeps the
+    // built-in default so demo links stay stable across restarts.
+    if (
+      process.env.NODE_ENV === "production" &&
+      !env.PUBLIC_TOKEN_SALT?.trim()
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["PUBLIC_TOKEN_SALT"],
+        message:
+          "required in production: report ids are public via Open311, so a default salt makes every resident status URL computable",
       });
     }
   });
@@ -69,6 +89,7 @@ function parseServerEnv() {
       TWILIO_FROM_NUMBER: process.env.TWILIO_FROM_NUMBER,
       DEV_AUTH_BYPASS: process.env.DEV_AUTH_BYPASS,
       RATE_LIMIT_TRUSTED_HEADER: process.env.RATE_LIMIT_TRUSTED_HEADER,
+      PUBLIC_TOKEN_SALT: process.env.PUBLIC_TOKEN_SALT,
     });
   } catch (err) {
     const issues =

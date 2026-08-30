@@ -50,12 +50,18 @@ function titleize(value: string): string {
 function formatDate(isoDate: string): string {
   const t = Date.parse(`${isoDate.slice(0, 10)}T00:00:00Z`);
   if (Number.isNaN(t)) return isoDate;
-  return new Date(t).toLocaleDateString(undefined, {
+  // Explicit locale, not `undefined`. This is a "use client" component, so it
+  // renders once on the server and again during hydration; `undefined` resolves
+  // to Node's default locale on the server and the visitor's in the browser,
+  // and any disagreement ("5 Mar 2026" vs "Mar 5, 2026") is a hydration
+  // mismatch that blows away the client tree. The timeZone was already pinned
+  // for the same reason.
+  return new Intl.DateTimeFormat("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
     timeZone: "UTC",
-  });
+  }).format(t);
 }
 
 function statusChip(status: string): { cls: string; label: string } {

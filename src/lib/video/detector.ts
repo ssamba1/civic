@@ -132,16 +132,25 @@ export function decodeYoloOutput(
     const w = get(2, j) / modelSize;
     const h = get(3, j) / modelSize;
     // Clamp to [0,1]: exports can emit boxes slightly outside the frame.
-    const x = Math.min(1, Math.max(0, cx - w / 2));
-    const y = Math.min(1, Math.max(0, cy - h / 2));
+    //
+    // Clamp BOTH edges and derive the extent from them. Clamping only the
+    // top-left and keeping the model's w/h silently translates the box: for a
+    // detection at the left border (cx < w/2) the left edge snaps to 0 while
+    // the width stays, so the right edge moves from cx + w/2 out to w — the
+    // stored evidence box then points at the wrong part of the frame, and the
+    // crop handed to the classifier is of the wrong thing.
+    const x0 = Math.min(1, Math.max(0, cx - w / 2));
+    const y0 = Math.min(1, Math.max(0, cy - h / 2));
+    const x1 = Math.min(1, Math.max(0, cx + w / 2));
+    const y1 = Math.min(1, Math.max(0, cy + h / 2));
     out.push({
       class: classNames[best],
       confidence: bestScore,
       bbox: {
-        x,
-        y,
-        w: Math.min(1 - x, Math.max(0, w)),
-        h: Math.min(1 - y, Math.max(0, h)),
+        x: x0,
+        y: y0,
+        w: Math.max(0, x1 - x0),
+        h: Math.max(0, y1 - y0),
       },
     });
   }

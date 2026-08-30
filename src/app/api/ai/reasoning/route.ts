@@ -149,12 +149,38 @@ function isCategory(v: unknown): v is DashboardReport["category"] {
   return typeof v === "string" && v in CATEGORY_META;
 }
 
+/** Longest address we will echo into a model prompt. */
+const MAX_PROMPT_FIELD_CHARS = 160;
+
+/**
+ * Flatten a client-supplied string before it is interpolated into a prompt.
+ *
+ * `address` arrives in the request body and is written straight into a
+ * `- Address: ${value}` line of the Gemini prompt (lib/ai/reasoning-ai.ts), so a
+ * value containing newlines can close that line and append attacker-authored
+ * instructions to the brief. Collapsing every control character and run of
+ * whitespace keeps the value on its own line; the length cap stops one field
+ * from dominating the context. Real addresses are unaffected.
+ */
+function sanitizePromptField(raw: unknown, fallback: string): string {
+  if (typeof raw !== "string") return fallback;
+  const flat = raw
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: stripping control characters is the point of this function
+    .replace(/[\u0000-\u001f\u007f]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!flat) return fallback;
+  return flat.length > MAX_PROMPT_FIELD_CHARS
+    ? `${flat.slice(0, MAX_PROMPT_FIELD_CHARS)}…`
+    : flat;
+}
+
 /**
  * Build a DashboardReport from client-forwarded fields, used for DB-backed
  * reports that aren't in the static corpus. Every field is validated: the
  * template and Gemini paths index CATEGORY_META/CATEGORY_SLA_TARGETS by
  * category and derive age from created_at, so an unknown category or
- * unparseable date would 500. An invalid payload returns null (→ 404),
+ * unparseable date would 500. An invalid payload returns null (-> 404),
  * matching the corpus-miss behavior.
  */
 function reportFromBody(
@@ -186,7 +212,7 @@ function reportFromBody(
     status: (typeof r.status === "string"
       ? r.status
       : "open") as DashboardReport["status"],
-    address: typeof r.address === "string" ? r.address : "Unknown location",
+    address: sanitizePromptField(r.address, "Unknown location"),
     location: { lng: 0, lat: 0 },
     photo_public_url: "",
     created_at: r.created_at,

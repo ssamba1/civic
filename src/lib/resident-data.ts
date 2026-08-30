@@ -23,6 +23,10 @@ import { DAY_MS, HOUR_MS } from "@/lib/utils/time-constants";
 
 const logger = createLogger("resident-data");
 
+/** Newest-first caps. Both feeds render a bounded list and never paginate. */
+const MAX_MY_REPORTS = 200;
+const MAX_NOTIFICATIONS = 100;
+
 /* ------------------------------------------------------------------
    Resident-facing types
    ------------------------------------------------------------------ */
@@ -313,7 +317,12 @@ export async function getMyReports(
         "id, status, address, location, photo_public_url, created_at, reporter_id, classifications ( category, severity ), work_orders ( completed_at, resolution_photo_url, fix_cost_estimate, fix_time_estimate_days, fix_note, marked_under_fix_at )",
       )
       .eq("reporter_id", user.id)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      // Bounded: a prolific reporter's history is otherwise unlimited, and the
+      // select joins classifications + work_orders, so the row count multiplies
+      // the payload. The UI shows a reverse-chronological list; older entries
+      // are not reachable from it.
+      .limit(MAX_MY_REPORTS);
 
     if (error || !data || data.length === 0) {
       logger.warn(
@@ -661,7 +670,9 @@ export async function getResidentNotifications(
       const { data, error } = await supabase
         .from("notifications")
         .select("id, report_id, type, title, body, read_at, created_at")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        // Bounded — the feed renders newest-first and never paginates.
+        .limit(MAX_NOTIFICATIONS);
 
       if (!error && data && data.length > 0) {
         return (data as NotificationRow[]).map((n) => ({
