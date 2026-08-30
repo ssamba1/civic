@@ -35,6 +35,11 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files
+# Catch-all FIRST so no env variant can slip through. A `.env.local.bak` made
+# by a hand-run `cp` was committed once because the list below enumerated exact
+# names and a .bak suffix matched none of them.
+.env*
+!.env.example
 .env
 .env.local
 .env.*.local
