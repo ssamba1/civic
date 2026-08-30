@@ -132,6 +132,9 @@ interface StudioContext {
   orphanEvents: TheaterEvent[];
   /** City slug — the rail links reports into that city's work-order grid. */
   slug: string;
+  /** Real staff. False on the public demo console, where the decision
+   *  controls are hidden rather than shown and refused by the server. */
+  canWrite: boolean;
   selectedId: string | null;
   /** Bumped only by user clicks, so the default selection never scrolls. */
   scrollToken: number;
@@ -147,11 +150,13 @@ export function ClipStudioProvider({
   clips,
   orphanEvents = [],
   slug,
+  canWrite,
   children,
 }: {
   clips: TheaterClip[];
   orphanEvents?: TheaterEvent[];
   slug: string;
+  canWrite: boolean;
   children: ReactNode;
 }) {
   const initial = useMemo(
@@ -182,6 +187,7 @@ export function ClipStudioProvider({
       clips,
       orphanEvents,
       slug,
+      canWrite,
       selectedId,
       scrollToken,
       select,
@@ -192,6 +198,7 @@ export function ClipStudioProvider({
       clips,
       orphanEvents,
       slug,
+      canWrite,
       selectedId,
       scrollToken,
       select,
@@ -219,7 +226,7 @@ function boxesAtFrame(track: DetectionTrack | null, index: number): Box[] {
 }
 
 export function ClipStage() {
-  const { clips, slug, selectedId, scrollToken } = useStudio();
+  const { clips, slug, canWrite, selectedId, scrollToken } = useStudio();
   const sectionRef = useRef<HTMLElement>(null);
   const clip = clips.find((c) => c.id === selectedId) ?? null;
 
@@ -246,12 +253,20 @@ export function ClipStage() {
         </p>
       </div>
       {/* Remount per clip so playhead, overlay track and media errors reset. */}
-      <StageBody key={clip.id} clip={clip} slug={slug} />
+      <StageBody key={clip.id} clip={clip} slug={slug} canWrite={canWrite} />
     </section>
   );
 }
 
-function StageBody({ clip, slug }: { clip: TheaterClip; slug: string }) {
+function StageBody({
+  clip,
+  slug,
+  canWrite,
+}: {
+  clip: TheaterClip;
+  slug: string;
+  canWrite: boolean;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [duration, setDuration] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -785,6 +800,9 @@ const EventCard = memo(function EventCard({
   onSeek: (seconds: number) => void;
   seekable: boolean;
 }) {
+  // Read from context rather than taking a prop: EventCard is memoized, and an
+  // extra prop that never changes would only widen its comparison surface.
+  const { canWrite } = useStudio();
   const scanning = phase === "analyzing" || phase === "drafting";
   const dispatched = Boolean(event.report);
   const showReport = dispatched && phase !== "waiting";
@@ -950,13 +968,17 @@ const EventCard = memo(function EventCard({
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
             {/* Manual stage-2 trigger + the frame pop-out fallback. Without
-                this a candidate cluster would have no way to be decided. */}
-            <ClusterRowActions
-              slug={slug}
-              clusterId={event.clusterId}
-              status={event.status}
-              framePath={event.framePath}
-            />
+                this a candidate cluster would have no way to be decided.
+                Hidden for public demo viewers: the server action refuses them
+                anyway, and a button that always errors is worse than none. */}
+            {canWrite && (
+              <ClusterRowActions
+                slug={slug}
+                clusterId={event.clusterId}
+                status={event.status}
+                framePath={event.framePath}
+              />
+            )}
             {event.report && (
               <Link
                 className="text-xs text-faint underline decoration-hairline-strong underline-offset-2 transition-colors hover:text-foreground"

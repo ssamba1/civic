@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CATEGORY_META, KNOWN_CITIES } from "@/lib/dashboard-data";
 import { createServerClient } from "@/lib/db/client";
+import { DEMO_CITY } from "@/lib/demo-auth";
 import { getStaffAccessForCity } from "@/lib/staff-access";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { VIDEO_PIPELINE } from "@/lib/video/config";
@@ -172,8 +173,22 @@ function DemoClipCard() {
 export default async function VideoPipelinePage({ params }: PageProps) {
   const { slug } = await params;
   if (!VIDEO_PIPELINE) notFound();
+
+  // The demo city's console is READ-ONLY PUBLIC so a hackathon judge (or
+  // anyone on a phone) can open it without credentials — a demo nobody can
+  // reach is not a demo. Same `slug !== DEMO_CITY` shape the grid page
+  // already uses.
+  //
+  // This is a deliberate, bounded exception to the staff gate, NOT a general
+  // loosening. Every OTHER city still requires real staff, because
+  // `video-frames` holds unblurred street footage; Cumming's clip is stock
+  // road footage with no faces or plates in it. Writes are unaffected —
+  // registerClipUpload / finalizeClip / escalateClusterNow / getFrameUrl all
+  // re-check `getStaffAccessForCity(...) === "real"` inside actions.ts, so a
+  // visitor can look and cannot touch.
   const access = await getStaffAccessForCity(slug);
-  if (access !== "real") notFound();
+  const publicDemo = slug === DEMO_CITY;
+  if (access !== "real" && !publicDemo) notFound();
 
   // DB first (provisioned cities), then the KNOWN_CITIES fallback (demo
   // deploy / local dev without a database) — same convention as the team
@@ -513,6 +528,7 @@ export default async function VideoPipelinePage({ params }: PageProps) {
       clips={theaterClips}
       orphanEvents={orphanEvents}
       slug={slug}
+      canWrite={access === "real"}
     >
       {/* Same page shell as the Teams/Analytics tabs: 1800px content column,
           pt-city-content for the mobile fixed-header offset, hairline footer. */}
@@ -540,10 +556,17 @@ export default async function VideoPipelinePage({ params }: PageProps) {
 
           {/* Ingest sits beside the run log rather than stacked above it —
               both are narrow, and the log's table wants the wider half. */}
-          <div className="grid items-start gap-4 lg:grid-cols-[minmax(320px,1fr)_minmax(0,2fr)]">
-            <UploadClip slug={slug} />
+          {/* Ingest is staff-only. A public demo viewer gets the run log at
+              full width rather than an upload form whose every submission
+              would come back "forbidden" from the server action. */}
+          {access === "real" ? (
+            <div className="grid items-start gap-4 lg:grid-cols-[minmax(320px,1fr)_minmax(0,2fr)]">
+              <UploadClip slug={slug} />
+              <ClipList />
+            </div>
+          ) : (
             <ClipList />
-          </div>
+          )}
         </div>
 
         <footer className="border-t border-hairline mt-10 pb-safe">
