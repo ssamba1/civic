@@ -71,5 +71,19 @@ export const VIDEO_PHASH_MAX_HAMMING = 10;
 export const VIDEO_MAX_CLIP_BYTES = 200 * 1024 * 1024;
 export const VIDEO_MAX_CLIP_SECONDS = 15 * 60;
 
+/**
+ * Days a full extracted frame is kept in the private `video-frames` bucket.
+ *
+ * Frames are raw street scenes — bystanders and readable plates — and unlike
+ * the resident path they are stored unblurred so the evidence box matches what
+ * the detector saw. Reads are staff-only through getFrameUrl (city-scoped path,
+ * 10-minute signed URL), so this is a retention control rather than an access
+ * one. 90 days, not the 30 that photos-raw uses, because a frame is the
+ * evidence behind a work order and possibly a contractor liability claim.
+ *
+ * Enforced by the pg_cron job in migration 069 — keep the two in sync.
+ */
+export const VIDEO_FRAME_TTL_DAYS = 90;
+
 /** Stamped into video_clips.detector_version for auditability. */
 export const VIDEO_DETECTOR_VERSION = "onnx-rdd-v1";

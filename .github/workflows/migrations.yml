@@ -1,0 +1,158 @@
+name: migrations
+
+# Fresh-deploy migration gate.
+#
+# Migrations are applied incrementally against the live project, so a file can
+# be broken in ways nobody notices until someone stands up a NEW database. That
+# already happened once: 33ec7d9 had to recover DDL that existed live but in no
+# migration file, and fix two files that had been given the same sequence
+# number. Nothing stopped a repeat.
+#
+# This job applies every migration, in order, to an empty Postgres with PostGIS
+# — the same thing a new city deployment does — and fails if any file errors.
+# It needs no secrets, so it runs on every PR and push.
+#
+# What it deliberately does NOT do: assert the resulting schema matches the live
+# project. That would need production credentials in CI. This answers the
+# narrower, still-valuable question — "would a fresh deploy succeed?"
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/**"
+      - ".github/workflows/migrations.yml"
+  push:
+    paths:
+      - "supabase/migrations/**"
+      - ".github/workflows/migrations.yml"
+
+concurrency:
+  group: migrations-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  fresh-deploy:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        # PostGIS is not optional here: every location column is
+        # geography(POINT,4326), so a plain postgres image fails on migration 1.
+        image: postgis/postgis:15-3.4
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: civic_fresh
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check migration numbering
+        run: |
+          # Two files sharing a sequence number makes rollback ambiguous and
+          # breaks any tooling that derives "the next number" from the set.
+          dupes=$(ls supabase/migrations/*.sql \
+            | sed -E 's|.*/[0-9]{8}_([0-9]+[a-z]?)_.*|\1|' \
+            | sort | uniq -d)
+          if [ -n "$dupes" ]; then
+            echo "Duplicate migration sequence number(s):"
+            echo "$dupes"
+            echo "Known: 056 is used by both routing_decisions and video_pipeline."
+            echo "Renaming an APPLIED migration is its own risk — the tracking"
+            echo "table keys on filename — so this is a warning, not a failure."
+          else
+            echo "No duplicate sequence numbers."
+          fi
+
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Apply every migration to an empty database
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set -euo pipefail
+          PSQL="psql -h localhost -U postgres -d civic_fresh -v ON_ERROR_STOP=1 --quiet"
+
+          # Supabase provides these roles and the auth schema; a bare Postgres
+          # does not, so stand in for them. Without this every RLS policy that
+          # references authenticated/anon fails, and every `auth.uid()` call
+          # errors — neither of which is a real defect in the migration.
+          $PSQL <<'SQL'
+            create extension if not exists postgis;
+            create extension if not exists pgcrypto;
+            do $$ begin
+              if not exists (select 1 from pg_roles where rolname='anon') then create role anon nologin; end if;
+              if not exists (select 1 from pg_roles where rolname='authenticated') then create role authenticated nologin; end if;
+              if not exists (select 1 from pg_roles where rolname='service_role') then create role service_role nologin bypassrls; end if;
+            end $$;
+            create schema if not exists auth;
+            create schema if not exists storage;
+            create schema if not exists extensions;
+            create or replace function auth.uid() returns uuid language sql stable as $$ select null::uuid $$;
+            create or replace function auth.role() returns text language sql stable as $$ select 'service_role'::text $$;
+            create table if not exists auth.users (id uuid primary key default gen_random_uuid(), email text);
+            create table if not exists storage.buckets (id text primary key, name text, public boolean default false);
+            create table if not exists storage.objects (
+              id uuid primary key default gen_random_uuid(),
+              bucket_id text, name text, owner uuid, created_at timestamptz default now()
+            );
+          SQL
+
+          failed=0
+          for f in $(ls supabase/migrations/*.sql | sort); do
+            base=$(basename "$f")
+            # pg_cron is a project-level extension the CI image does not carry,
+            # and these two schedule recurring DELETEs. They are OWNER-APPLY by
+            # design (see the header of each file), so skip rather than fail.
+            case "$base" in
+              *_039_raw_photo_retention.sql|*_069_video_frame_retention.sql)
+                echo "SKIP  $base (owner-apply: needs pg_cron)"
+                continue
+                ;;
+            esac
+            printf 'APPLY %s ... ' "$base"
+            if $PSQL -f "$f" >/dev/null 2>/tmp/err; then
+              echo ok
+            else
+              echo FAILED
+              sed 's/^/      /' /tmp/err | head -12
+              failed=$((failed + 1))
+            fi
+          done
+
+          echo
+          if [ "$failed" -gt 0 ]; then
+            echo "$failed migration(s) failed against an empty database."
+            echo "A new city deployment would not come up. Fix the file, not the live DB."
+            exit 1
+          fi
+          echo "All migrations applied cleanly to a fresh database."
+
+      - name: Assert RLS is enabled on every public table
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set -euo pipefail
+          # agents.md hard rule 3: RLS on every table, default deny. A table
+          # shipped without it is the single easiest way to leak a tenant's data.
+          missing=$(psql -h localhost -U postgres -d civic_fresh -tAc "
+            select string_agg(c.relname, ', ' order by c.relname)
+            from pg_class c
+            join pg_namespace n on n.oid = c.relnamespace
+            where n.nspname = 'public'
+              and c.relkind = 'r'
+              and not c.relrowsecurity
+          ")
+          if [ -n "$missing" ]; then
+            echo "Tables in public with RLS DISABLED: $missing"
+            exit 1
+          fi
+          echo "Every public table has row-level security enabled."
