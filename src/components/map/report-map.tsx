@@ -56,7 +56,9 @@ import { DAY_MS } from "@/lib/utils/time-constants";
 
 export type MapTheme = "dark" | "light" | "satellite";
 
-/** Which renderer draws the basemap + pins. Globe is the default. */
+/** Which renderer draws the basemap + pins. Flat is the default; the globe is
+ *  opt-in through the map controls (it costs 8.7 MB and ~10.5 s of blocked main
+ *  thread on first paint). */
 export type MapRenderer = "globe" | "flat";
 
 // Cesium is a multi-megabyte dependency; keeping the globe behind its own
@@ -788,8 +790,8 @@ function ReportMapInner({
               </div>
             )}
 
-            {/* Renderer — Cesium 3D globe (default) vs the MapLibre/deck.gl
-                flat map. Mirrors the Basemap grid below. The globe is
+            {/* Renderer — MapLibre/deck.gl flat map (default) vs the opt-in
+                Cesium 3D globe. Mirrors the Basemap grid below. The globe is
                 unavailable in the heatmap view (deck.gl aggregation has no
                 globe equivalent), and disabled outright once Cesium has
                 failed to initialise. */}

@@ -39,7 +39,25 @@ export function isLangCode(v: string | undefined | null): v is LangCode {
 
 // Process-lifetime cache keyed by (lang, text). Status copy is highly
 // repetitive across requests, so this collapses almost all calls to one.
+//
+// BOUNDED on purpose: the key contains attacker-supplied text (the translate
+// route accepts arbitrary strings), so an unbounded Map is a memory-exhaustion
+// vector — every distinct input pins a new entry for the life of the process.
+// Insertion-ordered eviction gives us a cheap LRU-ish policy: Map iterates in
+// insertion order, so the oldest key is always first.
+const CACHE_MAX_ENTRIES = 2000;
 const cache = new Map<string, string>();
+
+function cachePut(key: string, value: string): void {
+  // Re-inserting moves the key to the end, keeping hot entries alive.
+  if (cache.has(key)) cache.delete(key);
+  cache.set(key, value);
+  while (cache.size > CACHE_MAX_ENTRIES) {
+    const oldest = cache.keys().next();
+    if (oldest.done) break;
+    cache.delete(oldest.value);
+  }
+}
 
 async function translateOne(text: string, target: LangCode): Promise<string> {
   const key = process.env.GEMINI_API_KEY;
@@ -48,7 +66,10 @@ async function translateOne(text: string, target: LangCode): Promise<string> {
 
   const cacheKey = `${target}:${trimmed}`;
   const cached = cache.get(cacheKey);
-  if (cached !== undefined) return cached;
+  if (cached !== undefined) {
+    cachePut(cacheKey, cached); // refresh recency
+    return cached;
+  }
 
   try {
     const model = new GoogleGenerativeAI(key).getGenerativeModel({
@@ -71,7 +92,7 @@ async function translateOne(text: string, target: LangCode): Promise<string> {
       .replace(/^```[a-z]*\n?|\n?```$/g, "")
       .trim();
     const value = out || text;
-    cache.set(cacheKey, value);
+    cachePut(cacheKey, value);
     return value;
   } catch (err) {
     logger.warn("translate_failed_fallback_to_source", {

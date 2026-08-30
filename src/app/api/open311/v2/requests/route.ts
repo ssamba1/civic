@@ -375,7 +375,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate media_url — must be https if provided (prevent XSS/tracking-pixel injection)
+    // media_url is accepted (it is an optional GeoReport v2 POST field, and
+    // rejecting it outright would break conformance) but it is deliberately
+    // NOT stored.
+    //
+    // `photo_public_url` means "a first-party image that went through the
+    // mandatory face/plate blur pipeline and lives in the photos-public
+    // bucket". A caller-supplied URL satisfies neither half of that: we cannot
+    // attest it is blurred, and we do not control it. Writing it through meant
+    // any holder of an open311:write key could put an arbitrary remote image —
+    // unblurred faces and plates, or a tracking pixel that deanonymises every
+    // viewer of the public dashboard — onto the city's public map, and have it
+    // echoed back as media_url in every subsequent GET.
+    //
+    // Photos reach us through the blur pipeline or not at all.
     const mediaUrl = body.media_url ?? "";
     if (mediaUrl) {
       try {
@@ -386,6 +399,15 @@ export async function POST(request: NextRequest) {
       } catch {
         return open311Error(400, "media_url must be a valid URL", wantsXml);
       }
+      logger.warn("open311 media_url ignored (not blur-verified)", {
+        host: (() => {
+          try {
+            return new URL(mediaUrl).host;
+          } catch {
+            return "unparseable";
+          }
+        })(),
+      });
     }
 
     // Insert the report
@@ -395,7 +417,8 @@ export async function POST(request: NextRequest) {
         city_id: city.id,
         reporter_id: reporterId,
         location: `SRID=4326;POINT(${lng} ${lat})`,
-        photo_public_url: mediaUrl,
+        // Never mediaUrl — see the note above the media_url validation.
+        photo_public_url: null,
         photo_raw_url: null,
         status: "open" as const,
         address: addressString,

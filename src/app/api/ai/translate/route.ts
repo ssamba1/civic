@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
+import { checkAndRecordGeminiCall } from "@/lib/ai/rate-limiter";
 import { isLangCode, translateText } from "@/lib/ai/translate";
+
+/**
+ * Longest text accepted for translation. The route is unauthenticated by
+ * design (the public /r/[token] status page uses it, and that page has no
+ * session), so an uncapped body is a direct lever on our Gemini bill.
+ */
+const MAX_TEXT_CHARS = 5000;
 
 /* ==================================================================
    POST /api/ai/translate (NEXT_100 #9 / #31)
@@ -65,6 +73,32 @@ export async function POST(request: Request) {
   const trimmed = text.trim();
   if (!trimmed) {
     return NextResponse.json({ translated: "" });
+  }
+  if (trimmed.length > MAX_TEXT_CHARS) {
+    return NextResponse.json(
+      { error: "text_too_long", maxChars: MAX_TEXT_CHARS },
+      { status: 413 },
+    );
+  }
+
+  // Global Gemini budget. lib/ai/translate.ts talks to the SDK directly rather
+  // than through lib/ai/gemini.ts, so without this the route is the one AI
+  // endpoint that never touches the shared quota — and the per-IP limiter above
+  // is keyed on a client-settable header unless RATE_LIMIT_TRUSTED_HEADER is
+  // set, so it alone does not bound spend.
+  const budget = checkAndRecordGeminiCall();
+  if (!budget.allowed) {
+    return NextResponse.json(
+      { error: "ai_budget_exhausted" },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(
+            Math.ceil((budget.retryAfterMs ?? 60_000) / 1000),
+          ),
+        },
+      },
+    );
   }
 
   // translateText is graceful: model error → returns source text unchanged

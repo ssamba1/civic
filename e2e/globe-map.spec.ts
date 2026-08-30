@@ -1,12 +1,26 @@
-import { expect, test } from "playwright/test";
+import { expect, type Page, test } from "playwright/test";
 
 /**
- * Cesium globe renderer smoke. Asserts the city map route boots the 3D globe
- * (not just the MapLibre fallback), that Civic's report pins actually landed on
- * it as Cesium entities, and that nothing was blocked by the CSP or thrown to
- * the console on the way. The `window.__civicGlobe` handle is a dev/test-only
- * export from components/map/globe-map.tsx.
+ * Cesium globe renderer smoke. Asserts the globe boots with Civic's report pins
+ * on it, and that nothing was blocked by the CSP or thrown to the console on the
+ * way. The `window.__civicGlobe` handle is a dev/test-only export from
+ * components/map/globe-map.tsx.
+ *
+ * The map route defaults to the FLAT renderer (9a05f50 — the globe cost 8.7 MB
+ * over 113 requests and ~10.5 s of blocked main thread), so the globe is opt-in
+ * through the map controls. These specs opt in explicitly rather than assuming a
+ * default; a regression that flips the default back would not silently pass.
  */
+
+/** Open the controls popover and switch the renderer. */
+async function selectRenderer(
+  page: Page,
+  label: "3D globe" | "Flat map",
+): Promise<void> {
+  await page.getByRole("button", { name: /toggle map controls/i }).click();
+  await page.getByRole("button", { name: label, exact: true }).click();
+}
+
 test("/city/cumming/map renders the Cesium globe with report pins", async ({
   page,
 }) => {
@@ -19,6 +33,12 @@ test("/city/cumming/map renders the Cesium globe with report pins", async ({
 
   const res = await page.goto("/city/cumming/map");
   expect(res?.status()).toBeLessThan(400);
+
+  // Flat is the default; the flat renderer must come up before we swap.
+  await expect(page.locator("canvas.maplibregl-canvas")).toBeVisible({
+    timeout: 30_000,
+  });
+  await selectRenderer(page, "3D globe");
 
   // Cesium mounts its own canvas inside the container we hand it.
   const canvas = page.locator(
@@ -61,16 +81,20 @@ test("/city/cumming/map renders the Cesium globe with report pins", async ({
   expect(consoleErrors).toEqual([]);
 });
 
-test("the map controls can swap the globe for the MapLibre renderer", async ({
+test("the map controls can swap the globe back to the MapLibre renderer", async ({
   page,
 }) => {
   await page.goto("/city/cumming/map");
+  await expect(page.locator("canvas.maplibregl-canvas")).toBeVisible({
+    timeout: 30_000,
+  });
+
+  await selectRenderer(page, "3D globe");
   await expect(
     page.locator('[data-testid="globe-map-container"] canvas').first(),
   ).toBeVisible({ timeout: 45_000 });
 
-  await page.getByRole("button", { name: /toggle map controls/i }).click();
-  await page.getByRole("button", { name: "Flat map", exact: true }).click();
+  await selectRenderer(page, "Flat map");
 
   // MapLibre owns the canvas once the flat renderer takes over, and the globe
   // container is gone entirely.

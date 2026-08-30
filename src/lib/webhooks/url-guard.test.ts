@@ -86,4 +86,73 @@ describe("isBlockedWebhookHost", () => {
     it("allows 192.167.0.1", () =>
       expect(isBlockedWebhookHost("192.167.0.1")).toBe(false));
   });
+
+  // --- encoding bypasses ---
+  // `fetch` (undici) accepts several spellings of the same address. Each of
+  // these reached the internal target before the guard normalised encodings.
+  describe("IPv4-mapped IPv6", () => {
+    it("blocks ::ffff:169.254.169.254 (cloud metadata)", () =>
+      expect(isBlockedWebhookHost("::ffff:169.254.169.254")).toBe(true));
+    it("blocks the bracketed form URL.hostname produces", () =>
+      expect(isBlockedWebhookHost("[::ffff:169.254.169.254]")).toBe(true));
+    it("blocks ::ffff:127.0.0.1", () =>
+      expect(isBlockedWebhookHost("::ffff:127.0.0.1")).toBe(true));
+    it("blocks ::ffff:10.0.0.5", () =>
+      expect(isBlockedWebhookHost("::ffff:10.0.0.5")).toBe(true));
+    it("blocks ::ffff:192.168.1.1", () =>
+      expect(isBlockedWebhookHost("::ffff:192.168.1.1")).toBe(true));
+    it("blocks the all-hex spelling ::ffff:a9fe:a9fe", () =>
+      expect(isBlockedWebhookHost("::ffff:a9fe:a9fe")).toBe(true));
+    it("still allows a mapped public address", () =>
+      expect(isBlockedWebhookHost("::ffff:8.8.8.8")).toBe(false));
+  });
+
+  describe("other IPv6", () => {
+    it("blocks :: (unspecified)", () =>
+      expect(isBlockedWebhookHost("::")).toBe(true));
+    it("blocks the bracketed loopback", () =>
+      expect(isBlockedWebhookHost("[::1]")).toBe(true));
+    it("blocks fe80:: link-local", () =>
+      expect(isBlockedWebhookHost("fe80::1")).toBe(true));
+    it("blocks a link-local with a zone id", () =>
+      expect(isBlockedWebhookHost("fe80::1%eth0")).toBe(true));
+    it("blocks fd00:: unique-local", () =>
+      expect(isBlockedWebhookHost("fd12:3456::1")).toBe(true));
+    it("blocks fc00:: unique-local", () =>
+      expect(isBlockedWebhookHost("fc00::1")).toBe(true));
+    it("allows a public v6 address", () =>
+      expect(isBlockedWebhookHost("2001:4860:4860::8888")).toBe(false));
+  });
+
+  describe("non-dotted-quad IPv4 spellings", () => {
+    it("blocks bare decimal 2130706433 (127.0.0.1)", () =>
+      expect(isBlockedWebhookHost("2130706433")).toBe(true));
+    it("blocks short form 127.1", () =>
+      expect(isBlockedWebhookHost("127.1")).toBe(true));
+    it("blocks short form 10.1", () =>
+      expect(isBlockedWebhookHost("10.1")).toBe(true));
+    it("blocks octal 0177.0.0.1", () =>
+      expect(isBlockedWebhookHost("0177.0.0.1")).toBe(true));
+    it("blocks hex 0x7f.0.0.1", () =>
+      expect(isBlockedWebhookHost("0x7f.0.0.1")).toBe(true));
+    it("blocks bare hex 0x7f000001", () =>
+      expect(isBlockedWebhookHost("0x7f000001")).toBe(true));
+    it("blocks decimal metadata 2852039166 (169.254.169.254)", () =>
+      expect(isBlockedWebhookHost("2852039166")).toBe(true));
+    it("allows bare decimal for a public address", () =>
+      expect(isBlockedWebhookHost("134744072")).toBe(false)); // 8.8.8.8
+  });
+
+  describe("additional reserved ranges", () => {
+    it("blocks 100.64.0.1 (CGNAT)", () =>
+      expect(isBlockedWebhookHost("100.64.0.1")).toBe(true));
+    it("blocks 255.255.255.255 (broadcast)", () =>
+      expect(isBlockedWebhookHost("255.255.255.255")).toBe(true));
+    it("blocks 198.18.0.1 (benchmarking)", () =>
+      expect(isBlockedWebhookHost("198.18.0.1")).toBe(true));
+    it("allows 100.63.0.1 (just below CGNAT)", () =>
+      expect(isBlockedWebhookHost("100.63.0.1")).toBe(false));
+    it("blocks the empty host", () =>
+      expect(isBlockedWebhookHost("")).toBe(true));
+  });
 });

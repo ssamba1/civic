@@ -9,21 +9,14 @@ const ALL_EVENTS = [
   "report.closed",
 ] as const;
 
-interface City {
-  id: string;
-  label: string;
-}
-
 interface Props {
-  cities: City[];
   onCreated?: (id: string, secret: string) => void;
 }
 
-export function WebhookForm({ cities, onCreated }: Props) {
+export function WebhookForm({ onCreated }: Props) {
   const formId = useId();
   const [label, setLabel] = useState("");
   const [url, setUrl] = useState("");
-  const [cityId, setCityId] = useState<string>("");
   const [events, setEvents] = useState<string[]>([...ALL_EVENTS]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +36,6 @@ export function WebhookForm({ cities, onCreated }: Props) {
       const result = await registerWebhookAction({
         label,
         url,
-        cityId: cityId || null,
         events,
       });
       if (!result.ok) {
@@ -53,7 +45,6 @@ export function WebhookForm({ cities, onCreated }: Props) {
         onCreated?.(result.data.id, result.data.secret);
         setLabel("");
         setUrl("");
-        setCityId("");
         setEvents([...ALL_EVENTS]);
       }
     } finally {
@@ -122,28 +113,6 @@ export function WebhookForm({ cities, onCreated }: Props) {
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900"
           placeholder="https://hooks.zapier.com/..."
         />
-      </div>
-
-      <div>
-        <label
-          htmlFor={`${formId}-city`}
-          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-        >
-          City scope (optional — blank = all cities)
-        </label>
-        <select
-          id={`${formId}-city`}
-          value={cityId}
-          onChange={(e) => setCityId(e.target.value)}
-          className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900"
-        >
-          <option value="">All cities</option>
-          {cities.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.label}
-            </option>
-          ))}
-        </select>
       </div>
 
       <div>

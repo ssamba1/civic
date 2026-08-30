@@ -19,10 +19,10 @@ import { Button } from "@/components/ui/button";
 import type { DashboardReport } from "@/lib/dashboard-data";
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import { DEMO_MODE } from "@/lib/demo-mode";
+import { blurFacesAndPlates } from "@/lib/privacy/blur";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import { useTaskCompletion } from "@/lib/task-completion";
 import { cn } from "@/lib/utils/cn";
-import { downscaleImageToDataUrl } from "@/lib/utils/downscale-image";
 import { lockBodyScroll } from "@/lib/utils/scroll-lock";
 import { timeAgo } from "@/lib/utils/time-ago";
 
@@ -163,6 +163,20 @@ export function TaskDetailPane({ report, onClose }: TaskDetailPaneProps) {
 }
 
 /**
+ * Blob -> data URL. The blurred output is already bounded to a ~1280px long
+ * edge by the blur pipeline, so it stays inside the localStorage budget the
+ * old downscale helper existed to protect.
+ */
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error ?? new Error("read failed"));
+    reader.readAsDataURL(blob);
+  });
+}
+
+/**
  * The scrollable detail content + before/after completion flow. Shared by the
  * mobile sheet and the desktop pane. Remounted (via `key={report.id}`) on every
  * task switch so the in-progress capture state resets cleanly.
@@ -185,7 +199,14 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
     setBusy(true);
     setError(null);
     try {
-      const dataUrl = await downscaleImageToDataUrl(file);
+      // Blur BEFORE anything else. This after-photo is uploaded to
+      // photos-public (staff/actions.ts uploadResolutionPhoto), so it is bound
+      // by the same mandatory face/plate blur as a resident submission — a
+      // repaired-sidewalk shot routinely catches passers-by and parked cars.
+      // Downscaling alone, which is what this used to do, only made the
+      // unblurred pixels smaller.
+      const { blurred } = await blurFacesAndPlates(file);
+      const dataUrl = await blobToDataUrl(blurred);
       setPendingPhoto(dataUrl);
     } catch {
       setError(

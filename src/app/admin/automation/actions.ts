@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { z } from "zod";
+import { requireAdminScope } from "@/lib/auth/admin-scope";
 import type { Action, AutomationRule, Condition } from "@/lib/automation/rules";
 import { validateRule } from "@/lib/automation/rules";
 import { createServerClient } from "@/lib/db/client";
@@ -17,28 +18,6 @@ const log = createLogger("admin-automation-actions");
 // ---------------------------------------------------------------------------
 // Admin guard — mirrors pattern from admin/webhooks/actions.ts
 // ---------------------------------------------------------------------------
-async function requireAdmin(): Promise<boolean> {
-  if (DEMO_MODE) {
-    const demo = findDemoAccount(
-      (await cookies()).get(DEMO_SESSION_COOKIE)?.value,
-    );
-    if (demo?.role === "admin") return true;
-  }
-  const devBypass =
-    process.env.NODE_ENV === "development" &&
-    process.env.DEV_AUTH_BYPASS === "1";
-  if (devBypass) return true;
-
-  const user = await getAuthUser();
-  if (!user) return false;
-  const db = createServerClient();
-  const { data } = await db
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle<{ role: string }>();
-  return data?.role === "admin";
-}
 
 // ---------------------------------------------------------------------------
 // Public row type
@@ -51,9 +30,11 @@ export type AutomationRuleRow = AutomationRule;
 export async function listRulesAction(
   cityId: string,
 ): Promise<Result<AutomationRuleRow[]>> {
-  if (!(await requireAdmin())) return { ok: false, error: "unauthorized" };
+  const admin = await requireAdminScope();
+  if (!admin) return { ok: false, error: "unauthorized" };
 
-  const parsedCityId = z.string().uuid().safeParse(cityId);
+  // Ignore the caller-supplied cityId — an admin only ever sees their own city.
+  const parsedCityId = z.string().uuid().safeParse(admin.cityId);
   if (!parsedCityId.success) return { ok: false, error: "invalid_id" };
 
   try {
@@ -90,9 +71,11 @@ export async function createRuleAction(input: {
   conditions: Condition[];
   actions: Action[];
 }): Promise<Result<{ id: string }>> {
-  if (!(await requireAdmin())) return { ok: false, error: "unauthorized" };
+  const admin = await requireAdminScope();
+  if (!admin) return { ok: false, error: "unauthorized" };
 
-  const parsedCityId = z.string().uuid().safeParse(input.cityId);
+  // Ignore input.cityId — an admin only ever writes rules for their own city.
+  const parsedCityId = z.string().uuid().safeParse(admin.cityId);
   if (!parsedCityId.success) return { ok: false, error: "invalid_id" };
 
   const validation = validateRule({
@@ -146,7 +129,8 @@ export async function updateRuleAction(
     actions: Action[];
   }>,
 ): Promise<Result<void>> {
-  if (!(await requireAdmin())) return { ok: false, error: "unauthorized" };
+  const admin = await requireAdminScope();
+  if (!admin) return { ok: false, error: "unauthorized" };
 
   const parsed = z.string().uuid().safeParse(id);
   if (!parsed.success) return { ok: false, error: "invalid_id" };
@@ -161,6 +145,7 @@ export async function updateRuleAction(
         .from("automation_rules")
         .select("name")
         .eq("id", parsed.data)
+        .eq("city_id", admin.cityId)
         .maybeSingle<{ name: string }>();
       name = data?.name ?? "rule";
     }
@@ -184,7 +169,8 @@ export async function updateRuleAction(
     const { error } = await db
       .from("automation_rules")
       .update(updates)
-      .eq("id", parsed.data);
+      .eq("id", parsed.data)
+      .eq("city_id", admin.cityId);
 
     if (error) {
       log.error("updateRuleAction failed", error, { id });
@@ -206,7 +192,8 @@ export async function toggleRuleAction(
   id: string,
   enabled: boolean,
 ): Promise<Result<void>> {
-  if (!(await requireAdmin())) return { ok: false, error: "unauthorized" };
+  const admin = await requireAdminScope();
+  if (!admin) return { ok: false, error: "unauthorized" };
 
   const parsed = z.string().uuid().safeParse(id);
   if (!parsed.success) return { ok: false, error: "invalid_id" };
@@ -216,7 +203,8 @@ export async function toggleRuleAction(
     const { error } = await db
       .from("automation_rules")
       .update({ enabled })
-      .eq("id", parsed.data);
+      .eq("id", parsed.data)
+      .eq("city_id", admin.cityId);
 
     if (error) {
       log.error("toggleRuleAction failed", error, { id });
@@ -235,7 +223,8 @@ export async function toggleRuleAction(
 // deleteRuleAction
 // ---------------------------------------------------------------------------
 export async function deleteRuleAction(id: string): Promise<Result<void>> {
-  if (!(await requireAdmin())) return { ok: false, error: "unauthorized" };
+  const admin = await requireAdminScope();
+  if (!admin) return { ok: false, error: "unauthorized" };
 
   const parsed = z.string().uuid().safeParse(id);
   if (!parsed.success) return { ok: false, error: "invalid_id" };
@@ -245,7 +234,8 @@ export async function deleteRuleAction(id: string): Promise<Result<void>> {
     const { error } = await db
       .from("automation_rules")
       .delete()
-      .eq("id", parsed.data);
+      .eq("id", parsed.data)
+      .eq("city_id", admin.cityId);
 
     if (error) {
       log.error("deleteRuleAction failed", error, { id });

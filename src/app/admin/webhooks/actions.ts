@@ -2,41 +2,14 @@
 
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
 import { z } from "zod/v4";
+import { requireAdminScope } from "@/lib/auth/admin-scope";
 import { createServerClient } from "@/lib/db/client";
-import { getAuthUser } from "@/lib/db/ssr-client";
-import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
-import { DEMO_MODE } from "@/lib/demo-mode";
 import { createLogger } from "@/lib/logger";
 import type { Result } from "@/lib/types";
 import { isBlockedWebhookHost } from "@/lib/webhooks/url-guard";
 
 const logger = createLogger("[webhooks/actions]");
-
-// Mirror the requireAdmin pattern from admin/onboard/actions.ts
-async function requireAdmin(): Promise<boolean> {
-  if (DEMO_MODE) {
-    const demo = findDemoAccount(
-      (await cookies()).get(DEMO_SESSION_COOKIE)?.value,
-    );
-    if (demo?.role === "admin") return true;
-  }
-  const devBypass =
-    process.env.NODE_ENV === "development" &&
-    process.env.DEV_AUTH_BYPASS === "1";
-  if (devBypass) return true;
-
-  const user = await getAuthUser();
-  if (!user) return false;
-  const db = createServerClient();
-  const { data } = await db
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle<{ role: string }>();
-  return data?.role === "admin";
-}
 
 const VALID_EVENTS = [
   "report.created",
@@ -51,7 +24,6 @@ const registerSchema = z.object({
     .refine((u) => u.startsWith("https://"), {
       message: "Webhook URL must use HTTPS",
     }),
-  cityId: z.string().uuid().nullable(),
   events: z.array(z.enum(VALID_EVENTS)).min(1, "Select at least one event"),
 });
 
@@ -65,13 +37,19 @@ export interface WebhookEndpointRow {
   created_at: string;
 }
 
+/**
+ * Register a webhook endpoint for the acting admin's OWN city. There is
+ * deliberately no cityId parameter: the previous signature took one from the
+ * client and wrote it straight through, which let an admin of one city register
+ * (and then read back) endpoints belonging to another.
+ */
 export async function registerWebhookAction(input: {
   label: string;
   url: string;
-  cityId: string | null;
   events: string[];
 }): Promise<Result<{ id: string; secret: string }>> {
-  if (!(await requireAdmin())) return { ok: false, error: "unauthorized" };
+  const admin = await requireAdminScope();
+  if (!admin) return { ok: false, error: "unauthorized" };
 
   const parsed = registerSchema.safeParse(input);
   if (!parsed.success) {
@@ -102,7 +80,8 @@ export async function registerWebhookAction(input: {
     .insert({
       label: parsed.data.label,
       url: parsed.data.url,
-      city_id: parsed.data.cityId,
+      // Never the caller-supplied cityId — an admin may only write to their own city.
+      city_id: admin.cityId,
       events: parsed.data.events,
       secret,
     })
@@ -119,7 +98,8 @@ export async function registerWebhookAction(input: {
 }
 
 export async function deleteWebhookAction(id: string): Promise<Result<void>> {
-  if (!(await requireAdmin())) return { ok: false, error: "unauthorized" };
+  const admin = await requireAdminScope();
+  if (!admin) return { ok: false, error: "unauthorized" };
 
   const parsed = z.string().uuid().safeParse(id);
   if (!parsed.success) return { ok: false, error: "invalid_id" };
@@ -128,7 +108,8 @@ export async function deleteWebhookAction(id: string): Promise<Result<void>> {
   const { error } = await db
     .from("webhook_endpoints")
     .delete()
-    .eq("id", parsed.data);
+    .eq("id", parsed.data)
+    .eq("city_id", admin.cityId);
 
   if (error) {
     logger.error("webhook delete db error", error);
@@ -142,7 +123,8 @@ export async function toggleWebhookAction(
   id: string,
   active: boolean,
 ): Promise<Result<void>> {
-  if (!(await requireAdmin())) return { ok: false, error: "unauthorized" };
+  const admin = await requireAdminScope();
+  if (!admin) return { ok: false, error: "unauthorized" };
 
   const parsed = z.string().uuid().safeParse(id);
   if (!parsed.success) return { ok: false, error: "invalid_id" };
@@ -151,7 +133,8 @@ export async function toggleWebhookAction(
   const { error } = await db
     .from("webhook_endpoints")
     .update({ active })
-    .eq("id", parsed.data);
+    .eq("id", parsed.data)
+    .eq("city_id", admin.cityId);
 
   if (error) {
     logger.error("webhook toggle db error", error);
@@ -164,12 +147,14 @@ export async function toggleWebhookAction(
 export async function listWebhooksAction(): Promise<
   Result<WebhookEndpointRow[]>
 > {
-  if (!(await requireAdmin())) return { ok: false, error: "unauthorized" };
+  const admin = await requireAdminScope();
+  if (!admin) return { ok: false, error: "unauthorized" };
 
   const db = createServerClient();
   const { data, error } = await db
     .from("webhook_endpoints")
     .select("id, label, url, city_id, events, active, created_at")
+    .eq("city_id", admin.cityId)
     .order("created_at", { ascending: false });
 
   if (error) {

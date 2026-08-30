@@ -1,9 +1,11 @@
 "use server";
 
+import { headers } from "next/headers";
 import { after } from "next/server";
 import { z } from "zod/v4";
 import { runClassifyPipeline } from "@/lib/ai/classify-pipeline";
 import { ASYNC_CLASSIFY } from "@/lib/ai/config";
+import { checkRateLimit } from "@/lib/ai/rate-limit";
 import { createServerClient } from "@/lib/db/client";
 import { buildPhotoPaths } from "@/lib/db/report-photos";
 import { createSSRClient } from "@/lib/db/ssr-client";
@@ -588,20 +590,62 @@ export async function checkPotentialDuplicate(params: {
  * User confirmed that their photo shows the same issue as an existing report.
  * We don't upload their photo; we just bump the existing work order's priority
  * so staff know the issue has more sightings.
+ *
+ * Deliberately callable without a session — anonymous reporting is a product
+ * requirement, and this runs in the pre-submit deflection flow before any
+ * account exists. That makes it a public write, so it is guarded three ways:
+ * the id must be a UUID, the caller is rate limited, and the target must be a
+ * real OPEN report. Previously it passed any caller-supplied string straight
+ * into the privilege-escalating service-role RPC, which let anyone inflate the
+ * priority of any work order in any city, without limit.
  */
 export async function linkAsDuplicate(
   primaryReportId: string,
 ): Promise<Result<void>> {
+  const parsed = z.string().uuid().safeParse(primaryReportId);
+  if (!parsed.success) return { ok: false, error: "invalid_report_id" };
+
+  const ip = await callerIp();
+  const rl = checkRateLimit(`link-duplicate:${ip}`, {
+    windowMs: 60_000,
+    max: 10,
+  });
+  if (!rl.allowed) return { ok: false, error: "rate_limited" };
+
   const service = createServerClient();
+
+  // Only an existing OPEN report may be bumped. Without this the RPC accepts
+  // any UUID, including closed reports and reports in other cities.
+  const { data: target } = await service
+    .from("reports")
+    .select("id, status")
+    .eq("id", parsed.data)
+    .maybeSingle<{ id: string; status: string }>();
+  if (!target) return { ok: false, error: "report_not_found" };
+  if (target.status !== "open") return { ok: false, error: "report_not_open" };
+
   const { error } = await service.rpc("bump_work_order_priority", {
-    _report_id: primaryReportId,
+    _report_id: parsed.data,
     _delta: 1,
   });
   if (error) {
     logger.warn("linkAsDuplicate: bump failed", {
       error: error.message,
-      primaryReportId,
+      primaryReportId: parsed.data,
     });
   }
   return { ok: true, data: undefined };
+}
+
+/** Client IP for rate-limit keying inside a server action (no Request object). */
+async function callerIp(): Promise<string> {
+  const h = await headers();
+  const trusted = process.env.RATE_LIMIT_TRUSTED_HEADER?.trim();
+  if (trusted) return h.get(trusted)?.trim() || "unknown";
+  return (
+    h.get("x-real-ip")?.trim() ||
+    h.get("cf-connecting-ip")?.trim() ||
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    "unknown"
+  );
 }

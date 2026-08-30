@@ -236,6 +236,29 @@ const JOB_TYPES = new Set([
   "other",
 ]);
 
+/**
+ * Mirrors the CHECK constraint on warranties.warranty_type (migration 062).
+ * An out-of-range value from the CSV used to reach the INSERT and fail the
+ * whole warranty batch, so the import is normalised here the same way
+ * job_type already is.
+ */
+const WARRANTY_TYPES = new Set([
+  "workmanship",
+  "pavement_performance",
+  "manufacturer",
+  "maintenance_bond",
+]);
+
+/** Normalise a CSV warranty_type to a value the DB CHECK accepts. */
+function normalizeWarrantyType(raw: string | undefined | null): string {
+  const v =
+    raw
+      ?.trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, "_") ?? "";
+  return WARRANTY_TYPES.has(v) ? v : "workmanship";
+}
+
 interface ParsedImport {
   headers: string[];
   mapping: Record<string, number | null>;
@@ -290,7 +313,7 @@ function parseImport(
         source: "csv",
         source_external_id: cell(row, "external_id")?.trim() || null,
         // Carried alongside the job; written into `warranties` after insert.
-        __warranty_type: cell(row, "warranty_type")?.trim() || "workmanship",
+        __warranty_type: normalizeWarrantyType(cell(row, "warranty_type")),
         __warranty_ends_on: parseDateOnly(cell(row, "warranty_ends_on")),
       };
       records.push(record);
@@ -439,7 +462,19 @@ export async function confirmLiabilityImport(input: {
 
   if (warranties.length > 0) {
     const { error: wErr } = await db.from("warranties").insert(warranties);
-    if (wErr) log.error("warranty rows import failed", wErr);
+    if (wErr) {
+      log.error("warranty rows import failed", wErr);
+      // Do NOT report success. A capital job with no warranty row is invisible
+      // to the expiry sweep and can never produce a liability verdict, so
+      // silently swallowing this loses the entire point of the import while
+      // telling staff it worked. Surfacing it lets them fix the CSV and retry;
+      // the capital jobs are already in, so the retry is additive.
+      revalidatePath("/admin/liability");
+      return {
+        ok: false,
+        error: `capital_jobs_imported_but_warranties_failed: ${wErr.message}`,
+      };
+    }
   }
 
   revalidatePath("/admin/liability");

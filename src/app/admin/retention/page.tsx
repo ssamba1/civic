@@ -22,7 +22,7 @@ export default async function RetentionPage() {
 
   let settings = null;
   if (firstCity) {
-    const result = await getRetentionSettings(firstCity.id);
+    const result = await getRetentionSettings();
     if (result.ok) settings = result.data;
   }
 
@@ -47,7 +47,7 @@ export default async function RetentionPage() {
           <h2 className="mb-4 text-base font-medium text-zinc-900 dark:text-zinc-100">
             {firstCity.name}
           </h2>
-          <RetentionForm cityId={firstCity.id} initial={settings} />
+          <RetentionForm initial={settings} />
         </div>
       )}
 

@@ -8,6 +8,7 @@ import { DEMO_CITY } from "@/lib/demo-auth";
 import { getStaffAccessForCity } from "@/lib/staff-access";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { VIDEO_PIPELINE } from "@/lib/video/config";
+import { reclaimStalledClips } from "@/lib/video/pipeline";
 import {
   ClipList,
   ClipStage,
@@ -203,6 +204,12 @@ export default async function VideoPipelinePage({ params }: PageProps) {
   const known = KNOWN_CITIES[slug];
   if (!dbCity && !known) notFound();
   const city = dbCity ?? { id: null, name: known.name };
+
+  // A clip whose processing was killed mid-run by the serverless runtime stays
+  // at status='processing' forever with nothing to notice it. Reclaim before
+  // reading, so the console shows a failed clip staff can act on rather than a
+  // spinner that never resolves. No-op in the normal case.
+  if (city.id) await reclaimStalledClips(city.id);
 
   const [{ data: clips }, { data: clusters }] = city.id
     ? await Promise.all([

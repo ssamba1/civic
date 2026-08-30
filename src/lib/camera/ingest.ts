@@ -463,39 +463,69 @@ async function createCluster(
   return (data as { id: string }).id;
 }
 
+/** Attempts before giving up on the compare-and-swap below. */
+const BUMP_CAS_ATTEMPTS = 5;
+
+/**
+ * Roll one detection into its cluster's running stats.
+ *
+ * This is a read-modify-write on a row that concurrent ingests contend for —
+ * two cameras covering the same intersection bump the same cluster at the same
+ * time. A plain SELECT-then-UPDATE loses increments: both readers see
+ * observation_count = 10, both write 11, and one observation vanishes. Since
+ * observation_count feeds the promotion threshold, a busy location was
+ * systematically under-counted and promoted late or not at all.
+ *
+ * The UPDATE therefore carries the value we read as a guard
+ * (`.eq("observation_count", seen)`), making it a compare-and-swap: if another
+ * writer got there first the predicate matches no rows, and we re-read and try
+ * again. Doing the arithmetic in a single SQL statement would be better still,
+ * but that needs a new RPC (a migration), so this closes the lost update using
+ * only the schema that exists.
+ */
 async function bumpCluster(
   db: SupabaseLike,
   clusterId: string,
   capturedAt: string,
   score: number,
 ): Promise<void> {
-  const { data, error } = await db
-    .from("detection_clusters")
-    .select("observation_count, peak_score, last_seen_at, first_seen_at")
-    .eq("id", clusterId)
-    .maybeSingle();
-  if (error || !data) return;
-  const row = data as {
-    observation_count: number;
-    peak_score: number | null;
-    last_seen_at: string;
-    first_seen_at: string;
-  };
-  await db
-    .from("detection_clusters")
-    .update({
-      observation_count: Number(row.observation_count) + 1,
-      peak_score: Math.max(Number(row.peak_score ?? 0), score),
-      last_seen_at:
-        Date.parse(capturedAt) > Date.parse(row.last_seen_at)
-          ? capturedAt
-          : row.last_seen_at,
-      first_seen_at:
-        Date.parse(capturedAt) < Date.parse(row.first_seen_at)
-          ? capturedAt
-          : row.first_seen_at,
-    })
-    .eq("id", clusterId);
+  for (let attempt = 0; attempt < BUMP_CAS_ATTEMPTS; attempt++) {
+    const { data, error } = await db
+      .from("detection_clusters")
+      .select("observation_count, peak_score, last_seen_at, first_seen_at")
+      .eq("id", clusterId)
+      .maybeSingle();
+    if (error || !data) return;
+    const row = data as {
+      observation_count: number;
+      peak_score: number | null;
+      last_seen_at: string;
+      first_seen_at: string;
+    };
+    const seen = Number(row.observation_count);
+
+    const { data: updated, error: updateError } = await db
+      .from("detection_clusters")
+      .update({
+        observation_count: seen + 1,
+        peak_score: Math.max(Number(row.peak_score ?? 0), score),
+        last_seen_at:
+          Date.parse(capturedAt) > Date.parse(row.last_seen_at)
+            ? capturedAt
+            : row.last_seen_at,
+        first_seen_at:
+          Date.parse(capturedAt) < Date.parse(row.first_seen_at)
+            ? capturedAt
+            : row.first_seen_at,
+      })
+      .eq("id", clusterId)
+      // CAS guard — no match means someone else bumped it since our read.
+      .eq("observation_count", seen)
+      .select("id");
+
+    if (updateError) return;
+    if (updated && updated.length > 0) return; // we won the race
+  }
 }
 
 /**

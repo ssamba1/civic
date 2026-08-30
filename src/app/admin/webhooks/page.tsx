@@ -36,7 +36,7 @@ export default async function AdminWebhooksPage() {
           <h2 className="mb-4 text-base font-medium text-zinc-900 dark:text-zinc-100">
             Register endpoint
           </h2>
-          <WebhookForm cities={cityOptions} />
+          <WebhookForm />
         </section>
 
         <section>

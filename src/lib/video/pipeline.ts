@@ -160,6 +160,55 @@ async function upsertCluster(
 }
 
 /** Process one uploaded clip end-to-end. Never throws. */
+/**
+ * How long a clip may sit in `processing` before we call it dead.
+ *
+ * processClip is invoked from `after()`, which extends the serverless
+ * function's life but cannot outlive the platform's max duration. A 200 MB
+ * clip (download + ffmpeg frame extraction + per-frame ONNX inference)
+ * routinely exceeds that, and when the runtime kills the function there is no
+ * exception for the caller's catch block to see: the row is simply left at
+ * `processing` forever, and the console shows a spinner that never resolves.
+ *
+ * Until clip processing moves onto a real queue with its own retries, the
+ * least-bad behaviour is to make the stall VISIBLE — a failed clip with an
+ * actionable message is something staff can act on; an eternal spinner is not.
+ */
+const STALLED_CLIP_MS = 20 * 60 * 1000;
+
+/**
+ * Flip clips that have been `processing` for longer than {@link STALLED_CLIP_MS}
+ * to `failed`. Safe to call on every console render: it is a single scoped
+ * UPDATE that matches nothing in the normal case.
+ *
+ * Returns the number of clips reclaimed.
+ */
+export async function reclaimStalledClips(cityId: string): Promise<number> {
+  const log = createLogger("video-pipeline");
+  const supabase = createServerClient();
+  const cutoff = new Date(Date.now() - STALLED_CLIP_MS).toISOString();
+
+  const { data, error } = await supabase
+    .from("video_clips")
+    .update({
+      status: "failed",
+      error:
+        "Processing did not finish in time and was interrupted. Re-upload the clip, or split it into shorter segments.",
+    })
+    .eq("city_id", cityId)
+    .eq("status", "processing")
+    .lt("created_at", cutoff)
+    .select("id");
+
+  if (error) {
+    log.error("stalled clip reclaim failed", error, { cityId });
+    return 0;
+  }
+  const n = data?.length ?? 0;
+  if (n > 0) log.warn("reclaimed stalled clips", { cityId, count: n });
+  return n;
+}
+
 export async function processClip(
   clipId: string,
 ): Promise<Result<ProcessClipResult>> {

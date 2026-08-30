@@ -8,11 +8,10 @@ import {
 } from "@/app/admin/retention/validate";
 
 interface RetentionFormProps {
-  cityId: string;
   initial: RetentionSettings;
 }
 
-export function RetentionForm({ cityId, initial }: RetentionFormProps) {
+export function RetentionForm({ initial }: RetentionFormProps) {
   const [rawDays, setRawDays] = useState(String(initial.raw_photo_ttl_days));
   const [freetextDays, setFreetextDays] = useState(
     String(initial.freetext_ttl_days),
@@ -37,7 +36,7 @@ export function RetentionForm({ cityId, initial }: RetentionFormProps) {
     }
 
     startTransition(async () => {
-      const result = await updateRetentionSettings(cityId, input);
+      const result = await updateRetentionSettings(input);
       if (result.ok) {
         setSuccess(true);
       } else {
