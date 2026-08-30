@@ -463,6 +463,12 @@ async function createCluster(
   return (data as { id: string }).id;
 }
 
+/**
+ * Newest-first cap on the detections loaded to decide a cluster's promotion.
+ * Far above the 3-pass / 2-distinct-day thresholds it feeds.
+ */
+const MAX_CLUSTER_OBSERVATIONS = 500;
+
 /** Attempts before giving up on the compare-and-swap below. */
 const BUMP_CAS_ATTEMPTS = 5;
 
@@ -551,10 +557,19 @@ async function maybePromote(
     centroid: unknown;
   };
 
+  // Bounded. A cluster on a busy route accumulates a detection per camera pass
+  // indefinitely, and this ran on every stored box with no limit — the row set
+  // grows without bound while the two things it feeds need very little of it:
+  // shouldPromote wants >= PROMOTE_MIN_PASSES (3) rows across >=
+  // PROMOTE_MIN_DISTINCT_DAYS (2) days, and pickBestObservation wants the
+  // top-scoring crop. Newest-first also makes the evidence crop current, which
+  // is what a claim packet should show.
   const { data: detRows, error: dErr } = await db
     .from("detections")
     .select("damage_class, captured_at, score, crop_url")
-    .eq("cluster_id", clusterId);
+    .eq("cluster_id", clusterId)
+    .order("captured_at", { ascending: false })
+    .limit(MAX_CLUSTER_OBSERVATIONS);
   if (dErr || !detRows) return null;
 
   const observations = (
