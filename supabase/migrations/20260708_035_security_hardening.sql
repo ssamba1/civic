@@ -61,7 +61,20 @@ REVOKE EXECUTE ON FUNCTION public._evt_work_order_created()        FROM anon, au
 REVOKE EXECUTE ON FUNCTION public._evt_work_order_milestones()     FROM anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.audit_trigger_fn()               FROM anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.notify_report_status_change()    FROM anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.rls_auto_enable()                FROM anon, authenticated;
+-- rls_auto_enable() is not created by any migration — it exists only on the
+-- live project, so an unguarded REVOKE aborts this file on a fresh database.
+-- Revoke it where it exists and move on where it does not; hardening a function
+-- that was never created is a no-op, not an error.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'rls_auto_enable'
+  ) THEN
+    EXECUTE 'REVOKE EXECUTE ON FUNCTION public.rls_auto_enable() FROM anon, authenticated';
+  END IF;
+END $$;
 REVOKE EXECUTE ON FUNCTION public.set_updated_at()                 FROM anon, authenticated;
 
 REVOKE EXECUTE ON FUNCTION

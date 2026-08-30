@@ -78,7 +78,15 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- (e.g. full names, addresses, phone numbers). The public dashboard view
 -- has no legitimate need for it. All other columns are preserved.
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE VIEW dashboard_reports_view AS
+-- DROP + CREATE, not CREATE OR REPLACE: this statement REMOVES `description`
+-- from the view, and Postgres refuses to drop a column through
+-- CREATE OR REPLACE VIEW ("cannot drop columns from view"). The file is
+-- transactional, so that error rolled back all of 003 on a fresh database —
+-- taking the storage RLS fixes AND this very PII protection with it, while the
+-- already-migrated live project stayed fine. Migration 009 uses this same
+-- DROP-then-CREATE shape on the same view.
+DROP VIEW IF EXISTS dashboard_reports_view;
+CREATE VIEW dashboard_reports_view AS
 SELECT
   r.id,
   r.city_id,
