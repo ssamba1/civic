@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { z } from "zod/v4";
+import { requireAdminScope } from "@/lib/auth/admin-scope";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
 import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
@@ -70,10 +71,16 @@ export async function createApiKeyAction(input: {
     };
   }
 
+  // Scope the key to the acting admin's OWN city. parsed.data.cityId is
+  // caller-supplied and was written through unchecked, so an admin of one city
+  // could mint a working Open311 key scoped to another.
+  const admin = await requireAdminScope();
+  if (!admin) return { ok: false, error: "unauthorized" };
+
   const result = await mintApiKey({
     label: parsed.data.label,
     userId: parsed.data.userId ?? adminId,
-    cityId: parsed.data.cityId,
+    cityId: admin.cityId,
     scopes: parsed.data.scopes,
   });
   if (result.ok) revalidatePath("/admin/api-keys");
@@ -86,6 +93,20 @@ export async function revokeApiKeyAction(id: string): Promise<Result<void>> {
 
   const parsed = z.string().uuid().safeParse(id);
   if (!parsed.success) return { ok: false, error: "invalid_id" };
+
+  // Ownership check before the revoke. revokeApiKey() matches on id alone and
+  // runs service-role, so without this any admin could revoke another city's
+  // integration key and silently break their Open311 feed.
+  const admin = await requireAdminScope();
+  if (!admin) return { ok: false, error: "unauthorized" };
+  const db = createServerClient();
+  const { data: key } = await db
+    .from("api_keys")
+    .select("id")
+    .eq("id", parsed.data)
+    .eq("city_id", admin.cityId)
+    .maybeSingle<{ id: string }>();
+  if (!key) return { ok: false, error: "not_found" };
 
   const result = await revokeApiKey(parsed.data);
   if (result.ok) revalidatePath("/admin/api-keys");

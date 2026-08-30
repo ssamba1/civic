@@ -116,22 +116,40 @@ async function upsertCluster(
   }
 
   if (existingId) {
-    const { data: row } = await supabase
-      .from("video_detection_clusters")
-      .select("frame_count, max_confidence")
-      .eq("id", existingId)
-      .single<{ frame_count: number; max_confidence: number }>();
-    const better = (row?.max_confidence ?? 0) < group.maxConfidence;
-    const { error } = await supabase
-      .from("video_detection_clusters")
-      .update({
-        frame_count: (row?.frame_count ?? 0) + memberCount,
-        max_confidence: Math.max(row?.max_confidence ?? 0, group.maxConfidence),
-        ...(better ? { best_detection_id: bestDetectionId } : {}),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", existingId);
-    if (error) return { ok: false, error: error.message };
+    // Read-modify-write on a row two concurrent clips can contend for (the same
+    // stretch of road filmed twice). Guarding the UPDATE with the frame_count we
+    // read makes it a compare-and-swap: if another clip rolled up first, the
+    // predicate matches nothing and we re-read rather than overwriting its
+    // count with a stale base. Same reasoning as bumpCluster in lib/camera.
+    for (let attempt = 0; attempt < CLUSTER_CAS_ATTEMPTS; attempt++) {
+      const { data: row } = await supabase
+        .from("video_detection_clusters")
+        .select("frame_count, max_confidence")
+        .eq("id", existingId)
+        .single<{ frame_count: number; max_confidence: number }>();
+      const seen = row?.frame_count ?? 0;
+      const better = (row?.max_confidence ?? 0) < group.maxConfidence;
+
+      const { data: updated, error } = await supabase
+        .from("video_detection_clusters")
+        .update({
+          frame_count: seen + memberCount,
+          max_confidence: Math.max(
+            row?.max_confidence ?? 0,
+            group.maxConfidence,
+          ),
+          ...(better ? { best_detection_id: bestDetectionId } : {}),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", existingId)
+        .eq("frame_count", seen)
+        .select("id");
+
+      if (error) return { ok: false, error: error.message };
+      if (updated && updated.length > 0) return { ok: true, data: existingId };
+    }
+    // Contended past the retry budget: the cluster exists and another writer is
+    // actively rolling into it, so returning its id is still correct.
     return { ok: true, data: existingId };
   }
 
@@ -159,7 +177,9 @@ async function upsertCluster(
   return { ok: true, data: inserted.id };
 }
 
-/** Process one uploaded clip end-to-end. Never throws. */
+/** Compare-and-swap attempts when rolling a group into an existing cluster. */
+const CLUSTER_CAS_ATTEMPTS = 5;
+
 /**
  * How long a clip may sit in `processing` before we call it dead.
  *
@@ -209,6 +229,7 @@ export async function reclaimStalledClips(cityId: string): Promise<number> {
   return n;
 }
 
+/** Process one uploaded clip end-to-end. Never throws. */
 export async function processClip(
   clipId: string,
 ): Promise<Result<ProcessClipResult>> {

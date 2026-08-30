@@ -505,8 +505,13 @@ export async function getCityMorale(citySlug: string): Promise<CityMorale> {
     total === 0 ? 0 : Math.round((resolvedTotal / total) * 100);
 
   // Reuse the dashboard's severity-weighted avg resolution hours.
+  // stats and trend both depend on the city id but not on each other, so they
+  // issue together rather than one round-trip after the other.
   const city = await fetchCity(citySlug);
-  const stats = await fetchCityStats(city?.id ?? "");
+  const [stats, trend] = await Promise.all([
+    fetchCityStats(city?.id ?? ""),
+    fetchReportsTrend(city?.id ?? "", 14, now),
+  ]);
   const avgFixHours = stats.avg_resolution_hours;
 
   // Momentum: last-week vs prior-week RESOLVED volume (by resolution time, as
@@ -518,8 +523,6 @@ export async function getCityMorale(citySlug: string): Promise<CityMorale> {
   const slope = lastWeek - priorWeek;
   const momentum: CityMorale["momentum"] =
     slope > 1 ? "up" : slope < -1 ? "down" : "flat";
-
-  const trend = await fetchReportsTrend(city?.id ?? "", 14, now);
 
   const catCounts = new Map<ReportCategory, number>();
   for (const r of closed) {

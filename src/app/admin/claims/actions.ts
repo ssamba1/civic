@@ -146,7 +146,12 @@ export async function listClaims(): Promise<ClaimQueueRow[]> {
     const { data: cData, error: cErr } = await db
       .from("contractors")
       .select("id, name, email")
-      .in("id", contractorIds);
+      .in("id", contractorIds)
+      // The claim rows are already city-scoped, but this secondary lookup ran
+      // on ids alone through the service-role client. A contractor id that
+      // appeared on a claim from another tenant would return that tenant's
+      // contractor name and email.
+      .eq("city_id", admin.cityId);
     if (cErr) {
       log.error("claim contractor lookup failed", cErr);
     } else {
