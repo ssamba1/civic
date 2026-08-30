@@ -127,9 +127,15 @@ export function CameraDemo() {
   const dropped = promotions.filter((p) => p.time <= now);
 
   return (
-    <div className="grid h-[calc(100vh/var(--app-zoom,1)-4rem)] grid-cols-1 gap-3 p-3 lg:grid-cols-[1.15fr_1fr_340px]">
+    // Below lg the three panels stack and the page scrolls: each gets its own
+    // readable height instead of a third of one viewport. The old
+    // `h-[calc(100vh…)]` applied at every width, so on a phone the feed was a
+    // letterbox strip, the map a postage stamp, and the agent feed was clipped
+    // by overflow-hidden with no way to scroll it. 100vh also sits under iOS
+    // Safari's URL bar; the desktop height uses dvh for the same reason.
+    <div className="grid grid-cols-1 gap-3 p-3 lg:h-[calc(100dvh/var(--app-zoom,1)-4rem)] lg:grid-cols-[1.15fr_1fr_340px]">
       {/* Feed */}
-      <section className="relative flex flex-col overflow-hidden rounded-lg border bg-card">
+      <section className="relative flex min-h-[46vh] flex-col overflow-hidden rounded-lg border bg-card lg:min-h-0">
         <header className="flex items-center justify-between border-b px-3 py-2">
           <h2 className="font-medium text-sm">Bus 12 — forward camera</h2>
           <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
@@ -166,7 +172,7 @@ export function CameraDemo() {
       </section>
 
       {/* Map */}
-      <section className="overflow-hidden rounded-lg border">
+      <section className="min-h-[38vh] overflow-hidden rounded-lg border lg:min-h-0">
         <MapGL
           initialViewState={{
             longitude: ROUTE_CENTER.lng,
@@ -212,7 +218,7 @@ export function CameraDemo() {
       </section>
 
       {/* Agents */}
-      <section className="overflow-hidden rounded-lg border bg-card p-3">
+      <section className="max-h-[70vh] overflow-y-auto rounded-lg border bg-card p-3 lg:max-h-none lg:overflow-hidden">
         <AgentFeed promotions={promotions} now={now} onSelect={openClaim} />
       </section>
 

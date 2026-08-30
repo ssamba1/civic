@@ -21,6 +21,13 @@ interface PhotoPreviewProps {
   /** Update the report address; the resident can correct a wrong/denied fix. */
   onAddressChange: (value: string | null) => void;
   onRetake: () => void;
+  /**
+   * Optional attachment strip, rendered in flow between the photo and the
+   * action buttons. It is a prop rather than a sibling overlay because an
+   * `absolute bottom-0` strip lands exactly on top of Submit and silently
+   * swallows the tap — see the note above the Bottom controls block.
+   */
+  thumbnails?: React.ReactNode;
   onSubmit: (
     description: string | null,
     tags: string[],
@@ -43,6 +50,7 @@ export default function PhotoPreview({
   address,
   onAddressChange,
   onRetake,
+  thumbnails,
   onSubmit,
   submitting,
 }: PhotoPreviewProps) {
@@ -160,6 +168,13 @@ export default function PhotoPreview({
           <span className="text-xs text-white font-medium">{gps.label}</span>
         </div>
       </div>
+
+      {/* Attachment strip sits ABOVE the controls, in normal flow.
+          It used to be an `absolute bottom-0 z-20` sibling in report/page.tsx,
+          which put it directly over the Retake/Submit row: elementFromPoint at
+          the Submit button's centre returned the strip, so the button could not
+          be tapped on any viewport. Keep this in flow. */}
+      {thumbnails}
 
       {/* Bottom controls — pb-safe clears home indicator */}
       <div className="shrink-0 bg-surface px-4 pt-4 pb-safe">

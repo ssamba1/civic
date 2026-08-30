@@ -29,7 +29,7 @@ export function DemoSignIn({ error }: { error?: string | null }) {
   const personas = DEMO_ACCOUNTS.map((a) => ({
     username: a.username,
     password: a.password,
-    label: a.role === "team" ? a.label : a.label,
+    label: a.label,
     role: a.role,
   }));
 
@@ -94,7 +94,7 @@ export function DemoSignIn({ error }: { error?: string | null }) {
                   : "border-hairline text-subtle hover:border-hairline-strong hover:text-foreground",
               )}
             >
-              {p.role === "team" ? p.username : p.label}
+              {p.label}
             </button>
           ))}
         </div>

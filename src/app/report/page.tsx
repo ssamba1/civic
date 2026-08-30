@@ -667,74 +667,71 @@ export default function ReportPage() {
             onRetake={handleRetake}
             onSubmit={handleSubmit}
             submitting={step.name === "submitting"}
-          />
-          {/* Multi-photo thumbnail strip — shown below the primary preview.
-              Allows adding up to 6 photos total; each thumbnail has a remove button.
-              Hidden while submitting to avoid state changes mid-flight. */}
-          {step.name === "preview" && (
-            <div className="absolute bottom-0 left-0 right-0 z-20 pb-safe">
-              <div className="flex items-center gap-2 overflow-x-auto px-4 py-3 bg-black/40 backdrop-blur-sm">
-                {step.photos.map((f, i) => {
-                  const objUrl = URL.createObjectURL(f);
-                  return (
-                    <div
-                      key={`${f.name}-${f.size}-${f.lastModified}`}
-                      className="relative flex-shrink-0"
-                    >
-                      {/* biome-ignore lint/performance/noImgElement: local object-URL preview of a not-yet-uploaded blob; next/image cannot optimize blob: URLs */}
-                      <img
-                        src={objUrl}
-                        alt={`Attachment ${i + 1}`}
-                        className="h-14 w-14 rounded-lg object-cover border-2 border-white/30"
-                        onLoad={() => URL.revokeObjectURL(objUrl)}
-                      />
-                      <button
-                        type="button"
-                        aria-label={`Remove photo ${i + 1}`}
-                        onClick={() => handleRemovePhoto(i)}
-                        className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white text-[11px] leading-none"
+            thumbnails={
+              step.name === "preview" ? (
+                <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-t border-hairline bg-surface px-4 py-3">
+                  {step.photos.map((f, i) => {
+                    const objUrl = URL.createObjectURL(f);
+                    return (
+                      <div
+                        key={`${f.name}-${f.size}-${f.lastModified}`}
+                        className="relative flex-shrink-0"
                       >
-                        &times;
-                      </button>
-                    </div>
-                  );
-                })}
-                {/* Add-more button — only shown when < 6 photos */}
-                {step.photos.length < 6 && (
-                  <label
-                    aria-label="Add more photos"
-                    className="flex-shrink-0 flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-white/40 text-white/70 hover:border-white/70 hover:text-white transition-colors"
-                  >
-                    <svg
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={2}
-                      stroke="currentColor"
-                      aria-hidden="true"
+                        {/* biome-ignore lint/performance/noImgElement: local object-URL preview of a not-yet-uploaded blob; next/image cannot optimize blob: URLs */}
+                        <img
+                          src={objUrl}
+                          alt={`Attachment ${i + 1}`}
+                          className="h-14 w-14 rounded-lg object-cover border-2 border-white/30"
+                          onLoad={() => URL.revokeObjectURL(objUrl)}
+                        />
+                        <button
+                          type="button"
+                          aria-label={`Remove photo ${i + 1}`}
+                          onClick={() => handleRemovePhoto(i)}
+                          className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white text-[11px] leading-none"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    );
+                  })}
+                  {/* Add-more button — only shown when < 6 photos */}
+                  {step.photos.length < 6 && (
+                    <label
+                      aria-label="Add more photos"
+                      className="flex-shrink-0 flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-white/40 text-white/70 hover:border-white/70 hover:text-white transition-colors"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 4.5v15m7.5-7.5h-15"
+                      <svg
+                        className="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2}
+                        stroke="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 4.5v15m7.5-7.5h-15"
+                        />
+                      </svg>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="sr-only"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files ?? []);
+                          if (files.length > 0) handleAddPhotos(files);
+                          e.target.value = "";
+                        }}
                       />
-                    </svg>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="sr-only"
-                      onChange={(e) => {
-                        const files = Array.from(e.target.files ?? []);
-                        if (files.length > 0) handleAddPhotos(files);
-                        e.target.value = "";
-                      }}
-                    />
-                  </label>
-                )}
-              </div>
-            </div>
-          )}
+                    </label>
+                  )}
+                </div>
+              ) : null
+            }
+          />
         </>
       )}
 

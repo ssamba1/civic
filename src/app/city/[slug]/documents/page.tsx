@@ -40,8 +40,11 @@ const EYEBROW =
 
 export default async function CityDocumentsPage({ params }: PageProps) {
   const { slug } = await params;
+  // Demo personas count as staff here, same as the contractor detail page.
+  // Requiring "real" made this the only nav entry that 404s for every demo
+  // login — the sidebar advertises "Documents" and the link dead-ends.
   const access = await getStaffAccessForCity(slug);
-  if (access !== "real") notFound();
+  if (access !== "real" && access !== "demo") notFound();
 
   // DB first (provisioned cities), then the KNOWN_CITIES fallback (demo deploy
   // / local dev without a database) — same convention as the video console.

@@ -534,13 +534,11 @@ export function GlobeMap({
           not bottom-right: in fullscreen the Dispatch panel owns the right
           edge and the legend/HUD stack owns the left one. */}
       <div className="civic-globe-credits pointer-events-none absolute inset-x-0 bottom-1 z-20 flex flex-col items-center gap-0.5 text-[10px] text-faint">
-        {!ION_TOKEN && (
-          // One quiet operator hint, not a console spam loop — the globe is
-          // fully usable without a token, just flat.
-          <span>
-            Set NEXT_PUBLIC_CESIUM_ION_TOKEN for 3D buildings + terrain
-          </span>
-        )}
+        {/* The keyless globe renders a plain ellipsoid — correct, just without
+            terrain or 3D buildings. This used to print
+            "Set NEXT_PUBLIC_CESIUM_ION_TOKEN …" into the map surface, which
+            reads to anyone looking at the product as an unfinished build. The
+            operator signal belongs in the console, not on the map. */}
         <div ref={creditRef} />
       </div>
     </div>
