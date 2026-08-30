@@ -160,8 +160,8 @@ Civic is a full-stack municipal infrastructure platform with two audiences:
 ```bash
 corepack pnpm install
 cp .env.example .env.local   # fill in required values
-corepack pnpm db:migrate     # apply all 15 Supabase migrations
-corepack pnpm db:seed        # seed Cumming, GA demo data
+corepack pnpm db:migrate     # apply the Supabase migrations (75 and counting)
+corepack pnpm demo:seed      # seed Cumming, GA demo data — every step, in order
 corepack pnpm dev            # http://localhost:3000
 ```
 
@@ -177,7 +177,10 @@ pnpm lint         # Biome lint
 pnpm lint:fix     # Biome lint + autofix
 pnpm typecheck    # TypeScript (no emit)
 pnpm db:migrate   # push Supabase migrations
-pnpm db:seed      # seed demo data
+pnpm demo:seed    # seed ALL demo data in dependency order (--list to see steps)
+pnpm db:seed      # core seed only (city, users, reports) — demo:seed calls this
+pnpm test:rls     # RLS regression tests (needs SUPABASE_TEST_* — else they skip)
+pnpm audit:privacy# assert no unblurred photo reached the public bucket
 pnpm health       # curl /api/health
 ```
 
@@ -193,6 +196,36 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 GEMINI_API_KEY=
+
+# Signs the demo-persona session cookie. Every reader verifies the HMAC, so
+# without this NO demo persona resolves — not the admin console, not the city
+# staff surfaces. Any long random string.
+DEMO_COOKIE_SECRET=
+
+# Salt for the opaque /r/[token] status URLs. Report ids are public through the
+# Open311 API, so the built-in default lets anyone compute every resident's
+# status link. Server env validation THROWS without it when NODE_ENV=production.
+PUBLIC_TOKEN_SALT=
+
+# The platform-set, un-spoofable client-IP header (x-real-ip on Vercel/nginx,
+# cf-connecting-ip on Cloudflare). The rate limiter keys off this alone, so
+# without it a client can rotate the key by forging x-forwarded-for. Also
+# THROWS when NODE_ENV=production.
+RATE_LIMIT_TRUSTED_HEADER=x-real-ip
+```
+
+> Env validation is lazy — it runs on first property access, not at boot. A
+> deployment missing `PUBLIC_TOKEN_SALT` or `RATE_LIMIT_TRUSTED_HEADER` builds
+> green and fails on the first request, so set them before deploying, not after
+> the first 500.
+
+### Feature flags worth knowing
+
+```bash
+VIDEO_PIPELINE=1               # else /city/[slug]/video 404s and no clip code runs
+NEXT_PUBLIC_CESIUM_ION_TOKEN=  # 3D globe terrain + buildings; without it the
+                               # globe still renders as a plain ellipsoid
+NEXT_PUBLIC_SENTRY_DSN=        # the ONLY DSN the browser and edge runtimes read
 ```
 
 ### Optional

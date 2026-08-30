@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { dispatchWorkOrderForReport } from "@/app/staff/actions";
+import { DemoInject } from "@/components/map/demo-inject";
 import type { MarkerColorMode } from "@/components/map/pin-icons";
 import type { MapTheme } from "@/components/map/report-map";
 import { ReportMapLazy as ReportMap } from "@/components/map/report-map-lazy";
@@ -821,6 +822,13 @@ export function FullscreenMapOrchestrator({
   return (
     <div className="h-full w-full flex-1 min-h-0 relative overflow-hidden flex bg-background select-none">
       <style>{`@keyframes fmPanelIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}`}</style>
+
+      {/* Presenter control for the injected-report beat (demo mode only —
+          renders nothing otherwise). Top-left, clear of the map controls on the
+          right and the legend stack below. */}
+      <div className="pointer-events-none absolute left-3 top-3 z-30">
+        <DemoInject />
+      </div>
 
       {/* Full-viewport map */}
       <div className="absolute inset-0 z-0 h-full w-full pointer-events-auto">
