@@ -5,7 +5,8 @@ import { MobileNav, SidebarNav } from "@/components/admin/sidebar-nav";
 import { ToastProvider } from "@/components/ui/toast";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
-import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
+import { DEMO_SESSION_COOKIE } from "@/lib/demo-auth";
+import { findVerifiedDemoAccount } from "@/lib/demo-cookie";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { createLogger } from "@/lib/logger";
 
@@ -22,7 +23,7 @@ export default async function AdminLayout({
   // Client-supplied cookie: honor it only in demo mode, and only for the admin
   // persona — team/resident personas must not reach tenant provisioning (T0.1).
   const demoCookieAccount = DEMO_MODE
-    ? findDemoAccount((await cookies()).get(DEMO_SESSION_COOKIE)?.value)
+    ? findVerifiedDemoAccount((await cookies()).get(DEMO_SESSION_COOKIE)?.value)
     : null;
   const demoAccount =
     demoCookieAccount?.role === "admin" ? demoCookieAccount : null;

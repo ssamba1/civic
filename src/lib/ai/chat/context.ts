@@ -2,11 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { type ChatScope, deriveScope, type UserRow } from "@/lib/ai/chat/scope";
 import { createSSRClient, getAuthUser } from "@/lib/db/ssr-client";
-import {
-  DEMO_CITY,
-  DEMO_SESSION_COOKIE,
-  findDemoAccount,
-} from "@/lib/demo-auth";
+import { DEMO_CITY, DEMO_SESSION_COOKIE } from "@/lib/demo-auth";
+import { findVerifiedDemoAccount } from "@/lib/demo-cookie";
 import { DEMO_MODE } from "@/lib/demo-mode";
 
 export interface ChatContext extends ChatScope {
@@ -31,7 +28,7 @@ export async function resolveChatContext(): Promise<ChatContext> {
   const user = await getAuthUser();
   if (!user) {
     if (DEMO_MODE) {
-      const demo = findDemoAccount(
+      const demo = findVerifiedDemoAccount(
         (await cookies()).get(DEMO_SESSION_COOKIE)?.value,
       );
       if (demo) {

@@ -3,11 +3,8 @@ import "server-only";
 import { cookies } from "next/headers";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
-import {
-  DEMO_CITY,
-  DEMO_SESSION_COOKIE,
-  findDemoAccount,
-} from "@/lib/demo-auth";
+import { DEMO_CITY, DEMO_SESSION_COOKIE } from "@/lib/demo-auth";
+import { findVerifiedDemoAccount } from "@/lib/demo-cookie";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { createLogger } from "@/lib/logger";
 
@@ -38,7 +35,7 @@ export async function requireAdminScope(): Promise<AdminScope | null> {
   const db = createServerClient();
 
   if (DEMO_MODE) {
-    const demo = findDemoAccount(
+    const demo = findVerifiedDemoAccount(
       (await cookies()).get(DEMO_SESSION_COOKIE)?.value,
     );
     if (demo?.role === "admin") {

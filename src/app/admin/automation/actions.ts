@@ -8,7 +8,7 @@ import type { Action, AutomationRule, Condition } from "@/lib/automation/rules";
 import { validateRule } from "@/lib/automation/rules";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
-import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
+import { DEMO_SESSION_COOKIE } from "@/lib/demo-auth";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { createLogger } from "@/lib/logger";
 import type { Result } from "@/lib/types";

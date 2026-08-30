@@ -472,8 +472,24 @@ export async function reverseGeocode(input: {
       },
     );
     if (!res.ok) return { ok: false, error: "geocode_failed" };
-    const data = (await res.json()) as { display_name?: string };
-    const address = data.display_name?.trim();
+    const data = (await res.json()) as {
+      display_name?: string;
+      address?: Record<string, string | undefined>;
+    };
+
+    // Prefer the structured fields. Nominatim's display_name is the full
+    // administrative chain — "Tribble Gap Road, Cumming, Forsyth County,
+    // Georgia, 30040, United States" — which is not how a resident describes
+    // where the pothole is, and it overflows the address field on a phone.
+    const a = data.address ?? {};
+    const street = [a.house_number, a.road ?? a.pedestrian ?? a.footway]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+    const place = a.city ?? a.town ?? a.village ?? a.hamlet ?? a.suburb ?? "";
+    const short = [street, place].filter(Boolean).join(", ").trim();
+
+    const address = short || data.display_name?.trim();
     if (!address) return { ok: false, error: "no_address" };
     return { ok: true, data: { address } };
   } catch {

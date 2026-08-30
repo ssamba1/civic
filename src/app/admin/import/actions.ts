@@ -4,7 +4,8 @@ import { cookies } from "next/headers";
 import { z } from "zod/v4";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
-import { DEMO_SESSION_COOKIE, findDemoAccount } from "@/lib/demo-auth";
+import { DEMO_SESSION_COOKIE } from "@/lib/demo-auth";
+import { findVerifiedDemoAccount } from "@/lib/demo-cookie";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import type { ImportSource } from "@/lib/import/normalize";
 import { importFromText } from "@/lib/import/normalize";
@@ -14,7 +15,7 @@ import type { Result } from "@/lib/types";
 
 async function requireAdmin(): Promise<boolean> {
   if (DEMO_MODE) {
-    const demo = findDemoAccount(
+    const demo = findVerifiedDemoAccount(
       (await cookies()).get(DEMO_SESSION_COOKIE)?.value,
     );
     if (demo?.role === "admin") return true;

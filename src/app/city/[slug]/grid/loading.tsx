@@ -8,14 +8,18 @@
    Placeholders ride the shared `.skeleton` shimmer (theme-aware,
    reduced-motion safe via globals.css). */
 
+/* Width class per column. Four columns share "w-[12%]", so the class string
+   cannot be the React key — that produced "Encountered two children with the
+   same key" on every render of this skeleton. The list is a fixed constant that
+   is never reordered or filtered, so the index IS the stable identity. */
 const COLUMNS = [
-  "w-[16%]",
-  "w-[22%]",
-  "w-[12%]",
-  "w-[12%]",
-  "w-[14%]",
-  "w-[12%]",
-  "w-[12%]",
+  { id: "category", w: "w-[16%]" },
+  { id: "address", w: "w-[22%]" },
+  { id: "status", w: "w-[12%]" },
+  { id: "severity", w: "w-[12%]" },
+  { id: "team", w: "w-[14%]" },
+  { id: "cost", w: "w-[12%]" },
+  { id: "due", w: "w-[12%]" },
 ];
 
 export default function Loading() {
@@ -44,8 +48,8 @@ export default function Loading() {
       {/* Grid body — header row then data rows at a fixed rhythm. */}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="flex flex-shrink-0 items-center gap-4 border-b border-hairline bg-overlay/50 px-4 py-3">
-          {COLUMNS.map((w) => (
-            <div key={w} className={`skeleton h-3 rounded ${w}`} />
+          {COLUMNS.map((col) => (
+            <div key={col.id} className={`skeleton h-3 rounded ${col.w}`} />
           ))}
         </div>
         <div className="min-h-0 flex-1 overflow-hidden">
@@ -54,8 +58,8 @@ export default function Loading() {
               key={key}
               className="flex items-center gap-4 border-b border-hairline px-4 py-[13px]"
             >
-              {COLUMNS.map((w) => (
-                <div key={w} className={`skeleton h-3 rounded ${w}`} />
+              {COLUMNS.map((col) => (
+                <div key={col.id} className={`skeleton h-3 rounded ${col.w}`} />
               ))}
             </div>
           ))}
