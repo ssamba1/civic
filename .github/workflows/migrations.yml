@@ -172,6 +172,9 @@ jobs:
           set -euo pipefail
           # agents.md hard rule 3: RLS on every table, default deny. A table
           # shipped without it is the single easiest way to leak a tenant's data.
+          # Excludes tables owned by an extension: PostGIS installs
+          # spatial_ref_sys into public and we neither can nor should enable RLS
+          # on it. Only tables this repo creates are in scope.
           missing=$(psql -h localhost -U postgres -d civic_fresh -tAc "
             select string_agg(c.relname, ', ' order by c.relname)
             from pg_class c
@@ -179,6 +182,11 @@ jobs:
             where n.nspname = 'public'
               and c.relkind = 'r'
               and not c.relrowsecurity
+              and not exists (
+                select 1 from pg_depend d
+                where d.objid = c.oid
+                  and d.deptype = 'e'
+              )
           ")
           if [ -n "$missing" ]; then
             echo "Tables in public with RLS DISABLED: $missing"
