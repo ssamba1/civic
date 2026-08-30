@@ -79,11 +79,19 @@ function buildCsp(nonce: string, isDev: boolean, useNonce: boolean): string {
   // the narrow grant, not a loosening back to 'unsafe-eval'. Without it the
   // globe throws CompileError on every decoder and falls back to MapLibre.
   const WASM = "'wasm-unsafe-eval'";
+  // Cesium's TaskProcessor pool bootstraps each worker from a blob: URL and
+  // then calls importScripts() on a second blob: URL. A blob worker inherits
+  // the creating document's policy, and importScripts is checked against
+  // script-src — not worker-src — so `worker-src blob:` alone lets the worker
+  // start and then blocks its bootstrap. The failure is silent in the network
+  // panel (nothing is ever requested) and surfaces only as a worker pageerror,
+  // which is why the globe rendered its pins while every decoder was dead.
+  const BLOB = "blob:";
   const scriptSrc = isDev
-    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+    ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${BLOB}`
     : useNonce
-      ? `script-src 'self' 'nonce-${nonce}' ${SCRIPT_HASHES.themeInit} ${SCRIPT_HASHES.swRegister} 'strict-dynamic' ${WASM}`
-      : `script-src 'self' 'unsafe-inline' ${WASM}`;
+      ? `script-src 'self' 'nonce-${nonce}' ${SCRIPT_HASHES.themeInit} ${SCRIPT_HASHES.swRegister} 'strict-dynamic' ${WASM} ${BLOB}`
+      : `script-src 'self' 'unsafe-inline' ${WASM} ${BLOB}`;
 
   return [
     "default-src 'self'",

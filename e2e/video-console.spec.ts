@@ -3,9 +3,14 @@ import { expect, type Locator, type Page, test } from "playwright/test";
 /**
  * Clip theater smoke (video damage mapping console). Drives the real page:
  * transport bar, playback, rail-item seeking, report disclosure and the
- * detector overlay. Requires DEV_AUTH_BYPASS=1 + VIDEO_PIPELINE=1 (both are in
- * .env.local) so the staff gate resolves without a login, and seeded clips —
- * the assertions are deliberately count-agnostic because the seed size varies.
+ * detector overlay. The assertions are deliberately count-agnostic because the
+ * seed size varies.
+ *
+ * SETUP: needs VIDEO_PIPELINE=1 in .env.local (the page 404s without it) and
+ * seeded clips (scripts/seed-demo-video.mjs). It does NOT need
+ * DEV_AUTH_BYPASS — the demo city's console is public read-only (0d4782d), and
+ * setting the bypass makes the auth-gate assertions in staff-triage.spec.ts
+ * fail, because every admin route then answers 200.
  *
  * Specs live in e2e/ (playwright.config.ts testDir), not tests/e2e/.
  */

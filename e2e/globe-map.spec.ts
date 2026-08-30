@@ -12,13 +12,20 @@ import { expect, type Page, test } from "playwright/test";
  * default; a regression that flips the default back would not silently pass.
  */
 
-/** Open the controls popover and switch the renderer. */
+/**
+ * Switch the renderer, opening the controls popover only if it is not already
+ * open. Picking a renderer leaves the popover up, so an unconditional toggle
+ * would close it and the next renderer button would never be clickable.
+ */
 async function selectRenderer(
   page: Page,
   label: "3D globe" | "Flat map",
 ): Promise<void> {
-  await page.getByRole("button", { name: /toggle map controls/i }).click();
-  await page.getByRole("button", { name: label, exact: true }).click();
+  const button = page.getByRole("button", { name: label, exact: true });
+  if (!(await button.isVisible().catch(() => false))) {
+    await page.getByRole("button", { name: /toggle map controls/i }).click();
+  }
+  await button.click();
 }
 
 test("/city/cumming/map renders the Cesium globe with report pins", async ({
