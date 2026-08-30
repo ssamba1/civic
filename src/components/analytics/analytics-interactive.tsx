@@ -20,6 +20,7 @@ import { useReasoningHover } from "@/components/analytics/reasoning-hover";
 import { ReportsExplorer } from "@/components/analytics/reports-explorer";
 import { RecentReports } from "@/components/dashboard/recent-reports";
 import { FilterBar } from "@/components/filters/filter-bar";
+import { DEMO_MODE } from "@/lib/demo-mode";
 import {
   useFilteredReports,
   usePreviousWindowReports,
@@ -58,7 +59,7 @@ export function AnalyticsInteractive() {
   const isPending = filtered !== liveFiltered;
 
   const kpis = useMemo(
-    () => deriveKpis(filtered, previous),
+    () => deriveKpis(filtered, previous, DEMO_MODE),
     [filtered, previous],
   );
   const trend = useMemo(() => deriveTrend(filtered), [filtered]);

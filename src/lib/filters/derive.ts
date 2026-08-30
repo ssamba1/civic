@@ -81,6 +81,12 @@ function slaCompliance(reports: DashboardReport[]): number {
 export function deriveKpis(
   current: DashboardReport[],
   previous: DashboardReport[],
+  /**
+   * Whether `current`/`previous` came from the synthetic corpus. This function
+   * is pure arithmetic over whatever rows it is handed, so only the caller can
+   * know — and the dashboard has to label illustrative numbers as illustrative.
+   */
+  synthetic = false,
 ): AnalyticsKpis {
   const currRate = resolutionRate(current);
   const prevRate = resolutionRate(previous);
@@ -90,6 +96,7 @@ export function deriveKpis(
   const prevBacklog = backlog(previous);
 
   return {
+    synthetic,
     resolution_rate_pct: round1(currRate),
     // delta in percentage points (matches the "vs prior window" framing)
     resolution_rate_delta_pct: round1(currRate - prevRate),

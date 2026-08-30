@@ -365,6 +365,25 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
   return (
     <>
       <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface overflow-hidden shadow-[var(--shadow-card)]">
+        {/* Say so when these are illustrative. The demo literals (76.5%
+            resolution, 64h MTTR, 88.4% SLA) are also the fallback whenever the
+            live aggregate errors or a city has no reports yet, so without this
+            an unlabelled dashboard presents invented numbers as measured
+            outcomes. Mirrors the "Demo data" badge on the onboarding wizard. */}
+        {kpis.synthetic && (
+          <div className="flex items-center gap-2 border-b border-hairline bg-overlay/60 px-4 py-2">
+            <span
+              className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-warning)]"
+              aria-hidden
+            />
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-subtle">
+              Sample data
+            </span>
+            <span className="text-[11px] text-faint">
+              Illustrative figures for the demo corpus — not measured outcomes.
+            </span>
+          </div>
+        )}
         <div className="grid grid-cols-2 lg:grid-cols-4">
           {cards.map((c, idx) => {
             const goodDirection =

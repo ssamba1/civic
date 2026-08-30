@@ -11,6 +11,13 @@ const logger = createLogger("analytics-data");
    ------------------------------------------------------------------ */
 
 export interface AnalyticsKpis {
+  /**
+   * True when these numbers are illustrative rather than measured — the demo
+   * literals below, or the fallback taken when the live aggregate errors or the
+   * city has no reports yet. The UI must label them: an unmarked 76.5% reads to
+   * anyone looking at the dashboard as a real outcome.
+   */
+  synthetic: boolean;
   resolution_rate_pct: number;
   resolution_rate_delta_pct: number;
   mttr_hours: number;
@@ -126,6 +133,7 @@ const seed = (i: number, salt: number) => {
 // Hardcoded demo KPIs — returned in DEMO_MODE, or when the live aggregate
 // errors / finds no reports, so demo analytics never renders empty.
 const KPI_FALLBACK: AnalyticsKpis = {
+  synthetic: true,
   resolution_rate_pct: 76.5,
   resolution_rate_delta_pct: 4.2,
   mttr_hours: 64,
@@ -139,6 +147,8 @@ const KPI_FALLBACK: AnalyticsKpis = {
 // Live-mode fallback: honest zeros instead of demo literals, so an empty
 // city renders an empty (not fabricated) analytics dashboard.
 const KPI_EMPTY: AnalyticsKpis = {
+  // Honest zeros are measured, not invented — an empty city really has none.
+  synthetic: false,
   resolution_rate_pct: 0,
   resolution_rate_delta_pct: 0,
   mttr_hours: 0,
@@ -244,6 +254,9 @@ export async function fetchAnalyticsKpis(
     }
 
     return {
+      // Demo mode keeps the MTTR/SLA literals above, so the row is only fully
+      // measured outside it.
+      synthetic: DEMO_MODE,
       resolution_rate_pct: round1(rate(closed, total)),
       resolution_rate_delta_pct: round1(
         pctChange(rate(twClosed, twTotal), rate(pwClosed, pwTotal)),
