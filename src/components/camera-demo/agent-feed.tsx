@@ -120,17 +120,19 @@ export function AgentFeed({
         const elapsed = now - p.time;
         const settled = elapsed >= STAGES[STAGES.length - 1].doneAt;
         return (
+          // The card holds an <ol>, which a <button> may not contain, so the
+          // button is a stretched overlay instead of a wrapper. Same hit area,
+          // valid HTML, and real keyboard/AT semantics.
           <section
             key={p.id}
-            className="cursor-pointer rounded-md border bg-card p-3 shadow-sm transition-colors hover:bg-muted/40"
-            onClick={() => onSelect(p)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") onSelect(p);
-            }}
-            role="button"
-            tabIndex={0}
-            aria-label={`Open claim detail for ${p.id}`}
+            className="relative rounded-md border bg-card p-3 shadow-sm transition-colors hover:bg-muted/40"
           >
+            <button
+              type="button"
+              className="absolute inset-0 z-10 cursor-pointer rounded-md focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+              onClick={() => onSelect(p)}
+              aria-label={`Open claim detail for ${p.id}`}
+            />
             <div className="flex items-center justify-between">
               <span className="font-medium text-xs">
                 Agent · {p.id.replace("promo-", "cluster ")}

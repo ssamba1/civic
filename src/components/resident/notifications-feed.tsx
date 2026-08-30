@@ -213,9 +213,7 @@ export function NotificationsFeed({
                       "mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg",
                       !meta.color && "bg-elevated",
                     )}
-                    style={
-                      meta.color ? { color: meta.color } : undefined
-                    }
+                    style={meta.color ? { color: meta.color } : undefined}
                   >
                     <Icon
                       className={cn("h-4 w-4", !meta.color && "text-subtle")}

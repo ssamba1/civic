@@ -203,7 +203,7 @@ function StatusRing({ status }: { status: ReportStatus }) {
       height="14"
       viewBox="0 0 14 14"
       fill="none"
-      aria-hidden
+      aria-hidden="true"
       className={cn("shrink-0", toneTextClass(STATUS_TONE[status]))}
     >
       <circle

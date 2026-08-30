@@ -340,7 +340,6 @@ export function FullscreenMapOrchestrator({
             className="flex items-center gap-2 rounded-md border px-2.5 py-1.5 shrink-0"
             style={{
               borderColor: `${activeTeamMeta.color}99`,
-              
             }}
           >
             <Shield
@@ -645,7 +644,7 @@ export function FullscreenMapOrchestrator({
                         className="inline-flex self-start items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium"
                         style={{
                           borderColor: `${ownerTeam.color}aa`,
-                          
+
                           color: ownerTeam.color,
                         }}
                       >
