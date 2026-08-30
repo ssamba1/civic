@@ -577,13 +577,52 @@ PHASE E — Hardening                                         [post-demo]
 ---
 
 ## 31. Demo script (3 min)
-1. **Hook (20s):** "Cumming waits days for a pothole. Watch." Open PWA on phone.
-2. **Resident (40s):** 2 taps → submit. Category + confidence appear. "Faces blurred on-device; nothing unblurred leaves the phone." (Optional: toggle airplane mode first → "queued, syncs when online.")
-3. **Realtime (20s):** Projector `/city/cumming/browse` — pin pops live; upvote.
-4. **Staff (40s):** `/staff` — already a costed, routed work order (dept, crew, materials, **$cost**, contact, **SLA badge**). Press `d`.
-5. **Accountability (40s):** `/city/cumming/scoreboard` — median resolution, open>30d, **by-neighborhood equity**, vs neighbors. "Pressure incumbents won't ship. And it's WCAG AA — law for cities as of April."
-6. **Close (20s):** "Open311. Free for residents. $0.0001/classification. Resident-led GTM, $1B+ market."
-**Fallback:** seeded report + 10s recorded submit clip.
+
+> Rewritten 2026-08-30 against routes that exist. The previous version sent
+> step 4 to `/staff` (scrapped — it has no page, only server actions; team views
+> and `/teams` are canonical) and step 5 to `/city/[slug]/scoreboard`, which was
+> never built. Every route below was opened in a browser against the live
+> database before this was written.
+
+**Setup:** `VIDEO_PIPELINE=1` and `DEMO_COOKIE_SECRET` set, `pnpm demo:seed`
+run, signed in as the **City Admin** persona on the projector. Phone on cellular,
+not conference wifi (see the fallback note).
+
+1. **Hook (20s)** — "Cumming waits days for a pothole. Watch." Open the PWA on
+   the phone.
+2. **Resident (35s)** — `/report`. Two taps to submit. Category and confidence
+   come back from the model. Say the privacy line while it classifies: *faces
+   and plates are blurred on-device; the unblurred original never leaves the
+   phone.* If a nearby report already exists the duplicate-deflection screen
+   appears — that is a feature, not a stumble: *"three residents, one ticket."*
+3. **Realtime (20s)** — projector on `/city/cumming/map`. The pin is there. Hit
+   **Inject report** in the demo control (top-left) if you want a second one to
+   land live while they watch.
+4. **The differentiator (45s)** — `/city/cumming/grid`. This is the whole pitch:
+   not a suggestion, *a costed, routed work order*. Crew, materials, estimated
+   minutes, dollar cost, SLA badge, and the AI's rationale. Say it plainly:
+   SeeClickFix hands the city a list; we hand them the job. This route is public
+   for Cumming, so it works even if the login misbehaves.
+5. **Accountability (40s)** — `/city/cumming/analytics`, scroll to **Response
+   Equity**. District 1 vs District 2, citywide median, and an explicit
+   "underserved = >1.5x median" rule with the councilmember named. No commercial
+   311 platform ships this. Note the *Sample data* badge is honest labelling, not
+   a caveat to apologise for.
+6. **Close (20s)** — "Open311-native, so it feeds the CMMS they already own.
+   Free for residents. Fractions of a cent per classification."
+
+**Optional 30s, if the room is engaged:** `/demo/camera` — the bus-camera feed
+finding defects and drafting a contractor liability claim, unprompted. It needs
+no database and no login, so it is also the safest thing to show if anything
+else is misbehaving.
+
+**Fallbacks, in order of preference:**
+- A recorded screen capture of steps 2-5. `PITCH_DECK_PLAN.md` recommends this
+  over a live app and it is the right call — record it before demo day.
+- Anonymous sign-in is per-project and rate-limited by IP. A room full of judges
+  on one conference network can collectively trip it, and step 2 then shows
+  "wait about a minute". Demo from cellular.
+- Everything except step 2 works on seeded data with no writes.
 
 ---
 
