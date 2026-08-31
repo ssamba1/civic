@@ -17,6 +17,7 @@ import { fetchCorrectionExamples } from "@/lib/db/classification-feedback";
 import { createServerClient } from "@/lib/db/client";
 import { fetchActiveCrewTypeDefs } from "@/lib/db/crew-types";
 import { fetchCustomCategoryDefs } from "@/lib/db/issue-types";
+import { buildPhotoPaths } from "@/lib/db/report-photos";
 import { fetchSlaHours } from "@/lib/db/sla-targets";
 import { sniffImageMime } from "@/lib/image/sniff-mime";
 import { createLogger } from "@/lib/logger";
@@ -195,7 +196,21 @@ export async function runClassifyPipeline(
 
   // Classify the RAW (unblurred) image for accuracy — the public copy has
   // faces/plates blurred which degrades classification.
-  const storagePath = `${report.city_id}/${report.id}.jpg`;
+  //
+  // The path comes from buildPhotoPaths, the SAME function the upload writes
+  // with, rather than being spelled out again here. It used to be spelled out
+  // here, as `${city_id}/${id}.jpg`, and that stopped being where photos live
+  // the day multi-photo submission moved them into a per-report folder
+  // (`${city_id}/${id}/${idx}.jpg`). The download then missed on every newly
+  // submitted report: storage answered "Object not found", the guard below
+  // swallowed it exactly as designed, and every report a resident filed came
+  // out classified `other` at confidence 0 with no crew — while the seeded
+  // reports still looked perfect, because the seed writes classifications
+  // directly instead of going through this pipeline.
+  //
+  // Index 0 is the primary photo, which is the one reports.photo_raw_url points
+  // at. Deriving it keeps the reader from drifting from the writer again.
+  const storagePath = buildPhotoPaths(report.city_id, report.id, 1)[0].rawPath;
   const { data: photoBlob, error: downloadErr } = await supabase.storage
     .from("photos-raw")
     .download(storagePath);

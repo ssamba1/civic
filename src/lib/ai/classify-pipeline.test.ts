@@ -5,6 +5,7 @@ import { autoAssignCrew } from "@/lib/ai/crew-assign";
 import { findDuplicate } from "@/lib/ai/dedup";
 import { classifyPhoto } from "@/lib/ai/gemini";
 import { createServerClient } from "@/lib/db/client";
+import { buildPhotoPaths } from "@/lib/db/report-photos";
 import type { Classification } from "@/lib/types";
 import { runClassifyPipeline } from "./classify-pipeline";
 
@@ -216,10 +217,16 @@ describe("runClassifyPipeline", () => {
 
     const result = await runClassifyPipeline(REPORT_ID);
 
-    // Raw download was attempted from the photos-raw bucket.
+    // Raw download was attempted from the photos-raw bucket, at the path the
+    // UPLOAD writes. Derived from buildPhotoPaths rather than spelled out,
+    // because spelling it out is what broke this: the pipeline hard-coded the
+    // pre-multi-photo layout `${city}/${id}.jpg`, uploads had long since moved
+    // to `${city}/${id}/${idx}.jpg`, and THIS ASSERTION ENCODED THE OLD PATH —
+    // so the suite went green while every newly filed report lost its
+    // classification to a swallowed "Object not found".
     expect(storage.from).toHaveBeenCalledWith("photos-raw");
     expect(storage.download).toHaveBeenCalledWith(
-      `${REPORT_ROW.city_id}/${REPORT_ID}.jpg`,
+      buildPhotoPaths(REPORT_ROW.city_id, REPORT_ID, 1)[0].rawPath,
     );
     // Download failure -> Gemini skipped entirely.
     expect(classifyPhotoMock).not.toHaveBeenCalled();
