@@ -451,6 +451,7 @@ Every number here was produced by running the command in the middle column on th
 | Unit tests | `pnpm test` | **1,419 passing** across 136 files |
 | Lint | `pnpm lint` | **0 errors** |
 | Production build | `pnpm build` | **96 routes compile**, 42 prerendered |
+| Production *runtime* | `pnpm prod` | Standalone server boots, `database: true, ai: true`, every route clean in a real browser |
 | Row-level security | `pnpm test:rls` | **45 passing** across 11 suites |
 | End to end | `pnpm test:e2e` | 7 Playwright specs |
 | Privacy audit | `pnpm audit:privacy` | **No raw-photo leaks across 5 cities** |
