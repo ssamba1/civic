@@ -47,6 +47,10 @@ of the process you dare let it touch, when the output is public money and a
 truck. The answer this repository argues for: **the model classifies, and it
 never dispatches.**
 
+![Recording of the routing page: resident reports fanning out through the AI classifier into twelve categories, eleven municipal divisions and the crews that receive the work, every node carrying a live count](docs/images/demo.gif)
+
+<div align="center"><sub>Recorded from the running app against the seeded city. Every count on every node is read from the database, not drawn.</sub></div>
+
 ### The one screen that explains the whole product
 
 <picture>
@@ -616,6 +620,7 @@ Then check `curl localhost:3000/api/health` **before** looking at any page. It s
 | `pnpm audit:privacy` | Check no raw photos reached the public bucket |
 | `pnpm eval` | Classification accuracy against `tests/golden/` |
 | `node scripts/shot-readme.mjs` | Regenerate every screenshot in this README, light and dark |
+| `node scripts/shot-readme-gif.mjs` | Re-record the demo loop at the top |
 | `node scripts/shot-social-preview.mjs` | Regenerate the card at the top |
 
 Demo personas, seeded against Cumming: `usertest` / `usertest` (resident), `admintest` / `admintest` (city admin), `teamtest1` / `teamtest` (dispatcher).
