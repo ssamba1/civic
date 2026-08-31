@@ -22,23 +22,37 @@ export interface CityTeamConfig {
   categories: ReportCategory[];
 }
 
-/** A city's enabled teams (empty when the city was not onboarded via the wizard). */
+/**
+ * A city's enabled teams (empty when the city was not onboarded via the wizard).
+ *
+ * Never throws. The query error path was already handled, but `createServerClient`
+ * itself throws when server env is missing or invalid, and that happened OUTSIDE
+ * the guard — so a deployment with an unset service-role key took the whole
+ * routing page down with a 500 instead of degrading to the static presets its
+ * callers are written to expect. An empty config is a correct answer here: it
+ * means "this city has no custom routing", which is exactly the state a city
+ * that was never onboarded is in.
+ */
 export async function fetchCityTeams(
   cityId: string,
 ): Promise<CityTeamConfig[]> {
-  const db = createServerClient();
-  const { data, error } = await db
-    .from("city_teams")
-    .select("team_key, label, enabled, categories")
-    .eq("city_id", cityId)
-    .eq("enabled", true);
-  if (error || !data) return [];
-  return data.map((r) => ({
-    teamKey: r.team_key as string,
-    label: r.label as string,
-    enabled: r.enabled as boolean,
-    categories: (r.categories ?? []) as ReportCategory[],
-  }));
+  try {
+    const db = createServerClient();
+    const { data, error } = await db
+      .from("city_teams")
+      .select("team_key, label, enabled, categories")
+      .eq("city_id", cityId)
+      .eq("enabled", true);
+    if (error || !data) return [];
+    return data.map((r) => ({
+      teamKey: r.team_key as string,
+      label: r.label as string,
+      enabled: r.enabled as boolean,
+      categories: (r.categories ?? []) as ReportCategory[],
+    }));
+  } catch {
+    return [];
+  }
 }
 
 /**

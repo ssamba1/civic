@@ -172,4 +172,18 @@ describe("fetchCityTeams", () => {
     responses = { city_teams: { data: [], error: null } };
     expect(await fetchCityTeams("city-1")).toEqual([]);
   });
+
+  it("returns [] when the client itself cannot be constructed", async () => {
+    // Regression: createServerClient throws when server env is missing or
+    // invalid, and that throw used to happen OUTSIDE the error guard. A
+    // deployment with an unset service-role key 500'd the whole routing page
+    // instead of degrading to the static presets every caller expects. Found by
+    // running the app, not by building it — tsc and the build were both clean.
+    from.mockImplementationOnce(() => {
+      throw new Error(
+        "Missing or invalid server environment variables: SUPABASE_SERVICE_ROLE_KEY",
+      );
+    });
+    await expect(fetchCityTeams("city-1")).resolves.toEqual([]);
+  });
 });
