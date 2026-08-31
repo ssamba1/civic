@@ -1,6 +1,6 @@
 # AGENTS.md
 
-> This is the cross-tool agent instruction file (Codex, Cursor, Copilot, Amp, Jules, Factory). Claude Code loads it via `CLAUDE.md` (`@agents.md` import — no symlink on Windows). Product/design context: `docs/planning/` + `docs/decisions/` (ADRs) + root `REVAMP_PLAN.md`. Read those before substantive work. Keep this file short.
+> This is the cross-tool agent instruction file (Codex, Cursor, Copilot, Amp, Jules, Factory). Claude Code loads it via `CLAUDE.md` (`@agents.md` import — no symlink on Windows). Product/design context: `docs/planning/` + `docs/decisions/` (ADRs). Read those before substantive work. Keep this file short.
 
 ## What this is
 
@@ -9,7 +9,7 @@ Civic. AI-native citizen repair reporting. Residents photograph broken infrastru
 ## Layout & current state
 
 - App root is `Civic/-Social-Impact-/` (this dir). Sibling `Civic/civic-deck/` = separate Vite pitch deck, not the app.
-- `REVAMP_PLAN.md` = active T0-T3 issue list from the 6-audit sweep. `STATE.md`, `AUDIT_FINDINGS.md` = session state + audit output. Read REVAMP_PLAN.md before starting revamp work.
+- `dev-audit/` = the audit output this project was hardened against. `docs/planning/SHIPPED.md` is the chronological record of what landed.
 - The `/staff` route UI is scrapped — team views + `/teams` picker are canonical. Several `staff/*` modules are still imported by shared code: check imports before deleting anything under `app/staff/`.
 - Working tree carries large uncommitted changes at times — commit before any destructive delete.
 
