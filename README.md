@@ -14,6 +14,8 @@
 [![migrations](https://github.com/ssamba1/civic/actions/workflows/migrations.yml/badge.svg)](https://github.com/ssamba1/civic/actions/workflows/migrations.yml)
 [![MIT licence](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
 
+**HackSocial · AI/ML track** — submission write-up in [`SUBMISSION.md`](SUBMISSION.md)
+
 </div>
 
 ---
@@ -27,6 +29,14 @@ Civic reads the photograph, grades the severity, checks it against nearby report
 Nobody reads a form in the middle. **The work order is the report, transformed.**
 
 The pilot city is Cumming, Georgia.
+
+We built it because the backlog everyone blames on budget or on crews is
+usually a backlog of *unstaffed triage* — and reading a photograph into a
+category is the one thing a vision model is unambiguously good at. The
+interesting question was never whether AI could do that step. It was how much
+of the process you dare let it touch, when the output is public money and a
+truck. The answer this repository argues for: **the model classifies, and it
+never dispatches.**
 
 ### The one screen that explains the whole product
 
@@ -73,6 +83,7 @@ Pick the path that matches the time you have. Every deep section is collapsed, s
 
 | What | Where |
 |---|---|
+| Inspiration, tech stack, and what we learned | [`SUBMISSION.md`](SUBMISSION.md) |
 | The rules every contributor follows, human or model | [`agents.md`](agents.md) |
 | Architecture decisions that closed off alternatives | [`docs/decisions/`](docs/decisions/) |
 | On-call procedures: AI pipeline, Open311 conformance, cutover, key rotation | [`docs/runbooks/`](docs/runbooks/) |
