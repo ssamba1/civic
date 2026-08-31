@@ -47,6 +47,13 @@ of the process you dare let it touch, when the output is public money and a
 truck. The answer this repository argues for: **the model classifies, and it
 never dispatches.**
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/landing-dark.jpg">
+  <img alt="The Civic landing page: a live map of Cumming with report pins, callouts reading 'AI TRIAGE — Pothole, classified in 1.4s' and 'ROUTED — Public Works, via Open311', over the wordmark and a card explaining photo to costed work order" src="docs/images/landing.jpg">
+</picture>
+
+<div align="center"><sub>The public landing page. The map is live, the pins are real reports, and the two callouts are the actual pipeline stages.</sub></div>
+
 ![Recording of the routing page: resident reports fanning out through the AI classifier into twelve categories, eleven municipal divisions and the crews that receive the work, every node carrying a live count](docs/images/demo.gif)
 
 <div align="center"><sub>Recorded from the running app against the seeded city. Every count on every node is read from the database, not drawn.</sub></div>
@@ -448,6 +455,7 @@ Every number here was produced by running the command in the middle column on th
 | End to end | `pnpm test:e2e` | 7 Playwright specs |
 | Privacy audit | `pnpm audit:privacy` | **No raw-photo leaks across 5 cities** |
 | Live health | `pnpm health` | `{"status":"ok","checks":{"database":true,"ai":true}}` |
+| Accessibility | Lighthouse, `/city/[slug]` | **100** accessibility, **100** best practices |
 
 The seeded pilot city holds **158 reports, 108 work orders, 9 crews and 66 users**, across 11 divisions and 12 categories.
 

@@ -104,6 +104,15 @@ for (const theme of ["light", "dark"]) {
   });
   const page = await ctx.newPage();
   await forceTheme(page, theme);
+  // The public landing page, before any sign-in: it is the first thing a
+  // visitor sees and the only screen that has to sell the product with no
+  // context at all.
+  console.log(`public (${theme}):`);
+  // Converted below: the hero is a full-bleed map, and photography in PNG is
+  // ~3.6 MB against ~250 KB as JPEG.
+  await shot(page, "/", `landing${suffix}`, { settle: 4000 });
+  toJpeg(`landing${suffix}`);
+
   await signIn(page, "admintest", "admintest");
   console.log(`staff (${theme}):`);
   await shot(page, `/city/${CITY}`, `dashboard${suffix}`, { settle: 3500 });

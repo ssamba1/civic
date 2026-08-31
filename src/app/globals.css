@@ -104,19 +104,27 @@
   /* Pastel accent ramp — soft = fills / chips / chart areas, strong = strokes /
      deltas / small emphasis. Decorative + data accents ONLY: body text stays on
      --foreground/--subtle (pastels don't clear AA as copy). Matched lightness
-     across hues so mixed charts read as one family. Flipped per-theme below. */
+     across hues so mixed charts read as one family. Flipped per-theme below.
+
+     Every -strong value here is darkened to clear WCAG AA (>=4.5:1) against its
+     OWN pastel fill, because that is the pairing the delta chips actually
+     render: strong text on the matching tint, at 11px. The previous ramp was
+     labelled AA-tuned and was not — the six pairs measured 3.40 to 4.13, and
+     Lighthouse failed the one chip that happened to be on screen. Re-tuned
+     together so the family still reads as one set. Dark theme is unaffected:
+     its translucent fills over a near-black surface already measure 6.9-8.2:1. */
   --pastel-mint: #d3ecdd;
-  --pastel-mint-strong: #35845c;
+  --pastel-mint-strong: #2e7350;
   --pastel-sky: #d6e6f5;
-  --pastel-sky-strong: #4577a8;
+  --pastel-sky-strong: #3c6892;
   --pastel-lavender: #e2ddf3;
-  --pastel-lavender-strong: #6c5fa8;
+  --pastel-lavender-strong: #6658a2;
   --pastel-blush: #f5dde2;
-  --pastel-blush-strong: #ad5468;
+  --pastel-blush-strong: #9c4b5d;
   --pastel-butter: #f4ecd2;
-  --pastel-butter-strong: #96772a;
+  --pastel-butter-strong: #816724;
   --pastel-peach: #f7e3d4;
-  --pastel-peach-strong: #b06a3d;
+  --pastel-peach-strong: #925832;
 }
 
 /* DARK theme — overrides only the values that flip. */
