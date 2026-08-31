@@ -5,19 +5,21 @@ import { notFound } from "next/navigation";
 import { FilterBar } from "@/components/filters/filter-bar";
 import { TeamsInteractive } from "@/components/teams/teams-interactive";
 import { Button } from "@/components/ui/button";
-import { fetchCity as fetchCityMock, KNOWN_CITIES } from "@/lib/dashboard-data";
+import { fetchCity as fetchCityMock } from "@/lib/dashboard-data";
 import {
   fetchCity as fetchCityFromDb,
   fetchCityStats,
   PREVIEW_SOURCES,
 } from "@/lib/dashboard-queries";
 
-// Pre-render known cities; provisioned cities render on demand (no redeploy).
-export const dynamicParams = true;
-
-export function generateStaticParams() {
-  return Object.keys(KNOWN_CITIES).map((slug) => ({ slug }));
-}
+// This route can never be statically generated: the city layout above it calls
+// isStaffForCity(), which reads the auth cookie on every request. Declaring
+// generateStaticParams() anyway did not make it static — it made Next attempt
+// static generation for slugs outside the list, and that attempt threw
+// DYNAMIC_SERVER_USAGE from the layout's cookie read. The throw surfaced as a
+// 500, so a mistyped city slug returned "Internal Server Error" instead of the
+// 404 the notFound() below is asking for.
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ slug: string }>;

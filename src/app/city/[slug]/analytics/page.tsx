@@ -6,12 +6,13 @@ import { DistrictRollups } from "@/components/analytics/district-rollups";
 import { EquityPanel } from "@/components/analytics/equity-panel";
 import { PeerBenchmarkCard } from "@/components/analytics/peer-benchmark-card";
 import { SurgeBanner } from "@/components/analytics/surge-banner";
-import { KNOWN_CITIES } from "@/lib/dashboard-data";
 import { fetchCity } from "@/lib/dashboard-queries";
 
-export function generateStaticParams() {
-  return Object.keys(KNOWN_CITIES).map((slug) => ({ slug }));
-}
+// Static generation is impossible under the city layout, which reads the auth
+// cookie via isStaffForCity() on every request. Declaring generateStaticParams()
+// made Next attempt it for slugs outside the list and throw
+// DYNAMIC_SERVER_USAGE, turning an unknown city into a 500 instead of a 404.
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
