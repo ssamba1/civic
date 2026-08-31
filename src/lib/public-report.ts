@@ -1,7 +1,12 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
-import { categoryMeta, categorySlaHours, getReportCorpus, type DashboardReport } from "@/lib/dashboard-data";
+import {
+  categoryMeta,
+  categorySlaHours,
+  type DashboardReport,
+  getReportCorpus,
+} from "@/lib/dashboard-data";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { HOUR_MS } from "@/lib/utils/time-constants";
 

@@ -8,7 +8,11 @@ import type {
 } from "@/app/api/ai/reasoning/route";
 import { type CurrencyConfig, formatCost } from "@/lib/currency";
 import type { DashboardReport } from "@/lib/dashboard-data";
-import { CATEGORY_SLA_TARGETS, categoryMeta, categorySlaHours } from "@/lib/dashboard-data";
+import {
+  CATEGORY_SLA_TARGETS,
+  categoryMeta,
+  categorySlaHours,
+} from "@/lib/dashboard-data";
 import { SEVERITY_HUE } from "@/lib/severity-colors";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import type { ReportStatus } from "@/lib/types";

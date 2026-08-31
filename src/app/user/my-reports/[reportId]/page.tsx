@@ -18,7 +18,7 @@ import {
   ReportTimeline,
 } from "@/components/resident/report-timeline";
 import { currencyForCitySlug, formatCost } from "@/lib/currency";
-import { KNOWN_CITIES, categoryMeta } from "@/lib/dashboard-data";
+import { categoryMeta, KNOWN_CITIES } from "@/lib/dashboard-data";
 import { listComments } from "@/lib/db/comments";
 import { getReportPhotos } from "@/lib/db/report-photos";
 import { publicToken } from "@/lib/public-report";

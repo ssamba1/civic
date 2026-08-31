@@ -10,7 +10,12 @@ import type {
   StatusFunnelStep,
   TrendPoint,
 } from "@/lib/analytics-data";
-import { CATEGORY_SLA_TARGETS, categoryMeta, categorySlaHours, type DashboardReport } from "@/lib/dashboard-data";
+import {
+  CATEGORY_SLA_TARGETS,
+  categoryMeta,
+  categorySlaHours,
+  type DashboardReport,
+} from "@/lib/dashboard-data";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { DAY_MS, HOUR_MS } from "@/lib/utils/time-constants";
 

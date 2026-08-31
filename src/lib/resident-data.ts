@@ -8,7 +8,12 @@ import {
   type TrendPoint,
 } from "@/lib/analytics-data";
 import type { DashboardReport } from "@/lib/dashboard-data";
-import { categoryMeta, fetchCity, fetchCityStats, getReportCorpus } from "@/lib/dashboard-data";
+import {
+  categoryMeta,
+  fetchCity,
+  fetchCityStats,
+  getReportCorpus,
+} from "@/lib/dashboard-data";
 import { createSSRClient, getAuthUser } from "@/lib/db/ssr-client";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { createLogger } from "@/lib/logger";

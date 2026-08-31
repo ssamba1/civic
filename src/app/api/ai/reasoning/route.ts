@@ -4,7 +4,13 @@ import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 import { checkAndRecordGeminiCall } from "@/lib/ai/rate-limiter";
 import { getReasoning } from "@/lib/ai/reasoning-ai";
 import type { DashboardReport } from "@/lib/dashboard-data";
-import { CATEGORY_META, CATEGORY_SLA_TARGETS, categoryMeta, categorySlaHours, getReportCorpus } from "@/lib/dashboard-data";
+import {
+  CATEGORY_META,
+  CATEGORY_SLA_TARGETS,
+  categoryMeta,
+  categorySlaHours,
+  getReportCorpus,
+} from "@/lib/dashboard-data";
 import { createSSRClient, getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
 
