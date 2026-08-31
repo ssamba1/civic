@@ -108,7 +108,7 @@ Pick the path that matches the time you have. Every deep section is collapsed, s
 | Architecture decisions that closed off alternatives | [`docs/decisions/`](docs/decisions/) |
 | On-call procedures: AI pipeline, Open311 conformance, cutover, key rotation | [`docs/runbooks/`](docs/runbooks/) |
 | Plans and in-flight work | [`docs/planning/`](docs/planning/) |
-| Live demo | Not deployed. See [Honest limits](#6-honest-limits) |
+| Live demo | Linked at the top of this file when one is running; see [Honest limits](#6-honest-limits) |
 
 ---
 
@@ -567,7 +567,7 @@ Status, team, department and crew are all editable inline, and the header says p
 
 Every line here can be checked in about a minute, so it is better said first than found later.
 
-- **There is no live deployment.** The database, seed data, build and app all work, and the app runs locally against real data. Hosting it needs an account credential we chose not to handle automatically.
+- **A hosted demo exists only if a URL is linked at the top of this file.** If there is none there, there is no live deployment — the database, seed data, build and running app are all real, and the production standalone server has been run and smoke-tested, but nothing is hosted. We would rather you found that stated here than discovered it after clicking.
 - **The seeded reports are synthetic.** They are realistic — real street names, a real coordinate distribution over Cumming, real classifications produced by the real pipeline — but no resident of Cumming has filed anything here, and the city has not deployed this. Calling it "in use in Cumming" would be a lie.
 - **The analytics figures are labelled sample data in the product itself.** The analytics page carries a `SAMPLE DATA — illustrative figures for the demo corpus, not measured outcomes` banner, and it is there because peer benchmarking against "comparable cities" has no real peer dataset behind it yet.
 - **The privacy blur is a heuristic, not face detection, on every browser that matters.** `FaceDetector` is absent on iOS Safari, Firefox and unflagged Chrome. The fallback blurs the top and bottom thirds and leaves the middle, so a centre-framed face can reach the public bucket. That is a deliberate trade — blurring the whole frame would hide the defect the photo exists to report — and it is documented at the top of [`src/lib/privacy/blur.ts`](src/lib/privacy/blur.ts) rather than buried.

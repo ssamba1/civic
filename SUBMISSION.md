@@ -133,7 +133,7 @@ failure: indistinguishable from a city that has never filed anything.
 ## Honest limits
 
 Stated in full in the [README](README.md#6-honest-limits). The short version:
-there is no live deployment, the seeded reports are synthetic (no resident of
+a hosted demo exists only if one is linked from the README, the seeded reports are synthetic (no resident of
 Cumming has filed anything here and the city has not adopted this), the
 analytics figures are labelled sample data in the product itself, and the
 privacy blur is a heuristic that leaves the middle third of the frame
