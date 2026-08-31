@@ -167,6 +167,16 @@ for (const theme of ["light", "dark"]) {
   await forceTheme(page, theme);
   console.log(`resident (phone, ${theme}):`);
   await shot(page, "/report", `report${suffix}`, { settle: 2500 });
+
+  // The public status page needs a real token, which is database-specific.
+  // Pass SHOT_STATUS_TOKEN (any value from reports.public_token — run
+  // `pnpm db:tokens` first if the column is still NULL) to include it.
+  const statusToken = process.env.SHOT_STATUS_TOKEN;
+  if (statusToken) {
+    await shot(page, `/r/${statusToken}`, `status${suffix}`, { settle: 2500 });
+  } else {
+    console.log("  (skipping status page — set SHOT_STATUS_TOKEN)");
+  }
   await ctx.close();
 }
 

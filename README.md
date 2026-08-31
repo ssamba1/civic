@@ -525,7 +525,11 @@ A resident on a sidewalk and a director at a desk are not the same user, so they
 <table>
 <tr>
 <td width="50%" valign="top"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/report-dark.png"><img alt="The report screen on a phone: a camera icon, the words Report an issue, Take a photo of the problem to get started, and two large buttons" src="docs/images/report.png"></picture></td>
-<td width="50%" valign="top"><b>Camera first.</b> No form to read before you can photograph a problem. Two targets, both sized for a thumb, and the primary one is the camera.<br><br>The written empty state — "Take a photo of the problem to get started" — is the entire tutorial. A resident standing in front of a broken thing will not read anything longer.<br><br><b>Camera denied falls back to upload.</b> Geolocation, unreliable on some Android builds, falls back to tapping the map.</td>
+<td width="50%" valign="top"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/status-dark.png"><img alt="The public status page on a phone: language switcher, Streetlight In progress, the reported address, Routed to Street Lighting Division, the photo, and a card reading Target date passed" src="docs/images/status.png"></picture></td>
+</tr>
+<tr>
+<td valign="top"><b>Camera first.</b> No form to read before you can photograph a problem. Two targets, both sized for a thumb, and the primary one is the camera.<br><br>The written empty state — "Take a photo of the problem to get started" — is the entire tutorial. A resident standing in front of a broken thing will not read anything longer.<br><br><b>Camera denied falls back to upload.</b> Geolocation, unreliable on some Android builds, falls back to tapping the map.</td>
+<td valign="top"><b>The status page needs no account</b>, because requiring one is how a city loses the reporter. An opaque salted token, bookmarkable, never a report id.<br><br>It is <b>translated into six languages</b> — English, Spanish, French, Vietnamese, Chinese, Korean — batched per request. A 311 system that only answers in English does not serve the residents most likely to be ignored by one.<br><br>And it tells the truth: <b>"Target date passed"</b> when the SLA has blown, rather than showing a soothing "in progress" forever.</td>
 </tr>
 </table>
 

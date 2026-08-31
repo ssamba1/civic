@@ -114,6 +114,21 @@ describe("categoryToTeam (no overrides)", () => {
 });
 
 describe("categoryToTeam (with override)", () => {
+  // categoryToTeam only consults the override snapshot in the browser: the
+  // snapshot lives in a `"use client"` module and React throws outright when
+  // the server calls into one. This file runs under @vitest-environment node,
+  // so `window` has to be stubbed for the client branch to be reachable at all.
+  const asBrowser = <T>(fn: () => T): T => {
+    const g = globalThis as { window?: unknown };
+    const had = "window" in g;
+    g.window = g.window ?? ({} as unknown);
+    try {
+      return fn();
+    } finally {
+      if (!had) delete g.window;
+    }
+  };
+
   it("returns the override team when set", async () => {
     const { getCategoryOverridesSnapshot } = await import(
       "@/lib/category-overrides"
@@ -121,7 +136,29 @@ describe("categoryToTeam (with override)", () => {
     vi.mocked(getCategoryOverridesSnapshot).mockReturnValueOnce({
       pothole: "parks_forestry" as TeamId,
     });
-    expect(categoryToTeam("pothole")).toBe("parks_forestry");
+    expect(asBrowser(() => categoryToTeam("pothole"))).toBe("parks_forestry");
+  });
+
+  it("ignores overrides on the server and returns the baseline", async () => {
+    // Regression: /r/[token] is a server component that resolves a report's
+    // owning team. Reading the client-only snapshot there threw and took the
+    // whole page down mid-stream — the visitor saw "A server error occurred"
+    // after a 200 had already been sent. Overrides are a per-browser staff
+    // preference, so the baseline is the server's correct answer, not a
+    // degraded one.
+    const { getCategoryOverridesSnapshot } = await import(
+      "@/lib/category-overrides"
+    );
+    // Cleared because the browser test above legitimately calls it, and this
+    // assertion is about whether the SERVER path reaches it at all.
+    vi.mocked(getCategoryOverridesSnapshot).mockClear();
+    vi.mocked(getCategoryOverridesSnapshot).mockReturnValue({
+      pothole: "parks_forestry" as TeamId,
+    });
+    expect(typeof window).toBe("undefined");
+    expect(categoryToTeam("pothole")).toBe(categoryToTeamDefault("pothole"));
+    expect(getCategoryOverridesSnapshot).not.toHaveBeenCalled();
+    vi.mocked(getCategoryOverridesSnapshot).mockReset();
   });
 });
 

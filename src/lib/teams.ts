@@ -188,7 +188,28 @@ export function categoryToTeamDefault(category: ReportCategory): TeamId {
 // baseline. Stays synchronous so non-React callers (filter-reports,
 // aggregateByTeam, server-rendered code) can keep their existing shape.
 export function categoryToTeam(category: ReportCategory): TeamId {
-  const override = getCategoryOverridesSnapshot()[category];
+  // The snapshot lives in a `"use client"` module, and React THROWS on any
+  // attempt to invoke one of those from the server — "Attempted to call
+  // getCategoryOverridesSnapshot() from the server". That is not a degraded
+  // render, it kills the whole component tree.
+  //
+  // Which is exactly what happened to /r/[token], a server component that
+  // resolves a report's owning team for the public status page: the render
+  // threw mid-stream, so the response had already gone out as 200 with correct
+  // metadata and the visitor got "A server error occurred". It stayed hidden
+  // because no seeded report had a public_token, so every one of those URLs
+  // 404'd before it could reach the render.
+  //
+  // The overrides are a per-browser staff preference — the routing-matrix
+  // dropdown writes them into a client store — so they do not exist on the
+  // server in any meaningful sense, and the baseline IS the server's correct
+  // answer rather than a fallback. Guarding here fixes every server caller at
+  // once (dashboard-queries, delegation-history, the onboarding modules) rather
+  // than at each call site.
+  const override =
+    typeof window === "undefined"
+      ? undefined
+      : getCategoryOverridesSnapshot()[category];
   if (override) return override;
   return CATEGORY_TO_TEAM[category] ?? "general_admin";
 }
