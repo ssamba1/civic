@@ -19,7 +19,7 @@ import {
   TreePine,
   Waves,
 } from "lucide-react";
-import { CATEGORY_META } from "@/lib/dashboard-data";
+import { CATEGORY_META, categoryMeta } from "@/lib/dashboard-data";
 import { SEVERITY_HUE } from "@/lib/severity-colors";
 import {
   STATUS_LABEL as REPORT_STATUS_LABEL,
@@ -71,7 +71,7 @@ export function ReportInline({
   /** The rail expands the full text; the table row keeps its two-line clamp. */
   clampDescription?: boolean;
 }) {
-  const meta = CATEGORY_META[report.category];
+  const meta = categoryMeta(report.category);
   const Icon = CATEGORY_ICON[meta.icon] ?? HelpCircle;
   // Canonical ordinal ramp (src/lib/severity-colors.ts) — the local copy this
   // module used to carry was neither monotonic nor dark-theme correct.

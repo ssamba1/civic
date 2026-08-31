@@ -18,7 +18,7 @@ import {
   ReportTimeline,
 } from "@/components/resident/report-timeline";
 import { currencyForCitySlug, formatCost } from "@/lib/currency";
-import { CATEGORY_META, KNOWN_CITIES } from "@/lib/dashboard-data";
+import { KNOWN_CITIES, categoryMeta } from "@/lib/dashboard-data";
 import { listComments } from "@/lib/db/comments";
 import { getReportPhotos } from "@/lib/db/report-photos";
 import { publicToken } from "@/lib/public-report";
@@ -46,10 +46,8 @@ export async function generateMetadata({
   const name = KNOWN_CITIES[citySlug]?.name ?? KNOWN_CITIES.cumming.name;
   if (!report) return { title: `Report not found | Civic` };
   return {
-    title: `Civic | ${CATEGORY_META[report.category].label} report — ${name}`,
-    description: `Status and timeline for this ${CATEGORY_META[
-      report.category
-    ].label.toLowerCase()} report.`,
+    title: `Civic | ${categoryMeta(report.category).label} report — ${name}`,
+    description: `Status and timeline for this ${categoryMeta(report.category).label.toLowerCase()} report.`,
   };
 }
 
@@ -75,7 +73,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
     extraPhotos.length > 1 ? extraPhotos.map((p) => p.public_url) : null; // null → use existing single-img path
 
   const steps = await getReportTimeline(citySlug, reportId);
-  const meta = CATEGORY_META[report.category];
+  const meta = categoryMeta(report.category);
   const { lat, lng } = report.location;
   const isResolved = report.status === "closed";
   const isUnderFix =

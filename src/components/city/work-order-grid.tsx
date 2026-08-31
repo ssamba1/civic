@@ -52,7 +52,7 @@ import {
   DEFAULT_CREW_TYPES,
 } from "@/lib/crew-types";
 import { type CurrencyConfig, formatCost } from "@/lib/currency";
-import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
+import { CATEGORY_META, categorySlaHours } from "@/lib/dashboard-data";
 import type { GridCrewOption, GridReportRow } from "@/lib/dashboard-grid-data";
 import { categoryToTeam, TEAMS } from "@/lib/teams";
 import { useTheme } from "@/lib/theme";
@@ -624,7 +624,7 @@ function computeSla(row: GridReportRow): SlaState {
   if (!row.category || !SLA_BACKLOG_STATUSES.has(row.status)) {
     return { remaining: null, tier: "na", label: "—" };
   }
-  const target = CATEGORY_SLA_TARGETS[row.category as ReportCategory];
+  const target = categorySlaHours(row.category);
   if (!target) return { remaining: null, tier: "na", label: "—" };
   const ageH = Math.max(
     0,

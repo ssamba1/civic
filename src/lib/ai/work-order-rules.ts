@@ -118,13 +118,34 @@ export const CATEGORY_CREW_TYPES: Readonly<
 ) as Record<ReportCategory, CrewType | null>;
 
 /**
+ * Look up a category's rule, falling back to `other` for a key the table does
+ * not contain.
+ *
+ * RULES is exhaustive over the twelve built-in categories, and for a long time
+ * that was safe because the classifier could only emit that union. It no longer
+ * can: the classify pipeline offers the model BUILTIN ∪ a city's own
+ * issue_types, so reports arrive here carrying keys like
+ * `custom_sidewalk_heave`.
+ *
+ * Unguarded, `RULES[custom_key].department` throws TypeError and takes the whole
+ * pipeline down AFTER the classification has already been persisted — the report
+ * is saved, no work order is ever created, and it is never dispatched to anyone,
+ * while the resident sees a thanks screen. `other` is the honest default: zero
+ * estimate, no crew type, which routes it to a human instead of inventing a
+ * repair plan for work nobody has described yet.
+ */
+function ruleFor(category: string): WorkOrderRule {
+  return RULES[category as ReportCategory] ?? RULES.other;
+}
+
+/**
  * Deterministic repair cost floor in whole USD:
  *   labor_rate * (minutes / 60) + flat material cost.
  * Always computable from a classification alone — ships even when the AI
  * work-order generator is disabled or fails.
  */
-export function estimateCost(category: ReportCategory): number {
-  const rule = RULES[category];
+export function estimateCost(category: string): number {
+  const rule = ruleFor(category);
   const labor = LABOR_RATE_PER_HOUR * (rule.est_minutes / 60);
   return Math.round(labor + rule.material_cost);
 }
@@ -161,7 +182,7 @@ export function generateWorkOrder(
   classification: Classification,
   meta: ReportMeta,
 ): GeneratedWorkOrder {
-  const rule = RULES[classification.category];
+  const rule = ruleFor(classification.category);
 
   const emergencyOverride = classification.is_emergency ? 1 : 0;
 

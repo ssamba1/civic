@@ -3,7 +3,7 @@
 import { BarChart2, X } from "lucide-react";
 import { memo } from "react";
 import type { CategoryCount } from "@/lib/dashboard-data";
-import { CATEGORY_META } from "@/lib/dashboard-data";
+import { categoryMeta } from "@/lib/dashboard-data";
 import type { ReportCategory } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 
@@ -66,7 +66,7 @@ function CategoryChartInner({
 
       <div className="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1 mt-3">
         {data.map(({ category, count }) => {
-          const meta = CATEGORY_META[category];
+          const meta = categoryMeta(category);
           const pct = Math.round((count / maxCount) * 100);
 
           const isSelected = selectedCategory === category;

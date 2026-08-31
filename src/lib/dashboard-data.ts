@@ -218,6 +218,43 @@ export const CATEGORY_META: Record<
   other: { label: "Other", color: "#787783", icon: "help-circle" },
 };
 
+/**
+ * Display metadata for ANY category key, built-in or not.
+ *
+ * The classify pipeline writes `BUILTIN ∪ a city's own issue_types`, so a
+ * report's category is frequently a key that is not in CATEGORY_META at all —
+ * `custom_sidewalk_heave` and friends. Every surface that indexes CATEGORY_META
+ * directly crashes on `.label` for those, so index through here instead: a
+ * built-in when we have one, otherwise a label derived from the key, so even a
+ * type a city added this morning renders as words rather than a blank dot or a
+ * thrown render.
+ */
+export function categoryMeta(category: string): {
+  label: string;
+  color: string;
+  icon: string;
+} {
+  const builtin = CATEGORY_META[category as ReportCategory];
+  if (builtin) return builtin;
+  return {
+    label: humanizeCategoryKey(category),
+    color: CATEGORY_META.other.color,
+    icon: CATEGORY_META.other.icon,
+  };
+}
+
+/** "custom_oyster_lease" -> "Oyster lease". Last-resort label for a key no
+ *  catalog knows — a city added it this morning and we still have to print
+ *  something a person can read. */
+function humanizeCategoryKey(key: string): string {
+  const words = key
+    .replace(/^custom_/, "")
+    .replace(/_/g, " ")
+    .trim();
+  if (words === "") return "Uncategorised";
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 /* ------------------------------------------------------------------
    Per-category SLA targets (hours to resolution). Used by analytics
    to compute breach % per category. Values reflect operational urgency:
@@ -238,6 +275,17 @@ export const CATEGORY_SLA_TARGETS: Record<ReportCategory, number> = {
   faded_signage: 240,
   other: 168,
 };
+
+/** Per-category SLA window in hours, falling back to the `other` window for a
+ *  city-defined key. Same exhaustive-over-builtins hazard as CATEGORY_META:
+ *  an `undefined` here propagates into NaN date arithmetic, and
+ *  `new Date(NaN).toISOString()` throws. */
+export function categorySlaHours(category: string): number {
+  return (
+    CATEGORY_SLA_TARGETS[category as ReportCategory] ??
+    CATEGORY_SLA_TARGETS.other
+  );
+}
 
 /* ------------------------------------------------------------------
    Data fetching

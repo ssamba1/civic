@@ -12,7 +12,7 @@ import {
 import { LiabilityBadge } from "@/components/liability/liability-badge";
 import { teamIcon } from "@/components/teams/team-icon";
 import { formatCost } from "@/lib/currency";
-import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
+import { CATEGORY_META, categorySlaHours } from "@/lib/dashboard-data";
 import type { GridCrewOption, GridReportRow } from "@/lib/dashboard-grid-data";
 import { SEVERITY_HUE, severityHue } from "@/lib/severity-colors";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
@@ -327,7 +327,7 @@ export function WorkOrderDetail({
   const label = row.category ? meta.label : "Unclassified";
   const team = TEAMS[categoryToTeam(cat)];
   const TeamIcon = teamIcon(team.icon);
-  const sla = row.category ? CATEGORY_SLA_TARGETS[cat] : undefined;
+  const sla = row.category ? categorySlaHours(cat) : undefined;
   const mapsHref = row.address
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
         row.address,

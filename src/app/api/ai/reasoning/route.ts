@@ -4,11 +4,7 @@ import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 import { checkAndRecordGeminiCall } from "@/lib/ai/rate-limiter";
 import { getReasoning } from "@/lib/ai/reasoning-ai";
 import type { DashboardReport } from "@/lib/dashboard-data";
-import {
-  CATEGORY_META,
-  CATEGORY_SLA_TARGETS,
-  getReportCorpus,
-} from "@/lib/dashboard-data";
+import { CATEGORY_META, CATEGORY_SLA_TARGETS, categoryMeta, categorySlaHours, getReportCorpus } from "@/lib/dashboard-data";
 import { createSSRClient, getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
 
@@ -129,8 +125,8 @@ export async function POST(request: Request) {
               address: report.address,
               created_at: report.created_at,
             },
-            CATEGORY_SLA_TARGETS[report.category],
-            CATEGORY_META[report.category].label,
+            categorySlaHours(report.category),
+            categoryMeta(report.category).label,
             () => templateReasoningForReport(report),
           )
         ).payload
@@ -223,8 +219,8 @@ function reportFromBody(
 function templateReasoningForReport(
   report: DashboardReport,
 ): Omit<ReasoningResponse, "reportId"> {
-  const categoryMeta = CATEGORY_META[report.category];
-  const slaHours = CATEGORY_SLA_TARGETS[report.category];
+  const meta = categoryMeta(report.category);
+  const slaHours = categorySlaHours(report.category);
   const ageDays = Math.floor(
     (Date.now() - new Date(report.created_at).getTime()) /
       (1000 * 60 * 60 * 24),
@@ -249,7 +245,7 @@ function templateReasoningForReport(
       },
       {
         title: "Timeline & Logistics",
-        value: `Standard scheduling window, no overtime authorized. Batched with other low-priority ${categoryMeta.label.toLowerCase()} items for efficient route planning.`,
+        value: `Standard scheduling window, no overtime authorized. Batched with other low-priority ${meta.label.toLowerCase()} items for efficient route planning.`,
       },
       {
         title: "Impact Assessment",
@@ -369,7 +365,7 @@ function templateReasoningForReport(
       },
       {
         title: "Examples",
-        value: `Cosmetic surface wear, minor efficiency degradation, non-critical ${categoryMeta.label.toLowerCase()} feature degradation that does not obstruct use.`,
+        value: `Cosmetic surface wear, minor efficiency degradation, non-critical ${meta.label.toLowerCase()} feature degradation that does not obstruct use.`,
       },
       {
         title: "Public Impact",
@@ -399,7 +395,7 @@ function templateReasoningForReport(
       },
       {
         title: "Examples",
-        value: `Moderate inconvenience to specific user groups, ${categoryMeta.label.toLowerCase()} conditions degraded but usable, time-limited issues (e.g., weather-dependent).`,
+        value: `Moderate inconvenience to specific user groups, ${meta.label.toLowerCase()} conditions degraded but usable, time-limited issues (e.g., weather-dependent).`,
       },
       {
         title: "Public Impact",
@@ -429,7 +425,7 @@ function templateReasoningForReport(
       },
       {
         title: "Examples",
-        value: `Risk of minor injury if unaddressed, significant service disruption on high-traffic ${categoryMeta.label.toLowerCase()} routes, accessibility barriers for vulnerable populations.`,
+        value: `Risk of minor injury if unaddressed, significant service disruption on high-traffic ${meta.label.toLowerCase()} routes, accessibility barriers for vulnerable populations.`,
       },
       {
         title: "Public Impact",
@@ -459,7 +455,7 @@ function templateReasoningForReport(
       },
       {
         title: "Examples",
-        value: `Immediate safety risk to pedestrians or vehicles, citywide ${categoryMeta.label.toLowerCase()} service disruption, hazardous conditions requiring area closure or detour.`,
+        value: `Immediate safety risk to pedestrians or vehicles, citywide ${meta.label.toLowerCase()} service disruption, hazardous conditions requiring area closure or detour.`,
       },
       {
         title: "Public Impact",
@@ -489,7 +485,7 @@ function templateReasoningForReport(
       },
       {
         title: "Examples",
-        value: `Imminent risk of death or serious injury, total ${categoryMeta.label.toLowerCase()} infrastructure collapse, mass service disruption affecting emergency vehicle access or critical city systems.`,
+        value: `Imminent risk of death or serious injury, total ${meta.label.toLowerCase()} infrastructure collapse, mass service disruption affecting emergency vehicle access or critical city systems.`,
       },
       {
         title: "Public Impact",
@@ -513,7 +509,7 @@ function templateReasoningForReport(
     ],
   };
 
-  const reasoning = `${categoryMeta.label} incident at ${report.address}. Severity ${report.severity}/5, age ${ageDays}d, status: ${report.status}. SLA: ${slaHours}h.`;
+  const reasoning = `${meta.label} incident at ${report.address}. Severity ${report.severity}/5, age ${ageDays}d, status: ${report.status}. SLA: ${slaHours}h.`;
 
   return {
     reasoning,

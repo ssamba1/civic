@@ -1,12 +1,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
-import {
-  CATEGORY_META,
-  CATEGORY_SLA_TARGETS,
-  type DashboardReport,
-  getReportCorpus,
-} from "@/lib/dashboard-data";
+import { categoryMeta, categorySlaHours, getReportCorpus, type DashboardReport } from "@/lib/dashboard-data";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { HOUR_MS } from "@/lib/utils/time-constants";
 
@@ -82,7 +77,7 @@ function computeFixBy(
     return undefined;
   }
   if (dueAt) return dueAt;
-  const targetHours = CATEGORY_SLA_TARGETS[category];
+  const targetHours = categorySlaHours(category);
   if (!targetHours) return undefined;
   return new Date(Date.parse(filedAt) + targetHours * HOUR_MS).toISOString();
 }
@@ -106,7 +101,7 @@ function toPublicStatus(status: ReportStatus): {
 }
 
 function toView(report: DashboardReport): PublicReportView {
-  const meta = CATEGORY_META[report.category];
+  const meta = categoryMeta(report.category);
   const { publicStatus, label } = toPublicStatus(report.status);
   return {
     token: publicToken(report.id),
@@ -207,7 +202,7 @@ export async function resolvePublicReport(
     const wo = Array.isArray(data.work_orders)
       ? (data.work_orders[0] ?? null)
       : data.work_orders;
-    const meta = CATEGORY_META[category];
+    const meta = categoryMeta(category);
     const { publicStatus, label } = toPublicStatus(data.status);
 
     return {

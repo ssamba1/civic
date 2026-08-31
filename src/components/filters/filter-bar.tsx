@@ -22,7 +22,7 @@ import {
   useState,
 } from "react";
 import BottomSheet from "@/components/ui/bottom-sheet";
-import { CATEGORY_META } from "@/lib/dashboard-data";
+import { CATEGORY_META, categoryMeta } from "@/lib/dashboard-data";
 import { useFilters } from "@/lib/filters/context";
 import {
   type DateRangePreset,
@@ -649,7 +649,7 @@ export function FilterBar() {
           {/* ---- Active category chips + reset ---- */}
           <div className="ml-auto flex flex-wrap items-center gap-1.5">
             {filter.categories.map((cat) => {
-              const meta = CATEGORY_META[cat];
+              const meta = categoryMeta(cat);
               return (
                 <button
                   key={cat}

@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { ReportDetail } from "@/components/analytics/report-detail";
 import { Drawer } from "@/components/ui/drawer";
 import type { DashboardReport } from "@/lib/dashboard-data";
-import { CATEGORY_META } from "@/lib/dashboard-data";
+import { CATEGORY_META, categoryMeta } from "@/lib/dashboard-data";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import { cn } from "@/lib/utils/cn";
 import { lockBodyScroll } from "@/lib/utils/scroll-lock";
@@ -73,7 +73,7 @@ export function ReportsExplorer({
   const reportListContent = (
     <ul className="flex flex-col p-2">
       {reports.map((report) => {
-        const meta = CATEGORY_META[report.category];
+        const meta = categoryMeta(report.category);
         const isSelected = report.id === selectedId;
 
         return (

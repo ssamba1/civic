@@ -1,6 +1,6 @@
 import { type CurrencyConfig, formatCost, USD } from "@/lib/currency";
 import type { DashboardReport } from "@/lib/dashboard-data";
-import { CATEGORY_META } from "@/lib/dashboard-data";
+import { categoryMeta } from "@/lib/dashboard-data";
 import { DEMO_REPORTER_ID } from "@/lib/demo-reports";
 import { STATUS_LABEL } from "@/lib/status";
 import type { ReportStatus } from "@/lib/types";
@@ -125,7 +125,7 @@ export function renderPopupHTML(
   report: DashboardReport,
   currency: CurrencyConfig = USD,
 ): string {
-  const meta = CATEGORY_META[report.category];
+  const meta = categoryMeta(report.category);
   const statusLabel = STATUS_LABEL[report.status];
   const statusColor = STATUS_COLOR[report.status];
   const cost = formatCost(

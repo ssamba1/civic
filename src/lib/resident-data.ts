@@ -8,12 +8,7 @@ import {
   type TrendPoint,
 } from "@/lib/analytics-data";
 import type { DashboardReport } from "@/lib/dashboard-data";
-import {
-  CATEGORY_META,
-  fetchCity,
-  fetchCityStats,
-  getReportCorpus,
-} from "@/lib/dashboard-data";
+import { categoryMeta, fetchCity, fetchCityStats, getReportCorpus } from "@/lib/dashboard-data";
 import { createSSRClient, getAuthUser } from "@/lib/db/ssr-client";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { createLogger } from "@/lib/logger";
@@ -725,7 +720,7 @@ async function syntheticNotifications(
             ? t.dispatched
             : t.filed; // open → acknowledge at filing time
     const label = STATUS_LABEL[r.status];
-    const catLabel = CATEGORY_META[r.category].label;
+    const catLabel = categoryMeta(r.category).label;
     const isResolved = r.status === "closed";
     const isReceived = r.status === "open";
 
@@ -747,7 +742,7 @@ async function syntheticNotifications(
       reportSnapshot: {
         category: r.category,
         categoryLabel: catLabel,
-        categoryColor: CATEGORY_META[r.category].color,
+        categoryColor: categoryMeta(r.category).color,
         status: r.status,
         statusLabel: label,
         address: r.address,

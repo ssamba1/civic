@@ -14,10 +14,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import type { ReasoningResponse } from "@/app/api/ai/reasoning/route";
 import { Stat, StatGrid } from "@/components/analytics/bento-primitives";
 import { formatCost } from "@/lib/currency";
-import {
-  CATEGORY_SLA_TARGETS,
-  type DashboardReport,
-} from "@/lib/dashboard-data";
+import { categorySlaHours, type DashboardReport } from "@/lib/dashboard-data";
 import {
   buildTimeline,
   type OverrideEvent,
@@ -312,7 +309,7 @@ function DelegationRowExpandedInner({
   const teamQueue = workloads.get(effectiveTeam)?.openCount ?? 0;
 
   const ageHours = (Date.now() - Date.parse(report.created_at)) / 3_600_000;
-  const target = CATEGORY_SLA_TARGETS[report.category];
+  const target = categorySlaHours(report.category);
   const pct = Math.round((ageHours / target) * 100);
   const slaColor =
     pct > 100

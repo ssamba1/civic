@@ -4,7 +4,7 @@ import { ArrowRight, History } from "lucide-react";
 import { memo, useMemo } from "react";
 import { Tile } from "@/components/analytics/bento-primitives";
 import { useCategoryOverrides } from "@/lib/category-overrides";
-import { CATEGORY_META } from "@/lib/dashboard-data";
+import { categoryMeta } from "@/lib/dashboard-data";
 import { TEAMS } from "@/lib/teams";
 import { useTeamOverrides } from "@/lib/teams-overrides";
 import { timeAgo } from "@/lib/utils/time-ago";
@@ -41,7 +41,7 @@ function RoutingChangesLogInner() {
 
     for (const events of Object.values(categoryHistory)) {
       for (const e of events) {
-        const meta = CATEGORY_META[e.category];
+        const meta = categoryMeta(e.category);
         out.push({
           id: `c-${e.category}-${e.ts}`,
           subject: meta?.label ?? e.category,

@@ -8,7 +8,7 @@ import type {
 } from "@/app/api/ai/reasoning/route";
 import { type CurrencyConfig, formatCost } from "@/lib/currency";
 import type { DashboardReport } from "@/lib/dashboard-data";
-import { CATEGORY_META, CATEGORY_SLA_TARGETS } from "@/lib/dashboard-data";
+import { CATEGORY_SLA_TARGETS, categoryMeta, categorySlaHours } from "@/lib/dashboard-data";
 import { SEVERITY_HUE } from "@/lib/severity-colors";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import type { ReportStatus } from "@/lib/types";
@@ -286,9 +286,9 @@ export function ReportDetail({ report }: { report: DashboardReport | null }) {
     );
   }
 
-  const meta = CATEGORY_META[report.category];
+  const meta = categoryMeta(report.category);
   const sevColor = SEVERITY_COLORS[report.severity];
-  const slaTargetHours = CATEGORY_SLA_TARGETS[report.category];
+  const slaTargetHours = categorySlaHours(report.category);
   const age = ageDays(report.created_at);
   const { lat, lng } = report.location;
 

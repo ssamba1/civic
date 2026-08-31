@@ -3,7 +3,7 @@
 import { Clock, ListChecks, TriangleAlert } from "lucide-react";
 import { memo } from "react";
 import type { ResolutionBucket } from "@/lib/analytics-data";
-import { CATEGORY_META } from "@/lib/dashboard-data";
+import { categoryMeta } from "@/lib/dashboard-data";
 import type { AttentionItem } from "@/lib/filters/derive";
 import {
   STATUS_LABEL,
@@ -66,7 +66,7 @@ function NeedsAttentionInner({
       ) : (
         <ul className="mt-1 flex flex-col">
           {items.map((item) => {
-            const meta = CATEGORY_META[item.category];
+            const meta = categoryMeta(item.category);
             const isFocused = focusedId === item.id;
             return (
               <li key={item.id}>

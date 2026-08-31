@@ -10,11 +10,7 @@ import type {
   StatusFunnelStep,
   TrendPoint,
 } from "@/lib/analytics-data";
-import {
-  CATEGORY_META,
-  CATEGORY_SLA_TARGETS,
-  type DashboardReport,
-} from "@/lib/dashboard-data";
+import { CATEGORY_SLA_TARGETS, categoryMeta, categorySlaHours, type DashboardReport } from "@/lib/dashboard-data";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { DAY_MS, HOUR_MS } from "@/lib/utils/time-constants";
 
@@ -73,7 +69,7 @@ function slaCompliance(reports: DashboardReport[]): number {
   const closed = reports.filter((r) => r.status === "closed");
   if (!closed.length) return 0;
   const met = closed.filter(
-    (r) => resolutionHours(r) <= CATEGORY_SLA_TARGETS[r.category],
+    (r) => resolutionHours(r) <= categorySlaHours(r.category),
   ).length;
   return (met / closed.length) * 100;
 }
@@ -268,14 +264,14 @@ export function deriveCategoryResolution(
   return Array.from(byCat.entries())
     .map(([category, v]) => ({
       category,
-      label: CATEGORY_META[category].label,
-      color: CATEGORY_META[category].color,
+      label: categoryMeta(category).label,
+      color: categoryMeta(category).color,
       avg_hours: v.closedHours.length
         ? Math.round(
             v.closedHours.reduce((s, h) => s + h, 0) / v.closedHours.length,
           )
         : 0,
-      target_hours: CATEGORY_SLA_TARGETS[category],
+      target_hours: categorySlaHours(category),
       count: v.count,
     }))
     .sort((a, b) => b.count - a.count);
@@ -377,8 +373,8 @@ export function deriveRecurringHotspots(
     .filter((c) => c.total >= minCount && c.weeks.size >= minEpisodes)
     .map((c) => ({
       category: c.category,
-      label: CATEGORY_META[c.category].label,
-      color: CATEGORY_META[c.category].color,
+      label: categoryMeta(c.category).label,
+      color: categoryMeta(c.category).color,
       lng: c.lngSum / c.total,
       lat: c.latSum / c.total,
       total: c.total,
@@ -440,7 +436,7 @@ export function deriveSlaRisk(
   for (const r of reports) {
     if (!BACKLOG_STATUSES.has(r.status)) continue;
     const ageH = Math.max(0, (now - Date.parse(r.created_at)) / HOUR_MS);
-    const target = CATEGORY_SLA_TARGETS[r.category];
+    const target = categorySlaHours(r.category);
     if (ageH >= target) breached++;
     else if (ageH >= target * SLA_RISK_THRESHOLD) at_risk++;
     else on_track++;
@@ -487,7 +483,7 @@ export function deriveNeedsAttention(
         severity: r.severity,
         created_at: r.created_at,
         age_hours,
-        breaches_sla: age_hours >= CATEGORY_SLA_TARGETS[r.category],
+        breaches_sla: age_hours >= categorySlaHours(r.category),
       };
     })
     .sort((a, b) => b.severity - a.severity || b.age_hours - a.age_hours)

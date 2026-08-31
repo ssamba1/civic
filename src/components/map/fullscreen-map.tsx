@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/liquid-glass";
 import { useCategoryOverrides } from "@/lib/category-overrides";
 import type { DashboardReport } from "@/lib/dashboard-data";
-import { CATEGORY_META } from "@/lib/dashboard-data";
+import { categoryMeta } from "@/lib/dashboard-data";
 import { useDemoReports } from "@/lib/demo-reports";
 import { STATUS_LABEL } from "@/lib/status";
 import {
@@ -314,7 +314,7 @@ export function FullscreenMapOrchestrator({
   const categoriesList = useMemo(() => {
     const list: { key: ReportCategory; label: string }[] = [];
     allReports.forEach((r) => {
-      const meta = CATEGORY_META[r.category];
+      const meta = categoryMeta(r.category);
       if (meta && !list.find((item) => item.key === r.category)) {
         list.push({ key: r.category, label: meta.label });
       }
@@ -587,7 +587,7 @@ export function FullscreenMapOrchestrator({
             </div>
           ) : (
             filteredReports.map((report, index) => {
-              const meta = CATEGORY_META[report.category];
+              const meta = categoryMeta(report.category);
               const isSelected = focusedReportId === report.id;
               const isMenuOpen = activeRouteMenuId === report.id;
               const ownerTeamId = categoryToTeam(report.category);

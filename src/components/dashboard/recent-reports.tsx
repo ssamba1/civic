@@ -3,7 +3,7 @@
 import { Clock, Maximize2 } from "lucide-react";
 import { memo, useEffect, useRef } from "react";
 import type { DashboardReport } from "@/lib/dashboard-data";
-import { CATEGORY_META } from "@/lib/dashboard-data";
+import { categoryMeta } from "@/lib/dashboard-data";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import { cn } from "@/lib/utils/cn";
 import { timeAgo } from "@/lib/utils/time-ago";
@@ -115,7 +115,7 @@ function RecentReportsInner({
         className="overflow-y-auto custom-scrollbar -mx-1 px-1 flex-1 scroll-smooth flex flex-col mt-2"
       >
         {reports.map((report, index) => {
-          const meta = CATEGORY_META[report.category];
+          const meta = categoryMeta(report.category);
           const isFocused = focusedId === report.id;
           const isDemo = report.demo === true;
 

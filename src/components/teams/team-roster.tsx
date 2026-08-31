@@ -13,7 +13,7 @@ import {
 } from "@/components/teams/status-mini-bar";
 import { teamIcon } from "@/components/teams/team-icon";
 import { TeamSetupModal } from "@/components/teams/team-setup-modal";
-import { CATEGORY_META } from "@/lib/dashboard-data";
+import { categoryMeta } from "@/lib/dashboard-data";
 import { TEAMS, type TeamId } from "@/lib/teams";
 import type { TeamWorkload } from "@/lib/teams-data";
 import { cn } from "@/lib/utils/cn";
@@ -71,7 +71,7 @@ function TeamRosterInner({
 
 function buildTip(w: TeamWorkload) {
   const team = TEAMS[w.teamId];
-  const topCatLabel = w.topCategory ? CATEGORY_META[w.topCategory].label : "—";
+  const topCatLabel = w.topCategory ? categoryMeta(w.topCategory).label : "—";
   const closureRate =
     w.total > 0 ? Math.round((w.closedCount / w.total) * 100) : 0;
   return {

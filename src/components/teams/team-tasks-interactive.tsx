@@ -8,7 +8,7 @@ import {
 } from "@/components/teams/team-task-detail";
 import { ResizableSplit } from "@/components/ui/resizable-split";
 import type { DashboardReport } from "@/lib/dashboard-data";
-import { CATEGORY_META } from "@/lib/dashboard-data";
+import { categoryMeta } from "@/lib/dashboard-data";
 import { useReportCorpus } from "@/lib/filters/context";
 import { STATUS_LABEL, STATUS_TONE, toneTextClass } from "@/lib/status";
 import type { TeamId } from "@/lib/teams";
@@ -253,7 +253,7 @@ function TaskRow({
   selected: boolean;
   onClick: () => void;
 }) {
-  const meta = CATEGORY_META[report.category];
+  const meta = categoryMeta(report.category);
   const isDemo = report.demo === true;
   const hasAfter = !!report.afterPhoto;
 

@@ -12,7 +12,7 @@ import {
 import { TeamPicker } from "@/components/teams/team-picker";
 import { useCategoryOverrides } from "@/lib/category-overrides";
 import type { DashboardReport } from "@/lib/dashboard-data";
-import { CATEGORY_META } from "@/lib/dashboard-data";
+import { categoryMeta } from "@/lib/dashboard-data";
 import type { OverrideEvent } from "@/lib/delegation-history";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
 import { categoryToTeam, type TeamId } from "@/lib/teams";
@@ -223,7 +223,7 @@ function DelegationRow({
   const [expanded, setExpanded] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const firstRun = useRef(true);
-  const meta = CATEGORY_META[report.category];
+  const meta = categoryMeta(report.category);
   const defaultTeam = categoryToTeam(report.category);
   const effectiveTeam = override ?? defaultTeam;
   const isOverridden = override !== undefined && override !== defaultTeam;

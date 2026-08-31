@@ -17,7 +17,7 @@ import { createPortal } from "react-dom";
 import { closeReportWorkOrder } from "@/app/staff/actions";
 import { Button } from "@/components/ui/button";
 import type { DashboardReport } from "@/lib/dashboard-data";
-import { CATEGORY_META } from "@/lib/dashboard-data";
+import { categoryMeta } from "@/lib/dashboard-data";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { blurFacesAndPlates } from "@/lib/privacy/blur";
 import { STATUS_LABEL, statusChipClass } from "@/lib/status";
@@ -28,7 +28,7 @@ import { timeAgo } from "@/lib/utils/time-ago";
 
 /** Neutral dot + category label + status pill — shared by every shell header. */
 function DetailTitle({ report }: { report: DashboardReport }) {
-  const meta = CATEGORY_META[report.category];
+  const meta = categoryMeta(report.category);
   return (
     <div className="flex min-w-0 items-center gap-2">
       <span
@@ -93,7 +93,7 @@ export function TeamTaskDetail({ report, open, onClose }: TeamTaskDetailProps) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={`${CATEGORY_META[report.category].label} task`}
+        aria-label={`${categoryMeta(report.category).label} task`}
         className={cn(
           "relative flex w-full flex-col overflow-y-auto border-hairline bg-surface text-foreground shadow-[0_8px_60px_rgba(0,0,0,0.6)] custom-scrollbar pb-safe",
           // Mobile: bottom sheet. sm+: right drawer.
