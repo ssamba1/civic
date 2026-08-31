@@ -1,8 +1,28 @@
+import path from "node:path";
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+
+  // Pin the workspace root to THIS directory.
+  //
+  // Next infers the root by walking up for lockfiles, and a stray
+  // package-lock.json in a parent directory (a home directory, a monorepo you
+  // are nested inside) wins over this project's own pnpm workspace. The
+  // inferred root then decides where standalone output is written: with the
+  // wrong root the entry point lands at `.next/standalone/<projectDir>/server.js`
+  // instead of `.next/standalone/server.js`, and `pnpm start:prod` — which is
+  // the documented way to run this in production — fails with MODULE_NOT_FOUND.
+  // `prod:assets` copies static and public to the wrong place for the same
+  // reason, so even correcting the path by hand serves an unstyled app.
+  //
+  // Next warns about the ambiguity on every build. The warning is the whole
+  // bug; pinning the root is the fix.
+  outputFileTracingRoot: path.join(__dirname),
+  turbopack: {
+    root: path.join(__dirname),
+  },
 
   experimental: {
     turbopackFileSystemCacheForDev: true,
