@@ -307,8 +307,8 @@ Note the pothole's confidence: **0.60**. It still routed. Confidence is shown to
 A city can mount a phone on a truck that already drives every street each week. That is a far denser source of pavement condition than resident reports — and a far more expensive one, if every frame goes to a vision model.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/video-dark.png">
-  <img alt="The video page: a dashcam clip with per-frame detector boxes, 375 frames scanned, 531 detections, 33 clusters and 27 reports created" src="docs/images/video.png">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/video-dark.jpg">
+  <img alt="The video page: a dashcam clip with per-frame detector boxes, 375 frames scanned, 531 detections, 33 clusters and 27 reports created" src="docs/images/video.jpg">
 </picture>
 
 So the model is the last step, not the first:

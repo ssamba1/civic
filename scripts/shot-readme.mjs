@@ -77,6 +77,21 @@ async function forceTheme(page, theme) {
   }, theme);
 }
 
+/** PNG -> JPEG for photography-heavy surfaces, which PNG stores terribly. */
+function toJpeg(name) {
+  try {
+    execFileSync(
+      "ffmpeg",
+      ["-y", "-i", `${OUT}/${name}.png`, "-q:v", "4", `${OUT}/${name}.jpg`],
+      { stdio: "ignore" },
+    );
+    rmSync(`${OUT}/${name}.png`, { force: true });
+    console.log(`  ${name}.jpg  (converted, ${name}.png removed)`);
+  } catch {
+    console.warn(`  ffmpeg missing: ${name}.png left, but the README wants .jpg`);
+  }
+}
+
 const browser = await chromium.launch();
 
 // -- Staff surfaces, both themes -------------------------------------------
@@ -99,7 +114,11 @@ for (const theme of ["light", "dark"]) {
     settle: 3500,
   });
   await shot(page, `/city/${CITY}/grid`, `grid${suffix}`, { settle: 3500 });
+  // Captured, then converted below: this surface is dominated by a video
+  // frame, and photography in PNG costs ~1.8 MB against ~370 KB as JPEG with
+  // no visible difference. The README references the .jpg.
   await shot(page, `/city/${CITY}/video`, `video${suffix}`, { settle: 3500 });
+  toJpeg(`video${suffix}`);
   await ctx.close();
 }
 
@@ -122,17 +141,7 @@ for (const theme of ["light", "dark"]) {
   // The basemap is mostly photography, which PNG stores terribly: the same
   // frame is over a megabyte as PNG and a fraction of that as JPEG with no
   // visible difference. The README references map.jpg.
-  try {
-    execFileSync(
-      "ffmpeg",
-      ["-y", "-i", `${OUT}/map.png`, "-q:v", "4", `${OUT}/map.jpg`],
-      { stdio: "ignore" },
-    );
-    rmSync(`${OUT}/map.png`, { force: true });
-    console.log("  map.jpg  (converted, map.png removed)");
-  } catch {
-    console.warn("  ffmpeg missing: map.png left, but the README wants map.jpg");
-  }
+  toJpeg("map");
 }
 
 // -- Resident surfaces, on a phone, both themes ----------------------------
