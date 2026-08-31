@@ -96,18 +96,33 @@ production build were all green the entire time. It was found by opening the
 app and reading a screenshot. The fix was three accessors with an `other`
 fallback, not twenty patches.
 
-**3. Every one of our real bugs failed silently.** A `200 OK` with an empty
+**3. The demo can be healthy while the product is broken, and seed data is how
+that happens.** Hours before submitting, we filed a report through the UI for
+the first time in a while. It came back classified `other`, confidence 0, no
+crew, "queued for manual triage". The pipeline was downloading the photo from
+`{city}/{report}.jpg`; multi-photo submission had moved uploads to
+`{city}/{report}/{idx}.jpg` some time earlier. Storage answered "Object not
+found", a guard written to keep a missing photo from killing the pipeline
+swallowed it exactly as designed, and **every report filed by a human lost its
+AI classification** — while the dashboard looked perfect, because the seed
+script writes classifications directly instead of going through the pipeline.
+The unit test asserted the old path, so it had not missed the bug so much as
+locked it in. Both sides now derive the path from the same function the
+uploader uses. Same photo after the fix: `pothole`, confidence 0.95, routed to
+public works / paving, 30 minutes, $98.
+
+**4. Every one of our real bugs failed silently.** A `200 OK` with an empty
 array. A saved report with no job. An email that rendered the literal word
 `undefined` to a resident. A build that *warned* instead of failing and wrote
 its entry point to the wrong directory. None of them threw where anyone was
 looking. We now distrust any code path whose failure mode is "returns nothing".
 
-**4. Verify with the command CI runs, not a friendlier version of it.** We
+**5. Verify with the command CI runs, not a friendlier version of it.** We
 checked lint with `biome check --write`, which fixes problems and then reports
 success. CI runs `biome check`, which reports them and exits 1. The difference
 turned a "verified" push into a red badge.
 
-**5. The database decides your data's shape at runtime, and TypeScript cannot
+**6. The database decides your data's shape at runtime, and TypeScript cannot
 help.** PostgREST returns an embedded relation as an array for to-many and a
 bare object for to-one — and the shape flips the day a migration adds a unique
 constraint. Our Open311 export validated arrays only, so every row failed

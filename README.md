@@ -455,9 +455,15 @@ Every number here was produced by running the command in the middle column on th
 | End to end | `pnpm test:e2e` | 7 Playwright specs |
 | Privacy audit | `pnpm audit:privacy` | **No raw-photo leaks across 5 cities** |
 | Live health | `pnpm health` | `{"status":"ok","checks":{"database":true,"ai":true}}` |
-| Accessibility | Lighthouse, `/city/[slug]` | **100** accessibility, **100** best practices |
+| Accessibility | Lighthouse | **100 / 100 / 100** — a11y, best practices, SEO — on `/` and `/report`, mobile |
+| Core loop, end to end | a real photo through `/report` | Filed on a phone viewport → classified **pothole at 0.95** → work order at public works / paving / 30 min / $98 |
 
 The seeded pilot city holds **158 reports, 108 work orders, 9 crews and 66 users**, across 11 divisions and 12 categories.
+
+Accessibility, best practices and SEO are structural and hold in any build, so
+those numbers are quoted. **Performance is not quoted**: the only Lighthouse run
+here was against a dev server, where the number measures the dev bundler rather
+than the product, and a figure like that is worth nothing to a reader.
 
 ### Open311 is the product, not an integration
 
