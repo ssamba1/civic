@@ -13,10 +13,15 @@
 
 export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE !== "0";
 
-// Cross-links for the environment switch button. Overridable per-project
-// so preview deployments can point at each other if needed.
-export const DEMO_SITE_URL =
-  process.env.NEXT_PUBLIC_DEMO_SITE_URL ?? "https://civic-city-demo.vercel.app";
+// Cross-links for the environment switch button, set per deployment.
+//
+// These used to carry hardcoded fallbacks naming two specific Vercel
+// deployments. EnvSwitch renders in the resident nav on every build, so any
+// deployment that had not overridden them showed a viewer a button that
+// navigated them off this install entirely — onto someone else's. A
+// single-deployment install is the normal case, and a cross-link with no
+// counterpart is worse than an absent one, so unset now means undefined and
+// EnvSwitch renders nothing.
+export const DEMO_SITE_URL = process.env.NEXT_PUBLIC_DEMO_SITE_URL || undefined;
 export const TESTING_SITE_URL =
-  process.env.NEXT_PUBLIC_TESTING_SITE_URL ??
-  "https://civic-testing.vercel.app";
+  process.env.NEXT_PUBLIC_TESTING_SITE_URL || undefined;
