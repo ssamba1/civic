@@ -161,7 +161,11 @@ export async function notifyReportStatus(
       case "closed":
         subject = `Your ${noun} report was resolved`;
         heading = "Resolved — here's what got done";
-        body = `${RESOLUTION_NOTES[category]} Thanks for helping keep the city running.`;
+        // RESOLUTION_NOTES is exhaustive over the built-in categories only,
+        // and a city's own issue types are not in it. Unguarded this rendered
+        // "undefined Thanks for helping keep the city running." into a
+        // resident's resolution email.
+        body = `${RESOLUTION_NOTES[category] ?? RESOLUTION_NOTES.other} Thanks for helping keep the city running.`;
         withPhoto = photoUrl; // the operational-transparency lever
         // One-tap CSAT: recorded by the public status page, no login needed.
         if (url) {

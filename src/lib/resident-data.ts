@@ -418,7 +418,11 @@ export async function getReportTimeline(
       done: reached.resolved,
       current: false,
       // The "what was done" note — operational transparency on close.
-      ...(reached.resolved ? { note: RESOLUTION_NOTES[report.category] } : {}),
+      // Same exhaustive-over-builtins table as status-notify: a city-defined
+      // issue type is absent, so fall back rather than showing an empty note.
+      ...(reached.resolved
+        ? { note: RESOLUTION_NOTES[report.category] ?? RESOLUTION_NOTES.other }
+        : {}),
     },
   ];
 
