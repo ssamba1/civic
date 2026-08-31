@@ -30,6 +30,15 @@ Nobody reads a form in the middle. **The work order is the report, transformed.*
 
 The pilot city is Cumming, Georgia.
 
+The same pipeline runs on video. A phone mounted on a truck that already
+drives every street produces far denser data than residents ever will — and a
+ruinous model bill, if every frame goes to a vision model. So the model is the
+*last* step: a local detector scans the frames for free, Postgres clusters the
+detections, and only a cluster that survives a confidence threshold costs a
+model call. On the seeded clip, **375 frames became 531 detections, 33
+clusters, and 27 reports** — with the model asked about a fraction of those 33.
+See [the video vertical](#the-video-vertical-how-to-use-a-model-without-a-model-bill).
+
 We built it because the backlog everyone blames on budget or on crews is
 usually a backlog of *unstaffed triage* — and reading a photograph into a
 category is the one thing a vision model is unambiguously good at. The
@@ -70,7 +79,7 @@ Pick the path that matches the time you have. Every deep section is collapsed, s
 
 1. [The problem](#1-the-problem): the 311 backlog, who it serves, what it is worth
 2. [What makes it different](#2-what-makes-it-different): five ideas, and what we refused to build
-3. [How it works](#3-how-it-works): the pipeline, the dispatcher, a worked example, the video vertical, data model, stack, security
+3. [How it works](#3-how-it-works): the pipeline, the dispatcher, a worked example, [the video vertical](#the-video-vertical-how-to-use-a-model-without-a-model-bill), data model, stack, security
 4. [Proof it works](#4-proof-it-works): every check, the live Open311 export, CI, and a real bug class
 5. [The two products](#5-the-two-products): what a resident sees, what a director sees
 6. [Honest limits](#6-honest-limits): what we are not claiming
@@ -310,10 +319,7 @@ Eight categories reach **seven crews across five departments**, and one of them 
 
 Note the pothole's confidence: **0.60**. It still routed. Confidence is shown to staff, never used as a gate, because a report the model was unsure about is exactly the one that most needs a human to see it — and dropping it would be the one failure a resident would never forgive.
 
-<details>
-<summary><b>The video vertical: how to use a model without a model bill</b> (worth opening)</summary>
-
-<br>
+### The video vertical: how to use a model without a model bill
 
 A city can mount a phone on a truck that already drives every street each week. That is a far denser source of pavement condition than resident reports — and a far more expensive one, if every frame goes to a vision model.
 
@@ -335,8 +341,6 @@ So the model is the last step, not the first:
 531 detections become 33 clusters because the same pothole appears in dozens of consecutive frames and the clustering knows it is one defect. Only clusters that survive a confidence threshold cost a model call, and only a decision to dispatch creates a report.
 
 The detector's own per-frame boxes are drawn live against the playhead, so a skeptical public-works director can watch what the machine claims to have seen, frame by frame, before believing the number at the top.
-
-</details>
 
 <details>
 <summary><b>The data model</b></summary>
