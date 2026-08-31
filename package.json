@@ -22,6 +22,7 @@
     "db:migrate": "supabase db push",
     "db:apply-012": "node scripts/apply-012.mjs",
     "db:seed": "tsx supabase/seed/index.ts",
+    "db:tokens": "tsx scripts/backfill-public-tokens.ts --apply",
     "db:seed:demo-crews": "node supabase/seed/demo-crews.mjs",
     "demo:seed": "node scripts/seed-demo.mjs",
     "eval": "tsx scripts/eval-classify.ts",

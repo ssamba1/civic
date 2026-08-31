@@ -620,6 +620,7 @@ corepack pnpm install
 cp .env.example .env.local     # fill in SUPABASE_* and GEMINI_API_KEY
 corepack pnpm db:migrate       # 77 ordered migrations
 corepack pnpm db:seed          # Cumming + demo crews, reports and users
+corepack pnpm db:tokens        # stamp public status tokens on the seeded rows
 corepack pnpm dev
 ```
 
@@ -631,11 +632,21 @@ Then check `curl localhost:3000/api/health` **before** looking at any page. It s
 | `pnpm test`, `test:e2e`, `test:rls` | Unit, end-to-end and row-level-security suites |
 | `pnpm typecheck`, `pnpm lint` | Types and lint |
 | `pnpm db:migrate`, `pnpm db:seed` | Schema and demo city |
+| `pnpm db:tokens` | Stamp `/r/[token]` status links on seeded reports (see below) |
 | `pnpm audit:privacy` | Check no raw photos reached the public bucket |
 | `pnpm eval` | Classification accuracy against `tests/golden/` |
 | `node scripts/shot-readme.mjs` | Regenerate every screenshot in this README, light and dark |
 | `node scripts/shot-readme-gif.mjs` | Re-record the demo loop at the top |
 | `node scripts/shot-social-preview.mjs` | Regenerate the card at the top |
+
+`db:tokens` is not optional if you want to see the resident side of the loop.
+`reports.public_token` is stamped **lazily**, by the notifier, the first time a
+resident is actually sent a status link — correct for a live city, where a
+report nobody was notified about should not have a URL sitting in the table.
+But seeded reports are never notified, so they never get one, and `/r/[token]`
+is the only door to the public status page, the share actions, the rating and
+the reopen button. Without the backfill that entire accountability loop 404s on
+a freshly seeded database while every other screen looks complete.
 
 Demo personas, seeded against Cumming: `usertest` / `usertest` (resident), `admintest` / `admintest` (city admin), `teamtest1` / `teamtest` (dispatcher).
 

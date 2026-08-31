@@ -7,6 +7,7 @@ import {
   type DashboardReport,
   getReportCorpus,
 } from "@/lib/dashboard-data";
+import { publicToken } from "@/lib/public-token";
 import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { HOUR_MS } from "@/lib/utils/time-constants";
 
@@ -25,18 +26,10 @@ import { HOUR_MS } from "@/lib/utils/time-constants";
    resolution photo + date. No reporter id, no raw photo, no contact info.
    ================================================================== */
 
-// Production should set PUBLIC_TOKEN_SALT to a secret so tokens can't be
-// recomputed by a third party who knows the id scheme. The default keeps the
-// demo deterministic across restarts.
-const TOKEN_SALT = process.env.PUBLIC_TOKEN_SALT ?? "civic-public-status-v1";
-
-/** Opaque, stable, unguessable token for a report id. */
-export function publicToken(reportId: string): string {
-  return createHash("sha256")
-    .update(`${TOKEN_SALT}:${reportId}`)
-    .digest("hex")
-    .slice(0, 24);
-}
+// The derivation lives in public-token.ts so the offline backfill script can
+// import it: this module is `server-only` and a plain Node script cannot load
+// it. Re-exported here so every existing caller keeps its import path.
+export { publicToken };
 
 export type PublicStatus = "in_progress" | "resolved" | "closed";
 
