@@ -92,12 +92,19 @@ export function reportToOpen311(
   // requests are already resolved, so their expectation is null. Uses the same
   // static CATEGORY_SLA_TARGETS the dashboard SLA metrics read — the public feed
   // reports the target, not a per-city override.
+  //
+  // CATEGORY_SLA_TARGETS is keyed by the twelve built-in categories, so a
+  // city-defined one — every `custom_`-prefixed key the onboarding wizard
+  // creates — looks up `undefined`. Multiplying that gives NaN, and
+  // `new Date(NaN).toISOString()` THROWS "Invalid time value", which the route
+  // catches as a 500. So this endpoint fails outright for any city using its own
+  // categories. Fall back to the `other` window, and never hand an
+  // unrepresentable instant to toISOString().
+  const slaHours = CATEGORY_SLA_TARGETS[category] ?? CATEGORY_SLA_TARGETS.other;
+  const expectedMs = Date.parse(report.created_at) + slaHours * 3_600_000;
   const expectedDatetime =
-    mapStatus(report.status) === "open"
-      ? new Date(
-          Date.parse(report.created_at) +
-            CATEGORY_SLA_TARGETS[category] * 3_600_000,
-        ).toISOString()
+    mapStatus(report.status) === "open" && Number.isFinite(expectedMs)
+      ? new Date(expectedMs).toISOString()
       : null;
 
   // D2: the public feed collapses to open/closed; the richer internal state
@@ -140,4 +147,19 @@ export function reportToOpen311(
   }
 
   return result;
+}
+
+/**
+ * Read a PostgREST embedded resource that may arrive as either shape.
+ *
+ * PostgREST shapes an embed by cardinality — an array for to-many, a bare
+ * object for to-one — and which one you get depends on whether a unique
+ * constraint exists on the child's foreign key, so the shape flips under a
+ * migration that merely adds one. Code that assumes an array silently reads
+ * nothing the day that migration lands.
+ */
+export function firstEmbed<T>(value: unknown): T | null {
+  if (value == null) return null;
+  if (Array.isArray(value)) return (value[0] ?? null) as T | null;
+  return value as T;
 }

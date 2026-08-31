@@ -10,6 +10,7 @@ import { wantsXml as negotiateXml, open311Error } from "@/lib/open311/http";
 import { getService } from "@/lib/open311/services";
 import {
   expandStatus,
+  firstEmbed,
   type Open311Request,
   reportToOpen311,
 } from "@/lib/open311/transform";
@@ -140,6 +141,11 @@ export async function GET(request: NextRequest) {
       return open311Error(500, "Database query failed", wantsXml);
     }
 
+    /** A PostgREST embed: array for to-many, bare object for to-one. */
+    const EMBED = z
+      .union([z.array(z.unknown()), z.record(z.string(), z.unknown())])
+      .nullable();
+
     // Validate row shape before transformation
     const RowSchema = z
       .object({
@@ -151,8 +157,11 @@ export async function GET(request: NextRequest) {
         address: z.string().nullable(),
         created_at: z.string(),
         updated_at: z.string(),
-        classifications: z.array(z.unknown()).nullable(),
-        cities: z.array(z.unknown()).nullable(),
+        // Object OR array — PostgREST shapes an embed by cardinality, and a
+        // migration adding a unique constraint flips it. Accepting only arrays
+        // silently emptied this endpoint; see firstEmbed().
+        classifications: EMBED,
+        cities: EMBED,
       })
       .passthrough();
 
@@ -169,14 +178,8 @@ export async function GET(request: NextRequest) {
         }
         const v = validated.data;
         const report = rowToReport(v as ReportRow);
-        const classification: Classification | null =
-          v.classifications != null
-            ? ((v.classifications[0] ?? null) as Classification | null)
-            : null;
-        const city =
-          Array.isArray(v.cities) && v.cities.length > 0
-            ? (v.cities[0] as City)
-            : (v.cities as City | null);
+        const classification = firstEmbed<Classification>(v.classifications);
+        const city = firstEmbed<City>(v.cities);
         return city ? reportToOpen311(report, classification, city) : null;
       })
       // Type-guard filter so the result is Open311Request[], not

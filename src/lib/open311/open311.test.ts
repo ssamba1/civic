@@ -3,6 +3,7 @@ import type { City, Classification, Report } from "@/lib/types";
 import { getAllServices } from "./services";
 import {
   expandStatus,
+  firstEmbed,
   mapStatus,
   type Open311Request,
   reportToOpen311,
@@ -185,5 +186,54 @@ describe("XML serialization (GeoReport v2 shape)", () => {
     expect(xml).toContain("<code>404</code>");
     expect(xml).toContain("<description>Not found</description>");
     expect(xml).toContain("<errors>");
+  });
+});
+
+describe("firstEmbed", () => {
+  it("unwraps a to-one embed, which PostgREST returns as a bare object", () => {
+    // The regression: a migration adding a unique constraint on the child FK
+    // flips PostgREST's embed from array to object. The list route validated
+    // arrays only, so every row failed validation and GET /requests answered
+    // 200 with [] while the reports table was full.
+    expect(
+      firstEmbed<{ category: string }>({ category: "custom_sidewalk_heave" }),
+    ).toEqual({ category: "custom_sidewalk_heave" });
+  });
+
+  it("unwraps a to-many embed", () => {
+    expect(firstEmbed<{ id: number }>([{ id: 1 }, { id: 2 }])).toEqual({
+      id: 1,
+    });
+  });
+
+  it("is null for null, undefined, and an empty array", () => {
+    expect(firstEmbed(null)).toBeNull();
+    expect(firstEmbed(undefined)).toBeNull();
+    expect(firstEmbed([])).toBeNull();
+  });
+});
+
+describe("reportToOpen311 expected_datetime", () => {
+  it("falls back to the 'other' SLA window for a city-defined category", () => {
+    // CATEGORY_SLA_TARGETS is keyed by the twelve built-ins. A `custom_` key
+    // looked up undefined, `created_at + undefined * 3_600_000` is NaN, and
+    // new Date(NaN).toISOString() THROWS — 500'ing the whole export for any
+    // city using its own categories.
+    const o = reportToOpen311(
+      report({ status: "open" }),
+      classification({ category: "custom_sidewalk_heave" as never }),
+      CITY,
+    );
+    // 'other' SLA = 168h from 2026-07-01T10:00Z
+    expect(o.expected_datetime).toBe("2026-07-08T10:00:00.000Z");
+  });
+
+  it("is null rather than throwing when created_at is unparseable", () => {
+    const o = reportToOpen311(
+      report({ status: "open", created_at: "not a date" }),
+      null,
+      CITY,
+    );
+    expect(o.expected_datetime).toBeNull();
   });
 });
