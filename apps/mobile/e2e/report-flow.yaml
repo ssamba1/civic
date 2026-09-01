@@ -1,0 +1,14 @@
+appId: org.civic.community
+---
+- launchApp
+- assertVisible: "Civic"
+- assertVisible: "What did you find?"
+- tapOn: "Photo library"
+- tapOn: "${E2E_PHOTO_LABEL}"
+- tapOn: "Capture GPS or choose on map"
+- assertVisible: "Save report"
+- tapOn: "Save report"
+- assertVisible: "Saved on this phone"
+- tapOn: "OK"
+- tapOn: "History"
+- assertVisible: "History.*"

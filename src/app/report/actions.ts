@@ -1,5 +1,6 @@
 "use server";
 
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { headers } from "next/headers";
 import { after } from "next/server";
 import { z } from "zod/v4";
@@ -60,6 +61,14 @@ const submitReportSchema = z.object({
   // Per-photo aHash array computed client-side. First entry feeds dedup (same
   // role as the former scalar phash). Optional for backward-compat.
   phashes: z.array(z.string()).optional(),
+  id: z.string().uuid().optional(),
+  occurredAt: z
+    .string()
+    .refine((value) => !Number.isNaN(Date.parse(value)), "invalid timestamp")
+    .optional(),
+  // Route-internal bearer authentication for native offline delivery. This
+  // value is never persisted or logged.
+  authToken: z.string().min(1).optional(),
 });
 
 type SubmitReportInput = z.infer<typeof submitReportSchema>;
@@ -137,11 +146,26 @@ export async function submitReport(
   // fall back to the demo city center so submission never dead-ends.
   const coord = location ?? DEFAULT_CITY_CENTER;
 
-  // Auth via cookie-aware SSR client.
-  const ssr = await createSSRClient();
+  // Native sync supplies the resident JWT while web submissions continue to
+  // use the cookie-aware SSR client. Both paths execute under the resident's
+  // RLS identity; service credentials never leave the server.
+  const ssr = parsed.data.authToken
+    ? createSupabaseClient(
+        // biome-ignore lint/style/noNonNullAssertion: validated during startup
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        // biome-ignore lint/style/noNonNullAssertion: public client credential
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          auth: { persistSession: false, autoRefreshToken: false },
+          global: {
+            headers: { Authorization: `Bearer ${parsed.data.authToken}` },
+          },
+        },
+      )
+    : await createSSRClient();
   const {
     data: { user },
-  } = await ssr.auth.getUser();
+  } = await ssr.auth.getUser(parsed.data.authToken);
   if (!user) {
     return { ok: false, error: "unauthenticated" };
   }
@@ -192,7 +216,26 @@ export async function submitReport(
     return { ok: false, error: "No city configured. Contact support." };
   }
 
-  const reportId = crypto.randomUUID();
+  const reportId = parsed.data.id ?? crypto.randomUUID();
+
+  if (parsed.data.id) {
+    const { data: existing } = await service
+      .from("reports")
+      .select("id,reporter_id")
+      .eq("id", reportId)
+      .maybeSingle<{ id: string; reporter_id: string | null }>();
+    if (existing) {
+      if (existing.reporter_id !== user.id)
+        return { ok: false, error: "idempotency_key_conflict" };
+      return {
+        ok: true,
+        data: {
+          id: existing.id,
+          classification: fallbackClassification("Already submitted"),
+        },
+      };
+    }
+  }
   const photoCount = photosBlurred.length;
   const paths = buildPhotoPaths(cityId, reportId, photoCount);
 
@@ -277,6 +320,7 @@ export async function submitReport(
     description,
     tags,
     status: "open",
+    ...(parsed.data.occurredAt ? { created_at: parsed.data.occurredAt } : {}),
     // classify_status is only stamped on the async path; the column ships in
     // migration 007 but isn't reflected in the generated Supabase types yet, so
     // attach it via a typed-loose record only when async is ON. The flag-off
@@ -343,7 +387,7 @@ export async function submitReport(
         address: address ?? null,
         lat: coord.lat,
         lng: coord.lng,
-        created_at: new Date().toISOString(),
+        created_at: parsed.data.occurredAt ?? new Date().toISOString(),
         updated_at: null,
       });
     } catch (err) {
