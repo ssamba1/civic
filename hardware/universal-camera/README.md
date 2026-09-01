@@ -321,15 +321,6 @@ fits the whole fleet without a per-vehicle variant.
 If you build on an ESP32-S3, the camera module footprint differs; scale or
 re-model the aperture in `shell-part-2` before printing a fleet.
 
-**Earlier revision, for reference.**
-
-<img width="320" alt="An earlier print of the same shell in blue: no civic emboss on the front face, the ESP32-CAM lens visible through the lower-front cut-out, a foam-padded module across the open top and the mount arm pivoting off the top on a side knob" src="images/device.jpg">
-
-<sub>An earlier print of the shell, made before the emboss was added to the model. The body carries
-no `civic` lettering — everything else about it, including the aperture, the
-foam-packed module and the pivoting arm, is the same part that is in `print/`
-today.</sub>
-
 ## How a detection becomes a report
 
 Civic already has the server half of this device. Migration
