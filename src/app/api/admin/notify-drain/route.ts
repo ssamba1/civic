@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
+import { bearerMatches } from "@/lib/auth/cron-bearer";
 import { createSSRClient, getAuthUser } from "@/lib/db/ssr-client";
 import { createLogger } from "@/lib/logger";
 import { drainUndelivered } from "@/lib/notify/outbox";
@@ -26,9 +27,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
   }
 
-  const cronSecret = process.env.NOTIFY_CRON_SECRET;
-  const authHeader = request.headers.get("authorization");
-  const cronOk = !!cronSecret && authHeader === `Bearer ${cronSecret}`;
+  const cronOk = bearerMatches(
+    request.headers.get("authorization"),
+    process.env.NOTIFY_CRON_SECRET,
+  );
 
   if (!cronOk) {
     const isDev = process.env.NODE_ENV === "development";

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { computeDrift } from "@/lib/ai/drift-monitor";
 import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
+import { bearerMatches } from "@/lib/auth/cron-bearer";
 import { createSSRClient, getAuthUser } from "@/lib/db/ssr-client";
 
 /* Classification drift metric (#37). Staff/admin or DRIFT_CRON_SECRET bearer.
@@ -15,9 +16,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
   }
 
-  const secret = process.env.DRIFT_CRON_SECRET;
-  const authHeader = request.headers.get("authorization");
-  const cronOk = !!secret && authHeader === `Bearer ${secret}`;
+  const cronOk = bearerMatches(
+    request.headers.get("authorization"),
+    process.env.DRIFT_CRON_SECRET,
+  );
   const devBypass =
     process.env.NODE_ENV === "development" &&
     process.env.DEV_AUTH_BYPASS === "1";
