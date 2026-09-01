@@ -74,10 +74,10 @@ jobs:
           subject="$(git log -1 --format=%s upstream/main)"
           snapshot="$(git commit-tree "$upstream_tree" -m "Deploy mirror of ssamba1/civic@${upstream_short}
 
-Upstream subject: ${subject}
-Upstream commit:  ${upstream_sha}
+          Upstream subject: ${subject}
+          Upstream commit:  ${upstream_sha}
 
-Re-authored snapshot; see .github/workflows/mirror-upstream.yml for why.")"
+          Re-authored snapshot; see .github/workflows/mirror-upstream.yml for why.")"
 
           echo "Mirroring tree of $upstream_short as $(git rev-parse --short=10 "$snapshot")"
           git push --force origin "$snapshot:refs/heads/main"
