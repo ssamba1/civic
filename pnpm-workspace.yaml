@@ -16,9 +16,21 @@ ignoredBuiltDependencies:
   - unrs-resolver
 
 # Security overrides for transitive dependencies with published advisories.
-# Every entry stays inside its package's current major, so these are patch or
-# minor lifts rather than API changes. brace-expansion resolves at two majors in
-# this tree, so each is pinned separately.
+#
+# Every entry is caret-bounded so it stays inside its package's current major —
+# a patch/minor lift, never an API change. That bound is the whole point, and
+# `>=` does not provide it: an open-ended floor resolves to *latest*, which for
+# these packages meant js-yaml 4→5, nanoid 3→6 and fast-uri 3→4 on an install
+# nobody thought was a dependency change.
+#
+# brace-expansion is the one that broke something. It legitimately resolves at
+# two majors here (minimatch@3 wants ^1, minimatch@10 wants ^5), so a single
+# open floor collapsed both onto 5.x — and minimatch@3's CJS
+# `require('brace-expansion')` expects a bare function while 5.x exports a
+# namespace object. Every tool routed through minimatch@3 died on
+# `TypeError: expand is not a function`; `pnpm exec eslint .` could not run at
+# all. Hence the per-major selectors: each major gets its own patched floor.
+#
 #   postcss          XSS via unescaped </style> in stringify output
 #   js-yaml          quadratic-complexity DoS in merge-key handling
 #   nanoid           predictable output
@@ -27,11 +39,12 @@ ignoredBuiltDependencies:
 #                    reached through onnxruntime-node)
 #   brace-expansion  exponential-time expansion DoS
 overrides:
-  postcss: '>=8.5.23'
-  js-yaml: '>=4.3.1'
-  nanoid: '>=3.3.18'
-  fast-uri: '>=3.1.5'
-  adm-zip: '>=0.6.0'
-  sharp: '>=0.35.0'
+  postcss: '^8.5.23'
+  js-yaml: '^4.3.1'
+  nanoid: '^3.3.18'
+  fast-uri: '^3.1.5'
+  adm-zip: '^0.6.0'
+  sharp: '^0.35.0'
   vite: '8.0.16'
-  brace-expansion: '>=5.0.9'
+  brace-expansion@1: '^1.1.12'
+  brace-expansion@5: '^5.0.9'
