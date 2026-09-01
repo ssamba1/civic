@@ -55,13 +55,13 @@ Steps 3-5 are skippable (smart defaults from the config template, ONBOARDING.md 
 
 | # | Step | Required? | Writes | While you're here… |
 |---|------|-----------|--------|---------------------|
-| 1 | **Identify**, City, State | ✅ | `cities` row (`active=false`) via `provisionCity()` | …job kicks off |
-| 2 | **Boundary**, confirm on map | ✅ (1-click) | confirms `cities.boundary` | …ingest running |
+| 1 | **Identify**, City, State | yes | `cities` row (`active=false`) via `provisionCity()` | …job kicks off |
+| 2 | **Boundary**, confirm on map | (1-click) | confirms `cities.boundary` | …ingest running |
 | 3 | Departments, toggle/rename | skip→defaults | `city_departments` | …ingest running |
 | 4 | Routing & SLA & cost | skip→defaults | `category_routing`,`sla_targets`,`cost_rules` | …classify running |
 | 5 | Invite staff | skip (Motion A) | `invites` | …classify finishing |
-| 6 | **Preview**. Live dashboard | ✅ | nothing | data has landed |
-| 7 | **Launch**. Share or Go-live | ✅ | `active`, signage kit | terminal |
+| 6 | **Preview**. Live dashboard | yes | nothing | data has landed |
+| 7 | **Launch**. Share or Go-live | yes | `active`, signage kit | terminal |
 
 ### Wizard shell (persistent across steps)
 
@@ -99,7 +99,7 @@ the operator kept busy with config.
 ### Job lifecycle (surfaced in the status bar)
 
 ```
-Provisioning ▸ Boundary ✓ ▸ Ingesting (ArcGIS/synthetic) ▸ Classifying n/m ▸ Ready ✓
+Provisioning ▸ Boundary ▸ Ingesting (ArcGIS/synthetic) ▸ Classifying n/m ▸ Ready
    <1s            <2s              ~10-60s                    ~1-4 min      done
 ```
 
@@ -112,7 +112,7 @@ Provisioning ▸ Boundary ✓ ▸ Ingesting (ArcGIS/synthetic) ▸ Classifying n
   - *running* → `◐` spinning glyph (motion-safe) + live counts, blue.
   - *partial/degraded* → `⚠` amber: "No ArcGIS source found, filled 200 synthetic
     reports" (honest, never silent). Links to swap source / upload CSV.
-  - *ready* → `✓` green "Cumming is ready to preview" + auto-nudge to step 6.
+  - *ready* → `` green "Cumming is ready to preview" + auto-nudge to step 6.
   - *error* → `role="alert"` red + **Retry** + **Continue with what loaded** (error
     recovery path, never a dead end).
 - **Synthetic labeling is load-bearing** (ONBOARDING.md §7): synthetic reports carry
@@ -296,7 +296,7 @@ fade-up/stagger motion, dashboard panels) is **reused as-is**.
 | Identify | button isPending | (is the empty state) | `role=alert` TIGER miss + manual fallback | advance + job starts |
 | Boundary | `.skeleton` map | n/a | geometry retry | "Looks right" |
 | Depts/Rules/Invite | inline | template defaults shown | field-level errors | saved (optimistic) |
-| Job/StatusBar | `◐` + live counts | "Starting…" | red + Retry / Continue-partial | `✓` green nudge |
+| Job/StatusBar | `◐` + live counts | "Starting…" | red + Retry / Continue-partial | `` green nudge |
 | Preview | Suspense skeletons | "Filling with sample data…" | per-panel retry | populated + Demo badge |
 | Launch | button isPending | n/a | toast error | toast + redirect |
 | Cities list | route `loading.tsx` | "No cities yet" CTA | toast | live table |

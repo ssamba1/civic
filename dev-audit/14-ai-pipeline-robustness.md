@@ -105,20 +105,20 @@
 ## Validation & Parsing Chain
 
 ### classifyPhoto path (gemini.ts:84-113)
-1. ✓ **Rate-limit check** (`checkAndRecordGeminiCall`). Returns error if exceeded.
-2. ✓ **Structured output schema** enforced by Gemini's `responseSchema`.
-3. ❌ **Response null check**, missing (CRITICAL finding #1).
-4. ✓ **Fence stripping**, fallback in case model wraps JSON (tested).
-5. ✓ **JSON parse**, try-catch; error returned if invalid (line 88-95).
-6. ✓ **Zod validation**. SafeParse; enum + range checks (line 97-103).
-7. ✓ **Fallback in pipeline**. Classify-pipeline.ts:131-154 uses neutral "other" on any error.
+1. **Rate-limit check** (`checkAndRecordGeminiCall`). Returns error if exceeded.
+2. **Structured output schema** enforced by Gemini's `responseSchema`.
+3. **Response null check**, missing (CRITICAL finding #1).
+4. **Fence stripping**, fallback in case model wraps JSON (tested).
+5. **JSON parse**, try-catch; error returned if invalid (line 88-95).
+6. **Zod validation**. SafeParse; enum + range checks (line 97-103).
+7. **Fallback in pipeline**. Classify-pipeline.ts:131-154 uses neutral "other" on any error.
 
 ### geminiReasoning path (reasoning-ai.ts:157-170)
-1. ✓ **Retry wrapper** with timeout.
-2. ❌ **Response null check**, missing (CRITICAL finding #2).
-3. ❌ **JSON parse error**. JSON.parse throws synchronously (not caught by the wrapping try in withRetry because parse is outside the withRetry callback).
-4. ✓ **Shape validation**, `isReasoningPayload` (line 162-166).
-5. ✓ **Fallback in caller**. GetReasoning catches and returns templateFallback (line 227-229).
+1. **Retry wrapper** with timeout.
+2. **Response null check**, missing (CRITICAL finding #2).
+3. **JSON parse error**. JSON.parse throws synchronously (not caught by the wrapping try in withRetry because parse is outside the withRetry callback).
+4. **Shape validation**, `isReasoningPayload` (line 162-166).
+5. **Fallback in caller**. GetReasoning catches and returns templateFallback (line 227-229).
 
 ---
 
@@ -145,13 +145,13 @@
 
 ### Fixed-window (rate-limit.ts)
 - **Algorithm:** Per-key bucket; if count >= max, reject until window resets.
-- **Correctness:** ✓ Tested (rate-limit.test.ts:52-141).
+- **Correctness:** Tested (rate-limit.test.ts:52-141).
 - **Concurrency risk:** In-memory Map; cold starts on serverless reset counts. Acceptable for demo; production needs Redis.
 
 ### Sliding-window (rate-limiter.ts)
 - **Algorithm:** Three independent windows; record all timestamps; prune old ones; reject if any window exceeds limit.
-- **Correctness:** ✓ Algorithm is sound (timestamps array is sorted by insertion); prune is O(n).
-- **Edge case:** Line 65-76 checks length *before* timestamp is added. Allows exactly max calls per window, then blocks the (max+1)th. ✓ Correct.
+- **Correctness:** Algorithm is sound (timestamps array is sorted by insertion); prune is O(n).
+- **Edge case:** Line 65-76 checks length *before* timestamp is added. Allows exactly max calls per window, then blocks the (max+1)th. Correct.
 - **Concurrency risk:** Same as fixed-window; in-memory.
 
 ---
@@ -160,7 +160,7 @@
 
 ### withRetry (retry.ts:83-125)
 - **Algorithm:** Exponential backoff with jitter; configurable per-attempt timeout.
-- **Correctness:** ✓ Tested (retry.test.ts:12-135).
+- **Correctness:** Tested (retry.test.ts:12-135).
 - **Per-attempt timeout:** Timeout is cleared in finally (line 119); AbortSignal is fresh each attempt (line 96).
 - **Edge case:** If fn never resolves and timeout never fires, the promise hangs. Not a risk here (Gemini SDK has its own timeouts).
 - **Jitter:** `baseMs * 2^attempt + Math.floor(Math.random() * baseMs)`: jitter range is [0, baseMs), safe.
@@ -174,12 +174,12 @@
 ## Pipeline Resilience
 
 ### classify-pipeline.ts (runClassifyPipeline)
-- **Report not found:** Returns error; logs to error_log (line 77-86). ✓
-- **Photo download fail:** Skips Gemini; uses fallback (line 106-114). ✓
-- **Gemini fail:** Uses fallback; logs error (line 131-163). ✓
-- **Classification persist fail:** Returns error; logs (line 175-186). ✓
-- **Work order persist fail:** Returns error; logs (line 230-241). ✓
-- **Status update fail:** Logs (not fatal) (line 248-253). ✓
+- **Report not found:** Returns error; logs to error_log (line 77-86).
+- **Photo download fail:** Skips Gemini; uses fallback (line 106-114).
+- **Gemini fail:** Uses fallback; logs error (line 131-163).
+- **Classification persist fail:** Returns error; logs (line 175-186).
+- **Work order persist fail:** Returns error; logs (line 230-241).
+- **Status update fail:** Logs (not fatal) (line 248-253).
 - **Overall:** Excellent fallback strategy; pipeline never crashes.
 
 ---
@@ -216,8 +216,8 @@
 
 ## Test Coverage Notes
 
-- ✓ Unit tests for each module are comprehensive and well-structured.
-- ✓ Edge cases (fence stripping, retry backoff, priority math) are covered.
-- ❌ No test for `result.response.text() === undefined` or empty response.
-- ❌ No test for rate-limiter timestamp record-then-fail scenario.
-- ⚠️ classify-pipeline.test.ts mocks Supabase and Gemini; integration gaps not caught by unit tests.
+- Unit tests for each module are comprehensive and well-structured.
+- Edge cases (fence stripping, retry backoff, priority math) are covered.
+- No test for `result.response.text() === undefined` or empty response.
+- No test for rate-limiter timestamp record-then-fail scenario.
+- classify-pipeline.test.ts mocks Supabase and Gemini; integration gaps not caught by unit tests.

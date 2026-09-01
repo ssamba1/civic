@@ -37,13 +37,13 @@
   - `city` / `team` = administrative entity (see multi-tenant routes)
 
 ### File Naming Conventions (Current State: 95% Compliant)
-- **Components:** Kebab-case filenames (camera-capture.tsx, user-nav.tsx, work-order-detail.tsx) ✓
-- **Lib utilities:** Kebab-case except single-word (logger.ts, env.ts, types.ts) ✓
-- **Test files:** .test.ts suffix (not .spec.ts) ✓
-- **Route handlers:** page.tsx, layout.tsx, route.ts (Next.js convention) ✓
+- **Components:** Kebab-case filenames (camera-capture.tsx, user-nav.tsx, work-order-detail.tsx)
+- **Lib utilities:** Kebab-case except single-word (logger.ts, env.ts, types.ts)
+- **Test files:** .test.ts suffix (not .spec.ts)
+- **Route handlers:** page.tsx, layout.tsx, route.ts (Next.js convention)
 
 ### Export Style (Current State: Mostly Named Exports)
-- Most React components use **named exports** (import { UserNav } from ...) ✓
+- Most React components use **named exports** (import { UserNav } from ...)
 - Some re-exports use default (CameraCapture, BottomSheet in src/components/report/page.tsx)
 - **Recommendation:** Move to 100% named exports for consistency.
 

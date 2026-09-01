@@ -120,10 +120,10 @@ Civic-tech hackathon rubrics weight ≈ **Relevance/Impact 25 · Technical 20 ·
 
 **Security baseline present:** CSP/HSTS(preload)/X-Frame DENY/nosniff/Referrer/Permissions headers; RLS default-deny; admin role from `app_metadata`; constant-time key compares.
 
-- ✅ Schema (4 migrations), Open311 routes, classify pipeline, staff inbox (real data), capture UI, dashboard UI, PWA shell, privacy *libraries*, headers.
-- 🔴 **Resident submit broken**. `report/actions.ts` (`"use server"`/Node) calls browser-only `blurFacesAndPlates()` + `createBrowserSupabase()` → `document is not defined`; blur never runs, submit fails.
-- 🔴 **Dashboard 100% mock**, `dashboard-data.ts` stubs; `dashboard_reports_view` + 6 `metric_*` views unused.
-- 🔴 **No `/login`**, submit + staff blocked; resident e2e unrunnable.
+- Schema (4 migrations), Open311 routes, classify pipeline, staff inbox (real data), capture UI, dashboard UI, PWA shell, privacy *libraries*, headers.
+- **Resident submit broken**. `report/actions.ts` (`"use server"`/Node) calls browser-only `blurFacesAndPlates()` + `createBrowserSupabase()` → `document is not defined`; blur never runs, submit fails.
+- **Dashboard 100% mock**, `dashboard-data.ts` stubs; `dashboard_reports_view` + 6 `metric_*` views unused.
+- **No `/login`**, submit + staff blocked; resident e2e unrunnable.
 - 🟠 Open311 **lat/long always 0,0** (EWKB hex unparsed); `service_code` filter returns all rows; datetimes not ISO-8601; classify fetch fire-and-forget.
 - 🟠 Storage RLS lets any user write any city path; classify runs on **blurred** image.
 - 🟡 6 smaller bugs (role check, `/offline`, override enum, notes/photo persistence, redirect target, model_version). Full register §30.
@@ -131,40 +131,40 @@ Civic-tech hackathon rubrics weight ≈ **Relevance/Impact 25 · Technical 20 ·
 ---
 
 ## 6. Complete route map
-Legend: ✅ built · ⚠️ partial/broken · ❌ new
+Legend: built · partial/broken · new
 
 ```
 PUBLIC (no auth), locale-prefixed /[locale]/... once i18n lands
-  /                                ✅ landing + city search
-  /city/[slug]                     ⚠️ dashboard (MOCK)
-  /city/[slug]/map                 ⚠️ fullscreen map (MOCK)
-  /city/[slug]/browse              ❌ resident browse + upvote
-  /city/[slug]/scoreboard          ❌ accountability scorecard (high-wow)
-  /offline                         ❌ PWA fallback (referenced, missing)
-  /kiosk/[slug]                    ❌ shared-device mode (digital divide)
-  /api/health                      ✅
-  /api/open311/v2/{services,requests,requests/[id]}  ✅ (bugs §26,30)
+  /                                landing + city search
+  /city/[slug]                     dashboard (MOCK)
+  /city/[slug]/map                 fullscreen map (MOCK)
+  /city/[slug]/browse              resident browse + upvote
+  /city/[slug]/scoreboard          accountability scorecard (high-wow)
+  /offline                         PWA fallback (referenced, missing)
+  /kiosk/[slug]                    shared-device mode (digital divide)
+  /api/health
+  /api/open311/v2/{services,requests,requests/[id]}  (bugs §26,30)
 
 RESIDENT (auth; anonymous bootstrap)
-  /login                           ❌ magic link + anon bootstrap
-  /report                          🔴 capture UI; submit BROKEN
-  /report/[id]                     ❌ shareable public status page
-  /me/reports                      ❌ my reports + close-the-loop
+  /login                           magic link + anon bootstrap
+  /report                          capture UI; submit BROKEN
+  /report/[id]                     shareable public status page
+  /me/reports                      my reports + close-the-loop
 
 ADMIN (staff_dispatcher | staff_supervisor | admin)
-  /staff                           ⚠️ inbox (real data; role bug)
-  /staff/work-order/[id]           ❌ deep-linkable detail
-  /staff/map                       ❌ nav links; 404
-  /staff/stats                     ❌ analytics (metric_* ready)
-  /staff/settings                  ❌ contacts, cost rules, crews, SLA
-  /admin/metrics · /admin/audit    ❌ admin-only
+  /staff                           inbox (real data; role bug)
+  /staff/work-order/[id]           deep-linkable detail
+  /staff/map                       nav links; 404
+  /staff/stats                     analytics (metric_* ready)
+  /staff/settings                  contacts, cost rules, crews, SLA
+  /admin/metrics · /admin/audit    admin-only
 
 INTERNAL
-  /api/ai/classify                 ✅ POST (session OR x-internal-key)
-  /api/cron/*                      ❌ (or pg_cron) retention, audit, embeddings, weekly summary, SLA sweep
-  /api/account                     ❌ DELETE. Right-to-be-forgotten
-  /api/push/subscribe              ❌ web push registration
-  server actions                   submit 🔴 · dispatch/close/reject/override ✅ · upvote ❌ · contacts ❌ · notes ❌
+  /api/ai/classify                 POST (session OR x-internal-key)
+  /api/cron/*                      (or pg_cron) retention, audit, embeddings, weekly summary, SLA sweep
+  /api/account                     DELETE. Right-to-be-forgotten
+  /api/push/subscribe              web push registration
+  server actions                   submit · dispatch/close/reject/override · upvote · contacts · notes
 ```
 
 ---
@@ -173,13 +173,13 @@ INTERNAL
 
 | Capability | anon | resident | dispatcher | supervisor | admin |
 |---|:--:|:--:|:--:|:--:|:--:|
-| View dashboard/map/browse/scoreboard | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Open311 read | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Submit report | - | ✅ | ✅ | ✅ | ✅ |
-| Upvote / track own / get notified | - | ✅ | ✅ | ✅ | ✅ |
-| Inbox dispatch/close/reject/override | - | - | ✅ | ✅ | ✅ |
-| Contacts / cost rules / crews / SLA | - | - | - | ✅ | ✅ |
-| Metrics / audit log / forget-user | - | - | - | ⚠️ | ✅ |
+| View dashboard/map/browse/scoreboard | yes | yes | yes | yes | yes |
+| Open311 read | yes | yes | yes | yes | yes |
+| Submit report | - | yes | yes | yes | yes |
+| Upvote / track own / get notified | - | yes | yes | yes | yes |
+| Inbox dispatch/close/reject/override | - | - | yes | yes | yes |
+| Contacts / cost rules / crews / SLA | - | - | - | yes | yes |
+| Metrics / audit log / forget-user | - | - | - | warn | yes |
 
 **Auth (research §40 Supabase):** silent `signInAnonymously()` on first action keeps the 2-tap goal; `linkIdentity`/magic-link upgrades to cross-device. Staff/admin magic-link; admin role in `app_metadata` only. **Pick ONE role source** (`public.users.role` recommended). Today `proxy.ts` uses `app_metadata`, app uses the table → divergence bug (§30 M4).
 
@@ -202,38 +202,38 @@ INTERNAL
 ```
 ### Resident report `/report` (full-bleed)
 ```
-camera → preview(+description +TAGS❌) → submitting → done
+camera → preview(+description +TAGS) → submitting → done
    GPS: device → EXIF fallback → manual address
    PRIVACY: compress → blur (client) → upload before any network send
    OFFLINE: queue to IndexedDB outbox → Background Sync → toast "will send when online"
    is_emergency → Call 911 interstitial
 ```
-### Browse `/city/[slug]/browse` ❌
+### Browse `/city/[slug]/browse`
 ```
 [category▾][severity▾][status▾][sort: top|new|nearby ▾]
 list(▲ upvote, photo, age, status) ⟷ live map(clustered, realtime pin drop)
 ```
-### My reports `/me/reports` ❌
+### My reports `/me/reports`
 ```
-• Pothole·Main St  DISPATCHED ▲12 [photo]   • Graffiti·Oak CLOSED ✓ before|after
+• Pothole·Main St  DISPATCHED ▲12 [photo]   • Graffiti·Oak CLOSED before|after
 [🔔 notify me when fixed]
 ```
-### Public dashboard `/city/[slug]` ⚠️ → wire real
+### Public dashboard `/city/[slug]` → wire real
 ```
 [stats cards] → [map] → [category chart | recent reports]
 ```
-### Scoreboard `/city/[slug]/scoreboard` ❌ (high-wow)
+### Scoreboard `/city/[slug]/scoreboard` (high-wow)
 ```
-Median resolution 41h (target 72h)✅ · Open>30d: 6 · On-time 88%
+Median resolution 41h (target 72h)· Open>30d: 6 · On-time 88%
 By category & By NEIGHBORHOOD (equity) · vs neighbors (Open311 ingest)
 AI weekly summary (Gemini → press-ready paragraph)
 ```
-### Staff inbox `/staff` ⚠️ + detail
+### Staff inbox `/staff` + detail
 ```
-[status tabs][search]  cat│sev│addr│age│est│$COST❌│▲│SLA│📷
+[status tabs][search]  cat│sev│addr│age│est│$COST│▲│SLA│📷
 detail: raw photo(signed) · AI class(conf bar) · WO dept/crew/time/$cost/materials
-        · CONTACTS❌ · notes⚠ · resolution📷⚠ · [Dispatch|Close|Reject|Override]
-SLA badge: ⏳ due 6h / 🔴 overdue
+        · CONTACTS· notes⚠ · resolution📷⚠ · [Dispatch|Close|Reject|Override]
+SLA badge: ⏳ due 6h / overdue
 ```
 ### Staff map/stats/settings, login, offline, kiosk: §6.
 
@@ -243,7 +243,7 @@ SLA badge: ⏳ due 6h / 🔴 overdue
 
 **Current:** cities, users, reports, classifications, work_orders, assets, merges, verifications, audit_log. Views: dashboard_reports_view (PII-stripped), 6 metric_* views. Geo `geography(POINT,4326)` GiST.
 
-### Migration `005` (⚠️ migrations spec-protected, agents.md #10: needs approval)
+### Migration `005` (migrations spec-protected, agents.md #10: needs approval)
 ```sql
 ALTER TABLE reports ADD COLUMN tags text[] NOT NULL DEFAULT '{}';
 ALTER TABLE reports ADD COLUMN upvote_count int NOT NULL DEFAULT 0;
@@ -302,7 +302,7 @@ CREATE POLICY "public upload scoped to own city" ON storage.objects
 - Offline background-sync outbox. [§16]
 - EXIF GPS fallback + reverse geocode. [§14]
 - Web push close-the-loop + Resend email. [§17]
-- /staff/map + /staff/stats (metric_* + SLA + equity). 
+- /staff/map + /staff/stats (metric_* + SLA + equity).
 - Contacts CRUD; notes persistence; resolution photo upload + AI score.
 - pgvector dedup (log-only). [§20]
 - Privacy crons wired (retention, audit). [§25]
@@ -311,7 +311,7 @@ CREATE POLICY "public upload scoped to own city" ON storage.objects
 **COULD**
 - i18n Spanish (next-intl); kiosk mode; low-bandwidth mode. [§18]
 - Open311 shadow-dashboard ingest (NYC/other cities). [§20]
-- Weekly AI press summary email. 
+- Weekly AI press summary email.
 - Light, ethical gamification ("verified contributor" badge, NOT leaderboard). [§19]
 - QR/yard-sign field-organizing deep links (`/report?ref=`).
 - Heatmap map layer; nearby sort.
@@ -530,7 +530,7 @@ PHASE E, Hardening                                         [post-demo]
 
 ## 30. Bug / gap register (severity-grouped)
 
-### 🔴 CRITICAL
+### CRITICAL
 | # | Issue | File | Phase |
 |---|---|---|---|
 | C1 | `"use server"` calls browser-only blur + browser client → crash, no blur, submit dead | report/actions.ts, blur.ts, upload.ts | 0.1 |
@@ -562,7 +562,7 @@ PHASE E, Hardening                                         [post-demo]
 | M8 | Work-order context hardcoded (school zone/traffic/recurrence) | classify-pipeline.ts | C2/D3 |
 | M9 | Deprecated `@google/generative-ai` SDK | gemini.ts, package | A4 |
 
-### 🟢 LOW
+### LOW
 | # | Issue | File | Phase |
 |---|---|---|---|
 | L1 | `/offline` referenced, missing | sw.js, proxy.ts | 0.5 |

@@ -63,7 +63,7 @@ const reporterId = apiKey?.user_id || process.env.OPEN311_SYSTEM_USER_ID;
 **Context:**
 From design.md, §8 (Unresolved Design Questions):
 ```
-2. **What happens when a report straddles jurisdictions?** A pothole on a county road 
+2. **What happens when a report straddles jurisdictions?** A pothole on a county road
    inside city limits. Manual override for now. Real solution unclear.
 ```
 
@@ -89,8 +89,8 @@ The app assumes each report belongs to exactly one city. But Forsyth County (the
 **Context:**
 From PLAN.md, §12 (AI strategy):
 ```
-- **Structured output**: generationConfig.responseMimeType="application/json" + responseSchema 
-  (per-field description, enum category, required) → guaranteed valid JSON; 
+- **Structured output**: generationConfig.responseMimeType="application/json" + responseSchema
+  (per-field description, enum category, required) → guaranteed valid JSON;
   delete fence hack; keep Zod as *semantic* backstop.
 ```
 
@@ -156,7 +156,7 @@ Once structured output has 30+ days of zero fence-wrapped responses in productio
 
 ## Verification Checklist
 
-- ✅ No implicit incomplete patterns found (migrations are guarded, feature flags are intentional).
-- ✅ Fire-and-forget classify pipeline is correctly implemented (uses `next/server`'s `after()` for Vercel serverless safety).
-- ✅ All 3 markers are in shipped code (ASYNC_CLASSIFY, cross-jurisdiction, Open311 lookup).
-- ✅ No NEXT_PUBLIC_* feature flags hiding incomplete features.
+- No implicit incomplete patterns found (migrations are guarded, feature flags are intentional).
+- Fire-and-forget classify pipeline is correctly implemented (uses `next/server`'s `after()` for Vercel serverless safety).
+- All 3 markers are in shipped code (ASYNC_CLASSIFY, cross-jurisdiction, Open311 lookup).
+- No NEXT_PUBLIC_* feature flags hiding incomplete features.

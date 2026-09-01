@@ -132,7 +132,7 @@ This doesn't change behavior, but makes intent explicit: "These tables are not d
 
 ## Security Strengths (No issues)
 
-### ✓ RLS comprehensive coverage
+### RLS comprehensive coverage
 - Cities: readable by all (public data)
 - Users: scoped (own or staff-in-city)
 - Reports: scoped (own or staff-in-city)
@@ -140,25 +140,25 @@ This doesn't change behavior, but makes intent explicit: "These tables are not d
 - Audit log: admin only
 - Service-role calls: used only server-side (lib/db, actions, routes)
 
-### ✓ Indexes well-designed
+### Indexes well-designed
 - GiST on geography (reports location, cities boundary, assets location)
 - B-tree on common filters (city_id, status, created_at, reporter_id, priority_score)
 - No redundant or missing indexes detected
 
-### ✓ Cascades intentional
+### Cascades intentional
 - `ON DELETE CASCADE` on classifications/work_orders/verifications deletes child rows
 - `ON DELETE RESTRICT` on reports→city prevents orphaning
 
-### ✓ Audit logging built-in
+### Audit logging built-in
 - `audit_trigger_fn()` on reports, work_orders captures INSERT/UPDATE/DELETE
 - User context via `auth.uid()`, old + new data
 - Admin-only via RLS policy
 
-### ✓ Helper functions SECURITY DEFINER
+### Helper functions SECURITY DEFINER
 - `current_user_city_id()`, `current_user_role()`, `is_staff()` bypass RLS on users table
 - Used safely in RLS policy bodies (no user injection possible)
 
-### ✓ No raw SQL in application code
+### No raw SQL in application code
 - All Supabase.js calls use parameterized operators (`.eq()`, `.gt()`, `.in()`)
 - No string interpolation into queries (except PostGIS POINT, which is safe)
 

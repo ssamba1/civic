@@ -6,11 +6,11 @@ Scope: Auth (Supabase), RLS, Crypto, API, Privacy, Demo Mode
 src/app/api/open311/v2/requests/route.ts:72-74
   - service_code filter returns ALL rows (no `!inner`)
   - Fix: Add .inner() to eq() call
-  
+
 src/app/api/open311/v2/requests/route.ts:278-282
   - classify fetch fire-and-forget (unawaited)
   - Fix: Wrap in after() to ensure serverless runs to completion
-  
+
 src/lib/demo-auth.ts + src/app/login/actions.ts
   - Demo credentials hardcoded, plaintext, always validated
   - Fix: Add `if (NODE_ENV !== "development") return error()` in signInDemo()
@@ -75,15 +75,15 @@ src/lib/env.ts:43-47
   - Fix: Eager validation at startup
 
 ## STRENGTHS
-✅ RLS default-deny on all tables
-✅ Helper functions use SECURITY DEFINER correctly
-✅ No SQL injection (Supabase parameterization)
-✅ Secrets never exposed to client (GEMINI_API_KEY, SERVICE_ROLE_KEY)
-✅ CSP with nonce for inline scripts (correct for App Router)
-✅ HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy headers set
-✅ Constant-time comparison on Open311 API key (correct pattern)
-✅ Dashboard view strips PII (no reporter_id, description, email)
-✅ Auth cookies httpOnly, sameSite
+RLS default-deny on all tables
+Helper functions use SECURITY DEFINER correctly
+No SQL injection (Supabase parameterization)
+Secrets never exposed to client (GEMINI_API_KEY, SERVICE_ROLE_KEY)
+CSP with nonce for inline scripts (correct for App Router)
+HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy headers set
+Constant-time comparison on Open311 API key (correct pattern)
+Dashboard view strips PII (no reporter_id, description, email)
+Auth cookies httpOnly, sameSite
 
 ## COMPLIANCE GAPS
 - WCAG 2.1 AA audit not completed (due 2026-04-24 for city govts >50k)
@@ -108,11 +108,11 @@ Roadmap: role unification, CCPA DELETE, WCAG audit, privacy crons
 
 ## RISK SUMMARY
 Auth/Sessions: 🟡 MEDIUM (demo creds, role divergence, logout missing)
-RLS/Authz: ✅ STRONG (default-deny, but cities SELECT too open, storage RLS missing)
+RLS/Authz: STRONG (default-deny, but cities SELECT too open, storage RLS missing)
 Crypto: 🟡 DECENT (timing oracle, otherwise correct)
-API Security: 🔴 HIGH RISK (filter, fetch, media_url)
+API Security: HIGH RISK (filter, fetch, media_url)
 Privacy: 🟠 MEDIUM RISK (blur accuracy, hardcoded city, EXIF)
-Demo Mode: 🔴 CRITICAL (credentials in code)
+Demo Mode: CRITICAL (credentials in code)
 Data Exposure: 🟡 MITIGATED (service-role by design; RLS is the gate)
 
 OVERALL: MEDIUM-HIGH RISK. Do NOT deploy to production without P0 fixes.

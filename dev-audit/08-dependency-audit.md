@@ -43,16 +43,16 @@ Audited: deck.gl (5 packages), gsap (2 packages), cobe, maplibre-gl, react-map-g
 
 | Package | Imported | Loaded | Used | Bundle Risk |
 |---|---|---|---|---|
-| @deck.gl/aggregation-layers | ✓ | eager | HexagonLayer, HeatmapLayer | Mitigated (lazy ReportMap) |
-| @deck.gl/core | ✗ | transitive | - | ✓ Normal (pulled by layers) |
-| @deck.gl/layers | ✓ | eager | ScatterplotLayer | Mitigated (lazy ReportMap) |
-| @deck.gl/mapbox | ✓ | eager | MapboxOverlay | Mitigated (lazy ReportMap) |
-| @deck.gl/react | ✓ | eager | - | Mitigated (lazy ReportMap) |
-| gsap | ✓ | eager | Direct animation calls | Acceptable (report/team modals only) |
-| @gsap/react | ✓ | eager | useGSAP hook | Acceptable (report/team modals only) |
-| cobe | ✓ | eager | createGlobe | Acceptable (landing page only) |
-| maplibre-gl | ✓ | type-only | StyleSpecification type | ✓ No risk (types only) |
-| react-map-gl | ✓ | eager | Map, Popup, useControl | Mitigated (lazy ReportMap) |
+| @deck.gl/aggregation-layers | yes | eager | HexagonLayer, HeatmapLayer | Mitigated (lazy ReportMap) |
+| @deck.gl/core | no | transitive | - | Normal (pulled by layers) |
+| @deck.gl/layers | yes | eager | ScatterplotLayer | Mitigated (lazy ReportMap) |
+| @deck.gl/mapbox | yes | eager | MapboxOverlay | Mitigated (lazy ReportMap) |
+| @deck.gl/react | yes | eager | - | Mitigated (lazy ReportMap) |
+| gsap | yes | eager | Direct animation calls | Acceptable (report/team modals only) |
+| @gsap/react | yes | eager | useGSAP hook | Acceptable (report/team modals only) |
+| cobe | yes | eager | createGlobe | Acceptable (landing page only) |
+| maplibre-gl | yes | type-only | StyleSpecification type | No risk (types only) |
+| react-map-gl | yes | eager | Map, Popup, useControl | Mitigated (lazy ReportMap) |
 
 **Key Findings:**
 
@@ -78,18 +78,18 @@ Audited: deck.gl (5 packages), gsap (2 packages), cobe, maplibre-gl, react-map-g
 
 | Package | Used | Evidence |
 |---|---|---|
-| @biomejs/biome | ✓ | biome.json + npm scripts |
-| @tailwindcss/postcss | ✓ | postcss.config.mjs:3 |
-| @types/node | ✓ | TypeScript |
-| @types/react | ✓ | TypeScript |
-| @types/react-dom | ✓ | TypeScript |
-| @vitejs/plugin-react | ✓ | vitest.config.ts:2 |
-| eslint | ✓ | eslint.config.mjs:1 |
-| eslint-config-next | ✓ | eslint.config.mjs:2 |
-| **pg** | **✗ UNUSED** | **Never imported** |
-| tailwindcss | ✓ | PostCSS config |
-| typescript | ✓ | tsconfig.json |
-| vitest | ✓ | vitest.config.ts:1 + test files |
+| @biomejs/biome | yes | biome.json + npm scripts |
+| @tailwindcss/postcss | yes | postcss.config.mjs:3 |
+| @types/node | yes | TypeScript |
+| @types/react | yes | TypeScript |
+| @types/react-dom | yes | TypeScript |
+| @vitejs/plugin-react | yes | vitest.config.ts:2 |
+| eslint | yes | eslint.config.mjs:1 |
+| eslint-config-next | yes | eslint.config.mjs:2 |
+| **pg** | **UNUSED** | **Never imported** |
+| tailwindcss | yes | PostCSS config |
+| typescript | yes | tsconfig.json |
+| vitest | yes | vitest.config.ts:1 + test files |
 
 ---
 
@@ -103,11 +103,11 @@ No suspicious transitive imports. @deck.gl/core pulled by @deck.gl/layers (norma
 
 | Purpose | Libraries | Status |
 |---|---|---|
-| Vector mapping | maplibre-gl + react-map-gl | ✓ Complementary (base + React wrapper) |
-| 3D visualization | deck.gl (5 packages) | ✓ Single ecosystem |
-| Animations | gsap + @gsap/react | ✓ Standard pairing |
-| Icons | lucide-react | ✓ No duplicate |
-| UI styling | class-variance-authority, clsx, tailwind-merge | ✓ Different purposes |
+| Vector mapping | maplibre-gl + react-map-gl | Complementary (base + React wrapper) |
+| 3D visualization | deck.gl (5 packages) | Single ecosystem |
+| Animations | gsap + @gsap/react | Standard pairing |
+| Icons | lucide-react | No duplicate |
+| UI styling | class-variance-authority, clsx, tailwind-merge | Different purposes |
 
 No redundant libraries.
 
@@ -125,10 +125,10 @@ No redundant libraries.
 
 ## Summary
 
-✓ All 24 runtime dependencies used  
-✗ 1 of 12 devDependencies unused: pg  
-✓ Bundle-heavy libs appropriately deployed  
-✓ No duplicate-purpose libraries  
-✓ No transitive risks  
+All 24 runtime dependencies used
+1 of 12 devDependencies unused: pg
+Bundle-heavy libs appropriately deployed
+No duplicate-purpose libraries
+No transitive risks
 
 **Action:** Remove pg. Done.

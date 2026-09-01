@@ -1,6 +1,6 @@
 # Environment & Configuration Audit
 
-**Date:** 2026-06-13  
+**Date:** 2026-06-13
 **Severity Levels:** P0 (Critical) | P1 (High) | P2 (Medium)
 
 ---
@@ -18,12 +18,12 @@ Comprehensive audit of environment variables, configuration files, and secrets m
 **File:** `c:\Hackathon\-Social-Impact-\.env.local`
 
 **Finding:** `.env.local` contains production secrets and is correctly gitignored, but contains real API keys in plaintext:
-- ✅ `SUPABASE_SERVICE_ROLE_KEY` (server-only, correct)
-- ✅ `GEMINI_API_KEY` (server-only, correct)
-- ✅ `INTERNAL_CLASSIFY_SECRET` (server-only, correct)
-- ✅ `NEXT_PUBLIC_SUPABASE_ANON_KEY` (client-safe, intentional)
+- `SUPABASE_SERVICE_ROLE_KEY` (server-only, correct)
+- `GEMINI_API_KEY` (server-only, correct)
+- `INTERNAL_CLASSIFY_SECRET` (server-only, correct)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (client-safe, intentional)
 
-**Status:** ✅ ACCEPTABLE - `.env.local` is in `.gitignore`; real secrets are properly isolated to server-only env vars (no `NEXT_PUBLIC_` prefix).
+**Status:** ACCEPTABLE - `.env.local` is in `.gitignore`; real secrets are properly isolated to server-only env vars (no `NEXT_PUBLIC_` prefix).
 
 **Recommendation:** Ensure `.env.local` is never committed and is rotated after team member departures.
 
@@ -48,7 +48,7 @@ const isInternal = Boolean(
 );
 ```
 
-**Status:** ✅ SECURE - Uses `timingSafeEqual` to prevent timing attacks.
+**Status:** SECURE - Uses `timingSafeEqual` to prevent timing attacks.
 
 ---
 
@@ -263,7 +263,7 @@ console.error(entry); // Always runs
 
 **Finding:** Sentry wrapper (`withSentryConfig`) only applied in production builds. This is intentional to reduce dev compile overhead, but means dev builds don't collect Sentry instrumentation errors.
 
-**Trade-off:** ✅ ACCEPTABLE - Documented as intentional, dev-only DSN isn't set anyway.
+**Trade-off:** ACCEPTABLE - Documented as intentional, dev-only DSN isn't set anyway.
 
 ---
 
@@ -273,25 +273,25 @@ console.error(entry); // Always runs
 
 | Variable | Required | Location | Type | Validation | Notes |
 |----------|----------|----------|------|-----------|-------|
-| `SUPABASE_URL` | ✅ Yes | Server-only | URL | Zod URL schema | Production Supabase instance |
-| `SUPABASE_SERVICE_ROLE_KEY` | ✅ Yes | Server-only | Secret | Zod string | Never expose to client |
-| `GEMINI_API_KEY` | ✅ Yes | Server-only | Secret | Zod string | Used for photo classification |
-| `SENTRY_DSN` | ⚠️ Optional | Server-only | URL | None (if-set) | **MISSING:** P1 risk. No error monitoring |
-| `INTERNAL_CLASSIFY_SECRET` | ⚠️ Recommended | Server-only | Secret | None, compare manually | Protects internal AI endpoints |
-| `DEV_AUTH_BYPASS` | ⚠️ Dev-only | Server-only | Boolean | None | Should fail in production |
-| `NEXT_PUBLIC_SUPABASE_URL` | ✅ Yes | Client | URL | Zod URL schema | Public Supabase URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ Yes | Client | Secret | Zod string | Limited RLS permissions |
-| `NEXT_PUBLIC_SITE_URL` | ✅ Yes | Client | URL | **MISSING:** Not in schema | Needed for email deep-links |
-| `NEXT_PUBLIC_DEMO_MODE` | ⚠️ Build-time | Client | String ("0" or "1") | **Confusing docs** | Defaults to demo when unset |
-| `NEXT_PUBLIC_DEMO_SITE_URL` | ⚠️ Build-time | Client | URL | None | Demo deployment link |
-| `NEXT_PUBLIC_TESTING_SITE_URL` | ⚠️ Build-time | Client | URL | None | Testing deployment link |
-| `RESEND_API_KEY` | ⚠️ Optional | Server-only | Secret | None (if-set) | Email delivery; graceful fallback to log-only |
-| `NOTIFY_FROM_EMAIL` | ⚠️ Optional | Server-only | Email | None | Sender for status notifications |
-| `NOTIFY_DISABLE` | ⚠️ Optional | Server-only | Boolean | None | Force log-only mode |
-| `NEXT_PUBLIC_ASYNC_CLASSIFY` | ⚠️ Feature | Client | String ("1" or off) | Used in conditional | Async background classification flag |
-| `AI_WORK_ORDER` | ⚠️ Feature | Server-only | String ("1" or off) | **MISSING:** Not in schema | Enables AI-based work order generation |
-| `LOG_LEVEL` | ❌ Missing | N/A | String | N/A | **NEEDED:** Currently no log-level control |
-| `NEXT_PUBLIC_MAPBOX_TOKEN` | ❌ Unused | `.env.local` only | Secret | None | **CLEANUP:** Not in codebase, remove or document |
+| `SUPABASE_URL` | Yes | Server-only | URL | Zod URL schema | Production Supabase instance |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Server-only | Secret | Zod string | Never expose to client |
+| `GEMINI_API_KEY` | Yes | Server-only | Secret | Zod string | Used for photo classification |
+| `SENTRY_DSN` | Optional | Server-only | URL | None (if-set) | **MISSING:** P1 risk. No error monitoring |
+| `INTERNAL_CLASSIFY_SECRET` | Recommended | Server-only | Secret | None, compare manually | Protects internal AI endpoints |
+| `DEV_AUTH_BYPASS` | Dev-only | Server-only | Boolean | None | Should fail in production |
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Client | URL | Zod URL schema | Public Supabase URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Client | Secret | Zod string | Limited RLS permissions |
+| `NEXT_PUBLIC_SITE_URL` | Yes | Client | URL | **MISSING:** Not in schema | Needed for email deep-links |
+| `NEXT_PUBLIC_DEMO_MODE` | Build-time | Client | String ("0" or "1") | **Confusing docs** | Defaults to demo when unset |
+| `NEXT_PUBLIC_DEMO_SITE_URL` | Build-time | Client | URL | None | Demo deployment link |
+| `NEXT_PUBLIC_TESTING_SITE_URL` | Build-time | Client | URL | None | Testing deployment link |
+| `RESEND_API_KEY` | Optional | Server-only | Secret | None (if-set) | Email delivery; graceful fallback to log-only |
+| `NOTIFY_FROM_EMAIL` | Optional | Server-only | Email | None | Sender for status notifications |
+| `NOTIFY_DISABLE` | Optional | Server-only | Boolean | None | Force log-only mode |
+| `NEXT_PUBLIC_ASYNC_CLASSIFY` | Feature | Client | String ("1" or off) | Used in conditional | Async background classification flag |
+| `AI_WORK_ORDER` | Feature | Server-only | String ("1" or off) | **MISSING:** Not in schema | Enables AI-based work order generation |
+| `LOG_LEVEL` | Missing | N/A | String | N/A | **NEEDED:** Currently no log-level control |
+| `NEXT_PUBLIC_MAPBOX_TOKEN` | Unused | `.env.local` only | Secret | None | **CLEANUP:** Not in codebase, remove or document |
 
 ---
 
@@ -299,34 +299,34 @@ console.error(entry); // Always runs
 
 ### Verified Patterns
 
-✅ **Correct usage:**
+**Correct usage:**
 - `NEXT_PUBLIC_DEMO_MODE` inlined at build time, controls demo corpus
 - `NEXT_PUBLIC_ASYNC_CLASSIFY` controls async classification path
 - `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY` used to init browser Supabase client
 
-⚠️ **Needs clarity:**
+**Needs clarity:**
 - `NEXT_PUBLIC_DEMO_MODE` defaults to ON when unset (comment says "unset or 1", code checks `!== "0"`)
 
 ---
 
 ## 6. Secrets Management Review
 
-### ✅ Correct Practices
+### Correct Practices
 
 1. **Server-only secrets never prefixed with `NEXT_PUBLIC_`**
-   - `SUPABASE_SERVICE_ROLE_KEY` ✅
-   - `GEMINI_API_KEY` ✅
-   - `INTERNAL_CLASSIFY_SECRET` ✅
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `GEMINI_API_KEY`
+   - `INTERNAL_CLASSIFY_SECRET`
 
 2. **Timing-safe comparison for authentication**
-   - `src/app/api/ai/classify/route.ts` uses `timingSafeEqual` ✅
-   - `src/app/api/ai/reasoning/route.ts` uses `timingSafeEqual` ✅
+   - `src/app/api/ai/classify/route.ts` uses `timingSafeEqual`
+   - `src/app/api/ai/reasoning/route.ts` uses `timingSafeEqual`
 
 3. **Lazy env validation**
-   - `src/lib/env.ts` uses Proxy to defer validation until request time ✅
-   - Allows build-time route collection without secrets present ✅
+   - `src/lib/env.ts` uses Proxy to defer validation until request time
+   - Allows build-time route collection without secrets present
 
-### ⚠️ Missing/Incomplete
+### Missing/Incomplete
 
 1. **No validation for ALL server flags** (P1)
    - `AI_WORK_ORDER` not in schema
@@ -355,7 +355,7 @@ No critical security vulnerabilities in secrets handling or configuration.
 | 1.2 | Feature flags not validated in schema | `src/lib/env.ts` | Add `AI_WORK_ORDER` and `NOTIFY_DISABLE` to `serverEnvSchema` |
 | 1.3 | `NEXT_PUBLIC_DEMO_MODE` docs confuse "unset" behavior | `.env.example`, `src/lib/demo-mode.ts` | Clarify: "unset defaults to demo" or refactor to enum |
 
-**Effort:** ~2 hours  
+**Effort:** ~2 hours
 **Impact:** High, prevents silent config failures in staging/production
 
 ---
@@ -370,7 +370,7 @@ No critical security vulnerabilities in secrets handling or configuration.
 | 2.4 | CSP nonce setup needs verification | `next.config.ts`, `src/proxy.ts` | Audit `src/proxy.ts` nonce implementation |
 | 2.5 | `RESEND_API_KEY` has ambiguous "missing" state | `.env.example`, docs | Clarify three states: absent / disabled / present |
 
-**Effort:** ~3 hours  
+**Effort:** ~3 hours
 **Impact:** Medium, improves operational clarity and email reliability
 
 ---
@@ -378,9 +378,9 @@ No critical security vulnerabilities in secrets handling or configuration.
 ## 8. Implementation Roadmap
 
 ### Phase 1: Critical Secrets (Done)
-- ✅ No exposed secrets in git
-- ✅ Timing-safe auth headers
-- ✅ Server-only secrets properly scoped
+- No exposed secrets in git
+- Timing-safe auth headers
+- Server-only secrets properly scoped
 
 ### Phase 2: Schema Completeness (P1)
 **Recommendation: Start here**
@@ -447,6 +447,6 @@ grep "process.env\." src/ --include="*.ts" --exclude-dir=node_modules \
 
 ---
 
-**Status:** ✅ AUDIT COMPLETE  
-**Overall Risk:** 🟡 MEDIUM (P1 findings must be addressed before production deployment)  
+**Status:** AUDIT COMPLETE
+**Overall Risk:** 🟡 MEDIUM (P1 findings must be addressed before production deployment)
 **Next Step:** Implement Phase 2 schema completeness fixes

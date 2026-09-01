@@ -17,7 +17,7 @@ Legend: effort S (<½ day) / M (½, 2 days) / L (>2 days). IDs reference the inv
 
 ---
 
-## WS0: Merge `docs/city-onboarding-plan` into this branch  ⚠️ DO FIRST
+## WS0: Merge `docs/city-onboarding-plan` into this branch  DO FIRST
 
 **Why first:** `feat/sidebar-shell`'s `city/[slug]/page.tsx` and layout already import `PREVIEW_SOURCES` and call the `_sources`-parameterized `city_stats` / `city_category_breakdown` RPC overloads, which are defined **only** in the onboarding branch's migration. The live-DB path on this branch is broken until the merge lands. Everything downstream (WS1, WS2) touches the same files.
 

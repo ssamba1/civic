@@ -10,8 +10,8 @@
 
 | Module | File | Tests | Hours | Status | Owner |
 |--------|------|-------|-------|--------|-------|
-| **Core Filter** | filters/filter-reports.ts | 8 | 2 | ✅ Written | - |
-| **Analytics** | filters/derive.ts | 12 | 4 | ✅ Written | - |
+| **Core Filter** | filters/filter-reports.ts | 8 | 2 | Written | - |
+| **Analytics** | filters/derive.ts | 12 | 4 | Written | - |
 | **URL Serialization** | filters/url-sync.ts | 6 | 2 | ⏳ Skeleton ready | - |
 | **Security** | privacy/signed-url.ts | 5 | 2 | ⏳ Skeleton ready | - |
 | **Resident Data** | resident-data.ts | 15 | 6 | ⏳ Skeleton ready | - |
@@ -21,8 +21,8 @@
 
 ## Written: filter-reports.test.ts (8 tests, 2 hrs)
 
-**File:** `src/lib/filters/filter-reports.test.ts`  
-**Status:** ✅ Complete and runnable
+**File:** `src/lib/filters/filter-reports.test.ts`
+**Status:** Complete and runnable
 
 **Test coverage:**
 - resolveWindow: 7 tests
@@ -45,8 +45,8 @@
 
 ## Written: derive.test.ts (12 tests, 4 hrs)
 
-**File:** `src/lib/filters/derive.test.ts`  
-**Status:** ✅ Complete and runnable
+**File:** `src/lib/filters/derive.test.ts`
+**Status:** Complete and runnable
 
 **Test coverage:**
 - deriveKpis: 6 tests
@@ -90,7 +90,7 @@
 
 ## Next: url-sync.test.ts (6 tests, 2 hrs)
 
-**File:** `src/lib/filters/url-sync.test.ts`  
+**File:** `src/lib/filters/url-sync.test.ts`
 **Status:** ⏳ Skeleton ready, awaiting implementation
 
 **Skeleton is in 01-test-coverage-gaps.md § "15 Highest-Priority"**
@@ -127,7 +127,7 @@ const baseFilter: ReportFilter = {
 
 ## Next: signed-url.test.ts (5 tests, 2 hrs)
 
-**File:** `src/lib/privacy/signed-url.test.ts`  
+**File:** `src/lib/privacy/signed-url.test.ts`
 **Status:** ⏳ Skeleton ready, awaiting implementation
 
 **Skeleton is in 01-test-coverage-gaps.md § "Privacy/signed-url.ts, P0"**
@@ -164,7 +164,7 @@ const createServerClientMock = vi.mocked(createServerClient);
 
 ## Next: resident-data.test.ts (15 tests, 6 hrs)
 
-**File:** `src/lib/resident-data.test.ts`  
+**File:** `src/lib/resident-data.test.ts`
 **Status:** ⏳ Skeleton ready, awaiting implementation
 
 **Skeleton is in 01-test-coverage-gaps.md § "resident-data.ts, P0"**

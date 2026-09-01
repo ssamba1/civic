@@ -9,18 +9,18 @@
 
 | Task | Status | Commit |
 |---|---|---|
-| 1, shared `src/lib/crew-types.ts` + tests | ✅ done, both reviews passed | `166d4e9` |
-| 2, migration `031` file + `tests/rls/city-crew-types.rls.test.ts` | ✅ files done + reviewed **safe to apply** | `0f5d265` |
+| 1, shared `src/lib/crew-types.ts` + tests | done, both reviews passed | `166d4e9` |
+| 2, migration `031` file + `tests/rls/city-crew-types.rls.test.ts` | files done + reviewed **safe to apply** | `0f5d265` |
 | **2-APPLY. Run 031 DDL on prod** | ⏳ **USER ACTION** (auto-mode classifier blocks schema pushes; re-confirmed 2026-07-08) | - |
-| 3, `src/lib/db/crew-types.ts` (`fetchCityCrewTypes`) | ✅ done, reviewed | `d0cb0c1` |
-| 4, server actions (`createCrewType`, free-text `crewTypeSchema`, `inviteMember`→`userId`) | ✅ done, both reviews | `737820b` |
-| 5, `MenuSelect` component (+ action-row-on-top tweak) | ✅ done, both reviews | `729b8e3`, `61de282` |
-| 6, Role/Team selects → MenuSelect + ERROR_COPY | ✅ done, both reviews | `0e3e48c` |
-| 7, crew dialog MenuSelect + new-type flow | ✅ done, both reviews | `5b80bf2` |
-| 8, invite-by-email in crew roster | ✅ done, both reviews | `7c5938a` |
-| 9, AI schema+prompt builders (zero-custom = byte-identical) | ✅ done + quality fix ($-pattern replace injection) | `c8d461a`, `628309e` |
-| 10, pipeline wiring + `crew_type` type widening | ✅ done, both reviews + custom-types test | `2763c46`, `143e3ad` |
-| 11, full gates + browser QA | ✅ typecheck clean · 351 unit + 25 RLS pass · biome clean on 19 touched files · Playwright QA 20/20 (menus, keyboard, Enter-guards, reserved-name copy, pre-031 graceful error, flip clamp, dark mode) | - |
+| 3, `src/lib/db/crew-types.ts` (`fetchCityCrewTypes`) | done, reviewed | `d0cb0c1` |
+| 4, server actions (`createCrewType`, free-text `crewTypeSchema`, `inviteMember`→`userId`) | done, both reviews | `737820b` |
+| 5, `MenuSelect` component (+ action-row-on-top tweak) | done, both reviews | `729b8e3`, `61de282` |
+| 6, Role/Team selects → MenuSelect + ERROR_COPY | done, both reviews | `0e3e48c` |
+| 7, crew dialog MenuSelect + new-type flow | done, both reviews | `5b80bf2` |
+| 8, invite-by-email in crew roster | done, both reviews | `7c5938a` |
+| 9, AI schema+prompt builders (zero-custom = byte-identical) | done + quality fix ($-pattern replace injection) | `c8d461a`, `628309e` |
+| 10, pipeline wiring + `crew_type` type widening | done, both reviews + custom-types test | `2763c46`, `143e3ad` |
+| 11, full gates + browser QA | typecheck clean · 351 unit + 25 RLS pass · biome clean on 19 touched files · Playwright QA 20/20 (menus, keyboard, Enter-guards, reserved-name copy, pre-031 graceful error, flip clamp, dark mode) | - |
 | Final. Code review + finish branch (merge/PR) | see repo history | - |
 
 Related: load-balancing across same-type crews deferred to [issue #16](https://github.com/28gugales-dev/-Social-Impact-/issues/16).

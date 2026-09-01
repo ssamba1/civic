@@ -33,26 +33,26 @@
 
 ## Content Negotiation
 
-- ✓ Correctly implements `?format=xml|json` and `Accept: text/xml|application/xml` headers.
-- ✓ XML declared with UTF-8 encoding.
+- Correctly implements `?format=xml|json` and `Accept: text/xml|application/xml` headers.
+- XML declared with UTF-8 encoding.
 - ⚠ JSON responses missing root object wrappers (items 1-3 above).
 
 ---
 
 ## Auth & Rate-Limiting
 
-- ✓ POST /requests validates `api_key` with constant-time comparison (timing-safe).
-- ✓ Rate limit 60 req/min per IP on both GET and POST.
+- POST /requests validates `api_key` with constant-time comparison (timing-safe).
+- Rate limit 60 req/min per IP on both GET and POST.
 - ⚠ No per-key rate limiting; all keys share same limit bucket (standard but worth noting).
 
 ---
 
 ## Data Safety
 
-- ✓ Public SELECT excludes reporter PII, raw photo URLs, raw descriptions.
-- ✓ UUID validation before DB lookup (prevents reflected error injection).
-- ✓ media_url must use https.
-- ✓ Rejected/merged reports excluded from public feed.
+- Public SELECT excludes reporter PII, raw photo URLs, raw descriptions.
+- UUID validation before DB lookup (prevents reflected error injection).
+- media_url must use https.
+- Rejected/merged reports excluded from public feed.
 
 ---
 

@@ -141,6 +141,6 @@ READ FIRST: `src/app/city/[slug]/team/[teamId]/layout.tsx` + its 3 pages (the ex
 - [ ] Fork-collision check (`git fetch origin && git log main..origin/main`), reconcile if needed; merge to main, push SSH; update memory + STATE docs.
 
 ## Self-Review Notes
-- "own portal": T4 route per crew type ✅. "own login": T3 crewtest1..N ✅. "see only what they need": T2 lockedCategories scoping every context surface + T4 calendar type lock ✅ (soft, documented, same trust level as existing team views).
+- "own portal": T4 route per crew type. "own login": T3 crewtest1..N. "see only what they need": T2 lockedCategories scoping every context surface + T4 calendar type lock (soft, documented, same trust level as existing team views).
 - Type seams: `categoriesForCrewType`/`isPortalCrewType`/`portalLabel` defined T1, consumed T4; `lockedCategories` defined T2, consumed T4; `crewType` on DemoAccount defined T3, standalone.
 - Custom city crew types: portals limited to built-ins (custom types have no category mapping yet). `isPortalCrewType` gate + plan note; extension = future issue.

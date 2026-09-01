@@ -44,41 +44,41 @@
 
 ## Auth & Authorization (Clean)
 
-✅ **src/lib/privacy/signed-url.ts**. Comprehensive role + city check before issuing signed URLs for raw photos. Uses SSR client (cookie-aware) for authorization gate, service-role client only for token generation. No bypass found.
+**src/lib/privacy/signed-url.ts**. Comprehensive role + city check before issuing signed URLs for raw photos. Uses SSR client (cookie-aware) for authorization gate, service-role client only for token generation. No bypass found.
 
-✅ **src/app/api/ai/classify/route.ts:54-75**. Reports are re-gated after the internal-key check: unauthenticated callers must own or staff the report (RLS scoped read via SSR client). The pipeline runs under service-role (correct for RLS bypass context) but read authorization is enforced upstream. No object-level bypass.
+**src/app/api/ai/classify/route.ts:54-75**. Reports are re-gated after the internal-key check: unauthenticated callers must own or staff the report (RLS scoped read via SSR client). The pipeline runs under service-role (correct for RLS bypass context) but read authorization is enforced upstream. No object-level bypass.
 
-✅ **src/app/staff/actions.ts:14-46**. Staff actions use `getStaffUser()` which validates role (staff_dispatcher, staff_supervisor, admin) before any mutation. Dev bypass (`DEV_AUTH_BYPASS=1 + NODE_ENV=development`) is correctly gated and only picks the first dev staff user, not an arbitrary one.
+**src/app/staff/actions.ts:14-46**. Staff actions use `getStaffUser()` which validates role (staff_dispatcher, staff_supervisor, admin) before any mutation. Dev bypass (`DEV_AUTH_BYPASS=1 + NODE_ENV=development`) is correctly gated and only picks the first dev staff user, not an arbitrary one.
 
 ---
 
 ## XSS & Output Encoding (Clean)
 
-✅ **src/components/map/map-popup.tsx**, Inline `esc()` function escapes HTML entities (&, <, >, ", '). Used on all user-controlled fields: address, status label, severity, reported date, cost, SLA. CATEGORY_META is a static constant.
+**src/components/map/map-popup.tsx**, Inline `esc()` function escapes HTML entities (&, <, >, ", '). Used on all user-controlled fields: address, status label, severity, reported date, cost, SLA. CATEGORY_META is a static constant.
 
-✅ **src/lib/open311/xml.ts**. XML serialization uses parameterized `tag()` helper that escapes all values via `esc()` function. No XML injection risk.
+**src/lib/open311/xml.ts**. XML serialization uses parameterized `tag()` helper that escapes all values via `esc()` function. No XML injection risk.
 
-✅ **src/app/api/open311/v2/requests/route.ts:299**, XML response manually escapes report.id using `escXml()` inline helper.
+**src/app/api/open311/v2/requests/route.ts:299**, XML response manually escapes report.id using `escXml()` inline helper.
 
 ---
 
 ## Rate Limiting & DOS (Clean)
 
-✅ **src/app/api/ai/classify/route.ts:25-37**, Rate limiter checked per IP for non-internal callers. Internal key (server actions, Open311) bypasses limit (acceptable: trusted context).
+**src/app/api/ai/classify/route.ts:25-37**, Rate limiter checked per IP for non-internal callers. Internal key (server actions, Open311) bypasses limit (acceptable: trusted context).
 
-✅ **src/app/api/ai/reasoning/route.ts:47-56**, Rate limiter on reasoning endpoint: 60 req/min per IP for anonymous, exempt for authenticated users and internal-key callers.
+**src/app/api/ai/reasoning/route.ts:47-56**, Rate limiter on reasoning endpoint: 60 req/min per IP for anonymous, exempt for authenticated users and internal-key callers.
 
-✅ **src/app/api/open311/v2/requests/route.ts:27-32**. GET /requests rate-limited to 60 req/min per IP (generous for public spec clients).
+**src/app/api/open311/v2/requests/route.ts:27-32**. GET /requests rate-limited to 60 req/min per IP (generous for public spec clients).
 
 ---
 
 ## Database & RLS (Clean)
 
-✅ All parameterized queries via Supabase client. No string interpolation in WHERE clauses.
+All parameterized queries via Supabase client. No string interpolation in WHERE clauses.
 
-✅ PUBLIC_REPORT_SELECT explicitly lists safe columns only: no photo_raw_url, no reporter PII, no description in public feed (H13 compliance).
+PUBLIC_REPORT_SELECT explicitly lists safe columns only: no photo_raw_url, no reporter PII, no description in public feed (H13 compliance).
 
-✅ Image MIME type validated on upload: magic-byte sniff after blob.type allowlist (src/lib/privacy/upload.ts:35-50).
+Image MIME type validated on upload: magic-byte sniff after blob.type allowlist (src/lib/privacy/upload.ts:35-50).
 
 ---
 

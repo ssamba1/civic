@@ -1,8 +1,8 @@
 # Lint & Format Audit Report
 
-**Date:** 2026-06-13  
-**Tool:** Biome 2.0.0  
-**Scope:** src/ (208 files checked)  
+**Date:** 2026-06-13
+**Tool:** Biome 2.0.0
+**Scope:** src/ (208 files checked)
 **Status:** 387 errors, 56 warnings
 
 ---
@@ -334,10 +334,10 @@ import { foo } from "./utils";
 ```
 
 **Issues with Config:**
-1. ✓ `recommended` ruleset enabled (good baseline)
-2. ✓ Formatter set to 2-space indents (matches project)
-3. ✗ No line ending enforcement → CRLF files slip through
-4. ✗ No explicit rule configuration for a11y warnings (all run at default level)
+1. `recommended` ruleset enabled (good baseline)
+2. Formatter set to 2-space indents (matches project)
+3. No line ending enforcement → CRLF files slip through
+4. No explicit rule configuration for a11y warnings (all run at default level)
 
 ### Recommended Config Additions
 ```json
@@ -374,9 +374,9 @@ npx biome check --fix src/
 ```
 
 **What this fixes:**
-- ✓ 264 format issues (CRLF→LF)
-- ✓ 73 import organization issues
-- ✓ ~40 fixable lint issues (useImportType, unused imports, etc.)
+- 264 format issues (CRLF→LF)
+- 73 import organization issues
+- ~40 fixable lint issues (useImportType, unused imports, etc.)
 
 **Result:** ~377 errors → ~47 errors (remaining manual work)
 
@@ -430,9 +430,9 @@ Update `lineEnding: "lf"` and elevate critical a11y rules to `error` level.
 ## 8. Risk Assessment
 
 ### Low Risk
-- ✓ Format fixes (CRLF→LF)
-- ✓ Import organization
-- ✓ Type import syntax updates
+- Format fixes (CRLF→LF)
+- Import organization
+- Type import syntax updates
 
 ### Medium Risk
 - ⚠ Hook dependency fixes (may require logic changes)

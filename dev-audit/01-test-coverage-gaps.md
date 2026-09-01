@@ -1,6 +1,6 @@
 # Test Coverage Audit: Civic Outreach Platform
 
-**Date:** 2026-06-13  
+**Date:** 2026-06-13
 **Auditor:** Code audit (read-only, exhaustive sweep)
 
 **Summary:** 64 untested src/lib/**/*.ts files across 10 subdirectories; 11 test files exist (70 tests total). **Most critical gap:** Five interdependent modules (filter→analytics→display pipeline) have zero coverage yet are touched by every dashboard render, resident update, and staff view. Coverage estimate: ~25% by LOC; ~75% achievable in ~40 hours (Phases 1-3).
@@ -26,76 +26,76 @@
 | File | Tested | Type | Priority | LOC | Rationale |
 |------|--------|------|----------|-----|-----------|
 | **AI Pipeline** | | | | | |
-| ai/classification-schema.ts | ✅ | Schema validation | - | 150 | 15 test cases, boundary testing |
-| ai/classify-pipeline.ts | ✅ | Integration | - | 300 | 5 scenarios, full error paths, mocked DB |
-| ai/gemini.ts | ✅ | API caller | - | 200 | 5 cases, JSON parsing + fence removal |
-| ai/reasoning-ai.ts | ✅ | Cached fetcher | - | 250 | 3 cases, cache hit/miss + fallback |
-| ai/retry.ts | ✅ | Retry logic | - | 100 | 8 cases, backoff + signal handling |
-| ai/work-order-rules.ts | ✅ | Pure logic | - | 150 | 15 cases, 12 categories, priority math |
-| ai/config.ts | ❌ | Constants | P2 | 30 | Just exports |
-| ai/prompt.ts | ❌ | Template | P2 | 50 | Prompt text, not testable |
-| ai/rate-limit.ts | ✅ | Rate limiter | - | 100 | 8 cases, window + IP extraction |
-| ai/rate-limiter.ts | ❌ | Rate limiter | P1 | 100 | Sliding window, 3 critical edges |
+| ai/classification-schema.ts | yes | Schema validation | - | 150 | 15 test cases, boundary testing |
+| ai/classify-pipeline.ts | yes | Integration | - | 300 | 5 scenarios, full error paths, mocked DB |
+| ai/gemini.ts | yes | API caller | - | 200 | 5 cases, JSON parsing + fence removal |
+| ai/reasoning-ai.ts | yes | Cached fetcher | - | 250 | 3 cases, cache hit/miss + fallback |
+| ai/retry.ts | yes | Retry logic | - | 100 | 8 cases, backoff + signal handling |
+| ai/work-order-rules.ts | yes | Pure logic | - | 150 | 15 cases, 12 categories, priority math |
+| ai/config.ts | no | Constants | P2 | 30 | Just exports |
+| ai/prompt.ts | no | Template | P2 | 50 | Prompt text, not testable |
+| ai/rate-limit.ts | yes | Rate limiter | - | 100 | 8 cases, window + IP extraction |
+| ai/rate-limiter.ts | no | Rate limiter | P1 | 100 | Sliding window, 3 critical edges |
 | **Analytics & Filtering** | | | | | |
-| analytics-data.ts | ❌ | Data fetch | P1 | 350 | Fallback chains, KPI generation |
-| dashboard-data.ts | ❌ | Data fetch | P1 | 509 | City cache, 1100-report corpus gen |
-| dashboard-queries.ts | ✅ | Query builder | - | 100 | 1-2 cases, basic happy path only |
-| filters/derive.ts | ❌ | Analytics | **P0** | 300 | 10+ KPIs, trends, heatmap, neighborhoods |
-| filters/filter-reports.ts | ❌ | Core filter | **P0** | 92 | Window resolution, 5-predicate filtering |
-| filters/types.ts | ❌ | Types | P2 | 42 | Interfaces + constants |
-| filters/url-sync.ts | ❌ | URL parser | P1 | 92 | Round-trip serialization, validation |
+| analytics-data.ts | no | Data fetch | P1 | 350 | Fallback chains, KPI generation |
+| dashboard-data.ts | no | Data fetch | P1 | 509 | City cache, 1100-report corpus gen |
+| dashboard-queries.ts | yes | Query builder | - | 100 | 1-2 cases, basic happy path only |
+| filters/derive.ts | no | Analytics | **P0** | 300 | 10+ KPIs, trends, heatmap, neighborhoods |
+| filters/filter-reports.ts | no | Core filter | **P0** | 92 | Window resolution, 5-predicate filtering |
+| filters/types.ts | no | Types | P2 | 42 | Interfaces + constants |
+| filters/url-sync.ts | no | URL parser | P1 | 92 | Round-trip serialization, validation |
 | **Database Clients** | | | | | |
-| db/browser-client.ts | ❌ | Wrapper | P2 | 10 | Thin Supabase wrapper |
-| db/client.ts | ❌ | Wrapper | P2 | 10 | Thin Supabase wrapper |
-| db/ssr-client.ts | ❌ | Wrapper | P2 | 15 | Thin Supabase wrapper |
+| db/browser-client.ts | no | Wrapper | P2 | 10 | Thin Supabase wrapper |
+| db/client.ts | no | Wrapper | P2 | 10 | Thin Supabase wrapper |
+| db/ssr-client.ts | no | Wrapper | P2 | 15 | Thin Supabase wrapper |
 | **Demo & Auth** | | | | | |
-| demo-auth.ts | ✅ | Auth | - | 80 | 5 cases, account structure |
-| demo-mode.ts | ❌ | Flag | P2 | 23 | Single NEXT_PUBLIC boolean |
-| demo-reports.ts | ❌ | Client store | P2 | 209 | Demo overlay, localStorage |
-| demo-session.ts | ❌ | Session | P2 | 50 | Anon fallback, simple |
+| demo-auth.ts | yes | Auth | - | 80 | 5 cases, account structure |
+| demo-mode.ts | no | Flag | P2 | 23 | Single NEXT_PUBLIC boolean |
+| demo-reports.ts | no | Client store | P2 | 209 | Demo overlay, localStorage |
+| demo-session.ts | no | Session | P2 | 50 | Anon fallback, simple |
 | **Delegation & Teams** | | | | | |
-| delegation-history.ts | ❌ | Pure logic | **P1** | 175 | Event timeline synthesis, Haversine distance |
-| teams.ts | ❌ | Routing | P1 | 189 | Category→team mapping, override-aware |
-| teams-data.ts | ❌ | Workload | P1 | 150 | Per-team metrics (MTTR, open, top cat) |
-| teams-overrides.ts | ❌ | Store | P2 | 100 | Client localStorage, snapshot reads |
+| delegation-history.ts | no | Pure logic | **P1** | 175 | Event timeline synthesis, Haversine distance |
+| teams.ts | no | Routing | P1 | 189 | Category→team mapping, override-aware |
+| teams-data.ts | no | Workload | P1 | 150 | Per-team metrics (MTTR, open, top cat) |
+| teams-overrides.ts | no | Store | P2 | 100 | Client localStorage, snapshot reads |
 | **Environment & Logging** | | | | | |
-| env.ts | ❌ | Validation | P2 | 30 | Env parser, minimal logic |
-| logger.ts | ❌ | Logging | P2 | 63 | Wraps console + Sentry, low business risk |
+| env.ts | no | Validation | P2 | 30 | Env parser, minimal logic |
+| logger.ts | no | Logging | P2 | 63 | Wraps console + Sentry, low business risk |
 | **Image Processing** | | | | | |
-| image/normalize.ts | ❌ | Canvas | P1 | 60 | EXIF orientation, downscaling |
-| image/sniff-mime.ts | ✅ | Magic bytes | - | 60 | 20+ cases, 6 formats, truncated input |
+| image/normalize.ts | no | Canvas | P1 | 60 | EXIF orientation, downscaling |
+| image/sniff-mime.ts | yes | Magic bytes | - | 60 | 20+ cases, 6 formats, truncated input |
 | **Notifications** | | | | | |
-| notify/deliver.ts | ❌ | Email | P1 | 114 | HTML escaping, Resend API, fallback logging |
-| notify/status-notify.ts | ❌ | Server action | P1 | 12 | Async notification delivery |
-| notifications-actions.ts | ❌ | Server action | P2 | 12 | Thin wrapper |
+| notify/deliver.ts | no | Email | P1 | 114 | HTML escaping, Resend API, fallback logging |
+| notify/status-notify.ts | no | Server action | P1 | 12 | Async notification delivery |
+| notifications-actions.ts | no | Server action | P2 | 12 | Thin wrapper |
 | **Open311 Integration** | | | | | |
-| open311/services.ts | ❌ | Lookups | P2 | 173 | Static data, dept mapping |
-| open311/transform.ts | ❌ | Transform | **P1** | 112 | Status mapping, Open311 serialization |
-| open311/xml.ts | ❌ | XML gen | P1 | 103 | Escaping, tag generation |
+| open311/services.ts | no | Lookups | P2 | 173 | Static data, dept mapping |
+| open311/transform.ts | no | Transform | **P1** | 112 | Status mapping, Open311 serialization |
+| open311/xml.ts | no | XML gen | P1 | 103 | Escaping, tag generation |
 | **Privacy & Uploads** | | | | | |
-| privacy/audit.ts | ❌ | DB audit | P1 | 73 | Storage bucket cross-reference |
-| privacy/blur.ts | ❌ | Canvas | **P1** | 213 | Face Detection fallback, blur, downscale |
+| privacy/audit.ts | no | DB audit | P1 | 73 | Storage bucket cross-reference |
+| privacy/blur.ts | no | Canvas | **P1** | 213 | Face Detection fallback, blur, downscale |
 | privacy/face-detector.d.ts | - | Types | - | 20 | Shape Detection API types |
-| privacy/retention.ts | ❌ | Config | P2 | 71 | 30-day TTL + cron script |
-| privacy/signed-url.ts | ❌ | Security | **P0** | 71 | Role + city verification |
-| privacy/upload.ts | ❌ | Upload | P1 | 115 | MIME validation, dual-bucket, error cleanup |
+| privacy/retention.ts | no | Config | P2 | 71 | 30-day TTL + cron script |
+| privacy/signed-url.ts | no | Security | **P0** | 71 | Role + city verification |
+| privacy/upload.ts | no | Upload | P1 | 115 | MIME validation, dual-bucket, error cleanup |
 | **Resident Features** | | | | | |
-| resident-csat.ts | ❌ | Client store | P2 | 102 | localStorage ratings, useSyncExternalStore |
-| resident-data.ts | ❌ | Aggregation | **P0** | 699 | Timeline synthesis, morale, fallback chains |
+| resident-csat.ts | no | Client store | P2 | 102 | localStorage ratings, useSyncExternalStore |
+| resident-data.ts | no | Aggregation | **P0** | 699 | Timeline synthesis, morale, fallback chains |
 | **State Management (Client)** | | | | | |
-| task-completion.ts | ✅ | Overlay | - | 168 | **SHALLOW: 2 asserts** |
-| upvotes.ts | ❌ | Client store | P2 | 127 | Deterministic hash, localStorage |
+| task-completion.ts | yes | Overlay | - | 168 | **SHALLOW: 2 asserts** |
+| upvotes.ts | no | Client store | P2 | 127 | Deterministic hash, localStorage |
 | **Type Definitions** | | | | | |
-| category-overrides.ts | ❌ | Store | P2 | 80 | Client-side category override snapshot |
-| custom-categories.ts | ❌ | Config | P2 | 50 | Custom category schema |
-| types.ts | ❌ | Types | P2 | 150 | Interfaces only |
+| category-overrides.ts | no | Store | P2 | 80 | Client-side category override snapshot |
+| custom-categories.ts | no | Config | P2 | 50 | Custom category schema |
+| types.ts | no | Types | P2 | 150 | Interfaces only |
 | **Utilities** | | | | | |
-| hooks/use-sliding-pill.ts | ❌ | React hook | P2 | 80 | UI state, trivial |
-| utils/cn.ts | ❌ | Classname | P2 | 10 | clsx wrapper |
-| utils/downscale-image.ts | ❌ | Canvas | P1 | 60 | Image resize, coordinate math |
-| utils/scroll-lock.ts | ❌ | DOM | P2 | 40 | Modal scroll prevention |
-| utils/stacked-bar.ts | ❌ | Chart | P2 | 50 | Stacked bar normalization |
-| utils/time-ago.ts | ❌ | Format | P2 | 45 | Relative time text |
+| hooks/use-sliding-pill.ts | no | React hook | P2 | 80 | UI state, trivial |
+| utils/cn.ts | no | Classname | P2 | 10 | clsx wrapper |
+| utils/downscale-image.ts | no | Canvas | P1 | 60 | Image resize, coordinate math |
+| utils/scroll-lock.ts | no | DOM | P2 | 40 | Modal scroll prevention |
+| utils/stacked-bar.ts | no | Chart | P2 | 50 | Stacked bar normalization |
+| utils/time-ago.ts | no | Format | P2 | 45 | Relative time text |
 
 **Total: 76 files. 11 tested, 64 untested. 1 shallow test found.**
 
@@ -682,17 +682,17 @@ describe("escapeHtml", () => {
 
 | File | Tests | Lines | Ratio |
 |------|-------|-------|-------|
-| `ai/classification-schema.ts` | ✅ | ~150 | Good |
-| `ai/classify-pipeline.ts` | ✅ | ~300 | Partial |
-| `ai/gemini.ts` | ✅ | ~200 | Partial |
-| `ai/reasoning-ai.ts` | ✅ | ~250 | Partial |
-| `ai/retry.ts` | ✅ | ~100 | Good |
-| `ai/work-order-rules.ts` | ✅ | ~150 | Partial |
-| `ai/rate-limit.ts` | ✅ | ~100 | Good |
-| `demo-auth.ts` | ✅ | ~80 | Good |
-| `image/sniff-mime.ts` | ✅ | ~60 | Good |
-| `task-completion.ts` | ✅ | ~168 | Partial |
-| `dashboard-queries.ts` | ✅ | ~100 | Partial |
+| `ai/classification-schema.ts` | yes | ~150 | Good |
+| `ai/classify-pipeline.ts` | yes | ~300 | Partial |
+| `ai/gemini.ts` | yes | ~200 | Partial |
+| `ai/reasoning-ai.ts` | yes | ~250 | Partial |
+| `ai/retry.ts` | yes | ~100 | Good |
+| `ai/work-order-rules.ts` | yes | ~150 | Partial |
+| `ai/rate-limit.ts` | yes | ~100 | Good |
+| `demo-auth.ts` | yes | ~80 | Good |
+| `image/sniff-mime.ts` | yes | ~60 | Good |
+| `task-completion.ts` | yes | ~168 | Partial |
+| `dashboard-queries.ts` | yes | ~100 | Partial |
 
 ---
 

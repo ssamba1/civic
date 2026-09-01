@@ -1,15 +1,15 @@
 # Type Safety Audit
 
-**Generated:** 2026-06-13  
-**Framework:** Next.js + TypeScript (strict mode)  
+**Generated:** 2026-06-13
+**Framework:** Next.js + TypeScript (strict mode)
 **Scope:** src/ (lib + app)
 
 ## Executive Summary
 
-**Overall:** ✅ Excellent  
-**Findings:** 21 issues across 16 files  
-**Severity Distribution:** P1: 5 | P2: 16 | P0: 0  
-**Type Coverage:** ~98% (comprehensive type guards and validation)  
+**Overall:** Excellent
+**Findings:** 21 issues across 16 files
+**Severity Distribution:** P1: 5 | P2: 16 | P0: 0
+**Type Coverage:** ~98% (comprehensive type guards and validation)
 
 Codebase uses `strict: true` in tsconfig.json with strong discipline. All `any` usages are avoided. Type assertions (`as`) are present but well-justified for JSON parsing and API response handling.
 
@@ -18,12 +18,12 @@ Codebase uses `strict: true` in tsconfig.json with strong discipline. All `any` 
 ## Config Review
 
 **tsconfig.json:**
-- ✅ `strict: true`. All strict checks enabled
-- ✅ `noEmit: true`. Type-checks all files
-- ✅ `isolatedModules: true`. Each file stands alone
-- ✅ `jsx: "react-jsx"`, Modern JSX runtime
-- ✅ `skipLibCheck: true`, Reasonable for third-party types
-- ✅ No `suppressImplicitAnyIndexAccess`, Good practice
+- `strict: true`. All strict checks enabled
+- `noEmit: true`. Type-checks all files
+- `isolatedModules: true`. Each file stands alone
+- `jsx: "react-jsx"`, Modern JSX runtime
+- `skipLibCheck: true`, Reasonable for third-party types
+- No `suppressImplicitAnyIndexAccess`, Good practice
 
 ---
 
@@ -55,7 +55,7 @@ Codebase uses `strict: true` in tsconfig.json with strong discipline. All `any` 
 | src/lib/task-completion.ts | 54 | `v as Record<string, unknown>` missing null check | Add `v !== null` before cast |
 | src/lib/upvotes.ts | 37 | Double cast in JSON parsing | Use single cast after guard |
 | src/lib/teams-overrides.ts | 63, 91, 96 | Repeated object-cast pattern | Extract shared `readJsonObject()` helper |
-| src/lib/privacy/blur.ts | 173 | Canvas context null return | ✅ Already handled with throw |
+| src/lib/privacy/blur.ts | 173 | Canvas context null return | Already handled with throw |
 | src/lib/resident-csat.ts | 38, 41 | JSON.parse + cast without schema | Add zod validation |
 | src/lib/resident-data.ts | 314 | `data as unknown as MyReportRow[]` | Use typed `.from().select()` |
 | src/lib/dashboard-data.ts | 249 | Data cast in fallback path | Document Supabase type contract |
@@ -78,7 +78,7 @@ All `as` casts are **intentional and guarded**. They fall into three safe catego
 
 ## Well-Implemented Type Guards
 
-✅ **Examples:**
+**Examples:**
 
 ```typescript
 // src/lib/ai/retry.ts:15-21, Safe error extraction
@@ -110,7 +110,7 @@ function isReasoningPayload(value: unknown): value is ReasoningPayload {
 
 ## Recommendations (Priority Order)
 
-### 🔴 P1: Must Fix
+### P1: Must Fix
 1. Replace all `!` env assertions with typed getter (consolidate to `env.ts` pattern)
 2. Add number type guards in `normalizeLocation()` before `Number()` coercion
 3. Guard `user_metadata` for null before cast
@@ -122,7 +122,7 @@ function isReasoningPayload(value: unknown): value is ReasoningPayload {
 3. Replace double casts with `.returns<T>()` on Supabase queries
 4. Document return type contracts for all API boundaries
 
-### 🟢 P3: Nice to Have
+### P3: Nice to Have
 1. Consider generated zod schemas from database types
 2. Add exhaustive error shape tests in `ai/retry.test.ts`
 3. Test all JSON parsing paths with invalid inputs
@@ -155,8 +155,8 @@ function isReasoningPayload(value: unknown): value is ReasoningPayload {
 
 ## Conclusion
 
-✅ **Strength:** No `any` types; strict mode enforced; intentional, guarded casts.
+**Strength:** No `any` types; strict mode enforced; intentional, guarded casts.
 
-⚠️ **Weakness:** JSON parsing lacks schema validation; env vars should use typed getters.
+**Weakness:** JSON parsing lacks schema validation; env vars should use typed getters.
 
-🎯 **Impact:** P1 issues affect environment loading and location data parsing; fix before production.
+**Impact:** P1 issues affect environment loading and location data parsing; fix before production.

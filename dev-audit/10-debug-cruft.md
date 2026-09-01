@@ -181,14 +181,14 @@ Apply to all error logging points:
 
 ## Clean (No Issues Found)
 
-- ✓ No `debugger` statements
-- ✓ No `console.log()` debug statements (only info/warn/error)
-- ✓ No `console.debug()` statements
-- ✓ No `.only()` or `.skip()` in test files (11 test files scanned)
-- ✓ No `if (true)` / `if (false)` dead code patterns
-- ✓ No large commented-out code blocks
-- ✓ No leftover test scaffolding
-- ✓ Development flags properly gated:
+- No `debugger` statements
+- No `console.log()` debug statements (only info/warn/error)
+- No `console.debug()` statements
+- No `.only()` or `.skip()` in test files (11 test files scanned)
+- No `if (true)` / `if (false)` dead code patterns
+- No large commented-out code blocks
+- No leftover test scaffolding
+- Development flags properly gated:
   - `DEMO_MODE` (NEXT_PUBLIC_DEMO_MODE env var)
   - `ASYNC_CLASSIFY` (NEXT_PUBLIC_ASYNC_CLASSIFY env var)
   - `DEV_AUTH_BYPASS` (NODE_ENV === "development" only)
@@ -225,14 +225,14 @@ Apply to all error logging points:
 
 | Category | Count | Status | Priority |
 |----------|-------|--------|----------|
-| **PII in logs** | 2 | 🔴 P0. Fix immediately | Critical |
+| **PII in logs** | 2 | P0. Fix immediately | Critical |
 | **Fallback warnings (unstructured)** | 8 | 🟠 P1, Migrate to logger | High |
 | **Error logging (no Sentry)** | 10 | 🟠 P1, Migrate to logger | High |
-| **Test scaffolding (.only/.skip)** | 0 | ✓ Clean | - |
-| **Dead code (if true/false)** | 0 | ✓ Clean | - |
-| **Commented-out code** | 0 | ✓ Clean | - |
-| **Dev toggles (properly gated)** | 3 | ✓ Clean | - |
-| **Intentional logger infra** | 3 | ✓ KEEP | - |
+| **Test scaffolding (.only/.skip)** | 0 | Clean | - |
+| **Dead code (if true/false)** | 0 | Clean | - |
+| **Commented-out code** | 0 | Clean | - |
+| **Dev toggles (properly gated)** | 3 | Clean | - |
+| **Intentional logger infra** | 3 | KEEP | - |
 
 ---
 

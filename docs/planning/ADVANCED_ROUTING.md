@@ -83,7 +83,7 @@ Weights per-city (`city_config`). Default = cost/SLA weighted (chosen): `w_load 
 
 ## Build order
 
-1. **Migration** `org_units` + ltree ext + trigger + RLS + backfill. ⚠️ touches `supabase/migrations/`. **hard rule 10: needs explicit owner ok before writing.**
+1. **Migration** `org_units` + ltree ext + trigger + RLS + backfill. touches `supabase/migrations/`. **hard rule 10: needs explicit owner ok before writing.**
 2. `resolveRouteSubtree()`: new, replaces `resolveTeamKeyForCategory`.
 3. `assignBestUnit()` scoring, replaces `autoAssignCrew`. Unit tests on score ordering + capacity filter + contractor spillover.
 4. Work-order schema: `route_candidates` field; wire into `classify-pipeline.ts`.

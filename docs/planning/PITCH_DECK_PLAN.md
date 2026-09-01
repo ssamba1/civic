@@ -92,7 +92,7 @@ Supporting arc (emotional ordering): **Hearts → Minds → Wallets.** Make them
 - **Traction beats deck (Tan/Seibel):** "Actual demand is more persuasive than any deck." This is why **the live demo + Cumming pilot + 283 leads** sit early and carry weight. "I'm more interested in progress than genius ideas." Always attach **timeframes** to progress numbers.
 - **Don't build a Frankenpitch (Tan):** *we just ran 20+ research streams*: synthesize into one voice; don't bolt every framework on. One spine (§3), one decision per slide.
 - **Market framing (Gurley / Thiel / Andreessen):** start with **a big share of a small market, then expand** (Thiel), our Cumming→county→state beachhead is exactly this. Don't size Civic off the incumbent's tiny footprint ("sizing a disruptor off the incumbent is like counting cars by the horses in 1910", Gurley). "The market always wins" (Andreessen), so the expansion logic must be airtight.
-- **⚠️ YC's "no video" caution vs. our hybrid format:** YC's *live Demo-Day stage* guidance says **no video, no cumulative graphs** (polish reads as suspicious in a 2-min projector pitch). Our deck is a **mixed-room hybrid**, where a hero clip + real screen-recording genuinely help, but honor the spirit: keep motion **subtle and strippable**, and maintain a **video-free "judge cut"** (static stills + the real demo recording) so the deck works in a bare-bones room. Never let a clip imply traction it doesn't have.
+- **YC's "no video" caution vs. our hybrid format:** YC's *live Demo-Day stage* guidance says **no video, no cumulative graphs** (polish reads as suspicious in a 2-min projector pitch). Our deck is a **mixed-room hybrid**, where a hero clip + real screen-recording genuinely help, but honor the spirit: keep motion **subtle and strippable**, and maintain a **video-free "judge cut"** (static stills + the real demo recording) so the deck works in a bare-bones room. Never let a clip imply traction it doesn't have.
 
 ---
 
@@ -178,7 +178,7 @@ For each slide: **on-screen headline** (the "so what"), **content** (what the sp
 ### S10: Competition (feature matrix)
 - **Headline:** *"Everyone tags. We dispatch."*
 - **Content:** **feature matrix**, Civic in the left column, real competitors across: **SeeClickFix/CivicPlus, Tyler Technologies, legacy 311 / "doing nothing."** Rows (customer-decision criteria, ≤6 words each): photo categorization · **auto-costed work order** · **public scoreboard** · on-device privacy · Open311 open API · price/capita · time-to-deploy. Acknowledge where incumbents are genuinely strong (installed base). Honesty builds trust.
-- **Visual:** clean comparison grid; Civic column highlighted; ✓/✗ + a few hard numbers. **No magic quadrant.**
+- **Visual:** clean comparison grid; Civic column highlighted;/+ a few hard numbers. **No magic quadrant.**
 - **Higgsfield:** **none**: design only.
 
 ### S11: Impact & Accountability (civic-tech proof)
@@ -233,7 +233,7 @@ For each slide: **on-screen headline** (the "so what"), **content** (what the sp
 
 **Editing/finishing tools to use:** `upscale_image` → push hero stills to 4K for projection · `outpaint_image` → uncrop any 1:1/3:2 still to clean 16:9 · `reframe` → make a 9:16 social teaser cut from the 16:9 sizzle · `remove_background` → clean logo + standardize team headshots.
 
-### 6.2 ⚠️ Do NOT use Higgsfield presets
+### 6.2 Do NOT use Higgsfield presets
 `presets_show` returns only character/avatar motion presets (BASEBALL GAME, DRIFT RACING, KUNG FU HIT, ZOMBIE DANCE, etc.). **None fit a civic product deck.** Drive all video with plain image-to-video prompts instead.
 
 ### 6.3 Prompt engineering approach
@@ -263,7 +263,7 @@ For each slide: **on-screen headline** (the "so what"), **content** (what the sp
 
 **Hero video budget = 2 (S4, S13).** B-roll video = 2-4 max (S1 loop, opt. S2). Total clips ≤ 6.
 
-### 6.5 ⚠️ Credits check before any generation
+### 6.5 Credits check before any generation
 `balance` API call **errored** during planning (`Request ID c4ac71e5...`). **Verify credits + plan tier before generating**. 4K Seedream and Seedance 2.0 std/4K are the expensive items. If credits are tight, fallback: drop hero video to stills-only, use Nano Banana over Seedream for non-hero stills, skip the sizzle.
 
 ---

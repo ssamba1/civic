@@ -101,7 +101,7 @@ This makes the routing step genuinely real via a small additive change to the in
 
 ## 10. Implementation status (2026-06-18)
 
-**Built on branch `feat/city-onboarding`.** Verified: `tsc --noEmit` ✓, `biome lint` ✓, `next build` ✓.
+**Built on branch `feat/city-onboarding`.** Verified: `tsc --noEmit`, `biome lint`, `next build`.
 
 Files:
 - `supabase/migrations/20260618_019_city_onboarding.sql`: `city_teams` table; `users.team_key` + `users.is_shared`; `cities.center` + `cities.created_by`; RLS select policy. **Must be applied** (`npm run db:migrate` / `supabase db push`) before the feature works against a real DB.

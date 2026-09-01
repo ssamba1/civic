@@ -234,7 +234,7 @@ try {
 return { ok: true, data: { id: reportId, classification } };
 ```
 
-**Why P1:** When ASYNC_CLASSIFY is OFF, the sync path (lines 231-240) runs. If it catches, it returns a fallback classification but **does not insert an error_log row or stamp classify_status:failed**. 
+**Why P1:** When ASYNC_CLASSIFY is OFF, the sync path (lines 231-240) runs. If it catches, it returns a fallback classification but **does not insert an error_log row or stamp classify_status:failed**.
 
 Contrast the async path (lines 183-219), which has a proper backstop: if pipeline throws unexpectedly, it inserts error_log and stamps classify_status:"failed" (lines 206-209). The sync path should do the same.
 
@@ -382,10 +382,10 @@ For line 326:
 
 ## Client-side patterns (React components)
 
-### ✓ Safe: work-order-detail.tsx startTransition callbacks
+### Safe: work-order-detail.tsx startTransition callbacks
 Lines 132-185 use proper pattern: `startTransition(async () => { const result = await action(); if (result.ok) {...} else { setError(result.error) } })`. Error checked and state updated.
 
-### ⚠️ Unhandled: report/page.tsx .then() chains
+### Unhandled: report/page.tsx .then() chains
 Three sites with no .catch():
 - **Line 83:** `getSession().then()`: rejection unhandled if network fails
 - **Line 89:** `signInAnonymously().then()`: checks error in-band but rejection unhandled if network fails

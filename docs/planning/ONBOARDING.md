@@ -287,7 +287,7 @@ Alpharetta, Marietta, Athens-Clarke, Augusta, Columbus, Savannah/Chatham,
 Macon-Bibb + pilot Cumming). Goal: validate or kill the cold-start premise before
 writing ingest code.
 
-### Finding 1: TIGER boundary fetch WORKS (provisionCity is viable today) ✅
+### Finding 1: TIGER boundary fetch WORKS (provisionCity is viable today)
 - Service: `tigerweb.geo.census.gov/.../Places_CouSub_ConCity_SubMCD/MapServer`,
   **layer 4 = Incorporated Places**.
 - Query gotcha: `NAME='Cumming city'` (Census appends the LSAD suffix " city"),
@@ -299,7 +299,7 @@ writing ingest code.
 - **Implication:** F4 needs no geocoder + no bbox math. TIGER is the single source.
   OSM fallback only for non-US / unincorporated edge cases. Confirms §7 "TIGER primary".
 
-### Finding 2: Socrata is the WRONG channel for the GA beachhead ❌
+### Finding 2: Socrata is the WRONG channel for the GA beachhead
 - Socrata catalog (`api.us.socrata.com/api/catalog/v1?q=311 service requests`)
   311 publishers are **large metros only**: Chicago, LA, Dallas, NYC, Montgomery
   County MD, Cincinnati, Oakland, Seattle, Miami, KC, Cambridge, Baton Rouge.
@@ -308,7 +308,7 @@ writing ingest code.
 - **Implication:** demote `socrata.ts` to big-metro tenants only. Don't build it
   for the GA GTM.
 
-### Finding 3: ArcGIS IS the real-data channel (cold-start premise SURVIVES) ✅
+### Finding 3: ArcGIS IS the real-data channel (cold-start premise SURVIVES)
 - ArcGIS Hub (`hub.arcgis.com/api/v3/datasets`) returns real resident-311 +
   work-order layers: `Citizen311ServiceRequest`, `311 Service Request Map`,
   `Pothole List`, `Streets - All Complete Pothole WOs` (fields `Incident_ID`,
@@ -325,7 +325,7 @@ writing ingest code.
   the TIGER probe, low new-tech risk). Open311 import drops to "where a city is on
   SeeClickFix/CivicPlus" (sparse; pilot is not).
 
-### Finding 4: county & consolidated boundaries work, but the name format is messy ✅⚠
+### Finding 4: county & consolidated boundaries work, but the name format is messy⚠
 Several gov leads are **counties** (Chatham, Forsyth, Houston, Dougherty) or
 **consolidated city-counties** (Athens-Clarke, Augusta-Richmond, Macon-Bibb,
 Columbus-Muscogee), not plain cities. Verified all are fetchable, but across

@@ -1,6 +1,6 @@
 # Test Coverage & Strategy
 
-**Current state:** 11 test files / 202 source files = 5.5% coverage (low).  
+**Current state:** 11 test files / 202 source files = 5.5% coverage (low).
 **Risk:** Critical paths (auth, API endpoints, RLS) lack tests.
 
 ---
@@ -9,37 +9,37 @@
 
 ### Unit Tests (5 files: src/lib/)
 
-1. **`src/lib/ai/gemini.test.ts`** ✅
+1. **`src/lib/ai/gemini.test.ts`**
    - Tests: classifyPhoto (Gemini API integration)
    - Coverage: Happy path, fenced JSON fallback, validation errors
    - **Gap:** Rate limiting behavior, timeout handling
 
-2. **`src/lib/ai/work-order-rules.test.ts`** ✅
+2. **`src/lib/ai/work-order-rules.test.ts`**
    - Tests: generateWorkOrder (pure function)
    - Coverage: All report categories, severity mapping
    - **Gap:** None (comprehensive for pure function)
 
-3. **`src/lib/ai/classify-pipeline.test.ts`** ✅
+3. **`src/lib/ai/classify-pipeline.test.ts`**
    - Tests: runClassifyPipeline (end-to-end with mocked Gemini/Supabase)
    - Coverage: Success path, Gemini failures, DB errors
    - **Gap:** Race conditions on async classify, missing report handling
 
-4. **`src/lib/ai/reasoning-ai.test.ts`** ✅
+4. **`src/lib/ai/reasoning-ai.test.ts`**
    - Tests: getReasoning (Gemini structured output)
    - Coverage: Cache hit/miss, template fallback, error handling
    - **Gap:** None (good coverage)
 
-5. **`src/lib/image/sniff-mime.test.ts`** ✅
+5. **`src/lib/image/sniff-mime.test.ts`**
    - Tests: sniffImageMime (magic-byte MIME detection)
    - Coverage: All supported types, invalid headers
    - **Gap:** None (comprehensive)
 
-6. **`src/lib/ai/rate-limit.test.ts`** ✅
+6. **`src/lib/ai/rate-limit.test.ts`**
    - Tests: checkRateLimit (sliding-window rate limiting)
    - Coverage: Allow/deny logic, window expiration
    - **Gap:** None (comprehensive)
 
-7. **`src/lib/dashboard-queries.test.ts`** ✅
+7. **`src/lib/dashboard-queries.test.ts`**
    - Tests: fetchCityStats, fetchReports (mocked Supabase queries)
    - Coverage: No-throw contract, error handling
    - **Gap:** None (good coverage for DB error paths)
@@ -246,35 +246,35 @@ describe("useHoverTip", () => {
   test("Portal stabilizes after hydration", () => {
     // Render hook (simulates SSR + hydration)
     const { result } = renderHook(() => useHoverTip());
-    
+
     // Before mounted: Portal reads reducedMotion() (returns false)
     // After effect: mounted = true, read actual window.matchMedia
-    
+
     // Assert: Portal identity stable, no remount on subsequent renders
   });
 
   test("hovering updates position without remounting Portal", () => {
     const { result } = renderHook(() => useHoverTip());
-    
+
     act(() => {
       result.current.show({ body: "Test" }, { clientX: 100, clientY: 200 });
       result.current.move({ clientX: 110, clientY: 210 });
     });
-    
+
     // Assert: Portal NOT recreated during move (only state changed)
   });
 
   test("touch vs mouse behavior", () => {
     const { result } = renderHook(() => useHoverTip());
-    
+
     const handlers = result.current.bindTarget({ body: "Test" });
-    
+
     // Touch: should not show on enter, should toggle on click
     act(() => {
       handlers.onPointerEnter({ pointerType: "touch", clientX: 100, clientY: 100 });
     });
     // Assert: visible == false
-    
+
     act(() => {
       handlers.onClick({});
     });
@@ -352,12 +352,12 @@ npm run ci:test        # CI: run all tests + coverage check
 
 ### Total Effort
 
-**Critical path (G1, G4):** 12-16 hours  
+**Critical path (G1, G4):** 12-16 hours
 **Full coverage (targets above):** 20-30 hours
 
 ### Recommendation
 
-**Phase 1 (2-3 days):** G1, G4 (critical gaps)  
+**Phase 1 (2-3 days):** G1, G4 (critical gaps)
 **Phase 2 (1 week):** Expand to 60% overall coverage
 
 ---
@@ -381,13 +381,13 @@ jobs:
         with:
           node-version: 20
           cache: 'pnpm'
-      
+
       - run: pnpm install
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run test:coverage
       - run: npm run test:e2e
-      
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:

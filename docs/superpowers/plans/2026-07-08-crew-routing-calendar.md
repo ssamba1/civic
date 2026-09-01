@@ -288,6 +288,6 @@ From `C:\Users\soham\brenda-v5-main` (scouted 2026-07-08). **Verdict: port-as-pa
 
 ## Self-Review Notes
 
-- Spec coverage: per-crew description (T1-T3 storage/UI, T4-T5 AI routing) ✅; "distribution formula" intentionally NOT here (user deferred to issue #16, hint short-circuit only) ✅; calendar + many filters (T6-T8: division/type/crew/status + month nav) ✅; Brenda as reference not dependency (T7) ✅; dispatched/completed dates decision (T6 `calendarDate` fallback + completed styling) ✅; model split honored (headers) ✅.
+- Spec coverage: per-crew description (T1-T3 storage/UI, T4-T5 AI routing); "distribution formula" intentionally NOT here (user deferred to issue #16, hint short-circuit only); calendar + many filters (T6-T8: division/type/crew/status + month nav); Brenda as reference not dependency (T7); dispatched/completed dates decision (T6 `calendarDate` fallback + completed styling); model split honored (headers).
 - Type consistency: `CalendarWorkOrder` defined T6, consumed T7/T8; `CrewRow.description` T2 → T3; `crew_hint` named identically T4/T5.
 - Pre-032/031 degradation called out in T2 (retry) and T6/T8 (accessors already `[]`-safe).

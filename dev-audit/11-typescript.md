@@ -1,7 +1,7 @@
 # TypeScript Strictness Audit Report
 
-**Date:** 2026-06-13  
-**Scope:** 207 TypeScript files (.ts, .tsx) in `src/`  
+**Date:** 2026-06-13
+**Scope:** 207 TypeScript files (.ts, .tsx) in `src/`
 **Status:** Mostly Strict with 3 Notable Issues
 
 ---
@@ -12,14 +12,14 @@
 
 | Setting | Value | Status |
 |---------|-------|--------|
-| `strict` | `true` | ✅ ENABLED |
-| `noImplicitAny` | Inherited from `strict: true` | ✅ ON |
-| `noUnusedLocals` | Inherited from `strict: true` | ✅ ON |
-| `noUnusedParameters` | Inherited from `strict: true` | ✅ ON |
-| `noEmit` | `true` | ✅ CONFIGURED |
-| `target` | ES2022 | ✅ MODERN |
-| `module` | esnext | ✅ MODERN |
-| `isolatedModules` | `true` | ✅ ON |
+| `strict` | `true` | ENABLED |
+| `noImplicitAny` | Inherited from `strict: true` | ON |
+| `noUnusedLocals` | Inherited from `strict: true` | ON |
+| `noUnusedParameters` | Inherited from `strict: true` | ON |
+| `noEmit` | `true` | CONFIGURED |
+| `target` | ES2022 | MODERN |
+| `module` | esnext | MODERN |
+| `isolatedModules` | `true` | ON |
 
 **Result:** TypeScript strict mode is **fully enabled** with all recommended strictness flags active.
 
@@ -34,13 +34,13 @@
 
 ### Active Type Error
 
-**File:** `src/lib/demo-reports.ts`  
-**Line:** 151  
+**File:** `src/lib/demo-reports.ts`
+**Line:** 151
 **Severity:** P1 (Type Safety)
 
 ```
-Type '{ id: string; report_id: string; department: string; ... }' 
-is missing the following properties from type 'WorkOrderWithDetails': 
+Type '{ id: string; report_id: string; department: string; ... }'
+is missing the following properties from type 'WorkOrderWithDetails':
 est_cost, wo_source
 ```
 
@@ -147,10 +147,10 @@ function queryViewData(query): Promise<ViewRow[]> {
 
 | Pattern | Count | Status |
 |---------|-------|--------|
-| `@typescript-eslint/no-unused-vars` | 2 | ⚠️ Expected (function params) |
-| `@typescript-eslint/no-explicit-any` | 1 | 🔴 Unavoidable cast |
-| `@next/next/no-img-element` | 3 | ✅ Acceptable (unoptimized imgs) |
-| `react-hooks/exhaustive-deps` | 4 | ⚠️ Intentional dependency omissions |
+| `@typescript-eslint/no-unused-vars` | 2 | Expected (function params) |
+| `@typescript-eslint/no-explicit-any` | 1 | Unavoidable cast |
+| `@next/next/no-img-element` | 3 | Acceptable (unoptimized imgs) |
+| `react-hooks/exhaustive-deps` | 4 | Intentional dependency omissions |
 
 **ESLint Findings:**
 - Most disables are justified (intentional patterns, framework constraints)
@@ -171,7 +171,7 @@ Analysis: The codebase avoids implicit `any`. All `any` usage is explicit and co
   - `src/app/staff/actions.ts` (middleware signature requires all params)
   - `src/app/staff/page.tsx` (Next.js page component signature)
 
-**Status:** ✅ Properly disabled where required by framework
+**Status:** Properly disabled where required by framework
 
 ### Type Definitions
 - **Total TypeScript files:** 207
@@ -197,8 +197,8 @@ Analysis: The codebase avoids implicit `any`. All `any` usage is explicit and co
 ### Top 3 Action Items
 
 #### 1. **Fix WorkOrderWithDetails Demо Object** (P1)
-**File:** `src/lib/demo-reports.ts:151`  
-**Effort:** 5 min  
+**File:** `src/lib/demo-reports.ts:151`
+**Effort:** 5 min
 **Impact:** Unblock CI type checks, improve demo data contracts
 ```typescript
 // Add missing required fields
@@ -207,8 +207,8 @@ wo_source: 'demo'
 ```
 
 #### 2. **Refactor Supabase Query Type Narrowing** (P2)
-**Files:** `src/lib/dashboard-queries.ts`, `src/lib/resident-data.ts`  
-**Effort:** 30 min  
+**Files:** `src/lib/dashboard-queries.ts`, `src/lib/resident-data.ts`
+**Effort:** 30 min
 **Impact:** Eliminate 2 unsafe casts; improve Supabase integration clarity
 ```typescript
 // Create typed query wrappers instead of casting
@@ -220,8 +220,8 @@ async function getViewData(): Promise<ViewRow[]> {
 ```
 
 #### 3. **Type the Optional Server Properties** (P1)
-**File:** `src/components/staff/staff-inbox.tsx:92`  
-**Effort:** 10 min  
+**File:** `src/components/staff/staff-inbox.tsx:92`
+**Effort:** 10 min
 **Impact:** Eliminate only `as any` cast; improve server response modeling
 ```typescript
 // Update type definition to include fetchedAt
@@ -239,11 +239,11 @@ interface FetchQueuedResult {
 **Overall Grade:** A (91/100)
 
 The codebase maintains high TypeScript strictness with:
-- ✅ Strict mode fully enabled
-- ✅ 207 source files with strong type safety
-- ✅ Only 1 active compilation error
-- ✅ Minimal unsafe casts (12 total, mostly justified)
-- ⚠️ 2 actionable P1 fixes needed
+- Strict mode fully enabled
+- 207 source files with strong type safety
+- Only 1 active compilation error
+- Minimal unsafe casts (12 total, mostly justified)
+- 2 actionable P1 fixes needed
 
 **Next Steps:**
 1. Apply P1 fixes immediately (15 min total effort)

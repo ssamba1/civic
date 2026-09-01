@@ -21,21 +21,21 @@
 
 ## Pass notes (security-relevant, verified clean)
 
-1. **Blur application BEFORE storage (line 159 in page.tsx, before submitReport):** Blurred blob is client-processed via `blurFacesAndPlates()` and base64-encoded before any network call. ✓ Invariant held.
-2. **Signed URL expiry (signed-url.ts:12):** 10-minute TTL is appropriate for staff-only raw photo access. Verified in `getSignedRawPhotoUrl()` via `SIGNED_URL_EXPIRY_SECONDS = 10 * 60`. ✓ Correct.
-3. **Upload MIME validation (upload.ts:35-50):** Two gates (blob.type allow-list + magic-byte sniff via `sniffImageMime()`). ✓ Solid.
-4. **RLS on storage.objects (migration 003:24-46):** Public bucket world-readable; raw bucket restricted to `staff_dispatcher`, `staff_supervisor`, `admin` roles. ✓ Policies are correct.
-5. **Dual-bucket invariant (upload.ts:7):** Public bucket gets blurred, raw gets original. Rollback on raw failure (line 98). ✓ Cleanup handled.
-6. **Audit size-matching heuristic (audit.ts:59-62):** Comparing file sizes to detect raw-photo leaks is sound, blurred WebP is always smaller due to information loss. ✓ Logic is valid (unused, but correct).
-7. **Server-side audit log (migration 003:55-72):** Audit trigger uses sentinel UUID `00000000-0000-0000-0000-000000000000` for service-role writes (auth.uid() is null). ✓ Forensic trail preserved.
+1. **Blur application BEFORE storage (line 159 in page.tsx, before submitReport):** Blurred blob is client-processed via `blurFacesAndPlates()` and base64-encoded before any network call. Invariant held.
+2. **Signed URL expiry (signed-url.ts:12):** 10-minute TTL is appropriate for staff-only raw photo access. Verified in `getSignedRawPhotoUrl()` via `SIGNED_URL_EXPIRY_SECONDS = 10 * 60`. Correct.
+3. **Upload MIME validation (upload.ts:35-50):** Two gates (blob.type allow-list + magic-byte sniff via `sniffImageMime()`). Solid.
+4. **RLS on storage.objects (migration 003:24-46):** Public bucket world-readable; raw bucket restricted to `staff_dispatcher`, `staff_supervisor`, `admin` roles. Policies are correct.
+5. **Dual-bucket invariant (upload.ts:7):** Public bucket gets blurred, raw gets original. Rollback on raw failure (line 98). Cleanup handled.
+6. **Audit size-matching heuristic (audit.ts:59-62):** Comparing file sizes to detect raw-photo leaks is sound, blurred WebP is always smaller due to information loss. Logic is valid (unused, but correct).
+7. **Server-side audit log (migration 003:55-72):** Audit trigger uses sentinel UUID `00000000-0000-0000-0000-000000000000` for service-role writes (auth.uid() is null). Forensic trail preserved.
 
 ---
 
 ## Non-findings (clarifications)
 
-- **No EXIF stripping:** `bitmapToJpeg()` (normalize.ts) draws decoded bitmap to canvas, which strips EXIF by design (no re-encode of metadata). ✓ Safe.
-- **No double-blur:** Only blurred version is encoded as WebP (line 193-197); original JPEG is re-encoded but NOT blurred (by design, staff need clarity). ✓ Correct split.
-- **No raw-to-public race:** Public upload (line 77-86 in upload.ts, or actions.ts:110-115) always precedes raw upload (line 88-94 or actions.ts:120-125). If raw fails, public is rolled back (line 98 or actions.ts:127). ✓ No orphans.
+- **No EXIF stripping:** `bitmapToJpeg()` (normalize.ts) draws decoded bitmap to canvas, which strips EXIF by design (no re-encode of metadata). Safe.
+- **No double-blur:** Only blurred version is encoded as WebP (line 193-197); original JPEG is re-encoded but NOT blurred (by design, staff need clarity). Correct split.
+- **No raw-to-public race:** Public upload (line 77-86 in upload.ts, or actions.ts:110-115) always precedes raw upload (line 88-94 or actions.ts:120-125). If raw fails, public is rolled back (line 98 or actions.ts:127). No orphans.
 
 ---
 
@@ -107,5 +107,5 @@ contentType: "image/jpeg",   // matches bitmapToJpeg() output
 
 ---
 
-**Report generated:** 2026-06-13  
+**Report generated:** 2026-06-13
 **Auditor:** Privacy module static review (file:line citations verified)

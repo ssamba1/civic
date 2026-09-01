@@ -1,16 +1,16 @@
 ﻿# Accessibility Audit, Civic Outreach App
 
-**Date:** 2026-06-13  
-**Scope:** All src/**/*.tsx components (202 files)  
+**Date:** 2026-06-13
+**Scope:** All src/**/*.tsx components (202 files)
 **Method:** Read-only sweep across 6 accessibility categories
 
 ---
 
 ## Summary
 
-**Total findings:** 23 issues  
-**P0 (broken/unsafe):** 4  
-**P1 (should fix):** 16  
+**Total findings:** 23 issues
+**P0 (broken/unsafe):** 4
+**P1 (should fix):** 16
 **P2 (nice-to-have):** 3
 
 **Most critical issue:** Report photo thumbnails marked as decorative (lt="") when they contain essential content. Staff cannot identify issues via image alone when alt text is missing.
@@ -47,11 +47,11 @@ Staff cannot identify issues without alt text. Affects work order review, triage
 
 **Fix:** Add contextual description:
 `	sx
-<Image 
-  src={report.photo_public_url} 
-  alt={Report: $'{classification.category.replace('_', ' ')} at ${report.address || 'unknown'}} 
-  fill 
-  className="object-cover" 
+<Image
+  src={report.photo_public_url}
+  alt={Report: $'{classification.category.replace('_', ' ')} at ${report.address || 'unknown'}}
+  fill
+  className="object-cover"
 />
 `
 
@@ -123,7 +123,7 @@ Focus ring may be subtle when tabbing on desktop. Test keyboard navigation; ensu
 
 ---
 
-## Well-Implemented Patterns ✓
+## Well-Implemented Patterns
 
 - **Modals/Drawers:** Full ARIA (role="dialog", aria-modal, Esc, focus traps)
 - **Accordion:** Radix UI, full keyboard support

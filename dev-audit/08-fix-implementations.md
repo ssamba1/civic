@@ -17,7 +17,7 @@ if (serviceCode) {
 }
 ```
 
-**Problem:** LEFT JOIN + dot-notation filter only filters joined rows, not parent reports.  
+**Problem:** LEFT JOIN + dot-notation filter only filters joined rows, not parent reports.
 **Result:** `?service_code=pothole` returns all reports regardless of category.
 
 ### Fixed Code
@@ -32,7 +32,7 @@ if (serviceCode) {
     .from("classifications")
     .select("report_id")
     .eq("category", serviceCode);
-  
+
   if (matchingReportIds && matchingReportIds.length > 0) {
     const ids = matchingReportIds.map(r => r.report_id);
     query = query.in("id", ids);
@@ -202,7 +202,7 @@ export async function dispatchWorkOrderForReport(
     .eq("report_id", reportId)
     .select("report_id")
     .single();
-  
+
   if (woError || !wo) {
     return { ok: false, error: "work_order_not_found" };
   }
@@ -382,7 +382,7 @@ useEffect(() => {
     .from("work_order_comments")
     .select(...)
     .then(({ data, error }) => {
-      if (cancelled) return;  // ✓ Current mitigation
+      if (cancelled) return;  // Current mitigation
       setLoading(false);
       // ...
     });

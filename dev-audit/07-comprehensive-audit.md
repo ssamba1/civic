@@ -1,9 +1,9 @@
 # Comprehensive Code Audit Report
 
-**Date:** 2026-06-13  
-**Scope:** src/ (202 ts/tsx files), excluding tests  
-**Audit type:** Security + Performance + Correctness + Architecture  
-**Methodology:** Grep patterns, focused file reads, data-flow analysis  
+**Date:** 2026-06-13
+**Scope:** src/ (202 ts/tsx files), excluding tests
+**Audit type:** Security + Performance + Correctness + Architecture
+**Methodology:** Grep patterns, focused file reads, data-flow analysis
 
 ---
 
@@ -41,7 +41,7 @@ Filter must apply to the parent query, not the join:
 // Option 1: filter at the report level before the join
 query = query.eq("status", "open").eq("categories.category", serviceCode);
 
-// Option 2: use IN subquery  
+// Option 2: use IN subquery
 query = query.in(
   "id",
   db.from("classifications")
@@ -60,7 +60,7 @@ query = query.in(
 
 Covered in debt markers report. External integrations cannot be attributed to specific API keys; all submissions credited to `OPEN311_SYSTEM_USER_ID`.
 
-**Fix:** See dev-audit/06-todo-fixme-harvest.md  
+**Fix:** See dev-audit/06-todo-fixme-harvest.md
 **Effort:** M
 
 ---
@@ -71,7 +71,7 @@ Covered in debt markers report. External integrations cannot be attributed to sp
 
 Covered in debt markers report. No programmatic solution for infrastructure owned by county vs city within same city bounds.
 
-**Fix:** See dev-audit/06-todo-fixme-harvest.md  
+**Fix:** See dev-audit/06-todo-fixme-harvest.md
 **Effort:** L, M (design + 2-4 hr implementation)
 
 ---
@@ -87,16 +87,16 @@ Covered in debt markers report. No programmatic solution for infrastructure owne
 useEffect(() => {
   let cancelled = false;
   // ... subscription setup ...
-  
+
   supabase
     .from("work_order_comments")
     .select(...)
     .eq("work_order_id", workOrderId)
     .then(({ data, error }) => {
-      if (cancelled) return;  // ✓ good, but no AbortController
+      if (cancelled) return;  // good, but no AbortController
       setComments(data);
     });
-  
+
   return () => {
     cancelled = true;
     supabase.removeChannel(channel);
@@ -105,7 +105,7 @@ useEffect(() => {
 ```
 
 The `cancelled` flag prevents setState on unmount, but Supabase doesn't accept an AbortSignal. The fetch request itself continues to the server and is never cancelled at the network level. If `workOrderId` changes while the initial fetch is in-flight, the pending `.then()` will:
-1. Check if cancelled ✓
+1. Check if cancelled
 2. Still hold the old `workOrderId` in closure
 3. Discard the response correctly
 
@@ -359,7 +359,7 @@ Uses `next/server`'s `after()` to schedule work after response flush. This is th
 
 ## Security Assessment
 
-### ✓ Strong Points
+### Strong Points
 
 - Constant-time secret comparison (timingSafeEqual on hashed keys)
 - HTTPS-only media_url validation (Open311 POST)
@@ -436,15 +436,15 @@ Some event handlers recreate inline closures every render (e.g., canvas event ha
 
 ## Verification Checklist
 
-- ✅ All P0/P1 bugs verified by code read
-- ✅ No SQL injection or direct string concatenation found
-- ✅ Auth checks present and mostly enforced (dispatchWorkOrderForReport is the exception)
-- ✅ Service-role keys never exposed to browser
-- ✅ RLS enforced via SSR client for sensitive reads
-- ✅ Fire-and-forget classify pipeline correctly uses `next/server`'s `after()`
-- ✅ MIME validation uses both extension and magic bytes
-- ✅ Rate limiting present on public endpoints (Open311 GET/POST, classify, reasoning)
-- ⚠️ Only 11 test files. Critical paths need tests
+- All P0/P1 bugs verified by code read
+- No SQL injection or direct string concatenation found
+- Auth checks present and mostly enforced (dispatchWorkOrderForReport is the exception)
+- Service-role keys never exposed to browser
+- RLS enforced via SSR client for sensitive reads
+- Fire-and-forget classify pipeline correctly uses `next/server`'s `after()`
+- MIME validation uses both extension and magic bytes
+- Rate limiting present on public endpoints (Open311 GET/POST, classify, reasoning)
+- Only 11 test files. Critical paths need tests
 
 ---
 

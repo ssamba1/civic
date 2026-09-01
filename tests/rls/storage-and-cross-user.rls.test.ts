@@ -15,7 +15,7 @@
 //      city A must NOT be able to upload an object into city B's folder in the
 //      photos-public / photos-raw buckets.
 //
-//      ⚠️  KNOWN FAILURE AGAINST THE CURRENT SCHEMA. Migration
+//      KNOWN FAILURE AGAINST THE CURRENT SCHEMA. Migration
 //      `20260527_003_storage_rls_and_fixes.sql` grants INSERT with only
 //      `WITH CHECK (bucket_id = '<bucket>')`. It does not constrain the object
 //      path to the uploader's city. So this test is expected to FAIL until a

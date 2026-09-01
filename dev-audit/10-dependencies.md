@@ -1,8 +1,8 @@
 # Dependency Safety Audit Report
 
-**Date:** 2026-06-13  
-**Project:** civic (v0.1.0)  
-**Package Manager:** pnpm v9.0  
+**Date:** 2026-06-13
+**Project:** civic (v0.1.0)
+**Package Manager:** pnpm v9.0
 **Audit Scope:** package.json + pnpm-lock.yaml
 
 ---
@@ -46,11 +46,11 @@ No P0 (critical/actively exploited) vulnerabilities detected.
 
 | Package | Current | Spec | Status | Notes |
 |---------|---------|------|--------|-------|
-| `@types/node` | 20.19.41 | ^20 | ✓ Latest | Pinned to v20; v24.12.4 available |
-| `typescript` | 5.9.3 | ^5 | ✓ Latest | Satisfies semver |
-| `next` | 16.2.6 | 16.2.6 (pinned) | ⚠️ Pinned | No caret; blocks minor/patch updates |
-| `react` | 19.2.4 | 19.2.4 (pinned) | ⚠️ Pinned | Same - pinned version strategy |
-| `eslint-config-next` | 16.2.6 | 16.2.6 | ✓ Match | Correctly aligned with Next.js |
+| `@types/node` | 20.19.41 | ^20 | Latest | Pinned to v20; v24.12.4 available |
+| `typescript` | 5.9.3 | ^5 | Latest | Satisfies semver |
+| `next` | 16.2.6 | 16.2.6 (pinned) | Pinned | No caret; blocks minor/patch updates |
+| `react` | 19.2.4 | 19.2.4 (pinned) | Pinned | Same - pinned version strategy |
+| `eslint-config-next` | 16.2.6 | 16.2.6 | Match | Correctly aligned with Next.js |
 
 ---
 
@@ -59,16 +59,16 @@ No P0 (critical/actively exploited) vulnerabilities detected.
 ### 1. **React 19 Compatibility**
 - **Risk:** React 19.2.4 is bleeding-edge; some third-party integrations may lag
 - **Affected Packages:**
-  - `@deck.gl/react@9.3.2` - Peer dep allows >=16.3.0 ✓
-  - `@gsap/react@2.1.2` - Peer dep requires >=17 ✓
-  - `lucide-react@1.16.0` - Tested with 19.x ✓
-  - `@radix-ui/*` - Community tested with 19 ✓
+  - `@deck.gl/react@9.3.2` - Peer dep allows >=16.3.0
+  - `@gsap/react@2.1.2` - Peer dep requires >=17
+  - `lucide-react@1.16.0` - Tested with 19.x
+  - `@radix-ui/*` - Community tested with 19
 - **Status:** ACCEPTABLE (monitor for ecosystem updates)
 
 ### 2. **Sentry + OpenTelemetry Chain**
 - **Risk:** @sentry/nextjs@10.54.0 brings 20+ transitive dependencies
-- **Sub-deps:** 
-  - `@opentelemetry/api@1.9.1` ✓
+- **Sub-deps:**
+  - `@opentelemetry/api@1.9.1`
   - `@opentelemetry/core@2.7.1` - Consider v3.x
   - `@opentelemetry/sdk-trace-base@2.7.1` - Consider v3.x
 - **Status:** REVIEW (OTel v3 available; v2 still supported until EOL)
@@ -79,8 +79,8 @@ No P0 (critical/actively exploited) vulnerabilities detected.
 
 | Package | Category | Assessment |
 |---------|----------|------------|
-| `@vitejs/plugin-react@6.0.2` | devDep | ⚠️ Present but Vite not in dev scripts; likely unused if using Next.js only |
-| `pg@8.21.0` | prod | ⚠️ Verify usage; may be for seeding only (see `db:seed` script) |
+| `@vitejs/plugin-react@6.0.2` | devDep | Present but Vite not in dev scripts; likely unused if using Next.js only |
+| `pg@8.21.0` | prod | Verify usage; may be for seeding only (see `db:seed` script) |
 | `tsx` | Missing | ℹ️ Used in `db:seed` but not listed in package.json |
 
 ---
@@ -94,7 +94,7 @@ No P0 (critical/actively exploited) vulnerabilities detected.
    npm ls react
    npm audit --fix  # if available under pnpm
    ```
-   
+
 2. **Check for missing dep: `tsx`**
    - Used in package.json:19 (`tsx supabase/seed/index.ts`)
    - Add explicitly: `pnpm add -D tsx`
@@ -148,7 +148,7 @@ No P0 (critical/actively exploited) vulnerabilities detected.
 
 ### Peer Dependency Issues
 - None detected
-- All peer deps satisfied ✓
+- All peer deps satisfied
 
 ### Duplicate Packages
 - None detected (pnpm dedupe working correctly)
@@ -157,10 +157,10 @@ No P0 (critical/actively exploited) vulnerabilities detected.
 
 ## Lock File Integrity
 
-- ✓ pnpm-lock.yaml v9.0 format
-- ✓ All integrity hashes present
-- ✓ No conflicts or unmet deps
-- ✓ Reproducible builds supported
+- pnpm-lock.yaml v9.0 format
+- All integrity hashes present
+- No conflicts or unmet deps
+- Reproducible builds supported
 
 ---
 

@@ -33,9 +33,9 @@
 | M23 | `src/lib/dashboard-data.ts:309` | P2 | Seeded RNG params (127.1, 311.7, 43758.5453) hardcoded; also in analytics-data, resident-data | Consolidate 3 copies to single `src/lib/seeded-random.ts` |
 | M24 | `src/lib/dashboard-data.ts:389-412` | P2 | Demo corpus: N=1100, span=180d, recency=1.6, pool=40; 8 magic numbers | Extract to `DEMO_CORPUS_CONFIG` object |
 | M25 | `src/lib/ai/config.ts:24` | P2 | AI_RATE_LIMIT windowMs=60000, max=20 has magic milliseconds | Extract milliseconds to TIME_MS constant reference |
-| M26 | `src/lib/privacy/blur.ts:29, 38-40` | ✓ | BLUR_RADIUS=24, MAX_OUTPUT_EDGE=1280, quality=0.8 already named | No action needed |
-| M27 | `src/lib/privacy/retention.ts:13, 16` | ✓ | RAW_PHOTO_TTL_DAYS=30, RETENTION_CRON_SCHEDULE="0 3 *" already named | No action needed |
-| M28 | `src/app/report/page.tsx:42` | ✓ | CLASSIFY_PENDING_TIMEOUT_MS=20000 already named | Reference in other files if using same timeout |
+| M26 | `src/lib/privacy/blur.ts:29, 38-40` | yes | BLUR_RADIUS=24, MAX_OUTPUT_EDGE=1280, quality=0.8 already named | No action needed |
+| M27 | `src/lib/privacy/retention.ts:13, 16` | yes | RAW_PHOTO_TTL_DAYS=30, RETENTION_CRON_SCHEDULE="0 3 *" already named | No action needed |
+| M28 | `src/app/report/page.tsx:42` | yes | CLASSIFY_PENDING_TIMEOUT_MS=20000 already named | Reference in other files if using same timeout |
 | M29 | `src/lib/delegation-history.ts:17-18` | P1 | HOUR_MS=3_600_000 duplicated (also in derive.ts); DISPATCH_OFFSET_MS named but pattern shows time duplication | Extract HOUR_MS from here; use TIME_MS.HOUR from centralized module |
 | M30 | `src/app/api/open311/v2/requests/[id]/route.ts:34-35` | P1 | Rate limit duplicate: windowMs=60_000, max=60 (same as list endpoint M8) | Consolidate both endpoints to shared OPEN311_RATE_LIMIT config |
 | M31 | `src/lib/ai/prompt.ts:46-49` | P1 | Confidence thresholds hardcoded in text: 0.90, 0.70, 0.50, <0.50 (semantic but unextracted) | Extract `CONFIDENCE_THRESHOLDS = { clear: 0.90, visible: 0.70, inferred: 0.50 }` to config |
@@ -111,9 +111,9 @@ const coord = location ?? DEMO_CITY.center;
 .eq("slug", DEMO_CITY.slug)
 
 // src/lib/demo-reports.ts:46
-location: { 
-  lng: C[0] + DEMO_MARKER_OFFSET.lng, 
-  lat: C[1] + DEMO_MARKER_OFFSET.lat 
+location: {
+  lng: C[0] + DEMO_MARKER_OFFSET.lng,
+  lat: C[1] + DEMO_MARKER_OFFSET.lat
 }
 ```
 
@@ -480,13 +480,13 @@ const SYNTHETIC_TTR_SEVERITY_MULTIPLIER = 18;
 
 ## Clean Areas (No Action Required)
 
-- ✓ `CATEGORY_META` (hardcoded colors in dashboard-data.ts). Colors are part of category definition; OK to keep
-- ✓ `CATEGORY_SLA_TARGETS` (72h pothole, 24h water leak, etc.). Operational policy; OK to keep but document why per-category
-- ✓ Demo session cookie name `"civic_demo_session"` in src/lib/demo-auth.ts:29, single usage, not a magic number
-- ✓ Demo account usernames (`"usertest"`, `"admintest"`), part of demo credential schema, OK hardcoded
-- ✓ OAuth brand colors in login-form.tsx. Correct to use brand-accurate hex values
-- ✓ Intersection Observer thresholds (0.5, 0.02), low impact, but still candidate for extraction
-- ✓ Resolution buckets in derive.ts (24h, 3d, 7d, 2w), policy-driven; extract if changing frequently
+- `CATEGORY_META` (hardcoded colors in dashboard-data.ts). Colors are part of category definition; OK to keep
+- `CATEGORY_SLA_TARGETS` (72h pothole, 24h water leak, etc.). Operational policy; OK to keep but document why per-category
+- Demo session cookie name `"civic_demo_session"` in src/lib/demo-auth.ts:29, single usage, not a magic number
+- Demo account usernames (`"usertest"`, `"admintest"`), part of demo credential schema, OK hardcoded
+- OAuth brand colors in login-form.tsx. Correct to use brand-accurate hex values
+- Intersection Observer thresholds (0.5, 0.02), low impact, but still candidate for extraction
+- Resolution buckets in derive.ts (24h, 3d, 7d, 2w), policy-driven; extract if changing frequently
 
 ---
 

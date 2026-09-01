@@ -62,11 +62,11 @@ graphify-out/
 - Nothing else significant
 
 **.gitignore completeness check:**
-- ✅ `*.tsbuildinfo` IS present (line 44). Build artifact ignored but file exists locally
-- ✅ `certificates` IS present (line 50). Dev cert storage ignored correctly
-- ✅ `.env.local` IS present (line 35). Secrets file ignored correctly
-- ✅ `/.next/` IS present (line 17). Build output ignored correctly
-- ❌ CSV backups NOT ignored. Should add patterns
+- `*.tsbuildinfo` IS present (line 44). Build artifact ignored but file exists locally
+- `certificates` IS present (line 50). Dev cert storage ignored correctly
+- `.env.local` IS present (line 35). Secrets file ignored correctly
+- `/.next/` IS present (line 17). Build output ignored correctly
+- CSV backups NOT ignored. Should add patterns
 
 ---
 
@@ -74,7 +74,7 @@ graphify-out/
 
 ### .env Files Comparison
 
-**`.env.local` (committed?)** ❌ NO. File EXISTS but properly in `.gitignore` ✅
+**`.env.local` (committed?)** NO. File EXISTS but properly in `.gitignore`
 
 **Secrets present in .env.local (safe, not tracked):**
 ```
@@ -83,14 +83,14 @@ GEMINI_API_KEY=***REMOVED-GEMINI-KEY***
 INTERNAL_CLASSIFY_SECRET=***REMOVED-INTERNAL-SECRET***
 ```
 
-**Status:** ✅ **SAFE.** `.env.local` is in `.gitignore` and NOT tracked in git. No secrets leaked.
+**Status:** **SAFE.** `.env.local` is in `.gitignore` and NOT tracked in git. No secrets leaked.
 
 ### Certificates
 
 - `certificates/localhost-key.pem` (1.7 KB)
 - `certificates/localhost.pem` (1.5 KB)
 
-**Status:** ✅ Dev TLS certs only, in `.gitignore`, safe.
+**Status:** Dev TLS certs only, in `.gitignore`, safe.
 
 ---
 
@@ -100,18 +100,18 @@ INTERNAL_CLASSIFY_SECRET=***REMOVED-INTERNAL-SECRET***
 
 | File | Size | Purpose | Issue |
 |------|------|---------|-------|
-| `pnpm-lock.yaml` | 252.9 KB | Lock file | ✅ OK. Necessary, tracked |
-| `tsconfig.tsbuildinfo` | 748 KB | Build output | ❌ Should delete from disk (in `.gitignore`, won't recommit) |
-| `civic_outreach.NEW.csv` | 276.4 KB | Data export? | ❌ Move to `leadgen/` or delete |
-| `civic_outreach.csv` | 136.9 KB | Data export? | ❌ Move to `leadgen/` or delete |
-| `civic_outreach.before283.csv` | 136.9 KB | Backup | ❌ Move to `leadgen/` or delete |
+| `pnpm-lock.yaml` | 252.9 KB | Lock file | OK. Necessary, tracked |
+| `tsconfig.tsbuildinfo` | 748 KB | Build output | Should delete from disk (in `.gitignore`, won't recommit) |
+| `civic_outreach.NEW.csv` | 276.4 KB | Data export? | Move to `leadgen/` or delete |
+| `civic_outreach.csv` | 136.9 KB | Data export? | Move to `leadgen/` or delete |
+| `civic_outreach.before283.csv` | 136.9 KB | Backup | Move to `leadgen/` or delete |
 
 **Other root files review:**
-- `agents.md` (5.7 KB) ✅ Tracked, intentional
-- `RESEARCH_PROMPT.md` (28.7 KB) ⚠️ Tracked but should move
-- `civic_research_findings.md` (30.1 KB) ⚠️ Tracked but should move
-- `README.md` (4.7 KB) ✅ Tracked, intentional
-- `next.config.ts`, `tsconfig.json`, `biome.json`, etc. ✅ Config files, OK
+- `agents.md` (5.7 KB) Tracked, intentional
+- `RESEARCH_PROMPT.md` (28.7 KB) Tracked but should move
+- `civic_research_findings.md` (30.1 KB) Tracked but should move
+- `README.md` (4.7 KB) Tracked, intentional
+- `next.config.ts`, `tsconfig.json`, `biome.json`, etc. Config files, OK
 
 ---
 
@@ -221,7 +221,7 @@ pnpm build
 | `tsconfig.tsbuildinfo` | 748 KB | DELETE | Build by-product, regenerates, local only |
 | `vitest.config.ts` | 0.4 KB | - | Test config, OK |
 
-**All 38 root entries accounted for.** ✅
+**All 38 root entries accounted for.**
 
 ---
 
