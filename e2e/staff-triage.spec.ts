@@ -26,29 +26,73 @@ test("/city/cumming public dashboard loads without a client crash", async ({
   expect(errors).toEqual([]);
 });
 
-test("POST /api/admin/sla-escalate is auth-gated (401 without a session)", async ({
-  request,
-}) => {
-  const res = await request.post("/api/admin/sla-escalate");
-  // No session + no cron bearer → rejected (401). Never 200 to anon.
-  expect([401, 403]).toContain(res.status());
-});
+/**
+ * Cron-bearer admin endpoints.
+ *
+ * Four routes take a shared `Authorization: Bearer <secret>` INSTEAD of a staff
+ * session, so a systemd timer can drive them headlessly. That makes each one a
+ * door with no session behind it, and the two things worth asserting over HTTP
+ * are the same for all four: anon never gets a 2xx, and a wrong bearer is not
+ * mistaken for a right one.
+ *
+ * Table-driven rather than four hand-written pairs, because the previous
+ * hand-written version covered two of the four routes and only one of them for
+ * a wrong bearer — and the two it missed (surge, drift) are the two whose auth
+ * is written differently from the others. surge in particular allows via an
+ * early `return null` from a helper, which is the shape most likely to fall
+ * open under an edit.
+ */
+const CRON_BEARER_ROUTES = [
+  {
+    path: "/api/admin/sla-escalate",
+    method: "post" as const,
+    // Rewrites work-order priority and appends to report timelines.
+    secret: "SLA_CRON_SECRET",
+  },
+  {
+    path: "/api/admin/notify-drain",
+    method: "post" as const,
+    // Re-sends resident email (LCP-05). A 200 to anon is a resend sweep.
+    secret: "NOTIFY_CRON_SECRET",
+  },
+  {
+    path: "/api/admin/surge",
+    method: "post" as const,
+    // Applies a city-wide storm priority bump.
+    secret: "STORM_CRON_SECRET",
+  },
+  {
+    path: "/api/admin/drift",
+    method: "get" as const,
+    // Reads classification override rates (#37).
+    secret: "DRIFT_CRON_SECRET",
+  },
+];
 
-test("POST /api/admin/notify-drain is auth-gated (401 without a session)", async ({
-  request,
-}) => {
-  // The email outbox drain (LCP-05) mirrors sla-escalate's auth: no session and
-  // no NOTIFY_CRON_SECRET bearer → rejected, never a 200 that would let anon
-  // trigger a resend sweep.
-  const res = await request.post("/api/admin/notify-drain");
-  expect([401, 403]).toContain(res.status());
-});
-
-test("POST /api/admin/notify-drain rejects a wrong bearer token", async ({
-  request,
-}) => {
-  const res = await request.post("/api/admin/notify-drain", {
-    headers: { authorization: "Bearer not-the-secret" },
+for (const route of CRON_BEARER_ROUTES) {
+  test(`${route.method.toUpperCase()} ${route.path} is auth-gated (no session, no bearer)`, async ({
+    request,
+  }) => {
+    const res = await request[route.method](route.path);
+    expect([401, 403]).toContain(res.status());
   });
+
+  test(`${route.method.toUpperCase()} ${route.path} rejects a wrong bearer token`, async ({
+    request,
+  }) => {
+    // Not the value of process.env[route.secret], whatever that is here.
+    const res = await request[route.method](route.path, {
+      headers: { authorization: "Bearer not-the-secret" },
+    });
+    expect([401, 403]).toContain(res.status());
+  });
+}
+
+test("GET /api/admin/surge is auth-gated too, not just POST", async ({
+  request,
+}) => {
+  // surge is the only one of the four with a read verb, and its GET and POST
+  // share a single authorize() helper — so a change that opens one opens both.
+  const res = await request.get("/api/admin/surge");
   expect([401, 403]).toContain(res.status());
 });
