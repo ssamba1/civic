@@ -3933,7 +3933,9 @@ function RecurringHotspotsCardInner({ data }: RecurringHotspotsProps) {
           ? `${data.length} repeat ${data.length === 1 ? "site" : "sites"}`
           : undefined
       }
-      className="lg:col-span-4"
+      // 6 + 6, not 4 + 4: these two close the bento, and at 4 each they left a
+      // dead third of the last row.
+      className="lg:col-span-6"
     >
       {top.length === 0 ? (
         <EmptyState message="No recurring problem sites yet" />
@@ -4016,7 +4018,7 @@ function SlaRiskCardInner({ data }: SlaRiskProps) {
     <Tile
       title="SLA risk"
       subtitle={total > 0 ? `${total} open` : undefined}
-      className="lg:col-span-4"
+      className="lg:col-span-6"
     >
       {total === 0 ? (
         <EmptyState message="No open backlog to assess" />
