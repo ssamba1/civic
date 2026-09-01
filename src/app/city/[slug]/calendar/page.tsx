@@ -25,17 +25,20 @@ interface PageProps {
   searchParams: Promise<{ month?: string }>;
 }
 
-/** "YYYY-MM" for the current month in SERVER-LOCAL time — the default when
- *  `?month=` is absent or fails MONTH_RE. Local (not UTC) on purpose: for a
- *  US-evening viewer, UTC has already rolled to tomorrow, which would open
- *  the calendar on the wrong month at month boundaries and ring the wrong
- *  "today" cell. Server-local is the best proxy we have for the city's day. */
-function currentMonth(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
+/** The month the calendar opens on when `?month=` is absent.
+ *
+ *  Pinned rather than derived from the wall clock: the demo corpus is seeded
+ *  and then ages, so opening on the real current month shows an empty grid the
+ *  moment the newest work order slips into last month — which reads as a
+ *  broken calendar rather than as old data. Month navigation still works in
+ *  both directions from here, and `?month=YYYY-MM` still overrides it.
+ *
+ *  Set this forward whenever the corpus is reseeded. */
+const DEFAULT_MONTH = "2026-08";
 
-/** Today as YYYY-MM-DD in server-local time — same rationale as currentMonth. */
+/** Today as YYYY-MM-DD in SERVER-LOCAL time, for ringing the "today" cell.
+ *  Local, not UTC: for a US-evening viewer UTC has already rolled to tomorrow,
+ *  which would ring the wrong day. */
 function todayLocalISO(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -97,7 +100,7 @@ export default async function CityCalendarPage({
   }
 
   const month =
-    monthParam && MONTH_RE.test(monthParam) ? monthParam : currentMonth();
+    monthParam && MONTH_RE.test(monthParam) ? monthParam : DEFAULT_MONTH;
   const monthISO = `${month}-01`;
   const todayISO = todayLocalISO();
   const cells = monthGrid(monthISO, todayISO);
