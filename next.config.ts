@@ -97,7 +97,20 @@ export default process.env.NODE_ENV === "production"
   ? withSentryConfig(nextConfig, {
       silent: !process.env.CI,
       widenClientFileUpload: true,
-      // Strip Sentry debug logging from the production client bundle.
-      disableLogger: true,
+      // NOTE: `disableLogger: true` used to sit here to strip Sentry's debug
+      // logging from the production client bundle. It did nothing and said so
+      // — every build printed, twice:
+      //
+      //   [@sentry/nextjs] DEPRECATION WARNING: disableLogger is deprecated and
+      //   will be removed in a future version. Use
+      //   webpack.treeshake.removeDebugLogging instead. (Not supported with
+      //   Turbopack.)
+      //
+      // Next 16 builds this app with Turbopack (`next build` reports
+      // "Next.js 16.2.12 (Turbopack)"), and the named replacement is a webpack
+      // option, so there is no Turbopack equivalent to migrate to. Keeping a
+      // deprecated no-op only to emit a warning that trains people to ignore
+      // build output is worse than carrying the few KB of debug strings, so
+      // the option is gone rather than swapped.
     })
   : nextConfig;
