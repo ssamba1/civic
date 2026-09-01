@@ -8,7 +8,7 @@
 [![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Supabase + PostGIS](https://img.shields.io/badge/Supabase-PostGIS-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
 [![Gemini 2.5 Flash-Lite](https://img.shields.io/badge/Gemini-2.5%20Flash--Lite-4285F4?logo=google&logoColor=white)](https://ai.google.dev)
-[![1436 tests](https://img.shields.io/badge/tests-1%2C436%20passing-success)](#4-proof-it-works)
+[![1443 tests](https://img.shields.io/badge/tests-1%2C443%20passing-success)](#4-proof-it-works)
 [![Open311](https://img.shields.io/badge/Open311-GeoReport%20v2-orange)](#open311-is-the-product-not-an-integration)
 [![CI](https://github.com/ssamba1/civic/actions/workflows/test.yml/badge.svg)](https://github.com/ssamba1/civic/actions/workflows/test.yml)
 [![migrations](https://github.com/ssamba1/civic/actions/workflows/migrations.yml/badge.svg)](https://github.com/ssamba1/civic/actions/workflows/migrations.yml)
@@ -448,7 +448,7 @@ Every number here was produced by running the command in the middle column on th
 | Check | Command | Result |
 |---|---|---|
 | Types | `pnpm typecheck` | **clean**, TypeScript strict |
-| Unit tests | `pnpm test` | **1,436 passing** across 138 files |
+| Unit tests | `pnpm test` | **1,443 passing** across 139 files |
 | Lint | `pnpm lint` | **0 errors** |
 | Production build | `pnpm build` | **96 routes compile**, 42 prerendered |
 | Production *runtime* | `pnpm prod` | Standalone server boots, `database: true, ai: true`, every route clean in a real browser |
@@ -687,11 +687,26 @@ src/lib/
   open311/          GeoReport v2: services, transform, XML
   onboarding/       city wizard: divisions, categories, routing config
 supabase/migrations 77 ordered SQL migrations, never edited once applied
+supabase/seed/      demo corpora — disposable, safe to re-run
+services/detector/  Python sidecar (FastAPI + ONNX): the cost gate that drops
+                    ~95% of video frames before Gemini is involved. Scaffold —
+                    no model shipped, and the licence filter is a hard one
 tests/rls/          row-level security regression suites
 tests/golden/       sample photos + expected classifications
 e2e/                Playwright specs
+scripts/            39 operational scripts — seeds, screenshot capture, one-off
+                    repairs. Nothing in src/ imports any of it
+public/             static assets, the PWA manifest and service worker
 docs/               design, context, decisions (ADRs), runbooks
+dev-audit/          the 2026-06-13 audit this project was hardened against.
+                    Historical: a snapshot of the starting line, not a to-do list
+pitch/              a self-contained 12-slide deck, one HTML file, no build step
+.github/workflows/  the two CI gates described above
 ```
+
+Each of those directories carries its own README explaining what is inside
+and which parts you are expected to run — the exception being
+`.github/workflows/`, where the two YAML files are commented instead.
 
 ## The team
 
