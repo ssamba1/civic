@@ -169,7 +169,7 @@ GPIO before you have wired anything of your own.
 | microSD in 4-bit mode: `CLK` `CMD` `D0` `D1` `D2` `D3` | 14, 15, 2, 4, 12, 13 | ESP-IDF SDMMC slot 1 |
 | Flash LED (the bright white one) | 4 | `camera_pins.h` (`LED_GPIO_NUM`) |
 
-Four of the camera's data pins — 34, 35, 36, 39 — are **input-only** on the
+Four of the camera's data pins —34, 35, 36, 39 — are **input-only** on the
 ESP32, so they were never candidates for anything else. GPIO0 doing double duty
 as `XCLK` and the boot strap is why the flashing jumper has to come off.
 
