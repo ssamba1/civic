@@ -48,8 +48,6 @@ materials, pin budget and the invariants the firmware may not break are in
 [`hardware/universal-camera/`](hardware/universal-camera/README.md); what the
 server does with what it sends is [further down](#and-a-camera-that-surveys-the-streets-on-its-own).
 
-<br clear="right">
-
 We built it because the backlog everyone blames on budget or on crews is
 usually a backlog of *unstaffed triage* — and reading a photograph into a
 category is the one thing a vision model is unambiguously good at. The
@@ -57,6 +55,8 @@ interesting question was never whether AI could do that step. It was how much
 of the process you dare let it touch, when the output is public money and a
 truck. The answer this repository argues for: **the model classifies, and it
 never dispatches.**
+
+<br clear="right">
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/landing-dark.jpg">

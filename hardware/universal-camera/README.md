@@ -101,7 +101,9 @@ build needs a resized camera aperture (see below).
 | Charge/regulation | TP4056 (18650) or a 12 V→5 V buck for vehicle power | ESP32-CAM peaks ~300 mA on Wi-Fi TX; do not under-spec the rail |
 | Enclosure | printed shell, `print/` | PETG recommended (check print settings) |
 
-![The assembled universal camera: a white 3D-printed enclosure on a desk, `civic` embossed across the lower front, the ESP32-CAM's OV2640 lens visible through a cut-out above the emboss, a foam-padded module seated across the open top, and a blue windshield-mount arm folded back off the top on a side pivot knob](images/device-civic.jpg)
+<p align="center">
+  <img width="440" alt="The assembled universal camera: a white 3D-printed enclosure on a desk, civic embossed across the lower front, the ESP32-CAM's OV2640 lens visible through a cut-out above the emboss, a foam-padded module seated across the open top, and a blue windshield-mount arm folded back off the top on a side pivot knob" src="images/device-civic.jpg">
+</p>
 
 <sub>The assembled reference unit, printed from the current `shell-part-2.stl` — the `civic` emboss below the lens is the one carried in the STL. The lens sits behind the front cut-out; the arm on top is the windshield mount, pivoting on the side knob to level the camera on whatever vehicle it is fitted to.</sub>
 
