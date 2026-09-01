@@ -96,3 +96,6 @@ docs/images/.video/
 # one-off probe scripts (tok.tmp.mjs et al) — never commit these
 *.tmp.mjs
 *.tmp.ts
+
+# 5 MB source plate for the thumbnail; scripts/shot-thumbnail.mjs re-captures it
+docs/images/.map-plate.png
