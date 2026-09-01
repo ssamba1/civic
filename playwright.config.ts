@@ -20,6 +20,13 @@ export default defineConfig({
   testDir: "./e2e",
   timeout: 60_000,
   retries: process.env.CI ? 1 : 0,
+  // A `test.only` left in a spec silently narrows the CI run to that one test
+  // and reports green — the most dangerous possible false pass, because it is
+  // indistinguishable from a full suite passing and the commit that caused it
+  // looks like a debugging leftover, not a coverage change. `forbidOnly` turns
+  // it into a hard failure in CI while leaving `.only` usable locally, which
+  // is the whole point of having it.
+  forbidOnly: !!process.env.CI,
   use: {
     baseURL: BASE_URL,
     trace: "retain-on-failure",
