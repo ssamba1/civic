@@ -131,15 +131,20 @@
 .dark {
   color-scheme: dark;
   /* Near-black canvas (not pitch black) — cards sit clearly lighter on it;
-     card/canvas contrast is the core of this theme. */
-  --background: #09090b;
+     card/canvas contrast is the core of this theme. Dropped from #09090b so
+     the canvas recedes further behind the cards: the separation between them
+     is what gives the dark theme its structure, and every text ratio measured
+     against the canvas only improves as it darkens. --surface and --glass move
+     with it by a smaller step, so panels and modals stay legibly above the
+     canvas instead of merging into it. */
+  --background: #040406;
   --foreground: #ffffff;
   --subtle: #b3b3ba; /* secondary text — lifted from #a1a1a8 (≈7:1 → ≈9:1 on --background); dark surfaces swallow mid-grays, so secondary copy runs one step brighter than the zinc scale suggests */
   --faint: #95959d; /* tertiary text — lifted from #85858c; ≥4.5:1 (AA) as 11–13px functional copy on both --surface #161619 and --background #0e0e10, with headroom */
 
-  --surface: #101012;
+  --surface: #0c0c0f;
   --elevated: #232327; /* lifted from #26262a so active/selected fills read against both canvas and cards */
-  --glass: rgba(12, 12, 15, 0.6);
+  --glass: rgba(7, 7, 10, 0.68);
 
   --overlay: rgba(255, 255, 255, 0.06);
   --overlay-strong: rgba(255, 255, 255, 0.11);
