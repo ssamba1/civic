@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start",
     "prod": "next build && npm run prod:assets && npm run start:prod",
-    "prod:assets": "powershell -Command \"Copy-Item -Recurse -Force .next/static .next/standalone/.next/static; Copy-Item -Recurse -Force public .next/standalone/public; if (Test-Path .env.local) { Copy-Item -Force .env.local .next/standalone/.env.local }\"",
+    "prod:assets": "node scripts/copy-standalone-assets.mjs",
     "start:prod": "node .next/standalone/server.js",
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
