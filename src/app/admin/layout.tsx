@@ -31,9 +31,12 @@ export default async function AdminLayout({
     process.env.NODE_ENV === "development" &&
     process.env.DEV_AUTH_BYPASS === "1";
 
-  if (!user && !demoAccount && !devBypass) {
-    redirect("/login?redirect=/admin/cities");
-  }
+  // Demo walk-up: under DEMO_MODE an anonymous visitor gets the demo admin
+  // persona instead of a login bounce. Demo credentials are baked into the
+  // public bundle, so the cookie only ever added a click. This grants VIEW of
+  // the operator console; every mutation still resolves its own authority
+  // (getCityAdminContext never returns non-null for a demo session).
+  const demoWalkUp = DEMO_MODE && !user && !demoAccount && !devBypass;
 
   const supabase = createServerClient();
   let profile:
@@ -47,6 +50,8 @@ export default async function AdminLayout({
       role: "admin",
       display_name: demoAccount.label,
     };
+  } else if (demoWalkUp) {
+    profile = { id: "demo", role: "admin", display_name: "Demo Admin" };
   } else if (devBypass && !user) {
     profile = { id: "dev-user", role: "admin", display_name: "Dev Admin" };
   } else if (user) {
@@ -66,7 +71,8 @@ export default async function AdminLayout({
     profile = data;
   }
 
-  // Onboarding writes tenant config → admins only.
+  // Onboarding writes tenant config → admins only. A signed-in NON-admin still
+  // gets bounced; only the anonymous demo walk-up above is exempt.
   if (!profile || profile.role !== "admin") {
     redirect("/login?redirect=/admin/cities");
   }

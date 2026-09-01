@@ -39,6 +39,17 @@ model call. On the seeded clip, **375 frames became 531 detections, 33
 clusters, and 27 reports** — with the model asked about a fraction of those 33.
 See [the video vertical](#the-video-vertical-how-to-use-a-model-without-a-model-bill).
 
+<img align="right" width="200" alt="The universal camera: a white 3D-printed enclosure with civic embossed on the front, the camera lens in a cut-out above the emboss and a blue windshield-mount arm folded back on top" src="hardware/universal-camera/images/device-civic.jpg">
+
+That video path has a purpose-built end. The **universal camera** is a
+3D-printed ESP32-CAM dashcam with a GPS module, powered off the vehicle rail,
+that turns a route a truck already drives into a survey. Print files, bill of
+materials, pin budget and the invariants the firmware may not break are in
+[`hardware/universal-camera/`](hardware/universal-camera/README.md); what the
+server does with what it sends is [further down](#and-a-camera-that-surveys-the-streets-on-its-own).
+
+<br clear="right">
+
 We built it because the backlog everyone blames on budget or on crews is
 usually a backlog of *unstaffed triage* — and reading a photograph into a
 category is the one thing a vision model is unambiguously good at. The
@@ -81,6 +92,7 @@ Pick the path that matches the time you have. Every deep section is collapsed, s
 | **10 minutes** | Add [The problem](#1-the-problem) and [How it works](#3-how-it-works) | Why it exists and how it is built |
 | **You are reviewing the code** | [Proof it works](#4-proof-it-works), especially the bug-class writeup | What we actually learned |
 | **You are running it** | [Run it locally](#run-it-locally) | Up in five minutes |
+| **You are here for the hardware** | [The universal camera](hardware/universal-camera/README.md) | The printed edge dashcam: build, print files, firmware invariants |
 | **You want the honest version** | [Honest limits](#6-honest-limits) and [FAQ](#7-faq) | Everything we would rather you heard from us |
 
 <details>
@@ -90,7 +102,7 @@ Pick the path that matches the time you have. Every deep section is collapsed, s
 
 1. [The problem](#1-the-problem): the 311 backlog, who it serves, what it is worth
 2. [What makes it different](#2-what-makes-it-different): five ideas, and what we refused to build
-3. [How it works](#3-how-it-works): the pipeline, the dispatcher, a worked example, [the video vertical](#the-video-vertical-how-to-use-a-model-without-a-model-bill), data model, stack, security
+3. [How it works](#3-how-it-works): the pipeline, the dispatcher, a worked example, [the video vertical](#the-video-vertical-how-to-use-a-model-without-a-model-bill), data model, stack, security, [the camera](#and-a-camera-that-surveys-the-streets-on-its-own) and its [hardware](hardware/universal-camera/README.md)
 4. [Proof it works](#4-proof-it-works): every check, the live Open311 export, CI, and a real bug class
 5. [The two products](#5-the-two-products): what a resident sees, what a director sees
 6. [Honest limits](#6-honest-limits): what we are not claiming
@@ -445,7 +457,7 @@ The blur is honest about its own limits, in a docblock at the top of [`src/lib/p
 
 ### And a camera that surveys the streets on its own
 
-<img align="right" width="250" alt="The assembled universal camera: a blue 3D-printed enclosure on a desk, the ESP32-CAM's OV2640 lens visible through a cut-out on the lower front, a foam-padded module seated across the open top, and a curved windshield-mount arm pivoting off the top on a knurled side knob" src="hardware/universal-camera/images/device.jpg">
+<img align="right" width="250" alt="The assembled universal camera: a white 3D-printed enclosure on a desk, civic embossed across the lower front, the ESP32-CAM's OV2640 lens in a cut-out above the emboss, a foam-padded module across the open top and a blue windshield-mount arm folded back on its side pivot knob" src="hardware/universal-camera/images/device-civic.jpg">
 
 Resident intake only sees what someone stops to report. A sweeper, a refuse truck or an inspection vehicle already drives every street on a schedule, and sees the same stretch of pavement dozens of times a week. The **universal camera** is a 3D-printed edge dashcam — an ESP32 + ESP32-CAM with a GPS module, running off the vehicle rail — that turns each of those routine passes into a survey for potholes, debris, damaged signage and blocked drains.
 

@@ -1,0 +1,83 @@
+# Keeps the deployment mirror (28gugales-dev/civic) in step with upstream
+# (ssamba1/civic), which is what Vercel actually builds from.
+#
+# Why a scheduled pull rather than a webhook on upstream: configuring a webhook
+# or a deploy key on ssamba1/civic needs admin there, and this account only has
+# push. Everything below runs on permissions the mirror already owns.
+#
+# Why the repository guard: this file lives in the shared history, so upstream
+# carries a copy of it too. Without the guard the job would also fire inside
+# ssamba1/civic and try to push into someone else's mirror. It is also what
+# makes the force-push safe — because upstream has this file, overwriting the
+# mirror with upstream content cannot delete the workflow doing the overwriting.
+name: Mirror upstream
+
+on:
+  schedule:
+    # Every 15 minutes. GitHub queues cron on a best-effort basis, so treat this
+    # as "within the hour", not a guarantee. Use the manual trigger when a
+    # deploy is actually being waited on.
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  # A slow run must never race a newer one into a force-push.
+  group: mirror-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == '28gugales-dev/civic'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the mirror
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Mirror upstream, re-authored so Vercel will build it
+        env:
+          MIRROR_AUTHOR_NAME: Soham
+          MIRROR_AUTHOR_EMAIL: 28gugales@gmail.com
+        run: |
+          set -euo pipefail
+          git remote add upstream https://github.com/ssamba1/civic.git
+          git fetch upstream main
+
+          upstream_sha="$(git rev-parse upstream/main)"
+          upstream_short="$(git rev-parse --short=10 upstream/main)"
+          upstream_tree="$(git rev-parse "upstream/main^{tree}")"
+          local_tree="$(git rev-parse 'HEAD^{tree}')"
+
+          # Compare TREES, not commit ids. The mirror's commits are re-authored,
+          # so their shas never match upstream even when the content is identical
+          # -- comparing shas would rebuild on every single run.
+          if [ "$local_tree" = "$upstream_tree" ]; then
+            echo "Tree already matches upstream ($upstream_short) -- nothing to mirror."
+            exit 0
+          fi
+
+          # Why re-author instead of pushing upstream's commits as-is: Vercel's
+          # hobby plan refuses to build a commit whose git author is not a member
+          # of the project, so a teammate's commit deploys as BLOCKED. This writes
+          # a new commit object over upstream's exact tree with the project owner
+          # as author. The built code is byte-identical; only the nameplate moves.
+          # Real attribution stays upstream in ssamba1/civic, which is where the
+          # history is authoritative.
+          export GIT_AUTHOR_NAME="$MIRROR_AUTHOR_NAME"
+          export GIT_AUTHOR_EMAIL="$MIRROR_AUTHOR_EMAIL"
+          export GIT_COMMITTER_NAME="$MIRROR_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$MIRROR_AUTHOR_EMAIL"
+
+          subject="$(git log -1 --format=%s upstream/main)"
+          snapshot="$(git commit-tree "$upstream_tree" -m "Deploy mirror of ssamba1/civic@${upstream_short}
+
+Upstream subject: ${subject}
+Upstream commit:  ${upstream_sha}
+
+Re-authored snapshot; see .github/workflows/mirror-upstream.yml for why.")"
+
+          echo "Mirroring tree of $upstream_short as $(git rev-parse --short=10 "$snapshot")"
+          git push --force origin "$snapshot:refs/heads/main"

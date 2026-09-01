@@ -1,13 +1,7 @@
-import { cookies } from "next/headers";
 import { cache } from "react";
 import { createServerClient } from "@/lib/db/client";
 import { getAuthUser } from "@/lib/db/ssr-client";
-import {
-  DEMO_CITY,
-  DEMO_SESSION_COOKIE,
-  isDemoStaffAccount,
-} from "@/lib/demo-auth";
-import { findVerifiedDemoAccount } from "@/lib/demo-cookie";
+import { DEMO_CITY } from "@/lib/demo-auth";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { createLogger } from "@/lib/logger";
 
@@ -19,8 +13,8 @@ const log = createLogger("staff-access");
  *  - `"real"` — an authenticated Supabase user with a staff/admin role whose
  *    `users.city_id` matches the city owning `slug` (or the local-only dev
  *    bypass, which only exists on a developer's machine).
- *  - `"demo"` — a verified demo staff persona. Demo credentials are baked into
- *    the public bundle, so `"demo"` proves nothing about who the visitor is —
+ *  - `"demo"` — the public demo showcase: any visitor to `DEMO_CITY` while
+ *    `DEMO_MODE` is on, signed in or not. It proves nothing about who they are —
  *    PII-bearing surfaces (member emails etc.) may render for `"demo"` but must
  *    mask anything sensitive. Demo personas are all Cumming-scoped, so this is
  *    only ever granted for `DEMO_CITY`.
@@ -34,8 +28,8 @@ export type StaffAccess = "real" | "demo" | null;
  * passes for city B; synthetic KNOWN_CITIES slugs with no `cities` row (only
  * the demo city) deny real users, and the demo path covers the demo city.
  *
- * The real-user path is checked before the demo cookie so a genuine staff
- * session always outranks a demo persona (and sees unmasked data).
+ * The real-user path is checked before the demo fallback so a genuine staff
+ * session always outranks the demo persona (and sees unmasked data).
  *
  * This does NOT apply the demo-city-is-always-open bypass — callers whose
  * surface is meant to be public for the demo city must OR in their own
@@ -86,19 +80,22 @@ export const getStaffAccessForCity = cache(async function getStaffAccessForCity(
     }
   }
 
-  const demoStaff =
-    DEMO_MODE &&
-    // Demo personas are all Cumming-scoped: a verified demo staff cookie only
-    // proves staff for the demo city, never any onboarded city's live data.
-    slug === DEMO_CITY &&
-    isDemoStaffAccount(
-      // Verify the HMAC signature before trusting the persona — a bare/forged
-      // civic_demo_session cookie must not prove staff access.
-      findVerifiedDemoAccount(
-        (await cookies()).get(DEMO_SESSION_COOKIE)?.value,
-      ),
-    );
-  if (demoStaff) return "demo";
+  // Demo-city walk-up access. The demo corpus is a public showcase and the
+  // demo credentials are baked into the public bundle, so requiring the cookie
+  // only added a click, never a barrier. Under DEMO_MODE an unauthenticated
+  // visitor to the demo city therefore resolves to "demo" directly.
+  //
+  // Scope is unchanged and deliberate: ONLY `DEMO_CITY`. An onboarded city's
+  // live data still requires a real staff session — a demo cookie never
+  // qualified there either, and anonymous access must not.
+  //
+  // "demo" remains untrusted: it proves nothing about who the visitor is.
+  // PII-bearing surfaces mask for it, and every mutating path requires "real".
+  //
+  // The verified-cookie path this replaced is still the authority for WHICH
+  // persona is active (header label, team/crew scoping) — see demo-auth.ts and
+  // the admin layout; it is just no longer required to reach the demo city.
+  if (DEMO_MODE && slug === DEMO_CITY) return "demo";
 
   return null;
 });

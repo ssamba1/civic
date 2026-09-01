@@ -101,9 +101,9 @@ build needs a resized camera aperture (see below).
 | Charge/regulation | TP4056 (18650) or a 12 V→5 V buck for vehicle power | ESP32-CAM peaks ~300 mA on Wi-Fi TX; do not under-spec the rail |
 | Enclosure | printed shell, `print/` | PETG recommended (check print settings) |
 
-![The assembled universal camera: a blue 3D-printed enclosure on a desk, the ESP32-CAM's OV2640 lens visible through a cut-out on the lower front, a foam-padded module seated across the open top, and a curved windshield-mount arm pivoting off the top on a knurled side knob](images/device.jpg)
+![The assembled universal camera: a white 3D-printed enclosure on a desk, `civic` embossed across the lower front, the ESP32-CAM's OV2640 lens visible through a cut-out above the emboss, a foam-padded module seated across the open top, and a blue windshield-mount arm folded back off the top on a side pivot knob](images/device-civic.jpg)
 
-<sub>The assembled reference unit, printed from an earlier revision of `shell-part-2.stl` — the current STL carries a `civic` emboss below the lens that this print does not have (visible in the turntable render). The lens sits behind the lower-front cut-out; the arm on top is the windshield mount, pivoting on the side knob to level the camera on whatever vehicle it is fitted to.</sub>
+<sub>The assembled reference unit, printed from the current `shell-part-2.stl` — the `civic` emboss below the lens is the one carried in the STL. The lens sits behind the front cut-out; the arm on top is the windshield mount, pivoting on the side knob to level the camera on whatever vehicle it is fitted to.</sub>
 
 ## The ESP32-CAM itself — flashing, pins, power
 
@@ -288,6 +288,21 @@ the pivot.
 
 <sub>Turntable of the assembled shell, rendered straight from the four STLs in `print/` by [`media/render-turntable.py`](media/render-turntable.py) — geometry, not a mock-up. Higher-resolution version: [`media/shell-turntable.mp4`](media/shell-turntable.mp4) (GitHub does not play an mp4 inline; the link downloads it).</sub>
 
+**The geometry against the object.** Left is a still frame lifted out of that
+turntable at 3.3 s — triangles from `print/`, nothing else. Right is the same
+view of the printed unit.
+
+<table>
+<tr>
+<td width="50%" valign="top"><img alt="Single frame of the turntable render at a three-quarter front angle: the shell body in blue on a near-black background, the mount arm folded up off the top, the pivot knob on the left side, and the civic emboss and camera aperture cut into the front face" src="images/shell-render-front.png"></td>
+<td width="50%" valign="top"><img alt="The printed unit at the same three-quarter front angle: a white 3D-printed enclosure, civic embossed across the lower front, the camera module and lens sitting in the front cut-out above it, foam packed under the open top, and the blue mount arm folded back on its pivot knob" src="images/device-civic.jpg"></td>
+</tr>
+<tr>
+<td valign="top"><b>The STL.</b> Straight geometry: the emboss, the aperture cut-out, the hinge axle across the top and the knob on the side are all features of the model, not of the photograph.</td>
+<td valign="top"><b>The print.</b> The same parts off a printer, with the ESP32-CAM seated behind the aperture and foam holding the module against the shell. Layer lines round the emboss off and the arm is printed separately in a second colour — nothing else moved between the model and the part.</td>
+</tr>
+</table>
+
 **Why the mount pivots.** A municipal fleet is not one vehicle — a pickup dash,
 a refuse truck cab, a bus windshield and a sedan all present the glass at a
 different rake — so the mount clamps to the windshield and the arm pivots on
@@ -305,6 +320,15 @@ fits the whole fleet without a per-vehicle variant.
 
 If you build on an ESP32-S3, the camera module footprint differs; scale or
 re-model the aperture in `shell-part-2` before printing a fleet.
+
+**Earlier revision, for reference.**
+
+<img width="320" alt="An earlier print of the same shell in blue: no civic emboss on the front face, the ESP32-CAM lens visible through the lower-front cut-out, a foam-padded module across the open top and the mount arm pivoting off the top on a side knob" src="images/device.jpg">
+
+<sub>An earlier print of the shell, made before the emboss was added to the model. The body carries
+no `civic` lettering — everything else about it, including the aperture, the
+foam-packed module and the pivoting arm, is the same part that is in `print/`
+today.</sub>
 
 ## How a detection becomes a report
 

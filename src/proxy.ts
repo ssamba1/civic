@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 import { SCRIPT_HASHES } from "@/lib/csp/inline-scripts";
+import { DEMO_MODE } from "@/lib/demo-mode";
 
 // Open311 spec-compliant clients append .json/.xml extensions. Rewrite to
 // canonical routes before auth/public-route checks so they resolve correctly.
@@ -213,21 +214,29 @@ export async function proxy(request: NextRequest) {
   // Protected: /admin/* — require admin role.
   if (pathname.startsWith("/admin/")) {
     if (!user) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
-      const redirect = NextResponse.redirect(loginUrl);
-      redirect.headers.set("Content-Security-Policy", csp);
-      return redirect;
-    }
-
-    // Read role ONLY from app_metadata (server-writable via the Supabase Admin
-    // API). Never trust user_metadata — any authenticated user can write it via
-    // supabase.auth.updateUser() and self-promote to admin.
-    const role = user.app_metadata?.role;
-    if (role !== "admin") {
-      const redirect = NextResponse.redirect(new URL("/teams", request.url));
-      redirect.headers.set("Content-Security-Policy", csp);
-      return redirect;
+      // Demo walk-up: with no session at all, DEMO_MODE lets the visitor
+      // through to the operator console (the admin layout resolves the demo
+      // admin persona and every mutation still checks its own authority).
+      // Outside DEMO_MODE this is still a login wall.
+      if (!DEMO_MODE) {
+        const loginUrl = new URL("/login", request.url);
+        loginUrl.searchParams.set("redirect", pathname);
+        const redirect = NextResponse.redirect(loginUrl);
+        redirect.headers.set("Content-Security-Policy", csp);
+        return redirect;
+      }
+    } else {
+      // Read role ONLY from app_metadata (server-writable via the Supabase
+      // Admin API). Never trust user_metadata — any authenticated user can
+      // write it via supabase.auth.updateUser() and self-promote to admin.
+      // A signed-in non-admin is still bounced: only the anonymous demo
+      // walk-up above is exempt.
+      const role = user.app_metadata?.role;
+      if (role !== "admin") {
+        const redirect = NextResponse.redirect(new URL("/teams", request.url));
+        redirect.headers.set("Content-Security-Policy", csp);
+        return redirect;
+      }
     }
   }
 
