@@ -7,8 +7,8 @@ they test. Everything else is co-located.
 
 | Tier | Location | Runner | Count |
 | --- | --- | --- | --- |
-| Unit | `src/**/*.test.ts(x)`, beside the module | vitest (`pnpm test`) | 129 files |
-| RLS integration | `tests/rls/` | vitest, opt-in (`pnpm test:rls`) | 13 suites |
+| Unit | `src/**/*.test.ts(x)`, beside the module | vitest (`pnpm test`) | 132 files |
+| RLS integration | `tests/rls/` | vitest, opt-in (`pnpm test:rls`) | 13 suites, all tabled in [`rls/README.md`](./rls/README.md) |
 | Classification eval | `tests/golden/` | `tsx` (`pnpm eval`) | manifest-driven |
 | Browser smoke | `e2e/` | Playwright (`pnpm test:e2e`) | 7 specs |
 
@@ -22,7 +22,7 @@ against a corpus rather than a function against inputs.
 ## The vitest include glob covers both
 
 ```ts
-include: ["src/**/*.test.{ts,tsx}", "tests/**/*.test.ts"]
+include: ["src/**/*.test.{ts,tsx}", "tests/**/*.test.{ts,tsx}"]
 ```
 
 So `pnpm test` **collects** `tests/rls/` on every run. It does not execute the
@@ -34,8 +34,9 @@ The consequence to be clear-eyed about: **a green `pnpm test` is not evidence
 RLS holds.** Only `pnpm test:rls` against a real database is, and that is what
 `agents.md` rule 3 requires before a schema change merges.
 
-Note also that `tests/**/*.test.ts` matches `.ts` only, so a `.tsx` file here
-would be silently uncollected.
+(Both globs take `{ts,tsx}` as of the vitest.config.ts change that fixed it —
+`tests/**` previously matched `.ts` only, so a `.tsx` file filed here was
+silently uncollected.)
 
 ## Environment notes
 

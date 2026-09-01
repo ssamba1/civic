@@ -13,14 +13,49 @@ and keeps CI green with no secrets.
 
 ## Files
 
-| File | Covers | Gating env |
-| --- | --- | --- |
-| `rls.test.ts` | anon default-deny on `reports`/`classifications`/`work_orders`/`merges`/`audit_log`/`error_log`; anon can read `dashboard_reports_view`; anon cannot INSERT a report; **service-role bypass control**; (optional) migration-012 view exclusion | `RUN_RLS_TESTS=1` + `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` + `SUPABASE_SERVICE_ROLE_KEY` |
-| `storage-and-cross-user.rls.test.ts` | **cross-user read isolation** (a resident can't read another's report); **storage cross-folder INSERT (T1.13)** — a city-A user can't upload into city-B's folder; plus own-report/own-city controls | `SUPABASE_TEST_URL` + `SUPABASE_TEST_ANON_KEY` + `SUPABASE_SERVICE_ROLE_KEY` |
+Thirteen suites. **Read the gate column before concluding a suite ran** — three
+different gating conventions are in play, and a suite whose variables are unset
+passes as skipped, which looks identical to passing.
 
-The two files use different env-var names on purpose: `rls.test.ts` predates this
-work and its gate is left untouched. The newer file uses the `SUPABASE_TEST_*`
-names. To run *both* against the same DB, export all of the variables below.
+Two gate families:
+
+- **`R`** — `RUN_RLS_TESTS=1` plus `NEXT_PUBLIC_SUPABASE_URL`,
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
+- **`T`** — `SUPABASE_TEST_URL`, `SUPABASE_TEST_ANON_KEY`,
+  `SUPABASE_SERVICE_ROLE_KEY`.
+
+Some suites additionally gate individual assertions on a `CHECK_MIGRATION_*`
+flag, so that a migration which has not been applied yet reads as "not checked"
+rather than as a regression. Those are listed in the third column and are opt-in
+on top of the gate.
+
+| File | Covers | Gate | Extra flags |
+| --- | --- | --- | --- |
+| `rls.test.ts` | anon default-deny on `reports`/`classifications`/`work_orders`/`merges`/`audit_log`/`error_log`; anon can read `dashboard_reports_view`; anon cannot INSERT a report; **service-role bypass control** | `R` | `CHECK_MIGRATION_012` |
+| `storage-and-cross-user.rls.test.ts` | **cross-user read isolation** (a resident can't read another's report); **storage cross-folder INSERT (T1.13)** — a city-A user can't upload into city-B's folder | `T` (+`R`) | — |
+| `city-config.rls.test.ts` | `city_departments`, `category_routing`, `sla_targets` public-read/staff-write; `cost_rules`, `provision_jobs` staff-only (migration 024) | `R` | `CHECK_MIGRATION_024` |
+| `crews.rls.test.ts` | `crews` + `crew_members` are staff-only in the caller's own city — rosters name staff, so unlike `city_teams` there is no public read (030) | `R` | `CHECK_MIGRATION_030`, `CHECK_MIGRATION_012` |
+| `crew-types.rls.test.ts` | `crew_types` catalog mirrors crews: staff-only read scoped to city, staff-only write (031) | `R` | `CHECK_MIGRATION_031`, `CHECK_MIGRATION_030` |
+| `org-units.rls.test.ts` | `org_units` staff-only — they expose org structure *and* contractor pricing (042) | `R` | `CHECK_MIGRATION_042`, `CHECK_MIGRATION_030` |
+| `routing-zones.rls.test.ts` | `routing_zones` public-read (routing config isn't sensitive) but staff-only write, scoped to city; `resolve_zone_team` (033) | `R` | `CHECK_MIGRATION_033` |
+| `cross-jurisdiction.rls.test.ts` | cross-jurisdiction routing policies + RPC existence (034) | `R` | `CHECK_MIGRATION_034` |
+| `loop-and-keys.rls.test.ts` | `report_updates`, `report_csat` (025), `report_upvotes`, `issue_types` (027), `api_keys` (028) | `R` | `CHECK_MIGRATIONS_025_028` |
+| `video-pipeline.rls.test.ts` | every video table staff-only within the staffer's own city — camera positions, GPS tracks and unblurred-frame paths; detections/clusters accept **no** authenticated writes (056) | `R` | — |
+| `camera.rls.test.ts` | the **ingest** invariant (064): there is deliberately no anon/authenticated INSERT policy on `detections` or `detection_clusters`, so a leaked anon key cannot forge detections at arbitrary coordinates and, through cluster promotion, forge reports and liability claims. Also: a contractor cannot enumerate camera devices | `T` | — |
+| `liability.rls.test.ts` | a contractor cannot read `capital_jobs`, `warranties`, `utility_permits`, other contractors' claims, or `report_liability` for unassigned reports (062, 063) | `T` | — |
+| `rpc-grants.rls.test.ts` | EXECUTE grants on the `SECURITY DEFINER` RPCs (068). For these the grant **is** the access control — the function bypasses RLS and takes the city id as a plain argument, so anyone who can execute it reads any tenant | `T` | — |
+
+`rpc-grants` is the one to read first if you are new here. It exists because
+three definer RPCs shipped callable by `anon`: verified against the live
+database on 2026-08-30, `routing_unit_load` returned 15 rows of org-unit
+cost/capacity/depot data and `search_document_chunks` returned 5 chunks of city
+contract and policy text, both with the anon key and no session. Migration 068
+revokes them; this suite is what fails if a later migration re-grants.
+
+The two gate families exist for historical reasons, not by design: `rls.test.ts`
+predates the `SUPABASE_TEST_*` convention and its gate was left untouched, and
+newer suites picked one or the other. Export all of the variables below to run
+everything against one database.
 
 ## Known expected failure — T1.13
 
