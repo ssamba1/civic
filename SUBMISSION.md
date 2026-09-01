@@ -130,6 +130,22 @@ validation and the public feed returned `200 OK` and an empty list while the
 table was full. For a public accountability record, that is the worst possible
 failure: indistinguishable from a city that has never filed anything.
 
+Then, hours later, we found the identical bug sitting in that route's sibling.
+The single-request `GET /requests/{id}` read the same to-one embed with `[0]`
+and had been reporting `other` for *every* report in the system. Fixing a bug
+is not the same as fixing its class: the second instance was two lines from a
+`cities` embed that had been unwrapped correctly all along. We only found it
+because we filed a request through the API and read back what came out.
+
+**7. The half of an integration nobody tests is the half that is broken.** Our
+Open311 *export* was verified, quoted in the README and genuinely worked. The
+*inbound* half — POST, the thing that lets an agency file into the system —
+answered `500` to every authenticated request, because a security fix (never
+store a caller-supplied `media_url`) left a NOT NULL column with nothing to
+write. No test had ever posted a service request. The e2e suite touched the
+endpoint only to check that an anonymous POST is rejected, and a 401 never
+reaches the insert.
+
 ## Honest limits
 
 Stated in full in the [README](README.md#6-honest-limits). The short version:
