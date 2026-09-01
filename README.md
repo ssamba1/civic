@@ -41,12 +41,15 @@ See [the video vertical](#the-video-vertical-how-to-use-a-model-without-a-model-
 
 <img align="right" width="200" alt="The universal camera: a white 3D-printed enclosure with civic embossed on the front, the camera lens in a cut-out above the emboss and a blue windshield-mount arm folded back on top" src="hardware/universal-camera/images/device-civic.jpg">
 
-That video path has a purpose-built end. The **universal camera** is a
-3D-printed ESP32-CAM dashcam with a GPS module, powered off the vehicle rail,
-that turns a route a truck already drives into a survey. Print files, bill of
-materials, pin budget and the invariants the firmware may not break are in
+That video path has a purpose-built end: the **universal camera**, a
+3D-printed ESP32-CAM dashcam that mounts on the public-service vehicles —
+sweepers, refuse trucks, inspection cars — that already drive the city's routes
+every day. As the vehicle moves, an on-device edge vision model scans each
+frame for road defects. When it spots one it captures the frame, caches it with
+a GPS geotag, and pushes it to Civic's database the moment the vehicle has
+internet. Print files, bill of materials and firmware invariants are in
 [`hardware/universal-camera/`](hardware/universal-camera/README.md); what the
-server does with what it sends is [further down](#and-a-camera-that-surveys-the-streets-on-its-own).
+server does with it is [further down](#and-a-camera-that-surveys-the-streets-on-its-own).
 
 We built it because the backlog everyone blames on budget or on crews is
 usually a backlog of *unstaffed triage* — and reading a photograph into a
