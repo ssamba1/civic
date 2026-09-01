@@ -99,7 +99,7 @@ build needs a resized camera aperture (see below).
 | Storage | microSD card | on-device buffer for gated frames + GPS log when offline |
 | Battery | 1S 18650 Li-ion + protection, or vehicle 12 V → 5 V buck | dashcam duty cycles are short; size for the longest route between signal |
 | Charge/regulation | TP4056 (18650) or a 12 V→5 V buck for vehicle power | ESP32-CAM peaks ~300 mA on Wi-Fi TX; do not under-spec the rail |
-| Enclosure | printed shell, `print/` | PETG recommended (see print settings) |
+| Enclosure | printed shell, `print/` | PETG recommended (check print settings) |
 
 ![The assembled universal camera: a blue 3D-printed enclosure on a desk, the ESP32-CAM's OV2640 lens visible through a cut-out on the lower front, a foam-padded module seated across the open top, and a curved windshield-mount arm pivoting off the top on a knurled side knob](images/device.jpg)
 
