@@ -140,9 +140,9 @@ function renderEventBody(event: TimelineEvent) {
     case "created":
       return (
         <span>
-          <span className="font-medium text-foreground">Created</span>{" "}
+          <span className="font-medium text-foreground">Created</span>
           <span className="text-subtle">
-            , Auto-routed to <TeamChip teamId={event.defaultTeam} />
+            , auto-routed to <TeamChip teamId={event.defaultTeam} />
           </span>
         </span>
       );

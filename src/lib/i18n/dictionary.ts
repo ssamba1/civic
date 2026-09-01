@@ -95,8 +95,8 @@ const zh: Dictionary = {
   cta_share: "分享",
   trending_title: "城市居民最想解决的问题",
   trending_subtitle:
-    "按邻居支持数量排名的未解决问题。添加您的声音,, 列表顶部是关注最多的地方。",
-  trending_empty: "目前没有未解决的报告,, 待办事项全部完成。",
+    "按邻居支持数量排名的未解决问题。添加您的声音，列表顶部是关注最多的地方。",
+  trending_empty: "目前没有未解决的报告，待办事项全部完成。",
   lang_select: "选择语言",
 };
 

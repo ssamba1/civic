@@ -534,7 +534,7 @@ export function WorkOrderDetail({
                 </span>
               ) : (
                 <span className="text-[15px] font-medium text-faint leading-tight">
-                  ,
+                  -
                 </span>
               )}
             </div>

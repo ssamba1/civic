@@ -763,7 +763,7 @@ function PredictedCostCell({
             : "Needs 5+ closed jobs with actual cost"
         }
       >
-        ,
+        -
       </span>
     );
   }
