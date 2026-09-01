@@ -68,7 +68,7 @@ product.
 | Maps | MapLibre GL + deck.gl (no Mapbox token, no per-view billing) |
 | UI | Tailwind CSS v4, shadcn/ui (Radix), AG Grid for the work-order table, GSAP |
 | Interop | Open311 GeoReport v2, XML + JSON |
-| Quality | Vitest (1,419 tests), Playwright, SQL row-level-security suites, Biome, Sentry |
+| Quality | Vitest (1,429 tests), Playwright, SQL row-level-security suites, Biome, Sentry |
 
 Server components are not a style preference here — they are what keeps the
 model API key server-side by construction. `"use client"` is the exception, and
@@ -91,7 +91,7 @@ works.** We shipped a bug class where lookup tables written as
 `custom_` category. The worst instance: a report was saved, then the work-order
 lookup threw on `undefined`, *after* the classification had been persisted — so
 the report existed, no job was ever created, nothing was dispatched, and the
-resident saw a thank-you screen. Type-check, lint, 1,419 tests and the
+resident saw a thank-you screen. Type-check, lint, the whole unit suite and the
 production build were all green the entire time. It was found by opening the
 app and reading a screenshot. The fix was three accessors with an `other`
 fallback, not twenty patches.

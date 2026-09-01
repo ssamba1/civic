@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/social-preview.png" alt="Civic. A resident photographs it, the work order writes itself. AI-native citizen repair reporting: photo to classified, costed, crew-assigned work order in one pass, no staff triage in the middle. 11 municipal divisions, 12 city-extensible categories, 0 manual triage steps, 1,419 tests passing." width="880">
+<img src="docs/images/social-preview.png" alt="Civic. A resident photographs it, the work order writes itself. AI-native citizen repair reporting: photo to classified, costed, crew-assigned work order in one pass, no staff triage in the middle. 11 municipal divisions, 12 city-extensible categories, 0 manual triage steps, 1,429 tests passing." width="880">
 
 ### The gap between a resident noticing a pothole and a crew being dispatched to it
 
@@ -8,7 +8,7 @@
 [![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Supabase + PostGIS](https://img.shields.io/badge/Supabase-PostGIS-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
 [![Gemini 2.5 Flash-Lite](https://img.shields.io/badge/Gemini-2.5%20Flash--Lite-4285F4?logo=google&logoColor=white)](https://ai.google.dev)
-[![1419 tests](https://img.shields.io/badge/tests-1%2C419%20passing-success)](#4-proof-it-works)
+[![1429 tests](https://img.shields.io/badge/tests-1%2C429%20passing-success)](#4-proof-it-works)
 [![Open311](https://img.shields.io/badge/Open311-GeoReport%20v2-orange)](#open311-is-the-product-not-an-integration)
 [![CI](https://github.com/ssamba1/civic/actions/workflows/test.yml/badge.svg)](https://github.com/ssamba1/civic/actions/workflows/test.yml)
 [![migrations](https://github.com/ssamba1/civic/actions/workflows/migrations.yml/badge.svg)](https://github.com/ssamba1/civic/actions/workflows/migrations.yml)
@@ -448,7 +448,7 @@ Every number here was produced by running the command in the middle column on th
 | Check | Command | Result |
 |---|---|---|
 | Types | `pnpm typecheck` | **clean**, TypeScript strict |
-| Unit tests | `pnpm test` | **1,419 passing** across 136 files |
+| Unit tests | `pnpm test` | **1,429 passing** across 137 files |
 | Lint | `pnpm lint` | **0 errors** |
 | Production build | `pnpm build` | **96 routes compile**, 42 prerendered |
 | Production *runtime* | `pnpm prod` | Standalone server boots, `database: true, ai: true`, every route clean in a real browser |
@@ -511,7 +511,7 @@ Three more of the same shape were fatal only in the sense that they were wrong r
 
 **What we take from it.** Every one of these failed **silently**: a 200 with no data, a saved report with no job, an email with a hole in it, a build that warned rather than failed. None of them threw where anyone was looking.
 
-A passing build and 1,419 passing tests tell you the code agrees with itself. They do not tell you the product works. A browser hitting a page and a person reading a screenshot each caught in one look what every automated check missed.
+A passing build and 1,400-odd passing tests tell you the code agrees with itself. They do not tell you the product works. A browser hitting a page and a person reading a screenshot each caught in one look what every automated check missed.
 
 The fix was not twenty patches, it was three accessors — `ruleFor()`, `categoryMeta()`, `categorySlaHours()` — each falling back to `other` for a key its table has never seen, and 22 call sites moved onto them. Call sites that iterate `CATEGORIES` rather than indexing by a runtime key were deliberately left alone: they cannot miss.
 
