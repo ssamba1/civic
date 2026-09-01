@@ -452,8 +452,8 @@ Every number here was produced by running the command in the middle column on th
 | Lint | `pnpm lint` | **0 errors** |
 | Production build | `pnpm build` | **96 routes compile**, 42 prerendered |
 | Production *runtime* | `pnpm prod` | Standalone server boots, `database: true, ai: true`, every route clean in a real browser |
-| Row-level security | `pnpm test:rls` | **45 passing** across 11 suites |
-| End to end | `pnpm test:e2e` | 7 Playwright specs |
+| Row-level security | `pnpm test:rls` | **45 passing**, 75 skipped — see below |
+| End to end | `pnpm test:e2e` | **28 passing** across 7 Playwright specs |
 | Privacy audit | `pnpm audit:privacy` | **No raw-photo leaks across 5 cities** |
 | Live health | `pnpm health` | `{"status":"ok","checks":{"database":true,"ai":true}}` |
 | Accessibility | Lighthouse | **100 / 100 / 100** — a11y, best practices, SEO — on `/` and `/report`, mobile |
@@ -465,6 +465,25 @@ Accessibility, best practices and SEO are structural and hold in any build, so
 those numbers are quoted. **Performance is not quoted**: the only Lighthouse run
 here was against a dev server, where the number measures the dev bundler rather
 than the product, and a figure like that is worth nothing to a reader.
+
+**On that RLS number.** 75 of the 120 assertions skip unless `SUPABASE_TEST_URL`
+points at a dedicated test database, and CI does not have one — so a green
+`pnpm test:rls` is not, on its own, evidence that row-level security holds. It
+is worth saying rather than quoting 45 and moving on.
+
+What is evidence: the live database was probed directly with the **anon key**,
+the one every visitor's browser holds. `select *` returns **0 rows** from
+`users`, `reports`, `classifications`, `work_orders`, `crews`, `crew_members`,
+`api_keys`, `error_log`, `org_units`, `report_photos`, `merges`, `notifications`
+and `audit_log`. The one table that answers is `city_teams` (39 rows), which is
+the public division labels the dashboard renders.
+
+That probe also found the one hole: `routing_unit_load(uuid)` is
+`SECURITY DEFINER` and executable by `PUBLIC`, so the anon key can read any
+city's org-chart operating data. Migration 068 exists to close it and has not
+been applied. It is written up in
+[`docs/runbooks/APPLY-068-NOW.md`](docs/runbooks/APPLY-068-NOW.md) rather than
+left for someone to find.
 
 ### Open311 is the product, not an integration
 

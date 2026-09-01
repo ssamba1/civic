@@ -153,7 +153,9 @@ a hosted demo exists only if one is linked from the README, the seeded reports a
 Cumming has filed anything here and the city has not adopted this), the
 analytics figures are labelled sample data in the product itself, and the
 privacy blur is a heuristic that leaves the middle third of the frame
-unblurred — a deliberate trade, documented in the source, because blurring the
+unblurred, and one `SECURITY DEFINER` database function is still readable with
+the anon key (migration 068 is written and unapplied — see
+`docs/runbooks/APPLY-068-NOW.md`) — a deliberate trade, documented in the source, because blurring the
 whole frame would hide the defect the photo exists to report.
 
 ## Team
