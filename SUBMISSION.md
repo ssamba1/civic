@@ -57,6 +57,37 @@ A public works director opens the dashboard to *manage* work, not to *create*
 it. There is no inbox of unread reports on that screen, and that absence is the
 product.
 
+### The same pipeline on video, without the model bill
+
+Residents only report what they walk past. A phone on a truck that already
+drives every street sees far more — and would produce a ruinous bill, because
+one bus on one route for one day is tens of thousands of frames and an LLM call
+per frame is economically impossible.
+
+So on the video path the model is the *last* step, not the first:
+
+1. a local ONNX detector (`services/detector/`, a FastAPI sidecar) scans every
+   frame for free and throws most of them away;
+2. Postgres clusters the surviving detections spatially, because the same
+   pothole appears in dozens of consecutive frames and is one defect;
+3. only a cluster that passes a confidence threshold costs a Gemini call, and
+   only a decision to dispatch creates a report.
+
+On the seeded clip: **375 frames → 531 detections → 33 clusters → 27 reports**,
+with the model asked about a fraction of those 33. Everything before the last
+step is free.
+
+Two constraints shaped that design as much as cost. **Licence:** the detector is
+selected at deploy time under a hard filter — Apache-2.0/BSD/MIT only,
+Ultralytics YOLOv8/v11 excluded because AGPL's network-use clause reaches a
+hosted product, and a better mAP number does not buy the right to relicense
+someone else's city software. **Privacy:** street footage is saturated with
+faces and plates, and unlike the resident path there is no client to blur in, so
+the sidecar's `/blur` endpoint must succeed before a crop is stored. It has no
+"return the original on error" path — an unimplemented or failed blur returns
+501, the app drops the crop, and the failure can only lose data, never leak a
+face.
+
 ## Tech stack
 
 | Layer | Choice |
@@ -67,8 +98,9 @@ product.
 | Auth & storage | Supabase Auth; two buckets — `photos-public` (blurred) and `photos-raw` (restricted, 30-day TTL) |
 | Maps | MapLibre GL + deck.gl (no Mapbox token, no per-view billing) |
 | UI | Tailwind CSS v4, shadcn/ui (Radix), AG Grid for the work-order table, GSAP |
+| Video | Local ONNX detector sidecar (Python/FastAPI, `services/detector/`) as the cost gate; PostGIS clustering; Gemini only on clusters that pass a confidence threshold |
 | Interop | Open311 GeoReport v2, XML + JSON |
-| Quality | Vitest (1,436 tests), Playwright, SQL row-level-security suites, Biome, Sentry |
+| Quality | Vitest (1,443 tests), Playwright, SQL row-level-security suites, Biome, Sentry; two CI gates — the full suite plus a fresh-database replay of every migration |
 
 Server components are not a style preference here — they are what keeps the
 model API key server-side by construction. `"use client"` is the exception, and
