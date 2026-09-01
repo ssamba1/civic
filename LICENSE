@@ -19,3 +19,38 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+THIRD-PARTY NOTICES
+
+The MIT grant above covers the source in this repository. It does not, and
+cannot, relicense anything this project merely depends on. Three notes for
+anyone forking, deploying, or running this for a city:
+
+1. Runtime dependencies are permissively licensed (MIT / Apache-2.0 / BSD /
+   ISC) and retain their own terms and copyright notices. Notable ones that
+   ship in the built client: MapLibre GL (BSD-3-Clause), deck.gl (MIT), Cesium
+   (Apache-2.0), AG Grid Community (MIT), GSAP (standard "no charge" licence).
+   `pnpm-lock.yaml` is the authoritative list of what is actually installed.
+
+2. No AGPL-licensed code is a dependency of the application or of the detector
+   service, and that is deliberate rather than incidental. AGPL-3.0's
+   network-use clause reaches a hosted product, so `services/detector/`
+   excludes Ultralytics YOLOv8/v11 and any checkpoint derived from them by
+   policy; the reasoning is in `services/detector/README.md` and the licence
+   gate is stated at the top of `services/detector/requirements.txt`.
+
+   The two exceptions are demo-only capture scripts —
+   `services/detector/export_detections.py` and `render_demo.py` — which import
+   `ultralytics` (AGPL-3.0). Neither is imported by the service, neither is
+   installed by `requirements.txt`, and neither runs in any deployment. They
+   exist to regenerate a committed artifact. If you choose to run them, you are
+   running AGPL software locally and its terms apply to what you do with it.
+
+3. Detector model weights are NOT vendored here and are not covered by this
+   licence. A checkpoint carries its own terms, which are frequently more
+   restrictive than the architecture's. Verify the licence of whatever
+   checkpoint you select at the moment you select it — do not treat any model
+   named in this repository's documentation as settled — and record the choice
+   and its licence in an ADR under `docs/decisions/`.
