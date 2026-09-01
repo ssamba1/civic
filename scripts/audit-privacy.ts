@@ -57,8 +57,28 @@ async function main() {
     process.exit(1);
   }
 
+  const cityRows = (cities ?? []) as { id: string; slug: string }[];
+
+  // A gate that audited nothing must not report a pass. Zero cities is never a
+  // legitimate clean result — it means the query answered against the wrong
+  // project, or with a key that cannot see the table, or before the base seed
+  // ran. Reporting "✓ Privacy audit passed" for that is a false green on the
+  // one check standing between a raw photo and a public bucket, and it is
+  // exactly the shape this project keeps finding: a 200 with an empty array,
+  // indistinguishable from a genuinely empty answer.
+  if (cityRows.length === 0) {
+    console.error(
+      "✗ Privacy audit INCONCLUSIVE — the cities table returned no rows, so " +
+        "no bucket was examined.\n" +
+        "  Check SUPABASE_URL points at the intended project and that " +
+        "SUPABASE_SERVICE_ROLE_KEY is the service role (not the anon key).\n" +
+        "  If this is a fresh database, run `pnpm db:seed` first.",
+    );
+    process.exit(1);
+  }
+
   const allViolations: string[] = [];
-  for (const city of (cities ?? []) as { id: string; slug: string }[]) {
+  for (const city of cityRows) {
     const { violations } = await auditPublicBucket(city.id);
     if (violations.length > 0) {
       allViolations.push(...violations.map((v) => `[${city.slug}] ${v}`));
@@ -71,7 +91,9 @@ async function main() {
     process.exit(1);
   }
   console.log(
-    `✓ Privacy audit passed — no raw-photo leaks across ${(cities ?? []).length} city/cities.`,
+    `✓ Privacy audit passed — no raw-photo leaks across ${cityRows.length} city/cities: ${cityRows
+      .map((c) => c.slug)
+      .join(", ")}`,
   );
 }
 
