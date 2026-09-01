@@ -108,6 +108,7 @@ Pick the path that matches the time you have. Every deep section is collapsed, s
 | The rules every contributor follows, human or model | [`agents.md`](agents.md) |
 | Architecture decisions that closed off alternatives | [`docs/decisions/`](docs/decisions/) |
 | On-call procedures: AI pipeline, Open311 conformance, cutover, key rotation | [`docs/runbooks/`](docs/runbooks/) |
+| Standing up the hosted demo, and the check that catches a half-working one | [`docs/runbooks/hosted-demo-deploy.md`](docs/runbooks/hosted-demo-deploy.md) |
 | Plans and in-flight work | [`docs/planning/`](docs/planning/) |
 | Live demo | Linked at the top of this file when one is running; see [Honest limits](#6-honest-limits) |
 
