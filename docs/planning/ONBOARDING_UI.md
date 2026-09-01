@@ -32,8 +32,14 @@
 ## 1. Information architecture & routes
 
 New `/admin` section, gated behind a `super_admin` role (reuse `admin` + allowlist
-for v1). Admin shell **mirrors the existing staff layout** ([staff/layout.tsx](../../src/app/staff/layout.tsx))
-— fixed left sidebar (desktop) / top bar (mobile), same auth-guard pattern.
+for v1). Admin shell **mirrors the existing staff layout** (`src/app/staff/layout.tsx` at
+the time of writing) — fixed left sidebar (desktop) / top bar (mobile), same
+auth-guard pattern.
+
+> **Since shipped:** the `/staff` route UI was scrapped (see `agents.md`,
+> "Layout & current state"), so that file no longer exists. What was built is
+> [`src/app/admin/layout.tsx`](../../src/app/admin/layout.tsx); the surviving
+> staff-shaped shell is [`src/app/city/[slug]/layout.tsx`](../../src/app/city/%5Bslug%5D/layout.tsx).
 
 ```
 /admin                       → redirect to /admin/cities
@@ -42,7 +48,9 @@ for v1). Admin shell **mirrors the existing staff layout** ([staff/layout.tsx](.
 /admin/cities/[slug]         → tenant detail / re-enter wizard at any step
 ```
 
-Sidebar nav (new, mirrors [sidebar-nav.tsx](../../src/components/staff/sidebar-nav.tsx)):
+Sidebar nav (new, mirrored `src/components/staff/sidebar-nav.tsx`, since
+removed with the `/staff` UI — it shipped as
+[`src/components/admin/sidebar-nav.tsx`](../../src/components/admin/sidebar-nav.tsx)):
 `Cities` (list), `Onboard` (+ new), back-link to `/staff`. Icon set = lucide
 (`Building2`, `PlusCircle`, `LayoutDashboard`).
 
