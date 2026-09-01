@@ -113,7 +113,10 @@ function KpiStrip({
   cells: { label: string; value: number; hue: string }[];
 }) {
   return (
-    <div className="overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-card)]">
+    <div
+      data-tour="video-funnel"
+      className="overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-card)]"
+    >
       <div className="grid grid-cols-2 lg:grid-cols-5">
         {cells.map((cell, idx) => (
           <div

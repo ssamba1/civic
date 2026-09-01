@@ -32,7 +32,7 @@ export function PublicTrending({
   }
 
   return (
-    <ol className="flex flex-col gap-2.5">
+    <ol data-tour="trending-list" className="flex flex-col gap-2.5">
       {reports.map((report, i) => {
         const meta = CATEGORY_META[report.category] ?? CATEGORY_META.other;
         return (

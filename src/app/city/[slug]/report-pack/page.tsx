@@ -77,7 +77,10 @@ export default async function ReportPackPage({ params }: PageProps) {
         <PrintButton />
       </div>
 
-      <section className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
+      <section
+        data-tour="pack-kpis"
+        className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3"
+      >
         {kpis.map((k) => (
           <div
             key={k.label}

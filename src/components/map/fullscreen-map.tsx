@@ -404,7 +404,7 @@ export function FullscreenMapOrchestrator({
             bg/border/radius: the outer LiquidGlassCard IS the panel's one
             card, nesting a second elevated surface here reads as a
             vibecoded double-card. */}
-        <div className="p-3 flex flex-col gap-3">
+        <div data-tour="map-filters" className="p-3 flex flex-col gap-3">
           {/* Team — primary scoping. Hidden in the team view (locked) and the
             resident community view (no team concept). */}
           {!lockedTeam && !readOnly && (
@@ -831,7 +831,10 @@ export function FullscreenMapOrchestrator({
       </div>
 
       {/* Full-viewport map */}
-      <div className="absolute inset-0 z-0 h-full w-full pointer-events-auto">
+      <div
+        data-tour="map-canvas"
+        className="absolute inset-0 z-0 h-full w-full pointer-events-auto"
+      >
         <ReportMap
           reports={filteredReports}
           center={center}
@@ -896,7 +899,10 @@ export function FullscreenMapOrchestrator({
         glowIntensity="none"
       >
         {/* Panel header */}
-        <div className="flex items-center justify-between shrink-0 mb-3">
+        <div
+          data-tour="map-dispatch"
+          className="flex items-center justify-between shrink-0 mb-3"
+        >
           <h2 className="text-[15px] font-semibold text-white">
             {readOnly ? "Nearby" : lockedTeam ? "Reports" : "Dispatch"}
           </h2>

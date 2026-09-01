@@ -194,6 +194,7 @@ export function MembersTable({
         <div
           role="toolbar"
           aria-label="Switch member view"
+          data-tour="members-views"
           aria-orientation="horizontal"
           className="inline-flex items-center gap-0.5 rounded-[var(--radius-md)] border border-hairline bg-overlay p-0.5"
         >
@@ -249,6 +250,7 @@ export function MembersTable({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search name or email"
+                data-tour="members-search"
                 aria-label="Search members by name or email"
                 className={[
                   "h-8 w-full rounded-[var(--radius-md)] border border-hairline bg-surface pl-8 pr-2.5 text-[13px] text-foreground",

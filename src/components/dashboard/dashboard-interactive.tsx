@@ -130,11 +130,15 @@ export function DashboardInteractive({
 .db-enter>*:nth-child(4){animation-delay:180ms}
 @media (prefers-reduced-motion:reduce){.db-enter>*{animation:none}}
 `}</style>
-      <section aria-label="Key statistics">
+      <section aria-label="Key statistics" data-tour="browse-stats">
         <StatsCards stats={dynamicStats} />
       </section>
 
-      <section aria-label="Report locations map" className="relative">
+      <section
+        aria-label="Report locations map"
+        data-tour="browse-map"
+        className="relative"
+      >
         <ReportMap
           reports={filteredReports}
           center={center}

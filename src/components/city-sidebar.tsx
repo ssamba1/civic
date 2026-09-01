@@ -19,6 +19,7 @@ import {
   SidebarWhenCollapsed,
   SidebarWhenExpanded,
 } from "@/components/dashboard/sidebar-shell";
+import { PageGuideButton } from "@/components/page-guide/page-guide";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ViewSwitch } from "@/components/view-switch";
 import { TEAM_LIST } from "@/lib/teams";
@@ -140,13 +141,18 @@ export function CitySidebar({
         <>
           <SidebarWhenExpanded>
             {/* User|City segment + theme toggle — one row. */}
-            <div className="flex h-8 w-full items-center gap-2 [&>div:first-child]:h-8 [&>div:first-child]:min-w-0 [&>div:first-child]:flex-1 [&_a]:h-full [&_a]:flex-1">
+            <div className="flex h-8 w-full items-center gap-1.5 [&>div:first-child]:h-8 [&>div:first-child]:min-w-0 [&>div:first-child]:flex-1 [&_a]:h-full [&_a]:flex-1">
               <ViewSwitch citySlug={slug} />
+              <PageGuideButton className="h-8 w-8 shrink-0" />
               <ThemeToggle className="h-8 w-8 shrink-0" />
             </div>
           </SidebarWhenExpanded>
           <SidebarWhenCollapsed>
-            <ThemeToggle className="h-9 w-full" />
+            {/* Stacked in the icon rail — the row has no width to share. */}
+            <div className="flex flex-col gap-1.5">
+              <PageGuideButton className="h-9 w-full" />
+              <ThemeToggle className="h-9 w-full" />
+            </div>
           </SidebarWhenCollapsed>
         </>
       }

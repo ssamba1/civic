@@ -75,7 +75,7 @@ export default async function LeaderboardPage({ params }: PageProps) {
         </p>
       </section>
 
-      <ol className="flex flex-col gap-2">
+      <ol data-tour="leaderboard-list" className="flex flex-col gap-2">
         {rows.map((row, i) => {
           const meta = CATEGORY_META[row.category] ?? CATEGORY_META.other;
           return (

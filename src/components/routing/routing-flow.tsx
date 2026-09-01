@@ -441,7 +441,7 @@ export function RoutingFlow({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1">
+        <div data-tour="routing-zoom" className="flex items-center gap-1">
           <button
             type="button"
             aria-label="Zoom out"
@@ -473,7 +473,7 @@ export function RoutingFlow({
         </div>
       </div>
 
-      <div className="overflow-auto">
+      <div data-tour="routing-canvas" className="overflow-auto">
         <div style={{ width: width * zoom, height: height * zoom }}>
           <div
             className="relative"

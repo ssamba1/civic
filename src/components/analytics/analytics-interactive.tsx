@@ -116,7 +116,10 @@ export function AnalyticsInteractive() {
          this wrapper rescales every tile without touching their spans. */}
         <div className="grid gap-4 lg:grid-cols-12 lg:items-start">
           <div className="lg:col-span-8">
-            <div className="bento-flat grid gap-px overflow-clip rounded-[var(--radius-lg)] border border-hairline bg-hairline lg:grid-cols-12 lg:auto-rows-[minmax(190px,auto)]">
+            <div
+              data-tour="analytics-bento"
+              className="bento-flat grid gap-px overflow-clip rounded-[var(--radius-lg)] border border-hairline bg-hairline lg:grid-cols-12 lg:auto-rows-[minmax(190px,auto)]"
+            >
               <ReportsTrend data={trend} />
               <SeverityDonut data={severity} />
               <ReporterVelocityCard data={velocity} />

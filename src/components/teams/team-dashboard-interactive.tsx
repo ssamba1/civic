@@ -68,6 +68,7 @@ export function TeamDashboardInteractive({
     <div className="stagger-children flex flex-col gap-4">
       <section
         aria-label="Team statistics"
+        data-tour="team-stats"
         style={{ "--stagger-index": 0 } as React.CSSProperties}
       >
         <StatsCards stats={stats} />
@@ -91,6 +92,7 @@ export function TeamDashboardInteractive({
 
       <section
         aria-label="Task queue"
+        data-tour="team-tasks"
         style={{ "--stagger-index": 2 } as React.CSSProperties}
       >
         <TeamTasksInteractive teamId={teamId} />

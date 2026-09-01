@@ -27,6 +27,7 @@ export function CrewPortalHeader({
   return (
     <div
       data-crew-type={crewType}
+      data-tour="crew-scope"
       className="rounded-[var(--radius-lg)] border border-hairline bg-surface px-4 py-3.5"
     >
       <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">

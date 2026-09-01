@@ -110,6 +110,7 @@ export function TeamsInteractive({ initialStats }: TeamsInteractiveProps) {
     <div className="stagger-children flex flex-col gap-4">
       <section
         aria-label="City statistics"
+        data-tour="city-stats"
         style={{ "--stagger-index": 0 } as React.CSSProperties}
       >
         <StatsCards stats={initialStats} />
@@ -117,6 +118,7 @@ export function TeamsInteractive({ initialStats }: TeamsInteractiveProps) {
 
       <section
         aria-label="Team roster"
+        data-tour="team-roster"
         style={{ "--stagger-index": 1 } as React.CSSProperties}
       >
         <TeamRoster

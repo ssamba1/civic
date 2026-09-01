@@ -1004,6 +1004,7 @@ export function ClipList() {
   return (
     <details
       id="clip-list"
+      data-tour="video-clips"
       open={needsAttention || listOpen || undefined}
       className="rounded-[var(--radius-lg)] border border-hairline bg-surface"
     >

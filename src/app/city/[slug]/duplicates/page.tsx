@@ -192,7 +192,12 @@ export default async function DuplicatesPage({ params }: PageProps) {
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
       {/* Page header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Duplicate reports</h1>
+        <h1
+          data-tour="duplicates-heading"
+          className="text-2xl font-bold tracking-tight"
+        >
+          Duplicate reports
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Open reports in {city.name} that have potential duplicates nearby.
           Merge the weaker report into the canonical one to reduce noise.
@@ -212,7 +217,7 @@ export default async function DuplicatesPage({ params }: PageProps) {
 
       {/* Report list */}
       <Suspense fallback={null}>
-        <ul className="space-y-6">
+        <ul data-tour="duplicates-queue" className="space-y-6">
           {reports.map((r) => (
             <li key={r.id}>
               <ReportRow report={r} />

@@ -230,7 +230,10 @@ export function WorkOrderCalendar({
     // wrapper is a plain block, flex-1 is inert and the grid falls back to the
     // day cells' own min-height — same look as before.
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div
+        data-tour="calendar-toolbar"
+        className="flex flex-wrap items-center justify-between gap-3"
+      >
         <div className="flex items-center gap-3">
           <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
             {monthLabel(monthISO)}
@@ -384,6 +387,7 @@ export function WorkOrderCalendar({
         </div>
         {/* biome-ignore lint/a11y/useSemanticElements: an intentional CSS-grid calendar, not a tabular data set — role="grid"/"gridcell" conveys the 2D layout without <table> markup fighting `grid grid-cols-7`. */}
         <div
+          data-tour="calendar-grid"
           role="grid"
           aria-label={`${monthLabel(monthISO)} work orders`}
           // auto-rows-fr (not a fixed 6-row template — monthGrid returns 5

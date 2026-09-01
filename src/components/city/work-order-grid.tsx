@@ -1396,7 +1396,10 @@ export function WorkOrderGrid({
     <div className="relative flex min-h-0 flex-1 flex-col gap-2">
       {/* Toolbar keeps horizontal padding so search + chips have breathing
           room; the grid below runs full-bleed to the viewport edges. */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 pt-3 sm:px-4 lg:px-6">
+      <div
+        data-tour="grid-toolbar"
+        className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 pt-3 sm:px-4 lg:px-6"
+      >
         <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
           <input
@@ -1409,7 +1412,10 @@ export function WorkOrderGrid({
           />
         </div>
 
-        <fieldset className="flex flex-wrap items-center gap-1.5">
+        <fieldset
+          data-tour="grid-status"
+          className="flex flex-wrap items-center gap-1.5"
+        >
           <legend className="sr-only">Filter by status</legend>
           <button
             ref={allChipRef}
@@ -1494,7 +1500,11 @@ export function WorkOrderGrid({
         </div>
       )}
 
-      <div ref={gridWrapRef} className="wo-grid relative min-h-0 flex-1">
+      <div
+        ref={gridWrapRef}
+        data-tour="grid-table"
+        className="wo-grid relative min-h-0 flex-1"
+      >
         <AgGridReact<GridReportRow>
           theme={gridTheme}
           rowData={filtered}

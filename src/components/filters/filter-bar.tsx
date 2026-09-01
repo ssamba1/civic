@@ -337,7 +337,10 @@ export function FilterBar() {
       {/* ============================================================
           DESKTOP (md+): unchanged inline bar
           ============================================================ */}
-      <div className="hidden md:block rounded-[14px] border border-hairline bg-surface px-3 py-2.5">
+      <div
+        data-tour="filter-bar"
+        className="hidden md:block rounded-[14px] border border-hairline bg-surface px-3 py-2.5"
+      >
         <style>{`@media (prefers-reduced-motion:no-preference){@keyframes popover-in{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}@keyframes popover-out{from{opacity:1;transform:none}to{opacity:0;transform:scale(.98)}}}`}</style>
 
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">

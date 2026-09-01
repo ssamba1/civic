@@ -91,7 +91,7 @@ export default async function HotspotsPage({ params }: PageProps) {
           No repeat locations yet.
         </p>
       ) : (
-        <ol className="flex flex-col gap-2">
+        <ol data-tour="hotspots-list" className="flex flex-col gap-2">
           {hotspots.map((h) => (
             <li
               key={h.address}

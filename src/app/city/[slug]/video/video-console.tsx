@@ -71,7 +71,10 @@ export function UploadClip({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface px-3 py-2.5">
+    <div
+      data-tour="video-upload"
+      className="rounded-[var(--radius-lg)] border border-hairline bg-surface px-3 py-2.5"
+    >
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-faint">
           Upload
