@@ -7,7 +7,21 @@ name: test
 # green out of the box with no secrets configured.
 on:
   pull_request:
+  # Push runs are scoped to main. Before this, every push to a branch ran the
+  # whole suite twice — once for `push`, once for `pull_request` on the same
+  # commit — because a branch in this repo with an open PR fires both. Two full
+  # runs of typecheck + lint + 1,443 tests + a production build per commit, for
+  # one commit's worth of information, and the concurrency group below cannot
+  # collapse them: they are deliberately keyed apart so a push run is never
+  # cancelled.
+  #
+  # The reason push runs exist at all is the comment below — a merged commit on
+  # main must get a definitive pass/fail of its own. That is about main, and
+  # only main, so restricting the trigger keeps the guarantee and drops the
+  # duplication. A branch with no PR open still gets covered the moment one is
+  # opened.
   push:
+    branches: [main]
 
 # Cancel superseded runs ONLY for PR iterations (pushing a new commit to an open
 # PR supersedes the prior run — cheap to drop). NEVER cancel push runs on a
@@ -20,6 +34,15 @@ on:
 concurrency:
   group: test-${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Least privilege for GITHUB_TOKEN. With no `permissions:` block the token
+# inherits the repository default, which on older repos is read/write across
+# every scope — so this job, which only ever needs to read the code it is
+# testing, would be handed a token that can push commits, open and merge PRs,
+# and publish packages. Nothing here uses any of that, and the job runs
+# arbitrary third-party postinstall scripts from the dependency tree.
+permissions:
+  contents: read
 
 jobs:
   test:

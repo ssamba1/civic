@@ -21,7 +21,11 @@ on:
     paths:
       - "supabase/migrations/**"
       - ".github/workflows/migrations.yml"
+  # Scoped to main for the same reason as test.yml: a branch with an open PR
+  # fires both `push` and `pull_request` on the same commit, so this replayed
+  # all 77 migrations into a fresh PostGIS container twice per push.
   push:
+    branches: [main]
     paths:
       - "supabase/migrations/**"
       - ".github/workflows/migrations.yml"
@@ -29,6 +33,11 @@ on:
 concurrency:
   group: migrations-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Least privilege — see the same block in test.yml. This job only reads
+# supabase/migrations/ and replays it into a throwaway container.
+permissions:
+  contents: read
 
 jobs:
   fresh-deploy:
