@@ -23,5 +23,25 @@
 *.pdf binary
 *.onnx binary
 
-# Lockfile churns hugely; keep diffs collapsed in review.
-pnpm-lock.yaml -diff
+# Lockfile churns hugely; keep it collapsed in review — but readable.
+#
+# This was `-diff`, which does not mean "collapse". It marks the file binary
+# for diff purposes, so `git diff pnpm-lock.yaml` prints
+#
+#     Binary files a/pnpm-lock.yaml and b/pnpm-lock.yaml differ
+#
+# and `--stat` reports "Bin 323640 -> 322675 bytes, 0 insertions(+), 0
+# deletions(-)". There is then no way to review a lockfile change locally at
+# all — not `git diff`, not `git log -p`, not `git add -p`. On a lockfile that
+# is the one review you actually want, because the question is always "did
+# this bump a patch, or swap a package for one nobody chose?"
+#
+# It also was not doing the job it was added for: GitHub already collapses
+# pnpm-lock.yaml in the PR view by its own generated-file detection, and
+# `-diff` has no effect there. So the attribute bought nothing and cost the
+# local diff.
+#
+# `linguist-generated=true` is the attribute that actually states the intent:
+# collapsed by default on GitHub, excluded from language statistics, and fully
+# diffable everywhere else.
+pnpm-lock.yaml linguist-generated=true
