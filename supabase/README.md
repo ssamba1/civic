@@ -58,13 +58,34 @@ Migrations get applied incrementally against a live project, so a file can be
 broken in a way nobody notices until someone stands up a *new* database — and
 this repo has shipped DDL that existed live but in no migration file.
 
-That is what `.github/workflows/migrations.yml` is for: it replays all 77 files
-into an empty PostGIS database on every push touching this directory, which is
+That is what `.github/workflows/migrations.yml` is for: it replays this
+directory into an empty PostGIS database on every push touching it, which is
 what a new city deployment does. It needs no secrets. It does **not** assert the
 result matches the live project — that would need production credentials — so it
 answers the narrower question, "would a fresh deploy succeed?"
 
 If you change schema, watch that job, not just `test.yml`.
+
+### Two files that job does not check
+
+75 of the 77, not all 77. The workflow skips two by name:
+
+    20260709_039_raw_photo_retention.sql
+    20260830_069_video_frame_retention.sql
+
+Both schedule recurring `DELETE`s through `pg_cron`, a project-level extension
+the CI Postgres image does not carry, so they are owner-apply by design (each
+says so in its own header) and would fail the job for a reason that is about
+the harness rather than the file.
+
+The consequence is worth stating plainly, because "all migrations are CI-tested"
+is the natural reading and it is wrong: **these two are the only files in this
+directory with no automated check at all.** A syntax error or a bad reference in
+either survives every gate this repo has and surfaces the first time someone
+stands up a new database — which is the exact failure mode the workflow was
+built to catch. They are also the two that enforce photo retention: 039 is what
+actually deletes `photos-raw` originals after 30 days, which `agents.md` rule 2
+states as a hard rule. Read them by hand when you touch them.
 
 ## seed/
 
