@@ -92,3 +92,7 @@ services/detector/runs/
 
 # scratch from scripts/shot-readme-gif.mjs
 docs/images/.video/
+
+# one-off probe scripts (tok.tmp.mjs et al) — never commit these
+*.tmp.mjs
+*.tmp.ts

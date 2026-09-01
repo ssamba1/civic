@@ -15,6 +15,15 @@ import {
   reportToOpen311,
 } from "@/lib/open311/transform";
 import { toOpen311Xml } from "@/lib/open311/xml";
+
+/**
+ * Public photo shown for a request filed through the Open311 API. A caller's
+ * media_url is deliberately never stored (it is neither blur-verified nor
+ * ours), so an externally filed report has no first-party image — the same
+ * situation the camera pipeline handles with VIDEO_PLACEHOLDER_PUBLIC_PATH.
+ */
+const OPEN311_PLACEHOLDER_PUBLIC_PATH = "/open311-external-placeholder.svg";
+
 import {
   type City,
   type Classification,
@@ -421,7 +430,20 @@ export async function POST(request: NextRequest) {
         reporter_id: reporterId,
         location: `SRID=4326;POINT(${lng} ${lat})`,
         // Never mediaUrl — see the note above the media_url validation.
-        photo_public_url: null,
+        //
+        // reports.photo_public_url is NOT NULL, so writing null here made the
+        // insert fail with 23502 and this endpoint answer 500 to EVERY POST.
+        // Refusing to store a caller-supplied media_url was the right call; it
+        // just left nothing to satisfy a required column, and no test posts a
+        // service request, so the whole inbound half of Open311 was dead while
+        // the suite stayed green.
+        //
+        // A placeholder is the honest value and matches what the camera
+        // pipeline already does for reports with no first-party blurred photo
+        // (VIDEO_PLACEHOLDER_PUBLIC_PATH). An externally filed request has no
+        // such photo either, and the GET echoes this back as media_url, which
+        // tells a consuming agency exactly what it is.
+        photo_public_url: OPEN311_PLACEHOLDER_PUBLIC_PATH,
         photo_raw_url: null,
         status: "open" as const,
         address: addressString,

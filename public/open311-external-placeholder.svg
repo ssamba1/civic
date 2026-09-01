@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" role="img" aria-label="Filed through the Open311 API — no photo submitted">
+  <rect width="640" height="480" fill="#1c2430"/>
+  <g fill="none" stroke="#5b6b80" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="215" y="165" width="210" height="150" rx="18"/>
+    <path d="M215 265 L275 210 L330 262 L370 228 L425 275"/>
+    <circle cx="290" cy="205" r="20"/>
+    <path d="M448 150 h44 v44" />
+    <path d="M492 150 L432 210" />
+  </g>
+  <text x="320" y="368" text-anchor="middle" fill="#8fa0b5" font-family="system-ui, sans-serif" font-size="24">Filed through the Open311 API</text>
+  <text x="320" y="400" text-anchor="middle" fill="#5b6b80" font-family="system-ui, sans-serif" font-size="18">No photo submitted by the reporting agency</text>
+</svg>
