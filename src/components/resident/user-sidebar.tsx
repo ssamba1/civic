@@ -84,10 +84,16 @@ export function UserSidebar({ citySlug }: { citySlug?: string }) {
                 would be lost with the header. */}
             <EnvSwitch />
             {/* User|City segment + theme toggle — one row, as in CitySidebar. */}
-            <div className="mt-2 flex h-8 w-full items-center gap-1.5 [&>div:first-child]:h-8 [&>div:first-child]:min-w-0 [&>div:first-child]:flex-1 [&_a]:h-full [&_a]:flex-1">
-              <ViewSwitch citySlug={citySlug} />
-              <PageGuideButton className="h-8 w-8 shrink-0" />
-              <ThemeToggle className="h-8 w-8 shrink-0" />
+            {/* Two rows, for the same reason as CitySidebar: ViewSwitch is
+                shrink-0, so it plus two icon controls overflow the rail. */}
+            <div className="mt-2 flex w-full flex-col gap-1.5">
+              <div className="flex h-8 w-full items-center [&>div:first-child]:h-8 [&>div:first-child]:w-full [&>div:first-child]:min-w-0 [&_a]:h-full [&_a]:flex-1">
+                <ViewSwitch citySlug={citySlug} />
+              </div>
+              <div className="flex h-8 w-full items-center gap-1.5">
+                <PageGuideButton className="h-8 flex-1" />
+                <ThemeToggle className="h-8 flex-1" />
+              </div>
             </div>
           </SidebarWhenExpanded>
           <SidebarWhenCollapsed>

@@ -140,11 +140,19 @@ export function CitySidebar({
       footer={
         <>
           <SidebarWhenExpanded>
-            {/* User|City segment + theme toggle — one row. */}
-            <div className="flex h-8 w-full items-center gap-1.5 [&>div:first-child]:h-8 [&>div:first-child]:min-w-0 [&>div:first-child]:flex-1 [&_a]:h-full [&_a]:flex-1">
-              <ViewSwitch citySlug={slug} />
-              <PageGuideButton className="h-8 w-8 shrink-0" />
-              <ThemeToggle className="h-8 w-8 shrink-0" />
+            {/* Two rows, not one. The rail is ~232px wide and ViewSwitch is
+                shrink-0 (its two labelled segments cannot compress), so a
+                third control pushed the row past the rail and overlapped the
+                button. The segment takes its own full-width row; the two
+                icon controls share the next one. */}
+            <div className="flex w-full flex-col gap-1.5">
+              <div className="flex h-8 w-full items-center [&>div:first-child]:h-8 [&>div:first-child]:w-full [&>div:first-child]:min-w-0 [&_a]:h-full [&_a]:flex-1">
+                <ViewSwitch citySlug={slug} />
+              </div>
+              <div className="flex h-8 w-full items-center gap-1.5">
+                <PageGuideButton className="h-8 flex-1" />
+                <ThemeToggle className="h-8 flex-1" />
+              </div>
             </div>
           </SidebarWhenExpanded>
           <SidebarWhenCollapsed>
