@@ -257,7 +257,10 @@ export function useHoverTip(): UseHoverTipReturn {
           "pointer-events-none fixed z-[60] select-none",
           "text-foreground text-[12px] leading-snug",
           "rounded-lg border border-hairline",
-          "bg-surface",
+          // Same treatment as the map's dispatch panel: frosted rather than a
+          // solid fill, so the tooltip reads as floating above the chart it
+          // covers instead of punching an opaque hole in it.
+          "bg-glass backdrop-blur-xl supports-[backdrop-filter]:bg-glass",
           "shadow-[var(--shadow-pop)]",
           !noMotion && "transition-[opacity,transform] duration-150 ease-out",
           state.visible
@@ -271,13 +274,6 @@ export function useHoverTip(): UseHoverTipReturn {
           maxWidth: `min(calc(100vw - 1.5rem), ${TIP_MAX_WIDTH}px)`,
         }}
       >
-        {state.accent && (
-          <div
-            className="absolute inset-y-2 left-0 w-[2px] rounded-full"
-            style={{ background: state.accent }}
-            aria-hidden
-          />
-        )}
         <div className="px-3.5 py-2.5">
           {state.title && (
             <div className="flex items-center gap-2 text-[12px] font-semibold text-foreground tracking-tight">

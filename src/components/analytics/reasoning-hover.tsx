@@ -346,7 +346,8 @@ export function useReasoningHover(): UseReasoningHoverReturn {
         className={cn(
           "pointer-events-none fixed z-[60] select-none",
           "rounded-[var(--radius-lg)] border border-hairline",
-          "bg-surface",
+          // Matches the map dispatch panel and hover-tip: frosted, not solid.
+          "bg-glass backdrop-blur-xl supports-[backdrop-filter]:bg-glass",
           "shadow-[var(--shadow-pop)]",
           !noMotion && "transition-[opacity,transform] duration-150 ease-out",
           visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1",
