@@ -552,22 +552,16 @@ function Chip({
           ? undefined
           : `${order.title}${order.crewName ? ` · ${order.crewName}` : ""}`
       }
-      // Division color drives a theme-aware tint (mixed into --surface so it
-      // reads in light and dark), a solid dot, and a deeper hover fill.
-      style={
-        {
-          "--chip": color,
-          "--chip-bg": `color-mix(in srgb, ${color} 14%, var(--surface))`,
-          "--chip-bg-hover": `color-mix(in srgb, ${color} 26%, var(--surface))`,
-          "--chip-bd": `color-mix(in srgb, ${color} 34%, transparent)`,
-          "--chip-bd-hover": `color-mix(in srgb, ${color} 60%, transparent)`,
-        } as React.CSSProperties
-      }
+      // Division colour lives in the dot only. The chip itself carries no
+      // border and no fill: a month grid can hold dozens of these, and a
+      // tinted box around every one turned the calendar into a field of
+      // rectangles. Hover still gets a quiet neutral fill so the row remains
+      // an obvious hit target.
+      style={{ "--chip": color } as React.CSSProperties}
       className={cn(
-        "relative flex items-center gap-1.5 truncate rounded-[calc(var(--radius-md)-2px)] border px-1.5 py-0.5 text-[11px] leading-tight text-foreground outline-none",
-        "border-[var(--chip-bd)] bg-[var(--chip-bg)]",
-        "transition-[background-color,border-color,transform,box-shadow] duration-150 ease-out",
-        "hover:-translate-y-px hover:border-[var(--chip-bd-hover)] hover:bg-[var(--chip-bg-hover)] hover:shadow-[var(--shadow-card)]",
+        "relative flex items-center gap-1.5 truncate rounded-[calc(var(--radius-md)-2px)] px-1 py-0.5 text-[11px] leading-tight text-foreground outline-none",
+        "transition-colors duration-150 ease-out",
+        "hover:bg-overlay",
         "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
         "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
         completed && "opacity-70",
@@ -575,7 +569,7 @@ function Chip({
     >
       <span
         aria-hidden
-        className="h-1.5 w-1.5 flex-shrink-0 rounded-full ring-1 ring-inset ring-black/10"
+        className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
         style={{ background: "var(--chip)" }}
       />
       <span

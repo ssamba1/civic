@@ -106,9 +106,12 @@ export function SidebarNav({
                     : sub
                       ? "pl-2.5 pr-8"
                       : "px-2.5",
+                  // Labels read at full strength whether or not the row is
+                  // active: the active row is distinguished by its fill, and
+                  // dimming every other label made the rail look disabled.
                   active
                     ? "bg-elevated font-medium text-foreground"
-                    : "font-medium text-subtle hover:bg-overlay hover:text-foreground",
+                    : "font-medium text-foreground hover:bg-overlay",
                 )}
               >
                 <Icon
@@ -116,7 +119,7 @@ export function SidebarNav({
                     "h-4 w-4 shrink-0 transition-colors duration-150",
                     active
                       ? "text-foreground"
-                      : "text-faint group-hover:text-subtle",
+                      : "text-subtle group-hover:text-foreground",
                   )}
                   strokeWidth={1.75}
                   aria-hidden="true"
