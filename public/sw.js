@@ -25,6 +25,20 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+// Only responses worth keeping. `cache.put` stores whatever it is handed —
+// including a 404, a 500, a 30x, and an opaque cross-origin response whose
+// status is unreadable (always 0). Storing any of those is how a cache-first
+// entry becomes permanent: nothing ever re-fetches it, because a cached error
+// page is still a cache hit. A single deploy window where a hashed chunk
+// briefly 404s is enough to pin that 404 for the life of the cache version.
+//
+// `type === "basic"` restricts this to same-origin responses. Cross-origin
+// assets (fonts, the picsum seed photos) come back opaque, so we cannot tell a
+// success from a failure and simply do not store them.
+function isCacheable(response) {
+  return response && response.ok && response.type === "basic";
+}
+
 // Fetch: network-first for API, cache-first for static assets
 self.addEventListener("fetch", (event) => {
   const { request } = event;
@@ -62,8 +76,12 @@ self.addEventListener("fetch", (event) => {
         (cached) =>
           cached ||
           fetch(request).then((response) => {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            if (isCacheable(response)) {
+              const clone = response.clone();
+              caches
+                .open(CACHE_NAME)
+                .then((cache) => cache.put(request, clone));
+            }
             return response;
           })
       )
@@ -79,8 +97,12 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          // A crew that loses signal must get their last GOOD queue, not a
+          // cached 500 or the login redirect their expired session produced.
+          if (isCacheable(response)) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
           return response;
         })
         .catch(() =>
