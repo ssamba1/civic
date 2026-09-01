@@ -683,6 +683,7 @@ Then check `curl localhost:3000/api/health` **before** looking at any page. It s
 | `node scripts/shot-readme.mjs` | Regenerate every screenshot in this README, light and dark |
 | `node scripts/shot-readme-gif.mjs` | Re-record the demo loop at the top |
 | `node scripts/shot-social-preview.mjs` | Regenerate the card at the top |
+| `node scripts/shot-thumbnail.mjs` | Regenerate the 3:2 submission thumbnail |
 
 `db:tokens` is not optional if you want to see the resident side of the loop.
 `reports.public_token` is stamped **lazily**, by the notifier, the first time a
