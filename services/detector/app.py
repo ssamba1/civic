@@ -24,6 +24,7 @@ Run: uvicorn app:app --host 0.0.0.0 --port 8000
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Literal
 
 from fastapi import FastAPI, Request, Response
@@ -72,12 +73,30 @@ class DetectResponse(BaseModel):
     model_version: str = "stub"
 
 
+def _model_present(path: str) -> bool:
+    """Whether `path` names a file that is actually there.
+
+    Not `bool(path)`. A configured-but-wrong path — a typo, a relative path
+    resolved from the wrong working directory, a volume that did not mount — is
+    the most likely way a deployment ends up with no model, and it is exactly
+    the case a truthiness check on the env var reports as healthy. A liveness
+    probe that answers "loaded" for a model that is not on disk is worse than
+    no probe: the operator stops looking here.
+    """
+    return bool(path) and Path(path).is_file()
+
+
 @app.get("/health")
 def health() -> dict[str, object]:
     return {
         "ok": True,
-        "detector_loaded": bool(MODEL_PATH),
-        "blur_loaded": bool(BLUR_MODEL_PATH),
+        # These describe the files, not the env vars. `*_configured` is what was
+        # asked for; `*_loaded` is what is actually on disk. When they disagree,
+        # the path is wrong — which is the whole reason to report both.
+        "detector_configured": bool(MODEL_PATH),
+        "detector_loaded": _model_present(MODEL_PATH),
+        "blur_configured": bool(BLUR_MODEL_PATH),
+        "blur_loaded": _model_present(BLUR_MODEL_PATH),
         "blur_version": BLUR_VERSION,
     }
 

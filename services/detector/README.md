@@ -34,6 +34,37 @@ not crash, and it does not fall back to storing anything.
 
 Optional: `DETECTOR_MODEL_PATH`, `BLUR_MODEL_PATH` (ONNX files).
 
+`GET /health` reports each of those twice — `*_configured` (the env var is
+set) and `*_loaded` (a file is actually at that path). They disagree when the
+path is wrong, which is the ordinary way a deployment ends up with no model:
+a typo, a relative path resolved from the wrong working directory, a volume
+that did not mount.
+
+## The two demo scripts are not part of this service
+
+`export_detections.py` and `render_demo.py` are one-off capture tools, not
+endpoints. They import `ultralytics` (AGPL-3.0) and `opencv-python`, and
+**neither is in `requirements.txt` on purpose** — the license gate at the top
+of that file is what keeps AGPL out of anything this product ships. So the
+install above will not let you run them, and that is the intended outcome:
+
+```bash
+python export_detections.py
+# ModuleNotFoundError: No module named 'cv2'
+```
+
+If you need to regenerate the demo detections, install those two into a
+throwaway environment yourself (`services/detector/.venv/` is gitignored) and
+keep them out of the pinned set. The AGPL runtime touches the committed
+artifact, never the service.
+
+What they produced is committed, which is why they are kept:
+`services/detector/detections.json` — the per-frame boxes behind the video
+console's overlay. Note that two byte-identical copies live under
+`public/demo/detections.json` and `public/camera-demo/detections.json`,
+because the browser fetches them by URL. Nothing keeps the three in sync, so
+re-running the export means copying the result to both.
+
 ## Model selection — licensing is a gate, not a preference
 
 The detector is trained on the **RDD2022 / Crowdsensing Road Damage Detection**
