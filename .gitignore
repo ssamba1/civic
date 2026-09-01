@@ -76,6 +76,14 @@ outreach/*
 
 # detector demo artifacts (AGPL venv + media stay local)
 services/detector/.venv/
+# Python bytecode. services/detector/README.md's own run instructions
+# (`uvicorn app:app`) write services/detector/__pycache__/app.cpython-*.pyc on
+# the first request, and git then offers it up as an untracked file to anyone
+# who runs `git add -A` — a compiled copy of the service, versioned against
+# whatever interpreter that machine happened to have.
+__pycache__/
+*.py[cod]
+.pytest_cache/
 services/detector/model/
 services/detector/sample_video.mp4
 services/detector/demo_output*.mp4
