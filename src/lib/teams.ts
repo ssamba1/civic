@@ -57,7 +57,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "streets_roads",
     label: "Streets & Roads Division",
     shortLabel: "Streets & Roads",
-    color: "#e35044",
+    color: "#f24335",
     icon: "construction",
     duties:
       "Pothole repair, milling, repaving, full street reconstruction. Curb/gutter, lane markings, asphalt and concrete maintenance.",
@@ -67,7 +67,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "sidewalks_ada",
     label: "Sidewalk & ADA Compliance Division",
     shortLabel: "Sidewalks & ADA",
-    color: "#c57124",
+    color: "#d97010",
     icon: "footprints",
     duties:
       "Sidewalk repair and replacement. Curb ramp installation and upgrades. ADA accessibility audits and trip hazard remediation.",
@@ -77,7 +77,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "stormwater",
     label: "Stormwater / Drainage Division",
     shortLabel: "Stormwater",
-    color: "#5082f4",
+    color: "#4a80fa",
     icon: "waves",
     duties:
       "Catch basin cleaning, storm pipe maintenance, flood mitigation. 24/7 emergency response to localized flooding and stormwater pollution.",
@@ -87,7 +87,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "water_utilities",
     label: "Water & Utilities Division",
     shortLabel: "Water & Utilities",
-    color: "#2995c0",
+    color: "#129cd2",
     icon: "droplets",
     duties:
       "Water main breaks, leak detection, fire hydrant maintenance. Potable and reclaimed water distribution systems.",
@@ -97,7 +97,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "street_lighting",
     label: "Street Lighting Division",
     shortLabel: "Street Lighting",
-    color: "#a48525",
+    color: "#b38b11",
     icon: "lightbulb",
     duties:
       "Streetlight repair, replacement, new installations. Energy efficiency upgrades and outage response.",
@@ -107,7 +107,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "traffic_engineering",
     label: "Traffic Engineering & Signals Division",
     shortLabel: "Traffic Engineering",
-    color: "#9c68e6",
+    color: "#9a5af4",
     icon: "sign-post",
     duties:
       "Traffic signal installation/timing. Road pavement markings, signage, crosswalk safety, school zone systems.",
@@ -117,7 +117,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "parks_forestry",
     label: "Parks & Recreation / Urban Forestry",
     shortLabel: "Parks & Forestry",
-    color: "#2ba06e",
+    color: "#11a666",
     icon: "tree-pine",
     duties:
       "Park facility maintenance. Right-of-way tree trimming, removal, planting. Irrigation, turf, landscaping.",
@@ -127,7 +127,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "graffiti_abatement",
     label: "Graffiti Abatement / Community Beautification",
     shortLabel: "Graffiti Abatement",
-    color: "#d052a8",
+    color: "#ea38b1",
     icon: "spray-can",
     duties:
       "Graffiti removal from public infrastructure and city facilities. Coordinates with code enforcement and law enforcement.",
@@ -137,7 +137,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "code_enforcement",
     label: "Code Enforcement Division",
     shortLabel: "Code Enforcement",
-    color: "#2a9b9c",
+    color: "#12a4a5",
     icon: "shield-alert",
     duties:
       "Property maintenance violations, illegal dumping, derelict buildings, inoperable vehicles, unpermitted construction.",
@@ -147,7 +147,7 @@ export const TEAMS: Record<TeamId, TeamMeta> = {
     id: "environmental_services",
     label: "Environmental Services / Solid Waste",
     shortLabel: "Environmental Services",
-    color: "#6a9a25",
+    color: "#65a010",
     icon: "trash-2",
     duties:
       "Trash and recycling collection. Illegal dumping cleanup, bulky item pickup, household hazardous waste disposal, public debris.",
