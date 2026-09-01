@@ -20,7 +20,15 @@ const OPEN311_JSON_REWRITES: [RegExp, string][] = [
   [/^\/api\/open311\/v2\/tokens\/([^/]+)\.json$/, "/api/open311/v2/tokens/$1"],
 ];
 
-const PUBLIC_ROUTES = ["/", "/login", "/report", "/offline"];
+const PUBLIC_ROUTES = [
+  "/",
+  "/login",
+  "/report",
+  "/offline",
+  // Native offline delivery authenticates inside the route with a Supabase
+  // bearer token rather than a browser cookie.
+  "/api/reports/sync",
+];
 
 const PUBLIC_PREFIXES = [
   "/city/",
@@ -30,7 +38,7 @@ const PUBLIC_PREFIXES = [
   "/icons/",
 ];
 
-function isPublicRoute(pathname: string): boolean {
+export function isPublicRoute(pathname: string): boolean {
   if (PUBLIC_ROUTES.includes(pathname)) return true;
   return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }

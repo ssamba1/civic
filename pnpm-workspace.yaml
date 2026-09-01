@@ -1,4 +1,8 @@
+packages:
+  - 'apps/*'
+
 allowBuilds:
+  '@shopify/react-native-skia': true
   '@sentry/cli': true
   # explicit deny: onnxruntime-node ships prebuilt CPU binaries in the npm
   # package; its postinstall only fetches optional extras (GPU libs). Denying

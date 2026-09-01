@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Civic",
+    "slug": "civic-mobile",
+    "scheme": "civic",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "org.civic.community",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Photograph broken infrastructure for your city.",
+        "NSPhotoLibraryUsageDescription": "Select an infrastructure issue photo to report.",
+        "NSLocationWhenInUseUsageDescription": "Attach the issue location to your report."
+      }
+    },
+    "android": {
+      "blockedPermissions": ["android.permission.RECORD_AUDIO"],
+      "adaptiveIcon": {
+        "backgroundColor": "#10182C",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "org.civic.community"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Select an infrastructure issue photo to report.",
+          "cameraPermission": "Photograph broken infrastructure for your city."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Attach the issue location to your report."
+        }
+      ],
+      ["expo-notifications", { "color": "#4F7FF0" }]
+    ]
+  }
+}
