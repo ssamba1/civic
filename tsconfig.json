@@ -5,6 +5,26 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
+    // `strict` does not cover either of these; both are opt-in on top of it.
+    //
+    // noImplicitReturns — a function that returns a value on one branch and
+    // falls off the end on another. In a codebase whose stated convention is
+    // tagged `{ ok: true, data } | { ok: false, error }` results from every
+    // server action, "some paths return, some return undefined" is precisely
+    // the silent-failure shape to catch at compile time rather than as a
+    // `Cannot read properties of undefined` in production.
+    //
+    // noFallthroughCasesInSwitch — a `case` that runs into the next one
+    // because a `break` is missing. This app switches on report category,
+    // status and severity in a lot of places; a missing break there routes a
+    // report to the wrong division, which is a wrong truck, not a type error.
+    //
+    // Both are free right now: enabling them surfaced exactly one site in the
+    // whole tree (the useEffect in resident/updates-popover.tsx, fixed
+    // alongside this) and zero fallthroughs. They cost nothing today and close
+    // two classes of bug that are cheap to introduce and expensive to find.
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",

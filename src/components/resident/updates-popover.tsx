@@ -175,6 +175,8 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
       wasOpenRef.current = false;
       buttonRef.current?.focus();
     }
+    // Closed path schedules nothing, so there is nothing to clean up.
+    return undefined;
   }, [open]);
 
   const unreadCount = useMemo(() => {
