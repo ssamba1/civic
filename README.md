@@ -108,6 +108,7 @@ Pick the path that matches the time you have. Every deep section is collapsed, s
 | The rules every contributor follows, human or model | [`agents.md`](agents.md) |
 | Architecture decisions that closed off alternatives | [`docs/decisions/`](docs/decisions/) |
 | On-call procedures: AI pipeline, Open311 conformance, cutover, key rotation | [`docs/runbooks/`](docs/runbooks/) |
+| Standing up the hosted demo, and the check that catches a half-working one | [`docs/runbooks/hosted-demo-deploy.md`](docs/runbooks/hosted-demo-deploy.md) |
 | Plans and in-flight work | [`docs/planning/`](docs/planning/) |
 | Live demo | Linked at the top of this file when one is running; see [Honest limits](#6-honest-limits) |
 
@@ -442,6 +443,123 @@ The blur is honest about its own limits, in a docblock at the top of [`src/lib/p
 
 ---
 
+### And a camera that surveys the streets on its own
+
+<img align="right" width="250" alt="The assembled universal camera: a blue 3D-printed enclosure on a desk, the ESP32-CAM's OV2640 lens visible through a cut-out on the lower front, a foam-padded module seated across the open top, and a curved windshield-mount arm pivoting off the top on a knurled side knob" src="hardware/universal-camera/images/device.jpg">
+
+Resident intake only sees what someone stops to report. A sweeper, a refuse truck or an inspection vehicle already drives every street on a schedule, and sees the same stretch of pavement dozens of times a week. The **universal camera** is a 3D-printed edge dashcam — an ESP32 + ESP32-CAM with a GPS module, running off the vehicle rail — that turns each of those routine passes into a survey for potholes, debris, damaged signage and blocked drains.
+
+It is deliberately a **trigger, not a classifier**. A tiny quantized model on the device answers one cheap question — is there something road-shaped worth a closer look — and discards everything else, so hours of empty road cost zero bytes. The GPS module stamps where the vehicle was, the frame and fix sit on an SD card until the vehicle is back on depot wifi, and only then does a batch reach the server.
+
+Build, bill of materials, print files and the invariants it must not break: [`hardware/universal-camera/`](hardware/universal-camera/README.md).
+
+<br clear="right">
+
+#### The server half already ships
+
+The device is new; the pipeline behind it is not. Migration [`20260823_064_camera.sql`](supabase/migrations/20260823_064_camera.sql) defines `camera_devices`, `detections` and `detection_clusters`, and a unit enrols as one row with `kind = 'vehicle'`.
+
+Batches arrive at [`POST /api/camera/frames`](src/app/api/camera/frames/route.ts). The camera is a machine identity, never a resident session — it presents an `api_keys` row scoped `camera:ingest`, and a city-pinned key may only push for devices in its own city:
+
+```ts
+// src/app/api/camera/frames/route.ts
+const SCOPE = "camera:ingest";
+
+/** Guard against a device shipping a whole route in one request body. */
+const MAX_FRAMES_PER_BATCH = 200;
+
+const FrameSchema = z.object({
+  externalId: z.string().min(1).max(200),   // device-local frame id = idempotency key
+  capturedAt: z.iso.datetime({ offset: true }),
+  lng: z.number().min(-180).max(180),
+  lat: z.number().min(-90).max(90),
+  headingDeg: z.number().min(0).max(360).nullish(),
+  speedMps: z.number().min(0).max(120).nullish(),
+  imageBase64OrUrl: z.string().min(1),
+});
+
+// A city-pinned key may only push frames for its own city's devices.
+if (partner.cityId && partner.cityId !== deviceRow.city_id) {
+  return err(403, "device_outside_key_city");
+}
+```
+
+There is deliberately **no RLS insert policy** on `detections` or `detection_clusters` anywhere in that migration. Ingest writes with the service role from behind this route, because an insert policy would mean a leaked anon key could forge detections at arbitrary coordinates and, through promotion, forge reports.
+
+#### The detection code
+
+Ingest is a gate, then a blur, then a cluster — in that order, and nothing is stored before all three have run. A frame the detector scores below `0.5` is dropped entirely; a box with no crop cannot be blurred, so it cannot be stored either:
+
+```ts
+// src/lib/camera/ingest.ts
+/** Below this detector score the frame is thrown away before anything is stored. */
+export const DETECTOR_MIN_SCORE = 0.5;
+
+// A box with no crop cannot be blurred, so it cannot be stored.
+if (!cls || !crop || !bbox || score < DETECTOR_MIN_SCORE) continue;
+```
+
+```
+detector gate -> below-threshold frames DROPPED ENTIRELY (never stored)
+-> surviving crops through blurServerSide() -> blurred bytes to photos-public
+-> detections row -> clustering (cluster.ts) -> promotion writes a report
+-> runClassifyPipeline(reportId)
+```
+
+Raw frames are never persisted at all — not privately, not on a timer. `detections.crop_url` is `NOT NULL` precisely so there is no crop-less row a raw frame could be attached to later.
+
+#### Why clustering is the load-bearing part
+
+A refuse truck passes the same pothole about twenty times a day over a school year. Naively, that is thousands of reports and thousands of model calls for one defect. Detections collapse into a cluster by damage class and location, and a cluster only becomes a report once it has been seen enough times on **enough separate days** — which is also what stops a one-off shadow from ever becoming one:
+
+```ts
+// src/lib/camera/cluster.ts
+export function shouldPromote(
+  cluster: Pick<ClusterCandidate, "state">,
+  detections: readonly DetectionObservation[],
+): boolean {
+  if (cluster.state !== "observing") return false;
+  if (detections.length < PROMOTE_MIN_PASSES) return false;
+
+  const days = new Set<string>();
+  for (const d of detections) {
+    const day = utcDay(d.capturedAt);
+    if (day !== null) days.add(day);
+  }
+  return days.size >= PROMOTE_MIN_DISTINCT_DAYS;
+}
+```
+
+```ts
+// src/lib/liability/config.ts
+export const CLUSTER_RADIUS_M = 8;
+/** Promote a cluster to a report after N passes on >= MIN_DISTINCT_DAYS days. */
+export const PROMOTE_MIN_PASSES = 3;
+export const PROMOTE_MIN_DISTINCT_DAYS = 2;
+```
+
+So there are three filters in front of the model, and the device is only the cheapest one:
+
+| Stage | Where it runs | What it costs | What it decides |
+|---|---|---|---|
+| Edge gate | On the ESP32-CAM, ~0.7–0.9 s/frame | nothing; empty road never leaves the device | whether a frame is worth uploading |
+| Detector | Server sidecar, ONNX, no model API | CPU | whether anything is stored at all (`score >= 0.5`) |
+| Promotion | Postgres, on the cluster | nothing | whether a defect is real enough to be a report (3 passes, 2 days) |
+| Classify | The same pipeline a resident photo runs | one model call, per *cluster* | category, severity, cost, work order |
+
+The honest cost of that last filter is latency: the first sighting of a defect is never a report. A hazard that needs same-day dispatch still depends on a resident filing it. The camera adds coverage, not speed — and the rest of the limits are written down in [`hardware/universal-camera/README.md`](hardware/universal-camera/README.md#honest-limits) rather than left for someone to discover.
+
+#### What the device half still costs you
+
+The server half ships; the device half is a build, and the build has two honest constraints worth knowing before ordering parts.
+
+The first is **pins**. The OV2640 is a parallel-bus sensor, and on an AI-Thinker board it takes fifteen GPIOs — including GPIO0, which is also the boot-mode strap, which is why flashing means a jumper that has to come back off. Add the microSD card and there is close to nothing left: run the card in 4-bit mode and it claims the flash-LED pin and the flash-voltage strapping pin on top of it, so the card runs in 1-bit mode and the GPS gets what remains. That is the whole reason the recommendation is to prototype on the AI-Thinker and deploy fleets on an ESP32-S3, which has 45 GPIOs, vector instructions, and native USB instead of an FTDI ritual per unit. The pin-by-pin budget, with the Espressif sources for each number, is in [`hardware/universal-camera/README.md`](hardware/universal-camera/README.md#the-pin-budget-is-the-real-design-constraint).
+
+The second is that **there is no firmware in this repository.** The print files, the wiring, the power envelope and the request contract are written down; the sketch that runs on the ESP32 is not, and pretending otherwise with code nobody has flashed would be worse than saying so. What the device loop has to do — gate, cache `{ jpeg, lat, lng, captured_at, frame_id }` with the capture timestamp stamped at capture, batch to `/api/camera/frames` with the key in `x-api-key`, delete on 2xx, resend the identical batch on 503 — is specified against the route as it actually exists: [`hardware/universal-camera/README.md`](hardware/universal-camera/README.md#firmware-what-it-has-to-do).
+
+
+---
+
 ## 4. Proof it works
 
 Every number here was produced by running the command in the middle column on the commit you are reading.
@@ -683,6 +801,7 @@ Then check `curl localhost:3000/api/health` **before** looking at any page. It s
 | `node scripts/shot-readme.mjs` | Regenerate every screenshot in this README, light and dark |
 | `node scripts/shot-readme-gif.mjs` | Re-record the demo loop at the top |
 | `node scripts/shot-social-preview.mjs` | Regenerate the card at the top |
+| `node scripts/shot-thumbnail.mjs` | Regenerate the 3:2 submission thumbnail |
 
 `db:tokens` is not optional if you want to see the resident side of the loop.
 `reports.public_token` is stamped **lazily**, by the notifier, the first time a
@@ -706,11 +825,16 @@ src/lib/
   privacy/          on-device blur, EXIF strip, PII redaction, audit
   open311/          GeoReport v2: services, transform, XML
   onboarding/       city wizard: divisions, categories, routing config
+  video/            uploaded-clip pipeline: frame extract, detect, cluster, decide
+  camera/           fleet-dashcam ingest: gate, blur, cluster, promote
+services/detector/  Python ONNX sidecar the two pipelines above call for boxes
+scripts/            seeds, migrations, audits, one-off maintenance
 supabase/migrations 77 ordered SQL migrations, never edited once applied
 tests/rls/          row-level security regression suites
 tests/golden/       sample photos + expected classifications
 e2e/                Playwright specs
 docs/               design, context, decisions (ADRs), runbooks
+hardware/           universal camera: print files and build docs for the edge dashcam
 ```
 
 ## The team
