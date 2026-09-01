@@ -172,6 +172,9 @@ ul.clean li::before{content:"";position:absolute;left:0;top:8px;width:9px;height
 #dots{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:50}
 #dots button{width:8px;height:8px;border-radius:50%;border:0;background:var(--z300);cursor:pointer;padding:0;transition:.2s}
 #dots button.on{background:var(--blue);width:22px;border-radius:5px}
+/* An 8px dot with border:0 has no default focus ring worth seeing. Without
+   this, tabbing through the nav gives no indication of where you are. */
+#dots button:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
 .hint{position:fixed;top:16px;right:22px;font-size:12px;color:var(--z400);z-index:50;opacity:.7}
 
 /* map svg */
@@ -597,15 +600,38 @@ ul.clean li::before{content:"";position:absolute;left:0;top:8px;width:9px;height
   var bar = document.getElementById('bar');
   var dotsWrap = document.getElementById('dots');
   var i = 0;
+  // The dots are a tab list over the deck. Built empty they were twelve
+  // buttons announcing themselves as "button", with no name, no position and
+  // no indication of which one is current — unusable by anyone navigating by
+  // keyboard or screen reader, which for a deck shown in a room is a real
+  // audience. type="button" as well: these are outside a form here, but a bare
+  // <button> defaults to type="submit" and that is a trap the moment this file
+  // is pasted into anything that has one.
+  dotsWrap.setAttribute('role', 'tablist');
+  dotsWrap.setAttribute('aria-label', 'Slides');
   slides.forEach(function(_,n){
     var b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-label', 'Slide ' + (n+1) + ' of ' + slides.length);
     b.addEventListener('click', function(){ go(n); });
     dotsWrap.appendChild(b);
   });
   var dots = Array.prototype.slice.call(dotsWrap.children);
   function render(){
-    slides.forEach(function(s,n){ s.classList.toggle('active', n===i); });
-    dots.forEach(function(d,n){ d.classList.toggle('on', n===i); });
+    slides.forEach(function(s,n){
+      var on = n===i;
+      s.classList.toggle('active', on);
+      // Hide the eleven inactive slides from assistive tech and from the tab
+      // order. They are only visually hidden (opacity/visibility), so without
+      // this every link and button on all twelve slides is reachable by Tab.
+      s.setAttribute('aria-hidden', on ? 'false' : 'true');
+    });
+    dots.forEach(function(d,n){
+      var on = n===i;
+      d.classList.toggle('on', on);
+      d.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
     bar.style.width = ((i)/(slides.length-1)*100) + '%';
   }
   function go(n){ i = Math.max(0, Math.min(slides.length-1, n)); render(); }
