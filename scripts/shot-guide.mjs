@@ -204,8 +204,15 @@ const DYNAMIC = [
   ["team/field", `${c}/team/${TEAM}/field`, 3000],
 ];
 
+// The first row of the members table is whoever is signed in — under
+// DEV_AUTH_BYPASS that is the developer's own account, and this asset ships
+// in a public repo. Capture a synthetic demo member instead; SHOT_MEMBER_ID
+// names it, and the fallback scrape is a last resort for a corpus that has
+// no demo admin.
 const memberHref = wanted("members/detail")
-  ? await firstLink(page, `${c}/members`, "/members/[^/]+$")
+  ? process.env.SHOT_MEMBER_ID
+    ? `${c}/members/${process.env.SHOT_MEMBER_ID}`
+    : await firstLink(page, `${c}/members`, "/members/[^/]+$")
   : null;
 if (memberHref) DYNAMIC.push(["members/detail", memberHref, 3000]);
 else if (wanted("members/detail"))
