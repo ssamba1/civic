@@ -2,7 +2,7 @@
 
 **Track: AI/ML**
 
-Repository: <https://github.com/ssamba1/civic> · Full technical write-up: [`README.md`](README.md)
+Repository: <https://github.com/ssamba1/civic> · Full technical write-up: [`README.md`](README.md) · What was built during the event: [`docs/HACKATHON-CHANGELOG.md`](docs/HACKATHON-CHANGELOG.md)
 
 ---
 

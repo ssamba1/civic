@@ -104,6 +104,7 @@ Pick the path that matches the time you have. Every deep section is collapsed, s
 | What | Where |
 |---|---|
 | Inspiration, tech stack, and what we learned | [`SUBMISSION.md`](SUBMISSION.md) |
+| What was built during the event, and how to check it | [`docs/HACKATHON-CHANGELOG.md`](docs/HACKATHON-CHANGELOG.md) |
 | The rules every contributor follows, human or model | [`agents.md`](agents.md) |
 | Architecture decisions that closed off alternatives | [`docs/decisions/`](docs/decisions/) |
 | On-call procedures: AI pipeline, Open311 conformance, cutover, key rotation | [`docs/runbooks/`](docs/runbooks/) |
