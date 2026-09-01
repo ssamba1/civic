@@ -631,6 +631,107 @@ export const GUIDES: Record<string, PageGuide> = {
     ],
   },
 
+  // ── Resident surface (/user/*) ──────────────────────────────────────────
+  // The same corpus the city views read, presented as an accountability
+  // surface rather than a dispatch one: no assignment, no routing, no cost.
+
+  "user/my-reports": {
+    title: "My Reports",
+    what: "The reports this community has filed, each with its current status and how far it has moved toward being fixed.",
+    points: [
+      {
+        label: "Status is the whole row",
+        text: "Every report carries the state the city has actually put it in, not a promise about it — open, dispatched, in progress, resolved.",
+      },
+      {
+        label: "The same record staff see",
+        text: "There is no resident copy of a report. This reads the row a dispatcher works from, so the two sides can never drift apart.",
+      },
+    ],
+    why: [
+      "A resident who files a report and then hears nothing assumes nothing happened. Showing the state the city moved it into is what turns a complaint box into a loop that closes.",
+    ],
+    readmeHref: readme("5-the-two-products"),
+    readmeLabel: "The two products",
+  },
+
+  "user/map": {
+    title: "Community Map",
+    what: "The same fullscreen map the city and team views run, in read-only mode: every open report in the city, plotted where it was filed.",
+    points: [
+      {
+        label: "Read-only by construction",
+        text: "The dispatch and routing affordances are absent here, not hidden — the resident build of this map has an upvote on each list row where staff get an assign action.",
+      },
+      {
+        label: "One map, two products",
+        text: "It reuses the same orchestrator and the same filtered corpus as the staff map, so a resident and a dispatcher are looking at identical data.",
+      },
+    ],
+    why: [
+      "Building a separate resident map would let the public view and the operational view disagree about what is on the street. Sharing the component makes that impossible rather than merely unlikely.",
+    ],
+    readmeHref: readme("5-the-two-products"),
+    readmeLabel: "The two products",
+    dock: "left",
+  },
+
+  "user/trending": {
+    title: "Trending",
+    what: "The open issues residents are upvoting most right now — a demand signal, ordered by how many people have said the same thing.",
+    points: [
+      {
+        label: "Open issues only",
+        text: "Closed and rejected reports are filtered out before ranking: a fixed report has no pressure left to apply, so leaving it here would inflate the signal with work already done.",
+      },
+      {
+        label: "Upvotes are the ranking",
+        text: "This is what the community is asking for, in its own order — not a staff priority score.",
+      },
+    ],
+    why: [
+      "Severity decides what is dangerous; upvotes decide what is infuriating. They are different questions, and a city that only ever answers the first one loses the public's patience on the second.",
+    ],
+    readmeHref: readme("5-the-two-products"),
+    readmeLabel: "The two products",
+  },
+
+  "user/pulse": {
+    title: "Community Pulse",
+    what: "How the city is doing in aggregate — issues fixed, how fast they closed, and whether the pace is rising or falling.",
+    points: [
+      {
+        label: "Fixed, not filed",
+        text: "The headline counts completed work. A backlog dashboard measures how much came in; this measures how much went out.",
+      },
+      {
+        label: "Rate, not just totals",
+        text: "Resolution time and momentum sit beside the count, because a total that never moves and a total that is accelerating look identical as a number.",
+      },
+    ],
+    why: [
+      "Accountability needs a number the public can watch move. Publishing throughput rather than intake is the version of that which a city cannot improve by doing nothing.",
+    ],
+    readmeHref: readme("5-the-two-products"),
+    readmeLabel: "The two products",
+  },
+
+  "user/updates": {
+    title: "Updates",
+    what: "Status changes on community reports and city-wide announcements, newest first.",
+    points: [
+      {
+        label: "Movement, not messages",
+        text: "Entries are generated when a report actually changes state, so the feed is a record of what the city did rather than what it said.",
+      },
+    ],
+    why: [
+      "The gap this closes is the silent one: a report that moves from dispatched to resolved without the person who filed it ever being told.",
+    ],
+    readmeHref: readme("5-the-two-products"),
+    readmeLabel: "The two products",
+  },
+
   fallback: {
     title: "City workspace",
     what: "A city surface in the Civic dashboard. The left rail groups the public city views above the staff-only workspace tools.",
@@ -660,6 +761,15 @@ const KNOWN_TAILS = new Set(["heatmap", "schedule", "route", "field", "chat"]);
  */
 export function guideKeyForPath(pathname: string | null | undefined): string {
   if (!pathname) return "fallback";
+
+  // Resident surface. Flat: /user/<section>, no dynamic segments, and bare
+  // /user redirects to my-reports so it answers to the same entry.
+  const u = pathname.match(/^\/user(?:\/([^/]+))?\/?$/);
+  if (u) {
+    const key = `user/${u[1] ?? "my-reports"}`;
+    return key in GUIDES ? key : "fallback";
+  }
+
   const m = pathname.match(/^\/city\/[^/]+(?:\/(.*))?$/);
   if (!m) return "fallback";
   const rest = (m[1] ?? "").replace(/\/+$/, "");

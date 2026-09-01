@@ -17,6 +17,7 @@ import {
   SidebarWhenExpanded,
 } from "@/components/dashboard/sidebar-shell";
 import { EnvSwitch } from "@/components/env-switch";
+import { PageGuideButton } from "@/components/page-guide/page-guide";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ViewSwitch } from "@/components/view-switch";
 
@@ -83,15 +84,19 @@ export function UserSidebar({ citySlug }: { citySlug?: string }) {
                 would be lost with the header. */}
             <EnvSwitch />
             {/* User|City segment + theme toggle — one row, as in CitySidebar. */}
-            <div className="mt-2 flex h-8 w-full items-center gap-2 [&>div:first-child]:h-8 [&>div:first-child]:min-w-0 [&>div:first-child]:flex-1 [&_a]:h-full [&_a]:flex-1">
+            <div className="mt-2 flex h-8 w-full items-center gap-1.5 [&>div:first-child]:h-8 [&>div:first-child]:min-w-0 [&>div:first-child]:flex-1 [&_a]:h-full [&_a]:flex-1">
               <ViewSwitch citySlug={citySlug} />
+              <PageGuideButton className="h-8 w-8 shrink-0" />
               <ThemeToggle className="h-8 w-8 shrink-0" />
             </div>
           </SidebarWhenExpanded>
           <SidebarWhenCollapsed>
             {/* The icon rail has no width to share — the segment drops, the
-                toggle stays full-width. */}
-            <ThemeToggle className="h-9 w-full" />
+                guide and toggle stack full-width. */}
+            <div className="flex flex-col gap-1.5">
+              <PageGuideButton className="h-9 w-full" />
+              <ThemeToggle className="h-9 w-full" />
+            </div>
           </SidebarWhenCollapsed>
         </>
       }
