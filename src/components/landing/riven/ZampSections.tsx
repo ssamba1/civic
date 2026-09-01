@@ -76,15 +76,15 @@ export function ZampSection1() {
           stagger={0.08}
         >
           <StaggerItem as="p" className="wl-zamp-s1-manifesto">
-            Reporting a pothole today means a 47-dropdown form or a hold queue
-            &mdash; the work stops being reporting and starts being patience.
+            Reporting a pothole today means a 47-dropdown form or a hold queue .
+            The work stops being reporting and starts being patience.
           </StaggerItem>
           <StaggerItem
             as="p"
             className="wl-zamp-s1-manifesto wl-zamp-s1-manifesto--lead"
           >
-            Civic is one camera button that remembers where, when, and what
-            &mdash; and routes it itself.
+            Civic is one camera button that remembers where, when, and what ,
+            and routes it itself.
           </StaggerItem>
 
           <StaggerItem as="div" className="wl-zamp-s1-numeral-row">
@@ -1034,9 +1034,7 @@ export function ZampSection3() {
             </div>
 
             <ul className="wl-zamp-s3-card-bullets">
-              <li>
-                Founding price locks 50% off the public rate &mdash; forever.
-              </li>
+              <li>Founding price locks 50% off the public rate, forever.</li>
               <li>Direct line to the founders, vote on the roadmap.</li>
               <li>No procurement maze. Open311 from day one.</li>
             </ul>
@@ -1061,8 +1059,8 @@ export function ZampSection3() {
             <h3 className="wl-zamp-s3-mid-title">Locked until Wave 1 fills.</h3>
             <p className="wl-zamp-s3-mid-body">
               Wave 2 opens when the founding cities are claimed. Same product,
-              public pricing &mdash; without the founder rate, working calls, or
-              2-week head start.
+              public pricing, without the founder rate, working calls, or 2-week
+              head start.
             </p>
             <span className="wl-zamp-s3-mid-foot">
               Public launch &middot; founding rate locked for the cohort
@@ -1239,7 +1237,7 @@ export function ZampSection4() {
             </h3>
             <p className="wl-zamp-s4-card-sub">
               Yours doesn&rsquo;t fit the seven above. Talk to the team behind
-              the pilot &mdash; we read every message and reply within a day.
+              the pilot. We read every message and reply within a day.
             </p>
             <Link className="wl-zamp-s4-cta" href="/teams">
               Talk to a city team

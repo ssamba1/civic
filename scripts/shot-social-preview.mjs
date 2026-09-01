@@ -26,7 +26,7 @@ const STATS = [
   ["11", "municipal divisions"],
   ["12", "city-extensible categories"],
   ["0", "manual triage steps"],
-  ["1,419", "tests passing"],
+  ["1,420", "tests passing"],
 ];
 
 const html = `<!doctype html>
@@ -66,7 +66,7 @@ const html = `<!doctype html>
     <div class="brand"><span class="dot"></span> Civic</div>
     <h1 style="margin-top:38px">A resident photographs it.<br><em>The work order writes itself.</em></h1>
     <div class="sub">AI-native citizen repair reporting. Photo to classified, costed,
-      crew-assigned work order in one pass &mdash; no staff triage in the middle.</div>
+      crew-assigned work order in one pass, no staff triage in the middle.</div>
   </div>
   <div class="foot">
     <div class="stats">

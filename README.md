@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/social-preview.png" alt="Civic. A resident photographs it, the work order writes itself. AI-native citizen repair reporting: photo to classified, costed, crew-assigned work order in one pass, no staff triage in the middle. 11 municipal divisions, 12 city-extensible categories, 0 manual triage steps, 1,419 tests passing." width="880">
+<img src="docs/images/social-preview.png" alt="Civic. A resident photographs it, the work order writes itself. AI-native citizen repair reporting: photo to classified, costed, crew-assigned work order in one pass, no staff triage in the middle. 11 municipal divisions, 12 city-extensible categories, 0 manual triage steps, 1,420 tests passing." width="880">
 
 ### The gap between a resident noticing a pothole and a crew being dispatched to it
 
@@ -8,7 +8,7 @@
 [![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Supabase + PostGIS](https://img.shields.io/badge/Supabase-PostGIS-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
 [![Gemini 2.5 Flash-Lite](https://img.shields.io/badge/Gemini-2.5%20Flash--Lite-4285F4?logo=google&logoColor=white)](https://ai.google.dev)
-[![1419 tests](https://img.shields.io/badge/tests-1%2C419%20passing-success)](#4-proof-it-works)
+[![1420 tests](https://img.shields.io/badge/tests-1%2C420%20passing-success)](#4-proof-it-works)
 [![Open311](https://img.shields.io/badge/Open311-GeoReport%20v2-orange)](#open311-is-the-product-not-an-integration)
 [![CI](https://github.com/ssamba1/civic/actions/workflows/test.yml/badge.svg)](https://github.com/ssamba1/civic/actions/workflows/test.yml)
 [![migrations](https://github.com/ssamba1/civic/actions/workflows/migrations.yml/badge.svg)](https://github.com/ssamba1/civic/actions/workflows/migrations.yml)
@@ -49,7 +49,7 @@ never dispatches.**
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/landing-dark.jpg">
-  <img alt="The Civic landing page: a live map of Cumming with report pins, callouts reading 'AI TRIAGE, Pothole, classified in 1.4s' and 'ROUTED, Public Works, via Open311', over the wordmark and a card explaining photo to costed work order" src="docs/images/landing.jpg">
+  <img alt="The Civic landing page: a live map of Cumming with report pins, callouts reading 'AI TRIAGE: Pothole, classified in 1.4s' and 'ROUTED: Public Works, via Open311', over the wordmark and a card explaining photo to costed work order" src="docs/images/landing.jpg">
 </picture>
 
 <div align="center"><sub>The public landing page. The map is live, the pins are real reports, and the two callouts are the actual pipeline stages.</sub></div>
@@ -448,7 +448,7 @@ Every number here was produced by running the command in the middle column on th
 | Check | Command | Result |
 |---|---|---|
 | Types | `pnpm typecheck` | **clean**, TypeScript strict |
-| Unit tests | `pnpm test` | **1,419 passing** across 136 files |
+| Unit tests | `pnpm test` | **1,420 passing** across 136 files |
 | Lint | `pnpm lint` | **0 errors** |
 | Production build | `pnpm build` | **96 routes compile**, 42 prerendered |
 | Production *runtime* | `pnpm prod` | Standalone server boots, `database: true, ai: true`, every route clean in a real browser |
@@ -456,7 +456,7 @@ Every number here was produced by running the command in the middle column on th
 | End to end | `pnpm test:e2e` | 7 Playwright specs |
 | Privacy audit | `pnpm audit:privacy` | **No raw-photo leaks across 5 cities** |
 | Live health | `pnpm health` | `{"status":"ok","checks":{"database":true,"ai":true}}` |
-| Accessibility | Lighthouse | **100 / 100 / 100**, a11y, best practices, SEO, on `/` and `/report`, mobile |
+| Accessibility | Lighthouse | **100 / 100 / 100** (a11y, best practices, SEO) on `/` and `/report`, mobile |
 | Core loop, end to end | a real photo through `/report` | Filed on a phone viewport → classified **pothole at 0.95** → work order at public works / paving / 30 min / $98 |
 
 The seeded pilot city holds **158 reports, 108 work orders, 9 crews and 66 users**, across 11 divisions and 12 categories.
@@ -511,9 +511,9 @@ Three more of the same shape were fatal only in the sense that they were wrong r
 
 **What we take from it.** Every one of these failed **silently**: a 200 with no data, a saved report with no job, an email with a hole in it, a build that warned rather than failed. None of them threw where anyone was looking.
 
-A passing build and 1,419 passing tests tell you the code agrees with itself. They do not tell you the product works. A browser hitting a page and a person reading a screenshot each caught in one look what every automated check missed.
+A passing build and 1,420 passing tests tell you the code agrees with itself. They do not tell you the product works. A browser hitting a page and a person reading a screenshot each caught in one look what every automated check missed.
 
-The fix was not twenty patches, it was three accessors (`ruleFor()`, `categoryMeta()`, `categorySlaHours()`) each falling back to `other` for a key its table has never seen, and 22 call sites moved onto them. Call sites that iterate `CATEGORIES` rather than indexing by a runtime key were deliberately left alone: they cannot miss.
+The fix was not twenty patches, it was three accessors (`ruleFor()`, `categoryMeta()`, `categorySlaHours()`), each falling back to `other` for a key its table has never seen, and 22 call sites moved onto them. Call sites that iterate `CATEGORIES` rather than indexing by a runtime key were deliberately left alone: they cannot miss.
 
 </details>
 
@@ -569,7 +569,7 @@ Every line here can be checked in about a minute, so it is better said first tha
 
 - **A hosted demo exists only if a URL is linked at the top of this file.** If there is none there, there is no live deployment. The database, seed data, build and running app are all real, and the production standalone server has been run and smoke-tested, but nothing is hosted. We would rather you found that stated here than discovered it after clicking.
 - **The seeded reports are synthetic.** They are realistic (real street names, a real coordinate distribution over Cumming, real classifications produced by the real pipeline), but no resident of Cumming has filed anything here, and the city has not deployed this. Calling it "in use in Cumming" would be a lie.
-- **The analytics figures are labelled sample data in the product itself.** The analytics page carries a `SAMPLE DATA, illustrative figures for the demo corpus, not measured outcomes` banner, and it is there because peer benchmarking against "comparable cities" has no real peer dataset behind it yet.
+- **The analytics figures are labelled sample data in the product itself.** The analytics page carries a `SAMPLE DATA · Illustrative figures for the demo corpus, not measured outcomes` banner, and it is there because peer benchmarking against "comparable cities" has no real peer dataset behind it yet.
 - **The privacy blur is a heuristic, not face detection, on every browser that matters.** `FaceDetector` is absent on iOS Safari, Firefox and unflagged Chrome. The fallback blurs the top and bottom thirds and leaves the middle, so a centre-framed face can reach the public bucket. That is a deliberate trade (blurring the whole frame would hide the defect the photo exists to report), and it is documented at the top of [`src/lib/privacy/blur.ts`](src/lib/privacy/blur.ts) rather than buried.
 - **There is no offline capture.** A resident with no signal cannot file. The client-minted-id and queue machinery that would fix it is not in this repository.
 - **City-extensible categories are built but unexercised in the pilot.** The classifier is offered the city's own `issue_types` on every request and the Open311 catalogue publishes them, but the seeded Cumming city defines **zero** custom types. The feature is proven by the bug class it caused, not by the demo.
