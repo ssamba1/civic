@@ -754,7 +754,7 @@ html {
      The cost to know about: anything measuring the viewport in JS sees the
      unzoomed coordinate space, so use documentElement.clientWidth rather than
      window.innerWidth when positioning against laid-out elements. */
-  --app-zoom: 0.9;
+  --app-zoom: 0.8;
   zoom: var(--app-zoom);
 }
 

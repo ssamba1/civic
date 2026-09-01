@@ -2,10 +2,8 @@
    Per-page guide copy for the demo walkthrough.
 
    Every entry was written from the route's own source, not from its
-   name. `points` describe what is actually on screen; a point with a
-   `target` is anchored to a `data-tour` attribute on the real element
-   and gets a numbered ring + label when that element is present.
-   `why` carries the thing the screen cannot say for itself.
+   name. `points` describe what is actually on screen and `why` carries
+   the thing the screen cannot say for itself.
 
    README deep links use verified heading anchors in the public repo.
    A page with no matching README section carries no link.
@@ -15,11 +13,15 @@ const REPO = "https://github.com/ssamba1/civic";
 const readme = (anchor: string) => `${REPO}/blob/main/README.md#${anchor}`;
 
 export interface GuidePoint {
-  /** `data-tour` key on the page element this point describes. */
+  /**
+   * `data-tour` key of the page element this point describes. Inert since the
+   * guide became a screenshot-led dialog and stopped drawing on the page;
+   * kept as a record of which element each point was written from.
+   */
   target?: string;
-  /** Short chip label drawn on the page. Keep under ~30 characters. */
+  /** Short heading for the point. Keep under ~30 characters. */
   label: string;
-  /** The sentence shown in the panel. */
+  /** The sentence shown under the heading. */
   text: string;
 }
 
@@ -33,12 +35,6 @@ export interface PageGuide {
   why: string[];
   readmeHref?: string;
   readmeLabel?: string;
-  /**
-   * Which edge the panel docks to. Defaults to the right; a page whose own
-   * controls live on the right (the map's dispatch panel) docks left so the
-   * guide never covers the thing it is describing.
-   */
-  dock?: "left" | "right";
 }
 
 export const GUIDES: Record<string, PageGuide> = {
@@ -100,7 +96,6 @@ export const GUIDES: Record<string, PageGuide> = {
     ],
     readmeHref: readme("the-dispatcher-in-full"),
     readmeLabel: "The dispatcher, in full",
-    dock: "left",
   },
 
   grid: {
@@ -673,7 +668,6 @@ export const GUIDES: Record<string, PageGuide> = {
     ],
     readmeHref: readme("5-the-two-products"),
     readmeLabel: "The two products",
-    dock: "left",
   },
 
   "user/trending": {

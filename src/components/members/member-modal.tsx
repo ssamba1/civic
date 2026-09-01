@@ -289,12 +289,15 @@ export function MemberModalShell({
   subtitle,
   icon,
   onClose,
+  size = "default",
   children,
 }: {
   title: string;
   subtitle?: ReactNode;
   icon: ReactNode;
   onClose: () => void;
+  /** `wide` for dialogs whose content is an image rather than a form column. */
+  size?: "default" | "wide";
   children: ReactNode;
 }) {
   // Portal mount gate — SSR + first CSR render both return null so the
@@ -363,7 +366,8 @@ export function MemberModalShell({
           aria-labelledby={labelId}
           tabIndex={-1}
           className={cn(
-            "pointer-events-auto flex w-full max-h-[calc(100dvh-1rem)] flex-col overflow-hidden text-foreground sm:max-w-lg sm:max-h-[calc(100dvh-2rem)]",
+            "pointer-events-auto flex w-full max-h-[calc(100dvh-1rem)] flex-col overflow-hidden text-foreground sm:max-h-[calc(100dvh-2rem)]",
+            size === "wide" ? "sm:max-w-2xl" : "sm:max-w-lg",
             "rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-pop)]",
             "origin-center animate-[city-pop_120ms_ease-out]",
           )}
