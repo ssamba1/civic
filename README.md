@@ -22,7 +22,7 @@
 
 ## What it is
 
-A resident photographs something broken. A pothole, a dead streetlight, a downed sign, a sidewalk that has heaved, a drain that no longer drains.
+A resident photographs something broken with their phone — a pothole, a dead streetlight, a downed sign, a sidewalk that has heaved, a drain that no longer drains. The phone is the front door; a vehicle-mounted camera (further down) is the secondary channel.
 
 Civic reads the photograph, grades the severity, checks it against nearby reports so the twentieth call about the same pothole does not become the twentieth work order, prices the repair, and assigns it to the division and crew that does that work.
 
