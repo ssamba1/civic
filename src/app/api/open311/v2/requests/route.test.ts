@@ -196,6 +196,21 @@ describe("POST /api/open311/v2/requests", () => {
 
   it("triggers classification for the created report", async () => {
     await post(VALID);
-    expect(runClassifyPipelineMock).toHaveBeenCalledWith("report-1");
+    expect(runClassifyPipelineMock).toHaveBeenCalledWith(
+      "report-1",
+      expect.anything(),
+    );
+  });
+
+  it("passes the caller's service_code through as the declared category", async () => {
+    // GeoReport v2 makes service_code the agency's own statement of what it
+    // filed. An API-filed request carries no photo we will classify, so
+    // without this the pipeline fell through to `other` and the next GET
+    // contradicted the POST — an agency that filed `pothole` read back
+    // `other`, routed to General Services instead of Public Works.
+    await post({ ...VALID, service_code: "streetlight" });
+    expect(runClassifyPipelineMock).toHaveBeenCalledWith("report-1", {
+      declaredCategory: "streetlight",
+    });
   });
 });

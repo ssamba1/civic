@@ -3,7 +3,7 @@ import { checkRateLimit, clientIp } from "@/lib/ai/rate-limit";
 import { createServerClient } from "@/lib/db/client";
 import { createLogger } from "@/lib/logger";
 import { open311Error, wantsXml } from "@/lib/open311/http";
-import { reportToOpen311 } from "@/lib/open311/transform";
+import { firstEmbed, reportToOpen311 } from "@/lib/open311/transform";
 import { toOpen311SingleXml } from "@/lib/open311/xml";
 import {
   type City,
@@ -65,11 +65,18 @@ export async function GET(
     }
 
     const report = rowToReport(row as ReportRow);
-    const classification: Classification | null =
-      ((row as Record<string, unknown[]>)
-        .classifications?.[0] as Classification | null) ?? null;
-    const cityRaw = (row as Record<string, unknown>).cities;
-    const city = (Array.isArray(cityRaw) ? cityRaw[0] : cityRaw) as City;
+    // Both embeds go through firstEmbed. PostgREST shapes an embedded resource
+    // by cardinality — an array for to-many, a bare OBJECT for to-one — and
+    // classifications.report_id is unique, so this one arrives as an object.
+    // Indexing it with [0] yielded undefined, the classification came through
+    // as null, and reportToOpen311 fell back to `other`: this endpoint has been
+    // reporting service_code "other" for EVERY request, whatever the report
+    // actually is. The list route was fixed for the same reason; this one was
+    // missed because `cities` (to-one, handled) and `classifications` (to-one,
+    // not handled) sat two lines apart.
+    const rec = row as Record<string, unknown>;
+    const classification = firstEmbed<Classification>(rec.classifications);
+    const city = firstEmbed<City>(rec.cities) as City;
 
     const open311Request = reportToOpen311(report, classification, city);
 

@@ -68,7 +68,7 @@ product.
 | Maps | MapLibre GL + deck.gl (no Mapbox token, no per-view billing) |
 | UI | Tailwind CSS v4, shadcn/ui (Radix), AG Grid for the work-order table, GSAP |
 | Interop | Open311 GeoReport v2, XML + JSON |
-| Quality | Vitest (1,429 tests), Playwright, SQL row-level-security suites, Biome, Sentry |
+| Quality | Vitest (1,436 tests), Playwright, SQL row-level-security suites, Biome, Sentry |
 
 Server components are not a style preference here — they are what keeps the
 model API key server-side by construction. `"use client"` is the exception, and

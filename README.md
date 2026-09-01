@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/social-preview.png" alt="Civic. A resident photographs it, the work order writes itself. AI-native citizen repair reporting: photo to classified, costed, crew-assigned work order in one pass, no staff triage in the middle. 11 municipal divisions, 12 city-extensible categories, 0 manual triage steps, 1,429 tests passing." width="880">
+<img src="docs/images/social-preview.png" alt="Civic. A resident photographs it, the work order writes itself. AI-native citizen repair reporting: photo to classified, costed, crew-assigned work order in one pass, no staff triage in the middle. 11 municipal divisions, 12 city-extensible categories, 0 manual triage steps, 1,436 tests passing." width="880">
 
 ### The gap between a resident noticing a pothole and a crew being dispatched to it
 
@@ -8,7 +8,7 @@
 [![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Supabase + PostGIS](https://img.shields.io/badge/Supabase-PostGIS-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
 [![Gemini 2.5 Flash-Lite](https://img.shields.io/badge/Gemini-2.5%20Flash--Lite-4285F4?logo=google&logoColor=white)](https://ai.google.dev)
-[![1429 tests](https://img.shields.io/badge/tests-1%2C429%20passing-success)](#4-proof-it-works)
+[![1436 tests](https://img.shields.io/badge/tests-1%2C436%20passing-success)](#4-proof-it-works)
 [![Open311](https://img.shields.io/badge/Open311-GeoReport%20v2-orange)](#open311-is-the-product-not-an-integration)
 [![CI](https://github.com/ssamba1/civic/actions/workflows/test.yml/badge.svg)](https://github.com/ssamba1/civic/actions/workflows/test.yml)
 [![migrations](https://github.com/ssamba1/civic/actions/workflows/migrations.yml/badge.svg)](https://github.com/ssamba1/civic/actions/workflows/migrations.yml)
@@ -448,7 +448,7 @@ Every number here was produced by running the command in the middle column on th
 | Check | Command | Result |
 |---|---|---|
 | Types | `pnpm typecheck` | **clean**, TypeScript strict |
-| Unit tests | `pnpm test` | **1,429 passing** across 137 files |
+| Unit tests | `pnpm test` | **1,436 passing** across 138 files |
 | Lint | `pnpm lint` | **0 errors** |
 | Production build | `pnpm build` | **96 routes compile**, 42 prerendered |
 | Production *runtime* | `pnpm prod` | Standalone server boots, `database: true, ai: true`, every route clean in a real browser |
@@ -480,6 +480,26 @@ $ curl -s -H 'Accept: text/xml' '/api/open311/v2/requests?jurisdiction_id=cummin
 ```
 
 **153 service requests, in both JSON and XML, across 12 distinct service codes and 6 responsible agencies**, with `expected_datetime` computed from the per-category SLA on the 115 that are still open. The service catalogue, pagination, status filtering and error envelopes are all GeoReport v2 shaped.
+
+Inbound too, which is the half that is usually a lie. Filing through the API
+with a write-scoped key returns `201` and a real `service_request_id`, and
+GET-ing that id returns the request the agency filed — the `service_code` they
+declared, routed to the division that owns it:
+
+```console
+$ curl -X POST '/api/open311/v2/requests' -d '{"api_key":"…","service_code":"streetlight",…}'
+[{"service_request_id":"949359fd-…","token":"949359fd-…","service_notice":"Request submitted…"}]
+
+$ curl -s '/api/open311/v2/requests/949359fd-….json'
+  service_code:        streetlight
+  agency_responsible:  Cumming Utilities Department
+```
+
+Every one of those three behaviours was broken until it was tested. POST
+answered `500` to every request; the caller's `service_code` was discarded in
+favour of our own classifier, which had no photo and said `other`; and the
+single-request GET read a to-one PostgREST embed with `[0]`, so it reported
+`other` for *every* report in the system. See the bug-class writeup.
 
 This matters more than it looks. An export that works is the difference between a city owning its own record and renting it from a vendor.
 
@@ -574,7 +594,6 @@ Every line here can be checked in about a minute, so it is better said first tha
 - **There is no offline capture.** A resident with no signal cannot file. The client-minted-id and queue machinery that would fix it is not in this repository.
 - **City-extensible categories are built but unexercised in the pilot.** The classifier is offered the city's own `issue_types` on every request and the Open311 catalogue publishes them, but the seeded Cumming city defines **zero** custom types — the feature is proven by the bug class it caused, not by the demo.
 - **The `/staff` route tree is scrapped.** Team views and `/teams` are canonical. Some `staff/*` modules are still imported by shared code, so they have not been deleted.
-- **An Open311 POST does not keep the caller's `service_code`.** An agency filing `pothole` gets a report back classified by our own pipeline, which — with no photo to look at, since a caller-supplied `media_url` is deliberately never stored — falls back to `other`. GeoReport v2 semantics say the caller declares the service, so this is a conformance gap, not a preference. It is left as-is because the fix means teaching the classify pipeline to honour a declared category, and that is not a change to make hours before a deadline. The endpoint itself is correct: POST returns 201 with a real `service_request_id` that round-trips through GET in JSON and XML.
 - **The AI is a classifier, not an oracle.** It reads a photograph into a category, a severity and a duplicate check. Every allocation decision after that is deterministic and auditable. We kept the model out of the dispatch loop on purpose.
 
 ---

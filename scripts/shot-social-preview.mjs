@@ -26,7 +26,7 @@ const STATS = [
   ["11", "municipal divisions"],
   ["12", "city-extensible categories"],
   ["0", "manual triage steps"],
-  ["1,429", "tests passing"],
+  ["1,436", "tests passing"],
 ];
 
 const html = `<!doctype html>

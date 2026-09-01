@@ -464,10 +464,16 @@ export async function POST(request: NextRequest) {
     // Open311 reports were never classified. runClassifyPipeline is the same
     // function that route invokes, minus a network hop and its auth (we're
     // already past api_key validation here).
+    // Pass the caller's declared service_code through. GeoReport v2 makes it
+    // the agency's own statement of what it filed, and there is no photo here
+    // to classify — the pipeline would otherwise fall through to `other` and
+    // the next GET would contradict this POST.
     after(() =>
-      runClassifyPipeline(report.id).catch((err) => {
-        logger.error("Classify trigger failed", err, { reportId: report.id });
-      }),
+      runClassifyPipeline(report.id, { declaredCategory: serviceCode }).catch(
+        (err) => {
+          logger.error("Classify trigger failed", err, { reportId: report.id });
+        },
+      ),
     );
 
     // Return Open311 POST response — token = service_request_id for simplicity

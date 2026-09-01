@@ -260,6 +260,58 @@ describe("runClassifyPipeline", () => {
     }
   });
 
+  it("photo download fail + declaredCategory -> the DECLARED category is persisted, not `other`", async () => {
+    // Open311 POST supplies the agency's own service_code and there is never a
+    // photo to classify (a caller's media_url is deliberately not stored), so
+    // the pipeline used to fall through to `other` and the next GET
+    // contradicted the POST. Confidence stays 0 — no AI ran, and the report
+    // still belongs in the manual review gate — but the record now says what
+    // the agency said, and the work order routes to the right division.
+    const { client, tables } = makeSupabase({
+      report: { data: REPORT_ROW, error: null },
+      download: { data: null, error: { message: "object not found" } },
+      workOrder: {
+        data: { id: "wo-1", report_id: REPORT_ID, priority_score: 7.5 },
+        error: null,
+      },
+    });
+    createServerClientMock.mockReturnValue(client as never);
+
+    await runClassifyPipeline(REPORT_ID, { declaredCategory: "streetlight" });
+
+    expect(classifyPhotoMock).not.toHaveBeenCalled();
+    expect(tables.classifications.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        report_id: REPORT_ID,
+        category: "streetlight",
+        confidence: 0,
+        model_version: "declared",
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("ignores a declaredCategory that is not a real category", async () => {
+    const { client, tables } = makeSupabase({
+      report: { data: REPORT_ROW, error: null },
+      download: { data: null, error: { message: "object not found" } },
+      workOrder: {
+        data: { id: "wo-1", report_id: REPORT_ID, priority_score: 7.5 },
+        error: null,
+      },
+    });
+    createServerClientMock.mockReturnValue(client as never);
+
+    await runClassifyPipeline(REPORT_ID, {
+      declaredCategory: "not_a_category",
+    });
+
+    expect(tables.classifications.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ category: "other", model_version: "fallback" }),
+      expect.anything(),
+    );
+  });
+
   it("gemini fail -> fallback persisted and pipeline continues to a work order", async () => {
     const { client, tables } = makeSupabase({
       report: { data: REPORT_ROW, error: null },

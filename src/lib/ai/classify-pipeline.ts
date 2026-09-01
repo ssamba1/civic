@@ -13,6 +13,7 @@ import { gradeHazard } from "@/lib/ai/hazard-grade";
 import { buildCorrectionGuidance, type PromptCrew } from "@/lib/ai/prompt";
 import { generateWorkOrderAI } from "@/lib/ai/work-order-ai";
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
+import { CATEGORY_META } from "@/lib/dashboard-data";
 import { fetchCorrectionExamples } from "@/lib/db/classification-feedback";
 import { createServerClient } from "@/lib/db/client";
 import { fetchActiveCrewTypeDefs } from "@/lib/db/crew-types";
@@ -26,6 +27,7 @@ import { resolveOwningCity } from "@/lib/routing/jurisdiction";
 import { autoAssignUnit } from "@/lib/routing/org-units";
 import type {
   Classification,
+  ReportCategory,
   Result,
   WorkOrder,
   WorkOrderSource,
@@ -167,8 +169,23 @@ async function stampWorkOrderCost(
  * Called directly from server actions (no HTTP round-trip) and from the
  * /api/ai/classify route handler after auth checks.
  */
+export interface ClassifyPipelineOptions {
+  /**
+   * A category the SUBMITTER declared, rather than one we inferred.
+   *
+   * Set by the Open311 POST route from the caller's `service_code`. GeoReport
+   * v2 semantics make that field the agency's own statement of what it is
+   * reporting, and an API-filed request carries no photo we are willing to
+   * classify — a caller-supplied media_url is never stored. Without this the
+   * pipeline fell all the way through to `other`, so an agency that filed
+   * `pothole` got `other` back from the very next GET.
+   */
+  declaredCategory?: string;
+}
+
 export async function runClassifyPipeline(
   reportId: string,
+  options: ClassifyPipelineOptions = {},
 ): Promise<Result<ClassifyPipelineResult>> {
   const log = createLogger("classify-pipeline");
   const supabase = createServerClient();
@@ -288,21 +305,36 @@ export async function runClassifyPipeline(
       message: classificationResult.error,
       metadata: { reportId, stage: "gemini" },
     });
+    // A submitter-declared category beats our `other` default. It is the
+    // agency's own statement of what it filed, and for an Open311 request
+    // there was never a photo to classify — so falling through to `other`
+    // silently overwrote the one piece of information the caller actually
+    // gave us, and the very next GET contradicted the POST.
+    //
+    // Confidence stays 0 on purpose. It means "no AI classification happened",
+    // which is exactly true here, and it keeps the report inside the manual
+    // review gate — correct for something filed sight-unseen. What changes is
+    // that the record now says what the agency said, and the work order routes
+    // to the division that owns it instead of to General Services.
+    const declared = options.declaredCategory;
+    const useDeclared =
+      typeof declared === "string" && declared in CATEGORY_META;
     classification = {
-      category: "other",
+      category: useDeclared ? (declared as ReportCategory) : "other",
       subcategory: "needs review",
       severity: 3,
       hazard_radius_m: 0,
       visible_size_estimate: "unknown",
       is_emergency: false,
       confidence: 0,
-      reasoning:
-        "Automatic classification unavailable — queued for manual triage.",
+      reasoning: useDeclared
+        ? `Category declared by the submitting agency (Open311 service_code "${declared}"); no photo was supplied to classify.`
+        : "Automatic classification unavailable — queued for manual triage.",
       no_issue_detected: false,
       alternate_categories: [],
     };
-    modelVersion = "fallback";
-    rawResponse = { fallback: true };
+    modelVersion = useDeclared ? "declared" : "fallback";
+    rawResponse = useDeclared ? { declared: true } : { fallback: true };
   } else {
     classification = classificationResult.data.classification;
     rawResponse = { text: classificationResult.data.rawText, mime: sniffed };
