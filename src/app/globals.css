@@ -740,19 +740,21 @@
 /* ── Base ── */
 html {
   scroll-behavior: smooth;
-  /* Base render at 100%. This was 0.9 — the app was baked to render at 90%
-     browser zoom, which read denser but shrank every type size against the
-     window.
+  /* Base render at 90%. Briefly set to 1; at full scale the app read too
+     large, so the density is deliberate and stays.
 
-     The variable stays at 1 rather than being deleted. Viewport units resolve
+     Everything downstream keys off this one value. Viewport units resolve
      BEFORE `zoom` scales them, so ~14 full-height surfaces divide by it
      (calc(100dvh / var(--app-zoom, 1)) — the city and user layouts, grid,
-     calendar, the sidebar rail, the landing hero). At 1 those divisions are
-     no-ops and every one of them stays correct with no edit, and setting this
-     back to a fractional value re-derives them all in one place. `zoom` (not
-     transform:scale) re-runs layout, so vw units, fixed/sticky chrome,
-     body-portaled modals and the map all scale as one with no dead gutter. */
-  --app-zoom: 1;
+     calendar, the sidebar rail, the landing hero); changing it here re-derives
+     all of them. `zoom` (not transform:scale) re-runs layout, so vw units,
+     fixed/sticky chrome, body-portaled modals and the map all scale as one
+     with no dead gutter.
+
+     The cost to know about: anything measuring the viewport in JS sees the
+     unzoomed coordinate space, so use documentElement.clientWidth rather than
+     window.innerWidth when positioning against laid-out elements. */
+  --app-zoom: 0.9;
   zoom: var(--app-zoom);
 }
 
