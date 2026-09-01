@@ -457,11 +457,20 @@ The blur is honest about its own limits, in a docblock at the top of [`src/lib/p
 
 ### And a camera that surveys the streets on its own
 
-<img align="right" width="250" alt="The assembled universal camera: a white 3D-printed enclosure on a desk, civic embossed across the lower front, the ESP32-CAM's OV2640 lens in a cut-out above the emboss, a foam-padded module across the open top and a blue windshield-mount arm folded back on its side pivot knob" src="hardware/universal-camera/images/device-civic.jpg">
-
 Resident intake only sees what someone stops to report. A sweeper, a refuse truck or an inspection vehicle already drives every street on a schedule, and sees the same stretch of pavement dozens of times a week. The **universal camera** is a 3D-printed edge dashcam — an ESP32 + ESP32-CAM with a GPS module, running off the vehicle rail — that turns each of those routine passes into a survey for potholes, debris, damaged signage and blocked drains.
 
 It is deliberately a **trigger, not a classifier**. A tiny quantized model on the device answers one cheap question — is there something road-shaped worth a closer look — and discards everything else, so hours of empty road cost zero bytes. The GPS module stamps where the vehicle was, the frame and fix sit on an SD card until the vehicle is back on depot wifi, and only then does a batch reach the server.
+
+<table>
+<tr>
+<td width="50%" valign="top"><img alt="Turntable render of the enclosure, generated from the four STL files: an upright box body with a rounded top, civic embossed across the lower front below the lens aperture, and the mount arm angled back off its hinge" src="hardware/universal-camera/images/shell-render-front.png"></td>
+<td width="50%" valign="top"><img alt="The same enclosure printed and assembled on a desk: white body with civic embossed across the lower front, the ESP32-CAM's OV2640 lens in the cut-out above it, foam padding across the open top, and a blue windshield-mount arm folded back on its side pivot knob" src="hardware/universal-camera/images/device-civic.jpg"></td>
+</tr>
+<tr>
+<td valign="top"><b>The geometry.</b> Rendered straight from the four STLs in <code>hardware/universal-camera/print/</code>, not a mock-up. The <code>civic</code> emboss is in the mesh.</td>
+<td valign="top"><b>The object.</b> The same part printed, with the ESP32-CAM seated behind the front cut-out and the mount arm on its pivot.</td>
+</tr>
+</table>
 
 Build, bill of materials, print files and the invariants it must not break: [`hardware/universal-camera/`](hardware/universal-camera/README.md).
 
