@@ -8,7 +8,7 @@ Civic. AI-native citizen repair reporting. Residents photograph broken infrastru
 
 ## Layout & current state
 
-- App root is `Civic/-Social-Impact-/` (this dir). Sibling `Civic/civic-deck/` = separate Vite pitch deck, not the app.
+- App root is the repository root (`ssamba1/civic`) — this dir. It was once a subdirectory called `-Social-Impact-` under a `Civic/` parent; nothing on disk is laid out that way any more, and no path in the repo should assume it. `Civic/civic-deck/`, a separate Vite pitch deck, was a sibling of that old layout and is **not** in this repository; the standalone deck that is here is `pitch/index.html`.
 - `dev-audit/` = the audit output this project was hardened against. `docs/planning/SHIPPED.md` is the chronological record of what landed.
 - The `/staff` route UI is scrapped — team views + `/teams` picker are canonical. Several `staff/*` modules are still imported by shared code: check imports before deleting anything under `app/staff/`.
 - Working tree carries large uncommitted changes at times — commit before any destructive delete.
@@ -35,7 +35,7 @@ pnpm health                     # curl localhost:3000/api/health — confirms db
 - Supabase: Postgres 15 + PostGIS, Auth, Storage, Realtime
 - Tailwind CSS v4 + shadcn/ui (Radix primitives)
 - Maps: MapLibre GL (`maplibre-gl` v5 via `react-map-gl` v8) + deck.gl v9 data layers — NOT Mapbox, no Mapbox token
-- AI: Vercel AI SDK (`ai` + `@ai-sdk/google`), Gemini 2.5 Flash (vision + classification), embeddings for dedup
+- AI: Vercel AI SDK (`ai` + `@ai-sdk/google`). **Two models, and they are not interchangeable** — `GEMINI_MODEL = "gemini-2.5-flash-lite"` for vision + classification (the per-report hot path; ~3–4s vs ~6–30s for full Flash), `CHAT_MODEL = "gemini-2.5-flash"` for the help assistant. Both in `lib/ai/config.ts`; embeddings for dedup
 - Sentry via `@sentry/nextjs` (`sentry.*.config.ts`, `instrumentation-client.ts`)
 - Motion: GSAP (framer-motion also installed — GSAP default); tables: AG Grid
 - Deploy target unresolved; `pnpm prod` builds Next standalone + copies assets, runs `node .next/standalone/server.js`
@@ -92,7 +92,7 @@ const candidates = await sql`
 - Touching Open311, privacy, or migrations directories
 - Anything that would expose raw photos publicly
 - Anything that would call an AI model from the client
-- Building features not listed in DESIGN.md's MVP scope
+- Building features not listed in the MVP scope in `docs/planning/design.md`
 
 ## Definition of done (any task)
 
@@ -104,19 +104,19 @@ const candidates = await sql`
 
 ## What lives where
 
-- `docs/CONTEXT.md` - problem, market, GTM, personas, business model
-- `docs/DESIGN.md` - architecture, data model, AI pipeline, alternatives considered
+- `docs/planning/context.md` - problem, market, GTM, personas, business model
+- `docs/planning/design.md` - architecture, data model, AI pipeline, alternatives considered
 - `docs/decisions/` - ADRs for any architecture choice that closed off alternatives
 - `docs/runbooks/` - on-call procedures (deploys, incidents, rollbacks)
 - `tests/rls/` - row-level security regression tests
 - `tests/golden/` - sample photos + expected classifications
 
-Read the doc before the code. If `docs/DESIGN.md` and this file conflict, the design doc wins. Flag the conflict.
+Read the doc before the code. If `docs/planning/design.md` and this file conflict, the design doc wins. Flag the conflict.
 
 ## Pitfalls specific to this project
 
 - Browser geolocation is unreliable in some Android builds. Always have a manual address fallback.
-- Mapbox marker clustering breaks with >5k points. Use the supercluster lib at the data layer.
+- Marker clustering breaks past ~5k points. Use the `supercluster` lib at the data layer — see `docs/decisions/0003-map-clustering-supercluster.md`. (This bullet used to say "Mapbox", which is a library this project deliberately does not use; the constraint is real, the attribution was not.)
 - Gemini occasionally returns markdown-wrapped JSON despite the prompt. Always strip code fences before parsing.
 - iOS PWA cannot keep camera permission across sessions reliably. Web Share Target API is the workaround.
 - PostGIS `geography` is more expensive than `geometry` but handles antimeridian correctly. We use `geography`. Do not change this.
