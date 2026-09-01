@@ -367,7 +367,7 @@ function templateReasoningForReport(
       {
         title: "Classification",
         value:
-          "Severity 1, Minor issue with no immediate safety impact on residents or infrastructure integrity.",
+          "Severity 1: Minor issue with no immediate safety impact on residents or infrastructure integrity.",
       },
       {
         title: "Examples",
@@ -397,7 +397,7 @@ function templateReasoningForReport(
       {
         title: "Classification",
         value:
-          "Severity 2, Noticeable issue affecting user comfort or creating minor service gaps without safety risk.",
+          "Severity 2: Noticeable issue affecting user comfort or creating minor service gaps without safety risk.",
       },
       {
         title: "Examples",
@@ -427,7 +427,7 @@ function templateReasoningForReport(
       {
         title: "Classification",
         value:
-          "Severity 3, Problem impacting public accessibility or approaching safety threshold. Requires prioritized attention.",
+          "Severity 3: Problem impacting public accessibility or approaching safety threshold. Requires prioritized attention.",
       },
       {
         title: "Examples",
@@ -457,7 +457,7 @@ function templateReasoningForReport(
       {
         title: "Classification",
         value:
-          "Severity 4, Serious hazard with significant public impact. Represents widespread outage or imminent injury risk.",
+          "Severity 4: Serious hazard with significant public impact. Represents widespread outage or imminent injury risk.",
       },
       {
         title: "Examples",
@@ -487,7 +487,7 @@ function templateReasoningForReport(
       {
         title: "Classification",
         value:
-          "Severity 5, Life-safety emergency or catastrophic infrastructure failure. Highest response tier, all resources authorized.",
+          "Severity 5: Life-safety emergency or catastrophic infrastructure failure. Highest response tier, all resources authorized.",
       },
       {
         title: "Examples",

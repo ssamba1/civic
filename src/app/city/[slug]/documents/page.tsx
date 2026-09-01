@@ -117,7 +117,7 @@ export default async function CityDocumentsPage({ params }: PageProps) {
         </section>
 
         {/* Ingestion + corpus ride a fixed-width left rail; retrieval, the
-            surface whose output actually needs reading room. Takes the rest
+            surface whose output actually needs reading room, takes the rest
             of the 1800px column. */}
         <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(340px,400px)_minmax(0,1fr)]">
           <div className="space-y-4">

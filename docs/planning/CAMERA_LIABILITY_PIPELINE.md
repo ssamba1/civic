@@ -38,8 +38,8 @@ Each ships independently and each is independently demoable. Build in order.
 | Phase | What | Depends on | Value if shipped alone |
 |---|---|---|---|
 | **A, Liability attribution** | `capital_jobs`, `warranties`, `utility_permits`, spatial join at report intake, warranty badge on every report, expiry sweep | nothing new, runs on today's resident reports | **High.** Dollar-recovery story with zero hardware. De-risks B by proving the join works before anyone buys a camera. |
-| **B, Camera ingest** | frame API, detector gate, detection clustering, server-side blur worker, camera→report writer | A (so detections get liability badges) | Medium alone, volume without attribution is just more tickets. |
-| **C, Claim packet** | packet assembly, staff review queue, contractor delivery, recovery ledger | A (needs liability), C is better with B (needs evidence chain) | High, converts A's finding into recovered money. |
+| **B: Camera ingest** | frame API, detector gate, detection clustering, server-side blur worker, camera→report writer | A (so detections get liability badges) | Medium alone, volume without attribution is just more tickets. |
+| **C: Claim packet** | packet assembly, staff review queue, contractor delivery, recovery ledger | A (needs liability), C is better with B (needs evidence chain) | High, converts A's finding into recovered money. |
 
 **Recommendation: A → C → B.** A and C together are the complete money story on
 existing report volume. B multiplies it. This ordering is deliberately different

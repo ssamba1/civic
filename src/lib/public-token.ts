@@ -7,7 +7,7 @@ import { createHash } from "node:crypto";
    makes it unimportable from a plain Node script, and the backfill in
    scripts/backfill-public-tokens.ts has to produce byte-identical tokens to
    the ones status-notify stamps at runtime. The alternative, copying four
-   lines of hashing into the script. Is precisely the writer/reader drift that
+   lines of hashing into the script, is precisely the writer/reader drift that
    silently broke photo classification when the classify pipeline spelled out a
    storage path the uploader had stopped using.
 

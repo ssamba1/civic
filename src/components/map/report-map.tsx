@@ -109,7 +109,7 @@ const STYLE_LIGHT =
 // Marker colors now live in ./pin-icons (pinIconFor / pinColorRGB / the legend
 // metadata) so the pins, the focus halo, and the legend all read from one
 // source and can't drift. The old statusColor() helper, which hard-coded the
-// map/legend palette here. Was removed with the ScatterplotLayer dot markers.
+// map/legend palette here, was removed with the ScatterplotLayer dot markers.
 
 /* ------------------------------------------------------------------
    DeckGL overlay glued onto the Maplibre map via useControl

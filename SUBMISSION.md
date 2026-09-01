@@ -9,8 +9,8 @@ Repository: <https://github.com/ssamba1/civic> · Full technical write-up: [`REA
 ## Inspiration
 
 Every city has a version of the same broken loop. A resident notices something
-wrong, a pothole, a dead streetlight, a sidewalk that has heaved into a trip
-hazard, reports it, hears nothing, and concludes the city does not care.
+wrong (a pothole, a dead streetlight, a sidewalk that has heaved into a trip
+hazard), reports it, hears nothing, and concludes the city does not care.
 
 The city usually does care. What it does not have is an hour.
 

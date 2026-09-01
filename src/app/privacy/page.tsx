@@ -256,8 +256,8 @@ export default function PrivacyPage() {
                 <strong>
                   blurred photo, location, description, and classification
                 </strong>{" "}
-                . Are shared with the city responsible for the area so it can
-                act on the issue.
+                are shared with the city responsible for the area so it can act
+                on the issue.
               </>,
               <>
                 Some cities receive reports through the <strong>Open311</strong>{" "}

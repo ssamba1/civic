@@ -17,8 +17,8 @@ open pitch/index.html        # macOS
 xdg-open pitch/index.html    # Linux
 ```
 
-No build step, no dependencies, no dev server. Everything. Styles, markup, any
-script. Is inline in the single file, which is the point: a deck that needs a
+No build step, no dependencies, no dev server. Everything (styles, markup, any
+script) is inline in the single file, which is the point: a deck that needs a
 toolchain to open is a deck that fails in the room.
 
 ## Don't confuse it with `civic-deck/`

@@ -326,8 +326,8 @@ arrows, and crosswalk markings were restored across the limits.
 
 The City inspector performed density testing on nine cores; all met the
 ninety-two percent minimum. Ride quality measured within specification on
-both lanes. A punch list of two items, a low utility casting at Station
-12+80 and flushing at the Station 31+00 tie-in. Was completed on May 27.
+both lanes. A punch list of two items (a low utility casting at Station
+12+80 and flushing at the Station 31+00 tie-in) was completed on May 27.
 Final acceptance was issued by the Department of Public Works on June 1,
 2026. Final contract value for the package: eight hundred ninety-one
 thousand dollars.

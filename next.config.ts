@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   // inferred root then decides where standalone output is written: with the
   // wrong root the entry point lands at `.next/standalone/<projectDir>/server.js`
   // instead of `.next/standalone/server.js`, and `pnpm start:prod`, which is
-  // the documented way to run this in production. Fails with MODULE_NOT_FOUND.
+  // the documented way to run this in production, fails with MODULE_NOT_FOUND.
   // `prod:assets` copies static and public to the wrong place for the same
   // reason, so even correcting the path by hand serves an unstyled app.
   //

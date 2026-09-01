@@ -406,7 +406,7 @@
   }
 }
 /* In @layer components (not unlayered) so Tailwind's `rounded-*` utilities,
-   which live in the higher `utilities` layer. Win over the `inherit` default.
+   which live in the higher `utilities` layer, win over the `inherit` default.
    Bare `.skeleton` still inherits the parent radius (fill-a-rounded-box case);
    `.skeleton rounded-full` now actually rounds instead of the utility being
    silently overridden by an unlayered rule. */

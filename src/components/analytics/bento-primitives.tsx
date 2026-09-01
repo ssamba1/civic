@@ -89,8 +89,8 @@ export function useReveal<T extends HTMLElement>(index?: number) {
     // Stagger entrance: each tile waits slot*60ms before its reveal transition
     // fires, so the grid cascades instead of flashing as one flat block. Capped
     // so a long grid never feels laggy. Delay rides transition-delay (not a
-    // timeout) so reduced-motion, which kills the transition via the media
-    // query. Is unaffected.
+    // timeout) so reduced-motion (which kills the transition via the media
+    // query) is unaffected.
     node.style.transitionDelay = `${Math.min(slotRef.current ?? 0, 11) * 60}ms`;
     const id = requestAnimationFrame(() => {
       node.setAttribute("data-shown", "1");
