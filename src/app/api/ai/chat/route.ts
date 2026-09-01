@@ -34,7 +34,7 @@ export async function POST(request: Request) {
   try {
     // Require an authenticated session. The help assistant is a browser-only,
     // user-facing feature (no server-to-server callers), so there is no
-    // internal-key carve-out here — a missing session is always anonymous
+    // internal-key carve-out here. A missing session is always anonymous
     // abuse. Gating before any Gemini spend closes the cost/DoS surface.
     const user = await getAuthUser();
     if (!user) {

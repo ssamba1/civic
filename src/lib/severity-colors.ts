@@ -1,17 +1,17 @@
 /* ==================================================================
-   Canonical severity ramp — ONE source for every surface that colors a
+   Canonical severity ramp, ONE source for every surface that colors a
    severity value (1 = cosmetic … 5 = emergency).
 
    Severity is ORDINAL and it encodes STATE, not category, so the ramp is
    built from the semantic status tokens rather than a decorative/pastel
    hue wheel: a categorical palette makes "5" read as merely *different*
    from "4" instead of *worse*, and pastel blush for "emergency" reads
-   softer than peach for "major" — backwards.
+   softer than peach for "major", backwards.
 
    Built by color-mixing `--status-success-fg → --status-warning-fg →
    `--status-danger-fg`, with mixed midpoints for 2 and 4. Deliberately the
    `--status-*-fg` tokens, NOT the saturated `--color-success/warning/danger`
-   fills — the `-fg` set is AA-tuned and flips per theme, the fills have no
+   fills. The `-fg` set is AA-tuned and flips per theme, the fills have no
    dark override and wash out on dark surfaces.
 
    One hue per level drives every surface of a swatch (text digit, low-alpha

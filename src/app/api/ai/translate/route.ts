@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   const rl = checkRateLimit(`translate:${ip}`);
   if (!rl.allowed) {
     return NextResponse.json(
-      { error: "Too many requests — please wait a moment." },
+      { error: "Too many requests, please wait a moment." },
       {
         status: 429,
         headers: { "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)) },
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
 
   // Global Gemini budget. lib/ai/translate.ts talks to the SDK directly rather
   // than through lib/ai/gemini.ts, so without this the route is the one AI
-  // endpoint that never touches the shared quota — and the per-IP limiter above
+  // endpoint that never touches the shared quota, and the per-IP limiter above
   // is keyed on a client-settable header unless RATE_LIMIT_TRUSTED_HEADER is
   // set, so it alone does not bound spend.
   const budget = checkAndRecordGeminiCall();

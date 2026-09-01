@@ -4,7 +4,7 @@ import { findVerifiedDemoAccount } from "@/lib/demo-cookie";
 
 /* Server-only: resolve the active demo persona from the session cookie.
    Used by server layouts to label the header + render the logout control.
-   Not a security gate — routing is soft. */
+   Not a security gate. Routing is soft. */
 export async function getDemoSession(): Promise<DemoAccount | null> {
   const store = await cookies();
   const username = store.get(DEMO_SESSION_COOKIE)?.value;

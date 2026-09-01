@@ -1,4 +1,4 @@
-# 0003 — Map marker clustering with supercluster
+# 0003: Map marker clustering with supercluster
 
 - Status: **Accepted** (2026-07-08)
 - Scope: how the report map renders at scale.
@@ -15,7 +15,7 @@ multi-city view blows past that.
 Cluster at the **data layer** with `supercluster` (agents.md's named remedy),
 engaged only above a threshold:
 
-- `src/lib/map/clustering.ts` — pure `buildClusterIndex` / `clustersForView` /
+- `src/lib/map/clustering.ts`: pure `buildClusterIndex` / `clustersForView` /
   `clusterExpansionZoom` wrapping supercluster; unit-tested, framework-free.
 - `report-map.tsx` builds the index (memoized on the report set), queries it for
   the live viewport (tracked via `onMoveEnd`), and renders clusters as

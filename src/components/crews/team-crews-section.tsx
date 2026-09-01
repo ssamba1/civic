@@ -35,7 +35,7 @@ export function TeamCrewsSection({
       {crews.length === 0 ? (
         <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface px-6 py-10 text-center shadow-[var(--shadow-card)]">
           <p className="text-[13px] text-faint">
-            No crews in this division yet — create them from the Members page.
+            No crews in this division yet, create them from the Members page.
           </p>
         </div>
       ) : (

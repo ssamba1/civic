@@ -8,7 +8,7 @@ import type { ReportCategory } from "@/lib/types";
    Response-time leaderboard by category (NEXT_100 #41).
 
    Internal accountability: which categories the city clears fastest and where
-   the backlog is aging. Computed from the city's corpus — resolution rate +
+   the backlog is aging. Computed from the city's corpus, resolution rate +
    average age of what's still open, ranked so the laggards surface.
    ================================================================== */
 
@@ -21,7 +21,7 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const c = await corpusForCity(slug);
-  return { title: c ? `Civic | ${c.name} — Leaderboard` : "Civic" };
+  return { title: c ? `Civic | ${c.name}, Leaderboard` : "Civic" };
 }
 
 const DAY = 86_400_000;

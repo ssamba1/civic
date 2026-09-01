@@ -2,7 +2,7 @@
 // Usage: node scripts/shot.mjs <url> <outPath> [waitMs]
 // Waits for the MapLibre canvas + a settle delay so async tile loads finish
 // before capture (capturing too early on a tile-loading map yields a blank
-// white frame — which would falsely "confirm" the very bug we're checking).
+// white frame, which would falsely "confirm" the very bug we're checking).
 import { chromium } from "playwright";
 
 const url = process.argv[2] ?? "http://localhost:3000/";

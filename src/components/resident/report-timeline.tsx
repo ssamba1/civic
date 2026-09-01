@@ -14,7 +14,7 @@ import type { TimelineStep } from "@/lib/resident-data";
 import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
-   Resident report timeline — "what happens next" vertical stepper.
+   Resident report timeline. "what happens next" vertical stepper.
 
    Renders the four-stage track (filed → dispatched → in_progress →
    resolved) returned by getReportTimeline. Each step shows its stage
@@ -55,7 +55,7 @@ export function ReportTimeline({ steps }: { steps: TimelineStep[] }) {
   if (steps.length === 0) return null;
 
   return (
-    /* Comfortable vertical stepper — node is 44px on mobile (min-tap),
+    /* Comfortable vertical stepper. Node is 44px on mobile (min-tap),
        scales down to 32px (h-8 w-8) on sm+ where precision pointing
        is available. Gap between node and label is wider on mobile too. */
     <ol className="relative flex flex-col">
@@ -94,7 +94,7 @@ export function ReportTimeline({ steps }: { steps: TimelineStep[] }) {
               />
             )}
 
-            {/* Node — 44×44 on mobile for comfortable touch; 32×32 on sm+ */}
+            {/* Node, 44×44 on mobile for comfortable touch; 32×32 on sm+ */}
             <span
               aria-hidden
               className={cn(
@@ -155,7 +155,7 @@ export function ReportTimeline({ steps }: { steps: TimelineStep[] }) {
 
 /* ------------------------------------------------------------------
    Report photo with graceful fallback. Mirrors ReportImage in
-   report-detail.tsx — some sources (CSP-blocked hosts, dead links)
+   report-detail.tsx, some sources (CSP-blocked hosts, dead links)
    won't load, so we swap in a neutral placeholder rather than leave a
    16:9 void. Lives here because the detail page is a Server Component
    and onError needs a client boundary; key by report id at the call

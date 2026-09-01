@@ -44,7 +44,7 @@ export function ReopenButton({
       </button>
       {state === "error" && (
         <span className="text-[12px] text-[var(--status-danger-fg)]">
-          Couldn&apos;t reopen — try again.
+          Couldn&apos;t reopen, try again.
         </span>
       )}
     </div>

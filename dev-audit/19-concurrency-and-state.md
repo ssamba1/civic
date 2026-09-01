@@ -6,14 +6,14 @@
 
 | File | Line | Risk | Finding | Fix |
 |------|------|------|---------|-----|
-| `src/lib/ai/reasoning-ai.ts` | 177–230 | P2 | Module-level cache is not atomic. Two concurrent requests for the same report ID both call `geminiReasoning()`, wasting a Gemini API call. Cache hit/miss is checked without locking; between check and set, another request can also miss. Typical: T1 miss → T2 miss → T1 set → T2 set (overwrites T1, both computed). | Use `Promise` memoization or request deduplication: cache the Promise itself, not the result. Return same promise for concurrent identical requests. |
-| `src/app/report/page.tsx` | 313–333 | P2 | Realtime subscription's `subscribe()` callback fires one-shot query with unhandled `.then()` (already found in EH-X). Additionally, if subscription is unsubscribed/resubscribed (e.g., user navigates away then back), callback fires again, re-running the fetch. No guard prevents duplicate fires on re-subscribe. | Add flag to ensure one-shot fetch fires only once per component mount: `let fetched = false; ... if (!fetched) { fetched = true; ... query.then(...) }`. |
+| `src/lib/ai/reasoning-ai.ts` | 177-230 | P2 | Module-level cache is not atomic. Two concurrent requests for the same report ID both call `geminiReasoning()`, wasting a Gemini API call. Cache hit/miss is checked without locking; between check and set, another request can also miss. Typical: T1 miss → T2 miss → T1 set → T2 set (overwrites T1, both computed). | Use `Promise` memoization or request deduplication: cache the Promise itself, not the result. Return same promise for concurrent identical requests. |
+| `src/app/report/page.tsx` | 313-333 | P2 | Realtime subscription's `subscribe()` callback fires one-shot query with unhandled `.then()` (already found in EH-X). Additionally, if subscription is unsubscribed/resubscribed (e.g., user navigates away then back), callback fires again, re-running the fetch. No guard prevents duplicate fires on re-subscribe. | Add flag to ensure one-shot fetch fires only once per component mount: `let fetched = false; ... if (!fetched) { fetched = true; ... query.then(...) }`. |
 
 ---
 
 ## Details
 
-### P2: Non-atomic cache in reasoning-ai.ts (src/lib/ai/reasoning-ai.ts:177–230)
+### P2: Non-atomic cache in reasoning-ai.ts (src/lib/ai/reasoning-ai.ts:177-230)
 
 ```typescript
 const cache = new Map<string, ReasoningPayload>();
@@ -110,7 +110,7 @@ Now concurrent requests for the same ID share the in-flight Promise and return t
 
 ---
 
-### P2: Re-subscribable realtime without one-shot guard (src/app/report/page.tsx:313–333)
+### P2: Re-subscribable realtime without one-shot guard (src/app/report/page.tsx:313-333)
 
 ```typescript
 const channel = supabase

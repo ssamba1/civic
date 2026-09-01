@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { redactPII } from "./pii-redact";
 
-describe("redactPII – emails", () => {
+describe("redactPII, emails", () => {
   it("redacts a plain email", () => {
     const { redacted } = redactPII("Contact me at john@example.com for info.");
     expect(redacted).toBe("Contact me at [EMAIL] for info.");
@@ -27,7 +27,7 @@ describe("redactPII – emails", () => {
   });
 });
 
-describe("redactPII – phones", () => {
+describe("redactPII, phones", () => {
   it("redacts dashes format", () => {
     const { redacted } = redactPII("Call 800-555-1234 now.");
     expect(redacted).toBe("Call [PHONE] now.");
@@ -59,7 +59,7 @@ describe("redactPII – phones", () => {
   });
 });
 
-describe("redactPII – SSN", () => {
+describe("redactPII, SSN", () => {
   it("redacts SSN pattern", () => {
     const { redacted } = redactPII("SSN: 123-45-6789.");
     expect(redacted).toBe("SSN: [SSN].");
@@ -77,7 +77,7 @@ describe("redactPII – SSN", () => {
   });
 });
 
-describe("redactPII – addresses", () => {
+describe("redactPII, addresses", () => {
   it("redacts a standard street address", () => {
     const { redacted } = redactPII("I live at 123 Main St, please fix it.");
     expect(redacted).toBe("I live at [ADDRESS], please fix it.");
@@ -113,7 +113,7 @@ describe("redactPII – addresses", () => {
   });
 });
 
-describe("redactPII – multiple and overlapping", () => {
+describe("redactPII, multiple and overlapping", () => {
   it("redacts multiple PIIs in one string", () => {
     const { redacted, spans } = redactPII(
       "Call 800-555-1234 or email me at alice@example.com",
@@ -145,7 +145,7 @@ describe("redactPII – multiple and overlapping", () => {
   });
 });
 
-describe("redactPII – false-positive guards", () => {
+describe("redactPII, false-positive guards", () => {
   it("does not mangle a normal URL", () => {
     const url = "https://civic.gov/reports/123";
     const { redacted } = redactPII(url);
@@ -159,7 +159,7 @@ describe("redactPII – false-positive guards", () => {
   });
 });
 
-describe("redactPII – ReDoS / adversarial input", () => {
+describe("redactPII, ReDoS / adversarial input", () => {
   it("completes within 500 ms on a 50k-char adversarial address-like string", () => {
     // Construct a string designed to stress ADDRESS_RE: many capitalised words
     // separated by spaces with no valid street suffix, forcing backtracking.

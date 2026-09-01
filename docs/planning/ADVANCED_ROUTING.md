@@ -1,4 +1,4 @@
-# Advanced Routing — Recursive Org Tree + AI Route Gen + Cost/SLA Load Balance
+# Advanced Routing: Recursive Org Tree + AI Route Gen + Cost/SLA Load Balance
 
 Status: proposed (2026-07-09). Supersedes flat `team_key` → `crews` routing.
 
@@ -6,20 +6,20 @@ Status: proposed (2026-07-09). Supersedes flat `team_key` → `crews` routing.
 
 Three capabilities beyond current 2-level routing:
 
-1. **Arbitrary-depth org tree** — team → subteam → … → crew/contractor, unlimited nesting.
-2. **AI-generated routes** — AI builds the org tree at onboarding AND picks the leaf unit per report.
+1. **Arbitrary-depth org tree**: team → subteam → … → crew/contractor, unlimited nesting.
+2. **AI-generated routes**: AI builds the org tree at onboarding AND picks the leaf unit per report.
 3. **Cost/SLA-weighted load balance** across a mix of internal crews and external contractors.
 
 ## Current state (baseline)
 
-- `city_teams` (per-city team config, `categories text[]`) — `20260618_019`
-- `crews` + `crew_members` + `crew_types` (one level under `team_key`) — `030`, `031`
-- `resolveTeamKeyForCategory()` → `resolve_zone_team()` RPC override → `autoAssignCrew()` (fewest-open-WO) — `src/lib/onboarding/city-teams.ts`, `src/lib/ai/classify-pipeline.ts`, `src/lib/ai/crew-assign.ts`
+- `city_teams` (per-city team config, `categories text[]`), `20260618_019`
+- `crews` + `crew_members` + `crew_types` (one level under `team_key`), `030`, `031`
+- `resolveTeamKeyForCategory()` → `resolve_zone_team()` RPC override → `autoAssignCrew()` (fewest-open-WO), `src/lib/onboarding/city-teams.ts`, `src/lib/ai/classify-pipeline.ts`, `src/lib/ai/crew-assign.ts`
 - No contractor/vendor model. No stored capacity. Load computed live from open WO counts.
 
 ## Design
 
-### 1. `org_units` — recursive tree (ltree)
+### 1. `org_units`: recursive tree (ltree)
 
 Requires Postgres `ltree` extension. Single self-referencing table subsumes `city_teams`, `crews`, `crew_types`.
 
@@ -57,9 +57,9 @@ create index org_units_city on org_units (city_id) where active;
 
 Replaces `resolveTeamKeyForCategory` + `autoAssignCrew`.
 
-**a. `resolveRouteSubtree(cityId, category, crewType)`** — descend tree, return candidate leaf units where `category ∈ categories` (inherited) AND `crewType ∈ skills`. Zone override (`resolve_zone_team`) still applies at team root.
+**a. `resolveRouteSubtree(cityId, category, crewType)`**: descend tree, return candidate leaf units where `category ∈ categories` (inherited) AND `crewType ∈ skills`. Zone override (`resolve_zone_team`) still applies at team root.
 
-**b. `assignBestUnit(candidates, workOrder)`** — hard filter then min-score:
+**b. `assignBestUnit(candidates, workOrder)`**: hard filter then min-score:
 
 ```
 filter: active AND skillMatch AND open_wos < capacity (capacity null = pass)
@@ -77,15 +77,15 @@ Weights per-city (`city_config`). Default = cost/SLA weighted (chosen): `w_load 
 
 ### 3. AI route generation (both jobs, server-side only)
 
-**a. Onboarding tree-gen** — new `/api/ai/org-tree` route. Input: city ops prose + category list. Output: proposed `org_units` insert set (validated by Zod schema mirroring table). **Human approves in an admin UI before any write.** One-time per city.
+**a. Onboarding tree-gen**: new `/api/ai/org-tree` route. Input: city ops prose + category list. Output: proposed `org_units` insert set (validated by Zod schema mirroring table). **Human approves in an admin UI before any write.** One-time per city.
 
-**b. Per-report leaf pick** — extend `buildAiWorkOrderSchema` with `route_candidates` (leaf keys + reason) instead of single `crew_hint`. Prompt is fed only the *pruned subtree* for the report's category (not whole org) to keep tokens low. AI pick is a *hint*; `assignBestUnit` scoring is authoritative — AI breaks ties / supplies skill nuance.
+**b. Per-report leaf pick**: extend `buildAiWorkOrderSchema` with `route_candidates` (leaf keys + reason) instead of single `crew_hint`. Prompt is fed only the *pruned subtree* for the report's category (not whole org) to keep tokens low. AI pick is a *hint*; `assignBestUnit` scoring is authoritative. AI breaks ties / supplies skill nuance.
 
 ## Build order
 
-1. **Migration** `org_units` + ltree ext + trigger + RLS + backfill. ⚠️ touches `supabase/migrations/` — **hard rule 10: needs explicit owner ok before writing.**
-2. `resolveRouteSubtree()` — new, replaces `resolveTeamKeyForCategory`.
-3. `assignBestUnit()` scoring — replaces `autoAssignCrew`. Unit tests on score ordering + capacity filter + contractor spillover.
+1. **Migration** `org_units` + ltree ext + trigger + RLS + backfill. ⚠️ touches `supabase/migrations/`. **hard rule 10: needs explicit owner ok before writing.**
+2. `resolveRouteSubtree()`: new, replaces `resolveTeamKeyForCategory`.
+3. `assignBestUnit()` scoring, replaces `autoAssignCrew`. Unit tests on score ordering + capacity filter + contractor spillover.
 4. Work-order schema: `route_candidates` field; wire into `classify-pipeline.ts`.
 5. `/api/ai/org-tree` onboarding route + approval UI.
 6. Migrate `teams-data.ts` / AI chat `getTeamWorkload` to `org_units`.
@@ -94,6 +94,6 @@ Weights per-city (`city_config`). Default = cost/SLA weighted (chosen): `w_load 
 ## Open / risks
 
 - ltree ext must be enabled on Supabase (check `list_extensions`).
-- Backfill correctness — snapshot old tables, diff assignments before/after on seed data.
+- Backfill correctness, snapshot old tables, diff assignments before/after on seed data.
 - Cost/SLA weights need real contractor data to tune; start with defaults + per-city override.
 - Open311 conformance unaffected (routing is internal; service_code mapping unchanged).

@@ -19,7 +19,7 @@ export type CityCrewTypesResult =
   | { ok: false; error: string };
 
 /**
- * All crew_types rows for a city (active and inactive) — the admin management
+ * All crew_types rows for a city (active and inactive), the admin management
  * view. Service-role client; call only behind a staff-access gate. Never
  * throws. An error (including a missing table on a pre-031 DB) returns a
  * tagged failure so the caller can fall back to DEFAULT_CREW_TYPES.
@@ -35,12 +35,12 @@ export async function fetchCityCrewTypes(
       .eq("city_id", cityId)
       .order("label");
     if (error) {
-      // PGRST205 = table not in the schema cache — the expected pre-031
+      // PGRST205 = table not in the schema cache. The expected pre-031
       // state, and every caller has a defaults fallback. Warn, don't error:
       // an error here makes the designed degrade path look like an outage.
       if (error.code === "PGRST205") {
         log.warn(
-          "crew_types table missing (migration 031 pending) — using built-in defaults",
+          "crew_types table missing (migration 031 pending), using built-in defaults",
           {
             cityId,
           },
@@ -58,7 +58,7 @@ export async function fetchCityCrewTypes(
 }
 
 /**
- * The city's ACTIVE crew types as plain defs — what the work-order AI prompt
+ * The city's ACTIVE crew types as plain defs. What the work-order AI prompt
  * and the crew-type selects consume. Degrades to DEFAULT_CREW_TYPES when the
  * city has no rows or the table is missing/unreadable, so every caller always
  * gets a non-empty list.

@@ -1,6 +1,6 @@
 // Legacy data migration normalizer (NEXT_100 #81)
 // Maps a raw record from CSV or SeeClickFix JSON to NormalizedReport.
-// Pure — no DB deps; unit-tested in normalize.test.ts.
+// Pure, no DB deps; unit-tested in normalize.test.ts.
 
 import type { CsvConfig } from "@/lib/onboarding/ingest/csv";
 import { parseCsvReports } from "@/lib/onboarding/ingest/csv";
@@ -50,7 +50,7 @@ export const DEFAULT_CSV_CONFIG: CsvConfig = {
 };
 
 // ---------------------------------------------------------------------------
-// SeeClickFix JSON import (batch — the kind you export via their CSV/JSON tool)
+// SeeClickFix JSON import (batch, the kind you export via their CSV/JSON tool)
 // ---------------------------------------------------------------------------
 
 interface ScfJsonRow {
@@ -146,7 +146,7 @@ export function mapLegacyRecord(
 }
 
 // ---------------------------------------------------------------------------
-// Top-level entry point — parse raw text (CSV or JSON) into NormalizedReport[]
+// Top-level entry point, parse raw text (CSV or JSON) into NormalizedReport[]
 // ---------------------------------------------------------------------------
 
 /**

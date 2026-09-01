@@ -8,8 +8,8 @@ import { submitRequest } from "./actions";
 
 const ERROR_COPY: Record<string, string> = {
   invalid_kind: "Pick a request type.",
-  invalid_title: "Add a short summary (1–160 characters).",
-  invalid_body: "Add some detail (1–4000 characters).",
+  invalid_title: "Add a short summary (1-160 characters).",
+  invalid_body: "Add some detail (1-4000 characters).",
   invalid_email: "That email doesn't look right.",
   submit_failed: "Something went wrong. Try again in a moment.",
 };
@@ -57,7 +57,7 @@ export function RequestForm({
           Request sent
         </h2>
         <p className="mt-2 text-sm text-subtle">
-          Thanks — we read every request. If you left an email, we'll reply
+          Thanks. We read every request. If you left an email, we'll reply
           there.
         </p>
         <Button

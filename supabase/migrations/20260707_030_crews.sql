@@ -1,4 +1,4 @@
--- 030: Crews — sub-team org units under a division (team_key), plus the
+-- 030: Crews, sub-team org units under a division (team_key), plus the
 -- membership join table. Fills the gap designed-for on day 1: work_orders has
 -- carried a dangling assigned_crew_id uuid since 001 with no crews table.
 --
@@ -9,7 +9,7 @@
 -- crew_type is the AI work-order labor type (CREW_TYPES in
 -- src/lib/ai/work-order-schema.ts: paving, line_crew, sign_crew, cleanup,
 -- concrete, arborist, drain_crew). Matching it against work_orders.crew_type
--- powers dispatch auto-suggest. Free text (not an enum) — the AI list is
+-- powers dispatch auto-suggest. Free text (not an enum). The AI list is
 -- app-level and cities may add bespoke crews.
 
 -- ---------------------------------------------------------------------------
@@ -44,7 +44,7 @@ CREATE INDEX IF NOT EXISTS idx_crew_members_user ON crew_members (user_id);
 
 -- ---------------------------------------------------------------------------
 -- 2. Wire the dangling FK. crews is empty at migration time, so every
---    pre-existing non-null assigned_crew_id points at nothing — null them
+--    pre-existing non-null assigned_crew_id points at nothing, null them
 --    before adding the constraint.
 -- ---------------------------------------------------------------------------
 
@@ -57,7 +57,7 @@ ALTER TABLE work_orders
   FOREIGN KEY (assigned_crew_id) REFERENCES crews (id) ON DELETE SET NULL;
 
 -- ---------------------------------------------------------------------------
--- 3. RLS — unlike city_teams (public read: just labels), crew rows and
+-- 3. RLS, unlike city_teams (public read: just labels), crew rows and
 --    membership expose staff names → staff-only read, scoped to own city.
 --    Writes are admin-gated at the action layer (service role bypasses RLS);
 --    the staff-write policy mirrors the 024 config tables as defense in depth.
@@ -76,7 +76,7 @@ CREATE POLICY crews_write_staff ON crews
   USING (is_staff() AND city_id = current_user_city_id())
   WITH CHECK (is_staff() AND city_id = current_user_city_id());
 
--- crew_members has no city_id — scope through the parent crew.
+-- crew_members has no city_id, scope through the parent crew.
 DROP POLICY IF EXISTS crew_members_select_staff ON crew_members;
 CREATE POLICY crew_members_select_staff ON crew_members
   FOR SELECT USING (

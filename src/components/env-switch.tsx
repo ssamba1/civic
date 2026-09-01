@@ -7,7 +7,7 @@ import { DEMO_MODE, DEMO_SITE_URL, TESTING_SITE_URL } from "@/lib/demo-mode";
 /**
  * Demo ⇄ Testing deployment switch. Rendered on both deployments of a paired
  * install: the demo build (NEXT_PUBLIC_DEMO_MODE unset) links to the testing
- * site, the live build (=0) links back to the demo. A plain anchor — the target
+ * site, the live build (=0) links back to the demo. A plain anchor. The target
  * is a different origin, so client routing doesn't apply. Carries the current
  * path across so the viewer lands on the same page in the other environment.
  *

@@ -14,7 +14,7 @@ import type { CrewRow } from "@/lib/db/crews";
 import { isValidTeamId, TEAMS } from "@/lib/teams";
 
 /* ==================================================================
-   Crew stat card — a crew's roster plus its work-order workload. Mirrors
+   Crew stat card. A crew's roster plus its work-order workload. Mirrors
    the team card (status mini-bar, oldest-open age, MTTR) but without the
    scope-toggle interaction: a crew card is a plain surface. Rendered by
    crews-panel, grouped under its division.
@@ -53,9 +53,9 @@ export function CrewStatCard({
   const oldestLabel =
     workload && workload.oldestOpenAgeDays !== null
       ? formatDays(workload.oldestOpenAgeDays)
-      : "—";
+      : "-";
   const mttrLabel =
-    workload && workload.mttrHours !== null ? `${workload.mttrHours}h` : "—";
+    workload && workload.mttrHours !== null ? `${workload.mttrHours}h` : "-";
 
   return (
     <div className="flex flex-col gap-3 rounded-[var(--radius-lg)] border border-hairline bg-surface p-4 shadow-[var(--shadow-card)]">
@@ -141,7 +141,7 @@ export function CrewStatCard({
       )}
       <div className="text-[12px] leading-relaxed text-faint">
         {crew.members.length === 0
-          ? "No members yet — work can still route here"
+          ? "No members yet. Work can still route here"
           : crew.members.map((m, i) => (
               <span key={m.userId}>
                 {i > 0 && ", "}

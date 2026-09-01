@@ -61,7 +61,7 @@ export async function registerWebhookAction(input: {
 
   // SSRF guard: reject URLs pointing at internal/private hosts.
   // DNS-rebinding is a residual risk (the hostname could resolve to a private IP
-  // after this check) — acceptable for MVP.
+  // after this check), acceptable for MVP.
   try {
     const { hostname } = new URL(parsed.data.url);
     if (isBlockedWebhookHost(hostname)) {
@@ -71,7 +71,7 @@ export async function registerWebhookAction(input: {
     return { ok: false, error: "url_not_allowed" };
   }
 
-  // Generate a random secret — shown once to the admin
+  // Generate a random secret, shown once to the admin
   const secret = `whsec_${randomBytes(32).toString("hex")}`;
 
   const db = createServerClient();
@@ -80,7 +80,7 @@ export async function registerWebhookAction(input: {
     .insert({
       label: parsed.data.label,
       url: parsed.data.url,
-      // Never the caller-supplied cityId — an admin may only write to their own city.
+      // Never the caller-supplied cityId. An admin may only write to their own city.
       city_id: admin.cityId,
       events: parsed.data.events,
       secret,

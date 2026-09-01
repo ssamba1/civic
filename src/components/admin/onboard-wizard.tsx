@@ -149,7 +149,7 @@ export function OnboardWizard() {
             </p>
           )}
 
-          {/* Step 0 — Identify */}
+          {/* Step 0, Identify */}
           {step === 0 && (
             <div className="flex flex-col gap-4">
               <Field label="City name" htmlFor="city-name" required>
@@ -187,12 +187,12 @@ export function OnboardWizard() {
             </div>
           )}
 
-          {/* Step 1 — Boundary / disambiguate */}
+          {/* Step 1, Boundary / disambiguate */}
           {step === 1 && (
             <div className="flex flex-col gap-4">
               <p className="text-sm text-[var(--color-muted)]">
                 {candidates.length > 1
-                  ? "Multiple Census matches — pick the right one."
+                  ? "Multiple Census matches. Pick the right one."
                   : "Confirm the Census match."}
               </p>
               <div className="h-56 overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)]">
@@ -255,7 +255,7 @@ export function OnboardWizard() {
             </div>
           )}
 
-          {/* Step 2 — Preview */}
+          {/* Step 2, Preview */}
           {step === 2 && result && (
             <div className="flex flex-col gap-4">
               <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
@@ -294,7 +294,7 @@ export function OnboardWizard() {
             </div>
           )}
 
-          {/* Step 3 — Launch */}
+          {/* Step 3, Launch */}
           {step === 3 && result && (
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex flex-col rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">

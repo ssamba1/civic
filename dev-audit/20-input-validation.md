@@ -6,15 +6,15 @@
 
 | File | Line | Risk | Finding | Fix |
 |------|------|------|---------|-----|
-| `src/app/api/open311/v2/requests/route.ts` | 177–182 | P2 | Latitude/longitude validation allows edge values `-90/90` and `-180/180`. These are valid WGS84 coordinates but represent poles (lat=±90) and antimeridian (lng=±180), which are edge cases. Queries on these exact points are rare but can cause unexpected behavior in some GIS libs. | Allow but document that poles are excluded from geographic analysis. Or tighten to `lat in [-89.99, 89.99]` and `lng in [-179.99, 179.99]` to avoid edge singularities. |
-| `src/app/report/actions.ts` | 14–25 | P1 | Input schema allows `description: null` and `tags: []` (empty), but UI may send empty strings `""` which pass validation. The schema does `.max(500)` on description but doesn't trim or normalize. A description of 500 spaces is valid but useless. | Add `.trim().refine(s => s.length > 0)` if required, or `.transform(s => s.trim()).optional()` to normalize whitespace. |
-| `src/lib/resident-data.ts` | 221 | P2 | `JSON.parse(geo)` at line 221 (inside `decodeLocation`) has no try/catch wrapper visible here; if the string is malformed, parse throws and bubbles up uncaught. Called from map rendering; a malformed location could crash the page. | Wrap in try/catch: `try { geo = JSON.parse(geo) } catch { return { lng: 0, lat: 0 } }` (already does this at lines 220–224, pattern is CLEAN). |
+| `src/app/api/open311/v2/requests/route.ts` | 177-182 | P2 | Latitude/longitude validation allows edge values `-90/90` and `-180/180`. These are valid WGS84 coordinates but represent poles (lat=±90) and antimeridian (lng=±180), which are edge cases. Queries on these exact points are rare but can cause unexpected behavior in some GIS libs. | Allow but document that poles are excluded from geographic analysis. Or tighten to `lat in [-89.99, 89.99]` and `lng in [-179.99, 179.99]` to avoid edge singularities. |
+| `src/app/report/actions.ts` | 14-25 | P1 | Input schema allows `description: null` and `tags: []` (empty), but UI may send empty strings `""` which pass validation. The schema does `.max(500)` on description but doesn't trim or normalize. A description of 500 spaces is valid but useless. | Add `.trim().refine(s => s.length > 0)` if required, or `.transform(s => s.trim()).optional()` to normalize whitespace. |
+| `src/lib/resident-data.ts` | 221 | P2 | `JSON.parse(geo)` at line 221 (inside `decodeLocation`) has no try/catch wrapper visible here; if the string is malformed, parse throws and bubbles up uncaught. Called from map rendering; a malformed location could crash the page. | Wrap in try/catch: `try { geo = JSON.parse(geo) } catch { return { lng: 0, lat: 0 } }` (already does this at lines 220-224, pattern is CLEAN). |
 
 ---
 
 ## Details
 
-### P2: WGS84 edge-case coordinates (src/app/api/open311/v2/requests/route.ts:177–182)
+### P2: WGS84 edge-case coordinates (src/app/api/open311/v2/requests/route.ts:177-182)
 
 ```typescript
 const lat = parseFloat(body.lat);
@@ -56,7 +56,7 @@ Or document that poles/antimeridian are not supported and may be handled special
 
 ---
 
-### P1: Whitespace-only input passes validation (src/app/report/actions.ts:14–25)
+### P1: Whitespace-only input passes validation (src/app/report/actions.ts:14-25)
 
 ```typescript
 const submitReportSchema = z.object({
@@ -70,8 +70,8 @@ const submitReportSchema = z.object({
 ```
 
 **Issue:** Schema accepts:
-- `description: "   "` (500 spaces) — passes `.max(500)`, no trim
-- `tags: ["", "  "]` — array items have `.max(40)` but no `.min(1)`, so empty strings pass
+- `description: "   "` (500 spaces). Passes `.max(500)`, no trim
+- `tags: ["", "  "]`: array items have `.max(40)` but no `.min(1)`, so empty strings pass
 - `address: ""` (empty string accepted since `.nullable()` but empty string is also falsy)
 
 **Why P1:** Saves noise data to database. Unlikely to crash, but pollutes reports with useless entries. Staff see empty descriptions, empty tags clutter filters.

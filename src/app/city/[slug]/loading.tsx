@@ -2,7 +2,7 @@
 // header (static Teams title + subtitle, three stat chips), the filter bar
 // (desktop inline pill-bar + mobile button), and the TeamsInteractive stack
 // (stats cards, team roster grid, workload/routing two-column grid, delegation
-// panel), then the footer — so the shimmer placeholders occupy the same boxes
+// panel), then the footer, so the shimmer placeholders occupy the same boxes
 // the real content lands in with no layout shift on hydrate. The title,
 // subtitle, and footer need no data, so they render as real text at the real
 // weight. Shimmer + reduced-motion handling live in the shared `.skeleton`
@@ -16,7 +16,7 @@ export default function CityDashboardLoading() {
       aria-label="Loading dashboard"
     >
       <div className="flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
-        {/* Compact page header — static title + subtitle are instant; only the
+        {/* Compact page header. Static title + subtitle are instant; only the
             three stat-chip numbers wait on data. */}
         <section className="mb-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -45,7 +45,7 @@ export default function CityDashboardLoading() {
           </div>
         </section>
 
-        {/* Filter bar — desktop inline pill-bar, mobile single trigger button. */}
+        {/* Filter bar, desktop inline pill-bar, mobile single trigger button. */}
         <div className="mb-6">
           <div className="hidden rounded-[14px] border border-hairline bg-surface px-3 py-2.5 md:block">
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
@@ -64,7 +64,7 @@ export default function CityDashboardLoading() {
 
         {/* TeamsInteractive stack */}
         <div className="flex flex-col gap-4">
-          {/* Stats cards — 2-up on mobile, 4-up on lg. */}
+          {/* Stats cards, 2-up on mobile, 4-up on lg. */}
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {["s1", "s2", "s3", "s4"].map((k) => (
               <div
@@ -80,7 +80,7 @@ export default function CityDashboardLoading() {
             ))}
           </div>
 
-          {/* Team roster — card grid, ramps to 4 columns on xl. */}
+          {/* Team roster, card grid, ramps to 4 columns on xl. */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {["r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8"].map((k) => (
               <div

@@ -1,12 +1,12 @@
 # RLS regression tests
 
 Row-Level-Security regression tests for the Civic Postgres schema. These enforce
-`AGENTS.md` hard rule #3 — *"RLS on every table. Default deny. Tests in
+`AGENTS.md` hard rule #3, *"RLS on every table. Default deny. Tests in
 `tests/rls/` must pass before merging schema changes."*
 
 They are **integration** tests: they run against a real Supabase/Postgres
 instance, hitting it with the anon key (RLS enforced) and the service-role key
-(RLS bypassing). They are **opt-in** — the default `pnpm test` still collects
+(RLS bypassing). They are **opt-in**, the default `pnpm test` still collects
 them, but each suite stays in `skipIf` skip mode (and passes) unless a test
 database is configured. This keeps the everyday unit run hermetic and offline,
 and keeps CI green with no secrets.
@@ -16,13 +16,13 @@ and keeps CI green with no secrets.
 | File | Covers | Gating env |
 | --- | --- | --- |
 | `rls.test.ts` | anon default-deny on `reports`/`classifications`/`work_orders`/`merges`/`audit_log`/`error_log`; anon can read `dashboard_reports_view`; anon cannot INSERT a report; **service-role bypass control**; (optional) migration-012 view exclusion | `RUN_RLS_TESTS=1` + `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` + `SUPABASE_SERVICE_ROLE_KEY` |
-| `storage-and-cross-user.rls.test.ts` | **cross-user read isolation** (a resident can't read another's report); **storage cross-folder INSERT (T1.13)** — a city-A user can't upload into city-B's folder; plus own-report/own-city controls | `SUPABASE_TEST_URL` + `SUPABASE_TEST_ANON_KEY` + `SUPABASE_SERVICE_ROLE_KEY` |
+| `storage-and-cross-user.rls.test.ts` | **cross-user read isolation** (a resident can't read another's report); **storage cross-folder INSERT (T1.13)**. A city-A user can't upload into city-B's folder; plus own-report/own-city controls | `SUPABASE_TEST_URL` + `SUPABASE_TEST_ANON_KEY` + `SUPABASE_SERVICE_ROLE_KEY` |
 
 The two files use different env-var names on purpose: `rls.test.ts` predates this
 work and its gate is left untouched. The newer file uses the `SUPABASE_TEST_*`
 names. To run *both* against the same DB, export all of the variables below.
 
-## Known expected failure — T1.13
+## Known expected failure: T1.13
 
 `storage-and-cross-user.rls.test.ts` asserts that an authenticated user **cannot**
 INSERT a storage object into another city's folder. Against the **current**
@@ -87,7 +87,7 @@ pnpm vitest run tests/rls
 The new suite provisions its own fixtures (two cities, two auth users + their
 `public.users` rows) via the service-role key and tears them down in
 `afterAll`. It requires the `photos-public` storage bucket to exist (created by
-the app's normal setup); if it is absent, the storage control test will error —
+the app's normal setup); if it is absent, the storage control test will error,
 create the bucket first.
 
 ## CI

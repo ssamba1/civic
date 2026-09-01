@@ -78,7 +78,7 @@ export default function EmergencyInterstitial({
       onKeyDown={handleKeyDown}
       className="fixed inset-0 h-dvh z-50 flex flex-col bg-[var(--color-danger)] px-6 text-center overflow-y-auto"
     >
-      {/* Scrollable inner — centers content but allows scroll on very small phones */}
+      {/* Scrollable inner, centers content but allows scroll on very small phones */}
       <div
         className="flex flex-col items-center justify-center min-h-full"
         style={{
@@ -88,14 +88,14 @@ export default function EmergencyInterstitial({
             "max(2.5rem, calc(2.5rem + env(safe-area-inset-bottom, 0px)))",
         }}
       >
-        {/* Warning icon — aria-label so screen readers announce the icon's meaning
+        {/* Warning icon, aria-label so screen readers announce the icon's meaning
             before the heading text when the dialog gets focus. */}
         <div
           className="relative mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-white/20"
           aria-label="Warning"
           role="img"
         >
-          {/* Attention ring — GSAP-driven expanding pulse (motion-safe only) */}
+          {/* Attention ring, GSAP-driven expanding pulse (motion-safe only) */}
           <span
             data-emergency-ring
             aria-hidden="true"
@@ -128,7 +128,7 @@ export default function EmergencyInterstitial({
           danger, please call 911 immediately.
         </p>
 
-        {/* Call 911 button — min-h-[56px] for thumb target */}
+        {/* Call 911 button, min-h-[56px] for thumb target */}
         <a
           ref={call911Ref}
           href="tel:911"
@@ -137,7 +137,7 @@ export default function EmergencyInterstitial({
           Call 911
         </a>
 
-        {/* Override — min-h-[56px] for thumb target */}
+        {/* Override, min-h-[56px] for thumb target */}
         <button
           ref={overrideRef}
           type="button"

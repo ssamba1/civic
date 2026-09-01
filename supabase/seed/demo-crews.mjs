@@ -1,8 +1,8 @@
 /**
- * Civic – Demo crews seed (idempotent).
+ * Civic, Demo crews seed (idempotent).
  *
  * Provisions crews + rosters for the demo cities directly in the live
- * Supabase project via the service-role key (data plane only — schema must
+ * Supabase project via the service-role key (data plane only, schema must
  * already exist; run migrations first, including 20260707_030_crews.sql):
  *   - 8-crew roster per demo city (skips any crew whose team_key division
  *     isn't enabled for that city)
@@ -42,21 +42,21 @@ const db = createClient(SB_URL, SVC, { auth: { autoRefreshToken: false, persistS
 const CITY_SLUGS = ["cumming", "ahilyanagar"];
 const STAFF_ROLES = ["staff_dispatcher", "staff_supervisor", "admin"];
 
-// Two same-type crews on streets_roads are deliberate — showcases the AI
+// Two same-type crews on streets_roads are deliberate, showcases the AI
 // crew_hint routing (descriptions differentiate them) and the load balancer
 // in src/lib/ai/crew-assign.ts when the hint misses.
 //
-// MUST stay in sync with CREW_UNIT_ROSTER in src/lib/demo-auth.ts — same
+// MUST stay in sync with CREW_UNIT_ROSTER in src/lib/demo-auth.ts, same
 // names/crew_type values, so each per-crew demo login's ?crew=<name> scope
 // resolves against a real seeded row instead of silently falling back to
 // the type-level portal.
 const CREW_ROSTER = [
-  { name: "Northside Paving LLC", team_key: "streets_roads", crew_type: "paving", description: "Contract pothole repair vendor under resurfacing agreement PW-2025-041. All pothole and pavement-failure work on the arterial corridors — Peachtree Industrial Blvd, Buford Hwy, Canton Hwy, Atlanta Road — routes here; repairs on those roads are covered by the vendor's 24-month warranty at no cost to the City." },
-  { name: "North Paving Crew", team_key: "streets_roads", crew_type: "paving", description: "City crew — school zones and everything north of the city core — fast pothole patch turnarounds on residential streets." },
-  { name: "South Paving Crew", team_key: "streets_roads", crew_type: "paving", description: "Downtown, the parks district, and southern subdivisions — larger resurfacing and prep jobs." },
+  { name: "Northside Paving LLC", team_key: "streets_roads", crew_type: "paving", description: "Contract pothole repair vendor under resurfacing agreement PW-2025-041. All pothole and pavement-failure work on the arterial corridors, Peachtree Industrial Blvd, Buford Hwy, Canton Hwy, Atlanta Road, routes here; repairs on those roads are covered by the vendor's 24-month warranty at no cost to the City." },
+  { name: "North Paving Crew", team_key: "streets_roads", crew_type: "paving", description: "City crew, school zones and everything north of the city core, fast pothole patch turnarounds on residential streets." },
+  { name: "South Paving Crew", team_key: "streets_roads", crew_type: "paving", description: "Downtown, the parks district, and southern subdivisions, larger resurfacing and prep jobs." },
   { name: "Flatwork Crew", team_key: "sidewalks_ada", crew_type: "concrete", description: "Sidewalk panel replacement, curb ramps, and ADA compliance fixes citywide." },
   { name: "Storm Drain Crew", team_key: "stormwater", crew_type: "drain_crew", description: "Clogged inlets, culverts, jet-truck cleanouts, and standing-water calls." },
-  { name: "Night Line Crew", team_key: "street_lighting", crew_type: "line_crew", description: "Streetlight outages, downed lines, and powered signal faults — after-hours capable." },
+  { name: "Night Line Crew", team_key: "street_lighting", crew_type: "line_crew", description: "Streetlight outages, downed lines, and powered signal faults, after-hours capable." },
   { name: "Signal & Sign Crew", team_key: "traffic_engineering", crew_type: "sign_crew", description: "Downed stop signs, faded signage, and signal head replacements." },
   { name: "Forestry Crew", team_key: "parks_forestry", crew_type: "arborist", description: "Fallen trees, hazardous limb removal, and post-storm cleanup across parks and rights-of-way." },
   { name: "Beautification Crew", team_key: "graffiti_abatement", crew_type: "cleanup", description: "Graffiti removal, illegal dump pickups, and community cleanup sweeps." },
@@ -88,7 +88,7 @@ async function upsertCrews(cityId, rows) {
   const missingDescCol = error && (error.code === "42703" || /description.*does not exist/i.test(error.message ?? ""));
   if (missingDescCol) {
     if (!descriptionMissingWarned) {
-      log("  WARNING: crews.description column not found — apply supabase/migrations/20260708_032_crew_descriptions.sql to store crew descriptions. Seeding without descriptions for now.");
+      log("  WARNING: crews.description column not found, apply supabase/migrations/20260708_032_crew_descriptions.sql to store crew descriptions. Seeding without descriptions for now.");
       descriptionMissingWarned = true;
     }
     const noDesc = withDesc.map(({ description, ...rest }) => rest);
@@ -108,13 +108,13 @@ async function seedCity(slug) {
   const cityId = city.id;
   log(`city: ${city.name} (${cityId})`);
 
-  // Only seed a crew whose division (team_key) is enabled for this city —
-  // crews.team_key has no FK to city_teams, so an insert would silently
+  // Only seed a crew whose division (team_key) is enabled for this city.
+  // Crews.team_key has no FK to city_teams, so an insert would silently
   // succeed for a disabled/absent division and the UI would show a crew
   // under a division the city turned off.
   const teamRows = await ok(db.from("city_teams").select("team_key, enabled").eq("city_id", cityId), `city_teams lookup ${slug}`);
   // A city with ZERO city_teams rows runs on the app's preset divisions
-  // (the UI falls back to TEAM_LIST — Cumming is in this state), so an empty
+  // (the UI falls back to TEAM_LIST, Cumming is in this state), so an empty
   // table means "everything enabled", not "nothing enabled".
   const hasTeamConfig = (teamRows ?? []).length > 0;
   const enabledTeamKeys = new Set((teamRows ?? []).filter((t) => t.enabled).map((t) => t.team_key));
@@ -122,7 +122,7 @@ async function seedCity(slug) {
 
   const toSeed = CREW_ROSTER.filter((c) => teamEnabled(c.team_key));
   for (const c of CREW_ROSTER) {
-    if (!teamEnabled(c.team_key)) log(`  skip crew "${c.name}" — team_key "${c.team_key}" not enabled for this city`);
+    if (!teamEnabled(c.team_key)) log(`  skip crew "${c.name}", team_key "${c.team_key}" not enabled for this city`);
   }
 
   const crews = toSeed.length ? await upsertCrews(cityId, toSeed) : [];
@@ -137,7 +137,7 @@ async function seedCity(slug) {
   if (!crews.length) {
     log(`members: 0 linked (no crews to staff)`);
   } else if (!staff?.length) {
-    log(`members: 0 linked (no staff/admin users in this city — hollow crews, assignable by design)`);
+    log(`members: 0 linked (no staff/admin users in this city, hollow crews, assignable by design)`);
   } else {
     const memberRows = staff.map((u, i) => ({
       crew_id: crews[i % crews.length].id,

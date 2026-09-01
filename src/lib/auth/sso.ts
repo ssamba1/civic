@@ -1,6 +1,6 @@
 // SSO / SAML scaffolding (NEXT_100 #83)
 // Pure helpers for SAML config validation and domain-to-tenant resolution.
-// No live IdP integration — full SAML assertion validation is TODO (see below).
+// No live IdP integration. Full SAML assertion validation is TODO (see below).
 //
 // TODO (before production SSO):
 // 1. Integrate a SAML library (e.g. `@node-saml/node-saml` or `samlify`) to
@@ -11,7 +11,7 @@
 //    verify the XML signature against x509cert.
 // 4. Map the SAML NameID (email) to a Supabase auth user; create if not exists.
 // 5. Issue a Supabase session (use the admin API or a custom JWT).
-// 6. Handle SLO (Single Logout) — optional but important for enterprise.
+// 6. Handle SLO (Single Logout), optional but important for enterprise.
 // 7. Rotate x509cert without downtime (overlapping cert window).
 
 import type { Result } from "@/lib/types";

@@ -1,8 +1,8 @@
 /**
- * Civic – Ahilyanagar demo seed (idempotent).
+ * Civic, Ahilyanagar demo seed (idempotent).
  *
  * Provisions the Ahilyanagar, Maharashtra demo city directly in the live
- * Supabase project via the service-role key (data plane only — schema must
+ * Supabase project via the service-role key (data plane only, schema must
  * already exist; run migrations first):
  *   - cities row (slug `ahilyanagar`, geocoded center)
  *   - 11 city_teams rows (full category -> team routing)

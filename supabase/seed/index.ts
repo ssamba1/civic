@@ -1,5 +1,5 @@
 /**
- * Civic – Seed Data
+ * Civic, Seed Data
  *
  * Seeds:
  *  - Cumming, GA as a city with approximate boundary polygon
@@ -35,7 +35,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 });
 
 // ---------------------------------------------------------------------------
-// Generate random passwords at runtime — never embed as string literals
+// Generate random passwords at runtime, never embed as string literals
 // ---------------------------------------------------------------------------
 
 function generatePassword(): string {
@@ -143,7 +143,7 @@ async function seedUsers(cityId: string): Promise<Record<string, string>> {
   const userIds: Record<string, string> = {};
 
   for (const u of TEST_USERS) {
-    // Create auth user (idempotent-ish — will error if exists, so we catch)
+    // Create auth user (idempotent-ish, will error if exists, so we catch)
     const { data: authData, error: authError } =
       await supabase.auth.admin.createUser({
         email: u.email,
@@ -154,7 +154,7 @@ async function seedUsers(cityId: string): Promise<Record<string, string>> {
     let userId: string;
 
     if (authError) {
-      // User may already exist — try to look them up
+      // User may already exist. Try to look them up
       const { data: listData } = await supabase.auth.admin.listUsers();
       const existing = listData?.users?.find(
         (existing) => existing.email === u.email,
@@ -187,7 +187,7 @@ async function seedUsers(cityId: string): Promise<Record<string, string>> {
     );
 
     userIds[u.role] = userId;
-    console.log(`User seeded: ${u.displayName} (${u.role}) — ${userId}`);
+    console.log(`User seeded: ${u.displayName} (${u.role}), ${userId}`);
   }
 
   return userIds;
@@ -438,7 +438,7 @@ async function seedReports(cityId: string, reporterId: string): Promise<void> {
     );
 
     console.log(
-      `Report seeded: ${sr.classification.category} at ${sr.address} — ${reportId}`,
+      `Report seeded: ${sr.classification.category} at ${sr.address}, ${reportId}`,
     );
   }
 }

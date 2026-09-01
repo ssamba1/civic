@@ -85,7 +85,7 @@ describe("validateBulkSelection", () => {
   });
 
   it("silently filters out non-string entries before dedup check", () => {
-    // mixing valid uuid + number — the number is filtered, leaving 1 valid entry
+    // mixing valid uuid + number. The number is filtered, leaving 1 valid entry
     const r = validateBulkSelection([uuid(1), 42 as unknown as string]);
     expect(r.ok).toBe(true);
     expect(r.ok === true && r.data).toEqual([uuid(1)]);

@@ -16,7 +16,7 @@ import {
 } from "@/lib/open311/admin-keys";
 import type { Result } from "@/lib/types";
 
-// Server Actions are public endpoints — re-check authorization here, never rely
+// Server Actions are public endpoints. Re-check authorization here, never rely
 // on the layout gate alone. Mirrors admin/onboard/actions.ts requireAdmin, but
 // returns the resolved admin user id so a minted key can attribute to a real
 // users row by default (the FK on api_keys.user_id, migration 028).

@@ -3,7 +3,7 @@
 /**
  * Clip playback theater: pick a clip from the recent-clips list, watch it play
  * with the detector's per-frame boxes drawn over it, and follow each detection
- * as the playhead crosses it — waiting → analyzing → drafting → settled — with
+ * as the playhead crosses it (waiting → analyzing → drafting → settled) with
  * the generated report expandable inline in the rail.
  *
  * This is a REPLAY of a pipeline run that already completed on the server; the
@@ -58,10 +58,10 @@ export interface TheaterEvent {
   frameUrl: string | null;
   /** Detector box for `frameUrl`, normalized 0..1 top-left. */
   frameBox: DetectionBox | null;
-  /** e.g. "pothole · 0.87" — drawn on the box in the full-frame modal. */
+  /** e.g. "pothole · 0.87", drawn on the box in the full-frame modal. */
   frameLabel: string | null;
   report: GeneratedReport | null;
-  /** Raw cluster status — drives whether a manual decision can be run. */
+  /** Raw cluster status. Drives whether a manual decision can be run. */
   status: string;
   /** Human label for `status` ("Needs manual dispatch", …). */
   statusLabel: string;
@@ -128,9 +128,9 @@ const ASSESS_WINDOW_S = 0.8;
 
 interface StudioContext {
   clips: TheaterClip[];
-  /** Clusters no clip can replay — appended to whichever rail is on screen. */
+  /** Clusters no clip can replay. Appended to whichever rail is on screen. */
   orphanEvents: TheaterEvent[];
-  /** City slug — the rail links reports into that city's work-order grid. */
+  /** City slug, the rail links reports into that city's work-order grid. */
   slug: string;
   /** Real staff. False on the public demo console, where the decision
    *  controls are hidden rather than shown and refused by the server. */
@@ -297,7 +297,7 @@ function StageBody({
         for (const frame of json.frames) byFrame.set(frame.i, frame.boxes);
         setTrack({ fps: json.fps || 25, byFrame });
       } catch {
-        // Overlay is an enhancement — a missing track just means no boxes.
+        // Overlay is an enhancement. A missing track just means no boxes.
       }
     })();
     return () => {
@@ -338,14 +338,14 @@ function StageBody({
       video.currentTime = Math.max(0, seconds);
       syncTime(video.currentTime);
       void video.play().catch(() => {
-        /* autoplay refusal is harmless — the seek still landed */
+        /* autoplay refusal is harmless, the seek still landed */
       });
     },
     [syncTime],
   );
 
   // Transport controls. The overlay covers the frame, so the browser's own
-  // hover-revealed control bar is easy to miss — this bar is always visible
+  // hover-revealed control bar is easy to miss. This bar is always visible
   // and carries the scrub/skip affordances the native one would.
   const togglePlay = useCallback(() => {
     const video = videoRef.current;
@@ -405,7 +405,7 @@ function StageBody({
             <HelpCircle className="h-6 w-6 text-faint" strokeWidth={1.5} />
             <p className="text-[13px] text-subtle">No playable media</p>
             <p className="max-w-xs text-[12px] text-faint">
-              This clip has no stored video object — its detections are still
+              This clip has no stored video object. Its detections are still
               listed below.
             </p>
           </div>
@@ -455,7 +455,7 @@ function StageBody({
             >
               <SkipForward className="h-3.5 w-3.5" strokeWidth={1.75} />
             </button>
-            {/* Uncontrolled on purpose — `syncTime` writes `.value` directly. */}
+            {/* Uncontrolled on purpose. `syncTime` writes `.value` directly. */}
             <input
               ref={seekRef}
               type="range"
@@ -536,8 +536,8 @@ function DetectionOverlay({
         className="pointer-events-none absolute inset-0 h-full w-full"
       >
         <title>Detector overlay</title>
-        {/* The published per-frame track carries geometry and confidence only —
-            no class — so these boxes stay on the neutral detector blush rather
+        {/* The published per-frame track carries geometry and confidence only,
+            no class, so these boxes stay on the neutral detector blush rather
             than claiming a class hue they cannot know. */}
         {boxes.map((box) => (
           <rect
@@ -554,7 +554,7 @@ function DetectionOverlay({
           />
         ))}
       </svg>
-      {/* Labels live in HTML, not SVG — a 0..1 viewBox with
+      {/* Labels live in HTML, not SVG. A 0..1 viewBox with
           preserveAspectRatio="none" would stretch <text> glyphs. */}
       <div className="pointer-events-none absolute inset-0">
         {boxes.map((box) => (
@@ -607,7 +607,7 @@ function DetectionRail({
 }) {
   const { clips, orphanEvents, revealClipList, selectedId } = useStudio();
   // Clip-bound detections first (they narrate the playhead), then the ones no
-  // clip can replay — deleting the standalone Detections list made this rail
+  // clip can replay, deleting the standalone Detections list made this rail
   // the only surface, so nothing may fall out of it.
   const items = useMemo(
     () => [...events, ...orphanEvents],
@@ -637,7 +637,7 @@ function DetectionRail({
         const prev = phasesRef.current;
         let changed = false;
         const next = items.map((event, i) => {
-          // An unlinked cluster has no timestamp on this clip — it is already
+          // An unlinked cluster has no timestamp on this clip. It is already
           // decided, and must never read as "waiting for playhead".
           const phase = event.unlinked
             ? "settled"
@@ -665,7 +665,7 @@ function DetectionRail({
         </span>
       </div>
       <p className="text-[12px] leading-snug text-faint">
-        Replay of a completed run — detected → assessed → report created. Expand
+        Replay of a completed run, detected → assessed → report created. Expand
         an item for its decision, evidence frame and controls.
       </p>
       {items.length === 0 ? (
@@ -705,14 +705,14 @@ function DetectionRail({
       )}
       {otherCount > 0 && (
         // The feed is scoped to the clip on screen. With a second clip in the
-        // city this line is the only thing that says so — and the way out.
+        // city this line is the only thing that says so, and the way out.
         <button
           type="button"
           onClick={revealClipList}
           data-testid="other-clip-clusters"
           className="self-start text-left font-mono text-[11px] text-faint underline decoration-hairline-strong underline-offset-2 transition-colors hover:text-foreground"
         >
-          {otherCount} more on other clips — pick a clip below
+          {otherCount} more on other clips. Pick a clip below
         </button>
       )}
     </div>
@@ -723,7 +723,7 @@ function DetectionRail({
    replay STATE (working / settled / dispatched), so it draws from the semantic
    --status-* tokens like every other state in the app; the 3px left edge is the
    detector CLASS, so it draws from the categorical pastel ramp. State moved off
-   pastel-sky/mint deliberately — those hues now belong to two damage classes,
+   pastel-sky/mint deliberately. Those hues now belong to two damage classes,
    and one hue cannot mean both "transverse crack" and "analyzing". */
 // Mixed toward transparent: the raw --status-* tokens are system-bright and a
 // full-strength ring on every card turns the rail neon, especially on dark.
@@ -740,7 +740,7 @@ const PHASE_RING: Record<EventPhase, string> = {
 };
 
 /**
- * Class dot · class name · confidence meter — the header line shared by the
+ * Class dot · class name · confidence meter, the header line shared by the
  * card's two mutually exclusive affordances (report link / seek button), so the
  * two can never drift apart. The meter's LENGTH is the magnitude a bare
  * two-decimal number makes you read; its hue repeats the class, which is why
@@ -816,14 +816,14 @@ const EventCard = memo(function EventCard({
       data-testid="detection-item"
       data-phase={phase}
       // The class hue is carried by the dot beside the class name, not by a
-      // thick left edge on the card — a colored side tab is a stock
+      // thick left edge on the card. A colored side tab is a stock
       // AI-dashboard tell and it double-encodes what the dot already says.
       className={`overflow-hidden rounded-[var(--radius-md)] border bg-surface transition-colors ${ring} ${phase === "waiting" ? "opacity-60" : ""}`}
     >
       {/* Two affordances, deliberately split: the timestamp scrubs the clip,
           the rest of the header opens the thing the detection became. A
           detection with no report has nothing to open, so there the body
-          seeks too. Siblings, not nested — an anchor cannot contain a
+          seeks too. Siblings, not nested. An anchor cannot contain a
           button. */}
       <div className="flex w-full items-center gap-2 px-3 py-2">
         <button
@@ -834,7 +834,7 @@ const EventCard = memo(function EventCard({
           data-testid="detection-ts"
           className="-mx-1 shrink-0 rounded px-1 font-mono text-[11px] tabular-nums text-faint outline-none transition-colors hover:bg-overlay hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-default disabled:hover:bg-transparent disabled:hover:text-faint"
         >
-          {event.unlinked ? "—" : `${event.tsSeconds.toFixed(2)}s`}
+          {event.unlinked ? "-" : `${event.tsSeconds.toFixed(2)}s`}
         </button>
         {event.report ? (
           <Link
@@ -906,7 +906,7 @@ const EventCard = memo(function EventCard({
         )}
       </div>
 
-      {/* One disclosure per cluster, always present — it is the only place the
+      {/* One disclosure per cluster, always present. It is the only place the
           decision, the evidence frame and the manual controls live now that
           the standalone Detections list is gone. The summary still says
           "Report" once the playhead has passed a dispatched cluster, so the
@@ -994,7 +994,7 @@ const EventCard = memo(function EventCard({
   );
 });
 
-/** The recent-clips log — same five columns, now a clip picker. */
+/** The recent-clips log, same five columns, now a clip picker. */
 export function ClipList() {
   const { clips, selectedId, select, listOpen } = useStudio();
   const needsAttention = clips.some(
@@ -1010,7 +1010,7 @@ export function ClipList() {
       <summary
         className={`${EYEBROW} cursor-pointer select-none px-4 py-3 transition-colors hover:text-subtle`}
       >
-        Recent clips ({clips.length}) — click one to play it
+        Recent clips ({clips.length}), click one to play it
       </summary>
       <div className="overflow-x-auto border-t border-hairline">
         <table className="w-full text-left text-[13px]">
@@ -1043,7 +1043,7 @@ export function ClipList() {
                     </button>
                   </td>
                   <td className="px-3 py-2">
-                    {/* Run state, not a category — the shared status tones, so
+                    {/* Run state, not a category, the shared status tones, so
                         a failed clip reads red here exactly as it would in the
                         grid. */}
                     <span
@@ -1055,10 +1055,10 @@ export function ClipList() {
                     </span>
                   </td>
                   <td className="px-3 py-2 tabular-nums">
-                    {clip.framesSampled ?? "—"}
+                    {clip.framesSampled ?? "-"}
                   </td>
                   <td className="px-3 py-2 tabular-nums">
-                    {clip.detectionsFound ?? "—"}
+                    {clip.detectionsFound ?? "-"}
                   </td>
                   <td className="max-w-80 truncate px-3 py-2 text-xs text-subtle">
                     {clip.error ?? ""}

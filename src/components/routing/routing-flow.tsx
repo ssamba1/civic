@@ -9,7 +9,7 @@ import { isValidTeamId, TEAMS } from "@/lib/teams";
 import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
-   RoutingFlow — dependency-free flow-chart of the routing pipeline.
+   RoutingFlow, dependency-free flow-chart of the routing pipeline.
 
    Layered DAG, left → right:
 
@@ -75,7 +75,7 @@ const V_GAP = 10;
 const PAD = 28;
 const NEUTRAL_EDGE = "var(--color-foreground)";
 
-/** Org-unit labels are often stored as slugs ("streets_roads") — humanize for
+/** Org-unit labels are often stored as slugs ("streets_roads"), humanize for
  *  display without touching labels a human already wrote. */
 function humanize(label: string): string {
   if (!/^[a-z0-9_]+$/.test(label)) return label;
@@ -110,7 +110,7 @@ function buildGraph(
     id: "ai",
     kind: "ai",
     label: "AI classify",
-    sublabel: "Gemini vision — category, severity, crew hint",
+    sublabel: "Gemini vision, category, severity, crew hint",
   };
   edges.push({ from: "intake", to: "ai" });
 
@@ -290,7 +290,7 @@ function buildGraph(
       id: "sink",
       kind: "sink",
       label: "Manual dispatch",
-      sublabel: "no matching crew — staff assign",
+      sublabel: "no matching crew, staff assign",
       dashed: true,
     });
   }
@@ -360,7 +360,7 @@ export function RoutingFlow({
   data: RoutingFlowData;
   /** Live per-category report counts; omit to hide all volume badges. */
   categoryCounts?: Record<string, number>;
-  /** e.g. `/city/cumming/crew` — makes crew nodes link to their workspace. */
+  /** e.g. `/city/cumming/crew`. Makes crew nodes link to their workspace. */
   crewLinkBase?: string;
 }) {
   const [hovered, setHovered] = useState<string | null>(null);
@@ -430,13 +430,13 @@ export function RoutingFlow({
             </span>
           ) : (
             <span>
-              crew pick: AI hint → staffed → least load — hover any node to
-              trace its paths
+              crew pick: AI hint → staffed → least load, hover any node to trace
+              its paths
             </span>
           )}
           {data.orgTreeInert && (
             <span className="rounded-full border border-dashed border-hairline px-2 py-0.5 text-faint">
-              org tree configured but routes nothing — no unit declares
+              org tree configured but routes nothing, no unit declares
               categories
             </span>
           )}

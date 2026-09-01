@@ -14,7 +14,7 @@ export default async function UserLayout({
   // silently establishes a guest session for reports/upvotes/my-reports.
   //
   // Resolve the resident's city once here so the User⇄City switch links to
-  // THEIR city, not a hardcoded default — the whole header is city-correct from
+  // THEIR city, not a hardcoded default. The whole header is city-correct from
   // a single source.
   const { citySlug } = await getCurrentResident();
 
@@ -23,7 +23,7 @@ export default async function UserLayout({
       <AnonBootstrap />
       <UserNav citySlug={citySlug} />
 
-      {/* Mobile has no top header (BottomTabBar covers nav) — float the
+      {/* Mobile has no top header (BottomTabBar covers nav), float the
           view switch top-right so User⇄City stays reachable on phones. */}
       <div
         className="md:hidden fixed right-3 top-0 z-50 flex items-center gap-2"
@@ -40,7 +40,7 @@ export default async function UserLayout({
        *           header offset.
        * pb-[calc(5.5rem+env(safe-area-inset-bottom))]: keep content clear of
        *   the BottomTabBar (~h-16) AND add the home-bar safe-area. Merged into
-       *   one calc() so only a single padding-bottom declaration exists — using
+       *   one calc() so only a single padding-bottom declaration exists. Using
        *   separate pb-[5.5rem] + pb-safe would let the cascade pick only one.
        * md:pb-0: no bottom bar on desktop.
        */}

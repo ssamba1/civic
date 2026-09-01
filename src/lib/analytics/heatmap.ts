@@ -4,7 +4,7 @@
  * Weight strategy:
  *   weight = severityFactor * recencyFactor
  *
- *   severityFactor = severity / 5  (range 0.2 – 1.0; higher severity → heavier)
+ *   severityFactor = severity / 5  (range 0.2-1.0; higher severity → heavier)
  *
  *   recencyFactor  = exp(-ageDays / 90)
  *     - A report submitted today has factor 1.0.
@@ -13,7 +13,7 @@
  *
  *   Combined weight is in the range (0, 1].
  *
- * No server/browser imports — this file is pure TypeScript so it can be
+ * No server/browser imports. This file is pure TypeScript so it can be
  * imported by server components, API routes, and Vitest unit tests alike.
  */
 
@@ -28,7 +28,7 @@ export interface HeatmapPoint {
   /** Normalised weight in (0, 1]. Used by deck.gl HeatmapLayer `getWeight`. */
   weight: number;
   /**
-   * Raw severity (1–5) from the source report, carried through so that
+   * Raw severity (1-5) from the source report, carried through so that
    * `bucketByGrid` can compute a true average severity rather than backing
    * it out of the composite weight (which is severity × recency and therefore
    * systematically understated). Optional for callers that construct points
@@ -38,11 +38,11 @@ export interface HeatmapPoint {
 }
 
 export interface ViewportBounds {
-  /** [west, south, east, north] — matches MapLibre fitBounds / deck.gl WebMercatorViewport */
+  /** [west, south, east, north], matches MapLibre fitBounds / deck.gl WebMercatorViewport */
   bbox: [number, number, number, number];
   /** Centroid of all points */
   center: [lng: number, lat: number];
-  /** Suggested zoom level (clamped 9–14). Coarse estimate; the map's fitBounds overrides. */
+  /** Suggested zoom level (clamped 9-14). Coarse estimate; the map's fitBounds overrides. */
   zoom: number;
 }
 
@@ -53,7 +53,7 @@ export interface GridCell {
   count: number;
   /** Sum of weights in this cell */
   totalWeight: number;
-  /** Average severity (1–5) */
+  /** Average severity (1-5) */
   avgSeverity: number;
 }
 
@@ -152,7 +152,7 @@ export function bucketByGrid(
   if (points.length === 0) return [];
 
   // Accumulate raw severity per cell so avgSeverity reflects true severity
-  // (1–5) rather than the composite weight (severity × recency), which is
+  // (1-5) rather than the composite weight (severity × recency), which is
   // systematically understated due to the recency multiplier.
   const cells = new Map<
     string,
@@ -199,7 +199,7 @@ export function bucketByGrid(
       position: [lngSum, latSum] as [number, number],
       count,
       totalWeight: weightSum,
-      // avgSeverity is the arithmetic mean of raw severity values (1–5),
+      // avgSeverity is the arithmetic mean of raw severity values (1-5),
       // rounded to the nearest integer and clamped to the valid range.
       avgSeverity: Math.round(Math.min(5, Math.max(1, rawSeveritySum / count))),
     }),

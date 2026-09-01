@@ -12,37 +12,37 @@
    surfaces use the SEMANTIC utilities registered in `@theme inline` below
    (bg-surface, text-foreground/subtle/faint, border-hairline[-strong],
    bg-overlay[-strong], bg-elevated, bg-glass). Because those utilities inline
-   `var(--token)`, ONE set of classes renders correctly in BOTH themes — no
+   `var(--token)`, ONE set of classes renders correctly in BOTH themes, no
    per-element `dark:` duplication, and a shared component looks right on every
    page regardless of that page's own migration state.
 
    Status FILL hues + the muted category tokens stay identical across themes
    (semantic encoding shouldn't flip). The ink accent and --color-primary DO
-   flip — near-black on light, near-white on dark — so primary surfaces stay
+   flip (near-black on light, near-white on dark), so primary surfaces stay
    high-contrast in either theme. */
 :root {
   color-scheme: light;
-  /* page + text — soft gray canvas, cards sit on it in pure white */
+  /* page + text. Soft gray canvas, cards sit on it in pure white */
   --background: #f7f7f8;
   --foreground: #141415; /* primary text  (was text-white / zinc-100) */
   --subtle: #52525b; /* secondary text (was zinc-300 / zinc-400) */
-  --faint: #67676e; /* tertiary text — holds WCAG AA (≥4.5:1) as 11–13px functional copy on --background #f7f7f8, --surface #fff, AND the #ededee raised/overlay wash (darkened from #6f6f76 which was only 4.26:1 on #ededee) */
+  --faint: #67676e; /* tertiary text. Holds WCAG AA (≥4.5:1) as 11-13px functional copy on --background #f7f7f8, --surface #fff, AND the #ededee raised/overlay wash (darkened from #6f6f76 which was only 4.26:1 on #ededee) */
 
   /* surfaces */
   --surface: #ffffff; /* cards / panels (was #1c1c1e / zinc-900)   */
   --elevated: #ededf0; /* raised chips / avatars (was zinc-800)     */
   --glass: rgba(255, 255, 255, 0.72); /* sticky header / popover casing */
 
-  /* translucent washes — hover fills + faint raises */
-  --overlay: rgba(0, 0, 0, 0.04); /* was bg-white/[0.02–0.05] */
-  --overlay-strong: rgba(0, 0, 0, 0.07); /* was bg-white/[0.06–0.10] */
+  /* translucent washes. Hover fills + faint raises */
+  --overlay: rgba(0, 0, 0, 0.04); /* was bg-white/[0.02-0.05] */
+  --overlay-strong: rgba(0, 0, 0, 0.07); /* was bg-white/[0.06-0.10] */
 
-  /* hairline borders — crisp enough to edge white cards on the paper-white
+  /* hairline borders, crisp enough to edge white cards on the paper-white
      page, still whisper-quiet */
-  --hairline: rgba(0, 0, 0, 0.08); /* was border-white/[0.04–0.10] */
+  --hairline: rgba(0, 0, 0, 0.08); /* was border-white/[0.04-0.10] */
   --hairline-strong: rgba(0, 0, 0, 0.13); /* was border-white/[0.12+]      */
 
-  /* elevation — subtle two-layer float on light (pure hairline borders read
+  /* elevation, subtle two-layer float on light (pure hairline borders read
      flat per vision QA); popovers/modals still float harder. Deep shadows on
      dark (see .dark). Used via shadow-[var(--shadow-*)]. */
   --shadow-card: 0 1px 2px rgba(16, 17, 20, 0.04), 0 2px 8px -2px rgba(16, 17, 20, 0.06);
@@ -53,7 +53,7 @@
   --color-primary-hover: #2d2d31;
   --color-primary-light: rgba(24, 24, 27, 0.08);
 
-  /* Ink accent — the monochrome enterprise accent (replaces the v3 emerald).
+  /* Ink accent, the monochrome enterprise accent (replaces the v3 emerald).
      Used for active nav, primary CTA, positive deltas, chart primary series,
      focus rings. Grayscale by design; hue is reserved for state/data only. */
   --accent: #18181b;
@@ -61,13 +61,13 @@
   --accent-soft: rgba(24, 24, 27, 0.07);
   --accent-text: #18181b;
 
-  /* Status FILL hues — muted enterprise tones (were bright Apple system
+  /* Status FILL hues. Muted enterprise tones (were bright Apple system
      colors). The AA-tuned --status-*-fg TEXT tokens below are unchanged. */
   --color-success: #3d9a63;
   --color-warning: #c08a1d;
   --color-danger: #cc4638;
 
-  /* Status TEXT tokens — kept SEPARATE from the bright FILL hues above. On a
+  /* Status TEXT tokens, kept SEPARATE from the bright FILL hues above. On a
      near-white surface the saturated fills (#30d158 etc.) only reach ~1.7:1 as
      text, far under the 4.5:1 AA floor, so the small status label switches to
      these darkened variants while the dot/bar/pill-fill keep the bright hue.
@@ -91,7 +91,7 @@
   --radius-lg: 12px;
 
   /* Category tokens kept under former names so existing class refs still resolve.
-     Muted enterprise categorical hues — same hue angles, chroma pulled down to
+     Muted enterprise categorical hues, same hue angles, chroma pulled down to
      mid-lightness. These encode category ONLY on map data layers + chart series;
      everywhere else the app is grayscale. */
   --fg-deep-void: #000000;
@@ -101,7 +101,7 @@
   --fg-amber-pulse: #ad8434;
   --fg-cyan-burst: #5f8ba6;
 
-  /* Pastel accent ramp — soft = fills / chips / chart areas, strong = strokes /
+  /* Pastel accent ramp, soft = fills / chips / chart areas, strong = strokes /
      deltas / small emphasis. Decorative + data accents ONLY: body text stays on
      --foreground/--subtle (pastels don't clear AA as copy). Matched lightness
      across hues so mixed charts read as one family. Flipped per-theme below.
@@ -109,7 +109,7 @@
      Every -strong value here is darkened to clear WCAG AA (>=4.5:1) against its
      OWN pastel fill, because that is the pairing the delta chips actually
      render: strong text on the matching tint, at 11px. The previous ramp was
-     labelled AA-tuned and was not — the six pairs measured 3.40 to 4.13, and
+     labelled AA-tuned and was not, the six pairs measured 3.40 to 4.13, and
      Lighthouse failed the one chip that happened to be on screen. Re-tuned
      together so the family still reads as one set. Dark theme is unaffected:
      its translucent fills over a near-black surface already measure 6.9-8.2:1. */
@@ -127,15 +127,15 @@
   --pastel-peach-strong: #925832;
 }
 
-/* DARK theme — overrides only the values that flip. */
+/* DARK theme, overrides only the values that flip. */
 .dark {
   color-scheme: dark;
-  /* Near-black canvas (not pitch black) — cards sit clearly lighter on it;
+  /* Near-black canvas (not pitch black). Cards sit clearly lighter on it;
      card/canvas contrast is the core of this theme. */
   --background: #09090b;
   --foreground: #ffffff;
-  --subtle: #b3b3ba; /* secondary text — lifted from #a1a1a8 (≈7:1 → ≈9:1 on --background); dark surfaces swallow mid-grays, so secondary copy runs one step brighter than the zinc scale suggests */
-  --faint: #95959d; /* tertiary text — lifted from #85858c; ≥4.5:1 (AA) as 11–13px functional copy on both --surface #161619 and --background #0e0e10, with headroom */
+  --subtle: #b3b3ba; /* secondary text, lifted from #a1a1a8 (≈7:1 → ≈9:1 on --background); dark surfaces swallow mid-grays, so secondary copy runs one step brighter than the zinc scale suggests */
+  --faint: #95959d; /* tertiary text, lifted from #85858c; ≥4.5:1 (AA) as 11-13px functional copy on both --surface #161619 and --background #0e0e10, with headroom */
 
   --surface: #101012;
   --elevated: #232327; /* lifted from #26262a so active/selected fills read against both canvas and cards */
@@ -144,7 +144,7 @@
   --overlay: rgba(255, 255, 255, 0.06);
   --overlay-strong: rgba(255, 255, 255, 0.11);
 
-  /* Lifted from 0.09/0.16 — with interior chrome dividers gone, the borders
+  /* Lifted from 0.09/0.16, with interior chrome dividers gone, the borders
      that remain (card edges, the sidebar rail) must actually register. */
   --hairline: rgba(255, 255, 255, 0.12);
   --hairline-strong: rgba(255, 255, 255, 0.2);
@@ -156,7 +156,7 @@
   --color-primary-hover: #d4d4d8;
   --color-primary-light: rgba(255, 255, 255, 0.1);
 
-  /* Ink accent, inverted for the dark canvas — near-white so primary CTAs read
+  /* Ink accent, inverted for the dark canvas, near-white so primary CTAs read
      as light-on-dark. Solid CTA text (--accent-contrast) is near-black; active
      nav uses the soft tint + --accent-text. */
   --accent: #f4f4f5;
@@ -165,10 +165,10 @@
   --accent-text: #f4f4f5;
 
   /* Dark theme: the bright system hues clear AA as text on the dark surface,
-     but two sat below 4.5:1 on the 10–12% pill-tint the chips actually use:
+     but two sat below 4.5:1 on the 10-12% pill-tint the chips actually use:
      the brand blue #0a84ff (4.18) and the system red #ff453a (4.39 at badge's
-     12%). Both are lifted slightly here — info → #3a97f5 (≈5.0:1), danger →
-     #ff5347 (≈4.7:1) — so every status chip clears AA in both themes. The
+     12%). Both are lifted slightly here, info → #3a97f5 (≈5.0:1), danger →
+     #ff5347 (≈4.7:1), so every status chip clears AA in both themes. The
      brand primary / fill hues (--color-primary, the /10 pill fills) are
      untouched; only the small chip TEXT shifts. */
   --status-success-fg: #30d158;
@@ -280,7 +280,7 @@
 }
 
 /* ── Delegation row expand ──
-   GSAP drives height/opacity imperatively (0 ↔ auto) via inline styles — see
+   GSAP drives height/opacity imperatively (0 ↔ auto) via inline styles. See
    delegation-panel.tsx useGSAP. This class is just the collapsed-by-default
    resting state so server HTML doesn't flash open before hydration; GSAP's
    inline values override it. Height is NOT in the JSX style prop, so React
@@ -386,7 +386,7 @@
   }
 }
 /* Soft breathing layered under the sweep so the surface gently pulses rather
-   than sitting flat — reads calmer than Tailwind's animate-pulse hard dip. */
+   than sitting flat. Reads calmer than Tailwind's animate-pulse hard dip. */
 @keyframes skeleton-breathe {
   0%,
   100% {
@@ -405,8 +405,8 @@
     opacity: 1;
   }
 }
-/* In @layer components (not unlayered) so Tailwind's `rounded-*` utilities —
-   which live in the higher `utilities` layer — win over the `inherit` default.
+/* In @layer components (not unlayered) so Tailwind's `rounded-*` utilities,
+   which live in the higher `utilities` layer. Win over the `inherit` default.
    Bare `.skeleton` still inherits the parent radius (fill-a-rounded-box case);
    `.skeleton rounded-full` now actually rounds instead of the utility being
    silently overridden by an unlayered rule. */
@@ -454,7 +454,7 @@
 
 /* ── Route enter (per-navigation fade) ──
    Applied by app/template.tsx, which remounts on every navigation so this
-   replays each route change — softening both the loading skeleton's entrance
+   replays each route change, softening both the loading skeleton's entrance
    and the resolved content. Compositor-only. Honors reduced motion. */
 @keyframes route-fade-in {
   from {
@@ -581,8 +581,8 @@
    The header is position:fixed and carries pt-safe, so its rendered height is
    `inset-top + rows`. Content below it must add the SAME inset-top term or it
    desyncs on notched iPhones (header grows, offset doesn't → content buried).
-   Desktop (md+): no fixed header anymore — the sidebar shell owns chrome and
-   sits in normal flex flow — so this collapses to plain page padding.
+   Desktop (md+): no fixed header anymore. The sidebar shell owns chrome and
+   sits in normal flex flow, so this collapses to plain page padding.
    Map page opts out (fullscreen, transparent header) by not using this class. */
 .pt-city-content {
   padding-top: calc(env(safe-area-inset-top) + 8rem);
@@ -661,7 +661,7 @@
 /* FLIP row animation on sort/filter. The base .ag-row rule above (for the hover
    accent) omits `transform`, which clobbers the Theming API's own
    `.ag-row-animation .ag-row { transition: transform .4s, top .4s, opacity .2s }`
-   at equal specificity — so without this rule rows JUMP to their new positions
+   at equal specificity, so without this rule rows JUMP to their new positions
    instead of sliding. Re-add the theme's exact transition, scoped one class
    deeper so it wins, and only while AG Grid is in its animation phase. AG Grid
    adds `.ag-prevent-animation { transition:none !important }` during scroll
@@ -681,7 +681,7 @@
   }
 }
 
-/* The custom dropdown editor draws its own rounded card — strip AG Grid's
+/* The custom dropdown editor draws its own rounded card, strip AG Grid's
    popup-editor frame (background/border) AND the square --ag-popup-shadow the
    .ag-popup-child wrapper paints behind it, which would otherwise render as a
    second, square-cornered shadow around the rounded menu. The :has() variant
@@ -735,7 +735,7 @@
 /* ── Base ── */
 html {
   scroll-behavior: smooth;
-  /* Base render at 90% — the app reads denser/better at 90% browser zoom than
+  /* Base render at 90%. The app reads denser/better at 90% browser zoom than
      100%, so bake that in. `zoom` (not transform:scale) re-runs layout, so vw
      units, fixed/sticky chrome, body-portaled modals, and the map all scale as
      one with no dead gutter. Exposed as --app-zoom because viewport units are
@@ -759,17 +759,17 @@ body {
   overscroll-behavior-y: contain;
 }
 
-/* Display face — newspaper serif for marketing headlines. Serifs carry their
+/* Display face, newspaper serif for marketing headlines. Serifs carry their
    own width, so they want lighter optical tracking than the grotesk default. */
 .font-display {
   font-family: var(--font-display), Georgia, "Times New Roman", serif;
   letter-spacing: -0.012em;
 }
 
-/* Hero face — slim high-contrast Garamond. Tall, thin strokes carry their own
+/* Hero face, slim high-contrast Garamond. Tall, thin strokes carry their own
    width, so it wants near-neutral tracking rather than the grotesk's tightening.
    Weight + leading live here (not as utilities) so they win over the unlayered
-   `h1..h6 { font-weight: 600 }` base rule below — Tailwind utilities are layered
+   `h1..h6 { font-weight: 600 }` base rule below. Tailwind utilities are layered
    and would otherwise lose the cascade. */
 .font-hero {
   font-family: var(--font-hero), Georgia, "Times New Roman", serif;
@@ -778,7 +778,7 @@ body {
   letter-spacing: -0.005em;
 }
 
-/* Demo data highlight — the presenter-injected report reads as a soft, lighter
+/* Demo data highlight. The presenter-injected report reads as a soft, lighter
    blue container (a translucent wash that floods the whole box) plus a diffuse
    halo, rather than a hard outline edge. The inset shadow paints above the
    background but below content, so text/photos stay legible on top. Reduced
@@ -831,7 +831,7 @@ h6 {
   letter-spacing: -0.022em;
 }
 
-/* ── Scroll reveal — consumed by landing/reveal.tsx ──
+/* ── Scroll reveal, consumed by landing/reveal.tsx ──
    Elements mount hidden, then the client wrapper toggles .is-visible when the
    element scrolls into view. Compositor-only props (opacity + translate); no
    layout animation. Honors prefers-reduced-motion by rendering instantly. */
@@ -863,7 +863,7 @@ h6 {
 }
 
 /* Hide the iOS/WebKit inline-video play/pause overlay that flashes on play-state
-   changes (the only <video> in the app is the decorative camera viewfinder —
+   changes (the only <video> in the app is the decorative camera viewfinder,
    capture happens via the shutter button, so native media controls must never
    appear). iOS Safari does NOT apply these shadow-pseudo rules when combined
    with an attribute selector, so they are intentionally un-scoped. */
@@ -895,7 +895,7 @@ video::-webkit-media-controls-overlay-play-button {
   color: var(--foreground);
 }
 
-/* ── Quiet glass surface — replaces the old neon glass-panel ── */
+/* ── Quiet glass surface, replaces the old neon glass-panel ── */
 .glass-panel {
   background-color: var(--glass);
   backdrop-filter: blur(20px) saturate(160%);
@@ -918,7 +918,7 @@ video::-webkit-media-controls-overlay-play-button {
   background: var(--faint);
 }
 
-/* Maplibre popup — quiet dark skin */
+/* Maplibre popup, quiet dark skin */
 .maplibregl-popup-content {
   /* biome-ignore lint/complexity/noImportantStyles: override maplibre-gl injected popup styles */
   background: rgba(28, 28, 30, 0.92) !important;
@@ -959,7 +959,7 @@ video::-webkit-media-controls-overlay-play-button {
   color: white !important;
 }
 
-/* Cesium globe popup — the same fixed-dark skin as the maplibre popup above.
+/* Cesium globe popup, the same fixed-dark skin as the maplibre popup above.
    renderPopupHTML is shared by both renderers and assumes a dark card, so the
    globe's own popup container has to supply the identical surface. */
 /* Cesium injects its credit list with its own absolute positioning (bottom-0
@@ -1018,7 +1018,7 @@ video::-webkit-media-controls-overlay-play-button {
    TEAM_LIST colors are tuned as GRAPHIC fills (dots, bars, pins): ~3.3-3.9:1
    on white, which clears 3:1 for non-text but not 4.5:1 for small labels.
    Anywhere a team hue is used as TEXT, mix it toward this token instead of a
-   hardcoded #000 — darkening is only correct on the light surface; on
+   hardcoded #000. Darkening is only correct on the light surface; on
    #101012 the same mix produced near-invisible text. Same split the status
    tokens already use (--color-* fill vs --status-*-fg text). */
 :root {

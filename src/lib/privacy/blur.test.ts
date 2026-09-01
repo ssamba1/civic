@@ -1,13 +1,13 @@
 // @vitest-environment node
 //
-// Contract test for the privacy blur engine (blur.ts is modify-forbidden —
+// Contract test for the privacy blur engine (blur.ts is modify-forbidden,
 // this only observes its boundary). Verifies the { blurred: webp, original:
 // jpeg } contract, the fallback-region path (no FaceDetector), the 1280px
 // output cap, and that the source bitmap is released. The canvas/bitmap
 // browser APIs are stubbed since the test runs in node.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// bitmapToJpeg is the "original" encoder — stub it to a sentinel Blob so we can
+// bitmapToJpeg is the "original" encoder, stub it to a sentinel Blob so we can
 // assert it's the value returned as `original`. vi.hoisted so the mock fn is
 // available to the hoisted vi.mock factory.
 const { originalJpeg, bitmapToJpeg } = vi.hoisted(() => {

@@ -17,8 +17,8 @@ Overall security posture: **GOOD** with minor findings. The codebase demonstrate
 - Rate limiting on public endpoints
 
 **Critical Issues:** None (P0)  
-**High Issues:** 1 (P1) — Distributed rate limiter single-point-of-failure  
-**Medium Issues:** 2 (P2) — Minor improvements for robustness
+**High Issues:** 1 (P1). Distributed rate limiter single-point-of-failure  
+**Medium Issues:** 2 (P2), Minor improvements for robustness
 
 ---
 
@@ -219,10 +219,10 @@ Overall security posture: **GOOD** with minor findings. The codebase demonstrate
 
 | Severity | Count | Issues |
 |----------|-------|--------|
-| P0 (Critical) | 0 | — |
+| P0 (Critical) | 0 | - |
 | P1 (High) | 1 | CSRF token missing on Open311 POST |
 | P2 (Medium) | 2 | Distributed rate-limit fallback; internal-secret quota tracking |
-| P3 (Low) | 0 | — |
+| P3 (Low) | 0 | - |
 
 ---
 

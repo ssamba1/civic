@@ -26,14 +26,14 @@ CREATE INDEX idx_report_photos_report_id ON report_photos (report_id, idx);
 -- ---------------------------------------------------------------------------
 -- RLS
 -- ---------------------------------------------------------------------------
--- Default deny — policies below define all permitted access.
+-- Default deny, policies below define all permitted access.
 ALTER TABLE report_photos ENABLE ROW LEVEL SECURITY;
 
 -- SELECT: mirror reports visibility.
 -- A photo is visible if and only if the reporter's parent report is visible to
 -- the caller (same predicate as reports_select_own + reports_select_staff).
 -- We use a subquery rather than a join so new report SELECT policies added
--- later automatically apply here — the mirror stays accurate without touching
+-- later automatically apply here. The mirror stays accurate without touching
 -- this migration.
 CREATE POLICY report_photos_select ON report_photos
   FOR SELECT

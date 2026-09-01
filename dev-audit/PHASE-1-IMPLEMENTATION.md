@@ -10,12 +10,12 @@
 
 | Module | File | Tests | Hours | Status | Owner |
 |--------|------|-------|-------|--------|-------|
-| **Core Filter** | filters/filter-reports.ts | 8 | 2 | ✅ Written | — |
-| **Analytics** | filters/derive.ts | 12 | 4 | ✅ Written | — |
-| **URL Serialization** | filters/url-sync.ts | 6 | 2 | ⏳ Skeleton ready | — |
-| **Security** | privacy/signed-url.ts | 5 | 2 | ⏳ Skeleton ready | — |
-| **Resident Data** | resident-data.ts | 15 | 6 | ⏳ Skeleton ready | — |
-| **TOTAL** | — | **38** | **17** | — | — |
+| **Core Filter** | filters/filter-reports.ts | 8 | 2 | ✅ Written | - |
+| **Analytics** | filters/derive.ts | 12 | 4 | ✅ Written | - |
+| **URL Serialization** | filters/url-sync.ts | 6 | 2 | ⏳ Skeleton ready | - |
+| **Security** | privacy/signed-url.ts | 5 | 2 | ⏳ Skeleton ready | - |
+| **Resident Data** | resident-data.ts | 15 | 6 | ⏳ Skeleton ready | - |
+| **TOTAL** | - | **38** | **17** | - | - |
 
 ---
 
@@ -130,7 +130,7 @@ const baseFilter: ReportFilter = {
 **File:** `src/lib/privacy/signed-url.test.ts`  
 **Status:** ⏳ Skeleton ready, awaiting implementation
 
-**Skeleton is in 01-test-coverage-gaps.md § "Privacy/signed-url.ts — P0"**
+**Skeleton is in 01-test-coverage-gaps.md § "Privacy/signed-url.ts, P0"**
 
 **Test cases needed:**
 1. Returns { ok: false, error: "unauthorized" } when user not found
@@ -167,7 +167,7 @@ const createServerClientMock = vi.mocked(createServerClient);
 **File:** `src/lib/resident-data.test.ts`  
 **Status:** ⏳ Skeleton ready, awaiting implementation
 
-**Skeleton is in 01-test-coverage-gaps.md § "resident-data.ts — P0"**
+**Skeleton is in 01-test-coverage-gaps.md § "resident-data.ts, P0"**
 
 **Test cases needed:**
 

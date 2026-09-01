@@ -5,7 +5,7 @@
 // connection. 012 is idempotent (CREATE OR REPLACE for the RPCs, DROP+CREATE
 // for the view), so re-running is safe.
 //
-// You need the project's direct connection string (NOT the service-role JWT —
+// You need the project's direct connection string (NOT the service-role JWT,
 // that is a PostgREST key and cannot run DDL). Get it from:
 //   Supabase Dashboard → Project Settings → Database → Connection string (URI).
 //
@@ -47,7 +47,7 @@ console.log("connected to", url.replace(/:[^:@]+@/, ":****@"));
 
 try {
   await client.query(sql);
-  console.log("OK — migration 012 applied (view + RPCs now exclude merged).");
+  console.log("OK, migration 012 applied (view + RPCs now exclude merged).");
 } catch (e) {
   console.error("FAIL:", e.message);
   process.exitCode = 1;

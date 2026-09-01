@@ -28,7 +28,7 @@ const serverEnvSchema = z
   })
   .superRefine((env, ctx) => {
     // In production the rate limiter MUST key off a platform-set, un-spoofable
-    // header — otherwise clientIp() silently falls back to client-forgeable
+    // header. Otherwise clientIp() silently falls back to client-forgeable
     // x-real-ip / x-forwarded-for and an attacker rotates the key to defeat every
     // AI + Open311 limit (unbounded Gemini spend). Fail loud on misconfig rather
     // than degrade silently. Dev/test are exempt (no trusted proxy in front).

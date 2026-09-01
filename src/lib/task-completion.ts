@@ -10,7 +10,7 @@ import { createReactiveStore } from "@/lib/utils/reactive-store";
    Task-completion overlay store.
 
    When a team marks a task done in the team view, the completion lives
-   here — keyed by report id — not on the report itself (the corpus is a
+   here (keyed by report id) not on the report itself (the corpus is a
    deterministic generated dataset with no write API). FilterProvider
    resolves this overlay into the shared corpus, so a done task reads as
    "closed" with its after-photo across every surface (team + city map,
@@ -28,7 +28,7 @@ const STORAGE_KEY = "civic.task_completion.v1";
 
 export interface Completion {
   completedAt: string;
-  /** Downscaled JPEG data URL of the "after" photo. Optional — a task can be
+  /** Downscaled JPEG data URL of the "after" photo. Optional. A task can be
    *  marked done without one. */
   afterPhoto?: string;
 }
@@ -57,7 +57,7 @@ function writeStorage(map: CompletionMap) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
   } catch {
-    // Quota / private mode — in-memory snapshot still drives the session.
+    // Quota / private mode, in-memory snapshot still drives the session.
     // After-photos are downscaled before storage to keep this rare.
   }
 }

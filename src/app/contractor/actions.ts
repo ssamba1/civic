@@ -64,7 +64,7 @@ async function resolveContractorId(): Promise<string | null> {
 //
 // Returns ONLY the work orders assigned to the current contractor. If the
 // caller is not an authenticated contractor, returns an empty array (graceful
-// degrade — never throws).
+// degrade. Never throws).
 // ---------------------------------------------------------------------------
 
 export async function listMyWorkOrders(): Promise<ContractorWorkOrder[]> {
@@ -76,7 +76,7 @@ export async function listMyWorkOrders(): Promise<ContractorWorkOrder[]> {
 
     // Use service-role client so the join to reports works without the
     // contractor having SELECT on reports. The contractor_id filter is the
-    // authorisation boundary — they can only see their own rows.
+    // authorisation boundary. They can only see their own rows.
     const { data, error } = await db
       .from("work_orders")
       // reports holds address/description/photo_public_url; category lives in
@@ -99,7 +99,7 @@ export async function listMyWorkOrders(): Promise<ContractorWorkOrder[]> {
     return ((data ?? []) as Record<string, unknown>[]).map((row) => {
       const report = (row.reports ?? {}) as Record<string, unknown>;
       // classifications embeds as an object (to-one) or array depending on the
-      // inferred relationship — normalise both.
+      // inferred relationship, normalise both.
       const classification = Array.isArray(row.classifications)
         ? ((row.classifications[0] ?? {}) as Record<string, unknown>)
         : ((row.classifications ?? {}) as Record<string, unknown>);
@@ -134,7 +134,7 @@ export async function listMyWorkOrders(): Promise<ContractorWorkOrder[]> {
 //
 // Defense-in-depth: verifies ownership BEFORE writing, even though the RLS
 // policy also enforces it. This prevents any edge-case where a service-role
-// call (which bypasses RLS) could be misused — we re-check at the action layer.
+// call (which bypasses RLS) could be misused. We re-check at the action layer.
 //
 // Column whitelist: only contractor_status, contractor_note,
 // contractor_photo_url, contractor_updated_at are ever written. No other
@@ -167,7 +167,7 @@ export async function updateWorkOrderProgress(
 
     const db = createServerClient();
 
-    // 3. Fetch current row — verify ownership and current status
+    // 3. Fetch current row, verify ownership and current status
     const { data: existing, error: fetchErr } = await db
       .from("work_orders")
       .select("id, contractor_id, contractor_status")
@@ -192,7 +192,7 @@ export async function updateWorkOrderProgress(
 
     // Defense-in-depth: verify the work order belongs to this contractor.
     if (existing.contractor_id !== contractorId) {
-      log.warn("contractor ownership check failed — possible tampering", {
+      log.warn("contractor ownership check failed, possible tampering", {
         workOrderId,
         contractorId,
         actualContractorId: existing.contractor_id,
@@ -210,7 +210,7 @@ export async function updateWorkOrderProgress(
       };
     }
 
-    // 5. Write — ONLY whitelisted columns
+    // 5. Write, ONLY whitelisted columns
     const { error: updateErr } = await db
       .from("work_orders")
       .update({

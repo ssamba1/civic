@@ -1,5 +1,5 @@
 /**
- * Stage 2 — the decision run. Fires only for detection clusters the LLM-free
+ * Stage 2. The decision run. Fires only for detection clusters the LLM-free
  * stage escalated (or a staff member escalates manually). One Gemini call
  * over the best evidence frame + in-DB city context produces a cited
  * decision; the decision and its full supporting dossier persist on the
@@ -129,7 +129,7 @@ async function buildContext(
 ): Promise<DecisionContext> {
   const location = normalizeLocation(cluster.location);
 
-  // Nearby open reports — the merge candidates and the history the model must
+  // Nearby open reports, the merge candidates and the history the model must
   // weigh. Reuses the report-dedup RPC (SECURITY DEFINER, public columns).
   let nearby: DecisionContext["nearby_reports"] = [];
   if (location) {
@@ -259,10 +259,10 @@ async function dispatchReport(
     return {
       ok: false,
       error:
-        "Cluster has no location — cannot create a report (manual dispatch required)",
+        "Cluster has no location. Cannot create a report (manual dispatch required)",
     };
   }
-  // reports.reporter_id is NOT NULL — attribute the report to the staff user
+  // reports.reporter_id is NOT NULL, attribute the report to the staff user
   // who registered the source clip.
   const { data: clip } = await supabase
     .from("video_clips")
@@ -273,13 +273,13 @@ async function dispatchReport(
     return {
       ok: false,
       error:
-        "Source clip has no creator — cannot attribute the report (manual dispatch required)",
+        "Source clip has no creator. Cannot attribute the report (manual dispatch required)",
     };
   }
 
   const reportId = crypto.randomUUID();
-  // The classify pipeline reads photos-raw at `${city_id}/${report_id}.jpg` —
-  // land the evidence frame there so the whole existing machinery (hazard
+  // The classify pipeline reads photos-raw at `${city_id}/${report_id}.jpg`.
+  // Land the evidence frame there so the whole existing machinery (hazard
   // grade, work order, SLA stamp, crew assign) runs unchanged.
   const rawPath = `${cluster.city_id}/${reportId}.jpg`;
   const { error: upErr } = await supabase.storage
@@ -301,7 +301,7 @@ async function dispatchReport(
     reporter_id: clip.created_by,
     location: `SRID=4326;POINT(${location.lng} ${location.lat})`,
     // Unblurred camera frame stays private; the public row carries the
-    // static placeholder (hard rule 2 — no raw photo in the public bucket).
+    // static placeholder (hard rule 2, no raw photo in the public bucket).
     photo_public_url: VIDEO_PLACEHOLDER_PUBLIC_PATH,
     photo_raw_url: `${RAW_BUCKET}/${rawPath}`,
     address: null,
@@ -316,7 +316,7 @@ async function dispatchReport(
 
   const pipeline = await runClassifyPipeline(reportId);
   if (!pipeline.ok) {
-    // Report exists; classification failed — the classify pipeline already
+    // Report exists; classification failed. The classify pipeline already
     // logged and the report sits in manual triage. Not a dispatch failure.
     log.warn("video_dispatch_classify_failed", {
       reportId,
@@ -326,7 +326,7 @@ async function dispatchReport(
     // Liability attribution (spec §3.2), same best-effort contract as the
     // resident path in app/report/actions.ts: it needs the classification's
     // category (hence the pipeline.ok gate), and a missing verdict only
-    // degrades the badge to "unknown" — a camera dispatch must never fail
+    // degrades the badge to "unknown". A camera dispatch must never fail
     // because the city has no paving schedule loaded.
     try {
       const liability = await evaluateReportLiability(reportId);
@@ -349,7 +349,7 @@ async function dispatchReport(
 /**
  * Run the decision stage for one cluster. Persists the decision + dossier and
  * applies side effects. ok:false leaves the cluster at 'candidate' so a later
- * clip (or manual escalation) retries — the LLM stage is always retryable.
+ * clip (or manual escalation) retries. The LLM stage is always retryable.
  */
 export async function decideCluster(
   clusterId: string,

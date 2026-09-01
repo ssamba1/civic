@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils/cn";
 import { lockBodyScroll } from "@/lib/utils/scroll-lock";
 import { timeAgo } from "@/lib/utils/time-ago";
 
-/** Neutral dot + category label + status pill — shared by every shell header. */
+/** Neutral dot + category label + status pill, shared by every shell header. */
 function DetailTitle({ report }: { report: DashboardReport }) {
   const meta = categoryMeta(report.category);
   return (
@@ -57,7 +57,7 @@ interface TeamTaskDetailProps {
 }
 
 /**
- * Mobile task detail — a portal sheet (right drawer on sm, bottom sheet on
+ * Mobile task detail, a portal sheet (right drawer on sm, bottom sheet on
  * phones) over a scrim. Used when the viewport is too narrow for the inline
  * split pane. Desktop uses {@link TaskDetailPane} instead.
  */
@@ -129,7 +129,7 @@ interface TaskDetailPaneProps {
 }
 
 /**
- * Desktop task detail — a sticky bordered card that lives in the right half of
+ * Desktop task detail, a sticky bordered card that lives in the right half of
  * the split pane and stays in view while the task list scrolls. Switching tasks
  * swaps the body in place (see the `key` on {@link TaskDetailBody}).
  */
@@ -201,7 +201,7 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
     try {
       // Blur BEFORE anything else. This after-photo is uploaded to
       // photos-public (staff/actions.ts uploadResolutionPhoto), so it is bound
-      // by the same mandatory face/plate blur as a resident submission — a
+      // by the same mandatory face/plate blur as a resident submission, a
       // repaired-sidewalk shot routinely catches passers-by and parked cars.
       // Downscaling alone, which is what this used to do, only made the
       // unblurred pixels smaller.
@@ -226,7 +226,7 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
     }
 
     // Live deploy: the close is a real work-order write. Actual cost is
-    // required — it is the training signal for the cost model (issue-8).
+    // required. It is the training signal for the cost model (issue-8).
     const cost = Number(actualCost);
     if (!actualCost.trim() || !Number.isFinite(cost) || cost <= 0) {
       setError("Enter the actual cost spent (a dollar amount above zero).");
@@ -235,7 +235,7 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
     // No-generic-closures (#5): a resolution reason and an after-photo are both
     // required before the reporter gets a resolution notice.
     if (!closureReason.trim()) {
-      setError("Enter what was done to resolve this — the reporter sees it.");
+      setError("Enter what was done to resolve this, the reporter sees it.");
       return;
     }
     if (!pendingPhoto) {
@@ -254,11 +254,11 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
       if (!result.ok) {
         setError(
           result.error === "work_order_not_found"
-            ? "No work order exists for this report yet — dispatch it first."
+            ? "No work order exists for this report yet. Dispatch it first."
             : result.error === "after_photo_required"
               ? "Add an after photo before marking this done."
               : result.error === "closure_reason_required"
-                ? "Enter what was done to resolve this — the reporter sees it."
+                ? "Enter what was done to resolve this. The reporter sees it."
                 : result.error,
         );
         return;
@@ -419,8 +419,8 @@ function TaskDetailBody({ report }: { report: DashboardReport }) {
           </Button>
           <p className="text-center text-[12px] text-faint">
             {DEMO_MODE
-              ? "Photo optional — adds a before/after record."
-              : "After photo required — it's sent to the reporter with the resolution notice."}
+              ? "Photo optional. Adds a before/after record."
+              : "After photo required, it's sent to the reporter with the resolution notice."}
           </p>
         </div>
       )}

@@ -3,7 +3,7 @@ import type { DashboardReport } from "@/lib/dashboard-data";
 
 // Data-layer clustering for the report map (LCP-17). agents.md pitfall:
 // "marker clustering breaks with >5k points. Use the supercluster lib at the
-// data layer." This is that layer — pure, framework-free, unit-testable. The
+// data layer." This is that layer, pure, framework-free, unit-testable. The
 // map component tracks the live viewport and asks this module what to draw.
 
 /** A point supercluster carries through: enough to render + click a leaf. */
@@ -32,7 +32,7 @@ export type ClusterFeature =
       lat: number;
     };
 
-/** [west, south, east, north] in degrees — supercluster's bbox order. */
+/** [west, south, east, north] in degrees, supercluster's bbox order. */
 export type Bounds = [number, number, number, number];
 
 export interface ClusterOptions {
@@ -79,7 +79,7 @@ export function buildClusterIndex(
 
 /**
  * Query the index for the current viewport. Returns a flat list of clusters +
- * unclustered leaves to draw. `zoom` is floored — supercluster keys tiles by
+ * unclustered leaves to draw. `zoom` is floored, supercluster keys tiles by
  * integer zoom, and a fractional zoom otherwise yields empty results at the
  * top end.
  */
@@ -120,7 +120,7 @@ export function clustersForView(
 }
 
 /**
- * Zoom at which a cluster breaks apart — feed into a flyTo when a bubble is
+ * Zoom at which a cluster breaks apart, feed into a flyTo when a bubble is
  * clicked so tapping a cluster drills in. Clamped defensively.
  */
 export function clusterExpansionZoom(

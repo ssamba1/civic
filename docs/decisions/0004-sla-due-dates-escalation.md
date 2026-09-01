@@ -1,4 +1,4 @@
-# 0004 — SLA due dates + overdue escalation
+# 0004: SLA due dates + overdue escalation
 
 - Status: **Accepted** (2026-07-08)
 - Scope: how work orders acquire a deadline and how breaches surface.
@@ -21,7 +21,7 @@ a breach. Operators had no "what's overdue" signal beyond eyeballing ages.
   `system` note to the report timeline, bumps priority, and stamps
   `escalated_at`. A systemd timer / external cron drives it.
 - The grid's SLA column is derived **client-side** from category + created_at
-  (NOT `due_at`) so it renders on un-migrated DBs — `due_at` drives the
+  (NOT `due_at`) so it renders on un-migrated DBs, `due_at` drives the
   server-side job; the column is the operator view.
 
 ## Alternatives considered
@@ -34,6 +34,6 @@ a breach. Operators had no "what's overdue" signal beyond eyeballing ages.
 
 ## Consequences
 
-- Escalation cadence is external (cron/timer hitting the drain) — documented in
+- Escalation cadence is external (cron/timer hitting the drain), documented in
   the sla-escalate runbook.
 - `due_at` is stamped from the static fallback until a city seeds `sla_targets`.

@@ -7,12 +7,12 @@ const logger = createLogger("[csat]");
 
 /**
  * Record a one-tap resolution rating for a report (report_csat, migration 025).
- * Called from the public status page — possession of the unguessable token is
+ * Called from the public status page. Possession of the unguessable token is
  * the auth, so this runs service-role with no session. Upsert = last tap wins.
  *
  * Returns the rating on success and ALSO on failure: demo-corpus reports have
- * no DB row (FK fails), and the resident should still see the thanks state —
- * the rating's absence from analytics is the correct demo behavior.
+ * no DB row (FK fails), and the resident should still see the thanks state.
+ * The rating's absence from analytics is the correct demo behavior.
  */
 export async function recordCsat(
   reportId: string,

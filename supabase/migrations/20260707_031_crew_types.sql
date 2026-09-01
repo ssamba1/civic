@@ -1,16 +1,16 @@
--- 031: crew_types — per-city catalog of crew labor types with AI-facing
+-- 031: crew_types, per-city catalog of crew labor types with AI-facing
 -- descriptions.
 --
 -- Before this, the crew-type list was a hardcoded 7-value enum duplicated in
 -- three app files (work-order-schema, crew-actions, crews-panel). Cities now
 -- define their own types; the description is what the work-order AI reads to
--- pick the right crew_type for a report ("concrete — flatwork, sidewalk panel
+-- pick the right crew_type for a report ("concrete, flatwork, sidewalk panel
 -- replacement, ADA ramps"). crews.crew_type stays a SOFT key reference into
--- this table (no hard FK) — same pattern as issue_types.team_key (027):
+-- this table (no hard FK), same pattern as issue_types.team_key (027):
 -- deleting a type never breaks existing crews, the UI just shows the raw key.
 --
 -- App fallback: when a city has zero rows (or the table is missing on an
--- un-migrated DB), the app uses DEFAULT_CREW_TYPES in src/lib/crew-types.ts —
+-- un-migrated DB), the app uses DEFAULT_CREW_TYPES in src/lib/crew-types.ts,
 -- the same 7 defaults seeded below.
 
 CREATE TABLE IF NOT EXISTS crew_types (
@@ -38,18 +38,18 @@ SELECT c.id, d.key, d.label, d.description
 FROM cities c
 CROSS JOIN (
   VALUES
-    ('paving', 'Paving', 'Asphalt work — pothole patching, road surface repair, resurfacing prep.'),
-    ('line_crew', 'Line Crew', 'Electrical and utility line work — streetlights, downed lines, powered signals.'),
-    ('sign_crew', 'Sign Crew', 'Traffic sign installation and replacement — downed, faded, or damaged signage.'),
+    ('paving', 'Paving', 'Asphalt work, pothole patching, road surface repair, resurfacing prep.'),
+    ('line_crew', 'Line Crew', 'Electrical and utility line work, streetlights, downed lines, powered signals.'),
+    ('sign_crew', 'Sign Crew', 'Traffic sign installation and replacement, downed, faded, or damaged signage.'),
     ('cleanup', 'Cleanup', 'Debris removal, illegal dump cleanup, graffiti abatement, general site cleanup.'),
-    ('concrete', 'Concrete', 'Concrete flatwork — sidewalk panel replacement, curbs, gutters, ADA ramps.'),
-    ('arborist', 'Arborist', 'Tree work — fallen tree removal, limb trimming, hazardous tree assessment.'),
-    ('drain_crew', 'Drain Crew', 'Stormwater and drainage — clogged drains, culverts, standing water, water leaks.')
+    ('concrete', 'Concrete', 'Concrete flatwork, sidewalk panel replacement, curbs, gutters, ADA ramps.'),
+    ('arborist', 'Arborist', 'Tree work, fallen tree removal, limb trimming, hazardous tree assessment.'),
+    ('drain_crew', 'Drain Crew', 'Stormwater and drainage, clogged drains, culverts, standing water, water leaks.')
 ) AS d (key, label, description)
 ON CONFLICT (city_id, key) DO NOTHING;
 
 -- ---------------------------------------------------------------------------
--- RLS — mirror crews (030): staff-only read scoped to own city; staff-write
+-- RLS. Mirror crews (030): staff-only read scoped to own city; staff-write
 -- policy as defense in depth (writes are admin-gated at the action layer and
 -- run through the service role, which bypasses RLS).
 -- ---------------------------------------------------------------------------

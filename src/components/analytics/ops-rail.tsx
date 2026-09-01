@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils/cn";
 import { timeAgo } from "@/lib/utils/time-ago";
 
 /* ==================================================================
-   Ops rail — actionable analytics that sit under the live report feed
+   Ops rail, actionable analytics that sit under the live report feed
    in the analytics right column. Non-sticky: they scroll with the page
    so the column can hold a stack instead of one pinned panel.
 
@@ -61,7 +61,7 @@ function NeedsAttentionInner({
 
       {items.length === 0 ? (
         <p className="mt-3 text-[13px] text-subtle">
-          Backlog clear — nothing open in range.
+          Backlog clear, nothing open in range.
         </p>
       ) : (
         <ul className="mt-1 flex flex-col">

@@ -3,8 +3,8 @@
  *
  * Strategy (v1 MVP):
  *  - Face detection via the Shape Detection API (`FaceDetector`). This API is
- *    EXPERIMENTAL and absent on the most common targets — iOS Safari, Firefox,
- *    and Chrome without the flag — so for a mobile-first audience the fallback
+ *    EXPERIMENTAL and absent on the most common targets, iOS Safari, Firefox,
+ *    and Chrome without the flag, so for a mobile-first audience the fallback
  *    below is effectively the primary path, not the exception.
  *  - Fallback (no detector): blur the top third (typical face zone). License
  *    plates can't be detected without a model, so v1 always blurs the bottom
@@ -14,11 +14,11 @@
  * KNOWN LIMITATION (tracked, see docs/planning/fcamera-ai-pipeline-plan.md): with
  * no detector the MIDDLE third is not blurred, so a centre-framed face can reach
  * the public `photos-public` bucket unredacted. Tightening this is a privacy-vs-
- * visibility product call — fully blurring the frame would hide the reported
- * issue — so it is deliberately left as a flagged decision rather than silently
+ * visibility product call. Fully blurring the frame would hide the reported
+ * issue, so it is deliberately left as a flagged decision rather than silently
  * changed here.
  *
- * The caller receives { blurred, original } — the original (an orientation-baked
+ * The caller receives { blurred, original }. The original (an orientation-baked
  * JPEG) is kept only for the restricted `photos-raw` bucket (staff-only).
  */
 
@@ -26,13 +26,13 @@ import { bitmapToJpeg } from "@/lib/image/normalize";
 
 export const BLUR_VERSION = 1;
 
-const BLUR_RADIUS = 24; // px — heavy enough to obscure text and features
+const BLUR_RADIUS = 24; // px, heavy enough to obscure text and features
 
 // Bounded long-edge for the encoded outputs. Both base64 blobs (blurred WebP +
 // original JPEG) are sent through a single Server Action request, which is
 // capped at Next's 1MB default (serverActions.bodySizeLimit is not configured,
 // and next.config is out of scope to change). A full-resolution phone photo's
-// two blobs routinely blow past 1MB and the action body is rejected — which the
+// two blobs routinely blow past 1MB and the action body is rejected, which the
 // client masks as a fake-success "thanks" screen (silent data loss). Capping
 // the long edge here keeps both encodes comfortably under the limit.
 const MAX_OUTPUT_EDGE = 1280;
@@ -65,7 +65,7 @@ async function detectFaces(
       height: f.boundingBox.height,
     }));
   } catch {
-    // API exists but failed (e.g. platform not supported) — fall back
+    // API exists but failed (e.g. platform not supported). Fall back
     return null;
   }
 }
@@ -77,9 +77,9 @@ async function detectFaces(
 function fallbackRegions(w: number, h: number): DetectedRegion[] {
   const thirdH = Math.round(h / 3);
   return [
-    // top third — likely face zone
+    // top third, likely face zone
     { x: 0, y: 0, width: w, height: thirdH },
-    // bottom third — likely plate zone
+    // bottom third, likely plate zone
     { x: 0, y: h - thirdH, width: w, height: thirdH },
   ];
 }
@@ -143,8 +143,8 @@ function canvasToBlob(
 /**
  * Primary export. Blurs faces and license plates on the client before upload.
  *
- * @returns `blurred` — the redacted WebP (goes to `photos-public`)
- *          `original` — an orientation-corrected JPEG (goes to `photos-raw`,
+ * @returns `blurred`. The redacted WebP (goes to `photos-public`)
+ *          `original`. An orientation-corrected JPEG (goes to `photos-raw`,
  *          30-day TTL). NOT a raw passthrough: EXIF orientation is baked into
  *          pixels and the output is guaranteed `image/jpeg`, so the downstream
  *          classifier always receives an upright, correctly-labeled image.
@@ -185,7 +185,7 @@ export async function blurFacesAndPlates(
   // Plate regions (always heuristic in v1)
   const plates = plateRegions(width, height);
 
-  // Merge and deduplicate — some fallback regions may overlap
+  // Merge and deduplicate. Some fallback regions may overlap
   const allRegions = [...faceRegions, ...plates];
 
   blurRegions(ctx, allRegions, bitmap);

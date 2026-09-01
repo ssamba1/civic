@@ -1,9 +1,9 @@
 -- =============================================================================
--- Civic – SSO / SAML configuration (NEXT_100 #83)
+-- Civic, SSO / SAML configuration (NEXT_100 #83)
 -- Migration: 20260709_048_sso_config.sql
 --
 -- Stores per-city SAML IdP configuration for future SSO integration.
--- Scaffold only — no live SAML assertion processing yet (see sso.ts TODO).
+-- Scaffold only. No live SAML assertion processing yet (see sso.ts TODO).
 -- RLS: admin-only read/write. No staff or resident access.
 -- =============================================================================
 

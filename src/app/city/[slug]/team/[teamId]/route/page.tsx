@@ -7,7 +7,7 @@ import { fetchCity as fetchCityFromDb } from "@/lib/dashboard-queries";
 import { fetchCityCrews } from "@/lib/db/crews";
 import { getStaffAccessForCity } from "@/lib/staff-access";
 
-// Auth-gated per-request — never cache or prerender.
+// Auth-gated per-request, never cache or prerender.
 export const dynamic = "force-dynamic";
 
 // ---------------------------------------------------------------------------
@@ -31,7 +31,7 @@ export async function generateMetadata({
   }
   if (!city) city = await fetchCityMock(slug);
   return {
-    title: city ? `Civic | ${city.name} — Crew Route` : "Crew Route | Civic",
+    title: city ? `Civic | ${city.name}. Crew Route` : "Crew Route | Civic",
     description: "Optimized daily route plan for a crew.",
     robots: { index: false, follow: false },
   };

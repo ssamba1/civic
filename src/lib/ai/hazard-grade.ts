@@ -1,5 +1,5 @@
 /**
- * Hazard grading from image — OUTFLANK #27
+ * Hazard grading from image, OUTFLANK #27
  *
  * Prompts Gemini vision to produce a severity grade and public-safety flag
  * from a photo. Called as an OPTIONAL step in classify-pipeline; never throws
@@ -33,7 +33,7 @@ const SEVERITY_VALUES: HazardSeverity[] = ["low", "medium", "high", "critical"];
  * the four canonical values. Case-insensitive; partial matches accepted so
  * minor prompt drift doesn't break the schema. Defaults to "medium".
  *
- * Pure function — unit-testable with no side effects.
+ * Pure function, unit-testable with no side effects.
  */
 export function normalizeSeverity(raw: string): HazardSeverity {
   const lower = (raw ?? "").toLowerCase().trim();
@@ -47,7 +47,7 @@ export function normalizeSeverity(raw: string): HazardSeverity {
  * Convert a severity grade to a work-order priority delta.
  * Low → 0, medium → 5, high → 15, critical → 30.
  *
- * Pure function — unit-testable with no side effects.
+ * Pure function, unit-testable with no side effects.
  */
 export function severityToPriority(severity: HazardSeverity): number {
   switch (severity) {
@@ -64,7 +64,7 @@ export function severityToPriority(severity: HazardSeverity): number {
 
 const HAZARD_PROMPT = `You are a public-safety expert reviewing a photo of infrastructure damage.
 
-Grade the hazard level of what you see. Reply with JSON only — no markdown, no preamble:
+Grade the hazard level of what you see. Reply with JSON only, no markdown, no preamble:
 
 {
   "severity": "<low|medium|high|critical>",

@@ -44,7 +44,7 @@ export function createLogger(context: string): Logger {
     },
 
     error(message, err, meta) {
-      // Non-Error throwables (PostgrestError etc.) are plain objects — String()
+      // Non-Error throwables (PostgrestError etc.) are plain objects, String()
       // yields "[object Object]" and destroys the diagnostic fields, so
       // serialize objects as JSON instead.
       let errMsg: string | undefined;

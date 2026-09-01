@@ -17,24 +17,24 @@
 
 | File | Line | Risk | Finding | Fix |
 |------|------|------|---------|-----|
-| `src/app/api/auth/logout/route.ts` | 4–8 | **P0** | No try/catch around `createSSRClient()` or `signOut()`. If either fails, exception propagates unhandled, returning 500 with no structured error body. Route should degrade gracefully. | Wrap in try/catch. Log error, then redirect to "/" anyway so logout always succeeds from user perspective. |
+| `src/app/api/auth/logout/route.ts` | 4-8 | **P0** | No try/catch around `createSSRClient()` or `signOut()`. If either fails, exception propagates unhandled, returning 500 with no structured error body. Route should degrade gracefully. | Wrap in try/catch. Log error, then redirect to "/" anyway so logout always succeeds from user perspective. |
 | `src/app/api/open311/v2/requests/route.ts` | 278 | **P0** | Unawaited `fetch()` call with no `.catch()` handler. Fire-and-forget network call that silently fails if classify service is unreachable. Network errors cause unhandled promise rejection; caller sees 201 success. | Wrap in `after()` (like submit-report line 183) or add `.catch(err => ...)` to log rejection and send to error_log. |
 | `src/app/staff/actions.ts` | 84, 115, 153, 179 | **P1** | Four `after()` callbacks return unhandled promises from `notifyReportStatus()`: `after(() => notifyReportStatus(...))` is not async. If `notifyReportStatus()` throws (createServerClient fails inside), promise rejection is unhandled. Modern runtimes crash invocation or leave bad state. Compare correct pattern in report/actions.ts:183 (`after(async () => { ... })`). | Convert all four to async with try/catch: `after(async () => { try { await notifyReportStatus(...) } catch(err) { console.error(...) } })`. |
-| `src/app/api/ai/classify/route.ts` | 85–91 | **P1** | Catches error but only logs to console; **not sent to Sentry**. Critical classification failures won't alert ops or appear in dashboards. | Add `Sentry.captureException(err, { tags: { endpoint: "classify" } })` before returning 500. |
-| `src/app/api/ai/reasoning/route.ts` | 110–116 | **P1** | Catches error but only logs to console; **not sent to Sentry**. Reasoning failures (staff dashboard crashes) won't alert. | Add `Sentry.captureException(err, { tags: { endpoint: "reasoning" } })` before returning 500. |
+| `src/app/api/ai/classify/route.ts` | 85-91 | **P1** | Catches error but only logs to console; **not sent to Sentry**. Critical classification failures won't alert ops or appear in dashboards. | Add `Sentry.captureException(err, { tags: { endpoint: "classify" } })` before returning 500. |
+| `src/app/api/ai/reasoning/route.ts` | 110-116 | **P1** | Catches error but only logs to console; **not sent to Sentry**. Reasoning failures (staff dashboard crashes) won't alert. | Add `Sentry.captureException(err, { tags: { endpoint: "reasoning" } })` before returning 500. |
 | `src/app/api/open311/v2/requests/route.ts` | 97, 122, 268, 313 | **P1** | Four `console.error()` calls without Sentry. Open311 is public API; failures must be tracked. Logs are ephemeral; Sentry creates actionable alerts. | Wrap each in `Sentry.captureException(error, { tags: { endpoint: "open311_requests" } })`. |
 | `src/app/api/open311/v2/requests/[id]/route.ts` | 74 | **P1** | `console.error()` without Sentry. Public endpoint failure untracked. | Add `Sentry.captureException(err, { tags: { endpoint: "open311_get_request" } })`. |
-| `src/app/report/actions.ts` | 231–240 | **P1** | Sync classification path catches and swallows throws from `runClassifyPipeline()` **without stamping classify_status:failed**. If pipeline throws unexpectedly (e.g., createServerClient fails before any db write), no error_log row is written and `classify_status` column stays null. Report orphaned in manual triage, operator has no signal. Async path (line 183) correctly stamps status; sync path does not. | When ASYNC_CLASSIFY is OFF, add try/catch around sync path (line 231–240) that mirrors async backstop (lines 197–210): on catch, insert error_log and stamp `classify_status:"failed"` using service client before returning fallback. |
+| `src/app/report/actions.ts` | 231-240 | **P1** | Sync classification path catches and swallows throws from `runClassifyPipeline()` **without stamping classify_status:failed**. If pipeline throws unexpectedly (e.g., createServerClient fails before any db write), no error_log row is written and `classify_status` column stays null. Report orphaned in manual triage, operator has no signal. Async path (line 183) correctly stamps status; sync path does not. | When ASYNC_CLASSIFY is OFF, add try/catch around sync path (line 231-240) that mirrors async backstop (lines 197-210): on catch, insert error_log and stamp `classify_status:"failed"` using service client before returning fallback. |
 | `src/app/report/actions.ts` | 63 | **P2** | `.getUser()` result destructure checks `!user` but **does not check `error`**. If auth.getUser() returns an error, code ignores it and continues, potentially treating auth error as unauthenticated. Helper `getAuthUser()` (lib/db/ssr-client.ts:39) already checks both; this site should use it instead. | Replace `const { data: { user } } = await ssr.auth.getUser()` with `const user = await getAuthUser()`, which already checks error. Or add error check: `if (error || !user) return { ok: false, error: "auth_failed" }`. |
 | `src/lib/ai/classify-pipeline.ts` | 117 | **P2** | `await photoBlob.arrayBuffer()` has no try/catch. If conversion fails (rare but possible with corrupted blobs), pipeline throws instead of gracefully falling back. Outer try/catch at line 109 catches it, so returns `ok:false`, but inline error handling improves clarity. | Wrap in try/catch that returns error result early before `classifyPhoto()` call. |
-| `src/app/report/actions.ts` | 183–219 | **P2** | Async backstop's nested try/catch (lines 197–210) catches `logErr` but does **not** independently attempt `classify_status` stamp. If error_log insert fails, both log and status update are lost, leaving `classify_status:"pending"` forever. | Split backstop: separate try/catch for error_log insert vs. classify_status update. If log fails, still attempt status stamp so report is marked failed. |
+| `src/app/report/actions.ts` | 183-219 | **P2** | Async backstop's nested try/catch (lines 197-210) catches `logErr` but does **not** independently attempt `classify_status` stamp. If error_log insert fails, both log and status update are lost, leaving `classify_status:"pending"` forever. | Split backstop: separate try/catch for error_log insert vs. classify_status update. If log fails, still attempt status stamp so report is marked failed. |
 | `src/app/report/page.tsx` | 83, 89, 326 | **P2** | Three `.then()` chains without `.catch()`: getSession (line 83), signInAnonymously (line 89), and classifications query (line 326). Rejections are unhandled. Line 89's chain checks `error` in-band but getSession/signInAnonymously rejection is unhandled if network fails. Line 326 has no error handling at all. | Add `.catch(err => ...)` to all three chains. Line 326 should set an error state if the query fails. |
 
 ---
 
 ## Details
 
-### P0: Unprotected logout route (src/app/api/auth/logout/route.ts:4–8)
+### P0: Unprotected logout route (src/app/api/auth/logout/route.ts:4-8)
 
 ```typescript
 export async function POST(request: Request) {
@@ -55,17 +55,17 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error("[logout] signOut failed:", err instanceof Error ? err.message : String(err));
   }
-  // Gracefully redirect regardless — logout always completes from user perspective
+  // Gracefully redirect regardless, logout always completes from user perspective
   return NextResponse.redirect(new URL("/", request.url), { status: 303 });
 }
 ```
 
 ---
 
-### P0: Unawaited fetch without error handler (src/app/api/open311/v2/requests/route.ts:278–282)
+### P0: Unawaited fetch without error handler (src/app/api/open311/v2/requests/route.ts:278-282)
 
 ```typescript
-// Trigger AI classification async — fire-and-forget (H2)
+// Trigger AI classification async, fire-and-forget (H2)
 const classifyHeaders: Record<string, string> = { "Content-Type": "application/json" };
 if (process.env.INTERNAL_CLASSIFY_SECRET) {
   classifyHeaders["x-internal-key"] = process.env.INTERNAL_CLASSIFY_SECRET;
@@ -81,7 +81,7 @@ fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/api/ai/cla
 
 **Fix:** Use Next.js `after()` (like submit-report does at line 183) or add `.catch()` handler:
 
-Option 1 (preferred — use after() for serverless correctness):
+Option 1 (preferred, use after() for serverless correctness):
 ```typescript
 import { after } from "next/server";
 
@@ -162,12 +162,12 @@ after(async () => {
 ### P1: API routes not reporting errors to Sentry
 
 **Files affected:**
-- `src/app/api/ai/classify/route.ts:85–91`
-- `src/app/api/ai/reasoning/route.ts:110–116`
+- `src/app/api/ai/classify/route.ts:85-91`
+- `src/app/api/ai/reasoning/route.ts:110-116`
 - `src/app/api/open311/v2/requests/route.ts:97, 122, 268, 313`
 - `src/app/api/open311/v2/requests/[id]/route.ts:74`
 
-**Current pattern (classify route example, line 85–91):**
+**Current pattern (classify route example, line 85-91):**
 ```typescript
 } catch (err) {
   console.error("[classify] unhandled error:", err);
@@ -215,10 +215,10 @@ const log = createLogger("classify");
 
 ---
 
-### P1: Sync classification path doesn't stamp classify_status:failed (src/app/report/actions.ts:231–240)
+### P1: Sync classification path doesn't stamp classify_status:failed (src/app/report/actions.ts:231-240)
 
 ```typescript
-// Default synchronous path — classify directly, no HTTP self-call.
+// Default synchronous path. Classify directly, no HTTP self-call.
 let classification: Classification;
 try {
   const result = await runClassifyPipeline(reportId);
@@ -234,9 +234,9 @@ try {
 return { ok: true, data: { id: reportId, classification } };
 ```
 
-**Why P1:** When ASYNC_CLASSIFY is OFF, the sync path (lines 231–240) runs. If it catches, it returns a fallback classification but **does not insert an error_log row or stamp classify_status:failed**. 
+**Why P1:** When ASYNC_CLASSIFY is OFF, the sync path (lines 231-240) runs. If it catches, it returns a fallback classification but **does not insert an error_log row or stamp classify_status:failed**. 
 
-Contrast the async path (lines 183–219), which has a proper backstop: if pipeline throws unexpectedly, it inserts error_log and stamps classify_status:"failed" (lines 206–209). The sync path should do the same.
+Contrast the async path (lines 183-219), which has a proper backstop: if pipeline throws unexpectedly, it inserts error_log and stamps classify_status:"failed" (lines 206-209). The sync path should do the same.
 
 If the pipeline throws before any db write, no one knows the report failed classification. Report gets stuck in a silent error state.
 
@@ -272,7 +272,7 @@ Note: The sync path doesn't set `classify_status` at insert time (line 157 is gu
 
 ---
 
-### P2: auth.error not checked in report submission (src/app/report/actions.ts:59–66)
+### P2: auth.error not checked in report submission (src/app/report/actions.ts:59-66)
 
 ```typescript
 // Auth via cookie-aware SSR client.
@@ -308,16 +308,16 @@ if (error || !user) {
 
 ## Safe Patterns (Clean)
 
-- **`src/lib/ai/gemini.ts:53–112`** — Proper try/catch wrapping Gemini call. JSON.parse in inner try/catch (line 89). Returns Result<> with error details.
-- **`src/lib/ai/reasoning-ai.ts:223–229`** — `getReasoning()` catches geminiReasoning() throw and falls back to template.
-- **`src/lib/ai/classify-pipeline.ts`** — Comprehensive error handling with error_log insertion. Every Supabase operation checked.
-- **`src/lib/notify/deliver.ts`** — fetch() wrapped in try/catch. Never throws; returns DeliveryResult.
-- **`src/lib/notify/status-notify.ts:84–154`** — Entire function wrapped. Catches and returns DeliveryResult.
-- **`src/lib/dashboard-queries.ts:22–33`** — `safeQuery<T>()` wrapper catches thrown errors (e.g., JSON.parse from Supabase) and returns fallback.
+- **`src/lib/ai/gemini.ts:53-112`**: Proper try/catch wrapping Gemini call. JSON.parse in inner try/catch (line 89). Returns Result<> with error details.
+- **`src/lib/ai/reasoning-ai.ts:223-229`**: `getReasoning()` catches geminiReasoning() throw and falls back to template.
+- **`src/lib/ai/classify-pipeline.ts`**: Comprehensive error handling with error_log insertion. Every Supabase operation checked.
+- **`src/lib/notify/deliver.ts`**: fetch() wrapped in try/catch. Never throws; returns DeliveryResult.
+- **`src/lib/notify/status-notify.ts:84-154`**: Entire function wrapped. Catches and returns DeliveryResult.
+- **`src/lib/dashboard-queries.ts:22-33`**: `safeQuery<T>()` wrapper catches thrown errors (e.g., JSON.parse from Supabase) and returns fallback.
 
 ### P2: Unhandled .then() chains in report/page.tsx (src/app/report/page.tsx:83, 89, 326)
 
-**Lines 83–97:**
+**Lines 83-97:**
 ```typescript
 supabase.auth.getSession().then(({ data }) => {
   if (!data.session) {
@@ -344,7 +344,7 @@ supabase.auth.getSession().then(({ data }) => {
 
 **Fix:**
 
-For lines 83–97:
+For lines 83-97:
 ```typescript
 supabase.auth
   .getSession()
@@ -383,13 +383,13 @@ For line 326:
 ## Client-side patterns (React components)
 
 ### ✓ Safe: work-order-detail.tsx startTransition callbacks
-Lines 132–185 use proper pattern: `startTransition(async () => { const result = await action(); if (result.ok) {...} else { setError(result.error) } })`. Error checked and state updated.
+Lines 132-185 use proper pattern: `startTransition(async () => { const result = await action(); if (result.ok) {...} else { setError(result.error) } })`. Error checked and state updated.
 
 ### ⚠️ Unhandled: report/page.tsx .then() chains
 Three sites with no .catch():
-- **Line 83:** `getSession().then()` — rejection unhandled if network fails
-- **Line 89:** `signInAnonymously().then()` — checks error in-band but rejection unhandled if network fails
-- **Line 326:** `classifications query.then()` — no error check or handler
+- **Line 83:** `getSession().then()`: rejection unhandled if network fails
+- **Line 89:** `signInAnonymously().then()`: checks error in-band but rejection unhandled if network fails
+- **Line 326:** `classifications query.then()`: no error check or handler
 
 ---
 

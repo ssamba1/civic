@@ -58,7 +58,7 @@ export interface CategoryCount {
 }
 
 /* ------------------------------------------------------------------
-   Known cities — used for generateStaticParams + fallback coords
+   Known cities, used for generateStaticParams + fallback coords
    ------------------------------------------------------------------ */
 
 export const KNOWN_CITIES: Record<
@@ -74,7 +74,7 @@ export const KNOWN_CITIES: Record<
 };
 
 /* ------------------------------------------------------------------
-   Municipality directory — powers the city switcher in the dashboard
+   Municipality directory, powers the city switcher in the dashboard
    header. `live` cities have a working dashboard; the rest are
    expansion targets in the same Forsyth County footprint, shown as
    "Soon" so the rollout story (Cumming -> Forsyth -> every neighbor)
@@ -170,16 +170,16 @@ export const MUNICIPALITIES: Municipality[] = [
 ];
 
 /* ------------------------------------------------------------------
-   Category metadata — labels, colors, icons
+   Category metadata, labels, colors, icons
 
-   Category palette: same generator as the team palette (@/lib/teams) —
+   Category palette: same generator as the team palette (@/lib/teams),
    OKLCH at a constant L=0.63 with C = min(0.185, 90% of that hue's in-gamut
    maximum), so the eleven chromatic categories brighten as one family
    instead of one entry out-shouting the rest at a 8px dot. Every entry keeps
    its previous hue anchor except the two that had none:
 
      - debris was #8a8a90 (C=0.009, a grey) and took the open teal slot.
-     - faded_signage was #b6b6bc (C=0.008, a grey at 2.0:1 on white — it
+     - faded_signage was #b6b6bc (C=0.008, a grey at 2.0:1 on white, it
        simply vanished) and took the open rose slot, deliberately far from
        downed_sign, the only other category sharing the sign-post glyph.
 
@@ -222,7 +222,7 @@ export const CATEGORY_META: Record<
  * Display metadata for ANY category key, built-in or not.
  *
  * The classify pipeline writes `BUILTIN ∪ a city's own issue_types`, so a
- * report's category is frequently a key that is not in CATEGORY_META at all —
+ * report's category is frequently a key that is not in CATEGORY_META at all,
  * `custom_sidewalk_heave` and friends. Every surface that indexes CATEGORY_META
  * directly crashes on `.label` for those, so index through here instead: a
  * built-in when we have one, otherwise a label derived from the key, so even a
@@ -244,7 +244,7 @@ export function categoryMeta(category: string): {
 }
 
 /** "custom_oyster_lease" -> "Oyster lease". Last-resort label for a key no
- *  catalog knows — a city added it this morning and we still have to print
+ *  catalog knows, a city added it this morning and we still have to print
  *  something a person can read. */
 function humanizeCategoryKey(key: string): string {
   const words = key
@@ -291,7 +291,7 @@ export function categorySlaHours(category: string): number {
    Data fetching
    ------------------------------------------------------------------ */
 
-// Placeholder UUID — only ever returned when the DB lookup fails, so readers
+// Placeholder UUID, only ever returned when the DB lookup fails, so readers
 // and writers don't disagree silently (they share the resolved real row below).
 const CITY_SLUG_TO_UUID: Record<string, string> = {
   cumming: "00000000-0000-0000-0000-000000000001",
@@ -348,7 +348,7 @@ export async function fetchCity(slug: string): Promise<City | null> {
 }
 
 /* ------------------------------------------------------------------
-   Mock corpus — 120 historical reports spanning the last ~6 months.
+   Mock corpus, 120 historical reports spanning the last ~6 months.
    Distributed ~20/month with realistic age-correlated status:
    fresh reports skew open/dispatched, old reports skew closed.
    ------------------------------------------------------------------ */
@@ -470,14 +470,14 @@ interface CorpusReport extends DashboardReport {
 
 // Real, category-appropriate report photos. Sourced + visually verified from
 // Wikimedia Commons (CC-licensed) and uploaded to the public storage bucket at
-// seed/<category>.jpg — one image per issue type so every report shows a photo
+// seed/<category>.jpg, one image per issue type so every report shows a photo
 // that actually matches the issue (replaces the old random picsum placeholders).
 const PHOTO_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""}/storage/v1/object/public/photos-public/seed`;
 const categoryPhoto = (category: ReportCategory): string =>
   `${PHOTO_BASE}/${category}.jpg`;
 
 function buildCorpus(): CorpusReport[] {
-  // Live deployments (NEXT_PUBLIC_DEMO_MODE=0) run with an empty corpus —
+  // Live deployments (NEXT_PUBLIC_DEMO_MODE=0) run with an empty corpus,
   // every dashboard/analytics surface derives from real Supabase rows or
   // renders empty. Demo deployments get the full synthetic city below.
   if (!DEMO_MODE) return [];
@@ -540,7 +540,7 @@ function stripCorpus(r: CorpusReport): DashboardReport {
 }
 
 /* ------------------------------------------------------------------
-   Full corpus accessor — the single source of truth that the shared
+   Full corpus accessor, the single source of truth that the shared
    filter context loads once and every dashboard/analytics widget
    derives from. age_days is stripped; derive functions recompute age
    from created_at so they stay pure and corpus-shape stays clean.

@@ -42,7 +42,7 @@ beforeEach(() => {
   state.captured = null;
 });
 
-describe("isTerminal — retry classification", () => {
+describe("isTerminal, retry classification", () => {
   it.each([
     [{ sent: true, reason: "ok" }, true],
     [{ sent: false, reason: "no-recipient" }, true],

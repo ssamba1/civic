@@ -1,5 +1,5 @@
 /**
- * Pure scheduling helpers — no I/O, no DB, no server-only imports.
+ * Pure scheduling helpers, no I/O, no DB, no server-only imports.
  * Safe to import from both server and client contexts (types only exported to
  * avoid accidental server-action leakage from client bundles).
  */
@@ -10,7 +10,7 @@ import type { Result } from "@/lib/types";
 // Types
 // ---------------------------------------------------------------------------
 
-/** A work order as seen by the scheduler — minimal fields to keep this pure. */
+/** A work order as seen by the scheduler. Minimal fields to keep this pure. */
 export interface SchedulableWorkOrder {
   id: string;
   /** ISO timestamptz string or null. */
@@ -99,7 +99,7 @@ export function groupByDay(
   const map = new Map<string, SchedulableWorkOrder[]>();
   for (const wo of workOrders) {
     if (!wo.scheduledFor) continue;
-    // Slice to date only — drop the time portion. ISO strings are always
+    // Slice to date only. Drop the time portion. ISO strings are always
     // UTC-normalised from the DB; the first 10 chars are YYYY-MM-DD.
     const day = wo.scheduledFor.slice(0, 10);
     const bucket = map.get(day) ?? [];

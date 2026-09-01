@@ -15,7 +15,7 @@ export const isDemoId = (id: string | null | undefined): boolean =>
    Demo-report overlay store.
 
    A presenter clicks "Refresh" (staff inbox) to inject a live demo
-   data point — the fallen tree photographed in a Cumming parking lot —
+   data point, the fallen tree photographed in a Cumming parking lot,
    and it appears across every client surface that renders reports
    (map, delegation, analytics, dashboard, inbox) with a blue glow.
    A small global "Reset demo" button clears them.
@@ -52,7 +52,7 @@ function buildDemoTree(n: number): DashboardReport {
     tags: ["storm", "parking-lot", "blocking-access"],
     demo: true,
     ai_reasoning:
-      "Large hardwood down across 3 parking spaces at the medical-office lot off Tribble Gap Rd. Blocking two vehicles and the pedestrian path; no downed power lines visible in frame. Classified tree_down at severity 3 — property access blocked, no injury risk. Auto-routed to Parks & Recreation / Urban Forestry; recommend a chainsaw crew, ~1 hr cleanup, and a hazard cone in the interim.",
+      "Large hardwood down across 3 parking spaces at the medical-office lot off Tribble Gap Rd. Blocking two vehicles and the pedestrian path; no downed power lines visible in frame. Classified tree_down at severity 3, property access blocked, no injury risk. Auto-routed to Parks & Recreation / Urban Forestry; recommend a chainsaw crew, ~1 hr cleanup, and a hazard cone in the interim.",
   };
 }
 
@@ -86,7 +86,7 @@ function writeStorage(list: DashboardReport[]) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
   } catch {
-    // Quota / private mode — in-memory snapshot still drives the UI this session.
+    // Quota / private mode, in-memory snapshot still drives the UI this session.
   }
 }
 
@@ -97,7 +97,7 @@ function hydrateOnce() {
   emit();
 }
 
-// Hydrate synchronously at client module-eval — before any component mounts —
+// Hydrate synchronously at client module-eval, before any component mounts,
 // so useSyncExternalStore's first client snapshot already has persisted reports
 // (no empty first frame / marker-pop). SSR-safe via the window guard inside.
 hydrateOnce();
@@ -166,7 +166,7 @@ export function demoWorkOrderFromReport(
       status: r.status,
       address: r.address,
       description:
-        "Large tree down across the parking lot — blocking two vehicles and the pedestrian walkway.",
+        "Large tree down across the parking lot, blocking two vehicles and the pedestrian walkway.",
       created_at: r.created_at,
       updated_at: r.created_at,
     },

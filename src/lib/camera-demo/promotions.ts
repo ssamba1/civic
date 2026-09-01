@@ -22,12 +22,12 @@ export interface Promotion {
   /** Video time (s) at which the cluster promotes and the agent spins off. */
   time: number;
   location: LngLat;
-  /** Strongest box at promotion time — shown as evidence confidence. */
+  /** Strongest box at promotion time, shown as evidence confidence. */
   peakConf: number;
   observationCount: number;
-  /** Frame the promotion fired on — the evidence screenshot. */
+  /** Frame the promotion fired on, the evidence screenshot. */
   frameIndex: number;
-  /** The strongest box in that frame — the one the evidence shot highlights. */
+  /** The strongest box in that frame, the one the evidence shot highlights. */
   bestBox: DetectionBox;
 }
 

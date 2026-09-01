@@ -19,9 +19,9 @@ import {
 } from "@/lib/onboarding/tiger";
 import type { Result } from "@/lib/types";
 
-// Server Actions are public endpoints — re-check authorization here, never rely
+// Server Actions are public endpoints. Re-check authorization here, never rely
 // on the layout gate alone. Demo persona + dev bypass mirror the layout so the
-// console is reachable in the demo — but only the admin persona, only when
+// console is reachable in the demo, but only the admin persona, only when
 // DEMO_MODE is on (the cookie is client-supplied; see T0.1).
 async function requireAdmin(): Promise<boolean> {
   if (DEMO_MODE) {
@@ -95,7 +95,7 @@ export async function provisionAndSeedAction(input: {
   const db = createServerClient();
 
   // Seed per-city config from the defaults (F3). Best-effort: a failure (e.g.
-  // un-migrated config tables) must not block cold-start — the app falls back to
+  // un-migrated config tables) must not block cold-start. The app falls back to
   // the static teams.ts config.
   await applyConfigTemplate(db, provisioned.data.cityId);
   const { data: job } = await db

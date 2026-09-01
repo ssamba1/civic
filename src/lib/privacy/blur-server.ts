@@ -1,11 +1,11 @@
 // Server-side face/plate blur for camera ingest (CAMERA_LIABILITY_PIPELINE.md §4.5).
 //
 // ────────────────────────────────────────────────────────────────────────────
-// HARD RULE — NON-NEGOTIABLE
+// HARD RULE, NON-NEGOTIABLE
 // On ANY failure (sidecar down, timeout, bad response, model error, empty
 // body) this returns { ok: false } and the CALLER MUST DROP THE CROP.
 // There is NO fallback path. An unblurred byte must never be persisted
-// anywhere — not to `photos-public`, not to `photos-raw`, not to a temp
+// anywhere, not to `photos-public`, not to `photos-raw`, not to a temp
 // object, not to a log. Dropping evidence is always cheaper than publishing
 // a face or a plate. Do not add a "degraded mode" here.
 // ────────────────────────────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ export interface BlurredCrop {
   bytes: Uint8Array;
   /** Value for the existing `blur_version` column. */
   blurVersion: string;
-  /** Regions the model redacted — telemetry only, never coordinates of a person. */
+  /** Regions the model redacted, telemetry only, never coordinates of a person. */
   regionsRedacted: number;
 }
 
@@ -42,7 +42,7 @@ function detectorBaseUrl(): string | null {
 
 /**
  * Blur faces and license plates in a crop by calling the detector sidecar's
- * `/blur` endpoint. Returns the redacted bytes, or `{ ok: false }` — in which
+ * `/blur` endpoint. Returns the redacted bytes, or `{ ok: false }`, in which
  * case the caller drops the crop entirely (see the hard rule above).
  */
 export async function blurServerSide(
@@ -52,7 +52,7 @@ export async function blurServerSide(
   const base = detectorBaseUrl();
   if (!base) {
     logger.error("blur_sidecar_unconfigured", undefined, {
-      detail: "DETECTOR_URL is unset — dropping crop rather than publishing it",
+      detail: "DETECTOR_URL is unset, dropping crop rather than publishing it",
     });
     return { ok: false, error: "blur_unavailable" };
   }
@@ -89,7 +89,7 @@ export async function blurServerSide(
     }
 
     // The sidecar reports what it redacted in a header so the response body can
-    // stay raw bytes. A missing header is not a failure — 0 regions is a legal
+    // stay raw bytes. A missing header is not a failure. 0 regions is a legal
     // outcome for a crop with no faces or plates in it.
     const regionsHeader = res.headers.get("x-blur-regions");
     const regionsRedacted = Number.parseInt(regionsHeader ?? "0", 10);

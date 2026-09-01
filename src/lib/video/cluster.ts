@@ -1,11 +1,11 @@
 /**
- * In-memory clustering of one clip's detections — 30 frames of the same
+ * In-memory clustering of one clip's detections. 30 frames of the same
  * pothole must become ONE candidate, or the decision stage would spend a
  * Gemini call per frame. Same-class detections join a cluster when they are
  * geographically within radiusM (GPS-carrying clips), or visually near-dup
  * by aHash (GPS-less clips).
  *
- * This handles only intra-clip grouping in application code — a handful of
+ * This handles only intra-clip grouping in application code. A handful of
  * points already in memory. CROSS-clip continuity goes through PostGIS
  * (find_nearby_detection_cluster RPC, migration 056) per hard rule 7.
  * Pure functions throughout.
@@ -15,7 +15,7 @@ import { hammingDistance } from "@/lib/video/phash";
 
 /** Input to clustering: one persisted-detection candidate. */
 export interface ClusterableDetection {
-  /** Caller's index — mapped back to detection rows after grouping. */
+  /** Caller's index, mapped back to detection rows after grouping. */
   index: number;
   class: string;
   confidence: number;
@@ -27,7 +27,7 @@ export interface DetectionGroup {
   class: string;
   /** Indices (ClusterableDetection.index) of the grouped detections. */
   indices: number[];
-  /** Index of the highest-confidence member — the cluster's "best frame". */
+  /** Index of the highest-confidence member, the cluster's "best frame". */
   bestIndex: number;
   maxConfidence: number;
   /** Best member's location (representative point); null when GPS-less. */
@@ -67,7 +67,7 @@ function sameScene(
 /**
  * Greedy single-link grouping: each detection joins the first group any of
  * whose members it matches (same class + within radius, or near-dup hash);
- * otherwise it starts a new group. O(n²) on a clip's detections — bounded
+ * otherwise it starts a new group. O(n²) on a clip's detections, bounded
  * by frames-per-clip, not city size.
  */
 export function groupDetections(

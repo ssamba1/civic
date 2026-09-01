@@ -3,11 +3,11 @@
 -- city_baselines: admin-entered pre-Civic values for before/after comparison.
 --   Populate via the Supabase dashboard or a SQL INSERT after deploying.
 --   Key metric names to enter (for the CSV to show before/after columns):
---     avg_resolution_days_before  — average days to close a report before Civic
---     avg_response_days_before    — average days before anyone responded
---     monthly_report_volume_before — avg monthly 311/email/phone reports received
---     monthly_duplicate_rate_pct_before — % that were dupes of an existing issue
---     manual_triage_min_per_report_before — staff minutes spent triaging one report
+--     avg_resolution_days_before, average days to close a report before Civic
+--     avg_response_days_before, average days before anyone responded
+--     monthly_report_volume_before, avg monthly 311/email/phone reports received
+--     monthly_duplicate_rate_pct_before, % that were dupes of an existing issue
+--     manual_triage_min_per_report_before, staff minutes spent triaging one report
 --
 -- get_impact_metrics(): single RPC returning ALL impact stats as JSONB.
 --   Called once by /api/admin/impact-export. Runs SECURITY DEFINER so it

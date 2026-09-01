@@ -44,10 +44,10 @@ Audited: deck.gl (5 packages), gsap (2 packages), cobe, maplibre-gl, react-map-g
 | Package | Imported | Loaded | Used | Bundle Risk |
 |---|---|---|---|---|
 | @deck.gl/aggregation-layers | ✓ | eager | HexagonLayer, HeatmapLayer | Mitigated (lazy ReportMap) |
-| @deck.gl/core | ✗ | transitive | — | ✓ Normal (pulled by layers) |
+| @deck.gl/core | ✗ | transitive | - | ✓ Normal (pulled by layers) |
 | @deck.gl/layers | ✓ | eager | ScatterplotLayer | Mitigated (lazy ReportMap) |
 | @deck.gl/mapbox | ✓ | eager | MapboxOverlay | Mitigated (lazy ReportMap) |
-| @deck.gl/react | ✓ | eager | — | Mitigated (lazy ReportMap) |
+| @deck.gl/react | ✓ | eager | - | Mitigated (lazy ReportMap) |
 | gsap | ✓ | eager | Direct animation calls | Acceptable (report/team modals only) |
 | @gsap/react | ✓ | eager | useGSAP hook | Acceptable (report/team modals only) |
 | cobe | ✓ | eager | createGlobe | Acceptable (landing page only) |
@@ -56,11 +56,11 @@ Audited: deck.gl (5 packages), gsap (2 packages), cobe, maplibre-gl, react-map-g
 
 **Key Findings:**
 
-1. **Lazy Loading Strategy:** Map components use `next/dynamic` wrapper in src/components/map/report-map-lazy.tsx:5, loaded only when needed (dashboard, browse pages). Eager load is confined to fullscreen-map.tsx and staff map pages — reasonable for dedicated routes.
+1. **Lazy Loading Strategy:** Map components use `next/dynamic` wrapper in src/components/map/report-map-lazy.tsx:5, loaded only when needed (dashboard, browse pages). Eager load is confined to fullscreen-map.tsx and staff map pages. Reasonable for dedicated routes.
 
 2. **GSAP Usage:** Animations in emergency-interstitial.tsx:2, submission-confirmation.tsx:3, delegation-panel.tsx:5, team-setup-modal.tsx:5, workload-bars.tsx:3. These are modal/UI-driven components with legitimate animation needs. Bundle cost is unavoidable if animations are core UX.
 
-3. **COBE (3D Globe):** Loaded in civic-globe.tsx:5 on landing page (app/page.tsx). Visible on landing but not on main app routes — acceptable trade-off.
+3. **COBE (3D Globe):** Loaded in civic-globe.tsx:5 on landing page (app/page.tsx). Visible on landing but not on main app routes, acceptable trade-off.
 
 4. **No Duplicate-Purpose Libraries:** Mapping stack is complementary: maplibre-gl (base), react-map-gl (wrapper), deck.gl (visualization). Animation: gsap + @gsap/react are standard pairing.
 
@@ -68,13 +68,13 @@ Audited: deck.gl (5 packages), gsap (2 packages), cobe, maplibre-gl, react-map-g
 
 ## Dependency Status by Type
 
-### Runtime Dependencies (24) — All Used
+### Runtime Dependencies (24): All Used
 
 @deck.gl/aggregation-layers, @deck.gl/core (transitive), @deck.gl/layers, @deck.gl/mapbox, @deck.gl/react, @google/generative-ai, @gsap/react, @radix-ui/react-accordion, @radix-ui/react-slot, @sentry/nextjs, @supabase/ssr, @supabase/supabase-js, class-variance-authority, clsx, cobe, gsap, lucide-react, maplibre-gl, next, react, react-dom, react-map-gl, tailwind-merge, zod.
 
 **Status:** All used. No undeclared imports found.
 
-### DevDependencies (12) — 11 Used, 1 Unused
+### DevDependencies (12): 11 Used, 1 Unused
 
 | Package | Used | Evidence |
 |---|---|---|

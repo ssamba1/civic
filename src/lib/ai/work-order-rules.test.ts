@@ -4,7 +4,7 @@ import type { Classification, ReportCategory } from "@/lib/types";
 import { estimateCost, generateWorkOrder } from "./work-order-rules";
 
 // generateWorkOrder is a pure, deterministic function. It imports only TYPES
-// (erased at compile time) — no network, DB, or env runtime dependencies — so
+// (erased at compile time) (no network, DB, or env runtime dependencies), so
 // there is nothing to vi.mock here. Tests stay fast and deterministic.
 
 function makeClassification(

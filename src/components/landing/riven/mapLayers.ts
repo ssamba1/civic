@@ -7,7 +7,7 @@ import { type CivicPoint, type MapInk, statusColor } from "./mapPresets";
  * deck.gl layer builders for the hero backdrop's aggregation views.
  *
  * Split out of mapPresets.ts on purpose: mapPresets holds the lightweight
- * preset DATA, which MapPresetContext imports at module load — on the landing
+ * preset DATA, which MapPresetContext imports at module load, on the landing
  * route's critical path. Keeping the heavy @deck.gl/* imports here (only the
  * lazily-loaded ZampMapBackdrop imports this file) means deck.gl never enters
  * the initial bundle. Marker views render via these layers too (NOT DOM <Marker>
@@ -40,7 +40,7 @@ export function buildHeatLayer(points: CivicPoint[]): Layer[] {
 }
 
 /**
- * Marker view as deck.gl layers — a soft status-colored glow ring + a crisp
+ * Marker view as deck.gl layers, a soft status-colored glow ring + a crisp
  * core dot, copied from report-map.tsx's glow/dots layers. pickable is off
  * everywhere (it's a backdrop) so deck never does ReadPixels picking, which
  * otherwise stalls the GPU.

@@ -12,7 +12,7 @@ import { isStaffForCity } from "@/lib/staff-access";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
-  /** `?report=<id>` — deep link from the video console's detection rail. */
+  /** `?report=<id>`, deep link from the video console's detection rail. */
   searchParams?: Promise<{ report?: string }>;
 }
 
@@ -29,8 +29,8 @@ export async function generateMetadata({
   if (!city) city = await fetchCityMock(slug);
   if (!city) return { title: "City not found | Civic" };
   return {
-    title: `Civic | ${city.name}, ${city.state} — Work Order Grid`,
-    description: `Spreadsheet of every report and work order for ${city.name}, ${city.state} — sortable, filterable, emergencies surfaced without a work order.`,
+    title: `Civic | ${city.name}, ${city.state}. Work Order Grid`,
+    description: `Spreadsheet of every report and work order for ${city.name}, ${city.state}. Sortable, filterable, emergencies surfaced without a work order.`,
   };
 }
 
@@ -38,7 +38,7 @@ export async function generateMetadata({
  * Gate this city's operational grid behind the shared, per-city operational
  * access check (isStaffForCity: demo persona scoped to the demo city, OR
  * dev-bypass, OR a real staff/admin role whose home city matches `slug`). The
- * demo city stays open — it's the public showcase — so this only runs for every
+ * demo city stays open (it's the public showcase), so this only runs for every
  * OTHER city (see the `slug !== DEMO_CITY` call site), whose per-work-order
  * cost/crew/department data is not public. Single source of truth so this gate
  * can never drift from the nav-visibility checks.
@@ -76,7 +76,7 @@ export default async function CityGridPage({
   // answer above instead of re-running the auth round trip.
   const canAssign = await isStaffForCity(slug);
 
-  // The rows, the crew list, and the crew-type catalog are independent reads —
+  // The rows, the crew list, and the crew-type catalog are independent reads,
   // running them serially made the grid wait out three round trips back to
   // back. Per-city crew-type catalog (031) lets the grid's crew filter + edit
   // dropdown show custom types even before any work order uses them; it

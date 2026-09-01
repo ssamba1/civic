@@ -12,7 +12,7 @@ export interface SwitchProps {
   className?: string;
 }
 
-/** Accessible toggle (role="switch"). Color is not the sole state signal —
+/** Accessible toggle (role="switch"). Color is not the sole state signal,
  *  aria-checked + thumb position both convey it. */
 export function Switch({
   checked,

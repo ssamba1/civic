@@ -2,8 +2,8 @@
 
 /**
  * Client console for the video damage-mapping pipeline: clip upload (direct
- * PUT to a signed storage URL — the file never transits a server action) and
- * per-cluster decision controls. Deliberately utilitarian — this is a staff
+ * PUT to a signed storage URL, the file never transits a server action) and
+ * per-cluster decision controls. Deliberately utilitarian. This is a staff
  * ops surface, not a resident page.
  */
 import { useRouter } from "next/navigation";
@@ -62,7 +62,7 @@ export function UploadClip({ slug }: { slug: string }) {
         setMessage(`Clip registration failed: ${finalized.error}`);
         return;
       }
-      setMessage("Clip uploaded — processing started.");
+      setMessage("Clip uploaded, processing started.");
       if (fileRef.current) fileRef.current.value = "";
       router.refresh();
     } finally {

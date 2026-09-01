@@ -16,7 +16,7 @@ export default async function AdminApiKeysPage() {
         <p className="mt-1 max-w-2xl text-sm text-[var(--color-muted)]">
           Per-partner keys for the Open311 GeoReport v2 API. Each key carries
           its own attribution and optional city scope, and can be revoked
-          independently. The plaintext is shown once, at issuance — store it
+          independently. The plaintext is shown once, at issuance, store it
           securely.
         </p>
       </div>

@@ -6,10 +6,10 @@ import { createLogger } from "@/lib/logger";
 /* ==================================================================
    Open-data export (NEXT_100 #50).
 
-   A public, anonymized, NYC-311-style dataset — aggregate report counts by
+   A public, anonymized, NYC-311-style dataset, aggregate report counts by
    category, status, and month for a city. Builds civic goodwill + research
    cred and gives journalists/academics a citable feed. Strictly aggregate:
-   no reporter, no coordinates, no free text — nothing that identifies anyone.
+   no reporter, no coordinates, no free text, nothing that identifies anyone.
    ================================================================== */
 
 const logger = createLogger("[open-data]");
@@ -109,7 +109,7 @@ export async function GET(request: Request) {
       byStatus,
       byMonth,
       license: "CC-BY-4.0",
-      note: "Aggregate counts only — no personal data.",
+      note: "Aggregate counts only, no personal data.",
     },
     { headers: { "Cache-Control": "public, max-age=3600" } },
   );

@@ -27,9 +27,9 @@ function toCsv(rows: Row[]): string {
 
 // Format a number nicely: round to 1dp, add commas.
 function n(v: unknown, decimals = 1): string {
-  if (v === null || v === undefined) return "N/A — no data yet";
+  if (v === null || v === undefined) return "N/A, no data yet";
   const num = typeof v === "number" ? v : Number(v);
-  if (Number.isNaN(num)) return "N/A — no data yet";
+  if (Number.isNaN(num)) return "N/A. No data yet";
   return num.toLocaleString("en-US", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -37,14 +37,14 @@ function n(v: unknown, decimals = 1): string {
 }
 
 function pct(v: unknown): string {
-  if (v === null || v === undefined) return "N/A — no data yet";
+  if (v === null || v === undefined) return "N/A. No data yet";
   return `${n(v)}%`;
 }
 
 function dollars(v: unknown): string {
-  if (v === null || v === undefined) return "N/A — no data yet";
+  if (v === null || v === undefined) return "N/A, no data yet";
   const num = typeof v === "number" ? v : Number(v);
-  if (Number.isNaN(num)) return "N/A — no data yet";
+  if (Number.isNaN(num)) return "N/A. No data yet";
   return `$${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
@@ -55,7 +55,7 @@ function baseline(
   formatter: (v: unknown) => string = n,
 ): string {
   const b = baselines[key];
-  if (!b) return "Not set — enter via Supabase city_baselines table";
+  if (!b) return "Not set, enter via Supabase city_baselines table";
   const display = b.text ?? (b.value !== undefined ? formatter(b.value) : "");
   return b.period ? `${display} (${b.period})` : display;
 }
@@ -76,11 +76,11 @@ function categoryRows(
     .map(([cat, val]) =>
       row(
         section,
-        `${label} — ${cat.replace(/_/g, " ")}`,
+        `${label}, ${cat.replace(/_/g, " ")}`,
         formatter(val),
         unit,
         period,
-        "—",
+        "-",
         notes,
       ),
     );
@@ -143,7 +143,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       n(m.unique_residents, 0),
       "unique users",
       period,
-      "—",
+      "-",
       "distinct reporter_id values",
     ),
     row(
@@ -152,7 +152,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       n(m.departments_active, 0),
       "departments",
       period,
-      "—",
+      "-",
       "distinct department in work_orders",
     ),
     row(
@@ -197,7 +197,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       n(m.total_duplicates_merged, 0),
       "reports",
       period,
-      "—",
+      "-",
       "merges table",
     ),
     row(
@@ -238,7 +238,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       n(m.total_merged_as_duplicates, 0),
       "reports",
       period,
-      "—",
+      "-",
       "status = merged",
     ),
     row(
@@ -247,7 +247,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       n(m.total_rejected, 0),
       "reports",
       period,
-      "—",
+      "-",
       "status = rejected",
     ),
     row(
@@ -256,7 +256,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       n(m.unique_residents, 0),
       "unique users",
       period,
-      "—",
+      "-",
       "COUNT DISTINCT reporter_id",
     ),
     row(
@@ -265,7 +265,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       n(m.departments_active, 0),
       "departments",
       period,
-      "—",
+      "-",
       "distinct departments with work orders",
     ),
     row(
@@ -274,7 +274,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       "Requires census tract overlay",
       "tracts",
       period,
-      "—",
+      "-",
       "PostGIS location data available; overlay census shapefile to compute",
     ),
     row(
@@ -283,7 +283,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       pct(m.first_time_submitter_pct),
       "%",
       period,
-      "—",
+      "-",
       "reporters with exactly 1 report / all reporters",
     ),
     row(
@@ -292,7 +292,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       pct(m.repeat_submitter_pct),
       "%",
       period,
-      "—",
+      "-",
       "reporters with 2+ reports / all reporters",
     ),
     row(
@@ -301,7 +301,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       n(m.total_upvotes, 0),
       "upvotes",
       period,
-      "—",
+      "-",
       "verifications table, vote = confirmed",
     ),
     row(
@@ -310,7 +310,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       pct(m.reports_with_descriptions_pct),
       "%",
       period,
-      "—",
+      "-",
       "engaged reporters who added context beyond the photo",
     ),
 
@@ -332,7 +332,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       `${n(m.p90_upload_to_classify_min)} min`,
       "minutes",
       period,
-      "—",
+      "-",
       "worst-case tail; excludes failed classifications",
     ),
     row(
@@ -368,7 +368,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       `${n(m.p90_report_to_resolution_hrs)} hrs`,
       "hours",
       period,
-      "—",
+      "-",
       "worst-case tail; only resolved reports",
     ),
     row(
@@ -407,7 +407,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       })(),
       "total hours",
       period,
-      "—",
+      "-",
       "time saved per report × total reports",
     ),
 
@@ -429,7 +429,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       pct(m.pct_classification_failed),
       "%",
       period,
-      "—",
+      "-",
       "reports without a confident classification / total",
     ),
     row(
@@ -447,16 +447,16 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       n(m.total_classification_overrides, 0),
       "corrections",
       period,
-      "—",
+      "-",
       "rows in classification_feedback",
     ),
     row(
       "AI ACCURACY",
       "Average AI confidence score",
       n(m.avg_ai_confidence, 3),
-      "0–1 scale",
+      "0-1 scale",
       period,
-      "—",
+      "-",
       "mean of classifications.confidence where confidence > 0",
     ),
     row(
@@ -465,7 +465,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       n(m.total_emergency_reports, 0),
       "reports",
       period,
-      "—",
+      "-",
       "classifications.is_emergency = true",
     ),
     row(
@@ -474,7 +474,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       pct(m.pct_ai_generated_work_orders),
       "%",
       period,
-      "—",
+      "-",
       "work_orders.wo_source = ai / total work orders",
     ),
 
@@ -520,7 +520,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       n(m.total_resolved, 0),
       "reports",
       period,
-      "—",
+      "-",
       "status = closed",
     ),
     row(
@@ -529,7 +529,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       n(m.total_open, 0),
       "reports",
       period,
-      "—",
+      "-",
       "status = open",
     ),
     row(
@@ -538,7 +538,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       n(m.total_dispatched, 0),
       "reports",
       period,
-      "—",
+      "-",
       "status = dispatched",
     ),
     row(
@@ -547,7 +547,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       n(m.total_in_progress, 0),
       "reports",
       period,
-      "—",
+      "-",
       "status = in_progress",
     ),
     row(
@@ -626,7 +626,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
 
     // ── EQUITY ───────────────────────────────────────────────────────────────
     row(
-      "EQUITY — By Category",
+      "EQUITY. By Category",
       "Note",
       "Resolution rates and times below reveal which infrastructure types receive faster service. Pair with neighborhood census data for equity analysis.",
       "",
@@ -635,7 +635,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       "",
     ),
     ...categoryRows(
-      "EQUITY — By Category",
+      "EQUITY, By Category",
       "Report count",
       (m.reports_by_category as Record<string, unknown>) ?? {},
       (v) => n(v, 0),
@@ -644,7 +644,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       "excludes rejected and merged",
     ),
     ...categoryRows(
-      "EQUITY — By Category",
+      "EQUITY, By Category",
       "Resolution rate",
       (m.resolution_rate_by_category as Record<string, unknown>) ?? {},
       pct,
@@ -653,7 +653,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       "closed / total per category",
     ),
     ...categoryRows(
-      "EQUITY — By Category",
+      "EQUITY, By Category",
       "Median resolution time",
       (m.median_resolution_hrs_by_category as Record<string, unknown>) ?? {},
       (v) => `${n(v)} hrs`,
@@ -671,7 +671,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       dollars(m.total_estimated_repair_cost),
       "USD",
       period,
-      "—",
+      "-",
       "SUM work_orders.est_cost",
     ),
     row(
@@ -680,7 +680,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       dollars(m.avg_estimated_cost_per_report),
       "USD/report",
       period,
-      "—",
+      "-",
       "AVG work_orders.est_cost where > 0",
     ),
     row(
@@ -688,10 +688,10 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       "AI cost estimate accuracy vs. actual repair cost",
       m.cost_accuracy_pct !== null
         ? pct(m.cost_accuracy_pct)
-        : "N/A — no closed reports with actual cost entered yet",
+        : "N/A. No closed reports with actual cost entered yet",
       "%",
       period,
-      "—",
+      "-",
       "requires staff to enter actual_cost when closing; computed as 100 − mean absolute % error vs. actual_cost (outliers excluded)",
     ),
 
@@ -704,7 +704,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       n(m.total_upvotes, 0),
       "upvotes",
       period,
-      "—",
+      "-",
       "verifications.vote = confirmed",
     ),
     row(
@@ -713,34 +713,34 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       pct(m.repeat_submitter_pct),
       "%",
       period,
-      "—",
+      "-",
       "reporters with 2+ reports / all reporters",
     ),
     row(
       "ENGAGEMENT",
       "Resident satisfaction / CSAT",
-      "N/A — feature not yet instrumented",
+      "N/A, feature not yet instrumented",
       "%",
       period,
-      "—",
+      "-",
       "add a CSAT rating step to the report-closed notification flow",
     ),
     row(
       "ENGAGEMENT",
       "Email open rate for status updates",
-      "N/A — track via Resend webhook",
+      "N/A, track via Resend webhook",
       "%",
       period,
-      "—",
+      "-",
       "configure Resend open/click webhooks → notifications table",
     ),
     row(
       "ENGAGEMENT",
       "Staff adoption rate",
-      "N/A — track via staff_actions table (future migration)",
+      "N/A, track via staff_actions table (future migration)",
       "%",
       period,
-      "—",
+      "-",
       "actions per staff member / expected workload",
     ),
 
@@ -765,8 +765,8 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       "Earliest report in database",
       String(m.earliest_report_date ?? "N/A"),
       "date",
-      "—",
-      "—",
+      "-",
+      "-",
       "MIN reports.created_at",
     ),
     row(
@@ -774,8 +774,8 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       "Most recent report in database",
       String(m.latest_report_date ?? "N/A"),
       "date",
-      "—",
-      "—",
+      "-",
+      "-",
       "MAX reports.created_at",
     ),
     row(
@@ -783,8 +783,8 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       "Report generated at",
       String(m.data_generated_at ?? generatedAt),
       "ISO 8601",
-      "—",
-      "—",
+      "-",
+      "-",
       "UTC timestamp when this CSV was generated",
     ),
     row(
@@ -793,7 +793,7 @@ function buildCsvRows(m: Metrics, bl: Baselines, generatedAt: string): Row[] {
       "Track via /api/health endpoint or Sentry",
       "",
       period,
-      "—",
+      "-",
       "error_log table + Sentry DSN for AI failure rate",
     ),
   ];
@@ -845,7 +845,7 @@ export async function GET(request: Request) {
       }
     }
 
-    // Fetch metrics — service client bypasses RLS for aggregate reads.
+    // Fetch metrics. Service client bypasses RLS for aggregate reads.
     const db = createServerClient();
 
     // Fetch the first city's ID for baseline lookup.
@@ -885,7 +885,7 @@ export async function GET(request: Request) {
     const filename = `civic-impact-report-${dateStr}.csv`;
 
     // UTF-8 BOM (﻿) makes Excel on Windows open the file with correct
-    // encoding so → and — characters render properly instead of garbling.
+    // encoding so → and, characters render properly instead of garbling.
     return new NextResponse(`﻿${csv}`, {
       status: 200,
       headers: {

@@ -9,7 +9,7 @@ import type { Result } from "@/lib/types";
 const logger = createLogger("[schedule-actions]");
 
 // ---------------------------------------------------------------------------
-// Auth guard — same pattern as src/app/staff/actions.ts getStaffUser()
+// Auth guard, same pattern as src/app/staff/actions.ts getStaffUser()
 // ---------------------------------------------------------------------------
 
 const STAFF_ROLES = ["staff_dispatcher", "staff_supervisor", "admin"] as const;
@@ -109,7 +109,7 @@ export async function scheduleWorkOrder(
   const db = createServerClient();
 
   if (!(await schedulingColumnsExist(db))) {
-    logger.warn("scheduling columns absent — migration 051 not applied", {
+    logger.warn("scheduling columns absent, migration 051 not applied", {
       workOrderId,
     });
     return { ok: false, error: "feature_not_migrated" };
@@ -168,7 +168,7 @@ export async function unscheduleWorkOrder(
   const db = createServerClient();
 
   if (!(await schedulingColumnsExist(db))) {
-    logger.warn("scheduling columns absent — migration 051 not applied", {
+    logger.warn("scheduling columns absent, migration 051 not applied", {
       workOrderId,
     });
     return { ok: false, error: "feature_not_migrated" };
@@ -195,7 +195,7 @@ export async function unscheduleWorkOrder(
     .update({
       scheduled_for: null,
       scheduled_window_end: null,
-      // intentionally do NOT null-out assigned_crew_id — crew assignment is
+      // intentionally do NOT null-out assigned_crew_id. Crew assignment is
       // independent from scheduling and may remain after unscheduling.
     })
     .eq("id", workOrderId);

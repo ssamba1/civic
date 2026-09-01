@@ -214,7 +214,7 @@ describe("detectConflicts", () => {
     expect(detectConflicts(wos)).toEqual([]);
   });
 
-  it("handles three WOs for same crew+day — all ids included", () => {
+  it("handles three WOs for same crew+day, all ids included", () => {
     const wos = [
       woFixture("a", "2026-07-10T08:00:00.000Z", CREW_A),
       woFixture("b", "2026-07-10T12:00:00.000Z", CREW_A),

@@ -1,8 +1,8 @@
-# Runbook — DEMO_MODE → production cutover
+# Runbook: DEMO_MODE → production cutover
 
 Many features gate on `DEMO_MODE` (localStorage / synthetic corpus) and no-op
 their DB writes when it's on: upvotes, category routing, custom categories,
-CSAT, notification email. A live pilot needs a deliberate, verified flip — not
+CSAT, notification email. A live pilot needs a deliberate, verified flip. Not
 ad-hoc env edits. This is the checklist.
 
 ## 0. Preconditions
@@ -16,7 +16,7 @@ ad-hoc env edits. This is the checklist.
 ## 1. Apply migrations
 
 Migrations are **not** auto-applied. Run the whole `supabase/migrations/`
-directory in filesystem order (dates make the order deterministic — the two
+directory in filesystem order (dates make the order deterministic, the two
 `_023_` files carry different date prefixes and sort correctly):
 
 ```
@@ -24,7 +24,7 @@ DATABASE_URL='postgresql://…' node scripts/run-migrations.mjs
 # → each file "OK"; exits non-zero if any FAILed
 ```
 
-This lands 024–034: `city_config`, `close_the_loop` (report_updates, report_csat,
+This lands 024-034: `city_config`, `close_the_loop` (report_updates, report_csat,
 public_token, notifications.delivered_at), `team_routing` (work_orders.team_key),
 `upvotes_issue_types`, `api_keys`, crews, SLA due dates, routing zones,
 cross-jurisdiction.
@@ -73,7 +73,7 @@ pnpm audit:privacy   # no raw photos in photos-public
 ```
 
 Then one **manual end-to-end on a real phone** against the live DB:
-1. `/report` — submit a photo from a clean session (anonymous). Confirms the
+1. `/report`: submit a photo from a clean session (anonymous). Confirms the
    anon session + `ensureResidentProfile` self-heal (so the close email can fire).
 2. Staff dispatch → close with actual cost + resolution photo.
 3. Resident receives the resolution email (check `notifications.delivered_at` is
@@ -87,7 +87,7 @@ DB-backed routing together.
 
 ## Rollback
 
-Cutover is additive (new columns/tables, `IF NOT EXISTS`) — no destructive
+Cutover is additive (new columns/tables, `IF NOT EXISTS`). No destructive
 migration. To fall back to demo, set `DEMO_MODE` on again; the DB rows remain but
 the UI reverts to the synthetic corpus. Revoke any issued Open311 keys via
 `/admin/api-keys` if the pilot is aborted.

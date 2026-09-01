@@ -217,7 +217,7 @@ describe("reportToOpen311 expected_datetime", () => {
   it("falls back to the 'other' SLA window for a city-defined category", () => {
     // CATEGORY_SLA_TARGETS is keyed by the twelve built-ins. A `custom_` key
     // looked up undefined, `created_at + undefined * 3_600_000` is NaN, and
-    // new Date(NaN).toISOString() THROWS — 500'ing the whole export for any
+    // new Date(NaN).toISOString() THROWS, 500'ing the whole export for any
     // city using its own categories.
     const o = reportToOpen311(
       report({ status: "open" }),

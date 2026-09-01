@@ -5,7 +5,7 @@ import { CameraDemo } from "@/components/camera-demo/camera-demo";
 export const metadata: Metadata = {
   title: "Camera pipeline demo | Civic",
   description:
-    "Fleet camera feed to detection, clustering, liability attribution, and a drafted contractor claim — scripted demo.",
+    "Fleet camera feed to detection, clustering, liability attribution, and a drafted contractor claim, scripted demo.",
 };
 
 export default function CameraDemoPage() {
@@ -16,7 +16,7 @@ export default function CameraDemoPage() {
         <p className="text-muted-foreground text-xs">
           A bus-mounted feed finds damage, a detector gates frames, clusters
           confirm across passes, and an agent assembles the liability trail.
-          Scripted demo on precomputed detections — the production pipeline is
+          Scripted demo on precomputed detections. The production pipeline is
           documented in the spec.
         </p>
       </div>

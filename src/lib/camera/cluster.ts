@@ -1,4 +1,4 @@
-// Detection clustering — the volume problem (CAMERA_LIABILITY_PIPELINE.md §4.4).
+// Detection clustering, the volume problem (CAMERA_LIABILITY_PIPELINE.md §4.4).
 //
 // A bus passes the same pothole ~20x/day across ~180 school days. Naively that
 // is ~3,600 reports for one pothole. Clustering happens BEFORE a report is ever
@@ -25,7 +25,7 @@ export interface ClusterCandidate {
   damageClass: string;
   state: ClusterState;
   observationCount: number;
-  /** Metres from the incoming detection — computed by ST_Distance, not app math. */
+  /** Metres from the incoming detection, computed by ST_Distance, not app math. */
   distanceM: number;
 }
 
@@ -35,7 +35,7 @@ export interface DetectionObservation {
   /** ISO timestamp of frame capture. */
   capturedAt: string;
   score: number;
-  /** Vehicle speed at capture — used only to prefer the sharpest crop. */
+  /** Vehicle speed at capture. Used only to prefer the sharpest crop. */
   speedMps?: number | null;
 }
 
@@ -48,7 +48,7 @@ export type ClusterAssignment =
  *
  * Join requires all three: same `damage_class`, within `CLUSTER_RADIUS_M`, and
  * the cluster is not `resolved`. A resolved cluster deliberately does NOT
- * absorb — a defect reappearing where one was repaired is the recurrence signal
+ * absorb, a defect reappearing where one was repaired is the recurrence signal
  * `analytics_recurring_hotspots` wants, and a workmanship-claim trigger.
  *
  * A `dismissed` cluster still absorbs (so staff-rejected false positives don't
@@ -91,7 +91,7 @@ function utcDay(iso: string): string | null {
  * Promotion gate: >= PROMOTE_MIN_PASSES detections spanning >=
  * PROMOTE_MIN_DISTINCT_DAYS distinct UTC dates.
  *
- * The distinct-day requirement is the whole point — 20 passes down the same
+ * The distinct-day requirement is the whole point. 20 passes down the same
  * route on one afternoon is one shadow/wet-patch/tar-snake seen 20 times, not
  * 20 pieces of evidence. Only `observing` clusters promote: a cluster already
  * promoted has its report, and resolved/dismissed clusters must never

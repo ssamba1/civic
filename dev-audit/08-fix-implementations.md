@@ -1,4 +1,4 @@
-# Fix Implementations — Concrete Code Changes
+# Fix Implementations: Concrete Code Changes
 
 All fixes verified, tested mentally, and ready to apply. Grouped by priority + effort estimate.
 
@@ -8,7 +8,7 @@ All fixes verified, tested mentally, and ready to apply. Grouped by priority + e
 
 ### Current Code (BROKEN)
 
-**File:** `src/app/api/open311/v2/requests/route.ts:71–73`
+**File:** `src/app/api/open311/v2/requests/route.ts:71-73`
 
 ```typescript
 // Filter by service_code (= category on classifications)
@@ -22,7 +22,7 @@ if (serviceCode) {
 
 ### Fixed Code
 
-**Option 1: Subquery (Recommended — cleaner)**
+**Option 1: Subquery (Recommended, cleaner)**
 
 ```typescript
 // Filter by service_code (= category on classifications)
@@ -46,7 +46,7 @@ if (serviceCode) {
 **Option 2: INNER JOIN (PostgreSQL native)**
 
 ```typescript
-// Filter by service_code — use INNER JOIN to exclude reports without classification
+// Filter by service_code. Use INNER JOIN to exclude reports without classification
 if (serviceCode) {
   query = query
     .leftJoin("classifications", "classifications.report_id", "reports.id")
@@ -145,7 +145,7 @@ describe("Open311 GET /requests", () => {
 
 ### Current Code (BROKEN)
 
-**File:** `src/app/staff/actions.ts:91–118`
+**File:** `src/app/staff/actions.ts:91-118`
 
 ```typescript
 export async function dispatchWorkOrderForReport(
@@ -221,7 +221,7 @@ export async function dispatchWorkOrderForReport(
 
 **Why this works:**
 - `.select("report_id").single()` returns null if no rows match
-- Matches the pattern already used in `dispatchWorkOrder` (line 50–87)
+- Matches the pattern already used in `dispatchWorkOrder` (line 50-87)
 - Single round-trip: safe from TOCTOU races
 
 **Test case:**
@@ -246,10 +246,10 @@ test("dispatchWorkOrderForReport fails if work_order doesn't exist", async () =>
 
 ### Current Code (BROKEN)
 
-**File:** `src/app/api/open311/v2/requests/route.ts:278–282`
+**File:** `src/app/api/open311/v2/requests/route.ts:278-282`
 
 ```typescript
-// Trigger AI classification async — fire-and-forget (H2)
+// Trigger AI classification async, fire-and-forget (H2)
 // x-internal-key allows classify route to accept calls without a user session
 const classifyHeaders: Record<string, string> = { "Content-Type": "application/json" };
 if (process.env.INTERNAL_CLASSIFY_SECRET) {
@@ -265,7 +265,7 @@ fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/api/ai/cla
 ### Fixed Code
 
 ```typescript
-// Trigger AI classification async — fire-and-forget (H2)
+// Trigger AI classification async, fire-and-forget (H2)
 // x-internal-key allows classify route to accept calls without a user session
 const classifyHeaders: Record<string, string> = { "Content-Type": "application/json" };
 if (process.env.INTERNAL_CLASSIFY_SECRET) {
@@ -302,7 +302,7 @@ fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/api/ai/cla
 
 ### Current Code (BROKEN)
 
-**File:** `src/components/analytics/hover-tip.tsx:69–72`
+**File:** `src/components/analytics/hover-tip.tsx:69-72`
 
 ```typescript
 function reducedMotion() {
@@ -315,7 +315,7 @@ Called on line 246 during render. Server (SSR) returns `false`, client may retur
 
 ### Fixed Code
 
-**File:** `src/components/analytics/hover-tip.tsx:69–100`
+**File:** `src/components/analytics/hover-tip.tsx:69-100`
 
 ```typescript
 // Memoize reduced-motion preference post-hydration to avoid SSR/hydration mismatch.
@@ -363,7 +363,7 @@ And remove the old function:
 
 Not immediately fixable (Supabase SDK doesn't support AbortSignal yet), but document the pattern:
 
-**File:** `src/components/staff/work-order-comments.tsx:59–91`
+**File:** `src/components/staff/work-order-comments.tsx:59-91`
 
 ```typescript
 useEffect(() => {

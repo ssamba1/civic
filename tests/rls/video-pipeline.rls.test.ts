@@ -4,7 +4,7 @@
 // integration harness as rls.test.ts: RUN_RLS_TESTS=1 + keys from .env.local.
 //
 // Policy under test: camera positions, GPS tracks, and unblurred-frame paths
-// are operationally sensitive — every video table is staff-only within the
+// are operationally sensitive. Every video table is staff-only within the
 // staff member's own city. Anonymous callers must never read or write any of
 // them, and detections/clusters accept NO authenticated writes at all
 // (pipeline writes go through the service role).
@@ -25,7 +25,7 @@ function loadEnvLocal() {
       }
     }
   } catch {
-    // No .env.local — rely on the process environment.
+    // No .env.local, rely on the process environment.
   }
 }
 const OPTED_IN = process.env.RUN_RLS_TESTS === "1";

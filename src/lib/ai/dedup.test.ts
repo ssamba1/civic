@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { findDuplicate } from "./dedup";
 
-// Minimal logger stub — findDuplicate only calls log.error.
+// Minimal logger stub, findDuplicate only calls log.error.
 function makeLog() {
   return {
     correlationId: "test",

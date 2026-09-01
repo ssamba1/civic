@@ -67,7 +67,7 @@ import { cn } from "@/lib/utils/cn";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 // ── Canonical category glyphs ───────────────────────────────────────────────
-// Keyed by the kebab `icon` field on CATEGORY_META (@/lib/dashboard-data) — the
+// Keyed by the kebab `icon` field on CATEGORY_META (@/lib/dashboard-data), the
 // SAME source the map, analytics, dashboard, and community-pulse surfaces read,
 // so every surface's glyph, label, and color stay identical by construction.
 const CATEGORY_ICON: Record<string, LucideIcon> = {
@@ -84,7 +84,7 @@ const CATEGORY_ICON: Record<string, LucideIcon> = {
   "help-circle": HelpCircle,
 };
 
-// Editable-column value lists (session-only edits — see WorkOrderGrid note).
+// Editable-column value lists (session-only edits, see WorkOrderGrid note).
 const CATEGORIES: ReportCategory[] = [
   "pothole",
   "streetlight",
@@ -132,10 +132,10 @@ const SEVERITY_LABELS: Record<number, string> = {
 
 // Severity 1→5 runs a green→red traffic-light ramp so the level reads at a
 // glance, not just from the digit. Built by color-mixing the three AA-tuned
-// `--status-*-fg` tokens (not the saturated `--color-*` — those have no dark
+// `--status-*-fg` tokens (not the saturated `--color-*`, those have no dark
 // override, so text on them fails contrast in dark mode): success → warning →
 // danger, with mixed midpoints for levels 2 and 4. One hue drives all three of
-// a chip's surfaces — colored digit, 14% tint fill, 42% ring — so the same
+// a chip's surfaces (colored digit, 14% tint fill, 42% ring), so the same
 // value is used as text (AA-safe) and as low-opacity tint.
 const SEVERITY_HUE: Record<number, string> = {
   1: "var(--status-success-fg)",
@@ -157,7 +157,7 @@ function severityChipStyle(value: number): React.CSSProperties {
 }
 
 // Priority score → the same green→red ramp, banded across the practical
-// non-emergency range (~3.5–15, bar domain clamped to 20). Colors the number
+// non-emergency range (~3.5-15, bar domain clamped to 20). Colors the number
 // and the proportional bar together so length and hue reinforce each other.
 function priorityHue(score: number): string {
   if (score < 4) return SEVERITY_HUE[1];
@@ -182,7 +182,7 @@ const STATUS_TEXT: Record<string, string> = {
   rejected: "text-[var(--status-danger-fg)]",
 };
 
-// Solid dot per status — used by the dropdown menu options and StatusCell.
+// Solid dot per status, used by the dropdown menu options and StatusCell.
 const STATUS_DOT: Record<string, string> = {
   open: "bg-[var(--color-warning)]",
   dispatched: "bg-[#5b6b8c]",
@@ -192,7 +192,7 @@ const STATUS_DOT: Record<string, string> = {
   rejected: "bg-[var(--color-danger)]",
 };
 
-// Outline+tint chip for the toolbar status filter buttons — mirrors
+// Outline+tint chip for the toolbar status filter buttons, mirrors
 // STATUS_TEXT/STATUS_DOT so the active filter reads the same vocabulary,
 // via the color-mix idiom already used for EditPill's hover border.
 const STATUS_CHIP_ACTIVE: Record<string, string> = {
@@ -211,14 +211,14 @@ const STATUS_CHIP_ACTIVE: Record<string, string> = {
 // ── AG-Grid theme ───────────────────────────────────────────────────────────
 // AG Grid's theming API takes literal color strings (no CSS custom properties),
 // so these are hardcoded to match globals.css's token values exactly rather
-// than referencing var(--token) — accent is the ink token (was the Apple-blue
+// than referencing var(--token). Accent is the ink token (was the Apple-blue
 // #0a84ff brand primary), hover/selection tints are neutral (was light-blue
-// tints). No zebra — the hover tint + accent bar (globals.css .wo-grid) is the
+// tints). No zebra, the hover tint + accent bar (globals.css .wo-grid) is the
 // row signal.
 const gridThemeLight = themeQuartz.withParams({
   accentColor: "#18181b", // --accent (light)
   backgroundColor: "#ffffff", // --surface (light)
-  headerBackgroundColor: "#ffffff", // --surface (light) — quiet borderless header
+  headerBackgroundColor: "#ffffff", // --surface (light), quiet borderless header
   headerTextColor: "#6f6f76", // --faint (light)
   headerFontWeight: 600,
   foregroundColor: "#141415", // --foreground (light)
@@ -228,13 +228,13 @@ const gridThemeLight = themeQuartz.withParams({
   rowHoverColor: "rgba(0, 0, 0, 0.04)", // --overlay (light)
   selectedRowBackgroundColor: "rgba(24, 24, 27, 0.07)", // --accent-soft (light)
   borderColor: "rgba(0, 0, 0, 0.08)", // --hairline (light)
-  wrapperBorderRadius: "0px", // full-bleed — grid runs edge-to-edge
+  wrapperBorderRadius: "0px", // full-bleed. Grid runs edge-to-edge
   wrapperBorder: false, // no outer frame; grid fills the content area
 });
 const gridThemeDark = themeQuartz.withParams({
   accentColor: "#f4f4f5", // --accent (dark)
   backgroundColor: "#101012", // --surface (dark)
-  headerBackgroundColor: "#101012", // --surface (dark) — quiet borderless header
+  headerBackgroundColor: "#101012", // --surface (dark), quiet borderless header
   headerTextColor: "#85858c", // --faint (dark)
   headerFontWeight: 600,
   foregroundColor: "#ffffff", // --foreground (dark)
@@ -244,15 +244,15 @@ const gridThemeDark = themeQuartz.withParams({
   rowHoverColor: "rgba(255, 255, 255, 0.04)", // --overlay (dark)
   selectedRowBackgroundColor: "rgba(255, 255, 255, 0.09)", // --accent-soft (dark)
   borderColor: "rgba(255, 255, 255, 0.09)", // --hairline (dark)
-  wrapperBorderRadius: "0px", // full-bleed — grid runs edge-to-edge
+  wrapperBorderRadius: "0px", // full-bleed. Grid runs edge-to-edge
   wrapperBorder: false, // no outer frame; grid fills the content area
 });
 
-// Neutral icon tile for category glyphs — category color stays off chrome
+// Neutral icon tile for category glyphs. Category color stays off chrome
 // here (only map data layers and chart series carry category hue).
 const ICON_TILE = "text-subtle";
 
-// Team icon tile — a soft alpha-tinted tile in the team's own color (the
+// Team icon tile, a soft alpha-tinted tile in the team's own color (the
 // "filled" icon read; lucide ships outline-only glyphs, so the fill lives on
 // the tile, not the icon color).
 function iconTileStyle(color: string): React.CSSProperties {
@@ -409,7 +409,7 @@ function SelectEditor(props: SelectEditorProps) {
   );
 }
 
-// Static option lists (dept/crew are built per-render — see WorkOrderGrid —
+// Static option lists (dept/crew are built per-render, see WorkOrderGrid,
 // because live rows carry AI-written values outside the enum).
 const CATEGORY_OPTIONS: SelectOption[] = CATEGORIES.map((c) => ({
   value: c,
@@ -460,7 +460,7 @@ function EditPill({
       className={cn(
         // Quiet ghost affordance: chrome only appears on hover, so the grid
         // reads as calm text until you reach for a cell (was an always-on
-        // bordered+shadowed pill — too loud at table density).
+        // bordered+shadowed pill, too loud at table density).
         "inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-[var(--radius-md)] border border-transparent bg-transparent py-1 pl-2 pr-1.5 transition-colors hover:border-hairline-strong hover:bg-overlay",
         className,
       )}
@@ -493,7 +493,7 @@ function CategoryCell({ data }: ICellRendererParams<GridReportRow>) {
   );
 }
 
-/** Owning team — DERIVED from the report's category via categoryToTeam (there
+/** Owning team, DERIVED from the report's category via categoryToTeam (there
  *  is no per-report team column). Read-only (no pill/chevron): change the
  *  Issue cell and the team re-derives live. */
 function TeamCell({ data }: ICellRendererParams<GridReportRow>) {
@@ -517,7 +517,7 @@ function TeamCell({ data }: ICellRendererParams<GridReportRow>) {
 }
 
 function SeverityCell({ value }: ICellRendererParams<GridReportRow, number>) {
-  if (value == null) return <span className="text-faint">—</span>;
+  if (value == null) return <span className="text-faint">-</span>;
   return (
     <EditPill className="h-8">
       <span
@@ -530,25 +530,25 @@ function SeverityCell({ value }: ICellRendererParams<GridReportRow, number>) {
   );
 }
 
-/** Priority (urgency) — number + proportional bar. Emergencies have no work
+/** Priority (urgency). Number + proportional bar. Emergencies have no work
  *  order (null priority) and instead surface an EMERGENCY tag, making the
  *  "emergency = dispatched, no priority math" reality visible in the grid. */
 function PriorityCell({ data }: ICellRendererParams<GridReportRow>) {
   if (!data) return null;
   if (data.priority_score == null) {
     return data.is_emergency ? (
-      // Safety-critical emergency flag — the one place danger red stays a
+      // Safety-critical emergency flag. The one place danger red stays a
       // solid fill rather than the outline+dot chip, since it must read
       // instantly against a grid full of neutral cells.
       <span className="inline-flex items-center rounded-[var(--radius-sm)] bg-[var(--color-danger)] px-2 py-0.5 text-xs font-bold text-white">
         EMERGENCY
       </span>
     ) : (
-      <span className="text-faint">—</span>
+      <span className="text-faint">-</span>
     );
   }
   const score = data.priority_score;
-  // Practical non-emergency priorities sit ~3.5–15; clamp the bar domain to 20.
+  // Practical non-emergency priorities sit ~3.5-15; clamp the bar domain to 20.
   const pct = Math.max(4, Math.min(100, (score / 20) * 100));
   const hue = priorityHue(score);
   return (
@@ -569,7 +569,7 @@ function PriorityCell({ data }: ICellRendererParams<GridReportRow>) {
   );
 }
 
-/** Status is editable — dropdown pill wrapping a solid status dot + tinted
+/** Status is editable, dropdown pill wrapping a solid status dot + tinted
  *  label, so the cell reads like a select control. */
 function StatusCell({ data }: ICellRendererParams<GridReportRow>) {
   if (!data) return null;
@@ -607,7 +607,7 @@ function StatusCell({ data }: ICellRendererParams<GridReportRow>) {
 
 // ── SLA column ──────────────────────────────────────────────────────────────
 // Derived client-side from category + created_at (NOT the work_orders.due_at
-// column) so it renders on databases that haven't applied migration 032 yet —
+// column) so it renders on databases that haven't applied migration 032 yet,
 // same computation as deriveSlaRisk. The due_at column drives the server-side
 // escalation job; this surfaces the same status to the operator in the grid.
 const SLA_BACKLOG_STATUSES = new Set(["open", "dispatched", "in_progress"]);
@@ -622,10 +622,10 @@ interface SlaState {
 
 function computeSla(row: GridReportRow): SlaState {
   if (!row.category || !SLA_BACKLOG_STATUSES.has(row.status)) {
-    return { remaining: null, tier: "na", label: "—" };
+    return { remaining: null, tier: "na", label: "-" };
   }
   const target = categorySlaHours(row.category);
-  if (!target) return { remaining: null, tier: "na", label: "—" };
+  if (!target) return { remaining: null, tier: "na", label: "-" };
   const ageH = Math.max(
     0,
     (Date.now() - Date.parse(row.created_at)) / 3_600_000,
@@ -662,7 +662,7 @@ function SlaCell({ data }: ICellRendererParams<GridReportRow>) {
   if (!data) return null;
   const sla = computeSla(data);
   if (sla.tier === "na") {
-    return <span className="text-[13px] text-faint">—</span>;
+    return <span className="text-[13px] text-faint">-</span>;
   }
   return (
     <span className="flex items-center gap-1.5">
@@ -691,14 +691,14 @@ function LabelPillCell({
           value ? "text-foreground" : "text-faint",
         )}
       >
-        {value ? titleize(value) : "—"}
+        {value ? titleize(value) : "-"}
       </span>
     </EditPill>
   );
 }
 
 function SourceCell({ value }: ICellRendererParams<GridReportRow, string>) {
-  if (!value) return <span className="text-faint">—</span>;
+  if (!value) return <span className="text-faint">-</span>;
   return (
     <span
       className={cn(
@@ -734,7 +734,7 @@ function predictFromStats(
   return Math.round(s.base * mult);
 }
 
-// Reliability tier as quiet colored TEXT (AA -fg tokens), not a filled pill —
+// Reliability tier as quiet colored TEXT (AA -fg tokens), not a filled pill,
 // hue-as-text matches the grid's status cells; low confidence stays gray.
 const TIER_TEXT: Record<CategoryCostStats["tier"], string> = {
   high: "text-[var(--status-success-fg)]",
@@ -763,7 +763,7 @@ function PredictedCostCell({
             : "Needs 5+ closed jobs with actual cost"
         }
       >
-        —
+        ,
       </span>
     );
   }
@@ -793,13 +793,13 @@ const dateFmt = (p: ValueFormatterParams<GridReportRow, string>) =>
         hour: "2-digit",
         minute: "2-digit",
       })
-    : "—";
+    : "-";
 
-/** Trailing expand affordance — opens the full-issue explorer focused on this
+/** Trailing expand affordance, opens the full-issue explorer focused on this
  *  row. Reads openDetail off the grid `context` (same channel PredictedCostCell
  *  uses for stats) so the pinned column def never has to close over React state
  *  and trigger a columnDefs rebuild. Editable cells keep single-click-to-edit;
- *  this button (and any read-only cell — see onCellClicked) is the open path. */
+ *  this button (and any read-only cell, see onCellClicked) is the open path. */
 function ExpandCell({ data, context }: ICellRendererParams<GridReportRow>) {
   if (!data) return null;
   const { openDetail } = context as { openDetail: (id: string) => void };
@@ -919,11 +919,11 @@ export function WorkOrderGrid({
   rows: GridReportRow[];
   cityId?: string;
   crews?: GridCrewOption[];
-  // Per-city crew-type catalog (031) — built-ins ∪ customs — so the crew
+  // Per-city crew-type catalog (031) (built-ins ∪ customs), so the crew
   // filter/edit dropdown can show and select custom types with no work order.
   crewTypes?: CrewTypeDef[];
   canAssign?: boolean;
-  /** `?report=<id>` deep link (video console rail) — scroll to it and flag it. */
+  /** `?report=<id>` deep link (video console rail), scroll to it and flag it. */
   focusReportId?: string | null;
 }) {
   const { theme } = useTheme();
@@ -934,7 +934,7 @@ export function WorkOrderGrid({
   const currency = useCurrency();
 
   // Predicted-cost stats live in a ref (not state) so their arrival can't
-  // rebuild columnDefs — AG Grid re-applies colDef sort/width on columnDefs
+  // rebuild columnDefs. AG Grid re-applies colDef sort/width on columnDefs
   // changes, clobbering user sort + resizes (see deptOptions note below).
   // Cell renderers reach the ref through the grid `context`; the effect
   // repaints just the predicted column when the fetch resolves.
@@ -944,7 +944,7 @@ export function WorkOrderGrid({
   // AG Grid owns the pagination panel DOM and gives no slot for extra controls.
   // To sit the page-size selector INLINE between the row summary ("1 to 25 of
   // N") and the page nav ("Page 1 of 6"), splice a host node into the panel and
-  // portal the React control into it — the portal keeps React in control of the
+  // portal the React control into it. The portal keeps React in control of the
   // node. `mountPagingSlot` is idempotent and re-run on pagination changes so
   // the host re-heals if AG Grid ever rebuilds the panel.
   const gridWrapRef = useRef<HTMLDivElement>(null);
@@ -993,7 +993,7 @@ export function WorkOrderGrid({
     let cancelled = false;
     fetchCategoryCostStats(cityId).then((res) => {
       // Empty data is the normal cold-start state (RPC missing or no actuals
-      // captured yet) — the column simply keeps rendering "—".
+      // captured yet). The column simply keeps rendering "-".
       if (cancelled || !res.ok || res.data.length === 0) return;
       costStatsRef.current = new Map(res.data.map((s) => [s.category, s]));
       gridApiRef.current?.refreshCells({
@@ -1008,7 +1008,7 @@ export function WorkOrderGrid({
 
   // Editable cells mutate rows in place; hold them in local state (seeded from
   // the server rows) so in-grid edits survive the search/filter recompute.
-  // Edits are SESSION-ONLY — there is no work-order update API, so a refresh
+  // Edits are SESSION-ONLY. There is no work-order update API, so a refresh
   // reverts them. See the "session-only" note in the toolbar.
   const [data, setData] = useState<GridReportRow[]>(rows);
   useEffect(() => setData(rows), [rows]);
@@ -1044,13 +1044,13 @@ export function WorkOrderGrid({
   const [pageChoice, setPageChoice] = useState<PageChoice>(25);
   const allChipRef = useRef<HTMLButtonElement>(null);
 
-  // Search first, then status — the chip counts read from the searched set so
+  // Search first, then status. The chip counts read from the searched set so
   // they always describe what the current search can actually reach.
   const searched = useMemo(() => {
     if (!query) return data;
     const q = query.toLowerCase();
     // Match raw enum values AND their displayed form ("in_progress" is shown
-    // as "In Progress" — a search for either must hit).
+    // as "In Progress". A search for either must hit).
     return data.filter((r) =>
       [r.category, r.subcategory, r.address, r.department, r.crew_type]
         .filter(Boolean)
@@ -1069,7 +1069,7 @@ export function WorkOrderGrid({
     [searched, statusFilter],
   );
 
-  // "All" ⇒ one page holding every filtered row (min 1 — AG Grid rejects 0).
+  // "All" ⇒ one page holding every filtered row (min 1, AG Grid rejects 0).
   const effectivePageSize =
     pageChoice === "all" ? Math.max(filtered.length, 1) : pageChoice;
 
@@ -1086,7 +1086,7 @@ export function WorkOrderGrid({
       return;
     }
     if (!filtered.some((r) => r.report_id === focusId)) {
-      // Present but filtered out — widen back to everything; this effect
+      // Present but filtered out, widen back to everything; this effect
       // re-runs on the recomputed `filtered` and finishes the job.
       setQuery("");
       setStatusFilter("");
@@ -1102,7 +1102,7 @@ export function WorkOrderGrid({
   // so a later row-data or filter change re-lands it instead of leaving the
   // operator on page 1 with nothing flagged. AG Grid evaluates rowClassRules
   // only when it BUILDS a row, hence the explicit redraw.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `filtered` is a re-run trigger, not a read — the row set changing under a live highlight has to re-land it
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `filtered` is a re-run trigger, not a read. The row set changing under a live highlight has to re-land it
   useEffect(() => {
     const api = gridApiRef.current;
     if (!highlightId || !api) return;
@@ -1110,7 +1110,7 @@ export function WorkOrderGrid({
     // goToPage issued before that is clamped back to page 0.
     const raf = requestAnimationFrame(() => {
       const node = api.getRowNode(highlightId);
-      // rowIndex is the DISPLAYED index (sort applied) — paging off the
+      // rowIndex is the DISPLAYED index (sort applied). Paging off the
       // `filtered` array index would land on whatever row sorted into that
       // slot instead.
       if (!node || node.rowIndex === null) return;
@@ -1127,11 +1127,11 @@ export function WorkOrderGrid({
     return counts;
   }, [searched]);
 
-  // Live rows carry AI-written dept/crew strings beyond the enum — fold them
+  // Live rows carry AI-written dept/crew strings beyond the enum, fold them
   // into the dropdowns so a cell's current value is always selectable.
   // Derived from the `rows` PROP, not `data` state: edits can only pick values
   // already in the options, so keying off `data` would rebuild these (and via
-  // them columnDefs) on every edit — and AG Grid re-applies defined sort/width
+  // them columnDefs) on every edit, and AG Grid re-applies defined sort/width
   // colDef attrs on columnDefs changes, clobbering user sort + resizes.
   const deptOptions = useMemo(
     () =>
@@ -1171,7 +1171,7 @@ export function WorkOrderGrid({
 
   // Click-to-open on read-only cells. Editable cells (category/severity/status/
   // dept/crew) keep single-click-to-edit, and the pinned actions button opens
-  // itself — so this fires only for the plain cells (Team, Priority, costs,
+  // itself, so this fires only for the plain cells (Team, Priority, costs,
   // Source, Reported), making "click the row" open the full issue without
   // fighting the inline editors.
   const onCellClicked = useCallback(
@@ -1215,7 +1215,7 @@ export function WorkOrderGrid({
       {
         colId: "team",
         headerName: "Team",
-        // Derived from category — no field; sort/filter/search on the label.
+        // Derived from category, no field; sort/filter/search on the label.
         valueGetter: (p: ValueGetterParams<GridReportRow>) =>
           p.data
             ? TEAMS[
@@ -1270,7 +1270,7 @@ export function WorkOrderGrid({
         colId: "sla",
         headerName: "SLA",
         // Sort/filter on hours-remaining (overdue = most negative sorts first
-        // on asc). Not editable — it's a derived read-only signal.
+        // on asc). Not editable. It's a derived read-only signal.
         valueGetter: (p: ValueGetterParams<GridReportRow>) =>
           p.data ? computeSla(p.data).remaining : null,
         cellRenderer: SlaCell,
@@ -1318,7 +1318,7 @@ export function WorkOrderGrid({
         field: "est_cost",
         valueFormatter: (
           p: ValueFormatterParams<GridReportRow, number | null>,
-        ) => (p.value == null ? "—" : formatCost(p.value, currency)),
+        ) => (p.value == null ? "-" : formatCost(p.value, currency)),
         type: "rightAligned",
         initialWidth: 120,
         minWidth: 100,
@@ -1340,7 +1340,7 @@ export function WorkOrderGrid({
         colId: "est_minutes",
         headerName: "Est. Min",
         field: "est_minutes",
-        valueFormatter: (p) => (p.value == null ? "—" : `${p.value}m`),
+        valueFormatter: (p) => (p.value == null ? "-" : `${p.value}m`),
         type: "rightAligned",
         initialWidth: 110,
         minWidth: 90,
@@ -1392,7 +1392,7 @@ export function WorkOrderGrid({
   return (
     // `relative` anchors the issue explorer overlay: it renders as an absolute
     // child here (not a body portal), so it fills the content column and leaves
-    // the app sidebar visible — see WorkOrderExplorer.
+    // the app sidebar visible. See WorkOrderExplorer.
     <div className="relative flex min-h-0 flex-1 flex-col gap-2">
       {/* Toolbar keeps horizontal padding so search + chips have breathing
           room; the grid below runs full-bleed to the viewport edges. */}
@@ -1459,11 +1459,11 @@ export function WorkOrderGrid({
         </fieldset>
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          {/* Always visible — the grid is just as editable on mobile, and a
+          {/* Always visible. The grid is just as editable on mobile, and a
               hidden warning turns unsaved edits into silent data loss. */}
           <span
             className="inline-flex items-center gap-1.5 rounded-[var(--radius-md)] border border-hairline bg-overlay px-2.5 py-1 text-[11px] font-medium text-[var(--status-warning-fg)]"
-            title="Category, severity, status, department, and crew are editable — click a cell. Changes are not saved to the database."
+            title="Category, severity, status, department, and crew are editable. Click a cell. Changes are not saved to the database."
           >
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-warning)]" />
             Edits not saved to database
@@ -1473,7 +1473,7 @@ export function WorkOrderGrid({
 
       {focusMissId && (
         // The deep link pointed at a report this city's grid doesn't hold
-        // (wrong city, or deleted) — say it quietly rather than doing nothing.
+        // (wrong city, or deleted). Say it quietly rather than doing nothing.
         <div
           role="status"
           data-testid="grid-focus-missing"

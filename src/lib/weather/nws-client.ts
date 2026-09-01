@@ -41,7 +41,7 @@ interface NwsAlertsResponse {
  * Fetch NWS alerts that were in effect for the city's coordinates within the
  * lookback window (covers both currently-active and recently-expired severe
  * weather, so the advisory keeps showing after a storm passes). Fails soft:
- * any network/parse error returns an empty list rather than throwing — this
+ * any network/parse error returns an empty list rather than throwing. This
  * feature must never break the staff console.
  */
 export async function fetchRecentAlerts(

@@ -1,13 +1,13 @@
 /**
  * Cumulative sliding-window rate limiter for Gemini API calls.
  *
- * Tracks all calls globally across the process — not per-user — so total API
+ * Tracks all calls globally across the process (not per-user), so total API
  * spend stays bounded regardless of how many concurrent reports are submitted.
  *
  * Three independent windows run in parallel:
- *   per-minute  — burst protection
- *   per-hour    — sustained-load protection
- *   per-day     — hard cost ceiling
+ *   per-minute, burst protection
+ *   per-hour. Sustained-load protection
+ *   per-day. Hard cost ceiling
  *
  * Limits are read from env vars at first call so they can be tuned per
  * deployment without a code change:
@@ -50,7 +50,7 @@ export interface RateLimitResult {
 /**
  * Call this before every Gemini request.
  * Returns { allowed: true } when under all limits, otherwise { allowed: false, ... }.
- * Recording the call timestamp is included in this function — do not call twice.
+ * Recording the call timestamp is included in this function. Do not call twice.
  */
 export function checkAndRecordGeminiCall(): RateLimitResult {
   const now = Date.now();

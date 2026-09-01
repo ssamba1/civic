@@ -3,13 +3,13 @@
 -- 030_crews.sql created the canonical constraint as
 -- `work_orders_assigned_crew_fkey`. 051_wo_scheduling.sql then "retro-fitted"
 -- the same FK, but its existence guard only looked for its OWN candidate name
--- (`work_orders_assigned_crew_id_fkey`) and never for 030's — so on any DB
+-- (`work_orders_assigned_crew_id_fkey`) and never for 030's, so on any DB
 -- where 030 had already run, 051 added a second, byte-identical FK on the same
 -- column.
 --
 -- Why that is not harmless: PostgREST resolves embeddings by foreign key, and
 -- two FKs between the same pair of tables make `work_orders?select=...,crews(name)`
--- ambiguous — it returns PGRST201 instead of rows. src/lib/db/calendar.ts is
+-- ambiguous. It returns PGRST201 instead of rows. src/lib/db/calendar.ts is
 -- the caller that trips this; it catches query errors and returns [], so the
 -- staff calendar silently rendered "0 work orders" for every city regardless of
 -- how much data was in the table.

@@ -61,7 +61,7 @@ export default function SubmissionConfirmation({
 
   // AI-routing preview: when the resident let the classifier decide, resolve the
   // detected category to its owning team so the confirmation shows where the
-  // report was routed — not just the category. Skipped when a manual type was
+  // report was routed, not just the category. Skipped when a manual type was
   // picked (that path renders its own routing card above) or on the offline
   // fallback (confidence 0), where no category was actually detected.
   const aiTeam =
@@ -158,7 +158,7 @@ export default function SubmissionConfirmation({
           We&apos;ll notify you when it&apos;s solved.
         </p>
 
-        {/* Manual issue-type card — shown when the resident picked a type,
+        {/* Manual issue-type card, shown when the resident picked a type,
             making its routing rule visible (bypasses the AI classifier). */}
         {manualMeta && manualTeam && ManualTeamIcon && (
           <div className="w-full rounded-[var(--radius-lg)] border border-hairline bg-surface p-5 mb-4 text-left space-y-3">
@@ -199,7 +199,7 @@ export default function SubmissionConfirmation({
           </div>
         )}
 
-        {/* Report details card — only on a real AI result */}
+        {/* Report details card, only on a real AI result */}
         {hasAiResult && (
           <div className="w-full rounded-[var(--radius-lg)] border border-hairline bg-surface p-5 mb-8 text-left space-y-3">
             <div
@@ -290,18 +290,18 @@ export default function SubmissionConfirmation({
         )}
 
         {/* On the offline/fallback branch there's no trackable AI result yet, so
-            reassure the resident the report is saved and will be followed up —
-            otherwise this branch has no next step at all. */}
+            reassure the resident the report is saved and will be followed up.
+            Otherwise this branch has no next step at all. */}
         {!hasAiResult && (
           <div className="w-full rounded-[var(--radius-lg)] border border-hairline bg-surface p-4 mb-6 text-left">
             <p className="text-sm text-subtle leading-relaxed">
-              Saved. Our team will review this report and update its status —
-              you&apos;ll be notified when it&apos;s on its way to a fix.
+              Saved. Our team will review this report and update its status.
+              You&apos;ll be notified when it&apos;s on its way to a fix.
             </p>
           </div>
         )}
 
-        {/* Actions — Track is the single visual primary (filled); the rest are
+        {/* Actions. Track is the single visual primary (filled); the rest are
             quieter secondary links. min-h-[56px] for thumb-reachable targets. */}
         <div className="w-full space-y-3">
           {hasAiResult && (

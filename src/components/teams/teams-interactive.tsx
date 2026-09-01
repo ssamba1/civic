@@ -26,7 +26,7 @@ import { getReportTeam, useTeamOverrides } from "@/lib/teams-overrides";
    not written to the shared filter context. This keeps the Teams view
    from polluting Analytics / Map scope when the user toggles between
    tabs. The shared FilterBar (separate UI) can still scope team
-   globally via filter.team — that path still flows through.
+   globally via filter.team, that path still flows through.
    ================================================================== */
 
 interface TeamsInteractiveProps {
@@ -44,7 +44,7 @@ export function TeamsInteractive({ initialStats }: TeamsInteractiveProps) {
 
   // Local-only highlight. Independent of filter.team so flipping to
   // Analytics doesn't drag this scope along. FilterBar can still drive
-  // filter.team globally — surface it as initial selection so the two
+  // filter.team globally, surface it as initial selection so the two
   // views stay in sync when the user did set a global scope.
   const [selectedTeam, setSelectedTeam] = useState<TeamId>(filter.team);
 
@@ -56,7 +56,7 @@ export function TeamsInteractive({ initialStats }: TeamsInteractiveProps) {
       const saved = sessionStorage.getItem(SELECTED_TEAM_STORAGE_KEY);
       if (saved && isValidTeamId(saved)) setSelectedTeam(saved);
     } catch {
-      // sessionStorage unavailable — keep the filter-derived default.
+      // sessionStorage unavailable. Keep the filter-derived default.
     }
   }, []);
 
@@ -64,7 +64,7 @@ export function TeamsInteractive({ initialStats }: TeamsInteractiveProps) {
     try {
       sessionStorage.setItem(SELECTED_TEAM_STORAGE_KEY, selectedTeam);
     } catch {
-      // Storage write blocked (private mode / quota) — non-fatal.
+      // Storage write blocked (private mode / quota), non-fatal.
     }
   }, [selectedTeam]);
 
@@ -88,7 +88,7 @@ export function TeamsInteractive({ initialStats }: TeamsInteractiveProps) {
 
   // Compute the per-team map once; DelegationPanel needs O(1) lookup by
   // team id (Map form), TeamRoster / WorkloadBars need the sorted array.
-  // Single source of truth — no duplicate aggregation.
+  // Single source of truth, no duplicate aggregation.
   const workloadMap = useMemo(
     () => aggregateByTeam(rosterReports, (r) => getReportTeam(r, overrides)),
     [rosterReports, overrides],

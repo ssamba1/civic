@@ -16,7 +16,7 @@ export interface ApiKeyPartner {
 
 /**
  * Resolve a plaintext Open311 API key to its partner row (api_keys, migration
- * 028). Keys are stored as SHA-256 hex — the hash lookup is inherently
+ * 028). Keys are stored as SHA-256 hex. The hash lookup is inherently
  * constant-time with respect to the stored value. Returns null for unknown or
  * revoked keys AND on any infrastructure error (un-migrated table included),
  * so the caller's legacy env-key fallback keeps working.

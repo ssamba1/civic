@@ -16,7 +16,7 @@ const titleize = (s: string) =>
   s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 /* ==================================================================
-   Work-order explorer — grid sibling of analytics' ReportsExplorer.
+   Work-order explorer, grid sibling of analytics' ReportsExplorer.
 
    Same list (left) + detail (right) layout, opened from the grid's
    per-row expand control. Two deliberate differences:
@@ -25,7 +25,7 @@ const titleize = (s: string) =>
       `fixed inset-0` on the body, so it covers the app sidebar. This
       one renders inline as `absolute inset-0` inside the grid's
       (relative) root, so it fills only the content column and the
-      left sidebar stays visible and usable — per the "full screen but
+      left sidebar stays visible and usable. Per the "full screen but
       keep the sidebar" requirement.
    2. Reads GridReportRow + renders WorkOrderDetail, so the list and
       detail speak the grid's operational vocabulary (department,
@@ -99,7 +99,7 @@ export function WorkOrderExplorer({
 
   return (
     <>
-      {/* Full-bleed within the grid's relative root — inset-0 fills the entire
+      {/* Full-bleed within the grid's relative root, inset-0 fills the entire
           content column (never the app sidebar). Not a floating card: no
           backdrop/margins/rounding, so it reads as the grid expanding into a
           detail view rather than a modal popping over it. */}
@@ -132,7 +132,7 @@ export function WorkOrderExplorer({
           </header>
 
           <div className="flex min-h-0 flex-1">
-            {/* List — full width on mobile, fixed rail on md+ */}
+            {/* List, full width on mobile, fixed rail on md+ */}
             <div className="custom-scrollbar w-full flex-shrink-0 overflow-y-auto pb-safe md:w-[340px] md:border-r md:border-hairline lg:w-[380px]">
               <ul className="flex flex-col p-2">
                 {rows.map((row) => {
@@ -201,7 +201,7 @@ export function WorkOrderExplorer({
               </ul>
             </div>
 
-            {/* Detail — hidden on mobile (Drawer instead), visible md+ */}
+            {/* Detail, hidden on mobile (Drawer instead), visible md+ */}
             <div className="custom-scrollbar hidden min-w-0 flex-1 overflow-y-auto p-6 pb-safe md:flex">
               <div className="flex-1">
                 <WorkOrderDetail

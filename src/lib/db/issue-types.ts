@@ -16,12 +16,12 @@ export interface IssueTypeRow {
 /**
  * A city's dispatcher-defined custom issue types (issue_types, migration 027),
  * shaped as AI category defs so the classify pipeline can offer them to the
- * model. Best-effort by design: any error — including a pre-027 DB where the
- * table is missing, or a pre-036 DB with no `description` column — returns [],
+ * model. Best-effort by design: any error, including a pre-027 DB where the
+ * table is missing, or a pre-036 DB with no `description` column. Returns [],
  * so classification falls back to the 12 built-ins and never breaks.
  *
  * A custom type with no description is skipped for CLASSIFICATION only (the model
- * has nothing to match on), but still routes when picked manually — routing
+ * has nothing to match on), but still routes when picked manually. Routing
  * reads team_key via fetchIssueTypeTeam, independent of this.
  */
 export async function fetchCustomCategoryDefs(
@@ -49,7 +49,7 @@ export async function fetchCityIssueTypes(
     if (error) {
       // Missing table/column on a pre-027/036 DB is the expected degrade path.
       if (error.code === "PGRST205" || error.code === "42703") {
-        log.warn("issue_types unavailable — using built-in categories only", {
+        log.warn("issue_types unavailable, using built-in categories only", {
           cityId,
         });
       } else {

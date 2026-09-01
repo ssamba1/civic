@@ -27,7 +27,7 @@ const ADMIN_ROLES = ["staff_supervisor", "admin"];
  *     → { idByKey }    persist an approved (edited) tree for the caller's city.
  *
  * Admin-gated (supervisor/admin) and city-scoped: the tree is always written to
- * the caller's own city_id, never a client-supplied one. Rule 1 holds — the
+ * the caller's own city_id, never a client-supplied one. Rule 1 holds. The
  * model is only ever called here, server-side.
  */
 export async function POST(request: Request) {
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
 
   if (action === "commit") {
     // Zod-parse the (possibly human-edited) tree, then structural re-validate,
-    // before any write — the body is untrusted even from an admin session.
+    // before any write. The body is untrusted even from an admin session.
     const parsed = orgTreeProposalSchema.safeParse({
       units: (body as { units?: unknown }).units,
       notes: "",

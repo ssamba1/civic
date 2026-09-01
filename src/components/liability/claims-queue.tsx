@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils/cn";
 
    Approval is the one irreversible outward action in the whole
    liability pipeline: it assigns a work order and mails a packet to an
-   external vendor. So approve is always two steps — select, then a
+   external vendor. So approve is always two steps, select, then a
    confirmation dialog that names every recipient and the exact claim
    count before anything leaves the building.
 
@@ -86,7 +86,7 @@ export function ClaimsQueue({ rows: initial, currency }: Props) {
     [rows, selected, selectableIds],
   );
 
-  /** Selection grouped by recipient — mirrors how delivery batches (5.3). */
+  /** Selection grouped by recipient, mirrors how delivery batches (5.3). */
   const recipients = useMemo(() => {
     const byContractor = new Map<
       string,
@@ -366,7 +366,7 @@ export function ClaimsQueue({ rows: initial, currency }: Props) {
                   {r.name}
                 </span>
                 <span className="block truncate text-[11px] text-faint">
-                  {r.email ?? "No email on file — delivery will fail"}
+                  {r.email ?? "No email on file. Delivery will fail"}
                 </span>
               </span>
               <span className="flex-shrink-0 text-[12px] tabular-nums text-subtle">
@@ -449,7 +449,7 @@ function ClaimRow({
         </td>
         <td className="px-3 py-2.5 text-subtle">
           <span className="block text-foreground">
-            {row.contractor_name ?? "—"}
+            {row.contractor_name ?? "-"}
           </span>
           {ref && <span className="block text-[11px] text-faint">#{ref}</span>}
         </td>
@@ -457,7 +457,7 @@ function ClaimRow({
         <td className="px-3 py-2.5 text-subtle tabular-nums">
           {row.window_ends_on
             ? formatLocalDate(row.window_ends_on, currency)
-            : "—"}
+            : "-"}
           {row.confidence != null && (
             <span className="block text-[11px] text-faint">
               {Math.round(row.confidence * 100)}% confidence
@@ -467,7 +467,7 @@ function ClaimRow({
         <td className="px-3 py-2.5 text-right tabular-nums text-subtle">
           {row.estimated_value_cents != null
             ? formatCost(row.estimated_value_cents / 100, currency)
-            : "—"}
+            : "-"}
           {row.recovered_value_cents != null && (
             <span className="block text-[11px] text-[var(--status-success-fg)]">
               {formatCost(row.recovered_value_cents / 100, currency)} recovered

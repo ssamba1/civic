@@ -132,7 +132,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
   const [ready, setReady] = useState(false);
 
   // `decided === false` shows a neutral spinner (also the SSR tree) until the
-  // client picks a strategy — no hydration mismatch.
+  // client picks a strategy, no hydration mismatch.
   //   useNative  → native camera input (no getUserMedia available, e.g. some
   //                in-app webviews)
   //   camFailed  → tried the live viewfinder, it errored or never produced a
@@ -187,7 +187,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
   }, []);
 
   // Decide strategy once, on the client. Only force the native input when the
-  // browser can't do getUserMedia at all — everything else attempts the live
+  // browser can't do getUserMedia at all. Everything else attempts the live
   // viewfinder for the seamless "camera opens instantly" flow, with a timeout
   // fallback (below) covering iOS stalls and webview blocks.
   useEffect(() => {
@@ -199,7 +199,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
 
   // Open the live viewfinder on mount and whenever the camera (facingMode)
   // changes. A timeout drops to the native input if no frame arrives.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: retryCount is an intentional re-trigger dep — not read in the body, but bumping it via "Try Again" re-runs the effect to reopen the viewfinder after a failure
+  // biome-ignore lint/correctness/useExhaustiveDependencies: retryCount is an intentional re-trigger dep. Not read in the body, but bumping it via "Try Again" re-runs the effect to reopen the viewfinder after a failure
   useEffect(() => {
     if (!decided || useNative || camFailed) return;
     readyRef.current = false;
@@ -207,7 +207,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
 
     // cancelled flag: if the effect cleans up while getUserMedia is still
     // awaiting (StrictMode double-mount / rapid facingMode flip), the resolved
-    // stream must be stopped immediately — it won't be in streamRef yet.
+    // stream must be stopped immediately. It won't be in streamRef yet.
     let cancelled = false;
 
     const run = async () => {
@@ -221,7 +221,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
           audio: false,
         });
         if (cancelled) {
-          // Effect already cleaned up while the promise was in-flight — stop
+          // Effect already cleaned up while the promise was in-flight. Stop
           // the stream that arrived too late so the camera indicator goes dark.
           stream.getTracks().forEach((t) => {
             t.stop();
@@ -521,7 +521,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
     <div className="relative flex flex-col items-center justify-end h-full bg-background overflow-hidden">
       {hiddenFileInputs}
 
-      {/* Live viewfinder — front camera is mirrored to match user expectation.
+      {/* Live viewfinder. Front camera is mirrored to match user expectation.
           Decorative: capture happens via the shutter button, so the video is
           non-interactive (taps must never toggle the native play/pause overlay)
           and all media controls are suppressed. */}
@@ -553,7 +553,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
         </div>
       )}
 
-      {/* Subtle corner-bracket framing (no full box — cleaner viewfinder look) */}
+      {/* Subtle corner-bracket framing (no full box, cleaner viewfinder look) */}
       {ready && !grid && (
         <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
           <div className="relative h-72 w-72 max-h-[78vw] max-w-[78vw]">
@@ -565,7 +565,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
         </div>
       )}
 
-      {/* Shutter flash — scoped keyframe (globals.css is owned elsewhere).
+      {/* Shutter flash. Scoped keyframe (globals.css is owned elsewhere).
           Reduced-motion: a brief static flash still reads as capture feedback. */}
       {flash && (
         <div className="pointer-events-none absolute inset-0 z-30 bg-white report-shutter-flash" />
@@ -651,7 +651,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
         </div>
       )}
 
-      {/* Controls — shutter centered, upload left, flip right. pb-safe clears
+      {/* Controls, shutter centered, upload left, flip right. pb-safe clears
           the home indicator. */}
       <div className="absolute inset-x-0 bottom-0 z-20 pb-safe">
         <div className="relative flex items-center justify-center pb-10 pt-6">

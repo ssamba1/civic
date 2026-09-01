@@ -1,5 +1,5 @@
 """Export per-frame detections from sample_video.mp4 as JSON for the site's
-camera-demo page. DEMO ONLY (AGPL runtime, gitignored venv) — see render_demo.py.
+camera-demo page. DEMO ONLY (AGPL runtime, gitignored venv). See render_demo.py.
 
 Output: detections.json
   { fps, width, height, frames: [ { i, boxes: [ { x, y, w, h, conf } ] } ] }

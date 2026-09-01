@@ -7,14 +7,14 @@
 // (src/lib/documents/chunk.ts) so the seeded corpus is byte-identical to what
 // an upload of this text would produce.
 //
-// Idempotent: keyed on (city, title) — a re-run deletes the previous document
+// Idempotent: keyed on (city, title). A re-run deletes the previous document
 // (chunks cascade) and re-ingests, so an edit to the text below is picked up.
 //
 // Requires migration 20260828_065_city_documents.sql to be applied.
 // Usage: npx tsx scripts/seed-city-documents.mjs [city-slug]   (default: cumming)
 //
 // tsx, not plain node: the chunker is TypeScript and must not be duplicated
-// here — a divergent copy would seed chunks the app could never reproduce.
+// here. A divergent copy would seed chunks the app could never reproduce.
 
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -220,7 +220,7 @@ performed.`;
 // warranty certificate below, capital_jobs.contract_ref (seeded by
 // scripts/seed-demo-contractor.mjs), and the liability badge on the pothole
 // camera-demo report all cite the same number.
-const CONTRACT_DOCUMENT = `# Pavement Repair Services Agreement — Contract PW-2025-041
+const CONTRACT_DOCUMENT = `# Pavement Repair Services Agreement, Contract PW-2025-041
 
 This Agreement is made between the City Department of Public Works ("the
 City") and Northside Paving LLC, 2180 Industrial Court, Suite B ("the
@@ -300,15 +300,15 @@ claims within twelve months trigger a performance review and possible
 suspension of this Agreement.`;
 
 // What the contractor actually did, and the live warranty on it. The project
-// limits deliberately cover 1245 Peachtree Industrial Blvd — the pothole
-// camera-demo report's address — and the warranty window brackets today, so
+// limits deliberately cover 1245 Peachtree Industrial Blvd, the pothole
+// camera-demo report's address, and the warranty window brackets today, so
 // document retrieval, the capital-jobs seed, and the liability badge all tell
 // the same story.
-const WARRANTY_DOCUMENT = `# Completed Work Record and Warranty Certificate — Northside Paving LLC
+const WARRANTY_DOCUMENT = `# Completed Work Record and Warranty Certificate, Northside Paving LLC
 
 Contract PW-2025-041, Work Package 7: Peachtree Industrial Boulevard
 resurfacing, Station 0+00 at Market Place Boulevard to Station 84+50 at
-Bald Ridge Marina Road, including the full frontage of the 1100–1400 blocks.
+Bald Ridge Marina Road, including the full frontage of the 1100-1400 blocks.
 This record is retained under Section 7 of the Road Maintenance Policy.
 
 ## 1. Work performed
@@ -326,8 +326,8 @@ arrows, and crosswalk markings were restored across the limits.
 
 The City inspector performed density testing on nine cores; all met the
 ninety-two percent minimum. Ride quality measured within specification on
-both lanes. A punch list of two items — a low utility casting at Station
-12+80 and flushing at the Station 31+00 tie-in — was completed on May 27.
+both lanes. A punch list of two items, a low utility casting at Station
+12+80 and flushing at the Station 31+00 tie-in. Was completed on May 27.
 Final acceptance was issued by the Department of Public Works on June 1,
 2026. Final contract value for the package: eight hundred ninety-one
 thousand dollars.
@@ -355,7 +355,7 @@ the warranty lapses. Claims are processed per Section 6 of the Road
 Maintenance Policy; notice contacts are on file with the City Clerk.`;
 
 // contractorEmail links the doc to its contractors row (066 contractor_id),
-// resolved at ingest time — null-safe when the vendor is not seeded yet
+// resolved at ingest time, null-safe when the vendor is not seeded yet
 // (scripts/seed-demo-contractor.mjs owns that row).
 const NORTHSIDE_EMAIL = "dispatch@northsidepaving.example";
 
@@ -368,14 +368,14 @@ const DOCS = [
     contractorEmail: null,
   },
   {
-    title: "Pavement Repair Services Agreement — Northside Paving LLC",
+    title: "Pavement Repair Services Agreement, Northside Paving LLC",
     filename: "pw-2025-041-services-agreement.md",
     doc_kind: "contract",
     text: CONTRACT_DOCUMENT,
     contractorEmail: NORTHSIDE_EMAIL,
   },
   {
-    title: "Completed Work & Warranty Certificate — Northside Paving LLC",
+    title: "Completed Work & Warranty Certificate, Northside Paving LLC",
     filename: "pw-2025-041-warranty-certificate.md",
     doc_kind: "contract",
     text: WARRANTY_DOCUMENT,
@@ -404,7 +404,7 @@ for (const email of new Set(
   if (row) contractorIdByEmail.set(email, row.id);
   else
     console.log(
-      `note: no contractors row for ${email} — docs seed without a vendor link (run scripts/seed-demo-contractor.mjs, then re-run this).`,
+      `note: no contractors row for ${email}. Docs seed without a vendor link (run scripts/seed-demo-contractor.mjs, then re-run this).`,
     );
 }
 

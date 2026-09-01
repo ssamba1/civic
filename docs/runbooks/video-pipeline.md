@@ -1,11 +1,11 @@
-# Runbook — video damage-mapping pipeline
+# Runbook: video damage-mapping pipeline
 
 ## Enable
 
 1. Apply migration `20260824_056_video_pipeline.sql` (`pnpm db:migrate`).
 2. Install **ffmpeg** on the deploy host (`ffmpeg -version` must work for the
    Node process). Frame sampling, detector preprocessing, and aHash all run
-   through it — there is no node-level image dependency.
+   through it. There is no node-level image dependency.
 3. Fetch a detector model (YOLOv8-style 640×640 ONNX export trained on
    RDD2022; check the license fits your deployment):
 
@@ -13,7 +13,7 @@
    node scripts/fetch-video-model.mjs <model-url> models/road-damage.onnx
    ```
 
-4. Ensure `onnxruntime-node` installed (it is an optionalDependency — on an
+4. Ensure `onnxruntime-node` installed (it is an optionalDependency, on an
    unsupported platform `pnpm install` skips it and clip processing will fail
    with `detector_unavailable`).
 5. Set env and restart:
@@ -48,11 +48,11 @@ All pipeline failures land in `error_log` with contexts `video-pipeline` /
 - `video-clips` and `video-frames` buckets stay **private**; frames are
   unblurred city-camera footage. Staff access is via 10-minute signed URLs.
 - A dispatched report's `photo_public_url` is the static placeholder
-  (`/video-detection-placeholder.svg`) — never a frame. The frame goes to
+  (`/video-detection-placeholder.svg`). Never a frame. The frame goes to
   `photos-raw` only (restricted, 30-day TTL) for the classify pipeline.
 
 ## Cost model
 
-Stage 1 is CPU-only (no API spend) and runs in-process via `after()` — fine
+Stage 1 is CPU-only (no API spend) and runs in-process via `after()`. Fine
 for manual upload volumes. Stage 2 is at most ONE Gemini call per cluster
 per escalation, behind the same global rate limiter as classification.

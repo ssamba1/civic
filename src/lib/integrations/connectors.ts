@@ -5,10 +5,10 @@ import { createLogger } from "@/lib/logger";
 /* ==================================================================
    Outbound CMMS/ERP/GIS connectors (NEXT_100 #74 #75 #76 #77 #78).
 
-   Wedge W5 — integrate, don't replace. Civic is the modern intake + public
+   Wedge W5. Integrate, don't replace. Civic is the modern intake + public
    accountability layer feeding the systems cities already run. Each connector
    maps a Civic status event to that vendor's shape and POSTs it, gated on the
-   vendor's own env credentials — absent creds → the connector is simply skipped,
+   vendor's own env credentials. Absent creds → the connector is simply skipped,
    so this ships dark and lights up per-city as creds are provided.
 
    These are SCAFFOLDS: the endpoint + auth are wired and the payload is mapped
@@ -50,7 +50,7 @@ function bearer(token: string) {
   };
 }
 
-// NOTE: payload field names are best-effort per public docs — confirm against a
+// NOTE: payload field names are best-effort per public docs, confirm against a
 // vendor sandbox before go-live.
 const CONNECTORS: Connector[] = [
   {
@@ -65,7 +65,7 @@ const CONNECTORS: Connector[] = [
           method: "POST",
           headers: bearer(token),
           body: JSON.stringify({
-            Description: `Civic ${e.category ?? "issue"} — ${e.status}`,
+            Description: `Civic ${e.category ?? "issue"}, ${e.status}`,
             Location: e.address ?? undefined,
             X: e.lng ?? undefined,
             Y: e.lat ?? undefined,
@@ -144,7 +144,7 @@ const CONNECTORS: Connector[] = [
       const url = process.env.ARCGIS_FEATURE_URL;
       const token = process.env.ARCGIS_TOKEN;
       if (!url || !token || e.lat == null || e.lng == null) return null;
-      // Esri feature-layer applyEdits (adds) — form-encoded, token in body.
+      // Esri feature-layer applyEdits (adds). Form-encoded, token in body.
       const adds = JSON.stringify([
         {
           geometry: { x: e.lng, y: e.lat, spatialReference: { wkid: 4326 } },

@@ -2,7 +2,7 @@
  * Privacy audit gate (agents.md Definition of Done: `pnpm audit:privacy`).
  *
  * Cross-references every city's photos-public bucket against photos-raw and
- * flags any file whose size matches its raw counterpart — a strong signal that
+ * flags any file whose size matches its raw counterpart, a strong signal that
  * an unblurred original leaked into the public bucket. Exits non-zero on any
  * violation so CI / a pre-deploy hook can gate on it.
  *
@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 
-// tsx does not auto-load dotenv — mirror scripts/eval-classify.ts.
+// tsx does not auto-load dotenv. Mirror scripts/eval-classify.ts.
 function loadEnvLocal(): void {
   const envPath = join(ROOT, ".env.local");
   if (!existsSync(envPath)) return;
@@ -46,7 +46,7 @@ async function main() {
     process.exit(1);
   }
 
-  // Imported after env is loaded — createServerClient reads it at construction.
+  // Imported after env is loaded. CreateServerClient reads it at construction.
   const { createServerClient } = await import("../src/lib/db/client");
   const { auditPublicBucket } = await import("../src/lib/privacy/audit");
 
@@ -66,12 +66,12 @@ async function main() {
   }
 
   if (allViolations.length > 0) {
-    console.error(`\n✗ Privacy audit FAILED — ${allViolations.length} finding(s):`);
+    console.error(`\n✗ Privacy audit FAILED, ${allViolations.length} finding(s):`);
     for (const v of allViolations) console.error(`  - ${v}`);
     process.exit(1);
   }
   console.log(
-    `✓ Privacy audit passed — no raw-photo leaks across ${(cities ?? []).length} city/cities.`,
+    `✓ Privacy audit passed, no raw-photo leaks across ${(cities ?? []).length} city/cities.`,
   );
 }
 

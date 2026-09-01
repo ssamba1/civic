@@ -10,7 +10,7 @@ const logger = createLogger("[notify-drain]");
  * Undelivered-notification drain (LCP-05). Retries the email leg for resolution
  * notifications whose synchronous send never landed (Resend 5xx / network blip),
  * so a transient failure at close time doesn't silently lose a resident's
- * resolution email. Idempotent — a delivered or terminally-failed row drops out
+ * resolution email. Idempotent, a delivered or terminally-failed row drops out
  * of future scans (see lib/notify/outbox.ts).
  *
  * Auth mirrors sla-escalate exactly: a shared NOTIFY_CRON_SECRET bearer token

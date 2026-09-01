@@ -36,7 +36,7 @@ import type { CapitalJobRow, UtilityPermitRow, WarrantyRow } from "./types";
  *
  * Every fetch returns a Result: an RPC failure must never be collapsed into
  * "no candidates", because that would be read downstream as a `city_cost`
- * verdict — the exact silent-failure trap spec §3.2 step 6 forbids.
+ * verdict, the exact silent-failure trap spec §3.2 step 6 forbids.
  */
 
 const logger = createLogger("liability-db");
@@ -53,7 +53,7 @@ function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
-/** UTC calendar date of a timestamp — the warranty clock is a date, not an instant. */
+/** UTC calendar date of a timestamp. The warranty clock is a date, not an instant. */
 export function toDateOnly(iso: string): string {
   return new Date(iso).toISOString().slice(0, 10);
 }
@@ -61,7 +61,7 @@ export function toDateOnly(iso: string): string {
 /**
  * Report fields the liability join needs. Category comes from the
  * classification row; a report classified as `other` (or not yet classified)
- * still evaluates — it just cannot score category compatibility.
+ * still evaluates. It just cannot score category compatibility.
  */
 export async function fetchReportForLiability(
   reportId: string,
@@ -82,7 +82,7 @@ export async function fetchReportForLiability(
       created_at: string;
       location: unknown;
       // PostgREST returns an embedded 1:1 relation as an object or an array
-      // depending on how the FK is detected — normalize both shapes.
+      // depending on how the FK is detected, normalize both shapes.
       classifications:
         | { category: string | null }
         | { category: string | null }[]

@@ -16,7 +16,7 @@ export type EnsureSessionResult =
 let inflight: Promise<EnsureSessionResult> | null = null;
 
 const MAX_ATTEMPTS = 4;
-// 0.8s, 1.6s, 3.2s between the 4 attempts — spaces retries out instead of
+// 0.8s, 1.6s, 3.2s between the 4 attempts, spaces retries out instead of
 // hammering a rate-limited endpoint, which only pushes the limit further out.
 const BASE_DELAY_MS = 800;
 
@@ -39,7 +39,7 @@ async function bootstrap(
 ): Promise<EnsureSessionResult> {
   // Reuse a persisted session first. The @supabase/ssr browser client restores
   // it from cookies/localStorage, so a returning visitor (or a second mount in
-  // the same visit) never signs up again — this is the core of the fix.
+  // the same visit) never signs up again. This is the core of the fix.
   const { data: sessionData } = await supabase.auth.getSession();
   if (sessionData.session) return { ok: true };
 
@@ -48,7 +48,7 @@ async function bootstrap(
     if (!error) return { ok: true };
 
     if (!isRateLimit(error.status, error.message)) {
-      // Offline / config / other non-429 failure — retrying quickly won't help.
+      // Offline / config / other non-429 failure. Retrying quickly won't help.
       return {
         ok: false,
         error:

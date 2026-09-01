@@ -111,7 +111,7 @@ describe("resolveCandidates", () => {
   });
 });
 
-describe("scoreUnit / assignBestUnit — load balance", () => {
+describe("scoreUnit / assignBestUnit, load balance", () => {
   it("prefers the less-loaded of two identical crews", () => {
     const busy = candidate({
       id: "busy",

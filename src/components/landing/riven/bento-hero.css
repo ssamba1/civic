@@ -1,4 +1,4 @@
-/* Bento "Playroom" hero — clay-asset tile grid. Scoped under .wl-bento-hero,
+/* Bento "Playroom" hero, clay-asset tile grid. Scoped under .wl-bento-hero,
    inherits the zamp token scope (fonts, ink, bg) from .wl-design-zamp.
    Radius system: 22px tiles / 14px small, matching zamp.css. Tile surfaces sit
    in the same warm off-white family as the clay renders (#f4f2ee) so the
@@ -10,7 +10,7 @@
   width: 100%;
   max-width: 1240px;
   margin: 0 auto;
-  /* ÷ --app-zoom — see riven-landing.css --wl-hero-min-h. */
+  /* ÷ --app-zoom. See riven-landing.css --wl-hero-min-h. */
   min-height: calc(100dvh / var(--app-zoom, 1));
   display: flex;
   flex-direction: column;

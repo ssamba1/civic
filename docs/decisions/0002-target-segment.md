@@ -1,11 +1,11 @@
-# 0002 — Target segment: which customer Civic is for
+# 0002: Target segment: which customer Civic is for
 
-- Status: **Accepted** (2026-07-08 — owner directed execution of the full
+- Status: **Accepted** (2026-07-08, owner directed execution of the full
   backlog including the segment-A downstream work; revert to Proposed if that
   read is wrong)
 - Date: 2026-07-07
 - Branch: `feat/sidebar-shell`
-- Scope: go-to-market focus and everything downstream of it — landing copy,
+- Scope: go-to-market focus and everything downstream of it, landing copy,
   outreach targeting, billing model, i18n/WhatsApp investment, and which
   deferred engineering (Open311 partner features vs. India readiness) gets
   built next.
@@ -17,17 +17,17 @@
 The repo currently serves three different customers at once (REVAMP_PLAN 3.1,
 MKT audit #1/#3), and each pull is real:
 
-1. **US small cities (Open311)** — what the product is actually built as:
+1. **US small cities (Open311)**: what the product is actually built as:
    Open311 GeoReport v2 conformance is a hard rule, the onboarding engine
    ingests TIGER boundaries + ArcGIS/Open311 feeds (US-shaped data sources),
    the pilot target is Cumming, GA, and docs/landing/leadgen all speak
    city-government language. ~19k municipal governments in the US; ACV at the
-   $0.50–2/capita norm puts a Cumming-sized city at ~$4–16k/yr.
-2. **HOAs / campuses / private communities** — the outreach CSV's
+   $0.50-2/capita norm puts a Cumming-sized city at ~$4-16k/yr.
+2. **HOAs / campuses / private communities**: the outreach CSV's
    highest-scoring leads. Faster sales cycle (no procurement), smaller ACV,
    no Open311 requirement at all. The audit called this the
    speed-to-revenue path.
-3. **Ahilyanagar, India** — a live branch seeded a real Indian city with INR
+3. **Ahilyanagar, India**: a live branch seeded a real Indian city with INR
    costs. Enormous TAM, but the product is ~zero-ready for it: English-only,
    no WhatsApp intake (the dominant Indian civic channel), US-state
    normalization in onboarding, and Open311 is irrelevant there (MKT #5).
@@ -37,7 +37,7 @@ with a sharp claim, outreach can't specialize, and engineering keeps paying
 for surface area (e.g. the ₹83 hardcoded FX, US_STATE_ABBR tables, Open311
 conformance) that at most one segment needs.
 
-A related market fact (MKT #2): "only AI player" is dead — SeeClickFix/
+A related market fact (MKT #2): "only AI player" is dead, SeeClickFix/
 CivicPlus shipped AI photo classification in Jan 2026. The surviving moat is
 the **photo → costed work order → closed-loop resolution** automation, which
 this branch just made real (close flow with actual-cost capture, resolution
@@ -47,7 +47,7 @@ photo, CSAT loop, DB-backed per-city routing).
 
 **A. US small cities, Open311-first (recommended).**
 The product as built. Open311 conformance + TIGER/ArcGIS onboarding are real
-differentiators *only* in this segment — nowhere else do they matter. The
+differentiators *only* in this segment. Nowhere else do they matter. The
 close-the-loop evidence (Boston 311: resolution photos → ~60% more reports)
 is a city-government sales argument. Cons: slow procurement cycles;
 venture-scale outcome requires many small ACVs or upmarket movement.
@@ -72,7 +72,7 @@ C parked.**
 - Everything hard that's already built (Open311, TIGER onboarding, the loop,
   the cost model) compounds in A and only in A.
 - B costs nothing to keep as a side-door: if an HOA/campus signs as a design
-  partner, onboard them through the same wizard — do NOT build B-specific
+  partner, onboard them through the same wizard. Do NOT build B-specific
   features or copy until one pays.
 - C is parked, not killed: keep the Ahilyanagar branch as proof of
   boundary-agnostic onboarding, but no i18n/WhatsApp investment until A has a

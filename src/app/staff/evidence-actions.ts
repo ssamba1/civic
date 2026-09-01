@@ -4,7 +4,7 @@
  * Video-detection evidence lookup for the grid's issue explorer.
  *
  * A camera-detected report carries the static placeholder as its public photo
- * (hard rule 2 — the real frame is unblurred street footage and never leaves
+ * (hard rule 2, the real frame is unblurred street footage and never leaves
  * the private `video-frames` bucket). Staff, however, need the actual evidence:
  * this resolves report → cluster → best detection → a short-lived signed URL
  * for the WHOLE frame plus the detector's own bounding box.
@@ -22,7 +22,7 @@ const FRAMES_BUCKET = "video-frames";
 /** Long enough for an operator to look; short enough that a leaked URL rots. */
 const SIGNED_URL_TTL_SECONDS = 600;
 
-/** Normalized 0..1, top-left origin — same convention as the video console. */
+/** Normalized 0..1, top-left origin, same convention as the video console. */
 export interface EvidenceBox {
   x: number;
   y: number;
@@ -39,8 +39,8 @@ export interface ReportEvidence {
 
 /**
  * `bbox` is jsonb: a legacy or half-written row can hold null, a string, or
- * partial keys. Anything that isn't four finite numbers yields no box at all —
- * a NaN-positioned overlay would be worse than showing the bare frame.
+ * partial keys. Anything that isn't four finite numbers yields no box at all.
+ * A NaN-positioned overlay would be worse than showing the bare frame.
  */
 function parseBox(raw: unknown): EvidenceBox | null {
   if (!raw || typeof raw !== "object") return null;
@@ -75,7 +75,7 @@ export async function getReportEvidenceFrame(
     .maybeSingle<{ slug: string }>();
   if (!city) return { ok: false, error: "not_found" };
 
-  // Gate BEFORE any storage work — a failed caller never reaches a signed URL,
+  // Gate BEFORE any storage work, a failed caller never reaches a signed URL,
   // and the failure text carries no frame path either.
   const access = await getStaffAccessForCity(city.slug);
   if (access !== "real") return { ok: false, error: "forbidden" };

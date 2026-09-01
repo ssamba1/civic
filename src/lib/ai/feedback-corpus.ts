@@ -1,5 +1,5 @@
 /**
- * Human-in-loop fine-tune corpus pipeline — OUTFLANK #26
+ * Human-in-loop fine-tune corpus pipeline, OUTFLANK #26
  *
  * Pure transforms over classification_feedback rows. Produces JSONL-style
  * training examples `{input, expected}` from staff corrections where the
@@ -37,10 +37,10 @@ export interface CorpusExample {
 /**
  * Build a list of training examples from feedback rows.
  *
- * Only rows where `original_category !== corrected_category` are included —
- * same-category rows are unchanged predictions and carry no training signal.
+ * Only rows where `original_category !== corrected_category` are included.
+ * Same-category rows are unchanged predictions and carry no training signal.
  *
- * Pure function — safe to call without a DB connection.
+ * Pure function, safe to call without a DB connection.
  */
 export function buildCorpus(feedbackRows: FeedbackRow[]): CorpusExample[] {
   const examples: CorpusExample[] = [];

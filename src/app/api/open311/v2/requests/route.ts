@@ -19,7 +19,7 @@ import { toOpen311Xml } from "@/lib/open311/xml";
 /**
  * Public photo shown for a request filed through the Open311 API. A caller's
  * media_url is deliberately never stored (it is neither blur-verified nor
- * ours), so an externally filed report has no first-party image — the same
+ * ours), so an externally filed report has no first-party image, the same
  * situation the camera pipeline handles with VIDEO_PLACEHOLDER_PUBLIC_PATH.
  */
 const OPEN311_PLACEHOLDER_PUBLIC_PATH = "/open311-external-placeholder.svg";
@@ -37,14 +37,14 @@ const logger = createLogger("[open311-list]");
 /**
  * GET /api/open311/v2/requests
  *
- * Open311 GeoReport v2 — list service requests.
+ * Open311 GeoReport v2, list service requests.
  * Public endpoint. Supports filters: jurisdiction_id, service_code,
  * start_date, end_date, status (open|closed).
  *
  * Content negotiation: ?format=xml → XML, otherwise JSON.
  */
 
-/** Safe columns for public GET — no reporter PII, no raw storage paths */
+/** Safe columns for public GET, no reporter PII, no raw storage paths */
 const PUBLIC_REPORT_SELECT =
   "id, city_id, location, photo_public_url, status, address, created_at, updated_at, classifications(category, severity, confidence, reasoning, is_emergency), cities!inner(id, name, open311_jurisdiction_id)";
 
@@ -52,7 +52,7 @@ const PUBLIC_REPORT_SELECT =
  * Same columns, but with classifications joined as INNER so a
  * `classifications.category` filter actually constrains the parent reports.
  * A plain (left) embed would filter only the embedded rows and still return
- * every report — breaking `?service_code=` (H-bug: service_code returned all
+ * every report, breaking `?service_code=` (H-bug: service_code returned all
  * categories). Used only when service_code is present.
  */
 const PUBLIC_REPORT_SELECT_INNER_CLASS = PUBLIC_REPORT_SELECT.replace(
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     const statusParam = params.get("status");
     const wantsXml = negotiateXml(request);
 
-    // Reject unknown status values — silently ignoring them violates spec
+    // Reject unknown status values, silently ignoring them violates spec
     if (
       statusParam !== null &&
       statusParam !== "open" &&
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
 
     const db = createServerClient();
 
-    // Select only safe public columns — no description, no photo_raw_url, no
+    // Select only safe public columns, no description, no photo_raw_url, no
     // reporter PII. When service_code is set we must INNER-join classifications
     // so the category filter constrains the parent reports; a left embed would
     // filter only the embedded rows and still return every report.
@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
       query = query.eq("classifications.category", serviceCode);
     }
 
-    // Filter by Open311 status — expand to internal status values
+    // Filter by Open311 status, expand to internal status values
     if (status === "open" || status === "closed") {
       query = query.in("status", expandStatus(status));
     }
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
       query = query.lte("created_at", endDate);
     }
 
-    // Exclude rejected (and merged) reports from the public feed — H13
+    // Exclude rejected (and merged) reports from the public feed, H13
     query = query.not("status", "in", '("rejected","merged")');
 
     query = query
@@ -166,7 +166,7 @@ export async function GET(request: NextRequest) {
         address: z.string().nullable(),
         created_at: z.string(),
         updated_at: z.string(),
-        // Object OR array — PostgREST shapes an embed by cardinality, and a
+        // Object OR array, PostgREST shapes an embed by cardinality, and a
         // migration adding a unique constraint flips it. Accepting only arrays
         // silently emptied this endpoint; see firstEmbed().
         classifications: EMBED,
@@ -192,7 +192,7 @@ export async function GET(request: NextRequest) {
         return city ? reportToOpen311(report, classification, city) : null;
       })
       // Type-guard filter so the result is Open311Request[], not
-      // (Open311Request | null)[] — Boolean alone doesn't narrow out null.
+      // (Open311Request | null)[]. Boolean alone doesn't narrow out null.
       .filter((r): r is Open311Request => r !== null);
 
     if (wantsXml) {
@@ -212,7 +212,7 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/open311/v2/requests
  *
- * Open311 GeoReport v2 — create a new service request.
+ * Open311 GeoReport v2. Create a new service request.
  * Requires api_key param. Body: service_code, lat, long,
  * address_string, description, media_url.
  *
@@ -272,7 +272,7 @@ export async function POST(request: NextRequest) {
     }
     // Per-partner keys must carry the open311:write scope to POST. The legacy
     // shared env key is unscoped and implicitly full-access. A read-only key
-    // (e.g. scopes ['open311:read']) is rejected here with 403, not 401 — the
+    // (e.g. scopes ['open311:read']) is rejected here with 403, not 401. The
     // key is valid, it just lacks the permission.
     if (partner && !partner.scopes.includes("open311:write")) {
       return open311Error(
@@ -395,9 +395,9 @@ export async function POST(request: NextRequest) {
     // mandatory face/plate blur pipeline and lives in the photos-public
     // bucket". A caller-supplied URL satisfies neither half of that: we cannot
     // attest it is blurred, and we do not control it. Writing it through meant
-    // any holder of an open311:write key could put an arbitrary remote image —
+    // any holder of an open311:write key could put an arbitrary remote image,
     // unblurred faces and plates, or a tracking pixel that deanonymises every
-    // viewer of the public dashboard — onto the city's public map, and have it
+    // viewer of the public dashboard. Onto the city's public map, and have it
     // echoed back as media_url in every subsequent GET.
     //
     // Photos reach us through the blur pipeline or not at all.
@@ -429,7 +429,7 @@ export async function POST(request: NextRequest) {
         city_id: city.id,
         reporter_id: reporterId,
         location: `SRID=4326;POINT(${lng} ${lat})`,
-        // Never mediaUrl — see the note above the media_url validation.
+        // Never mediaUrl. See the note above the media_url validation.
         //
         // reports.photo_public_url is NOT NULL, so writing null here made the
         // insert fail with 23502 and this endpoint answer 500 to EVERY POST.
@@ -457,7 +457,7 @@ export async function POST(request: NextRequest) {
       return open311Error(500, "Failed to create service request", wantsXml);
     }
 
-    // Trigger AI classification async — fire-and-forget (H2). Call the pipeline
+    // Trigger AI classification async, fire-and-forget (H2). Call the pipeline
     // IN-PROCESS rather than HTTP self-calling /api/ai/classify: the old fetch
     // depended on NEXT_PUBLIC_SITE_URL and silently fell back to
     // http://localhost:3000, so in production (env unset) externally-submitted
@@ -470,7 +470,7 @@ export async function POST(request: NextRequest) {
       }),
     );
 
-    // Return Open311 POST response — token = service_request_id for simplicity
+    // Return Open311 POST response, token = service_request_id for simplicity
     const responseBody = [
       {
         service_request_id: report.id,
@@ -508,7 +508,7 @@ export async function POST(request: NextRequest) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Constant-time string comparison — prevents timing oracle on API key check. */
+/** Constant-time string comparison. Prevents timing oracle on API key check. */
 function safeCompare(a: string, b: string): boolean {
   // Hash both sides to fixed-length digests so an unequal-length guess takes the
   // same path as an equal-length one (no early-exit length oracle).
@@ -524,7 +524,7 @@ function escXml(value: string): string {
     .replace(/>/g, "&gt;");
 }
 
-// Only safe public columns are fetched — no description, no photo_raw_url, no reporter_id
+// Only safe public columns are fetched, no description, no photo_raw_url, no reporter_id
 type ReportRow = {
   id: string;
   city_id: string;

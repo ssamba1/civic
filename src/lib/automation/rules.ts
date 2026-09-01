@@ -1,25 +1,25 @@
 /**
- * Automation Rules Engine — pure, no DB deps, no Next.js imports.
+ * Automation Rules Engine, pure, no DB deps, no Next.js imports.
  *
  * Condition fields:
- *   category       – ReportCategory string
- *   severity       – 1-5 integer
- *   is_emergency   – boolean
- *   tag            – string (checks report.tags array if present)
+ *   category, ReportCategory string
+ *   severity. 1-5 integer
+ *   is_emergency. Boolean
+ *   tag. String (checks report.tags array if present)
  *
  * Condition ops:
- *   eq       – value === field value
- *   gte      – field value >= value  (numeric)
- *   lte      – field value <= value  (numeric)
- *   in       – value is array, field value is included
- *   contains – field is array, value is a member of it
+ *   eq, value === field value
+ *   gte, field value >= value  (numeric)
+ *   lte. Field value <= value  (numeric)
+ *   in. Value is array, field value is included
+ *   contains. Field is array, value is a member of it
  *
  * Action types:
- *   set_priority     – "low" | "medium" | "high" | "critical"
- *   assign_team      – team key string
- *   auto_acknowledge – true
- *   add_tag          – tag string (multiple rules can add different tags)
- *   set_severity     – 1-5 integer
+ *   set_priority, "low" | "medium" | "high" | "critical"
+ *   assign_team, team key string
+ *   auto_acknowledge. True
+ *   add_tag. Tag string (multiple rules can add different tags)
+ *   set_severity, 1-5 integer
  *
  * Rule evaluation:
  *   - Only enabled rules are considered.

@@ -20,7 +20,7 @@ const logger = createLogger("[comments]");
  *  - The report has no comments.
  *  - Any unexpected query error.
  *
- * Uses the service-role client — hidden filtering is applied in the query
+ * Uses the service-role client. Hidden filtering is applied in the query
  * directly (`hidden = false`) rather than relying on RLS, so this is safe to
  * call from Server Components that already verified the caller may see the
  * report (e.g. getMyReport returned a row).

@@ -12,11 +12,11 @@
 --
 -- Storage: the ORIGINAL uploaded file lands in the PRIVATE 'city-documents'
 -- bucket (service-role only, no storage.objects policies). Municipal contracts
--- carry vendor pricing and staff names — nothing here is publicly addressable.
+-- carry vendor pricing and staff names. Nothing here is publicly addressable.
 --
 -- RLS: default deny. Both tables are staff-only within the caller's city;
 -- all writes go through the service role (bypasses RLS), matching the video
--- pipeline's and classify pipeline's write pattern — so there is deliberately
+-- pipeline's and classify pipeline's write pattern, so there is deliberately
 -- no authenticated INSERT/UPDATE/DELETE policy.
 --
 -- NOT auto-applied. Run with: npm run db:migrate
@@ -74,14 +74,14 @@ CREATE INDEX IF NOT EXISTS idx_document_chunks_doc_ordinal
   ON document_chunks (document_id, ordinal);
 
 -- ---------------------------------------------------------------------------
--- 2. RLS — default deny; staff-only within their city
+-- 2. RLS, default deny; staff-only within their city
 -- ---------------------------------------------------------------------------
 
 ALTER TABLE city_documents  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE document_chunks ENABLE ROW LEVEL SECURITY;
 
 -- SELECT: staff of the owning city. Contracts carry vendor pricing and named
--- staff obligations — no anon/resident read at all.
+-- staff obligations. No anon/resident read at all.
 DROP POLICY IF EXISTS city_documents_select_staff ON city_documents;
 CREATE POLICY city_documents_select_staff ON city_documents
   FOR SELECT TO authenticated
@@ -111,7 +111,7 @@ ON CONFLICT (id) DO NOTHING;
 -- 4. Guidance retrieval RPC
 -- ---------------------------------------------------------------------------
 -- PostgREST cannot express `ORDER BY ts_rank(...)` against a query-time
--- tsquery, so ranked retrieval lives in an RPC — same shape as
+-- tsquery, so ranked retrieval lives in an RPC, same shape as
 -- find_nearby_detection_cluster. websearch_to_tsquery (not plainto_) so staff
 -- can type quoted phrases and -negations in the retrieval box.
 --
@@ -119,7 +119,7 @@ ON CONFLICT (id) DO NOTHING;
 -- Real scenarios rarely survive it: an operator types "pothole on Peachtree
 -- Industrial Blvd" and the policy says "Boulevard", so one unmatched token
 -- zeroes the whole result. The loose pass rewrites the query's ANDs to ORs and
--- runs only when the strict pass found nothing — ts_rank still floats the
+-- runs only when the strict pass found nothing, ts_rank still floats the
 -- chunks matching the most terms to the top. Phrase operators (<->) survive
 -- the rewrite untouched; a query carrying a negation (!) skips the loose pass,
 -- since OR-ing a negation would match nearly everything.
@@ -199,6 +199,6 @@ GRANT EXECUTE ON FUNCTION public.search_document_chunks(uuid, text, int)
 COMMENT ON TABLE city_documents IS
   'Staff-uploaded municipal source documents (policies, contracts, specs) for a city. The original file lives in the private city-documents bucket; the text lives in document_chunks.';
 COMMENT ON TABLE document_chunks IS
-  'Ordered ~800-char text chunks of a city_document with a generated english tsvector. Full-text retrieval only — this project has no pgvector and stores no embeddings.';
+  'Ordered ~800-char text chunks of a city_document with a generated english tsvector. Full-text retrieval only. This project has no pgvector and stores no embeddings.';
 COMMENT ON FUNCTION public.search_document_chunks(uuid, text, int) IS
   'City-scoped ranked guidance lookup: websearch_to_tsquery + ts_rank over document_chunks.tsv.';

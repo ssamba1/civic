@@ -85,7 +85,7 @@ export function deriveKpis(
   /**
    * Whether `current`/`previous` came from the synthetic corpus. This function
    * is pure arithmetic over whatever rows it is handed, so only the caller can
-   * know — and the dashboard has to label illustrative numbers as illustrative.
+   * know, and the dashboard has to label illustrative numbers as illustrative.
    */
   synthetic = false,
 ): AnalyticsKpis {
@@ -134,7 +134,7 @@ export function deriveTrend(reports: DashboardReport[]): TrendPoint[] {
     created.set(k, (created.get(k) ?? 0) + 1);
 
     // Count the synthetic close event, but never extend the axis past the last
-    // created day — a close time can fall in the future (created_at + resolution),
+    // created day. A close time can fall in the future (created_at + resolution),
     // which would tail the chart out to empty days where `created` is 0.
     const ct = closeTime(r);
     if (ct !== null) {
@@ -231,7 +231,7 @@ export function deriveHourlyHeatmap(reports: DashboardReport[]): HeatCell[] {
 
 /* ------------------------ Neighborhoods ------------------------ */
 
-// No neighborhood field in the corpus — bucket by street name (the address
+// No neighborhood field in the corpus, bucket by street name (the address
 // tail after the house number) as a stable proxy.
 export function deriveTopNeighborhoods(
   reports: DashboardReport[],
@@ -322,11 +322,11 @@ function weekKey(ms: number): string {
 }
 
 /**
- * OUTFLANK #41 — recurring-problem detection (client-side mirror of the
+ * OUTFLANK #41, recurring-problem detection (client-side mirror of the
  * `analytics_recurring_hotspots` RPC in migration 037). Groups the filtered set
  * by category and a ~111m coordinate grid (3-decimal round), surfacing spots
  * where the same problem recurs across >= minEpisodes distinct weeks. A spot
- * reported 6 times in one week is one incident, not a recurring pattern — so
+ * reported 6 times in one week is one incident, not a recurring pattern, so
  * recurrence is measured in distinct weeks, not raw count.
  */
 export function deriveRecurringHotspots(
@@ -396,7 +396,7 @@ export function deriveRecurringHotspots(
 /**
  * Aging profile of the OPEN backlog (open/dispatched/in_progress), bucketed by
  * how long each has been waiting. A growing tail in the older buckets is the
- * leading indicator of trouble — it shows up before SLA breaches do. Reuses the
+ * leading indicator of trouble. It shows up before SLA breaches do. Reuses the
  * resolution-distribution buckets, but measured on age-since-filed, not
  * time-to-close. Closed/merged/rejected are excluded.
  */
@@ -427,7 +427,7 @@ const SLA_RISK_THRESHOLD = 0.8;
 
 /**
  * Classify the OPEN backlog against each report's per-category SLA target
- * (CATEGORY_SLA_TARGETS, in hours). Pure — no due_at column needed; the target
+ * (CATEGORY_SLA_TARGETS, in hours). Pure, no due_at column needed; the target
  * is derived from category, age from created_at. Lets an operator see what's
  * about to breach, not just what already has.
  */
@@ -458,7 +458,7 @@ export interface AttentionItem {
   address: string;
   severity: number;
   created_at: string;
-  /** Hours since filed — used for tie-break ranking and the breach flag. */
+  /** Hours since filed. Used for tie-break ranking and the breach flag. */
   age_hours: number;
   /** Already past its per-category SLA window. */
   breaches_sla: boolean;
@@ -466,8 +466,8 @@ export interface AttentionItem {
 
 /**
  * The top open items an operator should look at right now. Only the OPEN
- * backlog (open/dispatched/in_progress) is eligible. Ranked severity-first — a
- * fresh Sev-5 outranks a stale Sev-2 — then oldest-first within a tier, so the
+ * backlog (open/dispatched/in_progress) is eligible. Ranked severity-first, a
+ * fresh Sev-5 outranks a stale Sev-2, then oldest-first within a tier, so the
  * most urgent, longest-waiting reports float up. Pure; `now` is injectable for
  * tests.
  */

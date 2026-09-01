@@ -1,5 +1,5 @@
 /**
- * Crew route optimization — pure compute, no I/O, no server-only imports.
+ * Crew route optimization, pure compute, no I/O, no server-only imports.
  * Safe to import from both server and client contexts.
  *
  * Heuristic: nearest-neighbour construction + optional 2-opt improvement pass.
@@ -9,9 +9,9 @@
  *
  * 2-opt: after NN, scan all pairs (i, k) and check whether reversing the
  * sub-route [i+1…k] improves total distance. Repeat until no improvement.
- * O(n²) per pass, typically 1–3 passes. Limits: does not cross time windows;
+ * O(n²) per pass, typically 1-3 passes. Limits: does not cross time windows;
  * does not handle traffic or one-way streets; degrades gracefully on ≤2 stops
- * (returns immediately). For city crews of 5–20 stops this is fast enough to
+ * (returns immediately). For city crews of 5-20 stops this is fast enough to
  * run synchronously in a server action.
  */
 
@@ -65,7 +65,7 @@ const EARTH_RADIUS_M = 6_371_000;
 
 /**
  * Great-circle distance between two geographic points in metres.
- * Uses the haversine formula. Accuracy within 0.5% for distances < 1 000 km —
+ * Uses the haversine formula. Accuracy within 0.5% for distances < 1 000 km,
  * more than sufficient for intra-city crew routing.
  */
 export function haversineMeters(a: GeoPoint, b: GeoPoint): number {

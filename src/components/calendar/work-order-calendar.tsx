@@ -16,11 +16,11 @@ import type { CalendarWorkOrder } from "@/lib/db/calendar";
 import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
-   Work-order calendar — staff console.
+   Work-order calendar, staff console.
 
    Plots one city's work orders on a Monday-start month grid by
    `calendarDate` (dispatched_at ?? created_at, computed server-side).
-   Month navigation is server-driven via `?month=YYYY-MM` <Link>s — an
+   Month navigation is server-driven via `?month=YYYY-MM` <Link>s, an
    RSC refetch, no client data fetching. The four filters are pure
    client state narrowing the already-fetched month.
 
@@ -74,7 +74,7 @@ export function WorkOrderCalendar({
   monthISO: string;
   todayISO: string;
   /** Crew-portal scope (src/app/city/[slug]/crew/[crewType]/calendar/page.tsx):
-   *  pins the Crew-type filter to this key and hides its picker entirely — a
+   *  pins the Crew-type filter to this key and hides its picker entirely, a
    *  locked constant, not a default the user could nudge away from. Absent
    *  (the city calendar route) → behavior is unchanged. */
   lockedCrewType?: string;
@@ -91,11 +91,11 @@ export function WorkOrderCalendar({
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   // The locks always win over client state, regardless of how fType/fCrew got
-  // set — constants, not merely initial values.
+  // set, constants, not merely initial values.
   const effectiveType = lockedCrewType ?? fType;
   const effectiveCrew = lockedCrewId ?? fCrew;
 
-  // Month-nav links stay inside the crew portal when locked — otherwise
+  // Month-nav links stay inside the crew portal when locked. Otherwise
   // "Next month" would silently drop the user onto the unscoped city
   // calendar, losing the lock.
   const calendarPath = lockedCrewType
@@ -228,7 +228,7 @@ export function WorkOrderCalendar({
     // min-h-0 + flex-1 let the month card absorb whatever height the page shell
     // hands down (md+ pins that to one viewport). In the crew portal, whose
     // wrapper is a plain block, flex-1 is inert and the grid falls back to the
-    // day cells' own min-height — same look as before.
+    // day cells' own min-height. Same look as before.
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -382,11 +382,11 @@ export function WorkOrderCalendar({
             </div>
           ))}
         </div>
-        {/* biome-ignore lint/a11y/useSemanticElements: an intentional CSS-grid calendar, not a tabular data set — role="grid"/"gridcell" conveys the 2D layout without <table> markup fighting `grid grid-cols-7`. */}
+        {/* biome-ignore lint/a11y/useSemanticElements: an intentional CSS-grid calendar, not a tabular data set, role="grid"/"gridcell" conveys the 2D layout without <table> markup fighting `grid grid-cols-7`. */}
         <div
           role="grid"
           aria-label={`${monthLabel(monthISO)} work orders`}
-          // auto-rows-fr (not a fixed 6-row template — monthGrid returns 5
+          // auto-rows-fr (not a fixed 6-row template, monthGrid returns 5
           // rows for some months) so the weeks split whatever height the card
           // has, and fall back to the cells' min-height when it has none.
           // A dense day whose chips exceed that share pushes its row past the
@@ -476,8 +476,8 @@ function DayCell({
   const dayNum = Number.parseInt(cell.iso.slice(8, 10), 10);
 
   return (
-    // biome-ignore lint/a11y/useSemanticElements: paired with the role="grid" container above — a CSS-grid cell, not a <td>.
-    // biome-ignore lint/a11y/useFocusableInteractive: the cell is a container, not the focus target — its chip links and "+N more" button carry keyboard focus (normal tab flow, no roving grid navigation by design).
+    // biome-ignore lint/a11y/useSemanticElements: paired with the role="grid" container above, a CSS-grid cell, not a <td>.
+    // biome-ignore lint/a11y/useFocusableInteractive: the cell is a container, not the focus target, its chip links and "+N more" button carry keyboard focus (normal tab flow, no roving grid navigation by design).
     <div
       role="gridcell"
       aria-label={longDate(cell.iso)}
@@ -614,7 +614,7 @@ function DayModal({
       className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-black/40 p-4 pt-20 animate-[city-pop_120ms_ease-out] motion-reduce:animate-none"
       onClick={onClose}
     >
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: this onClick only halts propagation so an inside click doesn't dismiss the backdrop — there is no action to bind a key to; Escape-to-close lives in the effect above. */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: this onClick only halts propagation so an inside click doesn't dismiss the backdrop. There is no action to bind a key to; Escape-to-close lives in the effect above. */}
       <div
         role="dialog"
         aria-modal="true"
@@ -655,7 +655,7 @@ function prettyCategory(c: string): string {
   return c.replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
 }
 
-/** "Wednesday, July 1, 2026" — UTC-formatted so it matches the ISO key. */
+/** "Wednesday, July 1, 2026", UTC-formatted so it matches the ISO key. */
 function longDate(iso: string): string {
   const [y, m, d] = iso.split("-").map((v) => Number.parseInt(v, 10));
   return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-US", {

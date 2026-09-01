@@ -86,18 +86,18 @@ interface ReportMapProps {
   selectedCategory?: ReportCategory | null;
   setSelectedCategory?: (c: ReportCategory | null) => void;
   isFullscreen?: boolean;
-  // Optional controlled mapTheme — pass these to lift theme state to a parent
+  // Optional controlled mapTheme, pass these to lift theme state to a parent
   // so other UI (e.g. Dispatch panel) can react. Falls back to local state.
   mapTheme?: MapTheme;
   onMapThemeChange?: (t: MapTheme) => void;
-  // Optional controlled marker color mode — same lift-to-parent pattern as
+  // Optional controlled marker color mode, same lift-to-parent pattern as
   // mapTheme. Falls back to local state ("progress").
   colorMode?: MarkerColorMode;
   onColorModeChange?: (m: MarkerColorMode) => void;
 }
 
 /* ------------------------------------------------------------------
-   Basemap styles — Carto vector (dark/light) + ArcGIS raster (satellite).
+   Basemap styles, Carto vector (dark/light) + ArcGIS raster (satellite).
    The satellite raster lives in ./satellite-style (shared with the landing
    hero map) so its Esri maxzoom cap stays in one place.
    ------------------------------------------------------------------ */
@@ -108,8 +108,8 @@ const STYLE_LIGHT =
 
 // Marker colors now live in ./pin-icons (pinIconFor / pinColorRGB / the legend
 // metadata) so the pins, the focus halo, and the legend all read from one
-// source and can't drift. The old statusColor() helper — which hard-coded the
-// map/legend palette here — was removed with the ScatterplotLayer dot markers.
+// source and can't drift. The old statusColor() helper, which hard-coded the
+// map/legend palette here. Was removed with the ScatterplotLayer dot markers.
 
 /* ------------------------------------------------------------------
    DeckGL overlay glued onto the Maplibre map via useControl
@@ -153,7 +153,7 @@ function ReportMapInner({
   // Uncontrolled maps follow the app's light/dark theme so the basemap matches
   // the surrounding UI. `satellite` is a deliberate user override, so it's left
   // untouched until the user picks another basemap. When a parent lifts the
-  // theme (mapThemeProp set), it owns this sync instead — we no-op here.
+  // theme (mapThemeProp set), it owns this sync instead, we no-op here.
   useEffect(() => {
     if (mapThemeProp !== undefined) return;
     setMapThemeLocal((cur) => (cur === "satellite" ? cur : appTheme));
@@ -164,7 +164,7 @@ function ReportMapInner({
   // the gear panel. The globe costs 8.7 MB over 113 requests (1.7 MB
   // Cesium.js + ~1 MB local assets + ~3.9 MB of ion terrain/OSM-building
   // tiles) and ~10.5 s of main-thread blocking parsing b3dm tiles, against
-  // 2.3 MB / 63 requests flat — too much to spend before the operator has
+  // 2.3 MB / 63 requests flat, too much to spend before the operator has
   // asked for 3D. It also cannot initialise under the production CSP today
   // (Cesium.js calls eval at load), so defaulting to it meant every prod
   // visitor paid a failed download before falling back here anyway.
@@ -177,12 +177,12 @@ function ReportMapInner({
     if (globeFailedRef.current) return;
     globeFailedRef.current = true;
     console.warn(
-      `[ReportMap] Cesium globe failed to initialise (${reason}) — falling back to the MapLibre renderer.`,
+      `[ReportMap] Cesium globe failed to initialise (${reason}), falling back to the MapLibre renderer.`,
     );
     setRenderer("flat");
   }, []);
   const useGlobe = renderer === "globe" && viewMode === "markers";
-  // Marker color mode — controlled by a parent when colorModeProp is set,
+  // Marker color mode, controlled by a parent when colorModeProp is set,
   // otherwise local (mirrors the mapTheme controlled/uncontrolled pattern).
   const [colorModeLocal, setColorModeLocal] =
     useState<MarkerColorMode>("progress");
@@ -238,7 +238,7 @@ function ReportMapInner({
   }, [onSelectMarker]);
 
   // Coarse clock tick (5 min) so the 24h completed-report cutoff below keeps
-  // re-evaluating on a long-lived idle tab — with a stable `reports` reference
+  // re-evaluating on a long-lived idle tab, with a stable `reports` reference
   // alone, the Date.now() captured on first evaluation would freeze and
   // expired reports would never drop off screen.
   const [nowTick, setNowTick] = useState(() => Date.now());
@@ -278,7 +278,7 @@ function ReportMapInner({
     null,
   );
 
-  // O(n) index build — memoized on the report set so pan/zoom reuse one index.
+  // O(n) index build. Memoized on the report set so pan/zoom reuse one index.
   const clusterIndex = useMemo(
     () => (clusteringActive ? buildClusterIndex(visibleReports) : null),
     [clusteringActive, visibleReports],
@@ -299,7 +299,7 @@ function ReportMapInner({
     });
   }, []);
 
-  // Fly to focused report — only when focusId actually changes.
+  // Fly to focused report, only when focusId actually changes.
   // visibleReports must stay in deps so we can look up coords after filter
   // mutations, but the lastFlownIdRef guard prevents re-flying for the same
   // selection. Resolving from visibleReports (not raw reports) makes focusing
@@ -334,7 +334,7 @@ function ReportMapInner({
     setPopupReport(focused);
   }, [focusId, visibleReports, zoom, is3D]);
 
-  // Clear marker popup when leaving marker view — stale popup from previous
+  // Clear marker popup when leaving marker view. Stale popup from previous
   // mode would float over the aggregation layer with no anchored point.
   useEffect(() => {
     if (viewMode !== "markers") setPopupReport(null);
@@ -362,7 +362,7 @@ function ReportMapInner({
     }
   };
 
-  // Team legend swatches — only the teams actually present on the map, so the
+  // Team legend swatches, only the teams actually present on the map, so the
   // legend never lists a department with zero visible pins. Memoized on the
   // same corpus the pins use so it stays in step with what's rendered.
   const [teamLegendExpanded, setTeamLegendExpanded] = useState(false);
@@ -375,7 +375,7 @@ function ReportMapInner({
     [visibleReports, teamLegendExpanded],
   );
 
-  // Halo layer depends only on focusId + visibleReports — separated so a focus
+  // Halo layer depends only on focusId + visibleReports, separated so a focus
   // change doesn't rebuild the marker layers (GPU buffer re-upload)
   // unnecessarily. Resolving from visibleReports (same corpus as the pins)
   // means a focused-but-expired report gets no orphan ring.
@@ -413,13 +413,13 @@ function ReportMapInner({
         data: visibleReports,
         pickable: false,
         getPosition: (r) => [r.location.lng, r.location.lat],
-        // weight by severity — a 5-star pothole heats more than a 1-star scuff
+        // weight by severity, a 5-star pothole heats more than a 1-star scuff
         getWeight: (r) => r.severity,
         // Larger kernel so nearby reports merge into regional hotspots instead
         // of reading as isolated dots. radiusPixels is screen-space so it stays
         // visually consistent across zooms.
         radiusPixels: 110,
-        // Lower intensity counterbalances larger radius — keeps the peak from
+        // Lower intensity counterbalances larger radius. Keeps the peak from
         // saturating to white when many reports cluster.
         intensity: 1,
         // Lower threshold lets faint edges fade out gradually instead of
@@ -427,7 +427,7 @@ function ReportMapInner({
         threshold: 0.02,
         // Bigger weights texture = smoother gradients, less blocky transitions.
         weightsTextureSize: 1024,
-        // Single-hue intensity ramp — transparent -> muted amber #ad8434 ->
+        // Single-hue intensity ramp, transparent -> muted amber #ad8434 ->
         // danger #cc4638 for hotspots. Replaces the old blue/purple/gold
         // rainbow; matched to the shared legend gradient swatch so density
         // reads as one enterprise-muted family.
@@ -444,7 +444,7 @@ function ReportMapInner({
     }
 
     // ---- Marker view (default) ----
-    // Blue "live" glow beneath ONLY the demo report — preserves the presenter
+    // Blue "live" glow beneath ONLY the demo report, preserves the presenter
     // affordance the old dots carried. Real reports no longer get a glow ring;
     // the teardrop pins carry their own tone-matched shadow.
     const demoGlow = new ScatterplotLayer<DashboardReport>({
@@ -468,7 +468,7 @@ function ReportMapInner({
       updateTriggers: { getFillColor: [focusId] },
     });
 
-    // Teardrop pin markers (hero-style — see ./pin-icons). getIcon returns a
+    // Teardrop pin markers (hero-style, see ./pin-icons). getIcon returns a
     // cached SVG data-URL keyed by fill+border+glyph, so IconLayer auto-packs
     // a small atlas and only re-fetches when the color mode changes. Same
     // depth-overlay params as the demo glow above (see that comment).
@@ -504,7 +504,7 @@ function ReportMapInner({
         const sized = r.demo ? base + 12 : base;
         return r.id === focusId ? sized * 1.28 : sized;
       },
-      // autoHighlight OFF — per-frame ReadPixels caused GPU stalls on lower-end GPUs.
+      // autoHighlight OFF, per-frame ReadPixels caused GPU stalls on lower-end GPUs.
       updateTriggers: { getIcon: [colorMode], getSize: [focusId] },
       onClick: ({ object }) => {
         if (object) {
@@ -594,7 +594,7 @@ function ReportMapInner({
   );
 
   // bg-background (theme token) so the loading/edge fill matches the app in
-  // both themes — a light basemap over a black container flashed a dark void.
+  // both themes, a light basemap over a black container flashed a dark void.
   const containerClass = isFullscreen
     ? "h-full w-full relative overflow-hidden bg-background"
     : "h-[300px] w-full sm:h-[450px] lg:h-[550px] relative rounded-xl overflow-hidden border border-hairline bg-background";
@@ -631,7 +631,7 @@ function ReportMapInner({
           style={{ width: "100%", height: "100%" }}
           // Smoothness levers ---------------------------------------------------
           // reuseMaps: keep GL context alive when component remounts (e.g. theme
-          //   swap, route transition) — avoids re-init cost.
+          //   swap, route transition). Avoids re-init cost.
           // maxTileCacheSize: bigger in-memory tile cache so panning back doesn't
           //   re-download; cheap on RAM, huge on perceived smoothness.
           // refreshExpiredTiles=false: stops periodic stale-checks on long
@@ -646,7 +646,7 @@ function ReportMapInner({
           localIdeographFontFamily="sans-serif"
           // Feed the live viewport to the clustering layer. onLoad seeds the
           // first bounds; onMoveEnd re-queries after each pan/zoom settles
-          // (moveEnd, not move — clustering per animation frame is wasteful).
+          // (moveEnd, not move, clustering per animation frame is wasteful).
           onLoad={syncViewFromMap}
           onMoveEnd={syncViewFromMap}
         >
@@ -721,7 +721,7 @@ function ReportMapInner({
             shadowIntensity="md"
             glowIntensity="none"
           >
-            {/* View mode — markers vs choropleth aggregations */}
+            {/* View mode, markers vs choropleth aggregations */}
             <div>
               <div className="flex items-center gap-1.5 text-xs text-zinc-300 mb-2">
                 <Sliders className="h-3 w-3 text-zinc-300" />
@@ -756,7 +756,7 @@ function ReportMapInner({
               )}
             </div>
 
-            {/* Marker colors — only meaningful in the markers view. Shown in
+            {/* Marker colors, only meaningful in the markers view. Shown in
                 fullscreen too (unlike the Filters section below). */}
             {viewMode === "markers" && (
               <div className="border-t border-white/5 pt-3">
@@ -790,7 +790,7 @@ function ReportMapInner({
               </div>
             )}
 
-            {/* Renderer — MapLibre/deck.gl flat map (default) vs the opt-in
+            {/* Renderer, MapLibre/deck.gl flat map (default) vs the opt-in
                 Cesium 3D globe. Mirrors the Basemap grid below. The globe is
                 unavailable in the heatmap view (deck.gl aggregation has no
                 globe equivalent), and disabled outright once Cesium has
@@ -886,7 +886,7 @@ function ReportMapInner({
               </div>
             </div>
 
-            {/* Filters — hidden in fullscreen (duplicates left-side Dispatch panel) */}
+            {/* Filters. Hidden in fullscreen (duplicates left-side Dispatch panel) */}
             {!isFullscreen && (
               <div className="border-t border-white/5 pt-3 flex flex-col gap-3">
                 <div className="flex items-center justify-between">
@@ -992,7 +992,7 @@ function ReportMapInner({
           <span className="text-zinc-500">reports</span>
         </div>
 
-        {/* Legend — content depends on view mode */}
+        {/* Legend, content depends on view mode */}
         <LiquidGlassCard
           className={`pointer-events-none ${glassChrome}`}
           contentClassName={`${glassSheen} px-3 py-2.5 text-[12px] text-zinc-200 flex flex-col gap-1.5 rounded-[14px]`}
@@ -1002,21 +1002,21 @@ function ReportMapInner({
           glowIntensity="none"
         >
           {viewMode === "markers" ? (
-            // Marker legend — rendered straight from ./pin-icons metadata
+            // Marker legend, rendered straight from ./pin-icons metadata
             // (PROGRESS_LEGEND / URGENCY_LEGEND / teamLegend) so the swatches and
             // the map pins share one color source and can't drift. This replaces
             // the old statusColor-based swatches; the color palette that used to
             // live inline here now lives in pin-icons.
             <div className="flex flex-col gap-1.5">
               {colorMode === "progress" && (
-                // biome-ignore lint/a11y/useSemanticElements: role="list" intentional — <ul> applies UA list-style/margin/padding; flex/gap layout is custom
+                // biome-ignore lint/a11y/useSemanticElements: role="list" intentional. <ul> applies UA list-style/margin/padding; flex/gap layout is custom
                 <div
                   role="list"
                   aria-label="Marker legend"
                   className="flex flex-col gap-1.5"
                 >
                   {PROGRESS_LEGEND.map((e) => (
-                    // biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling
+                    // biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional, sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling
                     <div
                       role="listitem"
                       key={e.label}
@@ -1065,14 +1065,14 @@ function ReportMapInner({
                 (teamLegendData.entries.length === 0 ? (
                   <div className="text-zinc-500">No reports</div>
                 ) : (
-                  // biome-ignore lint/a11y/useSemanticElements: role="list" intentional — <ul> applies UA list-style/margin/padding; flex/gap layout is custom
+                  // biome-ignore lint/a11y/useSemanticElements: role="list" intentional. <ul> applies UA list-style/margin/padding; flex/gap layout is custom
                   <div
                     role="list"
                     aria-label="Teams shown"
                     className="flex flex-col gap-1.5"
                   >
                     {teamLegendData.entries.map((e) => (
-                      // biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional — sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling
+                      // biome-ignore lint/a11y/useSemanticElements: role="listitem" intentional, sibling of role="list" div; <li> outside a <ul> is invalid and would inherit UA list styling
                       <div
                         role="listitem"
                         key={e.label}
@@ -1106,7 +1106,7 @@ function ReportMapInner({
                 Density
               </div>
               <div className="flex items-center gap-2">
-                {/* Same amber -> danger family as the heatmap colorRange above —
+                {/* Same amber -> danger family as the heatmap colorRange above,
                   low density fades in as faint amber, high density reads as
                   danger red. */}
                 <span className="inline-block h-2 w-20 rounded-sm bg-gradient-to-r from-[#ad8434]/25 via-[#ad8434] to-[#cc4638]" />

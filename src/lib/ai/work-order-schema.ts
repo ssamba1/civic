@@ -24,7 +24,7 @@ function effectiveKeys(crewTypeKeys: readonly string[]): string[] {
  * Zod schema for the Gemini work-order response, with crew_type constrained
  * to the given city's crew-type keys (crew_types table, migration 031).
  * crew_type is nullable (category "other" has no physical crew). materials is
- * a list of {item, qty} objects — the staff work-order panel already renders
+ * a list of {item, qty} objects. The staff work-order panel already renders
  * that object form.
  */
 export function buildAiWorkOrderSchema(crewTypeKeys: readonly string[]) {
@@ -39,7 +39,7 @@ export function buildAiWorkOrderSchema(crewTypeKeys: readonly string[]) {
     // the pipeline only honors a hint that exactly matches a real crew, so a
     // hallucinated name degrades to the load balancer, never a bad assignment.
     // default(null): crew_hint is nullable + non-required in the Gemini schema,
-    // so the model may omit the key entirely — treat absent as "no hint".
+    // so the model may omit the key entirely. Treat absent as "no hint".
     crew_hint: z.string().nullable().default(null),
     est_minutes: z.number().int().min(0),
     materials: z
@@ -51,13 +51,13 @@ export function buildAiWorkOrderSchema(crewTypeKeys: readonly string[]) {
       )
       .max(20),
     // Upper bound: $5M per job. Prevents a hallucinated astronomical value from
-    // persisting — the pipeline applies a tighter per-category clamp on top.
+    // persisting. The pipeline applies a tighter per-category clamp on top.
     est_cost: z.number().min(0).max(5_000_000),
     rationale: z.string().min(1),
   });
 }
 
-/** Default-keys schema — used by tests and any caller without city context. */
+/** Default-keys schema, used by tests and any caller without city context. */
 export const aiWorkOrderSchema = buildAiWorkOrderSchema(DEFAULT_CREW_TYPE_KEYS);
 
 export type AiWorkOrder = z.infer<typeof aiWorkOrderSchema>;
@@ -116,6 +116,6 @@ export function buildGeminiWorkOrderSchema(
   };
 }
 
-/** Default-keys Gemini schema — kept for tests / no-city-context callers. */
+/** Default-keys Gemini schema, kept for tests / no-city-context callers. */
 export const GEMINI_WORK_ORDER_SCHEMA: ObjectSchema =
   buildGeminiWorkOrderSchema(DEFAULT_CREW_TYPE_KEYS);

@@ -29,9 +29,9 @@ interface MembersTableProps {
   slug: string;
   canManage: boolean;
   crews: CrewOption[];
-  /** City vendors — rendered as their own roster under the Contractors chip. */
+  /** City vendors. Rendered as their own roster under the Contractors chip. */
   contractors?: ContractorListRow[];
-  /** Full crew rows — rendered as their own roster under the Crews chip. */
+  /** Full crew rows. Rendered as their own roster under the Crews chip. */
   crewRows?: CrewRow[];
   /** Per-crew work-order rollup for the Crews rows (open, oldest, MTTR). */
   crewWorkloads?: Record<string, CrewWorkload>;
@@ -53,7 +53,7 @@ const FILTERS: ReadonlyArray<{ key: RoleFilter; label: string }> = [
 ];
 
 function formatDateOnly(isoDate: string | null): string {
-  if (!isoDate) return "—";
+  if (!isoDate) return "-";
   const t = Date.parse(`${isoDate.slice(0, 10)}T00:00:00Z`);
   if (Number.isNaN(t)) return isoDate;
   return new Date(t).toLocaleDateString(undefined, {
@@ -73,12 +73,12 @@ const VIEWS: ReadonlyArray<{
   { key: "team", label: "By team", Icon: LayoutGrid },
 ];
 
-// Coarse relative time — "just now" / "3d ago" / "2mo ago". Small enough to keep
+// Coarse relative time, "just now" / "3d ago" / "2mo ago". Small enough to keep
 // local; no date library dependency.
 function relativeTime(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return "—";
+  if (Number.isNaN(then)) return "-";
   const secs = Math.floor((Date.now() - then) / 1000);
   if (secs < 45) return "just now";
   const mins = Math.floor(secs / 60);
@@ -109,7 +109,7 @@ export function MembersTable({
   const [crewDialog, setCrewDialog] = useState<CrewDialogState | null>(null);
   const searchId = useId();
 
-  // Roster candidates for the crew dialog — city members as it expects them.
+  // Roster candidates for the crew dialog. City members as it expects them.
   const crewCandidates = useMemo<CrewCandidate[]>(
     () =>
       members.map((m) => ({
@@ -121,7 +121,7 @@ export function MembersTable({
     [members],
   );
 
-  // Crew names render under the Team cell — resolve ids once per crews prop.
+  // Crew names render under the Team cell, resolve ids once per crews prop.
   const crewNameById = useMemo(
     () => new Map(crews.map((c) => [c.id, c.name])),
     [crews],
@@ -139,7 +139,7 @@ export function MembersTable({
     };
     for (const m of members) {
       map[m.role] += 1;
-      // "All" is the operators view — residents are counted only under their
+      // "All" is the operators view. Residents are counted only under their
       // own chip, never rolled into All.
       if (m.role !== "resident") map.all += 1;
     }
@@ -163,7 +163,7 @@ export function MembersTable({
     });
   }, [members, role, query]);
 
-  // Vendor roster under the Contractors chip — same search box applies.
+  // Vendor roster under the Contractors chip. Same search box applies.
   const filteredContractors = useMemo(() => {
     if (role !== "contractors") return [];
     const needle = query.trim().toLowerCase();
@@ -175,7 +175,7 @@ export function MembersTable({
     );
   }, [contractors, role, query]);
 
-  // Crew roster under the Crews chip — same search box applies.
+  // Crew roster under the Crews chip. Same search box applies.
   const filteredCrews = useMemo(() => {
     if (role !== "crews") return [];
     const needle = query.trim().toLowerCase();
@@ -189,7 +189,7 @@ export function MembersTable({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Top controls — view toggle + (People-only) search. */}
+      {/* Top controls, view toggle + (People-only) search. */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div
           role="toolbar"
@@ -261,7 +261,7 @@ export function MembersTable({
         )}
       </div>
 
-      {/* Role chips — People view only; By-team groups by team and drops
+      {/* Role chips, People view only; By-team groups by team and drops
           residents, so a role filter there would be redundant. */}
       {view === "people" && (
         <div
@@ -400,7 +400,7 @@ export function MembersTable({
                       <td className="px-4 py-3 align-middle text-subtle">
                         {typeMeta?.label ??
                           c.crewType?.replace(/_/g, " ") ??
-                          "—"}
+                          "-"}
                       </td>
                       <td className="px-4 py-3 align-middle text-right tabular-nums text-foreground">
                         {c.members.length}
@@ -411,15 +411,15 @@ export function MembersTable({
                       <td className="px-4 py-3 align-middle tabular-nums text-subtle">
                         {load?.oldestOpenAgeDays != null
                           ? `${Math.round(load.oldestOpenAgeDays)}d`
-                          : "—"}
+                          : "-"}
                       </td>
                       <td className="px-4 py-3 align-middle tabular-nums text-subtle">
                         {load?.mttrHours != null
                           ? `${Math.round(load.mttrHours)}h`
-                          : "—"}
+                          : "-"}
                       </td>
                       <td className="px-4 py-3 align-middle text-subtle">
-                        {lead?.displayName ?? "—"}
+                        {lead?.displayName ?? "-"}
                       </td>
                       {canManage && (
                         <td className="px-4 py-3 align-middle text-right">
@@ -500,7 +500,7 @@ export function MembersTable({
                         {c.name}
                       </Link>
                       <div className="text-[12px] text-faint">
-                        {c.email ?? "—"}
+                        {c.email ?? "-"}
                       </div>
                     </td>
                     <td className="px-4 py-3 align-middle">
@@ -597,11 +597,11 @@ export function MembersTable({
                           name={m.displayName}
                         />
                         <div className="text-[12px] text-faint">
-                          {m.email ?? "—"}
+                          {m.email ?? "-"}
                         </div>
                       </td>
                       <td className="px-4 py-3 align-middle tabular-nums text-subtle">
-                        {m.phone ?? "—"}
+                        {m.phone ?? "-"}
                       </td>
                       <td className="px-4 py-3 align-middle">
                         <RoleBadge role={m.role} />

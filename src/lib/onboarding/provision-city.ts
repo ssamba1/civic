@@ -1,4 +1,4 @@
-// provisionCity — turns a resolved TIGER candidate into a cities row (F4).
+// provisionCity, turns a resolved TIGER candidate into a cities row (F4).
 // SERVER-ONLY: defaults to the service-role client (createServerClient bypasses
 // RLS; `cities` has no write policy). Gate the caller at the /admin route.
 //
@@ -30,7 +30,7 @@ export interface ProvisionResult {
   /** false when an existing city with this slug was updated instead of created. */
   created: boolean;
   candidate: CityCandidate;
-  /** The fetched boundary — reused by cold-start so it isn't fetched twice. */
+  /** The fetched boundary. Reused by cold-start so it isn't fetched twice. */
   boundary: BoundaryGeometry;
 }
 

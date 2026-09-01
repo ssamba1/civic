@@ -9,7 +9,7 @@ const inputCls =
   "w-full rounded-lg border border-hairline bg-surface pl-9 pr-9 py-2.5 text-sm text-foreground outline-none transition-shadow placeholder:text-faint focus:ring-2 focus:ring-[color-mix(in_srgb,var(--color-primary)_50%,transparent)]";
 
 /**
- * City autocomplete — one search box that replaces the old name + state
+ * City autocomplete, one search box that replaces the old name + state
  * fields. Types stream to `searchCities` (Nominatim) debounced; each pick
  * carries its own center point, so the wizard sets the map center directly
  * from the selection (no second geocode round-trip).
@@ -17,7 +17,7 @@ const inputCls =
  * Stale responses are dropped by comparing the in-flight query against the
  * latest one (server actions can't be AbortController-cancelled). The debounce
  * cuts per-client request volume, but OSM's public endpoint rate-limits
- * autocomplete — see searchCities() for the at-scale provider note.
+ * autocomplete. See searchCities() for the at-scale provider note.
  */
 export function CitySearch({
   value,
@@ -43,7 +43,7 @@ export function CitySearch({
   const [active, setActive] = useState(-1);
 
   const rootRef = useRef<HTMLDivElement>(null);
-  // Latest query string still considered "current" — drops stale responses.
+  // Latest query string still considered "current", drops stale responses.
   const latestQuery = useRef(query);
   // The label written by a selection; the search effect skips it so picking a
   // city doesn't immediately re-query its own label and reopen the dropdown.

@@ -1,6 +1,6 @@
 -- 016_report_events: append-only lifecycle event log for every report.
 --
--- DB triggers auto-insert rows as reports move through the pipeline —
+-- DB triggers auto-insert rows as reports move through the pipeline,
 -- no app code change needed. A one-time backfill at the bottom seeds all
 -- historical data from existing tables so the events table is complete
 -- from day one, even on databases that existed before this migration.
@@ -212,7 +212,7 @@ CREATE TRIGGER trg_classification_overridden
 -- BACKFILL: reconstruct events from all existing table data.
 -- Rows are tagged backfilled=true so they can be identified if needed.
 -- ON CONFLICT DO NOTHING would require a unique key; since we have none,
--- this migration is safe to run once per database — re-running it would
+-- this migration is safe to run once per database. Re-running it would
 -- duplicate rows. Supabase migrations run exactly once, so this is fine.
 -- ─────────────────────────────────────────────────────────────────────────────
 

@@ -1,11 +1,11 @@
 -- =============================================================================
--- Civic – Per-partner Open311 API keys
+-- Civic, Per-partner Open311 API keys
 -- Migration: 20260707_028_api_keys.sql
 --
 -- REVAMP_PLAN 3.7 / dev-audit P1: replaces the single shared OPEN311_API_KEY +
 -- OPEN311_SYSTEM_USER_ID pair with per-partner keys that carry attribution
 -- (user_id), an optional city scope, and revocation. Only a SHA-256 hash of
--- the key is stored — the plaintext exists once, at issuance.
+-- the key is stored. The plaintext exists once, at issuance.
 --
 -- The env-var pair keeps working as a legacy fallback (see the Open311 POST
 -- route) so existing integrations don't break the day this ships.

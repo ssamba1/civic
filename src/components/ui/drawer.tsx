@@ -28,8 +28,8 @@ export interface DrawerProps {
  * Mobile-native side panel: full dynamic-viewport height, capped width, safe-area
  * aware, reduced-motion aware. Closes on Esc, backdrop tap, or the close button.
  *
- * Desktop is unchanged from any inline/side-by-side layout a caller already uses —
- * this primitive is intended for the mobile branch of a "Drawer on mobile,
+ * Desktop is unchanged from any inline/side-by-side layout a caller already uses.
+ * This primitive is intended for the mobile branch of a "Drawer on mobile,
  * inline on desktop" pattern.
  */
 export function Drawer({
@@ -98,7 +98,7 @@ export function Drawer({
         }
       `}</style>
 
-      {/* Backdrop — tap to close. */}
+      {/* Backdrop, tap to close. */}
       <button
         type="button"
         aria-label="Close"

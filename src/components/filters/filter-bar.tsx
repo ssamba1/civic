@@ -219,7 +219,7 @@ function MenuRow({
   );
 }
 
-// Severity is a filter control here, not a per-record status field — a
+// Severity is a filter control here, not a per-record status field. A
 // 5-color rainbow would be decorative. Neutralized to a single foreground
 // hue ramped by opacity, so the row still reads low→high at a glance without
 // inventing a hue vocabulary chrome doesn't otherwise use.
@@ -250,7 +250,7 @@ function TeamRow({
         selected ? "bg-overlay-strong" : "hover:bg-overlay",
       )}
     >
-      {/* Team identity no longer carries hue (chrome is grayscale) — a plain
+      {/* Team identity no longer carries hue (chrome is grayscale). A plain
           faint bullet keeps the list's scan rhythm. */}
       <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-faint ring-1 ring-inset ring-hairline-strong" />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -324,7 +324,7 @@ export function FilterBar() {
 
   // Total active-filter count for the mobile badge.
   // Preset contributes only when it differs from the default ("30d"), so
-  // an untouched filter always shows 0 — matching isDefault semantics.
+  // an untouched filter always shows 0, matching isDefault semantics.
   const activeCount =
     statusCount +
     categoryCount +
@@ -347,7 +347,7 @@ export function FilterBar() {
           </span>
 
           {/* ---- Team selector: primary scoping decision. On a team view the
-               scope is locked — render a static badge, not a switcher, so it
+               scope is locked, render a static badge, not a switcher, so it
                can't LOOK changeable while every patch() forces it back. ---- */}
           {lockedTeam ? (
             <span
@@ -580,7 +580,7 @@ export function FilterBar() {
             )}
           </Popover>
 
-          {/* ---- Category selector: on a crew portal the scope is locked —
+          {/* ---- Category selector: on a crew portal the scope is locked,
                render a static badge, not the picker, so it can't LOOK
                changeable while every patch() forces it back. ---- */}
           {lockedCategories ? (
@@ -633,7 +633,7 @@ export function FilterBar() {
                           patch({ categories: toggle(filter.categories, cat) })
                         }
                       >
-                        {/* Category dot is grayscale here — chips/menus are
+                        {/* Category dot is grayscale here. Chips/menus are
                             chrome, not a map layer/chart series, so the glyph +
                             label carry the identity, not hue. */}
                         <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-faint ring-1 ring-inset ring-hairline-strong" />
@@ -748,7 +748,7 @@ export function FilterBar() {
             icon={<Calendar className="h-3.5 w-3.5" />}
             title="Date range"
           >
-            {/* Preset buttons — 2-per-row grid so they're finger-friendly */}
+            {/* Preset buttons, 2-per-row grid so they're finger-friendly */}
             <div className="mb-3 grid grid-cols-3 gap-1.5">
               {PRESETS.filter((p) => p !== "custom").map((p) => (
                 <button
@@ -922,7 +922,7 @@ export function FilterBar() {
           )}
 
           {/* --- Pinned footer: Apply + Reset ---
-              sticky bottom-0 sits above the sheet's own pb-safe — no double-adding */}
+              sticky bottom-0 sits above the sheet's own pb-safe, no double-adding */}
           <div className="sticky bottom-0 flex gap-3 border-t border-hairline bg-[var(--color-surface)] pt-3">
             {!isDefault && (
               <button

@@ -1,13 +1,13 @@
 -- =============================================================================
--- Civic – City Onboarding
+-- Civic, City Onboarding
 -- Migration: 20260618_019_city_onboarding.sql
 --
 -- Adds the schema needed for self-serve city onboarding:
---   * cities.center      – geocoded center point (map centering; boundary deferred)
---   * cities.created_by  – the admin user who provisioned the city
---   * users.team_key     – staff↔team assignment (per-person or shared-team account)
---   * users.is_shared    – marks a shared-per-team login (no per-person identity)
---   * city_teams         – per-city team config (which presets are enabled, their
+--   * cities.center. Geocoded center point (map centering; boundary deferred)
+--   * cities.created_by, the admin user who provisioned the city
+--   * users.team_key, staff↔team assignment (per-person or shared-team account)
+--   * users.is_shared, marks a shared-per-team login (no per-person identity)
+--   * city_teams, per-city team config (which presets are enabled, their
 --                          labels, and which report categories each owns). This is
 --                          the DB-backed, per-city replacement for the localStorage
 --                          routing overrides (see src/lib/category-overrides.ts).

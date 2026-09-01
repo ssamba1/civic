@@ -5,7 +5,7 @@
 //
 // Why this exists: the token is stamped LAZILY, by status-notify, the first
 // time a resident is sent a status link. That is the right behaviour for a live
-// city — a report nobody was notified about has no link to leak — but it means
+// city (a report nobody was notified about has no link to leak), but it means
 // seeded reports never get one, and /r/[token] is the only entry point to the
 // public status page, the share actions, the CSAT rating and the reopen button.
 // On a freshly seeded database that whole accountability loop is unreachable:
@@ -20,14 +20,14 @@
 //
 // NOTE ON THE SALT: tokens are looked up by the stored column, never
 // re-derived, so rotating PUBLIC_TOKEN_SALT afterwards does not break existing
-// links — it only changes what future stamps look like. Run this AFTER setting
+// links. It only changes what future stamps look like. Run this AFTER setting
 // the production salt if you want production links to match it.
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { publicToken } from "../src/lib/public-token";
 
-// tsx does not auto-load dotenv, and dotenv is not a dependency here — mirror
+// tsx does not auto-load dotenv, and dotenv is not a dependency here, mirror
 // scripts/audit-privacy.ts. Without this the credential guard below reads an
 // empty environment and the script exits having done nothing, which is the
 // silent-skip failure mode a check like this exists to avoid.
@@ -55,7 +55,7 @@ const url = process.env.SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!url || !key) {
-  console.error("SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set — aborting.");
+  console.error("SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set, aborting.");
   process.exit(1);
 }
 

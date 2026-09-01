@@ -12,7 +12,7 @@ const logger = createLogger("analytics-data");
 
 export interface AnalyticsKpis {
   /**
-   * True when these numbers are illustrative rather than measured — the demo
+   * True when these numbers are illustrative rather than measured, the demo
    * literals below, or the fallback taken when the live aggregate errors or the
    * city has no reports yet. The UI must label them: an unmarked 76.5% reads to
    * anyone looking at the dashboard as a real outcome.
@@ -130,7 +130,7 @@ const seed = (i: number, salt: number) => {
   return x - Math.floor(x);
 };
 
-// Hardcoded demo KPIs — returned in DEMO_MODE, or when the live aggregate
+// Hardcoded demo KPIs, returned in DEMO_MODE, or when the live aggregate
 // errors / finds no reports, so demo analytics never renders empty.
 const KPI_FALLBACK: AnalyticsKpis = {
   synthetic: true,
@@ -147,7 +147,7 @@ const KPI_FALLBACK: AnalyticsKpis = {
 // Live-mode fallback: honest zeros instead of demo literals, so an empty
 // city renders an empty (not fabricated) analytics dashboard.
 const KPI_EMPTY: AnalyticsKpis = {
-  // Honest zeros are measured, not invented — an empty city really has none.
+  // Honest zeros are measured, not invented. An empty city really has none.
   synthetic: false,
   resolution_rate_pct: 0,
   resolution_rate_delta_pct: 0,
@@ -229,7 +229,7 @@ export async function fetchAnalyticsKpis(
     const round1 = (n: number) => Math.round(n * 10) / 10;
 
     // Real MTTR + SLA from completed work orders (migration 036 RPC). In demo
-    // mode keep the literals — the synthetic rows carry no completion timestamps
+    // mode keep the literals, the synthetic rows carry no completion timestamps
     // so a real query would flatline them to zero.
     let mttr_hours = kpiFallback().mttr_hours;
     let mttr_delta_pct = kpiFallback().mttr_delta_pct;
@@ -246,7 +246,7 @@ export async function fetchAnalyticsKpis(
         ? round1(pctChange(Number(ms.mttr_hours), Number(ms.mttr_prev_hours)))
         : 0;
       // Only report SLA compliance when at least one work order carries a due_at;
-      // otherwise there is nothing to comply with — leave it at zero.
+      // otherwise there is nothing to comply with. Leave it at zero.
       sla_compliance_pct =
         ms && Number(ms.sla_denominator) > 0
           ? Number(ms.sla_compliance_pct)
@@ -546,7 +546,7 @@ export async function fetchReporterVelocity(
   };
 }
 
-// OUTFLANK #41 — recurring-problem detection. Locations where the same category
+// OUTFLANK #41, recurring-problem detection. Locations where the same category
 // recurs across >= minEpisodes distinct weeks (migration 037). In demo mode
 // returns a couple of illustrative spots so the widget is never empty on stage.
 export async function fetchRecurringHotspots(

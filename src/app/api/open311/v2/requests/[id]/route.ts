@@ -15,18 +15,18 @@ import {
 
 const logger = createLogger("[open311-get]");
 
-// UUID v4 regex — reject obviously invalid IDs before hitting the DB
+// UUID v4 regex, reject obviously invalid IDs before hitting the DB
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-/** Safe columns for public GET — no reporter PII, no raw storage paths */
+/** Safe columns for public GET, no reporter PII, no raw storage paths */
 const PUBLIC_REPORT_SELECT =
   "id, city_id, location, photo_public_url, status, address, created_at, updated_at, classifications(category, severity, confidence, reasoning, is_emergency), cities!inner(id, name, open311_jurisdiction_id)";
 
 /**
  * GET /api/open311/v2/requests/[id]
  *
- * Open311 GeoReport v2 — get a single service request by ID.
+ * Open311 GeoReport v2. Get a single service request by ID.
  * Public endpoint.
  */
 export async function GET(
@@ -87,7 +87,7 @@ export async function GET(
   }
 }
 
-// Only safe public columns are fetched — no description, no photo_raw_url, no reporter_id
+// Only safe public columns are fetched, no description, no photo_raw_url, no reporter_id
 type ReportRow = {
   id: string;
   city_id: string;

@@ -1,5 +1,5 @@
 /* ==================================================================
-   Locale detection — pure, no deps, unit-testable.
+   Locale detection, pure, no deps, unit-testable.
 
    Priority: ?lang= query param > Accept-Language header > "en".
    Only locales present in the dictionary are accepted; everything

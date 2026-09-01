@@ -21,8 +21,8 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const SLUG_RE = /^[a-z0-9-]+$/;
 
 // Nominatim returns full state names ("Georgia"); ship-with cities store USPS
-// abbreviations ("GA"). Normalize on ingest so every city — onboarded or
-// shipped — displays consistently (e.g. "Atlanta, GA", not "Atlanta, Georgia").
+// abbreviations ("GA"). Normalize on ingest so every city, onboarded or
+// shipped, displays consistently (e.g. "Atlanta, GA", not "Atlanta, Georgia").
 const US_STATE_ABBR: Record<string, string> = {
   alabama: "AL",
   alaska: "AK",
@@ -99,7 +99,7 @@ function genPassword(): string {
  * point, so the onboarding wizard sets the map center directly from the
  * selection and never needs a second geocode round-trip.
  *
- * Free, no API key. Returns [] on any failure — search is best-effort and
+ * Free, no API key. Returns [] on any failure. Search is best-effort and
  * never blocks onboarding. The client debounces keystrokes and drops stale
  * responses, which cuts per-client volume; note that OSM's public endpoint
  * rate-limits autocomplete (≤1 req/s aggregate, single egress IP here), so a
@@ -177,7 +177,7 @@ const BUILTIN_SLUGS: ReadonlySet<string> = new Set([
  * Live pre-flight for the wizard's City step: is `/city/[slug]` free, and if
  * not, what nearby slugs are? This surfaces a collision on step 1 instead of
  * letting it fail at provisioning (step 5). `provisionCity` still re-checks
- * authoritatively — this is a UX shortcut, not the source of truth.
+ * authoritatively. This is a UX shortcut, not the source of truth.
  *
  * One DB round-trip covers the slug plus every candidate alternative. On a DB
  * error the query yields no rows, so we fall back to the built-in reserved set
@@ -238,7 +238,7 @@ interface AccountWork {
 export async function provisionCity(
   input: OnboardCityInput,
 ): Promise<ProvisionResult> {
-  // 1. Auth — must be a signed-in user (becomes the city admin).
+  // 1. Auth. Must be a signed-in user (becomes the city admin).
   const authUser = await getAuthUser();
   if (!authUser) {
     return {
@@ -255,7 +255,7 @@ export async function provisionCity(
       ok: false,
       accounts: [],
       error:
-        "Sign in with Google or email to set up a city — guest sessions can't own a city.",
+        "Sign in with Google or email to set up a city. Guest sessions can't own a city.",
     };
   }
 
@@ -337,7 +337,7 @@ export async function provisionCity(
     };
   }
 
-  // 4. Insert the city as inactive first — flipped to active only once admin
+  // 4. Insert the city as inactive first, flipped to active only once admin
   //    access is in place, so a failed setup never leaves a live, admin-less
   //    city at /city/[slug]. Unlisted either way (not in the public showcase).
   const center = input.city.center;
@@ -366,7 +366,7 @@ export async function provisionCity(
 
   // 5. Elevate the creator to admin of the new city (city-first FK order).
   //    Upsert by id: a fresh signup has no users row; an existing user is
-  //    re-pointed to this city (one user = one city — see spec non-goals).
+  //    re-pointed to this city (one user = one city, see spec non-goals).
   const adminEmail = authUser.email ?? null;
   const { error: adminErr } = await db.from("users").upsert(
     {
@@ -388,7 +388,7 @@ export async function provisionCity(
       ok: false,
       accounts: [],
       error:
-        "The city could not be set up (admin access failed). Nothing was saved — please try again.",
+        "The city could not be set up (admin access failed). Nothing was saved, please try again.",
     };
   }
 
@@ -429,7 +429,7 @@ export async function provisionCity(
   if (teamsErr) {
     logger.error("city_teams insert failed", teamsErr);
     warnings.push(
-      "Custom routing couldn't be saved — reports will use default routing. You can reconfigure it from your console.",
+      "Custom routing couldn't be saved. Reports will use default routing. You can reconfigure it from your console.",
     );
   }
 
@@ -452,7 +452,7 @@ export async function provisionCity(
           teamKey: p.teamKey,
         }));
 
-  // 8. Provision each account — best-effort, deduped, never aborts the batch.
+  // 8. Provision each account, best-effort, deduped, never aborts the batch.
   const accounts: ProvisionedAccount[] = [];
   const seen = new Set<string>();
   if (adminEmail) seen.add(adminEmail.toLowerCase()); // never re-create the admin
@@ -474,7 +474,7 @@ export async function provisionCity(
       accounts.push({
         ...base,
         status: "skipped",
-        message: "Duplicate email (or the admin's own) — skipped.",
+        message: "Duplicate email (or the admin's own), skipped.",
       });
       continue;
     }
@@ -522,7 +522,7 @@ export async function provisionCity(
           id: userId,
           city_id: city.id,
           role: w.role,
-          email: key, // normalized (lowercase) — matches the dedup key
+          email: key, // normalized (lowercase), matches the dedup key
           display_name: w.label,
           team_key: w.teamKey,
           is_shared: input.granularity === "shared_per_team",

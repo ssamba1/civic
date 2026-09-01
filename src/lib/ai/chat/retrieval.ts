@@ -39,7 +39,7 @@ function docTerms(doc: HelpDoc): string[] {
 
 /**
  * Lexical top-k over the help corpus. Scores by query-term overlap, weighting
- * title/tag matches higher than body matches. Pure and synchronous — the seam
+ * title/tag matches higher than body matches. Pure and synchronous. The seam
  * a future pgvector implementation would replace.
  */
 export function searchCorpus(query: string, k = 3): HelpDoc[] {

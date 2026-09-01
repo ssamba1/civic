@@ -13,32 +13,32 @@ export interface CrewCandidate {
   id: string;
   name: string;
   memberCount: number;
-  /** Count of the crew's OPEN work orders — the first load tie-break. */
+  /** Count of the crew's OPEN work orders. The first load tie-break. */
   openWorkOrders: number;
   /** Sum of est_minutes across the crew's OPEN work orders (NULLs already
    *  resolved to the crew_type median / DEFAULT_EST_MINUTES by the caller). */
   openMinutes: number;
   /** Epoch ms of the crew's most recent assignment (max created_at of its open
-   *  work orders), or null if it holds none — drives round-robin. */
+   *  work orders), or null if it holds none, drives round-robin. */
   lastAssignedAt: number | null;
 }
 
 /** Per-capita workload: minutes of open work divided by crew size, so a bigger
  *  crew absorbs proportionally more before it looks "loaded". memberCount is
- *  floored at 1 — shells (0 members) are already deprioritized by the staffed
+ *  floored at 1. Shells (0 members) are already deprioritized by the staffed
  *  gate below, so this only guards against a divide-by-zero, never reorders. */
 function loadPerCapita(c: CrewCandidate): number {
   return c.openMinutes / Math.max(c.memberCount, 1);
 }
 
 /**
- * Deterministic crew pick — no model call. Ranking (argmin load):
- *   1. staffed crews before hollow shells (a shell is still assignable — the
- *      city created it precisely so work can route there before it's staffed —
+ * Deterministic crew pick, no model call. Ranking (argmin load):
+ *   1. staffed crews before hollow shells (a shell is still assignable, the
+ *      city created it precisely so work can route there before it's staffed,
  *      but a crew with people wins when one exists);
  *   2. lowest workload-hours ÷ crew size (real effort balanced by team size);
  *   3. fewest open work orders (spread raw count on a minutes tie);
- *   4. least-recently-assigned, i.e. smallest lastAssignedAt — null (never
+ *   4. least-recently-assigned, i.e. smallest lastAssignedAt, null (never
  *      assigned) sorts first, giving idle crews the next job (round-robin);
  *   5. name (stable final tie-break so re-runs pick the same crew).
  */
@@ -71,18 +71,18 @@ export function pickCrew(candidates: CrewCandidate[]): CrewCandidate | null {
  * Auto-assign a crew to a freshly created work order (AI_CREW_ASSIGN flag).
  *
  * Candidates: the city's ACTIVE crews in the work order's division whose
- * crew_type equals the work order's crew_type — strict match, because the
+ * crew_type equals the work order's crew_type, strict match, because the
  * type is the semantic contract between the AI pick and the org chart. No
  * match → no assignment (staff assign manually, exactly as before).
  *
  * Best-effort by design, mirroring the team_key stamp: any failure logs and
- * returns null, never throws — the pipeline must not break on an un-migrated
+ * returns null, never throws. The pipeline must not break on an un-migrated
  * DB or a transient query error. The final UPDATE is guarded with
  * `.is("assigned_crew_id", null)` so a re-run (pipeline is idempotent via
  * upsert) never clobbers an assignment staff already made.
  *
  * `crewHint` (AI crew_hint, from the crews' own descriptions): when it names
- * one of the candidates — case-insensitive exact name match — that crew wins
+ * one of the candidates (case-insensitive exact name match) that crew wins
  * outright and the load ranking is skipped. Any other value (hallucinated,
  * stale, cross-division) is ignored and logged; routing quality can degrade,
  * assignment correctness cannot.
@@ -118,7 +118,7 @@ export async function autoAssignCrew(
     if (crews.length === 0) return null;
 
     // AI hint first: an exact (case-insensitive) name match among the
-    // candidates ends the search — the model chose from these very crews'
+    // candidates ends the search, the model chose from these very crews'
     // descriptions, so its pick outranks the load heuristic. No match →
     // ignore the hint and rank as usual.
     const hint = crewHint?.trim().toLowerCase();
@@ -133,7 +133,7 @@ export async function autoAssignCrew(
     if (!chosen) {
       const crewIds = crews.map((c) => c.id);
 
-      // Roster sizes — a hollow shell has zero rows here.
+      // Roster sizes. A hollow shell has zero rows here.
       const memberCounts = new Map<string, number>();
       const { data: memberData, error: memberErr } = await supabase
         .from("crew_members")
@@ -149,7 +149,7 @@ export async function autoAssignCrew(
         memberCounts.set(m.crew_id, (memberCounts.get(m.crew_id) ?? 0) + 1);
       }
 
-      // Current load — open (not yet completed) work orders per crew. The
+      // Current load. Open (not yet completed) work orders per crew. The
       // report status join matters: rejected/merged reports never get their
       // work order completed_at stamped, so completed_at alone would count
       // dead work forever and permanently skew the ranking. est_minutes drives
@@ -187,7 +187,7 @@ export async function autoAssignCrew(
 
       // NULL est_minutes borrows the median of the estimated open work in this
       // candidate set (same crew_type + division), falling back to a fixed
-      // default when nothing is estimated yet — so an un-estimated order still
+      // default when nothing is estimated yet, so an un-estimated order still
       // contributes realistic load instead of zero.
       const estimated = liveOrders
         .map((w) => w.est_minutes)

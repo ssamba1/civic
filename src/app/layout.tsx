@@ -12,7 +12,7 @@ import { HELP_ASSISTANT } from "@/lib/ai/config";
 import { SW_CLEANUP, SW_REGISTER, THEME_INIT } from "@/lib/csp/inline-scripts";
 
 // Both scripts are build-time constants allowlisted by SHA-256 hash in the
-// prod CSP (src/proxy.ts + src/lib/csp/inline-scripts.ts), NOT by nonce — so
+// prod CSP (src/proxy.ts + src/lib/csp/inline-scripts.ts), NOT by nonce, so
 // this layout never reads headers() and routes with no dynamic data of their
 // own (landing, /terms, /privacy, /offline) can statically prerender again
 // (REVAMP_PLAN 2.5; the old force-dynamic + per-request nonce forced every
@@ -20,7 +20,7 @@ import { SW_CLEANUP, SW_REGISTER, THEME_INIT } from "@/lib/csp/inline-scripts";
 const SW_SCRIPT =
   process.env.NODE_ENV === "production" ? SW_REGISTER : SW_CLEANUP;
 
-// Body / UI — Inter, the enterprise product standard (Linear/Palantir/Stripe
+// Body / UI, Inter, the enterprise product standard (Linear/Palantir/Stripe
 // register). Carries headings, buttons, labels, body, and data across app chrome.
 const sans = Inter({
   variable: "--font-sans",
@@ -29,7 +29,7 @@ const sans = Inter({
   display: "swap",
 });
 
-// Display — newspaper serif. Carries the civic / public-record register and
+// Display, newspaper serif. Carries the civic / public-record register and
 // gives us a real italic for the accent move in headlines.
 const display = Newsreader({
   variable: "--font-display",
@@ -39,7 +39,7 @@ const display = Newsreader({
   display: "swap",
 });
 
-// Hero face — high-contrast slim Garamond. Thin strokes + light weight give the
+// Hero face, high-contrast slim Garamond. Thin strokes + light weight give the
 // headline a refined, slender voice distinct from the body display serif; real
 // italic carries the accent line.
 const hero = Cormorant_Garamond({
@@ -50,7 +50,7 @@ const hero = Cormorant_Garamond({
   display: "swap",
 });
 
-// Mono — eyebrow labels and metrics only.
+// Mono, eyebrow labels and metrics only.
 const mono = JetBrains_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
@@ -60,7 +60,7 @@ const mono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Civic — AI-Powered Infrastructure Reporting",
+    default: "Civic, AI-Powered Infrastructure Reporting",
     template: "%s | Civic",
   },
   description:
@@ -68,13 +68,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Civic",
-    title: "Civic — AI-Powered Infrastructure Reporting",
+    title: "Civic, AI-Powered Infrastructure Reporting",
     description:
       "Report potholes, broken streetlights, and infrastructure issues. AI classifies and routes them to the right city crew instantly.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Civic — AI-Powered Infrastructure Reporting",
+    title: "Civic, AI-Powered Infrastructure Reporting",
     description: "Report infrastructure issues. AI classifies, city fixes.",
   },
 };
@@ -109,7 +109,7 @@ export default function RootLayout({
       className={`${sans.variable} ${display.variable} ${hero.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        {/* No-flash theme init — children form (matches the repo's inline
+        {/* No-flash theme init, children form (matches the repo's inline
             <style>{`…`}</style> idiom) so no dangerouslySetInnerHTML. Both
             scripts are hash-allowlisted in the prod CSP (see
             lib/csp/inline-scripts.ts). */}

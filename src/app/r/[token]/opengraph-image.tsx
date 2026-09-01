@@ -1,9 +1,9 @@
 import { ImageResponse } from "next/og";
 import { resolvePublicReport } from "@/lib/public-report";
 
-// OUTFLANK #22 — shareable social card per report. Auto-wired by Next.js as the
+// OUTFLANK #22, shareable social card per report. Auto-wired by Next.js as the
 // og:image / twitter:image for /r/[token]. A resolved report reads "Fixed in N
-// days" (organic accountability marketing — every fix advertises the platform);
+// days" (organic accountability marketing, every fix advertises the platform);
 // an open one shows its live status.
 export const runtime = "nodejs";
 export const alt = "Civic report status";

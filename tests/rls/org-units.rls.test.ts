@@ -4,7 +4,7 @@
 // harness as rls.test.ts: RUN_RLS_TESTS=1 + keys from .env.local.
 //
 // Policy under test: org_units expose org structure AND contractor pricing, so
-// like crews (030) they are staff-only — anonymous callers must never read or
+// like crews (030) they are staff-only. Anonymous callers must never read or
 // write them.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -23,7 +23,7 @@ function loadEnvLocal() {
       }
     }
   } catch {
-    // No .env.local — rely on the process environment.
+    // No .env.local, rely on the process environment.
   }
 }
 const OPTED_IN = process.env.RUN_RLS_TESTS === "1";
@@ -36,7 +36,7 @@ const HAS_ENV = OPTED_IN && Boolean(URL && ANON && SERVICE);
 
 // Service-role control assumes migration 042 is applied. Gate it (mirrors
 // CHECK_MIGRATION_030) so a pending migration doesn't read as a regression;
-// the anon-deny tests hold either way — a missing table also denies.
+// the anon-deny tests hold either way. A missing table also denies.
 const CHECK_042 = HAS_ENV && process.env.CHECK_MIGRATION_042 === "1";
 
 describe.skipIf(!HAS_ENV)(

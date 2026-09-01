@@ -22,7 +22,7 @@ export const BUS_ROUTE: LngLat[] = [
   { lng: -84.1247, lat: 34.2189 },
 ];
 
-/** Equirectangular segment length — fine at city scale, demo purposes only. */
+/** Equirectangular segment length, fine at city scale, demo purposes only. */
 function segLen(a: LngLat, b: LngLat): number {
   const kx = Math.cos(((a.lat + b.lat) / 2) * (Math.PI / 180));
   const dx = (b.lng - a.lng) * kx;

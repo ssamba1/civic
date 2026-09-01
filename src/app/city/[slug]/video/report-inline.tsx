@@ -41,7 +41,7 @@ export interface GeneratedReport {
   imageUrl: string | null;
 }
 
-// Keyed by the kebab `icon` field on CATEGORY_META — same source every other
+// Keyed by the kebab `icon` field on CATEGORY_META. Same source every other
 // surface reads. Re-implemented locally because work-order-grid's copy is
 // module-private (and client-only).
 export const CATEGORY_ICON: Record<string, LucideIcon> = {
@@ -59,7 +59,7 @@ export const CATEGORY_ICON: Record<string, LucideIcon> = {
 };
 
 /**
- * Report facts folded inline into a detection row — same chips/typography the
+ * Report facts folded inline into a detection row, same chips/typography the
  * standalone report card used, minus its own thumbnail and link wrapper (the
  * row owns both, and nesting a link inside the row's buttons is invalid).
  */
@@ -73,7 +73,7 @@ export function ReportInline({
 }) {
   const meta = categoryMeta(report.category);
   const Icon = CATEGORY_ICON[meta.icon] ?? HelpCircle;
-  // Canonical ordinal ramp (src/lib/severity-colors.ts) — the local copy this
+  // Canonical ordinal ramp (src/lib/severity-colors.ts), the local copy this
   // module used to carry was neither monotonic nor dark-theme correct.
   const sevColor = SEVERITY_HUE[report.severity];
 

@@ -14,7 +14,7 @@ import {
   UploadDocument,
 } from "./documents-console";
 
-// Staff-gated per-request surface (cookies) — never prerender or cache.
+// Staff-gated per-request surface (cookies), never prerender or cache.
 export const dynamic = "force-dynamic";
 
 interface PageProps {
@@ -42,12 +42,12 @@ export default async function CityDocumentsPage({ params }: PageProps) {
   const { slug } = await params;
   // Demo personas count as staff here, same as the contractor detail page.
   // Requiring "real" made this the only nav entry that 404s for every demo
-  // login — the sidebar advertises "Documents" and the link dead-ends.
+  // login, the sidebar advertises "Documents" and the link dead-ends.
   const access = await getStaffAccessForCity(slug);
   if (access !== "real" && access !== "demo") notFound();
 
   // DB first (provisioned cities), then the KNOWN_CITIES fallback (demo deploy
-  // / local dev without a database) — same convention as the video console.
+  // / local dev without a database), same convention as the video console.
   // Without a city row there is no id, so the list renders empty and ingestion
   // fails with a visible error rather than the page 404ing.
   const db = createServerClient();
@@ -78,7 +78,7 @@ export default async function CityDocumentsPage({ params }: PageProps) {
   const totalChunks = rows.reduce((sum, row) => sum + row.chunk_count, 0);
 
   // Corpus rows may cite an inactive vendor the (active-only) dropdown no
-  // longer offers — resolve those names too so the link never goes blank.
+  // longer offers, resolve those names too so the link never goes blank.
   const contractorName = new Map(contractorOptions.map((c) => [c.id, c.name]));
   const unresolved = [
     ...new Set(
@@ -103,7 +103,7 @@ export default async function CityDocumentsPage({ params }: PageProps) {
     // pt-city-content for the mobile fixed-header offset, hairline footer.
     <div className="flex flex-col min-h-dvh bg-background">
       <div className="flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
-        {/* Compact page header — single slim row, like every other tab. */}
+        {/* Compact page header, single slim row, like every other tab. */}
         <section className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
             Documents
@@ -116,8 +116,8 @@ export default async function CityDocumentsPage({ params }: PageProps) {
           </p>
         </section>
 
-        {/* Ingestion + corpus ride a fixed-width left rail; retrieval — the
-            surface whose output actually needs reading room — takes the rest
+        {/* Ingestion + corpus ride a fixed-width left rail; retrieval, the
+            surface whose output actually needs reading room. Takes the rest
             of the 1800px column. */}
         <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(340px,400px)_minmax(0,1fr)]">
           <div className="space-y-4">
@@ -149,7 +149,7 @@ export default async function CityDocumentsPage({ params }: PageProps) {
                         <p className="truncate text-[13px] font-medium text-foreground">
                           {row.title}
                         </p>
-                        {/* One quiet metadata line — everything text-faint so
+                        {/* One quiet metadata line, everything text-faint so
                             the title above stays primary; the vendor link is
                             a shade warmer with a hairline dotted underline
                             instead of shouting over its neighbors. */}
@@ -186,14 +186,14 @@ export default async function CityDocumentsPage({ params }: PageProps) {
               ) : (
                 <p className="px-4 py-6 text-[13px] text-subtle">
                   No documents yet. Add a maintenance policy or a contractor
-                  agreement above — retrieval has nothing to match against until
+                  agreement above. Retrieval has nothing to match against until
                   one is indexed.
                 </p>
               )}
             </section>
           </div>
 
-          {/* Right column: proof the mechanism works — wide enough that a
+          {/* Right column: proof the mechanism works, wide enough that a
               retrieved clause reads as prose, not as a squeezed column. */}
           <RetrievalTester slug={slug} />
         </div>

@@ -26,7 +26,7 @@ const KIND_BADGE: Record<OrgUnitProposal["kind"], string> = {
     "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200",
 };
 
-/** Depth of a unit by walking parentKey — for indented tree rendering. */
+/** Depth of a unit by walking parentKey, for indented tree rendering. */
 function depthOf(
   u: OrgUnitProposal,
   byKey: Map<string, OrgUnitProposal>,
@@ -205,7 +205,7 @@ export function OrgTreeBuilder() {
                         </span>
                       </td>
                       <td className="px-3 py-2 text-[var(--color-muted)]">
-                        {u.categories?.join(", ") || "—"}
+                        {u.categories?.join(", ") || "-"}
                       </td>
                       <td className="px-3 py-2 text-[var(--color-muted)]">
                         {u.skills.join(", ") || "any"}
@@ -214,10 +214,10 @@ export function OrgTreeBuilder() {
                         {u.capacity ?? "∞"}
                       </td>
                       <td className="px-3 py-2 text-[var(--color-muted)]">
-                        {u.costPerJob ? `$${u.costPerJob}` : "—"}
+                        {u.costPerJob ? `$${u.costPerJob}` : "-"}
                       </td>
                       <td className="px-3 py-2 text-[var(--color-muted)]">
-                        {u.slaHours ?? "—"}
+                        {u.slaHours ?? "-"}
                       </td>
                       <td className="px-3 py-2 text-right">
                         <button

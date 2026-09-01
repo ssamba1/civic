@@ -15,7 +15,7 @@ import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
-   Attributed-reports card — compact preview + "View all" modal so the
+   Attributed-reports card, compact preview + "View all" modal so the
    full list (dozens of rows for an active vendor) never stretches the
    detail page. Chips reuse the app-wide status/tone system: hue only
    ever encodes state.

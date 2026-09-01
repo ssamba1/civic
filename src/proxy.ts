@@ -36,11 +36,11 @@ function isPublicRoute(pathname: string): boolean {
 
 /**
  * Route prefixes that are GUARANTEED per-request dynamic (auth/cookies/DB in
- * their tree — `next build` marks them ƒ). Only these get the per-request
- * nonce + 'strict-dynamic' CSP. Everything else — including anything Next
- * might prerender (○/●) — gets the nonce-FREE policy: prerendered HTML is
+ * their tree. `next build` marks them ƒ). Only these get the per-request
+ * nonce + 'strict-dynamic' CSP. Everything else. Including anything Next
+ * might prerender (○/●). Gets the nonce-FREE policy: prerendered HTML is
  * baked with no nonce, so a nonce CSP would block every inline script in the
- * cached page (Next's own flight-data scripts included) — the classic
+ * cached page (Next's own flight-data scripts included), the classic
  * dev-invisible, prod-only blank page.
  *
  * The default is deliberately the SAFE direction: a dynamic route mistakenly
@@ -61,28 +61,28 @@ function isNonceCspRoute(pathname: string): boolean {
  * on dynamic routes: Next streams its RSC payload and bootstraps hydration
  * through INLINE <script> tags. A static `script-src 'self'` (no nonce, no
  * 'unsafe-inline') makes the browser refuse every inline script, so the client
- * never hydrates and any client-only subtree (e.g. the WebGL map) never mounts
- * — a blank page in prod while `next dev` appears fine. See
+ * never hydrates and any client-only subtree (e.g. the WebGL map) never mounts,
+ * a blank page in prod while `next dev` appears fine. See
  * https://nextjs.org/docs (CSP guide).
  *
  * Dev keeps the original permissive script-src ('unsafe-inline' 'unsafe-eval',
  * no nonce) so Turbopack Fast Refresh is unaffected. Prod dynamic routes use
  * nonce + 'strict-dynamic' (Next stamps the nonce onto its own scripts) plus
  * the SHA-256 hashes of the app's two constant inline scripts (theme-init +
- * SW-register — see lib/csp/inline-scripts.ts), which is what lets the root
+ * SW-register. See lib/csp/inline-scripts.ts), which is what lets the root
  * layout skip headers() and static routes prerender at all.
  */
 function buildCsp(nonce: string, isDev: boolean, useNonce: boolean): string {
   // Cesium compiles WebAssembly (draco / basis decoders) at runtime, which the
   // CSP counts as evaluating script. 'wasm-unsafe-eval' permits exactly that
-  // and nothing else — it does NOT re-enable eval() for JavaScript, so it is
+  // and nothing else. It does NOT re-enable eval() for JavaScript, so it is
   // the narrow grant, not a loosening back to 'unsafe-eval'. Without it the
   // globe throws CompileError on every decoder and falls back to MapLibre.
   const WASM = "'wasm-unsafe-eval'";
   // Cesium's TaskProcessor pool bootstraps each worker from a blob: URL and
   // then calls importScripts() on a second blob: URL. A blob worker inherits
   // the creating document's policy, and importScripts is checked against
-  // script-src — not worker-src — so `worker-src blob:` alone lets the worker
+  // script-src (not worker-src), so `worker-src blob:` alone lets the worker
   // start and then blocks its bootstrap. The failure is silent in the network
   // panel (nothing is ever requested) and surfaces only as a worker pageerror,
   // which is why the globe rendered its pins while every decoder was dead.
@@ -108,10 +108,10 @@ function buildCsp(nonce: string, isDev: boolean, useNonce: boolean): string {
     // private supabase bucket. Without this, media falls back to default-src
     // 'self' and the <video> fails with MEDIA_ELEMENT_ERROR code 4.
     "media-src 'self' blob: https://*.supabase.co",
-    // data: — deck.gl's IconLayer fetch()es the SVG pin icons generated as
+    // data:, deck.gl's IconLayer fetch()es the SVG pin icons generated as
     // data: URLs by components/map/pin-icons.ts; fetch is governed by
     // connect-src (img-src data: does not cover it). data: here adds no
-    // network destination — it only lets the page read its own inline URIs.
+    // network destination. It only lets the page read its own inline URIs.
     // Cesium globe: api.cesium.com resolves ion asset endpoints + tokens;
     // assets.ion.cesium.com serves the World Terrain heightmaps and the OSM
     // Buildings 3D tileset. Both are only hit when NEXT_PUBLIC_CESIUM_ION_TOKEN
@@ -141,7 +141,7 @@ export async function proxy(request: NextRequest) {
   const isDev = process.env.NODE_ENV === "development";
   const useNonce = isNonceCspRoute(pathname);
   // btoa (not Buffer) so this runs identically in the Edge runtime Vercel uses
-  // for middleware/proxy — Buffer is a Node global and may be absent on edge.
+  // for middleware/proxy. Buffer is a Node global and may be absent on edge.
   const nonce = btoa(crypto.randomUUID());
   const csp = buildCsp(nonce, isDev, useNonce);
 
@@ -170,7 +170,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // Always create the Supabase client and call getUser() so the auth session
-  // cookies refresh on every request — including public routes — otherwise
+  // cookies refresh on every request (including public routes) otherwise
   // sessions expire silently.
   let response = NextResponse.next({ request: { headers: reqHeaders() } });
 
@@ -203,14 +203,14 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Allow public routes through — return `response` so refreshed cookies + the
+  // Allow public routes through. Return `response` so refreshed cookies + the
   // CSP header reach the browser.
   if (isPublicRoute(pathname)) {
     response.headers.set("Content-Security-Policy", csp);
     return response;
   }
 
-  // Protected: /admin/* — require admin role.
+  // Protected: /admin/*. Require admin role.
   if (pathname.startsWith("/admin/")) {
     if (!user) {
       const loginUrl = new URL("/login", request.url);
@@ -221,7 +221,7 @@ export async function proxy(request: NextRequest) {
     }
 
     // Read role ONLY from app_metadata (server-writable via the Supabase Admin
-    // API). Never trust user_metadata — any authenticated user can write it via
+    // API). Never trust user_metadata. Any authenticated user can write it via
     // supabase.auth.updateUser() and self-promote to admin.
     const role = user.app_metadata?.role;
     if (role !== "admin") {

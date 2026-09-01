@@ -5,7 +5,7 @@ interface CrewPortalHeaderProps {
   crewType: string;
   label: string;
   categories: ReportCategory[];
-  /** Resolved `?crew=` instance name — when present it becomes the heading and
+  /** Resolved `?crew=` instance name, when present it becomes the heading and
    *  the type label drops to a subtitle. Absent → type-level header,
    *  byte-identical to before. */
   crewName?: string;
@@ -14,7 +14,7 @@ interface CrewPortalHeaderProps {
 /**
  * Scope banner for a crew-type portal. The page-level, always-visible
  * counterpart to the FilterBar's locked-categories badge
- * (src/components/filters/filter-bar.tsx ~586-598) — a crew signing in
+ * (src/components/filters/filter-bar.tsx ~586-598). A crew signing in
  * should see what they're scoped to immediately, not just a badge tucked
  * inside a filter popover. Staff tokens only, no hardcoded colors.
  */

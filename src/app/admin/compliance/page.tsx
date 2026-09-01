@@ -27,7 +27,7 @@ export default async function CompliancePage() {
       blurCoveragePercent = Math.round(((withBlur ?? 0) / total) * 1000) / 10;
     }
   } catch {
-    // Non-fatal — report renders with null
+    // Non-fatal, report renders with null
   }
 
   // ── RLS table count ──────────────────────────────────────────────────────
@@ -38,7 +38,7 @@ export default async function CompliancePage() {
     const { data } = await db.rpc("count_rls_enabled_tables");
     if (typeof data === "number") rlsEnabledTablesCount = data;
   } catch {
-    // RPC may not exist yet — non-fatal
+    // RPC may not exist yet, non-fatal
   }
 
   // ── retention settings ───────────────────────────────────────────────────
@@ -94,10 +94,10 @@ export default async function CompliancePage() {
         <PrintButton />
       </div>
 
-      {/* Print header — hidden on screen */}
+      {/* Print header, hidden on screen */}
       <div className="hidden print:block">
         <h1 className="text-2xl font-bold text-black">
-          Civic — Compliance report
+          Civic, Compliance report
         </h1>
       </div>
 

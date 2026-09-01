@@ -11,7 +11,7 @@ import { serverEnv } from "@/lib/env";
  * Produces a municipal cost breakdown + severity scoring rationale for a single
  * report, grounded in its metadata. Mirrors the response shape consumed by
  * /api/ai/reasoning ({ reasoning, costBreakdown, scoringExplanation }) without
- * importing from the route — the Section type is declared locally to avoid a
+ * importing from the route. The Section type is declared locally to avoid a
  * circular import.
  */
 
@@ -172,9 +172,9 @@ const CACHE_MAX = 500;
  * Module-level LRU-ish cache. Keyed by report id + the semantic fields that
  * determine the output (category|severity|status), NOT id alone. This gives two
  * properties the id-only key lacked:
- *   1. Auto-invalidation — when a report's severity/status/category changes, the
+ *   1. Auto-invalidation, when a report's severity/status/category changes, the
  *      key changes, so stale reasoning is never served.
- *   2. Anti-poisoning — a caller who forwards forged fields caches under a
+ *   2. Anti-poisoning, a caller who forwards forged fields caches under a
  *      different key and cannot overwrite the entry a legitimate request for the
  *      same id would read.
  */
@@ -205,9 +205,9 @@ function cacheSet(id: string, payload: ReasoningPayload): void {
 
 /**
  * Resolve a reasoning payload with three-tier sourcing for observability:
- *   cache    — previously computed gemini result for this id
- *   gemini   — freshly generated and cached
- *   template — deterministic fallback used on any gemini error
+ *   cache, previously computed gemini result for this id
+ *   gemini, freshly generated and cached
+ *   template, deterministic fallback used on any gemini error
  *
  * Only successful gemini results are cached; template fallbacks are not, so a
  * transient failure does not poison the cache for the report's id.

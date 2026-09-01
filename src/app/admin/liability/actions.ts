@@ -20,7 +20,7 @@ import type { Result } from "@/lib/types";
 const log = createLogger("admin-liability");
 
 /* ==================================================================
-   /admin/liability — the expiry sweep, the recovery ledger, and the
+   /admin/liability, the expiry sweep, the recovery ledger, and the
    v1 way to get contract data into the system at all (spec 3.4/3.5/5.4).
 
    Every read degrades to an empty result: migration 062/063 are
@@ -43,7 +43,7 @@ function num(row: Record<string, unknown>, ...keys: string[]): number {
 }
 
 /**
- * Warranty expiry sweep — spec 3.4 calls this the highest-ROI screen in the
+ * Warranty expiry sweep, spec 3.4 calls this the highest-ROI screen in the
  * spec, because it converts "we forgot" into a worklist.
  *
  * The engine owns the query (`src/lib/liability/sweep.ts`); this only shapes
@@ -83,7 +83,7 @@ export async function getSweep(horizonDays: SweepHorizon): Promise<SweepRow[]> {
   }));
 }
 
-/** Recovery ledger totals (spec 5.4) — the renewal argument, from day one. */
+/** Recovery ledger totals (spec 5.4), the renewal argument, from day one. */
 export async function getLedgerTotals(): Promise<LedgerTotals> {
   const empty: LedgerTotals = {
     draft: 0,
@@ -182,7 +182,7 @@ function buildMapping(
  * the pragmatic fallback the spec asks for: a list of lat/lng pairs a clerk can
  * paste from a map. Pairs are read as LAT,LNG (the order every consumer web map
  * prints) and emitted as WKT lon-lat, which is what EPSG:4326 requires.
- * Returns null when nothing usable is present — the caller skips the row.
+ * Returns null when nothing usable is present, the caller skips the row.
  */
 function parseFootprint(raw: string | null | undefined): string | null {
   const text = (raw ?? "").trim();
@@ -222,7 +222,7 @@ function parseFootprint(raw: string | null | undefined): string | null {
  * `.toISOString()` then re-expresses it in UTC. West of UTC that lands on the
  * previous day, so a warranty imported as 2026-03-05 was stored as 2026-03-04.
  * These dates decide whether a defect is still under warranty, so a one-day
- * drift silently changes liability at the boundary — and it moved with the
+ * drift silently changes liability at the boundary, and it moved with the
  * deploy region, which makes it maddening to reproduce.
  *
  * A date-only string has no instant attached, so no conversion should happen:

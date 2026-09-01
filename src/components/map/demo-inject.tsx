@@ -10,7 +10,7 @@ import { useDemoReports } from "@/lib/demo-reports";
  * lib/demo-reports.ts has always described this: "a presenter clicks Refresh to
  * inject a live demo data point … and it appears across every client surface".
  * The store, the localStorage persistence, the glow styling and the map-side
- * consumer were all written — nothing ever called `add()` or `reset()`, so the
+ * consumer were all written. Nothing ever called `add()` or `reset()`, so the
  * feature the module documents did not exist. This is that button.
  *
  * Demo-mode only: on a live deployment injecting a fake report onto a real

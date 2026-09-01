@@ -27,7 +27,7 @@ interface ScheduleCalendarProps {
   weekDates: string[];
   workOrders: ScheduledWorkOrderRow[];
   crews: Crew[];
-  /** The city slug — used for revalidation hints, not routing. */
+  /** The city slug, used for revalidation hints, not routing. */
   cityId: string;
 }
 
@@ -36,7 +36,7 @@ interface ScheduleCalendarProps {
 // ---------------------------------------------------------------------------
 
 function formatDate(iso: string): string {
-  // "Mon Jul 14" style — pure JS, no locale dep on the server date format.
+  // "Mon Jul 14" style, pure JS, no locale dep on the server date format.
   const d = new Date(`${iso}T12:00:00Z`);
   return d.toLocaleDateString("en-US", {
     weekday: "short",
@@ -73,7 +73,7 @@ function ConflictBanner({ conflicts }: { conflicts: ScheduleConflict[] }) {
             key={`${c.crewId}|${c.date}`}
             className="text-[12px] text-warning-foreground/80"
           >
-            {formatDate(c.date)} — crew {c.crewId.slice(0, 8)}… (
+            {formatDate(c.date)}, crew {c.crewId.slice(0, 8)}… (
             {c.workOrderIds.length} orders)
           </li>
         ))}
@@ -83,7 +83,7 @@ function ConflictBanner({ conflicts }: { conflicts: ScheduleConflict[] }) {
 }
 
 // ---------------------------------------------------------------------------
-// ScheduleModal — inline form to set/clear a schedule
+// ScheduleModal. Inline form to set/clear a schedule
 // ---------------------------------------------------------------------------
 
 interface ScheduleModalProps {
@@ -231,7 +231,7 @@ function ScheduleModal({
               onChange={(e) => setCrewId(e.target.value)}
               className="mt-1 w-full rounded-[var(--radius-sm)] border border-hairline bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
             >
-              <option value="">— no crew —</option>
+              <option value="">, no crew, </option>
               {crews.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -311,7 +311,7 @@ function WorkOrderCard({ wo, conflictIds, onEdit }: WOCardProps) {
       )}
       <p className="mt-0.5 text-[11px] text-faint">
         {formatTime(wo.scheduledFor)}
-        {wo.scheduledWindowEnd && ` – ${formatTime(wo.scheduledWindowEnd)}`}
+        {wo.scheduledWindowEnd && `, ${formatTime(wo.scheduledWindowEnd)}`}
       </p>
       {wo.crewName && (
         <p className="mt-0.5 text-[11px] text-faint truncate">
@@ -421,7 +421,7 @@ export function ScheduleCalendar({
               ].join(" ")}
             >
               {dayWOs.length === 0 ? (
-                <p className="text-center text-[11px] text-faint/50 mt-8">—</p>
+                <p className="text-center text-[11px] text-faint/50 mt-8">-</p>
               ) : (
                 dayWOs.map((wo) => (
                   <WorkOrderCard

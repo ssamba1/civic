@@ -13,7 +13,7 @@ const BACKLOG_STATUSES = ["open", "dispatched", "in_progress"];
 /**
  * Build the read/navigate tool set bound to a request's ChatContext. All data
  * reads use ctx.supabase (RLS-scoped); no tool mutates data. Tool execute
- * functions never throw — they return a structured `{ error }` so the model can
+ * functions never throw. They return a structured `{ error }` so the model can
  * recover conversationally.
  */
 export function buildChatTools(ctx: ChatContext) {
@@ -128,7 +128,7 @@ export function buildChatTools(ctx: ChatContext) {
   };
 
   // Resident/anon scope stops here. Staff roles get read-only operational tools
-  // scoped to their own city (default) — all reads still run under the caller's
+  // scoped to their own city (default). All reads still run under the caller's
   // RLS-scoped client, so the gate widens the toolset, never the data access.
   if (!scopeAllowsStaffReads(ctx)) return base;
 

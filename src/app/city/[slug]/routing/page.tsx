@@ -24,8 +24,8 @@ export async function generateMetadata({
   if (!city) city = await fetchCityMock(slug);
   if (!city) return { title: "City not found | Civic" };
   return {
-    title: `Civic | ${city.name}, ${city.state} — Routing`,
-    description: `Live flow chart of how ${city.name} routes reports — AI classification through divisions to the crews that do the work.`,
+    title: `Civic | ${city.name}, ${city.state}. Routing`,
+    description: `Live flow chart of how ${city.name} routes reports, AI classification through divisions to the crews that do the work.`,
   };
 }
 
@@ -61,7 +61,7 @@ export default async function CityRoutingPage({ params }: PageProps) {
               Routing
             </h1>
             <p className="text-[13px] text-faint">
-              How a report becomes a crew&apos;s job — photo to dispatch, live.
+              How a report becomes a crew&apos;s job. Photo to dispatch, live.
             </p>
           </div>
         </section>

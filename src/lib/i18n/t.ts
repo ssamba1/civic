@@ -1,5 +1,5 @@
 /* ==================================================================
-   Typed translation helper — zero deps, en fallback.
+   Typed translation helper, zero deps, en fallback.
    ================================================================== */
 
 import { DICTIONARIES, type Dictionary, type Locale } from "./dictionary";

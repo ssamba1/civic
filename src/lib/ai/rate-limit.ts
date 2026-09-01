@@ -1,5 +1,5 @@
 // In-memory fixed-window rate limiter. The window state lives in a module-level
-// Map and resets on cold start (serverless) — counters are per-instance, so under
+// Map and resets on cold start (serverless). Counters are per-instance, so under
 // multi-instance scale the effective limit is (instances * max). For real
 // distributed limiting, swap this Map for Upstash/Redis with an atomic INCR + TTL.
 
@@ -25,7 +25,7 @@ const windows = new Map<string, WindowState>();
 /**
  * Client IP used as the rate-limit key.
  *
- * When RATE_LIMIT_TRUSTED_HEADER is set, ONLY that header is read — point it at
+ * When RATE_LIMIT_TRUSTED_HEADER is set, ONLY that header is read. Point it at
  * the platform-set header your infra guarantees (e.g. "x-real-ip" on
  * Vercel/nginx), which the client cannot forge. This is the correct, spoof-safe
  * mode for production.
@@ -34,7 +34,7 @@ const windows = new Map<string, WindowState>();
  * back to the previous best-effort order. That fallback is only as trustworthy
  * as your proxy: a reverse proxy that does NOT strip client-supplied
  * x-real-ip / x-forwarded-for lets an attacker rotate the key and evade the
- * limiter — so set RATE_LIMIT_TRUSTED_HEADER in any real deployment.
+ * limiter, so set RATE_LIMIT_TRUSTED_HEADER in any real deployment.
  */
 export function clientIp(req: Request): string {
   // Read process.env directly (not the validated serverEnv proxy): this runs on

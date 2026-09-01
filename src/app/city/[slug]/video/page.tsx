@@ -20,7 +20,7 @@ import type { DetectionBox } from "./evidence-frame";
 import type { GeneratedReport } from "./report-inline";
 import { UploadClip } from "./video-console";
 
-// Staff-gated per-request surface (cookies) — never prerender or cache.
+// Staff-gated per-request surface (cookies), never prerender or cache.
 export const dynamic = "force-dynamic";
 
 interface PageProps {
@@ -57,7 +57,7 @@ interface ClusterRow {
 interface DetectionRow {
   id: string;
   frame_path: string;
-  /** jsonb — normalized 0..1 top-left, `{x,y,w,h,conf}`. */
+  /** jsonb, normalized 0..1 top-left, `{x,y,w,h,conf}`. */
   bbox: unknown;
   class: string;
   confidence: number;
@@ -72,8 +72,8 @@ interface FrameEvidence {
 
 /**
  * `bbox` is jsonb: a legacy or half-written row can hold null, a string, or
- * partial keys. Anything that isn't four finite numbers yields no box at all —
- * a NaN-positioned overlay would be worse than showing the bare frame.
+ * partial keys. Anything that isn't four finite numbers yields no box at all.
+ * A NaN-positioned overlay would be worse than showing the bare frame.
  */
 function parseBox(raw: unknown): DetectionBox | null {
   if (!raw || typeof raw !== "object") return null;
@@ -123,7 +123,7 @@ function KpiStrip({
             {/* One quiet dot per cell, tied to what the number counts (raw
                 inputs stay grey, clusters carry the "being decided" info tone,
                 reports created carry success). The figure itself stays on
-                --foreground — this strip reports, it does not alarm. */}
+                --foreground. This strip reports, it does not alarm. */}
             <span
               className={`${EYEBROW} mb-2.5 flex items-center gap-1.5 tracking-[0.08em] leading-none`}
             >
@@ -146,7 +146,7 @@ function KpiStrip({
 
 /**
  * Local demo: the detector's rendered overlay clip, if present. The 42 MB mp4
- * is a gitignored local artifact (public/demo/ — see .gitignore), so this card
+ * is a gitignored local artifact (public/demo/, see .gitignore), so this card
  * simply disappears on deploys that don't carry it.
  */
 function DemoClipCard() {
@@ -156,8 +156,8 @@ function DemoClipCard() {
     <section className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-4 sm:p-5">
       <h2 className={`${EYEBROW} mb-1`}>Demo clip</h2>
       <p className="mb-3 text-xs text-subtle">
-        Sample dashcam pass with the detector&apos;s damage overlays rendered in
-        — click play to watch the pipeline&apos;s output. Seed matching table
+        Sample dashcam pass with the detector&apos;s damage overlays rendered
+        in. Click play to watch the pipeline&apos;s output. Seed matching table
         rows with <code>node scripts/seed-demo-video.mjs</code>.
       </p>
       {/* biome-ignore lint/a11y/useMediaCaption: synthetic demo footage has no dialogue */}
@@ -176,14 +176,14 @@ export default async function VideoPipelinePage({ params }: PageProps) {
   if (!VIDEO_PIPELINE) notFound();
 
   // The demo city's console is READ-ONLY PUBLIC so a hackathon judge (or
-  // anyone on a phone) can open it without credentials — a demo nobody can
+  // anyone on a phone) can open it without credentials. A demo nobody can
   // reach is not a demo. Same `slug !== DEMO_CITY` shape the grid page
   // already uses.
   //
   // This is a deliberate, bounded exception to the staff gate, NOT a general
   // loosening. Every OTHER city still requires real staff, because
   // `video-frames` holds unblurred street footage; Cumming's clip is stock
-  // road footage with no faces or plates in it. Writes are unaffected —
+  // road footage with no faces or plates in it. Writes are unaffected,
   // registerClipUpload / finalizeClip / escalateClusterNow / getFrameUrl all
   // re-check `getStaffAccessForCity(...) === "real"` inside actions.ts, so a
   // visitor can look and cannot touch.
@@ -192,7 +192,7 @@ export default async function VideoPipelinePage({ params }: PageProps) {
   if (access !== "real" && !publicDemo) notFound();
 
   // DB first (provisioned cities), then the KNOWN_CITIES fallback (demo
-  // deploy / local dev without a database) — same convention as the team
+  // deploy / local dev without a database), same convention as the team
   // pages. Without a DB row there is no city id, so the tables render empty
   // and uploads fail with a visible error rather than the page 404ing.
   const db = createServerClient();
@@ -290,7 +290,7 @@ export default async function VideoPipelinePage({ params }: PageProps) {
   }
 
   // Evidence frames live in the private video-frames bucket. Mint a
-  // short-lived signed URL for EVERY cluster that has one — the row renders it
+  // short-lived signed URL for EVERY cluster that has one, the row renders it
   // as a thumbnail, so an operator never has to click through to see it.
   // Signed in ONE batch call: per-cluster createSignedUrl was up to 50 separate
   // round trips to storage and dominated this page's server time.
@@ -330,7 +330,7 @@ export default async function VideoPipelinePage({ params }: PageProps) {
   }
 
   // Reports generated by dispatch decisions. Read straight off `reports`
-  // (not dashboard_reports_view, which drops `description` for PII reasons) —
+  // (not dashboard_reports_view, which drops `description` for PII reasons),
   // safe here because this page is gated on staff access === "real".
   const reportIds = clusterRows
     .map((c) => c.report_id)
@@ -360,7 +360,7 @@ export default async function VideoPipelinePage({ params }: PageProps) {
       created_at: string;
       photo_public_url: string | null;
       // PostgREST returns a one-to-one embed as an object or a single-element
-      // array depending on how it resolves the relationship — handle both.
+      // array depending on how it resolves the relationship, handle both.
       classifications: Classification | Classification[] | null;
     };
     for (const row of (reportRows ?? []) as ReportRow[]) {
@@ -399,7 +399,7 @@ export default async function VideoPipelinePage({ params }: PageProps) {
   }
 
   /**
-   * Everything a rail item carries about the cluster itself — the fields the
+   * Everything a rail item carries about the cluster itself, the fields the
    * standalone Detections section used to own before the rail became the
    * single surface. `framePath` keeps that section's rule: the pop-out button
    * only earns its place when no thumbnail URL could be minted.
@@ -429,7 +429,7 @@ export default async function VideoPipelinePage({ params }: PageProps) {
     };
   };
 
-  // Which cluster fires at which second of which clip — one query for all
+  // Which cluster fires at which second of which clip, one query for all
   // clips, folded to the earliest sampled frame per cluster.
   const clusterById = new Map(clusterRows.map((c) => [c.id, c]));
   const eventsByClip = new Map<string, TheaterEvent[]>();
@@ -443,7 +443,7 @@ export default async function VideoPipelinePage({ params }: PageProps) {
       class: string;
       confidence: number;
     };
-    // Keyed `clipId|clusterId` — a cluster can only belong to one clip, but
+    // Keyed `clipId|clusterId`. A cluster can only belong to one clip, but
     // keeping the clip in the key keeps the grouping honest either way.
     const firstByKey = new Map<string, TheaterEvent & { clipId: string }>();
     for (const row of (detRows ?? []) as DetRow[]) {
@@ -453,7 +453,7 @@ export default async function VideoPipelinePage({ params }: PageProps) {
       const existing = firstByKey.get(key);
       if (existing && existing.tsSeconds <= ts) continue;
       // A detection whose cluster fell outside the 50-row window is not a
-      // rail item — it would carry no status, decision or controls. Its
+      // rail item. It would carry no status, decision or controls. Its
       // cluster is not in `clusterRows` either, so no count disagrees.
       const cluster = clusterById.get(row.cluster_id);
       if (!cluster) continue;
@@ -481,8 +481,8 @@ export default async function VideoPipelinePage({ params }: PageProps) {
     detectionsFound: clip.detections_found,
     error: clip.error,
     videoUrl: videoUrlByClip.get(clip.id) ?? null,
-    // The committed per-frame track belongs to the seeded demo pass only —
-    // drawing it over any other clip would map boxes onto the wrong road.
+    // The committed per-frame track belongs to the seeded demo pass only.
+    // Drawing it over any other clip would map boxes onto the wrong road.
     detectionsUrl: clip.storage_path.endsWith("demo-sample.mp4")
       ? "/demo/detections.json"
       : null,
@@ -492,7 +492,7 @@ export default async function VideoPipelinePage({ params }: PageProps) {
 
   // Clusters NO clip in the picker can replay: no clip association, an
   // unusable frame timestamp, or a clip older than the 20 listed. They are
-  // appended to whichever rail is on screen instead of being orphaned — the
+  // appended to whichever rail is on screen instead of being orphaned. The
   // rail is the only detections surface now, so it has to be complete.
   const railed = new Set(
     theaterClips.flatMap((c) => c.events.map((e) => e.clusterId)),
@@ -541,7 +541,7 @@ export default async function VideoPipelinePage({ params }: PageProps) {
           pt-city-content for the mobile fixed-header offset, hairline footer. */}
       <div className="flex flex-col min-h-dvh bg-background">
         <div className="flex-grow mx-auto w-full max-w-[1800px] space-y-4 px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
-          {/* Compact page header — single slim row, like every other tab. */}
+          {/* Compact page header, single slim row, like every other tab. */}
           <section className="mb-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
               Video
@@ -561,8 +561,8 @@ export default async function VideoPipelinePage({ params }: PageProps) {
           the table has a playable object to drive the live theater. */}
           {!hasPlayableClip && <DemoClipCard />}
 
-          {/* Ingest sits beside the run log rather than stacked above it —
-              both are narrow, and the log's table wants the wider half. */}
+          {/* Ingest sits beside the run log rather than stacked above it.
+              Both are narrow, and the log's table wants the wider half. */}
           {/* Ingest is staff-only. A public demo viewer gets the run log at
               full width rather than an upload form whose every submission
               would come back "forbidden" from the server action. */}

@@ -1,4 +1,4 @@
-# Help Assistant Widget — Design
+# Help Assistant Widget: Design
 
 **Date:** 2026-07-01
 **Status:** Approved (design), pending implementation plan
@@ -8,7 +8,7 @@
 
 A floating, help-first AI assistant in the bottom-right of every page. It answers
 help/FAQ questions, looks up the current user's own live data (report status, city
-stats), and opens the right screen for the user. It is **read + navigate only** — it
+stats), and opens the right screen for the user. It is **read + navigate only**, it
 performs no data mutations in this MVP. Retrieval is lightweight (no pgvector). The
 chat engine is built on the Vercel AI SDK (`ai` + `@ai-sdk/google`) reusing the
 existing Gemini integration, called strictly server-side.
@@ -21,7 +21,7 @@ faster, or help the city fix it faster?* This feature is deliberately scoped as 
 **task-completing help assistant**, not a general-purpose chatbot:
 
 - It answers questions about **how Civic works** (privacy, blur, Open311, cost, SLA)
-  and about **the user's own reports/data** — both of which reduce friction in the
+  and about **the user's own reports/data**, both of which reduce friction in the
   core report → track → fix loop.
 - It **navigates** users to the right screen instead of making them hunt.
 - It is surfaced and labelled as **"Help"/"Ask"**, never "Chatbot", to stay in
@@ -37,7 +37,7 @@ the product's focus.
 - Floating assistant widget, bottom-right, on all pages, streaming responses.
 - Answer help/FAQ from a curated in-app corpus.
 - Read the current user's RLS-scoped live data (their reports + status; staff: nothing
-  extra in MVP unless the staff read-tier is enabled — see Deferred).
+  extra in MVP unless the staff read-tier is enabled. See Deferred).
 - Read public city stats (dashboard view).
 - Open screens for the user via validated client-side navigation.
 - Role-aware behaviour driven entirely by Postgres RLS (resident / staff / anon).
@@ -45,12 +45,12 @@ the product's focus.
 ### Out of scope (MVP)
 - **No writes / no data input**: no submitting reports, upvoting, CSAT, dispatch,
   comments, or edits. (Originally requested; deliberately deferred after tradeoff
-  review — see Deferred.)
+  review. See Deferred.)
 - **No pgvector / vector DB.** The corpus needing semantic search today is ~7 FAQ
   items plus a few doc sections.
 - No cross-user data access (RLS forbids it by construction).
 - No conversation persistence across sessions.
-- No new AI provider — reuse Gemini.
+- No new AI provider, reuse Gemini.
 
 ## Hard constraints inherited from the codebase
 
@@ -64,7 +64,7 @@ These come from `AGENTS.md` and the RLS model; the design must not violate them.
 3. **No PII in URLs.** The `navigateTo` tool validates targets against a route
    allow-list and never places PII in query strings.
 4. **No new data model changes for MVP.** No migrations; the help corpus is static.
-5. **Adding npm dependencies is a stop-and-ask** — answered: the Vercel AI SDK base
+5. **Adding npm dependencies is a stop-and-ask**: answered: the Vercel AI SDK base
    is approved.
 
 ## Architecture
@@ -78,7 +78,7 @@ Widget (client component, useChat from @ai-sdk/react)
    │  2. rate-limit (reuse existing limiter)
    │  3. streamText({ model: google('gemini-2.5-flash'), system, tools, messages })
    ▼
-Tool loop (all READ / NAVIGATE — no writes):
+Tool loop (all READ / NAVIGATE, no writes):
    searchHelpDocs · getMyReports · getReportStatus · getCityStats · navigateTo
    │  data tools run queries AS THE USER (RLS enforced), return compact JSON
    ▼
@@ -92,21 +92,21 @@ tagged-result error style, and `error_log` on failure.
 
 ### Components / units (each independently testable)
 
-- **`src/lib/ai/help-corpus.ts`** — typed array of `{ id, title, tags, body }` help
+- **`src/lib/ai/help-corpus.ts`**: typed array of `{ id, title, tags, body }` help
   snippets seeded from the FAQ + doc sections. One concern: hold the corpus.
-- **`src/lib/ai/chat/retrieval.ts`** — `searchCorpus(query, k)`: keyword/lexical
+- **`src/lib/ai/chat/retrieval.ts`**: `searchCorpus(query, k)`: keyword/lexical
   scoring (token overlap / BM25-lite) returning top-k snippets. Pure, no I/O.
-- **`src/lib/ai/chat/tools.ts`** — factory `buildChatTools(ctx)` where `ctx` holds the
+- **`src/lib/ai/chat/tools.ts`**: factory `buildChatTools(ctx)` where `ctx` holds the
   user's scoped Supabase client + role/city. Returns the AI SDK tool set. Data tools
   never receive the service-role client.
-- **`src/lib/ai/chat/system-prompt.ts`** — builds the system prompt from role +
+- **`src/lib/ai/chat/system-prompt.ts`**: builds the system prompt from role +
   city + the tool contract + refusal rules.
-- **`src/app/api/ai/chat/route.ts`** — the streaming endpoint; wires auth →
+- **`src/app/api/ai/chat/route.ts`**: the streaming endpoint; wires auth →
   rate-limit → `streamText` → response.
-- **`src/components/assistant/*`** — the widget: launcher button, panel
+- **`src/components/assistant/*`**: the widget: launcher button, panel
   (`Drawer`/`BottomSheet`), message list, composer. Client component.
-- **`src/lib/ai/config.ts`** (edit) — add `CHAT_MODEL` and a `HELP_ASSISTANT` flag.
-- **`src/app/layout.tsx`** (edit) — mount the widget via portal.
+- **`src/lib/ai/config.ts`** (edit). Add `CHAT_MODEL` and a `HELP_ASSISTANT` flag.
+- **`src/app/layout.tsx`** (edit), mount the widget via portal.
 
 ## Tool set (read + navigate only)
 
@@ -130,8 +130,8 @@ see), `/user/pulse`, `/user/updates`, `/city/[slug]`, `/city/[slug]/map`,
   distilled from `context.md` / `design.md` (privacy/blur, Open311 interop, AI
   mechanics + cost, SLA/accountability, cities live).
 - Retrieval is in-process lexical top-k. No embeddings, no DB, no migration.
-- **Upgrade path (documented, not built):** when the corpus passes ~50–100 chunks or
-  needs semantic recall, add pgvector — which is already roadmapped for dedup — and
+- **Upgrade path (documented, not built):** when the corpus passes ~50-100 chunks or
+  needs semantic recall, add pgvector (which is already roadmapped for dedup), and
   swap `searchCorpus` for a vector query behind the same interface. `retrieval.ts` is
   the single seam.
 
@@ -145,7 +145,7 @@ see), `/user/pulse`, `/user/updates`, `/city/[slug]`, `/city/[slug]/map`,
   clears the mobile tab bar.
 - Motion respects `prefers-reduced-motion`.
 - Streaming markdown rendering; tool activity shown as subtle inline status.
-- Label: **"Help"** / **"Ask Civic"** — not "Chatbot".
+- Label: **"Help"** / **"Ask Civic"**, not "Chatbot".
 
 ## Error handling
 
@@ -173,7 +173,7 @@ see), `/user/pulse`, `/user/updates`, `/city/[slug]`, `/city/[slug]/map`,
 ## Dependencies
 
 Add (approved): `ai`, `@ai-sdk/google`, and a chat UI shell (`@assistant-ui/react`
-or shadcn chat — the lighter fit chosen at plan time via context7). Classification
+or shadcn chat, the lighter fit chosen at plan time via context7). Classification
 stays on `@google/generative-ai`; the two SDKs coexist by design (chat vs. vision
 pipeline), an accepted tradeoff.
 
@@ -183,7 +183,7 @@ pipeline), an accepted tradeoff.
 - Classification pipeline: unchanged (`gemini-2.5-flash-lite`).
 - Both configurable in `config.ts`.
 
-## Deferred (Phase 2 — architecture already supports)
+## Deferred (Phase 2: architecture already supports)
 
 - **Submit-assist & staff write tools** behind a confirm/preview step, routed through
   the *existing* server actions (`submitReport`, `dispatchWorkOrder`, …) so validation
@@ -198,7 +198,7 @@ pipeline), an accepted tradeoff.
   (a resident cannot read another user's report *through the bot*); `navigateTo`
   allow-list rejects unlisted / staff-only routes for residents.
 - Route test: disabled flag → 404, rate-limit path, streamed shape. (Anonymous
-  callers are allowed — help + public stats work without login; personal-data
+  callers are allowed. Help + public stats work without login; personal-data
   tools return a "sign in" message rather than erroring.)
 - Playwright e2e: open widget → ask a help question → ask "take me to my reports" →
   assert navigation.
@@ -207,6 +207,6 @@ pipeline), an accepted tradeoff.
 
 ## Open items to confirm at plan time (non-blocking)
 
-- Exact chat UI shell (`@assistant-ui/react` vs. shadcn chat) — decide via context7.
+- Exact chat UI shell (`@assistant-ui/react` vs. shadcn chat), decide via context7.
 - Whether MVP surfaces the staff read-tier tool (`queryWorkOrders`) or truly
   resident-only reads first.

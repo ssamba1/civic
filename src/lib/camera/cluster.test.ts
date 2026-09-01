@@ -38,7 +38,7 @@ describe("assignCluster", () => {
   });
 
   it("opens a new cluster when the nearest candidate is outside CLUSTER_RADIUS_M", () => {
-    // CLUSTER_RADIUS_M is 8 — 9m away is a different defect, not GPS jitter.
+    // CLUSTER_RADIUS_M is 8-9m away is a different defect, not GPS jitter.
     expect(
       assignCluster(obs(), [candidate({ id: "c1", distanceM: 9 })]),
     ).toEqual({
@@ -54,7 +54,7 @@ describe("assignCluster", () => {
     ).toEqual({ kind: "new" });
   });
 
-  it("a resolved cluster does NOT absorb — later detections open a NEW cluster (recurrence signal)", () => {
+  it("a resolved cluster does NOT absorb, later detections open a NEW cluster (recurrence signal)", () => {
     expect(
       assignCluster(obs(), [
         candidate({ id: "old", state: "resolved", distanceM: 0.2 }),

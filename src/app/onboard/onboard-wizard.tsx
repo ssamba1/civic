@@ -120,7 +120,7 @@ export function OnboardWizard({ adminEmail }: { adminEmail: string | null }) {
 
   // Live availability of the chosen /city/[slug] address (City step). Lifted to
   // the wizard because the Continue gate must block until the slug is confirmed
-  // free — a taken slug otherwise only fails at "Create" on the final step.
+  // free. A taken slug otherwise only fails at "Create" on the final step.
   const [slugCheck, setSlugCheck] = useState<SlugState>({
     status: "idle",
     suggestions: [],
@@ -171,7 +171,7 @@ export function OnboardWizard({ adminEmail }: { adminEmail: string | null }) {
         if (!city.name.trim() || !city.center)
           return "Search for your city and pick it from the list.";
         if (slugCheck.status === "taken")
-          return "That public address is taken — pick a suggestion below.";
+          return "That public address is taken. Pick a suggestion below.";
         if (slugCheck.status === "invalid")
           return "Public address needs lowercase letters, numbers, or dashes.";
         return null;
@@ -523,7 +523,7 @@ function CityStep({
 
   // Editing the search box after a pick clears the committed city, so the
   // Continue gate (name + center) blocks until the user picks again. Slug is
-  // left alone — a manually-typed public address survives a re-search.
+  // left alone, a manually-typed public address survives a re-search.
   const handleClear = () => {
     setCity((c) => ({
       ...c,
@@ -558,7 +558,7 @@ function CityStep({
     <div>
       <StepHeading
         title="Your city"
-        sub="Search for your city — we'll center your map and set up your public address automatically."
+        sub="Search for your city. We'll center your map and set up your public address automatically."
       />
       <div className="space-y-4">
         {/* Plain labeled block (not <Field>'s <label>) so the autocomplete
@@ -578,7 +578,7 @@ function CityStep({
         </div>
         <Field
           label="Public address"
-          hint="Auto-filled from your city — edit only if you want a different URL."
+          hint="Auto-filled from your city, edit only if you want a different URL."
         >
           <div className="flex items-center rounded-lg border border-hairline bg-surface px-3 py-2 text-sm">
             <span className="text-faint">/city/</span>
@@ -824,7 +824,7 @@ function RoutingStep({
     <div>
       <StepHeading
         title="Auto-routing"
-        sub="When a report comes in, which team owns it? Defaults are set — adjust any."
+        sub="When a report comes in, which team owns it? Defaults are set, adjust any."
       />
       <ul className="divide-y divide-hairline overflow-hidden rounded-lg border border-hairline">
         {ALL_CATEGORIES.map((cat) => (
@@ -905,7 +905,7 @@ function RosterStep({
 
       {granularity === "shared_per_team" && (
         <p className="mt-3 rounded-lg border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/10 px-3 py-2 text-xs text-[var(--status-warning-fg)]">
-          Shared logins can't tell who did what — actions attribute to the team,
+          Shared logins can't tell who did what, actions attribute to the team,
           not a person, and the password is harder to rotate.
         </p>
       )}
@@ -978,7 +978,7 @@ function PerPersonRoster({
     <div className="space-y-2">
       {roster.length === 0 && (
         <p className="text-sm text-subtle">
-          No staff yet — add people, or skip and invite them later.
+          No staff yet. Add people, or skip and invite them later.
         </p>
       )}
       {roster.map((p, i) => {
@@ -1208,12 +1208,12 @@ function ReviewStep({
       />
       <dl className="space-y-3 text-sm">
         <Row label="City">
-          {city.name || "—"}, {city.state || "—"}{" "}
+          {city.name || "-"}, {city.state || "-"}{" "}
           <span className="text-faint">(/city/{effectiveSlug})</span>
         </Row>
         <Row label="Admin">{adminEmail ?? "you"}</Row>
         <Row label="Teams">
-          {enabledKeys.length} —{" "}
+          {enabledKeys.length},{" "}
           {enabledKeys.map((k) => labels[k] ?? k).join(", ") || "none"}
         </Row>
         <Row label="Logins">
@@ -1310,7 +1310,7 @@ function ResultScreen({
       {hasTempPasswords && (
         <div className="mt-5 rounded-lg border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/10 p-3">
           <p className="text-sm font-medium text-[var(--status-warning-fg)]">
-            Save these credentials now — temporary passwords are shown once.
+            Save these credentials now. Temporary passwords are shown once.
           </p>
           <Button
             variant="outline"

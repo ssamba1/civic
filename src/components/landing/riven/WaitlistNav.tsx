@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-// Ported from Riven WaitlistNav.jsx — same fixed bar, scroll-driven blur/mask,
+// Ported from Riven WaitlistNav.jsx, same fixed bar, scroll-driven blur/mask,
 // same grid layout. react-router smooth-scroll machinery dropped (Civic is a
 // single landing route); anchors use plain hashes. Wordmark = plain "Civic".
 function ArrowRightIcon() {

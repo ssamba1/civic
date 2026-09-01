@@ -7,7 +7,7 @@ import { fetchCity as fetchCityFromDb } from "@/lib/dashboard-queries";
 import { fetchCityCrews } from "@/lib/db/crews";
 import { getStaffAccessForCity } from "@/lib/staff-access";
 
-// Auth-gated per-request — do not cache or prerender.
+// Auth-gated per-request. Do not cache or prerender.
 export const dynamic = "force-dynamic";
 
 // ---------------------------------------------------------------------------
@@ -62,7 +62,7 @@ export async function generateMetadata({
   if (!city) city = await fetchCityMock(slug);
   if (!city) return { title: "City not found | Civic" };
   return {
-    title: `Civic | ${city.name} — Team Schedule`,
+    title: `Civic | ${city.name}. Team Schedule`,
     description: `Weekly work-order schedule for ${city.name} staff.`,
     robots: { index: false, follow: false },
   };
@@ -125,7 +125,7 @@ export default async function TeamSchedulePage({
               Schedule
             </h1>
             <p className="text-[13px] text-faint">
-              {city.name} — week of {weekStart}
+              {city.name}, week of {weekStart}
             </p>
           </div>
 

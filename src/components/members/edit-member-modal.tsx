@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import type { MemberRow } from "@/lib/db/members";
 
 /* ==================================================================
-   Edit member — controlled by the members table row edit buttons.
+   Edit member, controlled by the members table row edit buttons.
    `member === null` closes it; a fresh `member` remounts the inner
    dialog (via key) so its prefilled fields reset per selection.
    ================================================================== */
@@ -71,7 +71,7 @@ function EditDialog({
   const [phone, setPhone] = useState(member.phone ?? "");
   const [error, setError] = useState<string | null>(null);
 
-  // Crew membership is division-scoped — changing the team clears any picks
+  // Crew membership is division-scoped. Changing the team clears any picks
   // that belonged to the previous one.
   function handleTeamChange(next: string | null) {
     setTeamKey(next);

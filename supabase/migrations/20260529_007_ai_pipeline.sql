@@ -1,10 +1,10 @@
 -- =============================================================================
--- Civic – AI Pipeline
+-- Civic, AI Pipeline
 -- Migration: 20260529_007_ai_pipeline.sql
 --
 -- Additive, safe, idempotent groundwork for the OPTIONAL async-classify path.
 -- The synchronous classify pipeline (the default demo path) is unaffected by
--- this migration — it adds a single nullable status column used only when the
+-- this migration. It adds a single nullable status column used only when the
 -- async background-classify path is enabled via NEXT_PUBLIC_ASYNC_CLASSIFY=1.
 --
 -- NOTE: this migration is NOT auto-applied. Run it explicitly with
@@ -20,14 +20,14 @@ BEGIN;
 -- ---------------------------------------------------------------------------
 -- 1. classify_status column
 --    Tracks the lifecycle of an async classification job for a report.
---    null    — async classification never enqueued (the synchronous default)
---    pending — job enqueued, awaiting / mid-flight Gemini call
---    done    — classification + work order persisted successfully
---    failed  — classification failed; report remains in the manual triage queue
+--    null, async classification never enqueued (the synchronous default)
+--    pending, job enqueued, awaiting / mid-flight Gemini call
+--    done. Classification + work order persisted successfully
+--    failed, classification failed; report remains in the manual triage queue
 -- ---------------------------------------------------------------------------
 ALTER TABLE reports ADD COLUMN IF NOT EXISTS classify_status text;
 
-COMMENT ON COLUMN reports.classify_status IS 'null|pending|done|failed — only used when NEXT_PUBLIC_ASYNC_CLASSIFY=1';
+COMMENT ON COLUMN reports.classify_status IS 'null|pending|done|failed, only used when NEXT_PUBLIC_ASYNC_CLASSIFY=1';
 
 -- ---------------------------------------------------------------------------
 -- 2. Worker dequeue index

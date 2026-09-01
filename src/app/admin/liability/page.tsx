@@ -9,7 +9,7 @@ import { currencyForCitySlug, formatCost } from "@/lib/currency";
 import { getLedgerTotals, getSweep } from "./actions";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Liability – Admin" };
+export const metadata = { title: "Liability, Admin" };
 
 function LedgerTile({
   label,

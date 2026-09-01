@@ -1,6 +1,6 @@
 "use client";
 
-// Bit-count lookup table for each nibble (0–15).
+// Bit-count lookup table for each nibble (0-15).
 const NIBBLE_BITS = [0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4];
 
 /**
@@ -15,7 +15,7 @@ const NIBBLE_BITS = [0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4];
  *   5. Pack the 64 bits into a 16-char hex string (MSB first).
  *
  * Returns "0000000000000000" on any error so callers never have to handle
- * rejection — a zero hash scores 0.5 (neutral) in the similarity formula.
+ * rejection, a zero hash scores 0.5 (neutral) in the similarity formula.
  */
 export function computeAHash(imageDataUrl: string): Promise<string> {
   return new Promise((resolve) => {

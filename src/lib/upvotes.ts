@@ -26,7 +26,7 @@ const STORAGE_KEY = "civic.upvotes.v1";
  * caller's own report_upvotes row (migration 027; RLS enforces
  * user_id = auth.uid()). localStorage stays the optimistic layer; a failure
  * (e.g. a synthetic report id with no DB row) is logged and the local state
- * stands — correct demo behavior, self-healing on the next real toggle.
+ * stands, correct demo behavior, self-healing on the next real toggle.
  */
 function persistUpvote(reportId: string, upvoted: boolean): void {
   if (DEMO_MODE) return;
@@ -81,7 +81,7 @@ function writeStorage(set: UpvoteSet) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify([...set]));
   } catch {
-    // Quota / private mode — silently drop. In-memory snapshot still works.
+    // Quota / private mode. Silently drop. In-memory snapshot still works.
   }
 }
 
@@ -95,7 +95,7 @@ function hydrateOnce() {
 /**
  * Deterministic per-report base upvote count so the community list reads as
  * populated without a backend. Same hashing approach as map-popup's cost
- * estimate — stable across reloads, varied across reports. DEMO ONLY — the
+ * estimate (stable across reloads, varied across reports. DEMO ONLY) the
  * live deploy shows real counts from report_upvote_counts (below).
  */
 export function baseUpvoteCount(reportId: string, severity = 3): number {
@@ -103,13 +103,13 @@ export function baseUpvoteCount(reportId: string, severity = 3): number {
   for (let i = 0; i < reportId.length; i++) {
     hash = reportId.charCodeAt(i) + ((hash << 5) - hash);
   }
-  // 0–23 base, nudged up by severity so worse issues trend higher.
+  // 0-23 base, nudged up by severity so worse issues trend higher.
   return (Math.abs(hash) % 24) + severity * 2;
 }
 
 /* ------------------------------------------------------------------
    Live counts (live deploy only). Rendering a count registers its report
-   id; ids batch into one report_upvote_counts RPC call (migration 027 —
+   id; ids batch into one report_upvote_counts RPC call (migration 027,
    aggregate only, no user ids) ~1 tick later. Fetched counts land in a
    module map, a version bump re-renders subscribers, and toggle()
    adjusts the cached count optimistically alongside its DB write.
@@ -177,7 +177,7 @@ export function useUpvotes(): UseUpvotesReturn {
 
   const has = useCallback((reportId: string) => set.has(reportId), [set]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `version` is intentionally extra — it invalidates the closure when the module-level live-count map updates.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `version` is intentionally extra, it invalidates the closure when the module-level live-count map updates.
   const count = useCallback(
     (reportId: string, severity = 3) => {
       if (DEMO_MODE) {

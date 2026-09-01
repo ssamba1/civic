@@ -17,16 +17,16 @@ import { useSlidingPill } from "@/lib/hooks/use-sliding-pill";
 interface CityNavProps {
   slug: string;
   /**
-   * Mobile layout slot — only used by CityHeader's mobile two-row structure.
+   * Mobile layout slot, only used by CityHeader's mobile two-row structure.
    *   "tabs"    → full-width 4-up segmented control (bottom row)
    *   "actions" → Report + My View action buttons (top row, right side)
    *   undefined → full desktop inline row (md+ single-row)
    */
   mobileSlot?: "tabs" | "actions";
-  /** Server-computed staff status (or demo city) — hides Grid for non-staff so
+  /** Server-computed staff status (or demo city), hides Grid for non-staff so
    *  the nav never links to a page that just bounces them to /login. */
   isStaff: boolean;
-  /** Server-computed VIDEO_PIPELINE flag — the tab never links to a route that
+  /** Server-computed VIDEO_PIPELINE flag. The tab never links to a route that
    *  404s when the pipeline ships dark. */
   videoEnabled?: boolean;
 }
@@ -98,7 +98,7 @@ export function CityNav({
     },
   ];
 
-  // Sliding-pill hook must run unconditionally (rules of hooks) — compute it
+  // Sliding-pill hook must run unconditionally (rules of hooks), compute it
   // before the mobile-slot early returns. Mobile branches don't use it.
   const activeHref = items.find((i) => i.active)?.href;
   const { trackRef, pill } = useSlidingPill(activeHref);
@@ -122,7 +122,7 @@ export function CityNav({
           } as React.CSSProperties
         }
       >
-        {/* Sliding active pill — sits behind the tabs, translates to active index.
+        {/* Sliding active pill. Sits behind the tabs, translates to active index.
             p-0.5 (2px) inset on each side, so the track is the nav inner box. */}
         <span
           aria-hidden="true"
@@ -188,7 +188,7 @@ export function CityNav({
         ref={trackRef}
         className="relative flex min-w-0 items-center gap-0.5 rounded-[10px] border border-hairline bg-overlay p-0.5"
       >
-        {/* Sliding active pill — measured to the active tab, eases between them. */}
+        {/* Sliding active pill, measured to the active tab, eases between them. */}
         <span
           aria-hidden="true"
           className="pill-slide pointer-events-none absolute top-0.5 bottom-0.5 left-0 z-0 rounded-md bg-overlay-strong shadow-[inset_0_0_0_1px_var(--hairline)]"

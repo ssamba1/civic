@@ -15,7 +15,7 @@ import { getStaffAccessForCity } from "@/lib/staff-access";
 import { TEAM_LIST } from "@/lib/teams";
 
 // Auth-gated per request (reads cookies via getStaffAccessForCity) and the
-// visible month depends on `?month=` + "today" — never prerender or cache.
+// visible month depends on `?month=` + "today", never prerender or cache.
 export const dynamic = "force-dynamic";
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -25,7 +25,7 @@ interface PageProps {
   searchParams: Promise<{ month?: string }>;
 }
 
-/** "YYYY-MM" for the current month in SERVER-LOCAL time — the default when
+/** "YYYY-MM" for the current month in SERVER-LOCAL time, the default when
  *  `?month=` is absent or fails MONTH_RE. Local (not UTC) on purpose: for a
  *  US-evening viewer, UTC has already rolled to tomorrow, which would open
  *  the calendar on the wrong month at month boundaries and ring the wrong
@@ -35,13 +35,13 @@ function currentMonth(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
-/** Today as YYYY-MM-DD in server-local time — same rationale as currentMonth. */
+/** Today as YYYY-MM-DD in server-local time, same rationale as currentMonth. */
 function todayLocalISO(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
-/** Day after `iso` (YYYY-MM-DD), UTC — turns the grid's last cell into the
+/** Day after `iso` (YYYY-MM-DD), UTC, turns the grid's last cell into the
  *  exclusive upper bound the accessor's [fromISO, toISO) window expects. */
 function isoPlusOneDay(iso: string): string {
   const d = new Date(`${iso}T00:00:00.000Z`);
@@ -62,9 +62,9 @@ export async function generateMetadata({
   if (!city) city = await fetchCityMock(slug);
   if (!city) return { title: "City not found | Civic" };
   return {
-    title: `Civic | ${city.name}, ${city.state} — Calendar`,
+    title: `Civic | ${city.name}, ${city.state}. Calendar`,
     description: `Staff calendar of work orders landing in ${city.name}, filterable by division, crew, and status.`,
-    // Staff-operational surface — keep it out of search indexes like Members.
+    // Staff-operational surface. Keep it out of search indexes like Members.
     robots: { index: false, follow: false },
   };
 }
@@ -80,7 +80,7 @@ export default async function CityCalendarPage({
   // back to the synthetic KNOWN_CITIES entry so demo slugs still resolve.
   // The city lookup and the staff gate are independent reads; run them
   // together instead of paying the auth round trip after the city round trip.
-  // The CHECK order below is unchanged — a missing city still 404s before the
+  // The CHECK order below is unchanged, a missing city still 404s before the
   // gate can redirect.
   const [dbCityResult, access] = await Promise.all([
     fetchCityFromDb(slug).catch(() => null),
@@ -90,7 +90,7 @@ export default async function CityCalendarPage({
   const city = dbCity ?? (await fetchCityMock(slug));
   if (!city) notFound();
 
-  // Staff-operational gate — calendar has no PII, so demo access is fine and
+  // Staff-operational gate. Calendar has no PII, so demo access is fine and
   // no admin requirement applies (unlike the Members roster).
   if (!access) {
     redirect(`/login?redirect=/city/${slug}/calendar`);
@@ -104,7 +104,7 @@ export default async function CityCalendarPage({
   const fromISO = cells[0].iso;
   const toISO = isoPlusOneDay(cells[cells.length - 1].iso);
 
-  // Synthetic (non-DB) cities have no real work orders — skip the fetches
+  // Synthetic (non-DB) cities have no real work orders, skip the fetches
   // rather than querying a placeholder city id.
   const [orders, crewsResult, crewTypeDefs] = dbCity
     ? await Promise.all([

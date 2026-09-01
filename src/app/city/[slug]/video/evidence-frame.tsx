@@ -3,7 +3,7 @@
 /**
  * Evidence frame viewer.
  *
- * A detection's stored frame is the WHOLE video frame, not a crop — the crop
+ * A detection's stored frame is the WHOLE video frame, not a crop. The crop
  * would throw away the context an operator needs (which lane, how far from the
  * curb, what else is in shot). So the frame renders whole and the detector's
  * box is drawn back on top of it from `damage_detections.bbox`, which is
@@ -48,7 +48,7 @@ export function EvidenceFrame({
 }: {
   src: string;
   box?: DetectionBox | null;
-  /** e.g. "pothole · 0.87" — drawn on the box's leader when there is room. */
+  /** e.g. "pothole · 0.87", drawn on the box's leader when there is room. */
   label?: string;
   alt: string;
   className?: string;
@@ -74,8 +74,8 @@ export function EvidenceFrame({
             height: `${height}%`,
             // The box wears its detection's CLASS hue, so it matches the card
             // that owns it. `--detect-hue` is set by whoever knows the class
-            // (EvidenceFrameButton below); callers that don't — e.g. the work
-            // order detail pane — keep the original blush.
+            // (EvidenceFrameButton below); callers that don't. E.g. the work
+            // order detail pane. Keep the original blush.
             borderColor: BOX_HUE,
             backgroundColor: `color-mix(in srgb, ${BOX_HUE} 12%, transparent)`,
             boxShadow: "0 0 0 1px color-mix(in srgb, #000 35%, transparent)",
@@ -116,14 +116,14 @@ export function EvidenceFrameButton({
   box?: DetectionBox | null;
   label?: string;
   alt: string;
-  /** Modal heading — the detection's class, usually. */
+  /** Modal heading, the detection's class, usually. */
   title: string;
   subtitle?: string;
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
   // `title` is the detection's class at every call site (the modal heading is
-  // the class), and the Modal portals out of this subtree — so the hue has to
+  // the class), and the Modal portals out of this subtree, so the hue has to
   // be resolved here and planted inside the portal, not inherited.
   const hue = detectionHue(title).strong;
 

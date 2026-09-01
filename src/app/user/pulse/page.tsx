@@ -6,8 +6,8 @@ import { getCityMorale, getCurrentResident } from "@/lib/resident-data";
 export function generateMetadata(): Metadata {
   const name = KNOWN_CITIES.cumming.name;
   return {
-    title: `Civic | ${name} — Community Pulse`,
-    description: `How ${name} is improving — issues fixed, faster resolution times, and the civic momentum residents are building together.`,
+    title: `Civic | ${name}. Community Pulse`,
+    description: `How ${name} is improving, issues fixed, faster resolution times, and the civic momentum residents are building together.`,
   };
 }
 

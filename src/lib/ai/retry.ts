@@ -64,7 +64,7 @@ export function defaultIsRetryable(e: unknown): boolean {
     msg.includes("socket hang up") ||
     msg.includes("overloaded") ||
     // Word-boundary match: a bare `msg.includes("rate")` also matches
-    // "generated", "moderate", "operate", etc. — any error message containing
+    // "generated", "moderate", "operate", etc., any error message containing
     // that substring incorrectly triggered the rate-limit backoff path.
     /\brate[ _-]?limit/.test(msg) ||
     msg.includes("429") ||

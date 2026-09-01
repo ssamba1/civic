@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * DensityHeatmap — client component.
+ * DensityHeatmap, client component.
  *
  * Renders a MapLibre GL map (react-map-gl v8, no Mapbox token) with either a
  * deck.gl HeatmapLayer or a GridLayer overlay. Deck.gl is dynamically imported
@@ -14,7 +14,7 @@ import { Map as MapGL } from "react-map-gl/maplibre";
 import type { HeatmapPoint, ViewportBounds } from "@/lib/analytics/heatmap";
 
 // ---------------------------------------------------------------------------
-// Map style — reuse the same Carto dark-matter style the main report map uses.
+// Map style. Reuse the same Carto dark-matter style the main report map uses.
 // ---------------------------------------------------------------------------
 const MAP_STYLE =
   "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
@@ -143,7 +143,7 @@ export function DensityHeatmap({ points, bounds }: DensityHeatmapProps) {
         try {
           createdOverlay.finalize();
         } catch {
-          // Overlay was never attached — safe to ignore
+          // Overlay was never attached, safe to ignore
         }
         createdOverlay = null;
       }
@@ -154,8 +154,8 @@ export function DensityHeatmap({ points, bounds }: DensityHeatmapProps) {
   // map has fired its onLoad event AND the async deck.gl import has resolved.
   // Guarding on `mapLoaded` covers ordering (a): map-first.
   // Guarding on `deckOverlay` covers ordering (b): overlay-first.
-  // No double-add risk because addControl on an already-added control throws —
-  // caught and ignored — and we never call it from onLoad anymore.
+  // No double-add risk because addControl on an already-added control throws,
+  // caught and ignored, and we never call it from onLoad anymore.
   useEffect(() => {
     if (!mapLoaded || !deckOverlay || !mapRef.current) return;
     const map = mapRef.current.getMap?.();
@@ -163,7 +163,7 @@ export function DensityHeatmap({ points, bounds }: DensityHeatmapProps) {
     try {
       map.addControl(deckOverlay.overlay);
     } catch {
-      // Already added — no-op
+      // Already added, no-op
     }
   }, [mapLoaded, deckOverlay]);
 

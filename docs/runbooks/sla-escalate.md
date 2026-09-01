@@ -1,4 +1,4 @@
-# Runbook — SLA overdue escalation
+# Runbook: SLA overdue escalation
 
 **Endpoint:** `POST /api/admin/sla-escalate`
 **Code:** `src/app/api/admin/sla-escalate/route.ts` · ADR 0004 · migration 032
@@ -13,7 +13,7 @@ Scans open (`completed_at IS NULL`), overdue (`due_at < now`), not-yet-escalated
 
 Reports already closed/rejected/merged are marked `escalated_at` and skipped.
 Returns `{ escalated, skipped, migrated }`. On an un-migrated DB (`due_at` absent)
-it returns `{ migrated: false }` and does nothing — safe to call anywhere.
+it returns `{ migrated: false }` and does nothing, safe to call anywhere.
 
 ## How to invoke
 
@@ -23,7 +23,7 @@ send the bearer:
 curl -X POST https://<host>/api/admin/sla-escalate \
   -H "authorization: Bearer $SLA_CRON_SECRET"
 ```
-Suggested cadence: every 15–30 min. Example systemd timer or crontab:
+Suggested cadence: every 15-30 min. Example systemd timer or crontab:
 ```
 */15 * * * * curl -fsS -X POST https://<host>/api/admin/sla-escalate -H "authorization: Bearer $SLA_CRON_SECRET" >/dev/null
 ```

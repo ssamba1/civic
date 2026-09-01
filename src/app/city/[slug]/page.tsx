@@ -14,7 +14,7 @@ import {
 
 // This route can never be statically generated: the city layout above it calls
 // isStaffForCity(), which reads the auth cookie on every request. Declaring
-// generateStaticParams() anyway did not make it static — it made Next attempt
+// generateStaticParams() anyway did not make it static, it made Next attempt
 // static generation for slugs outside the list, and that attempt threw
 // DYNAMIC_SERVER_USAGE from the layout's cookie read. The throw surfaced as a
 // 500, so a mistyped city slug returned "Internal Server Error" instead of the
@@ -41,7 +41,7 @@ export async function generateMetadata({
   }
   if (!city) return { title: "City not found | Civic" };
 
-  const title = `Civic | ${city.name}, ${city.state} — Teams & Delegation`;
+  const title = `Civic | ${city.name}, ${city.state}, Teams & Delegation`;
   const description = `Per-team workload and delegation for ${city.name}, ${city.state}. Backlog by division, default routing rules, per-report reassignment.`;
 
   return {
@@ -84,7 +84,7 @@ export default async function CityDashboardPage({ params }: PageProps) {
   return (
     <div className="flex flex-col min-h-dvh">
       <div className="flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
-        {/* Compact page header — the sidebar carries location context on md+,
+        {/* Compact page header, the sidebar carries location context on md+,
             so the title collapses to a single slim row. */}
         <section className="mb-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

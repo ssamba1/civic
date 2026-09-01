@@ -1,7 +1,7 @@
-# Runbook — Open311 GeoReport v2 conformance testing
+# Runbook: Open311 GeoReport v2 conformance testing
 
 **Routes:** `src/app/api/open311/v2/*` · helpers `src/lib/open311/` · ADR 0007.
-No live partner needed — everything below runs against a local/staging host.
+No live partner needed. Everything below runs against a local/staging host.
 
 ## Endpoints
 
@@ -46,7 +46,7 @@ in `src/lib/open311/open311.test.ts` + `services.test.ts`.
 
 ## Privacy invariants (must hold)
 
-- Public feed coordinates are coarsened to ~3dp (~110m) — never full precision.
+- Public feed coordinates are coarsened to ~3dp (~110m), never full precision.
 - No `description`, `photo_raw_url`, or `reporter_id` in any GET response.
 - `rejected`/`merged` reports are excluded from the public list.
 

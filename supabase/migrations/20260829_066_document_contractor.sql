@@ -5,12 +5,12 @@
 -- Documents upload form can file a document under a vendor.
 --
 -- Nullable by design: most documents (policies, specs) concern no vendor.
--- ON DELETE SET NULL — deleting a contractor must never take the city's
+-- ON DELETE SET NULL. Deleting a contractor must never take the city's
 -- governing documents with it.
 --
 -- No RLS change: city_documents policies from 065 already scope reads to
 -- staff of the owning city, and contractors (062) deliberately has no
--- client-readable policy — all contractor reads stay on the service role.
+-- client-readable policy. All contractor reads stay on the service role.
 --
 -- NOT auto-applied. Run with: npm run db:migrate
 -- Re-runnable: IF NOT EXISTS throughout.

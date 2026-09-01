@@ -15,7 +15,7 @@ interface WorkOrderRule {
 }
 
 /**
- * Blended crew labor rate in USD per hour (loaded — wage + equipment + overhead).
+ * Blended crew labor rate in USD per hour (loaded, wage + equipment + overhead).
  * Deliberately a single small-city average; the AI generator refines per-report.
  */
 const LABOR_RATE_PER_HOUR = 75;
@@ -128,7 +128,7 @@ export const CATEGORY_CREW_TYPES: Readonly<
  * `custom_sidewalk_heave`.
  *
  * Unguarded, `RULES[custom_key].department` throws TypeError and takes the whole
- * pipeline down AFTER the classification has already been persisted — the report
+ * pipeline down AFTER the classification has already been persisted. The report
  * is saved, no work order is ever created, and it is never dispatched to anyone,
  * while the resident sees a thanks screen. `other` is the honest default: zero
  * estimate, no crew type, which routes it to a human instead of inventing a
@@ -141,7 +141,7 @@ function ruleFor(category: string): WorkOrderRule {
 /**
  * Deterministic repair cost floor in whole USD:
  *   labor_rate * (minutes / 60) + flat material cost.
- * Always computable from a classification alone — ships even when the AI
+ * Always computable from a classification alone. Ships even when the AI
  * work-order generator is disabled or fails.
  */
 export function estimateCost(category: string): number {
@@ -152,7 +152,7 @@ export function estimateCost(category: string): number {
 
 interface ReportMeta {
   // isSchoolZone/footTrafficWeight were removed: no data source (geofence,
-  // foot-traffic feed) exists anywhere in the schema to populate them — the
+  // foot-traffic feed) exists anywhere in the schema to populate them, the
   // pipeline always passed isSchoolZone:false/footTrafficWeight:1, so their
   // formula terms were dead weight that only implied the score considered
   // factors it never actually received. recurrenceCount is real: it starts at
@@ -175,8 +175,8 @@ interface GeneratedWorkOrder {
  * Deterministic work order from classification + report context.
  *
  * priority = (severity * 2)
- *          + (recurrence_bonus * 1)     — raw recurrence count
- *          + (emergency_override * 50)  — 1 if is_emergency, else 0
+ *          + (recurrence_bonus * 1), raw recurrence count
+ *          + (emergency_override * 50), 1 if is_emergency, else 0
  */
 export function generateWorkOrder(
   classification: Classification,

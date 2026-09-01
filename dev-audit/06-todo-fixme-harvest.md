@@ -1,4 +1,4 @@
-# In-Code Debt Markers — Complete Harvest
+# In-Code Debt Markers: Complete Harvest
 
 **Summary:** 3 explicit markers found across src/ and docs/. All shipped + unfinished. Top priority: Open311 API key lookup (blocks external integrations). Secondary: cross-jurisdiction report handling (design debt), fence-stripping fallback (cleanup candidate).
 
@@ -9,8 +9,8 @@
 | File:Line | Severity | Effort | Category | Marker Text | Status |
 |-----------|----------|--------|----------|-------------|--------|
 | `src/app/api/open311/v2/requests/route.ts:228` | P1 | M | incomplete-feature | TODO: Replace with a real api_key → user lookup table. | Shipped |
-| `docs/planning/design.md:402` | P1 | L | design-debt | "Manual override for now. Real solution unclear." — Cross-jurisdiction reports (pothole on county road in city limits) | Shipped |
-| `docs/planning/PLAN.md:330` | P2 | S | cleanup | "delete fence hack" — Structured output migration (Gemini 2.5 Flash responseMimeType + responseSchema) not yet implemented; still using fence-stripping fallback | Shipped |
+| `docs/planning/design.md:402` | P1 | L | design-debt | "Manual override for now. Real solution unclear.", Cross-jurisdiction reports (pothole on county road in city limits) | Shipped |
+| `docs/planning/PLAN.md:330` | P2 | S | cleanup | "delete fence hack", Structured output migration (Gemini 2.5 Flash responseMimeType + responseSchema) not yet implemented; still using fence-stripping fallback | Shipped |
 
 ---
 
@@ -21,7 +21,7 @@
 **Context:**
 ```typescript
 // Line 227-236
-// Reporter ID — use system user for external Open311 submissions.
+// Reporter ID. Use system user for external Open311 submissions.
 // TODO: Replace with a real api_key → user lookup table.
 const reporterId = process.env.OPEN311_SYSTEM_USER_ID;
 if (!reporterId) {
@@ -54,7 +54,7 @@ const { data: apiKey } = await supabase
 const reporterId = apiKey?.user_id || process.env.OPEN311_SYSTEM_USER_ID;
 ```
 
-**Effort:** M (1–2 hours: table schema + lookup query + tests)
+**Effort:** M (1-2 hours: table schema + lookup query + tests)
 
 ---
 
@@ -68,7 +68,7 @@ From design.md, §8 (Unresolved Design Questions):
 ```
 
 **What's unfinished:**
-The app assumes each report belongs to exactly one city. But Forsyth County (the hosting jurisdiction for Cumming, GA) owns infrastructure inside Cumming's boundaries. A pothole on a county road inside city limits cannot be routed programmatically — no parent-child relationship exists between county and city.
+The app assumes each report belongs to exactly one city. But Forsyth County (the hosting jurisdiction for Cumming, GA) owns infrastructure inside Cumming's boundaries. A pothole on a county road inside city limits cannot be routed programmatically. No parent-child relationship exists between county and city.
 
 **Why it matters:**
 - **Resident confusion:** Report goes to the wrong team or doesn't dispatch at all.
@@ -80,11 +80,11 @@ The app assumes each report belongs to exactly one city. But Forsyth County (the
 2. **Infrastructure ownership layers:** Store infrastructure assets with explicit ownership (city vs. county vs. state), route based on asset ownership, not report location alone.
 3. **Escalation rule:** If a report can't route to city, escalate to county via Open311.
 
-**Effort:** L for decision (design meeting); M–L for implementation (depends on chosen approach).
+**Effort:** L for decision (design meeting); M, L for implementation (depends on chosen approach).
 
 ---
 
-### P2: Fence-Stripping Fallback (docs/planning/PLAN.md:330 + src/lib/ai/gemini.ts:25–29)
+### P2: Fence-Stripping Fallback (docs/planning/PLAN.md:330 + src/lib/ai/gemini.ts:25-29)
 
 **Context:**
 From PLAN.md, §12 (AI strategy):
@@ -96,7 +96,7 @@ From PLAN.md, §12 (AI strategy):
 
 **What exists:**
 ```typescript
-// src/lib/ai/gemini.ts:18–30
+// src/lib/ai/gemini.ts:18-30
 function stripCodeFences(raw: string): string {
   const trimmed = raw.trim();
   const fencePattern = /^```(?:json)?\s*\n?([\s\S]*?)\n?\s*```$/;
@@ -106,7 +106,7 @@ function stripCodeFences(raw: string): string {
 ```
 
 **What's unfinished:**
-Gemini 2.5 Flash now supports structured output (`responseMimeType="application/json"` + `responseSchema`), which guarantees clean JSON without markdown fences. The code DOES use structured output (line 59–60 of gemini.ts), so the fence-stripping fallback is a belt-and-suspenders safety net.
+Gemini 2.5 Flash now supports structured output (`responseMimeType="application/json"` + `responseSchema`), which guarantees clean JSON without markdown fences. The code DOES use structured output (line 59-60 of gemini.ts), so the fence-stripping fallback is a belt-and-suspenders safety net.
 
 **Why it's still here:**
 The comment in the code says: "with structured output (responseMimeType + responseSchema) the model already returns clean JSON, but we keep this as a belt-and-suspenders parse in case a response slips through fenced."
@@ -118,10 +118,10 @@ The comment in the code says: "with structured output (responseMimeType + respon
 **Fix:**
 Once structured output has 30+ days of zero fence-wrapped responses in production (track via metrics), delete:
 - `stripCodeFences()` function
-- The test case `"parses fenced ```json output via the stripCodeFences fallback"` (src/lib/ai/gemini.test.ts:85–99)
-- The comment about fallback parsing (gemini.ts:21–23)
+- The test case `"parses fenced ```json output via the stripCodeFences fallback"` (src/lib/ai/gemini.test.ts:85-99)
+- The comment about fallback parsing (gemini.ts:21-23)
 
-**Effort:** S (1–2 files, ~30 lines, quick PR once confidence is high).
+**Effort:** S (1-2 files, ~30 lines, quick PR once confidence is high).
 
 ---
 
@@ -131,12 +131,12 @@ Once structured output has 30+ days of zero fence-wrapped responses in productio
 1. **Implement Open311 API key → user lookup** (P1, M effort)
    - Blocks external integrations and audit trail.
    - Touches only `src/app/api/open311/v2/requests/route.ts` and schema.
-   - 2–3 hour task.
+   - 2-3 hour task.
 
 ### Short-term (Roadmap Phase A)
-2. **Resolve cross-jurisdiction report routing** (P1, L–M effort)
+2. **Resolve cross-jurisdiction report routing** (P1, L, M effort)
    - Design decision first (1 hour): choose parent-child vs. asset ownership vs. escalation.
-   - Implement once city/county relationship is clarified (2–4 hours).
+   - Implement once city/county relationship is clarified (2-4 hours).
 
 ### Nice-to-have (Cleanup)
 3. **Remove fence-stripping fallback** (P2, S effort)

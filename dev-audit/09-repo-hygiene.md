@@ -7,8 +7,8 @@
 ## Pass 1: Root-Level Files
 
 ### Tracked Files (git ls-files)
-- `RESEARCH_PROMPT.md` (28.7 KB) — committed c19c39e "docs: add deep-research prompt + verified market findings"
-- `civic_research_findings.md` (30.1 KB) — committed same commit
+- `RESEARCH_PROMPT.md` (28.7 KB). Committed c19c39e "docs: add deep-research prompt + verified market findings"
+- `civic_research_findings.md` (30.1 KB), committed same commit
 
 ### Untracked Files (11 items, 815+ KB total)
 | File | Size | Status |
@@ -57,16 +57,16 @@ graphify-out/
 ```
 
 **Missing patterns (not in .gitignore):**
-- `civic_outreach*.csv` — 6 backups/variants untracked but live in root, causing clutter
-- `*_review*.csv` — alternate form of above
+- `civic_outreach*.csv`: 6 backups/variants untracked but live in root, causing clutter
+- `*_review*.csv`: alternate form of above
 - Nothing else significant
 
 **.gitignore completeness check:**
-- ✅ `*.tsbuildinfo` IS present (line 44) — build artifact ignored but file exists locally
-- ✅ `certificates` IS present (line 50) — dev cert storage ignored correctly
-- ✅ `.env.local` IS present (line 35) — secrets file ignored correctly
-- ✅ `/.next/` IS present (line 17) — build output ignored correctly
-- ❌ CSV backups NOT ignored — should add patterns
+- ✅ `*.tsbuildinfo` IS present (line 44). Build artifact ignored but file exists locally
+- ✅ `certificates` IS present (line 50). Dev cert storage ignored correctly
+- ✅ `.env.local` IS present (line 35). Secrets file ignored correctly
+- ✅ `/.next/` IS present (line 17). Build output ignored correctly
+- ❌ CSV backups NOT ignored. Should add patterns
 
 ---
 
@@ -74,7 +74,7 @@ graphify-out/
 
 ### .env Files Comparison
 
-**`.env.local` (committed?)** ❌ NO — file EXISTS but properly in `.gitignore` ✅
+**`.env.local` (committed?)** ❌ NO. File EXISTS but properly in `.gitignore` ✅
 
 **Secrets present in .env.local (safe, not tracked):**
 ```
@@ -100,7 +100,7 @@ INTERNAL_CLASSIFY_SECRET=***REMOVED-INTERNAL-SECRET***
 
 | File | Size | Purpose | Issue |
 |------|------|---------|-------|
-| `pnpm-lock.yaml` | 252.9 KB | Lock file | ✅ OK — necessary, tracked |
+| `pnpm-lock.yaml` | 252.9 KB | Lock file | ✅ OK. Necessary, tracked |
 | `tsconfig.tsbuildinfo` | 748 KB | Build output | ❌ Should delete from disk (in `.gitignore`, won't recommit) |
 | `civic_outreach.NEW.csv` | 276.4 KB | Data export? | ❌ Move to `leadgen/` or delete |
 | `civic_outreach.csv` | 136.9 KB | Data export? | ❌ Move to `leadgen/` or delete |
@@ -117,7 +117,7 @@ INTERNAL_CLASSIFY_SECRET=***REMOVED-INTERNAL-SECRET***
 
 ## Pass 5: Recommendations
 
-### A. Delete from Disk (won't recommit — files are untracked)
+### A. Delete from Disk (won't recommit: files are untracked)
 
 ```bash
 # Remove untracked CSV backups
@@ -185,41 +185,41 @@ pnpm build
 
 ---
 
-## Pass 6: Endurance Check — Account for Every Root Entry
+## Pass 6: Endurance Check: Account for Every Root Entry
 
 | Item | Status | Action | Notes |
 |------|--------|--------|-------|
-| `.git/` | DIR | — | Repository metadata, OK |
-| `.next/` | DIR | — | Build cache, in `.gitignore`, OK |
-| `certificates/` | DIR | — | Dev TLS, in `.gitignore`, OK |
-| `dev-audit/` | DIR | — | This audit output, OK |
-| `docs/` | DIR | — | Documentation, OK |
-| `leadgen/` | DIR | — | Lead generation, OK to move research files here |
-| `node_modules/` | DIR | — | Dependencies, in `.gitignore`, OK |
-| `public/` | DIR | — | Static assets, OK |
-| `scripts/` | DIR | — | Scripts, OK |
-| `src/` | DIR | — | Source code, OK |
-| `supabase/` | DIR | — | Supabase config, OK |
-| `.env.example` | 1.4 KB | — | Public template, OK |
-| `.env.local` | 0.9 KB | — | Real secrets, gitignored, OK |
+| `.git/` | DIR | - | Repository metadata, OK |
+| `.next/` | DIR | - | Build cache, in `.gitignore`, OK |
+| `certificates/` | DIR | - | Dev TLS, in `.gitignore`, OK |
+| `dev-audit/` | DIR | - | This audit output, OK |
+| `docs/` | DIR | - | Documentation, OK |
+| `leadgen/` | DIR | - | Lead generation, OK to move research files here |
+| `node_modules/` | DIR | - | Dependencies, in `.gitignore`, OK |
+| `public/` | DIR | - | Static assets, OK |
+| `scripts/` | DIR | - | Scripts, OK |
+| `src/` | DIR | - | Source code, OK |
+| `supabase/` | DIR | - | Supabase config, OK |
+| `.env.example` | 1.4 KB | - | Public template, OK |
+| `.env.local` | 0.9 KB | - | Real secrets, gitignored, OK |
 | `.gitignore` | 0.6 KB | EDIT | Add CSV patterns |
-| `agents.md` | 5.7 KB | — | Tracked, OK |
-| `biome.json` | 0.5 KB | — | Lint config, OK |
+| `agents.md` | 5.7 KB | - | Tracked, OK |
+| `biome.json` | 0.5 KB | - | Lint config, OK |
 | `civic_outreach*.csv` (6 files) | 815+ KB | DELETE | Untracked backups, move or remove |
 | `civic_research_findings.md` | 30.1 KB | MOVE | Tracked, move to `leadgen/` or `docs/` |
-| `eslint.config.mjs` | 0.5 KB | — | Lint config, OK |
-| `next-env.d.ts` | 0.2 KB | — | Next.js auto-generated, OK |
-| `next.config.ts` | 2.9 KB | — | App config, OK |
-| `package.json` | 2.0 KB | — | Dependency manifest, OK |
-| `pnpm-lock.yaml` | 252.9 KB | — | Lock file, OK |
-| `pnpm-workspace.yaml` | 0.1 KB | — | Workspace config, OK |
-| `postcss.config.mjs` | 0.1 KB | — | CSS config, OK |
-| `README.md` | 4.7 KB | — | Documentation, OK |
+| `eslint.config.mjs` | 0.5 KB | - | Lint config, OK |
+| `next-env.d.ts` | 0.2 KB | - | Next.js auto-generated, OK |
+| `next.config.ts` | 2.9 KB | - | App config, OK |
+| `package.json` | 2.0 KB | - | Dependency manifest, OK |
+| `pnpm-lock.yaml` | 252.9 KB | - | Lock file, OK |
+| `pnpm-workspace.yaml` | 0.1 KB | - | Workspace config, OK |
+| `postcss.config.mjs` | 0.1 KB | - | CSS config, OK |
+| `README.md` | 4.7 KB | - | Documentation, OK |
 | `RESEARCH_PROMPT.md` | 28.7 KB | MOVE | Tracked, move to `leadgen/` or `docs/` |
-| `sentry.*.config.ts` (3 files) | 0.7 KB total | — | Sentry config, OK |
-| `tsconfig.json` | 0.7 KB | — | TS config, OK |
+| `sentry.*.config.ts` (3 files) | 0.7 KB total | - | Sentry config, OK |
+| `tsconfig.json` | 0.7 KB | - | TS config, OK |
 | `tsconfig.tsbuildinfo` | 748 KB | DELETE | Build by-product, regenerates, local only |
-| `vitest.config.ts` | 0.4 KB | — | Test config, OK |
+| `vitest.config.ts` | 0.4 KB | - | Test config, OK |
 
 **All 38 root entries accounted for.** ✅
 

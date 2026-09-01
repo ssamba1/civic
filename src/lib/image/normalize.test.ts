@@ -2,7 +2,7 @@
 // Tests for bitmapToJpeg in normalize.ts.
 // normalize.ts has a module-level `const isBrowser = typeof document !== "undefined"`
 // which is false in node. We override the guard by stubbing `document` in the
-// global scope BEFORE the module is evaluated — achieved with vi.hoisted + a
+// global scope BEFORE the module is evaluated, achieved with vi.hoisted + a
 // globalThis assignment that runs in the module registry phase.
 //
 // The strategy: use vi.mock to provide a factory that side-effects globalThis

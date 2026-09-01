@@ -35,7 +35,7 @@ export default function LoginForm() {
   const [email, setEmail] = useState(DEV_PREFILL ? DEV_EMAIL : "");
   const [password, setPassword] = useState(DEV_PREFILL ? DEV_PASSWORD : "");
   const [error, setError] = useState<string | null>(initialError);
-  // Positive/neutral notice (e.g. signup confirmation) — kept separate from
+  // Positive/neutral notice (e.g. signup confirmation), kept separate from
   // `error` so a success outcome doesn't render in the red danger box.
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState<"google" | "email" | "guest" | null>(null);
@@ -75,11 +75,11 @@ export default function LoginForm() {
         setBusy(null);
         return;
       }
-      // No explicit destination requested — send staff to their city
+      // No explicit destination requested. Send staff to their city
       // console instead of always landing on "/" (mirrors auth/callback's
       // landing logic, which this password path never goes through).
       // Sign-in has already succeeded by this point, so a failed landing
-      // lookup must still navigate somewhere — never strand the user on a
+      // lookup must still navigate somewhere, never strand the user on a
       // frozen spinner while actually logged in.
       let destination = redirectTo;
       if (redirectTo === "/") {

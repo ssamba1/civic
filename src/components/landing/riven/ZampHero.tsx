@@ -13,7 +13,7 @@ import { useMapPreset } from "./MapPresetContext";
 import StaticHeroMap from "./StaticHeroMap";
 import ZampMapBackdropLazy, { ZampMapFallback } from "./ZampMapBackdropLazy";
 
-// Zamp hero — colossal per-letter "Civic" wordmark anchored bottom-left, with
+// Zamp hero, colossal per-letter "Civic" wordmark anchored bottom-left, with
 // a black glass sign-up card on the right. The full-bleed ZampShader fills the
 // hero behind the content. Per-letter rise stagger driven by framer-motion.
 
@@ -38,7 +38,7 @@ function ArrowRightIcon() {
   );
 }
 
-// Glass-card inner stagger child — fades up with the card.
+// Glass-card inner stagger child, fades up with the card.
 const glassChild = {
   collapsed: { opacity: 0, y: 14 },
   expanded: {
@@ -50,7 +50,7 @@ const glassChild = {
 
 export default function ZampHero({ pinStory = false }: { pinStory?: boolean }) {
   // tweaksVisible (?tweaks=1, dev only) swaps the static plate back for the
-  // LIVE maplibre/deck.gl map — the studio used to retune presets and re-run
+  // LIVE maplibre/deck.gl map, the studio used to retune presets and re-run
   // scripts/capture-hero-map.mjs. Public visitors never mount it, so the
   // ~1.85MB map chunk never enters the route.
   const { tweaksVisible } = useMapPreset();
@@ -63,7 +63,7 @@ export default function ZampHero({ pinStory = false }: { pinStory?: boolean }) {
   // viewports). Plain text renders instantly.
   //
   // showMap also gates the heavy live map: it starts false (so the server and
-  // first client render are identical — gradient only, no hydration mismatch)
+  // first client render are identical. Gradient only, no hydration mismatch)
   // and is set true ONLY on non-mobile, after first paint. Phones therefore
   // never mount the lazy wrapper and never download maplibre-gl / deck.gl.
   const [isMobile, setIsMobile] = useState(false);
@@ -146,7 +146,7 @@ export default function ZampHero({ pinStory = false }: { pinStory?: boolean }) {
           pointerEvents: "none",
         }}
       >
-        {/* Colossal per-letter "Civic" wordmark — the hero IS the wordmark. */}
+        {/* Colossal per-letter "Civic" wordmark. The hero IS the wordmark. */}
         <motion.h1
           className="wl-zamp-wordmark"
           aria-label="Civic"
@@ -228,20 +228,20 @@ export default function ZampHero({ pinStory = false }: { pinStory?: boolean }) {
               <motion.ul variants={glassChild} className="wl-zamp-feature-list">
                 <li>
                   <span>
-                    <strong>Photo → costed work order</strong> — AI prices the
+                    <strong>Photo → costed work order</strong>. AI prices the
                     repair, picks the crew, and drafts the order in 1.4 seconds.
                   </span>
                 </li>
                 <li>
                   <span>
-                    <strong>Closes the loop</strong> — dispatch, actual cost,
-                    resolution photo, and a 👍/👎 back to the reporter — not
-                    just a ticket number.
+                    <strong>Closes the loop</strong>. Dispatch, actual cost,
+                    resolution photo, and a 👍/👎 back to the reporter, not just
+                    a ticket number.
                   </span>
                 </li>
                 <li>
                   <span>
-                    <strong>Open311 native</strong> — SeeClickFix, Tyler, and
+                    <strong>Open311 native</strong>, SeeClickFix, Tyler, and
                     Granicus ingest reports with zero rework.
                   </span>
                 </li>

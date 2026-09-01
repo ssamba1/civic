@@ -5,7 +5,7 @@
    the calendar renders the same regardless of the viewer's timezone,
    and the ISO keys line up with `CalendarWorkOrder.calendarDate`
    (a UTC YYYY-MM-DD string from Postgres). We only ever read UTC
-   components (getUTC*), never local getters — so a viewer east or west
+   components (getUTC*), never local getters, so a viewer east or west
    of UTC never sees an off-by-one day. No dependencies.
    ================================================================== */
 

@@ -23,11 +23,11 @@ export default async function CityDashboardLayout({
 }) {
   const { slug } = await params;
 
-  // Resolve the real city identity first — used for the header and to load the
+  // Resolve the real city identity first, used for the header and to load the
   // city's live reports below.
   const city = await fetchCity(slug);
 
-  // Nav-visibility only (not a security gate — the grid page enforces its own
+  // Nav-visibility only (not a security gate, the grid page enforces its own
   // requireStaffFor() redirect). Demo city always counts as staff here too,
   // matching the grid page's own `slug !== DEMO_CITY` bypass, so its Grid tab
   // stays visible to every visitor.
@@ -36,7 +36,7 @@ export default async function CityDashboardLayout({
   const now = Date.now();
 
   // Demo deploy keeps the rich synthetic corpus for the known demo city; every
-  // other (onboarded) city — and every city on a real deploy — loads its OWN
+  // other (onboarded) city (and every city on a real deploy) loads its OWN
   // reports from the DB per city_id (F1) so its dashboard, workload, and map
   // reflect real data. A preview (not-yet-live) city includes synthetic/imported
   // sources so its dashboard looks alive.
@@ -53,7 +53,7 @@ export default async function CityDashboardLayout({
     // Column on mobile (fixed CityHeader on top); row on md+ where the
     // sticky CitySidebar owns the left rail and flexbox owns content width.
     // dvh is resolved before the html zoom (globals.css --app-zoom) scales
-    // it — divide back out so full-viewport routes (map) reach the bottom
+    // it, divide back out so full-viewport routes (map) reach the bottom
     // instead of stopping 10% short.
     <div className="flex min-h-[calc(100dvh/var(--app-zoom,1))] flex-col bg-background text-foreground md:flex-row">
       <CityHeader

@@ -13,7 +13,7 @@ import { DEMO_MODE } from "@/lib/demo-mode";
 import { cn } from "@/lib/utils/cn";
 
 /**
- * Demo persona sign-in. DEMO ONLY — credentials are baked in (see demo-auth.ts)
+ * Demo persona sign-in. DEMO ONLY. Credentials are baked in (see demo-auth.ts)
  * and gate nothing sensitive. Shown unconditionally so the deployed hackathon
  * demo can log in as each surface. Quick-pick chips prefill the fields; submit
  * posts to the signInDemo server action which sets the cookie and redirects.
@@ -86,7 +86,7 @@ export function DemoSignIn({ error }: { error?: string | null }) {
                 setUsername(p.username);
                 setPassword(p.password);
               }}
-              title={`${p.label} — ${p.username}`}
+              title={`${p.label}, ${p.username}`}
               className={cn(
                 "rounded-[var(--radius-md)] border px-2.5 py-1 text-[11px] font-medium transition-colors motion-safe:active:scale-95 motion-safe:transition-transform motion-safe:duration-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]",
                 username === p.username

@@ -1,7 +1,7 @@
 import { stackedBarLayers } from "@/lib/utils/stacked-bar";
 
 /* ==================================================================
-   Status mini-bar — a thin stacked proportion bar for a status mix,
+   Status mini-bar, a thin stacked proportion bar for a status mix,
    plus the shared status→color map and day formatter. Used by team
    cards and crew cards alike.
    ================================================================== */
@@ -9,9 +9,9 @@ import { stackedBarLayers } from "@/lib/utils/stacked-bar";
 // Mirrors STATUS_PALETTE in workload-bars.tsx (kept byte-identical).
 // Deliberately diverges from lib/status.ts's STATUS_TONE: chips encode status
 // via TEXT (a11y-tuned per-theme fg tokens), this bar encodes status via FILL
-// AREA — different constraint, so a separate local map. Pastel efferd ramp:
+// AREA, different constraint, so a separate local map. Pastel efferd ramp:
 // open = butter-strong (warning-ish, the one actionable state, pops);
-// dispatched/in_progress share the sky (info) hue — dispatched is a
+// dispatched/in_progress share the sky (info) hue. Dispatched is a
 // color-mix-softened sky, in_progress full sky-strong, so their relative
 // weight ordering holds in both themes without raw hex. Segments overpaint
 // each other (absolute right-0 layers), and the raw --pastel-* soft tokens

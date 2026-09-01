@@ -12,7 +12,7 @@ interface PageProps {
   searchParams: Promise<{ crew?: string }>;
 }
 
-// DB first (provisioned cities), then the mock fallback (demo deploy) — same
+// DB first (provisioned cities), then the mock fallback (demo deploy), same
 // resolution order as the crew overview page (../page.tsx).
 async function resolveCity(slug: string): Promise<City | null> {
   let city: City | null = null;
@@ -36,7 +36,7 @@ export async function generateMetadata({
   if (!city) return { title: "Crew not found | Civic" };
   const label = portalLabel(crewType);
   return {
-    title: `Civic | ${city.name} — ${label} Crew Analytics`,
+    title: `Civic | ${city.name}, ${label} Crew Analytics`,
     description: `Operational analytics for the ${label} crew in ${city.name}, ${city.state}.`,
   };
 }
@@ -54,7 +54,7 @@ export default async function CrewPortalAnalyticsPage({
 
   // Analytics is report-level: it renders AnalyticsInteractive under the crew
   // layout's category-locked FilterProvider, so the corpus is already scoped
-  // to this crew TYPE. A single crew instance can't narrow it further — the
+  // to this crew TYPE. A single crew instance can't narrow it further, the
   // ?crew=<name> param only names the crew in the heading (so the crews-panel
   // click-through reads coherently); it never invents fake per-crew scoping.
   const { crew: crewParam } = await searchParams;
@@ -80,7 +80,7 @@ export default async function CrewPortalAnalyticsPage({
               Analytics
             </h1>
             <p className="text-[13px] text-faint">
-              {label} crew operational signal — resolution, backlog, and where
+              {label} crew operational signal, resolution, backlog, and where
               it&apos;s happening.
             </p>
           </div>

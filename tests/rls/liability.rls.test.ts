@@ -2,7 +2,7 @@
 //
 // RLS regression tests for migrations 062 (liability) and 063 (claims).
 //
-// Spec: docs/planning/CAMERA_LIABILITY_PIPELINE.md §7 — "a contractor cannot
+// Spec: docs/planning/CAMERA_LIABILITY_PIPELINE.md §7. "a contractor cannot
 // read capital_jobs, cannot read other contractors' claims, cannot read
 // report_liability for unassigned reports".
 //
@@ -11,7 +11,7 @@
 //   1. Anon default-deny on capital_jobs, warranties, utility_permits,
 //      report_liability and claims (SELECT filtered/denied, INSERT rejected).
 //   2. A signed-in CONTRACTOR cannot read capital_jobs / warranties /
-//      utility_permits / report_liability at all — those tables carry no
+//      utility_permits / report_liability at all, those tables carry no
 //      contractor policy by design (peer contract values, warranty exposure).
 //   3. A signed-in contractor cannot see a claim in 'draft' state, can see
 //      their own claim once it is 'sent', and cannot see another contractor's
@@ -19,7 +19,7 @@
 //   4. Service-role control: the same tables are readable with the service key,
 //      proving the denials above are RLS and not a missing table.
 //
-// GATING — opt-in integration tests. The suite still COLLECTS and passes (as
+// GATING, opt-in integration tests. The suite still COLLECTS and passes (as
 // skipped) unless a live test database is configured:
 //
 //   SUPABASE_TEST_URL            project URL (e.g. http://127.0.0.1:54321)
@@ -47,7 +47,7 @@ const LIABILITY_TABLES = [
   "claims",
 ] as const;
 
-// The four tables a contractor must never touch (claims is handled separately —
+// The four tables a contractor must never touch (claims is handled separately,
 // contractors DO have a scoped policy there).
 const CONTRACTOR_FORBIDDEN = [
   "capital_jobs",

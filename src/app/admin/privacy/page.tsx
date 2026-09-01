@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { auditAllCities } from "@/lib/privacy/audit";
 import { ExportButton } from "./export-button";
 
-// Live bucket audit — always fresh, never cached.
+// Live bucket audit, always fresh, never cached.
 export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Privacy audit | Civic" };
@@ -82,7 +82,7 @@ export default async function AdminPrivacyPage() {
                 </td>
                 <td className="px-4 py-3 tabular-nums text-subtle">
                   {c.blurCoverage.total === 0 ? (
-                    <span className="text-faint">—</span>
+                    <span className="text-faint">-</span>
                   ) : (
                     <span
                       className={

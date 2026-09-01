@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 
 // calendar.ts calls createServerClient() internally (no DI), so the module
-// itself is mocked — the chain builder below stands in for supabase-js's
+// itself is mocked. The chain builder below stands in for supabase-js's
 // thenable query builder, same shape as lib/ai/crew-assign.test.ts's mockDb
 // but extended with .gte()/.lt() for the created_at window.
 vi.mock("@/lib/db/client", () => ({
@@ -38,7 +38,7 @@ function mockDb(response: MockResponse) {
       filters[`lt:${col}`] = val;
       return chain;
     },
-    // biome-ignore lint/suspicious/noThenProperty: intentional thenable — mirrors supabase-js's query builder resolving via then().
+    // biome-ignore lint/suspicious/noThenProperty: intentional thenable, mirrors supabase-js's query builder resolving via then().
     then(
       resolve: (value: MockResponse) => unknown,
       reject?: (reason: unknown) => unknown,
@@ -179,7 +179,7 @@ describe("fetchCalendarWorkOrders", () => {
   it("drops rows whose calendarDate falls outside [fromISO, toISO) after the widened fetch", async () => {
     const { db } = mockDb({
       data: [
-        // Created well before the window, dispatched even earlier — outside
+        // Created well before the window, dispatched even earlier, outside
         // the visible range even after the created_at lookback widening.
         row({
           id: "too-early",

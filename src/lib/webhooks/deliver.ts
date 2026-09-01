@@ -1,4 +1,4 @@
-// Webhook delivery — POST to registered endpoints with HMAC signature header.
+// Webhook delivery, POST to registered endpoints with HMAC signature header.
 // Retries up to 3 times with exponential backoff (adapted from ai/retry pattern).
 // Gracefully degrades: delivery failures are logged but never throw to callers.
 
@@ -53,7 +53,7 @@ async function deliverOne(
       }
       // 429 / 5xx: retryable
     } catch (err) {
-      // Network error — retryable
+      // Network error, retryable
       if (attempt >= retries) {
         return {
           ok: false,
@@ -113,7 +113,7 @@ export async function emitWebhook(
   try {
     endpoints = await loadEndpoints(event, report.city_id);
   } catch {
-    return; // DB absent or error — graceful degrade
+    return; // DB absent or error, graceful degrade
   }
 
   if (endpoints.length === 0) return;
@@ -133,7 +133,7 @@ export async function emitWebhook(
           const u = new URL(ep.url);
           safeUrl = u.origin + u.pathname;
         } catch {
-          // unparseable — log as-is (already a non-sensitive fallback)
+          // unparseable. Log as-is (already a non-sensitive fallback)
         }
         logger.info(`Webhook delivered to ${ep.id} (${safeUrl})`);
       }

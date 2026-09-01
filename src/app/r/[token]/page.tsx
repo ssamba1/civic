@@ -14,7 +14,7 @@ import { categoryToTeam, TEAMS } from "@/lib/teams";
 import { ReopenButton } from "./reopen-button";
 import { ShareActions } from "./share-actions";
 
-// Public, account-less status page — resolved per request from an opaque token.
+// Public, account-less status page, resolved per request from an opaque token.
 export const dynamic = "force-dynamic";
 
 interface PageProps {
@@ -29,9 +29,9 @@ export async function generateMetadata({
   const report = await resolvePublicReport(token);
   if (!report) return { title: "Report not found | Civic" };
   return {
-    title: `Civic | ${report.categoryLabel} — ${report.statusLabel}`,
+    title: `Civic | ${report.categoryLabel}, ${report.statusLabel}`,
     description: `Public status for a reported ${report.categoryLabel.toLowerCase()}.`,
-    // Status pages carry a location — keep them out of search indexes.
+    // Status pages carry a location. Keep them out of search indexes.
     robots: { index: false, follow: false },
   };
 }
@@ -59,24 +59,24 @@ const COPY = {
   targetPassed: "Target date passed",
   estimatedFixBy: "Estimated fix by",
   overdueBody:
-    "This is past its target service window. The crew is still on it — check back for updates.",
+    "This is past its target service window. The crew is still on it. Check back for updates.",
   onTrackBody:
     "Based on the typical service window for this issue type. Weather and priority can shift the date.",
   resolved: "Resolved",
   resolvedBody:
-    "This issue has been fixed. Thanks for reporting it — reports like this keep the city running.",
-  ratedUp: "Thanks — glad it worked out. Your rating was recorded.",
+    "This issue has been fixed. Thanks for reporting it, reports like this keep the city running.",
+  ratedUp: "Thanks. Glad it worked out. Your rating was recorded.",
   ratedDown:
-    "Sorry it wasn't fixed right. Your rating was recorded — the crew will take another look.",
+    "Sorry it wasn't fixed right. Your rating was recorded. The crew will take another look.",
   csatPrompt: "How did the crew do?",
   history: "History",
   reported: "Reported",
   handledBy: "Routed to",
   reopenCta: "Still broken? Reopen this report",
   reopenBusy: "Reopening…",
-  reopenDone: "Reopened — the crew will take another look.",
+  reopenDone: "Reopened. The crew will take another look.",
   footer:
-    "This is a public status page. No account needed — bookmark this link to check back anytime.",
+    "This is a public status page. No account needed. Bookmark this link to check back anytime.",
 } as const;
 
 type CopyKey = keyof typeof COPY;
@@ -93,7 +93,7 @@ export default async function PublicReportPage({
   const isResolved = report.publicStatus === "resolved";
 
   // One-tap CSAT from the resolution email (?rate=up|down). Possession of the
-  // unguessable token IS the auth — the reporter is the only one who has it.
+  // unguessable token IS the auth. The reporter is the only one who has it.
   // Idempotent upsert; a repeat click just re-records.
   const { rate, lang: langParam } = await searchParams;
   const lang: LangCode = isLangCode(langParam) ? langParam : "en";
@@ -186,7 +186,7 @@ export default async function PublicReportPage({
           <p className="mt-2 text-[13px] text-subtle">
             {report.address} · {t.reported} {fmtDate(report.filedAt, lang)}
           </p>
-          {/* #13 — name the owning team so it reads as routed to a real human. */}
+          {/* #13, name the owning team so it reads as routed to a real human. */}
           <p className="mt-1 text-[13px] text-faint">
             {t.handledBy} {TEAMS[categoryToTeam(report.category)].label}
           </p>
@@ -201,7 +201,7 @@ export default async function PublicReportPage({
                 {/* biome-ignore lint/performance/noImgElement: dynamic external resident-uploaded photo URL, not optimizable by next/image */}
                 <img
                   src={report.photoUrl}
-                  alt={`${categoryLabel} — ${t.reported}`}
+                  alt={`${categoryLabel}, ${t.reported}`}
                   className="aspect-[16/9] w-full object-cover"
                 />
                 <figcaption className="absolute left-2 top-2 rounded-md bg-black/55 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm">
@@ -213,7 +213,7 @@ export default async function PublicReportPage({
                 {/* biome-ignore lint/performance/noImgElement: dynamic external resident-uploaded photo URL, not optimizable by next/image */}
                 <img
                   src={report.resolutionPhotoUrl}
-                  alt={`${categoryLabel} — ${t.resolved}`}
+                  alt={`${categoryLabel}, ${t.resolved}`}
                   className="aspect-[16/9] w-full object-cover"
                 />
                 <figcaption className="absolute left-2 top-2 rounded-md bg-[var(--color-success)]/85 px-2 py-0.5 text-[11px] font-medium text-black backdrop-blur-sm">
@@ -295,7 +295,7 @@ export default async function PublicReportPage({
                 </a>
               </p>
             )}
-            {/* #7 — reporter can reopen if it's not actually fixed. */}
+            {/* #7. Reporter can reopen if it's not actually fixed. */}
             <div className="mt-4 border-t border-[var(--color-success)]/20 pt-3">
               <ReopenButton
                 token={token}

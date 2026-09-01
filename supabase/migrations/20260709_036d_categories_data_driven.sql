@@ -1,5 +1,5 @@
 -- ===========================================================================
--- 036 — Data-driven issue categories (issue #6)
+-- 036, Data-driven issue categories (issue #6)
 --
 -- The classification category was a Postgres ENUM (classification_category),
 -- which hard-blocks a runtime-added issue type from ever being persisted: a
@@ -9,8 +9,8 @@
 -- This migration converts every classification_category column to plain `text`
 -- so a custom slug persists with NO per-type schema change, and adds an
 -- AI-facing `description` to issue_types so the model knows what the new type
--- looks like (mirrors crew_types.description). The 12 built-ins are unchanged —
--- their string values are identical, just no longer enum-constrained.
+-- looks like (mirrors crew_types.description). The 12 built-ins are unchanged.
+-- Their string values are identical, just no longer enum-constrained.
 --
 -- Views and the one function that expose the enum in their result shape are
 -- dropped and recreated verbatim (bodies captured from the live DB) so their

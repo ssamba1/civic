@@ -67,7 +67,7 @@ describe("chunkDocument", () => {
     );
     const [first, second] = chunks;
 
-    // Longest tail of chunk 1 that chunk 2 opens with — that is the overlap.
+    // Longest tail of chunk 1 that chunk 2 opens with, that is the overlap.
     let carried = 0;
     for (let k = CHUNK_PARAMS.overlapChars; k > 0; k--) {
       if (second.content.startsWith(first.content.slice(-k))) {
@@ -104,7 +104,7 @@ describe("chunkDocument", () => {
     const tokens = new Set(
       chunks.flatMap((c) => c.content.split(/\s+/)).filter(Boolean),
     );
-    // Every emitted token is a whole `tokN` from the source — no severed words.
+    // Every emitted token is a whole `tokN` from the source, no severed words.
     for (const token of tokens) {
       expect(token).toMatch(/^tok\d+$/);
     }

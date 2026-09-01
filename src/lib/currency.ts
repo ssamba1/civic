@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------
    Per-city currency.
 
-   The whole app stores costs in a single base currency (USD) — the
+   The whole app stores costs in a single base currency (USD), the
    rules engine, AI prompts, and seed all produce USD-magnitude numbers.
    These configs convert that base to a city's local currency at DISPLAY
    time only. Nothing is ever stored converted, so cross-value math
@@ -12,15 +12,15 @@
    ------------------------------------------------------------------ */
 
 export interface CurrencyConfig {
-  /** ISO 4217 code — drives the Intl currency symbol (e.g. $, ₹). */
+  /** ISO 4217 code, drives the Intl currency symbol (e.g. $, ₹). */
   code: string;
-  /** BCP-47 locale — drives digit grouping (en-IN uses lakh grouping). */
+  /** BCP-47 locale. Drives digit grouping (en-IN uses lakh grouping). */
   locale: string;
   /** Multiplier from the USD cost base into this currency. */
   rateFromUsd: number;
 }
 
-// Fixed FX rate — NOT live. ~₹83 per USD (2026). Tune here if it drifts;
+// Fixed FX rate. NOT live. ~₹83 per USD (2026). Tune here if it drifts;
 // nothing else references the raw number.
 export const USD_TO_INR = 83;
 
@@ -59,7 +59,7 @@ export function formatCost(
   usdAmount: number | null | undefined,
   cfg: CurrencyConfig = DEFAULT_CURRENCY,
 ): string {
-  if (usdAmount == null || !Number.isFinite(usdAmount)) return "—";
+  if (usdAmount == null || !Number.isFinite(usdAmount)) return "-";
   return new Intl.NumberFormat(cfg.locale, {
     style: "currency",
     currency: cfg.code,
@@ -77,8 +77,8 @@ export function formatLocalDate(
   cfg: CurrencyConfig = DEFAULT_CURRENCY,
   opts: Intl.DateTimeFormatOptions = { dateStyle: "medium" },
 ): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const t = Date.parse(iso);
-  if (Number.isNaN(t)) return "—";
+  if (Number.isNaN(t)) return "-";
   return new Intl.DateTimeFormat(cfg.locale, opts).format(t);
 }

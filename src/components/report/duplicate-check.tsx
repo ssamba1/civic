@@ -58,7 +58,7 @@ export default function DuplicateCheck({
             <p className="mt-0.5 text-sm text-faint">
               Someone may have already reported this issue
               {candidate.distance_m < 200
-                ? ` — ${candidate.distance_m}m away`
+                ? `, ${candidate.distance_m}m away`
                 : ""}
               .
             </p>
@@ -163,7 +163,7 @@ export default function DuplicateCheck({
           disabled={confirming}
           className="flex w-full items-center justify-center rounded-2xl border border-hairline bg-transparent px-4 py-4 text-base font-semibold text-foreground active:scale-[0.97] transition-transform disabled:opacity-60"
         >
-          No, mine is different — submit anyway
+          No, mine is different, submit anyway
         </button>
       </div>
     </div>

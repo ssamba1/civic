@@ -10,7 +10,7 @@ import {
 import { postComment } from "@/app/report/comment-actions";
 import type { ReportComment } from "@/lib/types";
 
-// Module-level counter — avoids Date.now() collisions and satisfies the
+// Module-level counter. Avoids Date.now() collisions and satisfies the
 // no-Date.now rule. Resets on module reload (hot-reload), which is fine.
 let _optimisticSeq = 0;
 
@@ -39,7 +39,7 @@ function RoleBadge({ role }: { role: ReportComment["author_role"] }) {
       </span>
     );
   }
-  // resident — no badge, just "You" implied from context
+  // resident, no badge, just "You" implied from context
   return null;
 }
 
@@ -150,7 +150,7 @@ export default function CommentThread({
 
         const result = await postComment(reportId, body);
         if (!result.ok) {
-          // Restore the draft before throwing — setDraft inside a transition
+          // Restore the draft before throwing. SetDraft inside a transition
           // is fine; React will batch it with the rollback.
           setDraft(body);
 

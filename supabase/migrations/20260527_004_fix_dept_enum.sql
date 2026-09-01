@@ -1,6 +1,6 @@
 -- =============================================================================
 -- Migration: 20260527_004_fix_dept_enum.sql
--- Fix C4 — Department enum SQL vs TypeScript mismatch
+-- Fix C4, Department enum SQL vs TypeScript mismatch
 -- =============================================================================
 -- NO-OP: work_order_department enum in 001_initial_schema.sql already contains
 -- the correct values:

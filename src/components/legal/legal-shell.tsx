@@ -28,7 +28,7 @@ export function LegalShell({
   return (
     <main className="min-h-dvh bg-background text-foreground">
       {/* backdrop-blur here is functional (sticky-header legibility over scrolling
-          content), not decorative — the one glass case the spec sanctions. */}
+          content), not decorative, the one glass case the spec sanctions. */}
       <header className="sticky top-0 z-20 border-b border-hairline bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
           <Link
@@ -56,7 +56,7 @@ export function LegalShell({
           {eyebrow}
         </p>
         {/* Non-serif: this is app chrome (a page header), not the document's
-            own long-form body — font-hero/font-display stay landing-only. */}
+            own long-form body. Font-hero/font-display stay landing-only. */}
         <h1 className="mt-3 text-[28px] font-semibold leading-[1.15] tracking-tight sm:text-[34px]">
           {title}
         </h1>
@@ -113,7 +113,7 @@ export function Section({
 }) {
   return (
     <section id={id} className="scroll-mt-24">
-      {/* Non-serif per the app's heading rule — font-display stays landing-only. */}
+      {/* Non-serif per the app's heading rule. Font-display stays landing-only. */}
       <h2 className="text-[22px] font-semibold tracking-tight sm:text-[25px]">
         {n != null && <span className="text-faint tabular-nums">{n}. </span>}
         {title}
@@ -153,7 +153,7 @@ export function List({ items }: { items: React.ReactNode[] }) {
           key={i}
           className="flex gap-3 text-[15px] leading-relaxed text-foreground"
         >
-          {/* Bullet marker, not a button/card — rounded-full is the standard
+          {/* Bullet marker, not a button/card. Rounded-full is the standard
               shape for a list dot. Neutral --subtle, not accent: this is
               decoration, and accent is reserved for actions/selection/state. */}
           <span className="mt-[9px] h-1 w-1 flex-shrink-0 rounded-full bg-subtle" />

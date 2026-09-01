@@ -9,7 +9,7 @@ import { contractFor } from "@/lib/camera-demo/vendors";
  * Detail dialog for one promoted defect: evidence screenshot (frame seeked
  * from the demo clip, everything dimmed except the relevant detection),
  * mock contract + warranty, packet checklist, and a demo send button.
- * Nothing leaves the browser — "send" flips local state only.
+ * Nothing leaves the browser. "send" flips local state only.
  */
 
 const VIDEO_SRC = "/camera-demo/bus-feed.mp4";
@@ -108,7 +108,7 @@ export function ClaimDetail({
         <header className="flex items-center justify-between border-b px-4 py-3">
           <div>
             <h2 className="font-semibold text-sm">
-              Claim draft — cluster {promotion.id.replace("promo-", "")}
+              Claim draft, cluster {promotion.id.replace("promo-", "")}
             </h2>
             <p className="text-muted-foreground text-xs">
               Pothole · conf {(promotion.peakConf * 100).toFixed(0)}% ·{" "}
@@ -128,7 +128,7 @@ export function ClaimDetail({
         </header>
 
         <div className="grid gap-4 p-4">
-          {/* Evidence — only the relevant detection stays lit */}
+          {/* Evidence. Only the relevant detection stays lit */}
           <section>
             <h3 className="mb-1 font-medium text-xs">Evidence</h3>
             <canvas
@@ -179,7 +179,7 @@ export function ClaimDetail({
 
           <footer className="flex items-center justify-between gap-3">
             <p className="text-[11px] text-muted-foreground">
-              Demo — nothing is delivered. The real queue is staff-approved
+              Demo. Nothing is delivered. The real queue is staff-approved
               (/admin/claims).
             </p>
             <button

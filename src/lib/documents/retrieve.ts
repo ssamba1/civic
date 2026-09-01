@@ -33,7 +33,7 @@ interface GuidanceRow {
 
 export interface FindGuidanceInput {
   cityId: string;
-  /** Free text — a scenario ("pothole on Peachtree Industrial Blvd"), not a
+  /** Free text, a scenario ("pothole on Peachtree Industrial Blvd"), not a
    *  keyword list. websearch_to_tsquery also honours "quoted phrases" and
    *  -exclusions, so staff can narrow without learning tsquery syntax. */
   query: string;
@@ -42,7 +42,7 @@ export interface FindGuidanceInput {
 
 /**
  * SERVER-ONLY. Ranked, city-scoped guidance lookup over the uploaded document
- * corpus — Postgres full-text (`websearch_to_tsquery` + `ts_rank`) via the
+ * corpus, Postgres full-text (`websearch_to_tsquery` + `ts_rank`) via the
  * `search_document_chunks` RPC. There are no embeddings in this project.
  *
  * A query with no indexable terms (punctuation, stop words only) is not an

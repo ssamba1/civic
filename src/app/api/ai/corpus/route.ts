@@ -4,8 +4,8 @@
  * Admin-gated endpoint that builds and returns the classification fine-tune
  * corpus as a downloadable JSONL file. Each line is one JSON training example.
  *
- * Auth guard: mirrors the pattern in /api/admin/surge and /api/admin/sla-escalate
- * — requires a session with role in [staff_dispatcher, staff_supervisor, admin].
+ * Auth guard: mirrors the pattern in /api/admin/surge and /api/admin/sla-escalate.
+ * Requires a session with role in [staff_dispatcher, staff_supervisor, admin].
  * DEV_AUTH_BYPASS=1 skips auth in development.
  *
  * Does NOT auto-fine-tune. Just produces the corpus for offline review/upload.
@@ -35,7 +35,7 @@ async function authorize(request: Request): Promise<NextResponse | null> {
     return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
   }
 
-  // Dev bypass — matches pattern in surge/sla-escalate routes.
+  // Dev bypass. Matches pattern in surge/sla-escalate routes.
   const devBypass =
     process.env.NODE_ENV === "development" &&
     process.env.DEV_AUTH_BYPASS === "1";

@@ -2,7 +2,7 @@
 #
 # Without this, core.autocrlf=true checks files out as CRLF on Windows while
 # CI (Linux) sees LF. `biome check` then reports hundreds of phantom format
-# errors locally that do not exist in CI — and, worse, hides the real ones in
+# errors locally that do not exist in CI, and, worse, hides the real ones in
 # the noise. Storing LF and checking out LF everywhere keeps `pnpm lint`
 # meaning the same thing on every machine.
 * text=auto eol=lf

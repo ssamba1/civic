@@ -68,7 +68,7 @@ const PUBLIC_BUCKET = "photos-public";
 const RAW_BUCKET = "photos-raw";
 
 // Demo default city. Fresh guest/anon submitters have no public.users row, and
-// no-GPS submits have no coordinate — both fall back to this city. Set to
+// no-GPS submits have no coordinate. Both fall back to this city. Set to
 // Ahilyanagar, Maharashtra so any report created on the live site routes into
 // the Ahilyanagar civic console (single lever for the demo). Center is the
 // Ahilyanagar (formerly Ahmednagar) city center.
@@ -127,7 +127,7 @@ export async function submitReport(
   }
 
   // Redact PII from the public-facing description before it is stored.
-  // The raw (pre-redaction) text is intentionally not persisted — the
+  // The raw (pre-redaction) text is intentionally not persisted. The
   // description column is public-readable via Open311; no PII should land there.
   const description = parsed.data.description
     ? redactPII(parsed.data.description).redacted
@@ -179,7 +179,7 @@ export async function submitReport(
         { onConflict: "id", ignoreDuplicates: true },
       );
       // If the row already existed with a null city_id, backfill ONLY the city so
-      // the report can be scoped — never touch role/email of an existing user.
+      // the report can be scoped, never touch role/email of an existing user.
       await service
         .from("users")
         .update({ city_id: city.id })
@@ -257,14 +257,14 @@ export async function submitReport(
   // Insert the report via the SSR client so RLS is the backstop
   // (reporter_id = auth.uid(), city_id = current_user_city_id()).
   //
-  // PRIMARY photo fields (idx 0) keep the same shape as the single-photo path —
+  // PRIMARY photo fields (idx 0) keep the same shape as the single-photo path,
   // backward-compatible: every existing display site that reads these columns
   // keeps working unchanged.
   //
   // Flag-gated: the async path stamps classify_status:"pending" so the resident
   // UI can subscribe for the result. The classify_status column ships in
   // migration 007 (NOT auto-applied), so the synchronous default path must
-  // NEVER reference it — keep the flag-off insert byte-identical to before.
+  // NEVER reference it. Keep the flag-off insert byte-identical to before.
   const primaryPhash = phashes?.[0];
   const reportRow = {
     id: reportId,
@@ -280,15 +280,15 @@ export async function submitReport(
     // classify_status is only stamped on the async path; the column ships in
     // migration 007 but isn't reflected in the generated Supabase types yet, so
     // attach it via a typed-loose record only when async is ON. The flag-off
-    // insert is the bare reportRow — byte-identical to the original behavior.
+    // insert is the bare reportRow, byte-identical to the original behavior.
     ...(ASYNC_CLASSIFY ? { classify_status: "pending" } : {}),
     ...(primaryPhash ? { photo_phash: primaryPhash } : {}),
-    // OUTFLANK #34 — record the blur pipeline version that ran client-side
+    // OUTFLANK #34, record the blur pipeline version that ran client-side
     // before this photo hit the public bucket, so the privacy-audit dashboard
     // can report blur coverage. Literal mirrors lib/privacy/blur.ts BLUR_VERSION
     // (not imported: that module carries client-only canvas deps). Bump both
     // together when the blur pipeline version changes. Column ships in migration
-    // 040 — stamped unconditionally; the migration is part of the deploy set.
+    // 040. Stamped unconditionally; the migration is part of the deploy set.
     blur_version: 1,
   } as Record<string, unknown>;
   const { error: insertErr } = await ssr.from("reports").insert(reportRow);
@@ -373,7 +373,7 @@ export async function submitReport(
         // ok:false returns. But an UNEXPECTED throw (createServerClient,
         // photoBlob.arrayBuffer(), generateWorkOrder, or a network-level throw
         // from the supabase client before any markClassifyStatus call) bypasses
-        // all of that — nothing would be logged and classify_status would stay
+        // all of that. Nothing would be logged and classify_status would stay
         // "pending" forever, dead-ending the resident. Backstop here: log the
         // throw to error_log and stamp classify_status:"failed" so an operator has
         // a signal and the report lands in manual triage. Use the service client
@@ -404,7 +404,7 @@ export async function submitReport(
           );
         }
       }
-      // Liability attribution — runs whether or not classification succeeded
+      // Liability attribution. Runs whether or not classification succeeded
       // (an unclassified report still joins on location and date). Already
       // inside after(), so this awaits without delaying the response.
       await evaluateLiabilityBestEffort(reportId);
@@ -418,7 +418,7 @@ export async function submitReport(
     };
   }
 
-  // Default synchronous path — classify directly, no HTTP self-call.
+  // Default synchronous path. Classify directly, no HTTP self-call.
   let classification: Classification;
   try {
     const result = await runClassifyPipeline(reportId);
@@ -432,7 +432,7 @@ export async function submitReport(
   }
 
   // Liability attribution on the synchronous path: scheduled with after() so
-  // the spatial join never adds latency to — or can fail — the submission.
+  // the spatial join never adds latency to (or can fail) the submission.
   after(() => evaluateLiabilityBestEffort(reportId));
 
   return { ok: true, data: { id: reportId, classification } };
@@ -449,7 +449,7 @@ const reverseGeocodeSchema = z.object({
  * from the acquired fix. Server-side (matches the forward geocoder in
  * onboard/actions.ts) so we can send the required identifying User-Agent, which
  * a browser can't set. Best-effort: returns ok:false on any failure and the
- * caller leaves the field blank for manual entry — geocoding never blocks a
+ * caller leaves the field blank for manual entry, geocoding never blocks a
  * report.
  */
 export async function reverseGeocode(input: {
@@ -478,8 +478,8 @@ export async function reverseGeocode(input: {
     };
 
     // Prefer the structured fields. Nominatim's display_name is the full
-    // administrative chain — "Tribble Gap Road, Cumming, Forsyth County,
-    // Georgia, 30040, United States" — which is not how a resident describes
+    // administrative chain, "Tribble Gap Road, Cumming, Forsyth County,
+    // Georgia, 30040, United States", which is not how a resident describes
     // where the pothole is, and it overflows the address field on a phone.
     const a = data.address ?? {};
     const street = [a.house_number, a.road ?? a.pedestrian ?? a.footway]
@@ -511,7 +511,7 @@ export interface DuplicateCandidate {
   score: number;
 }
 
-// Bit-count lookup for each nibble (0-15) — used server-side for hamming distance.
+// Bit-count lookup for each nibble (0-15), used server-side for hamming distance.
 const NIBBLE_BITS = [0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4];
 
 function hammingDistance(a: string, b: string): number {
@@ -530,10 +530,10 @@ function hammingDistance(a: string, b: string): number {
  * can confirm or deny before any upload happens.
  *
  * Scoring (all components in [0, 1]):
- *   50% location  — how close is the existing report geographically?
- *   30% visual    — hamming distance between aHash values (0.5 if hash missing)
- *   20% category  — exact match / mismatch / unknown (0.5)
- * Threshold: 0.5 — below this we don't show the warning.
+ *   50% location. How close is the existing report geographically?
+ *   30% visual, hamming distance between aHash values (0.5 if hash missing)
+ *   20% category, exact match / mismatch / unknown (0.5)
+ * Threshold: 0.5. Below this we don't show the warning.
  */
 export async function checkPotentialDuplicate(params: {
   lat: number;
@@ -607,7 +607,7 @@ export async function checkPotentialDuplicate(params: {
  * We don't upload their photo; we just bump the existing work order's priority
  * so staff know the issue has more sightings.
  *
- * Deliberately callable without a session — anonymous reporting is a product
+ * Deliberately callable without a session. Anonymous reporting is a product
  * requirement, and this runs in the pre-submit deflection flow before any
  * account exists. That makes it a public write, so it is guarded three ways:
  * the id must be a UUID, the caller is rate limited, and the target must be a

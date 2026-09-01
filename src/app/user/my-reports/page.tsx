@@ -6,8 +6,8 @@ import { getCurrentResident, getMyReports } from "@/lib/resident-data";
 export async function generateMetadata(): Promise<Metadata> {
   const name = KNOWN_CITIES.cumming.name;
   return {
-    title: `Civic | ${name} — My Reports`,
-    description: `Track the community's reported issues in ${name} — status, progress, and resolution.`,
+    title: `Civic | ${name}, My Reports`,
+    description: `Track the community's reported issues in ${name}, status, progress, and resolution.`,
   };
 }
 

@@ -1,4 +1,4 @@
-/* Route-level skeleton — mirrors the Calendar page shell (header + nav/filter
+/* Route-level skeleton, mirrors the Calendar page shell (header + nav/filter
    bar + 6x7 month grid) so the swap to real content has no geometry shift.
    Placeholders ride the shared `.skeleton` shimmer (theme-aware, reduced-
    motion safe). */
@@ -7,7 +7,7 @@ const WEEK_KEYS = ["w1", "w2", "w3", "w4", "w5", "w6"];
 const DAY_KEYS = ["d1", "d2", "d3", "d4", "d5", "d6", "d7"];
 
 // Filter fields vary in width in the real bar (Division / Crew type / Crew /
-// Status) — stagger the placeholder widths to match.
+// Status), stagger the placeholder widths to match.
 const FILTERS = [
   { k: "f1", w: "w-44" },
   { k: "f2", w: "w-44" },
@@ -24,7 +24,7 @@ export default function Loading() {
       className="relative flex flex-col min-h-dvh bg-background"
     >
       <div className="relative flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
-        {/* Header — instant static text at the real weight, no shimmer. */}
+        {/* Header, instant static text at the real weight, no shimmer. */}
         <section className="mb-5 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
@@ -62,7 +62,7 @@ export default function Loading() {
             ))}
           </div>
 
-          {/* Month grid — weekday header + 6x7 cells, same shell as real. */}
+          {/* Month grid, weekday header + 6x7 cells, same shell as real. */}
           <div className="overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-card)]">
             <div className="grid grid-cols-7 border-b border-hairline bg-overlay/50">
               {DAY_KEYS.map((k) => (

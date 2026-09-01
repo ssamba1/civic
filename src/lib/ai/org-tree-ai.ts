@@ -15,7 +15,7 @@ import type { Result } from "@/lib/types";
 
    A city describes its operations in prose ("two road crews, we contract out
    tree removal, the sign shop is shared with the county"). Gemini proposes an
-   org_units tree — teams, subteams, crews, contractors — with categories,
+   org_units tree (teams, subteams, crews, contractors) with categories,
    skills, capacity and per-job cost filled in. The proposal is ALWAYS reviewed
    and approved by a human before any write (see /api/ai/org-tree); the model
    never writes to the DB. Server-only, like every other Gemini call.
@@ -105,7 +105,7 @@ Only use categories and crew types from the provided lists. Do not invent new on
 
 /**
  * Generate a proposed org tree from a city's operations description. Returns a
- * validated proposal for human review — NOT persisted. Rate-limited and
+ * validated proposal for human review, NOT persisted. Rate-limited and
  * retried like classifyPhoto; degrades to ok:false so the caller shows an error
  * rather than crashing.
  */
@@ -190,7 +190,7 @@ Produce the org tree.`;
 /**
  * Structural validation the model can't be trusted to self-enforce: unique
  * keys, resolvable non-cyclic parentKeys, contractors priced, and categories/
- * skills drawn only from the allowed lists. Pure — reused by the persist path
+ * skills drawn only from the allowed lists. Pure, reused by the persist path
  * and unit-tested without a model call.
  */
 export function validateTreeShape(

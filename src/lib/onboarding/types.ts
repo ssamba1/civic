@@ -3,7 +3,7 @@ import type { ReportCategory } from "@/lib/types";
 /* ==================================================================
    Shared data contract for the city onboarding flow.
 
-   Pure types only — imported by the client wizard AND the server
+   Pure types only, imported by the client wizard AND the server
    provisioning action, so this file must stay free of "use client" /
    "use server" directives and runtime-only deps.
    ================================================================== */

@@ -16,7 +16,7 @@ import { getStaffAccessForCity } from "@/lib/staff-access";
 import { TEAM_LIST } from "@/lib/teams";
 
 // Same rationale as the city calendar page: auth-gated per request, month
-// depends on `?month=` + "today" — never prerender or cache.
+// depends on `?month=` + "today", never prerender or cache.
 export const dynamic = "force-dynamic";
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -26,7 +26,7 @@ interface PageProps {
   searchParams: Promise<{ month?: string; crew?: string }>;
 }
 
-/** "YYYY-MM" for the current month in SERVER-LOCAL time — see the city
+/** "YYYY-MM" for the current month in SERVER-LOCAL time. See the city
  *  calendar page for the full local-vs-UTC rationale. */
 function currentMonth(): string {
   const now = new Date();
@@ -39,7 +39,7 @@ function todayLocalISO(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
-/** Day after `iso` (YYYY-MM-DD), UTC — exclusive upper bound for the
+/** Day after `iso` (YYYY-MM-DD), UTC, exclusive upper bound for the
  *  accessor's [fromISO, toISO) window. */
 function isoPlusOneDay(iso: string): string {
   const d = new Date(`${iso}T00:00:00.000Z`);
@@ -64,9 +64,9 @@ export async function generateMetadata({
   if (!city) return { title: "City not found | Civic" };
   const label = portalLabel(crewType);
   return {
-    title: `Civic | ${city.name}, ${city.state} — ${label} Calendar`,
+    title: `Civic | ${city.name}, ${city.state}. ${label} Calendar`,
     description: `Staff calendar of work orders landing for the ${label} crew in ${city.name}.`,
-    // Staff-operational surface — keep it out of search indexes like Members.
+    // Staff-operational surface. Keep it out of search indexes like Members.
     robots: { index: false, follow: false },
   };
 }
@@ -90,7 +90,7 @@ export default async function CrewPortalCalendarPage({
   const city = dbCity ?? (await fetchCityMock(slug));
   if (!city) notFound();
 
-  // Staff-operational gate — calendar has no PII, so demo access is fine.
+  // Staff-operational gate. Calendar has no PII, so demo access is fine.
   const access = await getStaffAccessForCity(slug);
   if (!access) {
     redirect(`/login?redirect=/city/${slug}/crew/${crewType}/calendar`);
@@ -104,7 +104,7 @@ export default async function CrewPortalCalendarPage({
   const fromISO = cells[0].iso;
   const toISO = isoPlusOneDay(cells[cells.length - 1].iso);
 
-  // Orders stay MONTH-fetched, same as the city calendar — the crew lock only
+  // Orders stay MONTH-fetched, same as the city calendar, the crew lock only
   // pins the client-side filter (see WorkOrderCalendar's lockedCrewType), it
   // doesn't narrow the server query.
   const [orders, crewsResult, crewTypeDefs] = dbCity

@@ -30,14 +30,14 @@ import { isValidTeamId, TEAM_LIST, TEAMS } from "@/lib/teams";
 import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
-   Crew dialog — create/edit a crew (the org level below a division).
+   Crew dialog, create/edit a crew (the org level below a division).
    Opened from the Crews rows on the members roster; the dialog reuses
    the member-modal chrome so create/edit crew feels identical to
-   invite/edit member. The old card-grid CrewsPanel is gone — crews
+   invite/edit member. The old card-grid CrewsPanel is gone, crews
    render as roster rows behind a filter chip in members-table.
    ================================================================== */
 
-/** Roster candidate — a city member as the crew dialog sees them. */
+/** Roster candidate. A city member as the crew dialog sees them. */
 export interface CrewCandidate {
   id: string;
   displayName: string | null;
@@ -118,7 +118,7 @@ export function CrewDialog({
   const [inviteName, setInviteName] = useState("");
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [invitePending, startInviteTransition] = useTransition();
-  // People invited from this dialog — appended to the candidate list so they
+  // People invited from this dialog, appended to the candidate list so they
   // can sit on the roster before the page refetches.
   const [invited, setInvited] = useState<CrewCandidate[]>([]);
 
@@ -127,7 +127,7 @@ export function CrewDialog({
   const typeId = useId();
   const activeId = useId();
 
-  // A crew's roster comes from its own division — the fetched division members
+  // A crew's roster comes from its own division, the fetched division members
   // plus anyone just invited from this dialog (same teamKey, deduped by id).
   const candidates = useMemo(() => {
     const base = members.filter((m) => m.teamKey === teamKey);
@@ -140,7 +140,7 @@ export function CrewDialog({
 
   // Dropdown options: the city's catalog (prop) plus any type created in this
   // session (localTypes), de-duped by key; then the current value if it's now
-  // unknown — its catalog row was deleted after the crew was typed — so editing
+  // unknown (its catalog row was deleted after the crew was typed), so editing
   // a crew never silently drops its own type.
   const typeOptions = useMemo(() => {
     const seen = new Set<string>();
@@ -215,7 +215,7 @@ export function CrewDialog({
         email,
         displayName,
         role: "staff_dispatcher", // crew members get console access for their division
-        teamKey, // the crew's division — always a real team in this dialog
+        teamKey, // the crew's division, always a real team in this dialog
         phone: null,
         crewIds: [], // roster membership lands on crew submit via setCrewMembers
       });
@@ -355,7 +355,7 @@ export function CrewDialog({
                 className={CONTROL_CLASS}
               />
             </label>
-            {/* Division is fixed after creation — moving a crew would silently
+            {/* Division is fixed after creation. Moving a crew would silently
                 orphan member assignments scoped to the old division. */}
             {editing ? (
               <div className="flex flex-col gap-1.5">
@@ -412,7 +412,7 @@ export function CrewDialog({
                   onChange={(e) => setActive(e.target.checked)}
                   className="h-3.5 w-3.5"
                 />
-                Active — offered when assigning work
+                Active, offered when assigning work
               </label>
             )}
           </div>
@@ -421,7 +421,7 @@ export function CrewDialog({
             <span className={FIELD_LABEL_CLASS}>
               Description{" "}
               <span className="font-normal text-faint">
-                optional — helps the AI pick between same-type crews
+                optional. Helps the AI pick between same-type crews
               </span>
             </span>
             <textarea
@@ -510,13 +510,13 @@ export function CrewDialog({
             <legend className={FIELD_LABEL_CLASS}>
               Members{" "}
               <span className="font-normal text-faint">
-                (from {teamShortLabel(teamKey)} — optional; create the crew now
+                (from {teamShortLabel(teamKey)}, optional; create the crew now
                 and staff it later, work can still route here)
               </span>
             </legend>
             {candidates.length === 0 ? (
               <p className="text-[12px] text-faint">
-                No members are assigned to this division yet — set a member's
+                No members are assigned to this division yet. Set a member's
                 team first, then add them to a crew.
               </p>
             ) : (

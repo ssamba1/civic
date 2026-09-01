@@ -44,7 +44,7 @@ export function TrendingFeed({ reports, limit = 25 }: TrendingFeedProps) {
   if (ranked.length === 0) {
     return (
       <p className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-6 text-center text-[14px] text-faint">
-        No open reports right now — the whole backlog is clear.
+        No open reports right now. The whole backlog is clear.
       </p>
     );
   }

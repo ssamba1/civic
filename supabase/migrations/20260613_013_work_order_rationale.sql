@@ -1,9 +1,9 @@
 -- =============================================================================
--- Civic – Work order AI rationale
+-- Civic. Work order AI rationale
 -- Migration: 20260613_013_work_order_rationale.sql
 --
 -- The AI work-order generator (work-order-ai.ts) returns a `rationale` string
--- explaining how it sized the crew, time, materials, and cost — the "show your
+-- explaining how it sized the crew, time, materials, and cost. The "show your
 -- work" a public-works reviewer needs to trust an AI-generated cost estimate.
 -- It was being discarded. This adds a nullable column to persist it.
 --

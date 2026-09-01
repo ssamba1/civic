@@ -5,7 +5,7 @@
 -- Two-stage architecture:
 --   Stage 1 (LLM-free): video clips → sampled frames → local ONNX road-damage
 --     detector → geo/visually clustered damage_detections. Continuous and
---     cheap — no model API cost.
+--     cheap. No model API cost.
 --   Stage 2 (LLM, on escalation only): a detection_cluster crossing the
 --     confidence threshold gets a Gemini "decision" run over in-DB context
 --     (SLA targets, crew catalog, nearby report history, past corrections).
@@ -17,7 +17,7 @@
 -- phase-2 RTSP puller and phase-3 phone-dashcam PWA plug in with no schema
 -- change; phase 1 only exercises 'upload'.
 --
--- Privacy: detection frames come from city cameras and are NOT blurred —
+-- Privacy: detection frames come from city cameras and are NOT blurred,
 -- they never enter a public bucket. Both new buckets are private; staff view
 -- frames via short-lived signed URLs minted server-side. A dispatched report
 -- gets a static placeholder as its public photo.
@@ -78,9 +78,9 @@ CREATE TABLE IF NOT EXISTS video_detection_clusters (
   id                  uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   city_id             uuid        NOT NULL REFERENCES cities (id) ON DELETE CASCADE,
   -- Representative point (best detection's location); NULL when the source
-  -- clip carried no GPS — such clusters can only be manually reviewed.
+  -- clip carried no GPS. Such clusters can only be manually reviewed.
   location            geography(POINT, 4326),
-  -- Detector class key (e.g. 'pothole', 'alligator_crack') — NOT the report
+  -- Detector class key (e.g. 'pothole', 'alligator_crack'), NOT the report
   -- category; the decision stage maps to a report category itself.
   class               text        NOT NULL,
   max_confidence      real        NOT NULL DEFAULT 0,
@@ -138,7 +138,7 @@ CREATE INDEX IF NOT EXISTS idx_damage_detections_clip ON damage_detections (clip
 CREATE INDEX IF NOT EXISTS idx_damage_detections_cluster ON damage_detections (cluster_id);
 
 -- ---------------------------------------------------------------------------
--- 2. RLS — default deny; staff-only within their city
+-- 2. RLS, default deny; staff-only within their city
 -- ---------------------------------------------------------------------------
 
 ALTER TABLE video_feeds        ENABLE ROW LEVEL SECURITY;
@@ -147,7 +147,7 @@ ALTER TABLE video_detection_clusters ENABLE ROW LEVEL SECURITY;
 ALTER TABLE damage_detections  ENABLE ROW LEVEL SECURITY;
 
 -- SELECT: staff of the owning city. Camera positions, GPS tracks, and raw
--- frame paths are operationally sensitive — no anon/resident read at all.
+-- frame paths are operationally sensitive. No anon/resident read at all.
 DROP POLICY IF EXISTS video_feeds_select_staff ON video_feeds;
 CREATE POLICY video_feeds_select_staff ON video_feeds
   FOR SELECT TO authenticated
@@ -170,7 +170,7 @@ CREATE POLICY damage_detections_select_staff ON damage_detections
 
 -- INSERT: staff can register feeds and clips for their own city. Detections,
 -- clusters, and all UPDATEs are pipeline-only writes (service role, bypasses
--- RLS) — no authenticated write policy on purpose.
+-- RLS). No authenticated write policy on purpose.
 DROP POLICY IF EXISTS video_feeds_insert_staff ON video_feeds;
 CREATE POLICY video_feeds_insert_staff ON video_feeds
   FOR INSERT TO authenticated
@@ -193,8 +193,8 @@ CREATE POLICY video_feeds_update_staff ON video_feeds
 -- ---------------------------------------------------------------------------
 -- Both buckets are PRIVATE (public = false) and get NO storage.objects
 -- policies: only the service role reads/writes them. Frames contain unblurred
--- faces/plates from city cameras and must never be publicly addressable —
--- staff UI access is via short-lived signed URLs minted server-side.
+-- faces/plates from city cameras and must never be publicly addressable.
+-- Staff UI access is via short-lived signed URLs minted server-side.
 
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('video-clips', 'video-clips', false)

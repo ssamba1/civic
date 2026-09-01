@@ -7,7 +7,7 @@ import { BUILTIN_CATEGORY_DEFS, type CategoryDef } from "./categories";
 export const CLASSIFICATION_SYSTEM_PROMPT =
   `You are an expert municipal infrastructure analyst embedded in a city 311 reporting system. ` +
   `You inspect citizen-submitted photos and classify infrastructure problems so the right city ` +
-  `crew is dispatched with the right priority. You are precise, consistent, and well-calibrated — ` +
+  `crew is dispatched with the right priority. You are precise, consistent, and well-calibrated, ` +
   `you never inflate severity to appear thorough, and you never dismiss genuine hazards. ` +
   `Your classifications feed directly into work-order routing and emergency dispatch.`;
 
@@ -16,75 +16,75 @@ export const CLASSIFICATION_SYSTEM_PROMPT =
  * category set (built-ins ∪ a city's custom issue types, issue #6). The CATEGORY
  * menu is rendered from data so a runtime-added type is offered to the model
  * with no code change; the rest of the prompt is fixed. Descriptions are
- * admin-authored free text for customs — whitespace is flattened so a multi-line
+ * admin-authored free text for customs. Whitespace is flattened so a multi-line
  * description can't break out of its list item into a new instruction block.
  */
 export function buildClassificationPrompt(
   categories: readonly CategoryDef[],
 ): string {
   const menu = categories
-    .map((c) => `- ${c.key} — ${c.description.replace(/\s+/g, " ").trim()}`)
+    .map((c) => `- ${c.key}, ${c.description.replace(/\s+/g, " ").trim()}`)
     .join("\n");
   return `Analyze the attached citizen photo and classify the infrastructure issue it depicts.
 
-## CATEGORY — choose the single best match
+## CATEGORY, choose the single best match
 ${menu}
 
-## SEVERITY SCALE (1–5)
-1 — Cosmetic only. No safety risk. Routine maintenance cycle.
+## SEVERITY SCALE (1-5)
+1, Cosmetic only. No safety risk. Routine maintenance cycle.
     Examples: light surface graffiti, minor paint fade, small surface scuff.
-2 — Minor. No immediate hazard. Schedule repair within 1–2 weeks.
+2, Minor. No immediate hazard. Schedule repair within 1-2 weeks.
     Examples: pothole <5 cm deep, hairline sidewalk crack, one missing bollard.
-3 — Moderate. Trip/tire hazard or actively worsening. Repair within 48–72 h.
-    Examples: pothole 5–20 cm deep, heaved sidewalk panel, debris blocking bike lane.
-4 — Significant. Injury or property-damage risk. Repair within 24 h.
+3, Moderate. Trip/tire hazard or actively worsening. Repair within 48-72 h.
+    Examples: pothole 5-20 cm deep, heaved sidewalk panel, debris blocking bike lane.
+4, Significant. Injury or property-damage risk. Repair within 24 h.
     Examples: pothole >20 cm, downed sign in live lane, flooded intersection, broken streetlight after dark.
-5 — Critical / life-safety. Dispatch immediately.
+5. Critical / life-safety. Dispatch immediately.
     Examples: active water-main flood, fallen tree blocking road, downed power line, open manhole.
 
 ## CONFIDENCE CALIBRATION
-0.90–1.00  Issue is clearly visible, well-lit, and unambiguous.
-0.70–0.89  Visible but partially obscured, poor lighting, or awkward angle.
-0.50–0.69  Issue is inferred from context; image is blurry, distant, or unclear.
-< 0.50     Too unclear to classify reliably — use category "other".
+0.90-1.00  Issue is clearly visible, well-lit, and unambiguous.
+0.70-0.89  Visible but partially obscured, poor lighting, or awkward angle.
+0.50-0.69  Issue is inferred from context; image is blurry, distant, or unclear.
+< 0.50     Too unclear to classify reliably. Use category "other".
 
 ## HAZARD RADIUS (hazard_radius_m)
 Estimate the radius in metres actively affected by this issue.
 Use 0 for purely cosmetic issues.
-Typical ranges: pothole 1–3 m · downed tree 10–30 m · water main break 20–100 m.
+Typical ranges: pothole 1-3 m · downed tree 10-30 m · water main break 20-100 m.
 
 ## NO ISSUE DETECTED (no_issue_detected)
 Set this to true ONLY when the photo shows no actual infrastructure damage or hazard at
-all — e.g. an intact road surface, a working streetlight, a clean wall, an empty lot with
+all, e.g. an intact road surface, a working streetlight, a clean wall, an empty lot with
 no dumping. When true, still fill in your best-guess category/severity, but the report will
 be routed to a human for manual review instead of being auto-dispatched to a crew.
 
-## ALTERNATE CATEGORIES — team ambiguity (alternate_categories)
+## ALTERNATE CATEGORIES, team ambiguity (alternate_categories)
 If the issue could reasonably be routed to more than one team/category (e.g. a pothole next
 to a clogged storm drain could plausibly be "pothole" OR "drainage"), list up to 2 other
 plausible categories here. Leave this an empty array [] when you are confident only one
 category applies. A non-empty list also routes the report to manual review, since the
 system cannot be sure which crew should own it.
 
-## OUTPUT — valid JSON only
+## OUTPUT, valid JSON only
 No markdown. No code fences. No prose before or after the JSON. Every field required.
 
 {
   "category": "<one of the category keys listed above>",
-  "subcategory": "<3–7 words, e.g. 'deep asphalt pothole with exposed base' or 'broken streetlight arm over lane'>",
-  "severity": <integer 1–5>,
+  "subcategory": "<3-7 words, e.g. 'deep asphalt pothole with exposed base' or 'broken streetlight arm over lane'>",
+  "severity": <integer 1-5>,
   "hazard_radius_m": <non-negative number>,
   "visible_size_estimate": "<measurement or description, e.g. '~30 cm wide × 10 cm deep' or '4 m cracked sidewalk panel'>",
   "is_emergency": <true only when severity is 5 AND there is active, immediate danger to life or traffic>,
-  "confidence": <float 0.00–1.00>,
-  "reasoning": "<2–3 sentences: (1) describe what you observe in the image, (2) explain why this category and severity were chosen over alternatives, (3) note any visual factors that raise or lower your confidence>",
+  "confidence": <float 0.00-1.00>,
+  "reasoning": "<2-3 sentences: (1) describe what you observe in the image, (2) explain why this category and severity were chosen over alternatives, (3) note any visual factors that raise or lower your confidence>",
   "no_issue_detected": <true only if no actual infrastructure problem is visible in the photo>,
-  "alternate_categories": [<0–2 other category strings that could also plausibly apply; [] if confident in a single category>]
+  "alternate_categories": [<0-2 other category strings that could also plausibly apply; [] if confident in a single category>]
 }`;
 }
 
 /**
- * Built-in classification prompt — the 12-category default, for callers without
+ * Built-in classification prompt, the 12-category default, for callers without
  * a city context (and byte-identical to the pre-#6 prompt for those 12).
  */
 export const CLASSIFICATION_PROMPT = buildClassificationPrompt(
@@ -98,11 +98,11 @@ export interface CorrectionExample {
 }
 
 /**
- * OUTFLANK #7 — human-in-the-loop feedback. Builds a per-city few-shot block
+ * OUTFLANK #7. Human-in-the-loop feedback. Builds a per-city few-shot block
  * from staff correction history (classification_feedback) to append to the
  * classification prompt. Returns "" when there are no corrections, so the base
  * prompt is unchanged for a fresh city. Only surfaces pairs a city's staff have
- * corrected repeatedly, framed as "double-check", not a hard override — the
+ * corrected repeatedly, framed as "double-check", not a hard override. The
  * photo is still the primary signal.
  */
 export function buildCorrectionGuidance(examples: CorrectionExample[]): string {
@@ -116,7 +116,7 @@ export function buildCorrectionGuidance(examples: CorrectionExample[]): string {
         `- When this looks like "${e.original_category}", this city's staff have re-classified it as "${e.corrected_category}" ${e.n} time${e.n === 1 ? "" : "s"}. Double-check before choosing "${e.original_category}".`,
     )
     .join("\n");
-  return `\n\n## PAST CORRECTIONS IN THIS CITY\nLocal staff have repeatedly corrected these classifications. Weigh them, but the photo remains the primary evidence — do not blindly apply a correction if the image clearly shows otherwise.\n${lines}`;
+  return `\n\n## PAST CORRECTIONS IN THIS CITY\nLocal staff have repeatedly corrected these classifications. Weigh them, but the photo remains the primary evidence. Do not blindly apply a correction if the image clearly shows otherwise.\n${lines}`;
 }
 
 /**
@@ -126,16 +126,16 @@ export function buildCorrectionGuidance(examples: CorrectionExample[]): string {
  */
 export const WORK_ORDER_SYSTEM_PROMPT =
   `You are a municipal public-works dispatcher and cost estimator for a small US city ` +
-  `(Cumming, Georgia — population ~7,000, North Atlanta metro). You convert a classified ` +
+  `(Cumming, Georgia, population ~7,000, North Atlanta metro). You convert a classified ` +
   `infrastructure problem into a concrete, dispatch-ready work order: the right crew, the ` +
   `materials and quantities they will carry, a realistic time-on-site, and a defensible cost ` +
-  `estimate in US dollars. You are practical and conservative — you do not over-order materials ` +
+  `estimate in US dollars. You are practical and conservative. You do not over-order materials ` +
   `or pad hours, and your cost estimates withstand a budget review.`;
 
 /**
  * User-facing work-order prompt. The caller appends the classification JSON.
  * Built per call: the crew-type menu is the city's own catalog (crew_types
- * table, migration 031) with the admin-written descriptions — the description
+ * table, migration 031) with the admin-written descriptions. The description
  * is what lets the model match "cracked sidewalk panel" to a concrete crew.
  */
 export interface PromptCrew {
@@ -145,10 +145,10 @@ export interface PromptCrew {
 }
 
 /**
- * "## CREWS" section — only when some crew type has SIBLING crews (≥2 of the
+ * "## CREWS" section, only when some crew type has SIBLING crews (≥2 of the
  * same type) and at least one of those carries a description to tell them
  * apart. Solo crews need no hint (the assigner finds them by type alone), and
- * description-less siblings give the model nothing to choose on — in both
+ * description-less siblings give the model nothing to choose on. In both
  * cases the section is omitted and the prompt stays byte-identical to today.
  */
 function buildCrewSection(crews: readonly PromptCrew[]): string {
@@ -172,12 +172,12 @@ function buildCrewSection(crews: readonly PromptCrew[]): string {
     .slice(0, 20)
     .map((c) => {
       const desc = c.description.replace(/\s+/g, " ").trim();
-      return `- "${c.name.replace(/\s+/g, " ").trim()}" (${c.crewType})${desc ? ` — ${desc}` : ""}`;
+      return `- "${c.name.replace(/\s+/g, " ").trim()}" (${c.crewType})${desc ? `, ${desc}` : ""}`;
     });
   return `
-## CREWS — this city fields multiple crews of the same type
+## CREWS, this city fields multiple crews of the same type
 ${lines.join("\n")}
-(When the descriptions clearly indicate which crew covers this problem — by area, specialty, or scope — set crew_hint to that crew's EXACT quoted name. Otherwise set crew_hint to null and dispatch will balance the load.)
+(When the descriptions clearly indicate which crew covers this problem, by area, specialty, or scope, set crew_hint to that crew's EXACT quoted name. Otherwise set crew_hint to null and dispatch will balance the load.)
 `;
 }
 
@@ -185,32 +185,32 @@ export function buildWorkOrderPrompt(
   crewTypes: readonly { key: string; description: string }[],
   crews: readonly PromptCrew[] = [],
 ): string {
-  // Descriptions are admin-authored free text headed into the prompt — flatten
+  // Descriptions are admin-authored free text headed into the prompt, flatten
   // whitespace so a multi-line description can't break out of its list item
   // and read as a new instruction block.
   const crewMenu = crewTypes
     .map((t) => {
       const desc = t.description.replace(/\s+/g, " ").trim();
-      return `- ${t.key}${desc ? ` — ${desc}` : ""}`;
+      return `- ${t.key}${desc ? `, ${desc}` : ""}`;
     })
     .join("\n");
   return `Given the infrastructure classification below, produce a dispatch-ready work order.
 
 ## ASSUMPTIONS
-- Blended crew labor rate: ~$75/hour (loaded — wage + equipment + overhead).
+- Blended crew labor rate: ~$75/hour (loaded, wage + equipment + overhead).
 - Small-city crews: a 2-person crew is typical for most repairs.
 - est_cost = labor (rate × crew-hours) + materials/equipment. Round to whole dollars.
-- Scale time and cost with the reported SEVERITY and visible size — a severity-4
+- Scale time and cost with the reported SEVERITY and visible size. A severity-4
   pothole takes longer and costs more than a severity-2 one of the same category.
 
-## CREW TYPES AVAILABLE IN THIS CITY — choose the single best match by what the crew does
+## CREW TYPES AVAILABLE IN THIS CITY, choose the single best match by what the crew does
 ${crewMenu}
 (Use the crew whose description covers the physical repair. Use null only when no listed crew fits, e.g. category "other".)
 ${buildCrewSection(crews)}
-## DEPARTMENT — choose the single best match
+## DEPARTMENT. Choose the single best match
 public_works · utilities · parks · code_enforcement · sanitation · other
 
-## OUTPUT — valid JSON only. No markdown, no prose, no code fences. Every field required.
+## OUTPUT, valid JSON only. No markdown, no prose, no code fences. Every field required.
 {
   "department": "<one of the department strings>",
   "crew_type": "<one of the crew type keys above, or null>",
@@ -218,6 +218,6 @@ public_works · utilities · parks · code_enforcement · sanitation · other
   "est_minutes": <integer, realistic time on site>,
   "materials": [ { "item": "<short name>", "qty": <integer ≥ 1> } ],
   "est_cost": <integer USD: labor + materials, rounded>,
-  "rationale": "<1–2 sentences: how you sized the crew, time, materials, and cost>"
+  "rationale": "<1-2 sentences: how you sized the crew, time, materials, and cost>"
 }`;
 }

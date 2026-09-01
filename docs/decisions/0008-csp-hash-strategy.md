@@ -1,4 +1,4 @@
-# 0008 — CSP strategy (hashes + selective nonce in the proxy)
+# 0008: CSP strategy (hashes + selective nonce in the proxy)
 
 - Status: **Accepted** (2026-07-08, documenting the WS4 decision)
 - Scope: how the Content-Security-Policy is constructed and applied.
@@ -32,5 +32,5 @@ middleware, which Next 16 exposes as `src/proxy.ts` (not `middleware.ts`).
 
 - Adding a new constant inline script means adding its hash (a prebuild step
   computes hashes from the source constants).
-- CSP changes are prod-only breakage, invisible to typecheck/vitest — they need
+- CSP changes are prod-only breakage, invisible to typecheck/vitest. They need
   a live-browser verification pass (documented with the WS4 checklist).

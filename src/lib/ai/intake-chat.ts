@@ -1,7 +1,7 @@
 /**
  * Conversational report intake helpers.
  *
- * Pure functions — no side effects, no env reads, safe to unit-test.
+ * Pure functions. No side effects, no env reads, safe to unit-test.
  * All AI calls live in /api/ai/intake/route.ts; this file only builds
  * prompts and parses responses.
  */
@@ -17,7 +17,7 @@ export interface ChatMessage {
 
 /**
  * Structured draft produced by the intake conversation.
- * This pre-fills the normal report submit form — it does NOT bypass
+ * This pre-fills the normal report submit form. It does NOT bypass
  * photo/blur/privacy checks.
  */
 export interface IntakeDraft {
@@ -72,7 +72,7 @@ export function buildIntakeSystemPrompt(): string {
 
 Your job is to gather the following information through a SHORT, friendly conversation:
   1. What is the problem? (category + description)
-  2. Where is it? (location_hint — street, intersection, landmark — optional)
+  2. Where is it? (location_hint, street, intersection, landmark, optional)
   3. How urgent / dangerous is it? (severity_hint 1-5, where 5 = immediate hazard)
   4. Is a photo needed to document this issue? (needs_photo true/false)
 
@@ -89,7 +89,7 @@ Severity guide: 1=minor cosmetic, 2=noticeable, 3=moderate, 4=serious safety ris
 
 Do NOT emit the draft until you have at least a category and a description. Ask follow-up questions if needed.
 Do NOT ask for names, contact info, or any personal details.
-Do NOT output the sentinel JSON until you are ready to finalize — only interim conversational text before that point.`;
+Do NOT output the sentinel JSON until you are ready to finalize, only interim conversational text before that point.`;
 }
 
 /**
@@ -137,7 +137,7 @@ export function parseIntakeResponse(raw: string): Result<IntakeResponse> {
   const sentinelIdx = raw.indexOf(DRAFT_SENTINEL);
 
   if (sentinelIdx === -1) {
-    // Interim conversational turn — no draft yet.
+    // Interim conversational turn. No draft yet.
     return {
       ok: true,
       data: {
@@ -171,7 +171,7 @@ export function parseIntakeResponse(raw: string): Result<IntakeResponse> {
 
   const replyText =
     beforeSentinel ||
-    "I've gathered enough information. Here's the draft report — please review and confirm before submitting.";
+    "I've gathered enough information. Here's the draft report, please review and confirm before submitting.";
 
   return {
     ok: true,

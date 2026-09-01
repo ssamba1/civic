@@ -220,7 +220,7 @@ describe("assemblePacket", () => {
     expect(packet.liability.contractorName).toBeNull();
   });
 
-  it("is deterministic — same input, identical JSON", () => {
+  it("is deterministic, same input, identical JSON", () => {
     const a = assemblePacket(warrantyInput());
     const b = assemblePacket(warrantyInput());
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));

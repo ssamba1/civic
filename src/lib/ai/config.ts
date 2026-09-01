@@ -1,6 +1,6 @@
 /**
  * Central AI configuration: pure constants + env reads.
- * No side effects, no external imports — safe to import anywhere (client or server).
+ * No side effects, no external imports, safe to import anywhere (client or server).
  */
 
 /**
@@ -15,14 +15,14 @@ export const GEMINI_MODEL = "gemini-2.5-flash-lite";
  * Per-attempt abort timeout for AI calls, in milliseconds.
  * Bounds the synchronous submit path: worst case ≈ (AI_MAX_RETRIES + 1) *
  * AI_TIMEOUT_MS + backoff. At 20s/1-retry that is ≈ 40s, inside typical
- * serverless function limits — the async path is the real fix for scale.
+ * serverless function limits. The async path is the real fix for scale.
  */
 export const AI_TIMEOUT_MS = 30000;
 
 /**
  * Max retry attempts (beyond the first try) for transient AI failures.
  * Set to 2 (3 attempts total): live Gemini calls intermittently fast-fail on
- * cold serverless instances, and retries (cheap — fast-fails back off in
+ * cold serverless instances, and retries (cheap, fast-fails back off in
  * <2s) collapse the per-submit failure rate. Pairs with the route maxDuration.
  */
 export const AI_MAX_RETRIES = 2;
@@ -55,7 +55,7 @@ export const AI_WORK_ORDER = process.env.AI_WORK_ORDER === "1";
  * city's active crews matching the work order's team + crew_type, ranked
  * staffed-before-hollow, then fewest open work orders, then name. Deterministic
  * (no extra Gemini call). Default OFF; staff can always assign/override
- * manually via the grid. Skipped for needs_manual_review reports — a human is
+ * manually via the grid. Skipped for needs_manual_review reports. A human is
  * about to look, and a category override would re-route the team anyway.
  * Server-only flag (no NEXT_PUBLIC_ prefix).
  */

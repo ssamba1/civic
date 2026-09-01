@@ -6,7 +6,7 @@ import { expect, type Page, test } from "playwright/test";
  * way. The `window.__civicGlobe` handle is a dev/test-only export from
  * components/map/globe-map.tsx.
  *
- * The map route defaults to the FLAT renderer (9a05f50 — the globe cost 8.7 MB
+ * The map route defaults to the FLAT renderer (9a05f50, the globe cost 8.7 MB
  * over 113 requests and ~10.5 s of blocked main thread), so the globe is opt-in
  * through the map controls. These specs opt in explicitly rather than assuming a
  * default; a regression that flips the default back would not silently pass.
@@ -54,7 +54,7 @@ test("/city/cumming/map renders the Cesium globe with report pins", async ({
   await expect(canvas.first()).toBeVisible({ timeout: 45_000 });
 
   // The globe holds the same corpus the flat map would draw. Entity ids are
-  // prefixed `pin:<reportId>` — the selection contract the Dispatch panel uses.
+  // prefixed `pin:<reportId>`. The selection contract the Dispatch panel uses.
   await page.waitForFunction(
     () =>
       (

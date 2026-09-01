@@ -18,8 +18,8 @@ export type { RetentionInput, RetentionSettings } from "./validate";
  * Read the retention policy for the acting admin's OWN city.
  *
  * The cityId parameter is gone on purpose. It was caller-supplied and never
- * checked against the admin's own city, so an admin of one city could read —
- * and, through updateRetentionSettings, rewrite — another city's raw-photo TTL,
+ * checked against the admin's own city, so an admin of one city could read,
+ * and, through updateRetentionSettings, rewrite, another city's raw-photo TTL,
  * which is a privacy control.
  */
 export async function getRetentionSettings(): Promise<

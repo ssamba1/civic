@@ -8,7 +8,7 @@ import { useCallback, useLayoutEffect, useRef, useState } from "react";
  * Measures the active child (the one carrying `data-pill-active="true"`) inside
  * the returned `trackRef` and reports the geometry an absolutely-positioned
  * indicator should occupy. The indicator animates between segments via a CSS
- * transition on `transform` + `width` — so callers get a smooth slide without
+ * transition on `transform` + `width`, so callers get a smooth slide without
  * any per-item width math, even when labels differ in length.
  *
  * Requirements on the caller:
@@ -46,7 +46,7 @@ export function useSlidingPill<T extends HTMLElement = HTMLDivElement>(
     });
   }, []);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: activeKey is an intentional extra dep — not read in the body, but it re-runs measure() so the pill re-aligns when the active segment changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: activeKey is an intentional extra dep. Not read in the body, but it re-runs measure() so the pill re-aligns when the active segment changes
   useLayoutEffect(() => {
     measure();
     const track = trackRef.current;

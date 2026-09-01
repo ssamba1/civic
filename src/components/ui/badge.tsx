@@ -23,7 +23,7 @@ const badgeVariants = cva(
   },
 );
 
-// Dot fill per status variant — the single spot of hue on an otherwise
+// Dot fill per status variant, the single spot of hue on an otherwise
 // grayscale chip. success/warning/danger use the muted status FILL tokens;
 // info uses the same slate-blue as the status.ts info tint (a state signal,
 // not Apple blue).

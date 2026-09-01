@@ -3,7 +3,7 @@ import { categoryToTeamDefault, TEAM_LIST, type TeamMeta } from "@/lib/teams";
 import type { ReportCategory } from "@/lib/types";
 
 /* ==================================================================
-   Onboarding presets — derived from the global team catalog.
+   Onboarding presets, derived from the global team catalog.
 
    Server-safe: imports only `TEAM_LIST` / `categoryToTeamDefault`
    (static data + the override-free resolver) from teams.ts, never

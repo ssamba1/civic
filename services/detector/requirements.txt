@@ -1,8 +1,8 @@
-# Civic detector sidecar. Pinned — a detector swap must be a deliberate commit,
+# Civic detector sidecar. Pinned. A detector swap must be a deliberate commit,
 # not a surprise from a transitive upgrade.
 #
 # LICENSE GATE: every package here is Apache-2.0/BSD/MIT. Do NOT add
-# `ultralytics` (AGPL-3.0) — see README.md.
+# `ultralytics` (AGPL-3.0). See README.md.
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 pydantic==2.10.4

@@ -1,4 +1,4 @@
-// ArcGIS Feature Service adapter (F5) — the primary real-data channel for the GA
+// ArcGIS Feature Service adapter (F5), the primary real-data channel for the GA
 // beachhead (ONBOARDING.md §10: GA 311 lives on ArcGIS, not Socrata). Pulls a
 // city's 311 / work-order layer over the standard REST query API, paginates, and
 // maps source rows → NormalizedReport. Pure HTTP; `fetchImpl` injectable.
@@ -174,7 +174,7 @@ export async function fetchArcGisReports(
     logger.warn("arcgis_max_records_hit", {
       url: cfg.url,
       maxRecords,
-      note: "import truncated — raise maxRecords to pull the full layer",
+      note: "import truncated. Raise maxRecords to pull the full layer",
     });
   }
 

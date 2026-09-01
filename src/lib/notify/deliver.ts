@@ -3,20 +3,20 @@ import "server-only";
 import { createLogger } from "@/lib/logger";
 
 /* ==================================================================
-   Notification delivery — the out-of-band channel.
+   Notification delivery, the out-of-band channel.
 
    Open311 GeoReport v2 has no push/webhooks, so the notification layer is ours
    to own. This is the email leg: a dependency-free Resend REST call (no SDK),
    env-gated, with a log fallback so demo builds SHOW intent without a key.
 
-   Config (all optional — absent → log-only no-op, never throws):
+   Config (all optional, absent → log-only no-op, never throws):
      RESEND_API_KEY     enables real sending
      NOTIFY_FROM_EMAIL  verified sender (default: a placeholder)
      NOTIFY_DISABLE=1   force log-only even when a key is present
 
    Channel policy: email is the durable, attachment-capable channel for the
    close-the-loop notifications (received / acknowledged / resolved). Anonymous
-   reporters have no email — callers pass `to: null` and this no-ops the email
+   reporters have no email, callers pass `to: null` and this no-ops the email
    leg; their channel is the in-app feed + (future) tokenized status page.
    ================================================================== */
 
@@ -31,7 +31,7 @@ export interface EmailMessage {
   heading: string;
   /** One or two short paragraphs of plain text. */
   body: string;
-  /** Optional resolution ("after") photo — the operational-transparency lever. */
+  /** Optional resolution ("after") photo, the operational-transparency lever. */
   photoUrl?: string | null;
   /** Optional deep link back to the report's status page. */
   reportUrl?: string | null;
@@ -80,7 +80,7 @@ function renderHtml(m: EmailMessage): string {
 }
 
 /**
- * Send one notification email. Never throws — returns a result the caller can
+ * Send one notification email. Never throws. Returns a result the caller can
  * log. Absent recipient/key/flag degrades to a console line so demo builds
  * still show what *would* have been delivered.
  */

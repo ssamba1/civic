@@ -1,21 +1,21 @@
 import type { ReportStatus } from "@/lib/types";
 
 /* ==================================================================
-   Status presentation — single source of truth.
+   Status presentation, single source of truth.
 
    Replaces the STATUS_LABEL / STATUS_TONE maps that were duplicated
    (and had drifted) across recent-reports, reports-explorer,
    report-detail, delegation-panel, and report-map.
 
    Two layers:
-   - STATUS_LABEL — canonical status → human label.
-   - STATUS_TONE  — status → semantic tone, the input to the chip
+   - STATUS_LABEL, canonical status → human label.
+   - STATUS_TONE, status → semantic tone, the input to the chip
      helpers below.
 
    The chip TEXT uses the theme-aware --status-*-fg tokens (defined in
    globals.css, flipped per light/dark) so the small label clears WCAG
    AA on the near-white light surface, while the pill FILL keeps the
-   bright system hue. Class strings are FULL LITERALS — Tailwind's
+   bright system hue. Class strings are FULL LITERALS. Tailwind's
    scanner only emits utilities it sees verbatim, so never build these
    by interpolating the tone into the class name.
    ================================================================== */
@@ -53,7 +53,7 @@ const TONE_TEXT: Record<StatusTone, string> = {
 
 // Outline + dot chip (matches ui/badge.tsx): quiet overlay fill + hairline
 // border in both themes, with a 6px `before:` pseudo-element dot carrying the
-// hue — the pseudo dot means the 19 existing <span> consumers convert without
+// hue. The pseudo dot means the 19 existing <span> consumers convert without
 // markup changes. Label text stays in the AA-tuned --status-*-fg tokens; the
 // dot uses the muted status FILL tokens (info = the slate-blue shared with
 // badge.tsx, a state signal, not Apple blue).

@@ -1,4 +1,4 @@
-﻿# Accessibility Audit — Civic Outreach App
+﻿# Accessibility Audit, Civic Outreach App
 
 **Date:** 2026-06-13  
 **Scope:** All src/**/*.tsx components (202 files)  
@@ -36,7 +36,7 @@
 
 ## P0 Issues (Blocking)
 
-### Report Photos with Empty Alt Text (A1–A3, A12)
+### Report Photos with Empty Alt Text (A1, A3, A12)
 
 Staff cannot identify issues without alt text. Affects work order review, triage, and decision-making.
 
@@ -57,14 +57,14 @@ Staff cannot identify issues without alt text. Affects work order review, triage
 
 ---
 
-### Form Inputs Without Labels (A4–A6)
+### Form Inputs Without Labels (A4, A6)
 
 Placeholders are not labels. Screen reader users have no context; users cannot file reports or log in.
 
 **Locations:**
-- report/page.tsx:406 — Address input (GPS fallback)
-- login-form.tsx:215 — Email input
-- login-form.tsx:225 — Password input
+- report/page.tsx:406, Address input (GPS fallback)
+- login-form.tsx:215, Email input
+- login-form.tsx:225, Password input
 
 **Fix:** Add proper <label> elements or ria-label attributes.
 
@@ -72,7 +72,7 @@ Placeholders are not labels. Screen reader users have no context; users cannot f
 
 ## P1 Issues (Should Fix)
 
-### A7–A8: Search Inputs Without aria-label
+### A7, A8: Search Inputs Without aria-label
 city-switcher.tsx:120 and staff-inbox.tsx:378 have search inputs with only placeholder text. When users type, placeholder vanishes and context is lost.
 
 **Fix:** Add ria-label="Search municipalities" and ria-label="Search work orders by address or category".
@@ -80,15 +80,15 @@ city-switcher.tsx:120 and staff-inbox.tsx:378 have search inputs with only place
 ---
 
 ### A9: Search Icon Without aria-hidden
-staff-inbox.tsx:376 — Decorative Search icon announced redundantly.
+staff-inbox.tsx:376, Decorative Search icon announced redundantly.
 
 **Fix:** Add ria-hidden="true".
 
 ---
 
-### A10–A11: Textareas Without Labels
-- photo-preview.tsx:228 — Issue description textarea
-- work-order-comments.tsx:150 — Comment textarea
+### A10, A11: Textareas Without Labels
+- photo-preview.tsx:228. Issue description textarea
+- work-order-comments.tsx:150, Comment textarea
 
 Screen reader users cannot identify the textarea purpose.
 
@@ -96,7 +96,7 @@ Screen reader users cannot identify the textarea purpose.
 
 ---
 
-### A13–A21: Decorative Clock Icons (9 instances)
+### A13, A21: Decorative Clock Icons (9 instances)
 Clock icons throughout the app (work order rows, analytics, maps) are announced redundantly by screen readers.
 
 **Locations:** work-order-row.tsx (203, 367, 471), work-order-detail.tsx (373), analytics/report-detail.tsx (427), analytics/reports-explorer.tsx (132), dashboard/recent-reports.tsx (190), map/fullscreen-map.tsx (530), teams/delegation-panel.tsx (327).
@@ -138,13 +138,13 @@ Focus ring may be subtle when tabbing on desktop. Test keyboard navigation; ensu
 ## Recommended Actions
 
 ### Tier 1 (Ship-Blocking)
-1. Fix report photo alts (A1, A2, A3, A12) — staff workflow blocker
-2. Add labels to form inputs (A4, A5, A6) — resident workflow blocker
+1. Fix report photo alts (A1, A2, A3, A12). Staff workflow blocker
+2. Add labels to form inputs (A4, A5, A6). Resident workflow blocker
 3. Add aria-label to search inputs (A7, A8)
 
 ### Tier 2 (Fix Soon)
 4. Label textareas (A10, A11)
-5. Mark decorative icons aria-hidden (A9, A13–A21)
+5. Mark decorative icons aria-hidden (A9, A13, A21)
 
 ### Tier 3 (Polish)
 6. Document icon-button convention (A22)
@@ -154,20 +154,20 @@ Focus ring may be subtle when tabbing on desktop. Test keyboard navigation; ensu
 
 ## Effort & Impact
 
-**Effort:** Low. Most fixes are 1–3 line changes (add label, add aria-label, add aria-hidden).
+**Effort:** Low. Most fixes are 1-3 line changes (add label, add aria-label, add aria-hidden).
 
 **Impact:** High. P0 issues block critical user flows:
 - Residents cannot file reports (login, address, description fields blocked)
 - Staff cannot review issues (photos not identifiable)
 
-**Violations:** WCAG 2.1 Level A — form labels, image alt text.
+**Violations:** WCAG 2.1 Level A, form labels, image alt text.
 
 ---
 
 ## Testing (Not in Scope, Requires Manual Verification)
 
 1. **Keyboard-only navigation:** No keyboard traps; all forms/buttons reachable
-2. **Screen reader testing:** NVDA or VoiceOver — verify form purposes, alt text quality
+2. **Screen reader testing:** NVDA or VoiceOver, verify form purposes, alt text quality
 3. **Focus visibility:** Outline visible at all breakpoints
 4. **Color contrast:** Verify WCAG AA on all text/background combos
 

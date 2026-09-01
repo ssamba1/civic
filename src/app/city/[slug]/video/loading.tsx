@@ -1,8 +1,8 @@
 /* Route-level skeleton for the video console. This route is force-dynamic and
    its server work (clips + clusters + batched signed URLs) is the slowest of
    any city tab, so without this the shell sat blank for the whole render.
-   Mirrors the real page's shell — same 1800px column, same pt-city-content
-   offset, same static header copy at its real weight — so the swap to real
+   Mirrors the real page's shell, same 1800px column, same pt-city-content
+   offset, same static header copy at its real weight, so the swap to real
    content has no geometry shift. Placeholders ride the shared `.skeleton`
    shimmer (theme-aware, reduced-motion safe via globals.css). */
 
@@ -18,7 +18,7 @@ export default function Loading() {
       className="flex flex-col min-h-dvh bg-background"
     >
       <div className="flex-grow mx-auto w-full max-w-[1800px] space-y-4 px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
-        {/* Header — static copy, real text, zero-shift swap. */}
+        {/* Header, static copy, real text, zero-shift swap. */}
         <section className="mb-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
             Video
@@ -30,7 +30,7 @@ export default function Loading() {
           </p>
         </section>
 
-        {/* KPI strip — 5 cells. */}
+        {/* KPI strip, 5 cells. */}
         <div className="overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-card)]">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
             {["k1", "k2", "k3", "k4", "k5"].map((k) => (
@@ -45,7 +45,7 @@ export default function Loading() {
           </div>
         </div>
 
-        {/* Clip stage — player surface plus its rail. */}
+        {/* Clip stage, player surface plus its rail. */}
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="skeleton aspect-video w-full rounded-[var(--radius-lg)]" />
           <div className="space-y-2">

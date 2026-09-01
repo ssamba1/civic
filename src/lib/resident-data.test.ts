@@ -51,7 +51,7 @@ vi.mock("@/lib/dashboard-data", async (importOriginal) => {
   };
 });
 
-// Analytics fetchers aren't under test — return inert values so morale composes.
+// Analytics fetchers aren't under test. Return inert values so morale composes.
 vi.mock("@/lib/analytics-data", () => ({
   fetchReportsTrend: async () => [],
   fetchTopNeighborhoods: async () => [],
@@ -61,10 +61,10 @@ vi.mock("@/lib/analytics-data", () => ({
 
 import { getCityMorale } from "./resident-data";
 
-describe("getCityMorale — resolvedThisWeek bucketed by resolution time", () => {
+describe("getCityMorale, resolvedThisWeek bucketed by resolution time", () => {
   it("counts a report FILED >7d ago but RESOLVED within the last week", async () => {
-    // Synthetic resolution time ≈ created + 3.5–7.5d. Filed 10d ago → resolved
-    // ≈ 2.5–6.5d ago, i.e. within the week. The old created-time logic
+    // Synthetic resolution time ≈ created + 3.5-7.5d. Filed 10d ago → resolved
+    // ≈ 2.5-6.5d ago, i.e. within the week. The old created-time logic
     // (age 10d > 7) would have wrongly excluded it.
     corpus.reports = [
       report({ id: "a", status: "closed", created_at: ago(10) }),

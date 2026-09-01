@@ -5,7 +5,7 @@
 //
 // These are INTEGRATION tests: they hit a real Supabase project with the anon
 // key (RLS-enforced) and the service-role key (RLS-bypassing) and assert the
-// default-deny policy model from migration 001. They are OPT-IN — the default
+// default-deny policy model from migration 001. They are OPT-IN, the default
 // hermetic `pnpm test` skips them so the unit suite never makes network calls.
 // Run them explicitly with the keys from .env.local (best-effort auto-loaded):
 //
@@ -34,7 +34,7 @@ function loadEnvLocal() {
       }
     }
   } catch {
-    // No .env.local — rely on the process environment.
+    // No .env.local, rely on the process environment.
   }
 }
 // Opt-in: only touch the network when explicitly requested, so the default
@@ -52,7 +52,7 @@ const HAS_ENV = OPTED_IN && Boolean(URL && ANON && SERVICE);
 // while the migration is still pending (apply via scripts/apply-012.mjs).
 const CHECK_012 = HAS_ENV && process.env.CHECK_MIGRATION_012 === "1";
 
-// Tables that anonymous callers must NEVER read directly — there is no anon
+// Tables that anonymous callers must NEVER read directly. There is no anon
 // SELECT policy on any of them (migration 001 §RLS). Public reads must go
 // through dashboard_reports_view instead.
 const ANON_DENIED_TABLES = [

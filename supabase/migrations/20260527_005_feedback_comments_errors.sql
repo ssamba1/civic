@@ -1,11 +1,11 @@
 -- =============================================================================
--- Civic – Classification Feedback, Work Order Comments, Error Log
+-- Civic. Classification Feedback, Work Order Comments, Error Log
 -- Migration: 20260527_005_feedback_comments_errors.sql
 --
 -- Adds:
---   classification_feedback — records every staff override of an AI category
---   work_order_comments     — per-work-order staff thread with Realtime
---   error_log               — structured server-side error capture with correlation IDs
+--   classification_feedback, records every staff override of an AI category
+--   work_order_comments. Per-work-order staff thread with Realtime
+--   error_log, structured server-side error capture with correlation IDs
 -- =============================================================================
 
 BEGIN;

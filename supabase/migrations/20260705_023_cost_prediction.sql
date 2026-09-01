@@ -1,5 +1,5 @@
 -- =============================================================================
--- Migration 023 — Cost prediction: actual_cost capture + category_cost_stats RPC
+-- Migration 023. Cost prediction: actual_cost capture + category_cost_stats RPC
 --
 -- Implements the design from docs/superpowers/specs/2026-07-01-cost-prediction-cold-start-design.md
 -- Decisions: per-city training, numeric(12,2) whole-dollars, compute-live,
@@ -16,7 +16,7 @@ BEGIN;
 -- ---------------------------------------------------------------------------
 
 -- Real spend entered by the worker at job close. Whole dollars, numeric(12,2)
--- pins the unit — no cents/dollars 100× ambiguity. NULL until reported.
+-- pins the unit, no cents/dollars 100× ambiguity. NULL until reported.
 -- This is the ONLY training signal for the cost predictor.
 ALTER TABLE work_orders
   ADD COLUMN IF NOT EXISTS actual_cost numeric(12,2);
@@ -27,15 +27,15 @@ ALTER TABLE work_orders
   ADD COLUMN IF NOT EXISTS actual_cost_excluded boolean NOT NULL DEFAULT false;
 
 -- ---------------------------------------------------------------------------
--- 2. category_cost_stats(_city_id) — per-city aggregate RPC
+-- 2. category_cost_stats(_city_id), per-city aggregate RPC
 --
 -- Returns one row per (city, category) from accepted actuals:
---   base         — mean actual_cost
---   avg_severity — mean classification severity
---   stddev       — population stddev of actual_cost
---   n            — count of accepted actuals
---   reliability  — sampleConf * dispersionConf in [0, 1)
---   tier         — 'low' | 'medium' | 'high'
+--   base. Mean actual_cost
+--   avg_severity. Mean classification severity
+--   stddev. Population stddev of actual_cost
+--   n, count of accepted actuals
+--   reliability, sampleConf * dispersionConf in [0, 1)
+--   tier, 'low' | 'medium' | 'high'
 --
 -- Caller derives predicted cost for a specific report as:
 --   mult      = clamp(report_severity / avg_severity, 0.6, 1.8)

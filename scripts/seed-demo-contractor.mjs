@@ -1,6 +1,6 @@
 // Seed the Northside Paving LLC contractor story behind the pothole
 // camera-demo: the vendor row, the completed capital job on Peachtree
-// Industrial Blvd, its live 24-month warranty, and the matching crew — then
+// Industrial Blvd, its live 24-month warranty, and the matching crew, then
 // backfill the already-seeded demo pothole report with a work order routed to
 // that crew and a contractor_warranty liability verdict.
 //
@@ -9,7 +9,7 @@
 // detail, the liability badge, and document retrieval all tell one story.
 //
 // The capital job's footprint runs exactly through the demo pothole location
-// (-84.14, 34.21 — CENTER in scripts/seed-demo-video-reports.mjs), inside the
+// (-84.14, 34.21, CENTER in scripts/seed-demo-video-reports.mjs), inside the
 // evaluator's 15 m MATCH_TOLERANCE_M, and the warranty window (2026-06-01 →
 // 2028-06-01) brackets any report created while the demo is current. Live
 // video dispatches (src/lib/video/decide.ts) now evaluate liability
@@ -63,7 +63,7 @@ const CREW = {
   name: VENDOR_NAME,
   crew_type: "paving",
   description:
-    "Contract pothole repair vendor under resurfacing agreement PW-2025-041. All pothole and pavement-failure work on the arterial corridors — Peachtree Industrial Blvd, Buford Hwy, Canton Hwy, Atlanta Road — routes here; repairs on those roads are covered by the vendor's 24-month warranty at no cost to the City.",
+    "Contract pothole repair vendor under resurfacing agreement PW-2025-041. All pothole and pavement-failure work on the arterial corridors, Peachtree Industrial Blvd, Buford Hwy, Canton Hwy, Atlanta Road, routes here; repairs on those roads are covered by the vendor's 24-month warranty at no cost to the City.",
 };
 
 const headers = {
@@ -197,7 +197,7 @@ const potholeReports = (reports ?? []).filter((r) => {
 });
 if (potholeReports.length === 0) {
   console.log(
-    "no canned video-detection pothole report found — run scripts/seed-demo-video-reports.mjs first (live dispatches handle themselves).",
+    "no canned video-detection pothole report found. Run scripts/seed-demo-video-reports.mjs first (live dispatches handle themselves).",
   );
 }
 
@@ -224,7 +224,7 @@ for (const report of potholeReports) {
     });
     console.log(`work order ${wo.id} assigned → ${CREW.name}`);
   } else {
-    console.log(`work order ${wo.id} already assigned — left alone`);
+    console.log(`work order ${wo.id} already assigned, left alone`);
   }
 
   // Upsert on the report_id PK: same shape evaluateReportLiability writes.

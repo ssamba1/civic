@@ -12,7 +12,7 @@ import { fetchCity } from "@/lib/dashboard-queries";
    Council-meeting report pack (NEXT_100 #51).
 
    Auto-generates the monthly infrastructure summary a city manager presents to
-   council — headline KPIs + category breakdown in a clean, print-to-PDF layout
+   council, headline KPIs + category breakdown in a clean, print-to-PDF layout
    (no PDF dependency; the browser's Print dialog does it). Reuses the same
    fetchCityStats / fetchCategoryBreakdown the dashboard uses.
    ================================================================== */
@@ -26,7 +26,7 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const city = await fetchCity(slug);
-  return { title: city ? `Civic | ${city.name} — Council Report` : "Civic" };
+  return { title: city ? `Civic | ${city.name}, Council Report` : "Civic" };
 }
 
 export default async function ReportPackPage({ params }: PageProps) {

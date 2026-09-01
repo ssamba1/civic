@@ -30,8 +30,8 @@ async function requireVideoStaff(
   const access = await getStaffAccessForCity(slug);
   if (access !== "real") return { ok: false, error: "forbidden" };
   const user = await getAuthUser();
-  // The dev bypass grants "real" without a session; refuse writes there too —
-  // clips need an attributable creator (reports.reporter_id is NOT NULL).
+  // The dev bypass grants "real" without a session; refuse writes there too.
+  // Clips need an attributable creator (reports.reporter_id is NOT NULL).
   if (!user) return { ok: false, error: "forbidden" };
   const db = createServerClient();
   const { data: city } = await db
@@ -51,7 +51,7 @@ const registerUploadSchema = z.object({
 
 /**
  * Step 1 of upload: mint a signed upload URL into the private video-clips
- * bucket. The browser PUTs the file straight to storage — a 200 MB clip never
+ * bucket. The browser PUTs the file straight to storage, a 200 MB clip never
  * transits a server action body.
  */
 export async function registerClipUpload(
@@ -89,7 +89,7 @@ const finalizeClipSchema = z.object({
   startLng: z.number().min(-180).max(180).nullable(),
   startLat: z.number().min(-90).max(90).nullable(),
   // Optional [{t,lng,lat}] GPS track (dashcam companion export). Re-validated
-  // server-side by parseTrack — malformed points are dropped, not stored.
+  // server-side by parseTrack. Malformed points are dropped, not stored.
   gpsTrack: z.unknown().optional(),
 });
 
@@ -107,7 +107,7 @@ export async function finalizeClip(
   if (!gate.ok) return gate;
   const { cityId, userId } = gate.data;
 
-  // A signed-URL path is caller-controlled on re-submit — re-anchor it to the
+  // A signed-URL path is caller-controlled on re-submit. Re-anchor it to the
   // caller's own city folder so one city's staff can't register another's clip.
   if (!parsed.data.storagePath.startsWith(`${cityId}/`)) {
     return { ok: false, error: "forbidden" };
@@ -218,7 +218,7 @@ const frameUrlSchema = z.object({
 
 /**
  * Short-lived signed URL for one evidence frame. Frames are unblurred city
- * footage in a private bucket — staff-only, city-scoped by path prefix, and
+ * footage in a private bucket, staff-only, city-scoped by path prefix, and
  * the URL expires in 10 minutes.
  */
 export async function getFrameUrl(

@@ -1,4 +1,4 @@
-/* Route-level skeleton — mirrors the member detail shell (back link + profile
+/* Route-level skeleton, mirrors the member detail shell (back link + profile
    header + stat tiles + activity timeline / reports table columns) so the swap
    to real content has no geometry shift. Placeholders ride the shared
    `.skeleton` shimmer (theme-aware, reduced-motion safe). */
@@ -58,7 +58,7 @@ export default function Loading() {
 
         {/* Activity timeline (left) + reports table (right). */}
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,7fr)_minmax(0,9fr)]">
-          {/* Activity — timeline nodes + connector rail. */}
+          {/* Activity, timeline nodes + connector rail. */}
           <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-5 shadow-[var(--shadow-card)]">
             <div className="mb-4 h-3.5 w-16 rounded skeleton" />
             <ol className="relative flex flex-col">
@@ -83,7 +83,7 @@ export default function Loading() {
             </ol>
           </div>
 
-          {/* Reports — unpadded card, bordered title header + table rows. */}
+          {/* Reports, unpadded card, bordered title header + table rows. */}
           <div className="overflow-hidden rounded-[var(--radius-lg)] border border-hairline bg-surface shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-3 sm:px-5">
               <div className="h-3.5 w-16 rounded skeleton" />

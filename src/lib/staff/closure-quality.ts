@@ -4,7 +4,7 @@
  * Prevents staff from closing work orders with single-word or generic reasons
  * that give residents zero information about what actually happened.
  *
- * Pure module — no I/O, no imports. Co-located tests: closure-quality.test.ts
+ * Pure module, no I/O, no imports. Co-located tests: closure-quality.test.ts
  */
 
 /** Normalise: lowercase, strip leading/trailing punctuation & whitespace. */
@@ -95,7 +95,7 @@ export function isGenericClosure(reason: string): boolean {
   const norm = normalise(reason);
   if (!norm) return true;
   if (norm.length < MIN_LENGTH) {
-    // Short strings must be an exact match to be blocked — allow short but
+    // Short strings must be an exact match to be blocked, allow short but
     // specific descriptions like "Crack sealed." (13 chars).  Exact-match the
     // raw short token; prefix check still applies below.
     if (GENERIC_EXACT.has(norm)) return true;
@@ -103,7 +103,7 @@ export function isGenericClosure(reason: string): boolean {
   if (GENERIC_EXACT.has(norm)) return true;
   // Prefix guard: only fire when there's no substantial extra content.
   // "resolved at 3pm after crew cleared debris" → starts with "resolved" but
-  // is 40+ chars — pass through.
+  // is 40+ chars, pass through.
   if (norm.length <= MIN_LENGTH + 10) {
     for (const prefix of GENERIC_PREFIX) {
       if (norm.startsWith(prefix)) return true;

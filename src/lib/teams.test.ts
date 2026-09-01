@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from "vitest";
 
-// categoryToTeam reads getCategoryOverridesSnapshot — mock it so tests are deterministic
+// categoryToTeam reads getCategoryOverridesSnapshot, mock it so tests are deterministic
 vi.mock("@/lib/category-overrides", () => ({
   getCategoryOverridesSnapshot: vi.fn(() => ({})),
 }));
@@ -142,7 +142,7 @@ describe("categoryToTeam (with override)", () => {
   it("ignores overrides on the server and returns the baseline", async () => {
     // Regression: /r/[token] is a server component that resolves a report's
     // owning team. Reading the client-only snapshot there threw and took the
-    // whole page down mid-stream — the visitor saw "A server error occurred"
+    // whole page down mid-stream, the visitor saw "A server error occurred"
     // after a 200 had already been sent. Overrides are a per-browser staff
     // preference, so the baseline is the server's correct answer, not a
     // degraded one.

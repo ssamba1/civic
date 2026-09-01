@@ -4,7 +4,7 @@
 // integration harness as rls.test.ts: RUN_RLS_TESTS=1 + keys from .env.local.
 //
 // Policy under test: crew rosters name staff, so unlike city_teams (public
-// read) both tables are staff-only — anonymous callers must never read or
+// read) both tables are staff-only. Anonymous callers must never read or
 // write them.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -23,7 +23,7 @@ function loadEnvLocal() {
       }
     }
   } catch {
-    // No .env.local — rely on the process environment.
+    // No .env.local, rely on the process environment.
   }
 }
 const OPTED_IN = process.env.RUN_RLS_TESTS === "1";
@@ -36,7 +36,7 @@ const HAS_ENV = OPTED_IN && Boolean(URL && ANON && SERVICE);
 
 // The service-role control assumes migration 030 is applied to the target DB.
 // Gate it (mirrors CHECK_MIGRATION_012 in rls.test.ts) so a pending migration
-// doesn't read as a test regression; the anon-deny tests hold either way — a
+// doesn't read as a test regression; the anon-deny tests hold either way, a
 // missing table also denies.
 const CHECK_030 = HAS_ENV && process.env.CHECK_MIGRATION_030 === "1";
 

@@ -5,7 +5,7 @@ import type { ClaimPacket } from "@/lib/liability/types";
 
    Pure, synchronous, DB-free: `claims.packet` is an immutable jsonb
    SNAPSHOT of what the city asserted at send time. If a capital job row is
-   corrected six months later, the claim as sent must still be reproducible —
+   corrected six months later, the claim as sent must still be reproducible,
    so nothing here may read live data, and field order is fixed so two
    assemblies of the same input serialize byte-identically.
    ================================================================== */
@@ -33,7 +33,7 @@ export interface PacketInput {
     address: string | null;
     lng: number;
     lat: number;
-    /** Capture time — reports.created_at, or the cluster's last sighting. */
+    /** Capture time, reports.created_at, or the cluster's last sighting. */
     observedAt: string;
     /** reports.source; 'camera' unlocks the observation-history line. */
     source?: string | null;
@@ -67,7 +67,7 @@ function plural(n: number, word: string): string {
 }
 
 /**
- * Camera evidence is materially stronger than one citizen photo — N passes over
+ * Camera evidence is materially stronger than one citizen photo. N passes over
  * M days is a persistence argument, not a snapshot. Say so, but only when the
  * cluster actually has repeat sightings.
  */
@@ -118,8 +118,8 @@ function requestedAction(input: PacketInput, observationCount: number): string {
 }
 
 /**
- * Build the immutable claim packet. Field order below is the wire order —
- * keep it stable; `claims.packet` rows written by earlier releases are
+ * Build the immutable claim packet. Field order below is the wire order.
+ * Keep it stable; `claims.packet` rows written by earlier releases are
  * compared against it.
  */
 export function assemblePacket(input: PacketInput): ClaimPacket {

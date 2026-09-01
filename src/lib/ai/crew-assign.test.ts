@@ -116,7 +116,7 @@ describe("pickCrew", () => {
 });
 
 // ---------------------------------------------------------------------------
-// autoAssignCrew — chainable supabase mock. Each from(table) call consumes the
+// autoAssignCrew, chainable supabase mock. Each from(table) call consumes the
 // next queued response for that table; every builder method returns the chain
 // and awaiting it resolves the response (mirrors supabase-js's thenable API).
 // ---------------------------------------------------------------------------
@@ -164,7 +164,7 @@ function mockDb(queues: Record<string, MockResponse[]>) {
           entry.filters[`is:${col}`] = val;
           return chain;
         },
-        // biome-ignore lint/suspicious/noThenProperty: intentional thenable — supabase-js query builders resolve via then(), the mock must mirror that.
+        // biome-ignore lint/suspicious/noThenProperty: intentional thenable, supabase-js query builders resolve via then(), the mock must mirror that.
         then(
           resolve: (value: MockResponse) => unknown,
           reject?: (reason: unknown) => unknown,
@@ -259,7 +259,7 @@ describe("autoAssignCrew", () => {
       crew_members: [{ data: [{ crew_id: "alpha" }, { crew_id: "bravo" }] }],
       work_orders: [
         {
-          // Alpha's only assignment belongs to a rejected report — dead work,
+          // Alpha's only assignment belongs to a rejected report. Dead work,
           // never completed_at-stamped. Counting it would flip the pick to
           // Bravo; excluding it makes both 0 and Alpha wins the name tie.
           data: [

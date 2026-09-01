@@ -13,7 +13,7 @@ import { createLogger } from "@/lib/logger";
    Gemini is our classifier already, so translation is free of a new dependency.
 
    Graceful by contract: no key, empty text, target === source, or any model
-   failure returns the ORIGINAL text — a translation miss must never blank a
+   failure returns the ORIGINAL text. A translation miss must never blank a
    page or drop a report's description.
    ================================================================== */
 
@@ -42,7 +42,7 @@ export function isLangCode(v: string | undefined | null): v is LangCode {
 //
 // BOUNDED on purpose: the key contains attacker-supplied text (the translate
 // route accepts arbitrary strings), so an unbounded Map is a memory-exhaustion
-// vector — every distinct input pins a new entry for the life of the process.
+// vector, every distinct input pins a new entry for the life of the process.
 // Insertion-ordered eviction gives us a cheap LRU-ish policy: Map iterates in
 // insertion order, so the oldest key is always first.
 const CACHE_MAX_ENTRIES = 2000;
@@ -77,7 +77,7 @@ async function translateOne(text: string, target: LangCode): Promise<string> {
     });
     const prompt =
       `Translate the following civic-service message into ${SUPPORTED_LANGS[target]}. ` +
-      "Return ONLY the translation — no notes, no quotes, no markdown. Keep it " +
+      "Return ONLY the translation. No notes, no quotes, no markdown. Keep it " +
       `natural and plain.\n\n${trimmed}`;
     const result = await withRetry(
       (signal) =>

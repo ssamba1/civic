@@ -52,7 +52,7 @@ function compatScore(category: string, jobType: string): number {
   return CATEGORY_JOB_COMPAT[category]?.includes(jobType) ? 1 : 0;
 }
 
-/** Spec §3.3 — 50% distance, 30% category/job-type compatibility, 20% footprint
+/** Spec §3.3-50% distance, 30% category/job-type compatibility, 20% footprint
  *  provenance. Visible in the UI, never a bare "contractor liable". */
 function confidenceFor(
   distanceM: number,
@@ -78,7 +78,7 @@ function byDistanceThenRecency(a: CapitalJobRow, b: CapitalJobRow): number {
  * Precedence when both hit: utility_restoration > contractor_warranty. A trench
  * cut through new pavement is the permittee's failure, and paving contracts
  * routinely exclude third-party cuts. Documented default, not silently
- * hardcoded — the test suite locks it.
+ * hardcoded, the test suite locks it.
  */
 export function pickVerdict(
   jobs: CapitalJobRow[],
@@ -142,7 +142,7 @@ export function pickVerdict(
   }
 
   // 6. No hit. Only call it the city's bill when the city actually HAS source
-  // data — an empty capital_jobs table reported as "city pays" is the
+  // data, an empty capital_jobs table reported as "city pays" is the
   // silent-failure trap spec §3.2 calls out by name.
   return report.hasSourceData
     ? { ...UNMATCHED, verdict: "city_cost", confidence: 0.5 }
@@ -154,7 +154,7 @@ export function pickVerdict(
  *
  * Best-effort by construction: every DB failure degrades to an `unknown`
  * verdict rather than a fabricated `city_cost`. Called fire-and-forget from
- * report submission — it must never block or fail a resident's report.
+ * report submission. It must never block or fail a resident's report.
  */
 export async function evaluateReportLiability(
   reportId: string,

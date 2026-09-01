@@ -8,7 +8,7 @@ const logger = createLogger("[sla-escalate]");
 
 // Priority bump applied to an overdue work order so it floats up the grid sort.
 const ESCALATION_PRIORITY_BUMP = 25;
-// Statuses that still count as "open backlog" — a report already closed or
+// Statuses that still count as "open backlog". A report already closed or
 // rejected/merged is never escalated even if its work order lacks completed_at.
 const BACKLOG_STATUSES = new Set(["open", "dispatched", "in_progress"]);
 
@@ -24,7 +24,7 @@ const BACKLOG_STATUSES = new Set(["open", "dispatched", "in_progress"]);
  * the self-hosted box can hit it headlessly. Mirrors the notify-drain pattern.
  */
 export async function POST(request: Request) {
-  // IP throttle atop the auth/bearer gate — a leaked secret or a compromised
+  // IP throttle atop the auth/bearer gate, a leaked secret or a compromised
   // staff session still can't hammer the escalation scan.
   const rl = checkRateLimit(`sla_escalate:${clientIp(request)}`, {
     windowMs: 60_000,
@@ -106,7 +106,7 @@ export async function POST(request: Request) {
     for (const wo of overdue) {
       const status = statusById.get(wo.report_id);
       if (!status || !BACKLOG_STATUSES.has(status)) {
-        // Report is closed/rejected/merged — mark escalated_at so it drops out
+        // Report is closed/rejected/merged, mark escalated_at so it drops out
         // of future scans, but take no escalation action.
         await db
           .from("work_orders")
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
         continue;
       }
 
-      const note = `SLA breached (due ${wo.due_at}) — auto-escalated, priority raised +${ESCALATION_PRIORITY_BUMP}`;
+      const note = `SLA breached (due ${wo.due_at}), auto-escalated, priority raised +${ESCALATION_PRIORITY_BUMP}`;
       // Timeline note (best-effort; report_updates ships in migration 025).
       const { error: noteErr } = await db.from("report_updates").insert({
         report_id: wo.report_id,

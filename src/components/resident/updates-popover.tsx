@@ -33,7 +33,7 @@ const FILTER_OPTIONS: { value: FeedFilter; label: string }[] = [
 ];
 
 // color is set only when the notification type IS a status (resolved/status
-// update) — that's the one place hue is warranted here (state, not
+// update). That's the one place hue is warranted here (state, not
 // decoration). Announcement/comment stay grayscale, rendered via swatchClass
 // below instead of an inline tint.
 const TYPE_META: Record<
@@ -46,9 +46,9 @@ const TYPE_META: Record<
   comment: { icon: MessageSquare, label: "Comment" },
 };
 
-// Exit-animation duration (ms) — kept in sync with the `duration-150` enter so
+// Exit-animation duration (ms), kept in sync with the `duration-150` enter so
 // the close mirrors the open. Used to defer unmount until the CSS animate-out
-// finishes (no framer-motion / AnimatePresence available — no new deps).
+// finishes (no framer-motion / AnimatePresence available, no new deps).
 const EXIT_MS = 150;
 
 export function UpdatesPopover({ active = false }: { active?: boolean }) {
@@ -80,7 +80,7 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
     return () => clearTimeout(id);
   }, [open, dropdownMounted]);
 
-  // Animated dismiss for the detail modal — plays the exit variant, then clears.
+  // Animated dismiss for the detail modal, plays the exit variant, then clears.
   const closeDetail = useCallback(() => {
     setDetailClosing(true);
     setTimeout(() => {
@@ -94,7 +94,7 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
 
   // Fetch the feed. Shared by the lazy first-open effect and the error-state
   // Retry button. `loadTick` bumps to force a re-fetch after a failure (the
-  // open-effect alone won't re-fire — its deps don't change on retry).
+  // open-effect alone won't re-fire. Its deps don't change on retry).
   const [loadTick, setLoadTick] = useState(0);
   const retry = useCallback(() => {
     setError(null);
@@ -278,7 +278,7 @@ export function UpdatesPopover({ active = false }: { active?: boolean }) {
         onRetry={retry}
       />
 
-      {/* Desktop dropdown — hidden on mobile, shown on sm+. Stays mounted
+      {/* Desktop dropdown. Hidden on mobile, shown on sm+. Stays mounted
           through the exit animation via dropdownMounted/dropdownClosing so
           close mirrors the open instead of snapping out. */}
       {dropdownMounted && (
@@ -447,7 +447,7 @@ function UpdatesFeedBody({
       <div className="px-4 py-10 text-center text-[13px] text-faint">
         {filter === "unread"
           ? "You're all caught up."
-          : "No updates yet — file a report to start tracking it here."}
+          : "No updates yet. File a report to start tracking it here."}
       </div>
     );
   }
@@ -551,7 +551,7 @@ function MobileUpdatesSheet({
   // Seed from matchMedia on the first client render so we don't paint a null
   // sheet (and miss the user's tap) for one frame on mobile. SSR yields false,
   // but BottomSheet itself renders null until its own mount effect, so the
-  // first client render still matches the server output — no hydration mismatch.
+  // first client render still matches the server output, no hydration mismatch.
   const [isMobile, setIsMobile] = useState(
     () =>
       typeof window !== "undefined" &&
@@ -571,7 +571,7 @@ function MobileUpdatesSheet({
   return (
     <BottomSheet open={open} onClose={onClose} title="Updates">
       <div className="-mx-5">
-        {/* Reuse the filter bar (without the close button — sheet header handles it) */}
+        {/* Reuse the filter bar (without the close button, sheet header handles it) */}
         <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-hairline">
           <PillGroup
             options={FILTER_OPTIONS}

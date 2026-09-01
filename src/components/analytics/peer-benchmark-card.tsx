@@ -4,7 +4,7 @@ import { getPeerBenchmark } from "@/lib/analytics/peer-benchmark";
    Peer-city benchmark card (NEXT_100 #40).
 
    "You resolve reports faster than X% of comparable cities." Sells itself to a
-   city manager — no incumbent shows cross-city comparison. Server component:
+   city manager. No incumbent shows cross-city comparison. Server component:
    fetches the anonymized RPC and renders, or nothing when there's no peer data.
    ================================================================== */
 
@@ -41,7 +41,7 @@ export async function PeerBenchmarkCard({ cityId }: { cityId: string }) {
         </div>
         <div className="flex items-baseline gap-1">
           <span className="text-[32px] font-semibold tabular-nums text-foreground">
-            {b.resolution_rate ?? "—"}
+            {b.resolution_rate ?? "-"}
           </span>
           <span className="text-[15px] text-faint">% resolved</span>
         </div>

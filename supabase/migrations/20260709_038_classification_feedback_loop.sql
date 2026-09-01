@@ -1,6 +1,6 @@
--- 038 classification feedback loop (OUTFLANK #7 — human-in-the-loop correction)
+-- 038 classification feedback loop (OUTFLANK #7, human-in-the-loop correction)
 -- Storage already exists: staff category overrides write classification_feedback
--- (migration 005, writer in staff/actions.ts). This closes the loop — an
+-- (migration 005, writer in staff/actions.ts). This closes the loop. An
 -- aggregate the classify pipeline reads to inject the city's most common
 -- correction pairs as few-shot guidance into the next classification prompt.
 -- A per-city compounding moat: the model gets better at each city's quirks the

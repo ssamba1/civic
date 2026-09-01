@@ -52,7 +52,7 @@ export default function TeamsIndexPage() {
               Pick a department
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-subtle">
-              Each team gets its own live queue, map, and analytics — scoped to
+              Each team gets its own live queue, map, and analytics. Scoped to
               the categories it owns. Choose a department to open its dashboard.
             </p>
           </section>

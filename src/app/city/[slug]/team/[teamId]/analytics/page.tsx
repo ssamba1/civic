@@ -28,7 +28,7 @@ export async function generateMetadata({
   const resolved = await resolveCity(slug);
   if (!resolved) return { title: "Team not found | Civic" };
   return {
-    title: `Civic | ${TEAMS[teamId].shortLabel} — ${resolved.name} Analytics`,
+    title: `Civic | ${TEAMS[teamId].shortLabel}, ${resolved.name} Analytics`,
     description: `Operational analytics for ${TEAMS[teamId].label} in ${resolved.name}, ${resolved.state}.`,
   };
 }
@@ -58,7 +58,7 @@ export default async function TeamAnalyticsPage({ params }: PageProps) {
               Analytics
             </h1>
             <p className="text-[13px] text-faint">
-              {meta.shortLabel} operational signal — resolution, backlog, and
+              {meta.shortLabel} operational signal, resolution, backlog, and
               where it&apos;s happening.
             </p>
           </div>

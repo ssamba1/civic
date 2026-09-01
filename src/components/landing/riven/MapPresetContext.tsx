@@ -35,7 +35,7 @@ const LS_TWEAKS = "civic-map-tweaks";
 export function MapPresetProvider({ children }: { children: ReactNode }) {
   // Start at the default so SSR and the first client render agree; hydrate the
   // real value from URL/localStorage in an effect AFTER commit (reading storage
-  // during render diverges SSR/CSR and breaks hydration — see memory).
+  // during render diverges SSR/CSR and breaks hydration. See memory).
   const [presetId, setPresetIdState] = useState<string>(DEFAULT_PRESET_ID);
   const [tweaksVisible, setTweaksVisibleState] = useState<boolean>(false);
 

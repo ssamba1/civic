@@ -35,7 +35,7 @@ export function ContractorManager({ contractors: initial }: Props) {
       return;
     }
 
-    // Optimistically add — server will revalidate
+    // Optimistically add. Server will revalidate
     const newRow: ContractorRow = {
       id: result.data.id,
       city_id: "",

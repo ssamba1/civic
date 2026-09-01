@@ -1,10 +1,10 @@
 -- =============================================================================
--- Civic – Outbound webhook endpoints (NEXT_100 #79)
+-- Civic, Outbound webhook endpoints (NEXT_100 #79)
 -- Migration: 20260709_047_webhooks.sql
 --
 -- Stores registered webhook endpoints per city. Secrets are stored plaintext
 -- (hashed at-rest by Supabase storage encryption); the admin UI generates a
--- random secret at registration time — users copy it once.
+-- random secret at registration time, users copy it once.
 -- RLS: read/write for admin role only. No resident/staff access.
 -- =============================================================================
 

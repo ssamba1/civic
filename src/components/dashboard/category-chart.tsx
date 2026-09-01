@@ -105,7 +105,7 @@ function CategoryChartInner({
                 </span>
               </div>
               <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-overlay">
-                {/* biome-ignore lint/a11y/useSemanticElements: role="meter" intentional — native <meter> renders a UA-styled gauge that cannot reproduce this custom gradient progress bar */}
+                {/* biome-ignore lint/a11y/useSemanticElements: role="meter" intentional, native <meter> renders a UA-styled gauge that cannot reproduce this custom gradient progress bar */}
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{

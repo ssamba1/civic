@@ -1,6 +1,6 @@
 // Empirical test: does Carto's free vector basemap carry building-height data,
 // and does Cumming, GA have enough buildings for a 3D fill-extrusion hero to
-// look good? Standalone maplibre (CDN) — does NOT touch the app.
+// look good? Standalone maplibre (CDN). Does NOT touch the app.
 // Usage: node scripts/test3d.mjs [styleUrl] [zoom] [outPath]
 import { chromium } from "playwright";
 

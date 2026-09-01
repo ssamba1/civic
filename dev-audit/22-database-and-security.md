@@ -6,15 +6,15 @@
 
 | File | Line | Risk | Finding | Fix |
 |------|------|------|---------|-----|
-| `src/app/login/login-form.tsx` | 14–28 | P2 | Hardcoded dev email + password in source: `DEV_EMAIL = "admin@civicdemo.com"`, `DEV_PASSWORD = "civic-admin-2026"`. Guarded by `NODE_ENV !== "production"` so not active in prod, but credentials are visible in git history and any clone. | Move to env vars: `.env.local.example` with dummy values, or use Supabase test users API instead of hardcoding. Keep the guard but remove hardcoded strings. |
-| `supabase/migrations/20260527_001_initial_schema.sql` | — | P2 | Classifications + work_orders have RLS enabled but no INSERT policies. Only SELECT/UPDATE. Classifier + dispatch actions use service-role bypass to insert, which is intentional. But if anyone accidentally queries with cookie-auth and tries `.insert()`, they get 404 Not Found (misleading). Consider explicit deny policy with clearer message. | Add explicit INSERT policy with `AS (false)` to clarify: `CREATE POLICY classifications_deny_insert ON classifications FOR INSERT AS (false)`. Same for work_orders. Optional but improves UX of RLS errors. |
+| `src/app/login/login-form.tsx` | 14-28 | P2 | Hardcoded dev email + password in source: `DEV_EMAIL = "admin@civicdemo.com"`, `DEV_PASSWORD = "civic-admin-2026"`. Guarded by `NODE_ENV !== "production"` so not active in prod, but credentials are visible in git history and any clone. | Move to env vars: `.env.local.example` with dummy values, or use Supabase test users API instead of hardcoding. Keep the guard but remove hardcoded strings. |
+| `supabase/migrations/20260527_001_initial_schema.sql` | - | P2 | Classifications + work_orders have RLS enabled but no INSERT policies. Only SELECT/UPDATE. Classifier + dispatch actions use service-role bypass to insert, which is intentional. But if anyone accidentally queries with cookie-auth and tries `.insert()`, they get 404 Not Found (misleading). Consider explicit deny policy with clearer message. | Add explicit INSERT policy with `AS (false)` to clarify: `CREATE POLICY classifications_deny_insert ON classifications FOR INSERT AS (false)`. Same for work_orders. Optional but improves UX of RLS errors. |
 | `src/lib/db/client.ts` | 7 | P1 | Service-role client initialized with `SUPABASE_SERVICE_ROLE_KEY` from env, but `.env` is not in repo (good). However, there's no audit trail of which service-role calls happen where (they bypass RLS). Logging is implicit via `audit_trigger_fn()`. No way to trace which backend code called the service role for a given operation. | Maintain strict pattern: service role only in trusted server-side code (lib/db, server actions, API routes). Add JSDoc `@internal` on `createServerClient()` to prevent accidental client-side usage. Audit log already captures who (via auth trigger), but not which endpoint/action triggered it. Optional: add context header to Supabase calls for tracing. |
 
 ---
 
 ## Details
 
-### P2: Hardcoded dev credentials in source (src/app/login/login-form.tsx:14–28)
+### P2: Hardcoded dev credentials in source (src/app/login/login-form.tsx:14-28)
 
 ```typescript
 const DEV_PREFILL = process.env.NODE_ENV !== "production";

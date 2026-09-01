@@ -65,7 +65,7 @@ export default function BottomSheet({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      {/* Backdrop — the only close target. */}
+      {/* Backdrop, the only close target. */}
       <button
         type="button"
         aria-label="Close"
@@ -74,7 +74,7 @@ export default function BottomSheet({
       />
 
       {/* Panel */}
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: onClick is a propagation guard, not an activation handler — the panel is a dialog container, not a control. Keyboard dismissal is handled by Escape and the focusable Close backdrop button. */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: onClick is a propagation guard, not an activation handler. The panel is a dialog container, not a control. Keyboard dismissal is handled by Escape and the focusable Close backdrop button. */}
       <div
         ref={panelRef}
         role="dialog"

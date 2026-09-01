@@ -1,13 +1,13 @@
 // Route-level skeleton for /login. Mirrors login-form.tsx so the swap to the
-// real form is positionally stable — same brand lockup, auth card, provider
+// real form is positionally stable, same brand lockup, auth card, provider
 // CTAs, OR divider, demo box, and footer geometry (zero layout shift on
 // hydrate). Instant static copy (heading, subtitle, "or", footer) renders as
-// real text at the real weight — matching the members loader convention; only
+// real text at the real weight, matching the members loader convention; only
 // data/interaction-dependent controls ride the shared `.skeleton` shimmer
 // (theme-aware, reduced-motion safe via globals.css).
 
-// Demo quick-fill chips: 2 static personas + 11 operational teams (demo-auth.ts)
-// — count kept in sync so the wrap grid reserves the real vertical height.
+// Demo quick-fill chips: 2 static personas + 11 operational teams (demo-auth.ts),
+// count kept in sync so the wrap grid reserves the real vertical height.
 const DEMO_CHIP_KEYS = [
   "d1",
   "d2",
@@ -32,7 +32,7 @@ export default function LoginLoading() {
       aria-busy="true"
       aria-label="Loading sign in"
     >
-      {/* Brand lockup — accent logo square + "Civic" wordmark. */}
+      {/* Brand lockup, accent logo square + "Civic" wordmark. */}
       <div className="relative z-10 mb-6 flex items-center gap-2 sm:mb-10">
         <div className="skeleton h-9 w-9 rounded-[var(--radius-md)]" />
         <div className="skeleton h-5 w-16 rounded" />
@@ -40,7 +40,7 @@ export default function LoginLoading() {
 
       <div className="relative z-10 w-full max-w-[400px]">
         <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-5 sm:p-7">
-          {/* Heading + subtitle — instant static copy at the real weight. */}
+          {/* Heading + subtitle, instant static copy at the real weight. */}
           <div>
             <h1 className="text-[22px] font-semibold tracking-tight text-foreground">
               Welcome back
@@ -53,7 +53,7 @@ export default function LoginLoading() {
           {/* Continue with Google (h-12 provider button). */}
           <div className="skeleton mt-6 h-12 w-full rounded-[var(--radius-md)]" />
 
-          {/* OR divider — static label between hairline rails. */}
+          {/* OR divider, static label between hairline rails. */}
           <div className="my-6 flex items-center gap-3 text-[11px] uppercase tracking-[0.12em] text-[var(--color-muted)]">
             <span className="h-px flex-1 bg-hairline" />
             or
@@ -64,7 +64,7 @@ export default function LoginLoading() {
           <div className="skeleton h-11 w-full rounded-[var(--radius-md)]" />
           <div className="skeleton mt-3 h-11 w-full rounded-[var(--radius-md)]" />
 
-          {/* Demo accounts box — mirrors DemoSignIn (bg-surface + border). */}
+          {/* Demo accounts box, mirrors DemoSignIn (bg-surface + border). */}
           <div className="mt-6 rounded-[var(--radius-lg)] border border-hairline bg-surface p-4">
             <div className="flex items-center justify-between">
               <div className="skeleton h-3 w-24 rounded" />
@@ -95,7 +95,7 @@ export default function LoginLoading() {
           </div>
         </div>
 
-        {/* Footer — signup prompt + terms, static copy at the real weight. */}
+        {/* Footer, signup prompt + terms, static copy at the real weight. */}
         <p className="mt-6 text-center text-[13px] text-[var(--color-muted)]">
           New to Civic?{" "}
           <span className="font-medium text-[var(--color-primary)]">

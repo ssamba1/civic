@@ -10,7 +10,7 @@ import type { Classification } from "@/lib/types";
    SMS / MMS inbound intake (NEXT_100 #2).
 
    Twilio POSTs here when a resident texts the city number. This reaches the
-   residents app-only tools exclude — feature-phone, senior, low-income.
+   residents app-only tools exclude, feature-phone, senior, low-income.
 
    PRIVACY (hard rule): the client-side face/plate blur can't run on an inbound
    MMS (there is no client). So an attached photo is written to the RESTRICTED
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
   }
   if (!cityId) {
     logger.error("sms_no_city", undefined, {});
-    return twiml("Sorry — reporting isn't available right now.");
+    return twiml("Sorry, reporting isn't available right now.");
   }
 
   const coord = (await geocode(bodyText)) ?? FALLBACK_CENTER;
@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Neutral public placeholder — never the raw MMS. A staffer swaps in a
+  // Neutral public placeholder, never the raw MMS. A staffer swaps in a
   // blurred image during manual review.
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const placeholder = `${base}/storage/v1/object/public/${PUBLIC_BUCKET}/seed/other.jpg`;
@@ -225,13 +225,13 @@ export async function POST(request: NextRequest) {
     logger.error("sms_report_insert_failed", undefined, {
       detail: reportErr.message,
     });
-    return twiml("Sorry — we couldn't file your report. Please try again.");
+    return twiml("Sorry, we couldn't file your report. Please try again.");
   }
 
   // Classification + work order, held for manual review (no auto-dispatch): the
   // raw photo hasn't been vetted and the category is unknown until a human looks.
   const classification = fallbackClassification(
-    "Filed via SMS — pending manual review",
+    "Filed via SMS, pending manual review",
   );
   after(async () => {
     try {
@@ -264,6 +264,6 @@ export async function POST(request: NextRequest) {
     ? ` Track it: ${siteBase}/r/${publicToken(reportId)}`
     : "";
   return twiml(
-    `Thanks — your report was filed and a crew will review it.${link}`,
+    `Thanks. Your report was filed and a crew will review it.${link}`,
   );
 }

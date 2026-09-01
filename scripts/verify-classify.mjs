@@ -8,7 +8,7 @@ const supabase = createClient(
   { auth: { persistSession: false } }
 );
 
-// 1x1 JPEG (valid) — proves the pipeline runs end-to-end.
+// 1x1 JPEG (valid). Proves the pipeline runs end-to-end.
 const JPG_B64 =
   "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAA//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AfwD/2Q==";
 

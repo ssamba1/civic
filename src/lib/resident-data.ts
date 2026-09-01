@@ -53,7 +53,7 @@ export interface CityMorale {
   totalReports: number;
   reportedThisWeek: number;
   // Week-over-week percent change; null = "new" (no prior-week base to
-  // compare against — see pctChange).
+  // compare against. See pctChange).
   reportedDeltaPct: number | null;
   resolvedDeltaPct: number | null;
   inProgressCount: number; // dispatched + in_progress
@@ -101,7 +101,7 @@ function seededFromId(id: string, salt: number): number {
 }
 
 /* ------------------------------------------------------------------
-   Demo resident — the reporter_id owning the most reports in the corpus.
+   Demo resident, the reporter_id owning the most reports in the corpus.
    SINGLE SOURCE OF TRUTH: every "my" query resolves through this so the
    current resident always matches their own reports.
    ------------------------------------------------------------------ */
@@ -109,7 +109,7 @@ function seededFromId(id: string, salt: number): number {
 // Recomputed per call (no module-global cache): a server module instance is
 // shared across concurrent requests, so a once-frozen value would leak the
 // first request's answer to everyone (loop-closure plan issue #6). The scan is
-// O(corpus) over an in-memory array — negligible.
+// O(corpus) over an in-memory array, negligible.
 function demoReporterId(): string {
   const counts = new Map<string, number>();
   for (const r of getReportCorpus()) {
@@ -127,7 +127,7 @@ function demoReporterId(): string {
 }
 
 /* ------------------------------------------------------------------
-   Synthetic stage timestamps — deterministic, monotonic, after created_at.
+   Synthetic stage timestamps, deterministic, monotonic, after created_at.
    SINGLE SOURCE OF TRUTH for both getReportTimeline and notifications so
    their times never disagree.
      dispatched   +6-24h
@@ -173,7 +173,7 @@ function reachedStages(status: ReportStatus): {
 }
 
 /* ------------------------------------------------------------------
-   Public API — DATA CONTRACT
+   Public API, DATA CONTRACT
    ------------------------------------------------------------------ */
 
 export async function getCurrentResident(citySlug = "cumming"): Promise<{
@@ -184,7 +184,7 @@ export async function getCurrentResident(citySlug = "cumming"): Promise<{
 }> {
   // Default to the demo reporter so the surface stays populated for anon/guest
   // visitors and when Supabase is unconfigured. A real signed-in user overrides
-  // both id and name below — using their actual auth id, NOT the demo id, so
+  // both id and name below, using their actual auth id, NOT the demo id, so
   // "my" queries scope to the rows they own.
   let id = demoReporterId();
   let displayName = "Cumming Resident";
@@ -205,7 +205,7 @@ export async function getCurrentResident(citySlug = "cumming"): Promise<{
       isDemo = false;
     }
   } catch {
-    // Missing/unconfigured Supabase must never throw — stay demo.
+    // Missing/unconfigured Supabase must never throw. Stay demo.
   }
 
   return { id, displayName, citySlug, isDemo };
@@ -265,21 +265,21 @@ interface MyReportRow {
 }
 
 /* ------------------------------------------------------------------
-   Per-category resolution notes — the "operational transparency" text the
+   Per-category resolution notes, the "operational transparency" text the
    research (Buell/Porter/Norton) shows is the lever: residents need to see
    WHAT was done, not just a status flip to "Resolved". Used as the synthetic
    close-out note when the live work order carries no human-written note.
    ------------------------------------------------------------------ */
 const RESOLUTION_NOTES: Record<ReportCategory, string> = {
-  pothole: "Pothole filled and compacted — surface restored and reopened.",
+  pothole: "Pothole filled and compacted, surface restored and reopened.",
   streetlight:
     "Fixture repaired and relit; circuit tested and back in service.",
   downed_sign: "Sign re-set and re-secured to spec.",
-  graffiti: "Surface cleaned and repainted — tag removed.",
+  graffiti: "Surface cleaned and repainted, tag removed.",
   illegal_dump: "Site cleared and debris hauled to the transfer station.",
   water_leak:
     "Leak isolated and repaired; service restored and pressure verified.",
-  sidewalk_damage: "Section repaired and leveled — trip hazard removed.",
+  sidewalk_damage: "Section repaired and leveled, trip hazard removed.",
   tree_down: "Tree cleared and debris chipped; right-of-way reopened.",
   debris: "Debris removed and the area swept clear.",
   drainage: "Drain cleared and flow restored; inlet inspected.",
@@ -348,13 +348,13 @@ export async function getMyReports(
         photo_public_url: r.photo_public_url,
         created_at: r.created_at,
         reporter_id: r.reporter_id,
-        // Surface the close-out evidence so the resident sees the work done —
+        // Surface the close-out evidence so the resident sees the work done,
         // the operational-transparency payoff. Only populated once closed.
         ...(wo?.completed_at ? { completed_at: wo.completed_at } : {}),
         ...(wo?.resolution_photo_url
           ? { afterPhoto: wo.resolution_photo_url }
           : {}),
-        // Admin-set public fix estimates — shown when status is in_progress.
+        // Admin-set public fix estimates, shown when status is in_progress.
         ...(wo?.fix_cost_estimate != null
           ? { fix_cost_estimate: wo.fix_cost_estimate }
           : {}),
@@ -422,7 +422,7 @@ export async function getReportTimeline(
       at: reached.resolved ? t.resolved : null,
       done: reached.resolved,
       current: false,
-      // The "what was done" note — operational transparency on close.
+      // The "what was done" note, operational transparency on close.
       // Same exhaustive-over-builtins table as status-notify: a city-defined
       // issue type is absent, so fall back rather than showing an empty note.
       ...(reached.resolved
@@ -435,7 +435,7 @@ export async function getReportTimeline(
     steps[0].note =
       report.status === "merged"
         ? "Merged into a nearby report covering the same issue."
-        : "Reviewed and closed — no action needed.";
+        : "Reviewed and closed, no action needed.";
     steps[0].current = true;
     return steps;
   }
@@ -496,7 +496,7 @@ export async function getCityMorale(citySlug: string): Promise<CityMorale> {
     (now - new Date(r.created_at).getTime()) / DAY_MS;
 
   // "Resolved this week" must measure when a report was RESOLVED, not when it
-  // was filed — a report filed months ago and closed yesterday belongs to this
+  // was filed, a report filed months ago and closed yesterday belongs to this
   // week. The synthetic corpus has no closed_at, so derive the resolution time
   // from the same deterministic stage clock the timeline uses (single source of
   // truth), keeping this metric consistent with what residents see per-report.
@@ -539,7 +539,7 @@ export async function getCityMorale(citySlug: string): Promise<CityMorale> {
     .sort((a, b) => b.count - a.count || a.category.localeCompare(b.category))
     .slice(0, 5);
 
-  // Week-over-week deltas. 0→N is NOT "+100%" — there is no base to compare
+  // Week-over-week deltas. 0→N is NOT "+100%". There is no base to compare
   // against, so it returns null and the UI renders "new" instead (issue #19).
   const pctChange = (cur: number, prev: number): number | null =>
     prev === 0 ? (cur > 0 ? null : 0) : Math.round(((cur - prev) / prev) * 100);
@@ -619,7 +619,7 @@ const ANNOUNCEMENTS: ReadonlyArray<{
   icon: string;
 }> = [
   {
-    title: "Spring pothole blitz — 120 potholes filled",
+    title: "Spring pothole blitz, 120 potholes filled",
     body: "Crews wrapped a week-long paving push across the city's busiest corridors.",
     ageDays: 1,
     icon: "construction",
@@ -672,13 +672,13 @@ export async function getResidentNotifications(
     } = await supabase.auth.getUser();
     if (user) {
       // RLS notifications_select_own scopes to the signed-in user. The table may
-      // not be applied to the live DB yet (migration 20260528_006) — a missing
+      // not be applied to the live DB yet (migration 20260528_006), a missing
       // table surfaces as a query error, which we treat as "no live rows".
       const { data, error } = await supabase
         .from("notifications")
         .select("id, report_id, type, title, body, read_at, created_at")
         .order("created_at", { ascending: false })
-        // Bounded — the feed renders newest-first and never paginates.
+        // Bounded, the feed renders newest-first and never paginates.
         .limit(MAX_NOTIFICATIONS);
 
       if (!error && data && data.length > 0) {
@@ -711,7 +711,7 @@ async function syntheticNotifications(
   const items: NotificationItem[] = [];
 
   for (const r of mine) {
-    // Skip only the terminal-at-filed states (merged/rejected) — those get no
+    // Skip only the terminal-at-filed states (merged/rejected). Those get no
     // progress notification. Everything still moving, INCLUDING a freshly filed
     // "open" report, gets at least a "received" acknowledgement so the resident
     // never files into silence.
@@ -740,7 +740,7 @@ async function syntheticNotifications(
         ? `A ${catLabel} report was received`
         : `A ${catLabel} report was ${label}`,
       body: isResolved
-        ? "Crews finished the fix — thanks to everyone helping keep the city running."
+        ? "Crews finished the fix. Thanks to everyone helping keep the city running."
         : isReceived
           ? "Logged and waiting to be picked up. We'll post an update the moment a crew takes it on."
           : `A crew has picked up this report. We'll keep the community posted as it progresses.`,
@@ -761,7 +761,7 @@ async function syntheticNotifications(
     });
   }
 
-  // City announcements are demo set-dressing — never show them on live
+  // City announcements are demo set-dressing. Never show them on live
   // deployments, where notifications must come from real reports only.
   for (let i = 0; DEMO_MODE && i < ANNOUNCEMENTS.length; i++) {
     const a = ANNOUNCEMENTS[i];

@@ -38,7 +38,7 @@ async function requireAdmin(): Promise<{
   const db = createServerClient();
 
   if (devBypass) {
-    // In dev bypass mode there is no acting user — return a sentinel so callers
+    // In dev bypass mode there is no acting user. Return a sentinel so callers
     // can still function. The sentinel city id is the first city in the DB.
     const { data } = await db
       .from("cities")
@@ -258,7 +258,7 @@ export async function assignContractorToWorkOrder(
       return { ok: false, error: "cross_city_forbidden" };
     }
 
-    // Write — only contractor_id and contractor_status touched.
+    // Write, only contractor_id and contractor_status touched.
     const { error: updateErr } = await db
       .from("work_orders")
       .update({

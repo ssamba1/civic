@@ -6,7 +6,7 @@ import { useRateReport, useReportRating } from "@/lib/resident-csat";
 import { cn } from "@/lib/utils/cn";
 
 /* ------------------------------------------------------------------
-   Resident CSAT — one-tap "Was this fixed?" on a resolved report.
+   Resident CSAT. One-tap "Was this fixed?" on a resolved report.
 
    The click IS the response (no form): it records the verdict locally and
    swaps to an acknowledgement. A "down" rating surfaces a light "we'll take
@@ -38,8 +38,8 @@ export function ReportCsat({ reportId }: { reportId: string }) {
             <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
           </span>
           {positive
-            ? "Thanks — glad we got it right."
-            : "Thanks for the flag — we'll take another look."}
+            ? "Thanks, glad we got it right."
+            : "Thanks for the flag. We'll take another look."}
         </div>
         {/* Persistent next action so a resolved+rated report doesn't dead-end. */}
         <Link

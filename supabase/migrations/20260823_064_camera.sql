@@ -1,11 +1,11 @@
 -- =============================================================================
--- Civic – Camera ingest (Phase B)
+-- Civic, Camera ingest (Phase B)
 -- Migration: 20260823_064_camera.sql
 -- Spec: docs/planning/CAMERA_LIABILITY_PIPELINE.md §4.2, §4.4
 --
---   camera_devices     – a registered vehicle dashcam or fixed camera
---   detection_clusters – the same physical defect, seen many times
---   detections         – one surviving detector hit on one frame
+--   camera_devices, a registered vehicle dashcam or fixed camera
+--   detection_clusters, the same physical defect, seen many times
+--   detections, one surviving detector hit on one frame
 --
 -- Why clusters exist: a bus passes the same pothole ~20x/day over ~180 school
 -- days. Detections collapse into a cluster (same damage_class, within
@@ -16,10 +16,10 @@
 --
 -- Security model:
 --
---   staff       – SELECT, own city only. Camera data is operational, not public.
---   admin       – INSERT / UPDATE / DELETE on camera_devices (fleet management)
+--   staff. SELECT, own city only. Camera data is operational, not public.
+--   admin. INSERT / UPDATE / DELETE on camera_devices (fleet management)
 --                 and UPDATE/DELETE on cluster state (dismiss a false positive).
---   INGEST      – has NO POLICY. There is deliberately no anon or authenticated
+--   INGEST. Has NO POLICY. There is deliberately no anon or authenticated
 --                 INSERT policy on detections or detection_clusters anywhere in
 --                 this migration. Frames arrive at POST /api/camera/frames,
 --                 which authenticates an api_keys row with scope
@@ -27,9 +27,9 @@
 --                 bypasses RLS. An RLS insert policy would mean a leaked anon
 --                 key could forge detections at arbitrary coordinates and, via
 --                 promotion, forge reports and liability claims.
---   contractor  – nothing. A vendor must not be able to enumerate where the
+--   contractor. Nothing. A vendor must not be able to enumerate where the
 --                 city's cameras have been looking.
---   anon        – nothing. Default deny.
+--   anon, nothing. Default deny.
 --
 -- Privacy note (agents.md rule #2): crop_url points at a blurred crop in the
 -- public photo bucket. The ingest route drops any crop whose server-side blur
@@ -69,12 +69,12 @@ CREATE INDEX IF NOT EXISTS idx_camera_devices_city ON camera_devices (city_id);
 -- Created before `detections` because detections.cluster_id references it.
 --
 -- state:
---   observing  – accumulating passes, below the promotion threshold
---   promoted   – a report was created from it (promoted_report_id)
---   resolved   – the report closed; later detections at the same spot must open
+--   observing, accumulating passes, below the promotion threshold
+--   promoted. A report was created from it (promoted_report_id)
+--   resolved, the report closed; later detections at the same spot must open
 --                a NEW cluster, which is exactly the recurrence signal the
 --                hotspot analytics and the contractor scorecard want
---   dismissed  – staff marked it a false positive
+--   dismissed, staff marked it a false positive
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS detection_clusters (
   id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS detection_clusters (
 );
 
 -- The cluster-assignment query is a ST_DWithin against every live cluster in
--- the city on every surviving frame — the hot path of the whole ingest tier.
+-- the city on every surviving frame, the hot path of the whole ingest tier.
 CREATE INDEX IF NOT EXISTS idx_detection_clusters_centroid
   ON detection_clusters USING GIST (centroid);
 
@@ -104,7 +104,7 @@ CREATE INDEX IF NOT EXISTS idx_detection_clusters_city_state
 -- 3. detections
 --
 -- One row per surviving detector hit. Below-threshold frames never reach this
--- table (and their images are never stored) — the detector gate throws ~95% of
+-- table (and their images are never stored). The detector gate throws ~95% of
 -- frames away before anything is persisted.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS detections (
@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS detections (
 );
 
 -- Idempotent ingest: one detection per (device, frame). A frame yielding two
--- distinct damage classes is out of scope for v1 — the route keeps the highest
+-- distinct damage classes is out of scope for v1. The route keeps the highest
 -- scoring hit per frame.
 CREATE UNIQUE INDEX IF NOT EXISTS uq_detections_device_frame
   ON detections (device_id, frame_external_id);
@@ -149,8 +149,8 @@ CREATE INDEX IF NOT EXISTS idx_detections_cluster_captured
   ON detections (cluster_id, captured_at);
 
 -- ---------------------------------------------------------------------------
--- 4. RLS — default deny; staff read own city; admin write; ingest via service
---    role only (no INSERT policy anywhere below — this is deliberate).
+-- 4. RLS. Default deny; staff read own city; admin write; ingest via service
+--    role only (no INSERT policy anywhere below, this is deliberate).
 -- ---------------------------------------------------------------------------
 ALTER TABLE camera_devices     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE detection_clusters ENABLE ROW LEVEL SECURITY;
@@ -203,7 +203,7 @@ CREATE POLICY detections_admin_delete ON detections
   FOR DELETE USING (is_admin() AND city_id = current_user_city_id());
 
 -- ---------------------------------------------------------------------------
--- camera_nearby_clusters() — candidate clusters for one incoming detection.
+-- camera_nearby_clusters(), candidate clusters for one incoming detection.
 --
 -- Called by the ingest route (src/lib/camera/ingest.ts nearbyClusters()) under
 -- the service role. Distance is computed here with ST_Distance (AGENTS.md rule
@@ -211,7 +211,7 @@ CREATE POLICY detections_admin_delete ON detections
 -- assignCluster() re-asserts the radius defensively.
 --
 -- Only 'observing' and 'promoted' clusters are candidates: a resolved or
--- dismissed cluster must NOT absorb new detections — a defect reappearing at a
+-- dismissed cluster must NOT absorb new detections, a defect reappearing at a
 -- resolved spot opens a NEW cluster, which is the recurrence/workmanship
 -- signal (spec §4.4).
 --

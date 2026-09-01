@@ -14,7 +14,7 @@ import {
 import { getStaffAccessForCity } from "@/lib/staff-access";
 
 // Auth-gated per request (reads cookies via getStaffAccessForCity) and exposes
-// member PII (email, phone) — never prerender or cache.
+// member PII (email, phone), never prerender or cache.
 export const dynamic = "force-dynamic";
 
 interface PageProps {
@@ -47,7 +47,7 @@ export async function generateMetadata({
   if (!city) return { title: "City not found | Civic" };
 
   // The member name only resolves into the tab title when the caller actually
-  // has access — a no-access request never surfaces PII here (and the page body
+  // has access, a no-access request never surfaces PII here (and the page body
   // redirects it away regardless).
   let name: string | null = null;
   const access = await getStaffAccessForCity(slug);
@@ -56,9 +56,9 @@ export async function generateMetadata({
     if (result.ok) name = result.detail.member.displayName;
   }
   return {
-    title: `Civic | ${city.name}, ${city.state} — ${name ?? "Member"}`,
+    title: `Civic | ${city.name}, ${city.state}, ${name ?? "Member"}`,
     description: `Activity and report history for a member of the ${city.name} console.`,
-    // Member profile behind an auth gate — keep out of search indexes.
+    // Member profile behind an auth gate. Keep out of search indexes.
     robots: { index: false, follow: false },
   };
 }
@@ -68,7 +68,7 @@ export default async function CityMemberDetailPage({ params }: PageProps) {
   const { dbCity, city } = await resolveCity(slug);
   if (!city) notFound();
 
-  // Access gate — mirrors the roster page. Unlike the grid there is NO public
+  // Access gate, mirrors the roster page. Unlike the grid there is NO public
   // demo-city bypass: this page exposes member email + phone (PII) and must
   // never be public. Demo staff may view it, but demo credentials are public,
   // so "demo" access gets email + phone masked server-side (the raw values
@@ -94,11 +94,11 @@ export default async function CityMemberDetailPage({ params }: PageProps) {
       content = (
         <InfoCard
           title="Couldn't load member"
-          body="Something went wrong fetching this profile. Refresh to try again — if it persists, check the server logs."
+          body="Something went wrong fetching this profile. Refresh to try again, if it persists, check the server logs."
         />
       );
     } else {
-      // Demo sessions never see raw PII — mask email + phone before the detail
+      // Demo sessions never see raw PII, mask email + phone before the detail
       // object crosses into the (client-rendered) component tree.
       const detail: MemberDetailData =
         access === "demo"
@@ -132,7 +132,7 @@ export default async function CityMemberDetailPage({ params }: PageProps) {
   );
 }
 
-// Shared empty/error card — same surface tokens the roster page uses.
+// Shared empty/error card. Same surface tokens the roster page uses.
 function InfoCard({ title, body }: { title: string; body: string }) {
   return (
     <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface px-6 py-16 text-center shadow-[var(--shadow-card)]">

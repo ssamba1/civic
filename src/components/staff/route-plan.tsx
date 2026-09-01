@@ -188,7 +188,7 @@ export function RoutePlan({ route, crewName }: RoutePlanProps) {
       {/* Header row */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="text-base font-semibold text-foreground">
-          {crewName ? `${crewName} — ` : ""}Route for {date}
+          {crewName ? `${crewName}. ` : ""}Route for {date}
         </h2>
         <p className="text-[13px] text-faint">
           {stats.stopCount} stop{stats.stopCount !== 1 ? "s" : ""} ·{" "}

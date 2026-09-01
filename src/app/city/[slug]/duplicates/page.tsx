@@ -4,7 +4,7 @@
  * Lists open reports that have at least one near-geo candidate duplicate,
  * linking each to an inline merge panel.
  *
- * Access gate: same pattern as /city/[slug]/grid — staff only, with redirect
+ * Access gate: same pattern as /city/[slug]/grid, staff only, with redirect
  * to login for non-staff; demo city is always readable.
  */
 
@@ -38,7 +38,7 @@ export async function generateMetadata({
   if (!city) city = await fetchCityMock(slug);
   if (!city) return { title: "City not found | Civic" };
   return {
-    title: `Civic | ${city.name} — Duplicate Reports`,
+    title: `Civic | ${city.name}, Duplicate Reports`,
     description: `Staff tool for reviewing and merging duplicate infrastructure reports in ${city.name}, ${city.state}.`,
   };
 }
@@ -79,7 +79,7 @@ async function fetchReportsWithDuplicates(
 
   if (error || !reports) return [];
 
-  // Fan out — in parallel, fetch candidates for each report.
+  // Fan out, in parallel, fetch candidates for each report.
   const results = await Promise.allSettled(
     reports.map(async (r) => {
       const catRaw = r.category;

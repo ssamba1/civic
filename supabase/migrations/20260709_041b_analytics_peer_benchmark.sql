@@ -1,7 +1,7 @@
--- NEXT_100 #40 — peer-city benchmark.
+-- NEXT_100 #40. Peer-city benchmark.
 -- Returns ONE row for the given city: its resolution rate + MTTR, its rank
 -- among active cities that have reports, and the peer medians. Strictly
--- anonymized aggregates — no other city is named or identifiable.
+-- anonymized aggregates. No other city is named or identifiable.
 -- SECURITY DEFINER (pinned search_path) so a single-city staff/anon caller can
 -- see the cross-city comparison without RLS exposing other cities' rows.
 create or replace function public.analytics_peer_benchmark(_city_id uuid)

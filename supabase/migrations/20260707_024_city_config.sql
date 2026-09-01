@@ -1,10 +1,10 @@
 -- =============================================================================
--- Civic – City config + multi-tenant onboarding foundation
+-- Civic, City config + multi-tenant onboarding foundation
 -- Migration: 20260707_024_city_config.sql
 --
 -- Authored as 20260614_015 on the docs/city-onboarding-plan branch; renumbered
 -- to 024 at merge into feat/sidebar-shell (015 was taken by under_fix_estimates
--- and slots 016–023 had already shipped). cities.center was dropped from §2
+-- and slots 016-023 had already shipped). cities.center was dropped from §2
 -- here because migration 019 already adds it.
 --
 -- Backs the onboarding plan (docs/planning/ONBOARDING.md + F1/F4/F5 specs).
@@ -26,7 +26,7 @@
 BEGIN;
 
 -- ---------------------------------------------------------------------------
--- 1. reports — provenance + import support
+-- 1. reports, provenance + import support
 -- ---------------------------------------------------------------------------
 
 -- source: discriminates real resident reports from synthetic/imported cold-start
@@ -43,7 +43,7 @@ ALTER TABLE reports
 
 -- Imported/synthetic reports have no real reporter (F5). Resident inserts still
 -- set reporter_id; RLS reports_insert_resident (reporter_id = auth.uid()) is
--- unaffected — imports run via the service role and bypass RLS.
+-- unaffected. Imports run via the service role and bypass RLS.
 ALTER TABLE reports ALTER COLUMN reporter_id DROP NOT NULL;
 
 -- Upstream id for idempotent re-import (skip rows already pulled).
@@ -59,7 +59,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_reports_source_external
   WHERE source_external_id IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
--- 2. cities — map config, tenancy hierarchy, onboarding progress
+-- 2. cities, map config, tenancy hierarchy, onboarding progress
 -- ---------------------------------------------------------------------------
 
 -- cities.center is added by migration 019 (city_onboarding). Only the remaining
@@ -98,7 +98,7 @@ BEGIN
   END IF;
 END $$;
 
--- 2.1 provision_city() — idempotent upsert called by src/lib/onboarding/
+-- 2.1 provision_city(), idempotent upsert called by src/lib/onboarding/
 --     provision-city.ts (F4). Converts GeoJSON → geography, normalizes single
 --     Polygon → MULTIPOLYGON, derives center from the boundary centroid when no
 --     internal point is supplied, and always lands active=false. SECURITY DEFINER
@@ -157,7 +157,7 @@ GRANT EXECUTE ON FUNCTION public.provision_city(
   text, text, text, jsonb, double precision, double precision, int, text
 ) TO service_role;
 
--- 2.2 city_for_point() — resolve a coordinate to the SMALLEST-area city whose
+-- 2.2 city_for_point(), resolve a coordinate to the SMALLEST-area city whose
 --     boundary contains it (§6 containment: city beats county). Used by resident
 --     city resolution to replace the hardcoded 'cumming' (fixes the multi-tenant
 --     bug where every resident joined Cumming). Returns NULL when no boundary
@@ -186,7 +186,7 @@ GRANT EXECUTE ON FUNCTION public.city_for_point(double precision, double precisi
   TO anon, authenticated;
 
 -- ---------------------------------------------------------------------------
--- 3. Per-city config tables (F3) — seeded from teams.ts defaults at provision.
+-- 3. Per-city config tables (F3), seeded from teams.ts defaults at provision.
 --    team_id is the app-level TeamId (text), not the work_order_department enum.
 --    category columns use the classification_category enum for type safety.
 -- ---------------------------------------------------------------------------
@@ -232,7 +232,7 @@ CREATE TABLE IF NOT EXISTS cost_rules (
 
 CREATE INDEX IF NOT EXISTS idx_city_departments_city ON city_departments (city_id);
 
--- 3.1 RLS — departments/routing/sla are PUBLIC READ (they render the public
+-- 3.1 RLS. Departments/routing/sla are PUBLIC READ (they render the public
 --     dashboard, like cities). cost_rules is internal → staff-only read.
 --     Writes are staff-scoped to their own city (mirrors reports_*_staff).
 --     The provisionCity template applier runs as service role → bypasses RLS.
@@ -283,7 +283,7 @@ GRANT SELECT ON city_departments, category_routing, sla_targets TO anon, authent
 GRANT SELECT ON cost_rules TO authenticated;
 
 -- ---------------------------------------------------------------------------
--- 4. provision_jobs — cold-start ingest progress (F5) → wizard StatusBar.
+-- 4. provision_jobs. Cold-start ingest progress (F5) → wizard StatusBar.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS provision_jobs (
   id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -327,7 +327,7 @@ BEGIN
 END $$;
 
 -- ---------------------------------------------------------------------------
--- 5. View + RPC updates (F1) — surface `source` for UI badging; exclude
+-- 5. View + RPC updates (F1), surface `source` for UI badging; exclude
 --    non-resident rows from KPI aggregates so synthetic/imported data never
 --    inflates real metrics (ONBOARDING.md §7). DEFAULT 'resident' keeps every
 --    existing row counted → no behavior change for current data.

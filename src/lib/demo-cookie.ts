@@ -4,7 +4,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { type DemoAccount, findDemoAccount } from "@/lib/demo-auth";
 
 /* ==================================================================
-   Demo session cookie signing — SERVER ONLY.
+   Demo session cookie signing, SERVER ONLY.
 
    The civic_demo_session cookie previously stored a bare username
    ("admintest"), so anyone could forge staff access by hand-setting
@@ -15,12 +15,12 @@ import { type DemoAccount, findDemoAccount } from "@/lib/demo-auth";
    This lives in its own module (not demo-auth.ts) because demo-auth.ts
    is imported by the client demo sign-in form; pulling node:crypto into
    that module would break the browser bundle. Keep this file off any
-   client import path — `server-only` enforces that at build time.
+   client import path, `server-only` enforces that at build time.
 
    Fail-closed: if DEMO_COOKIE_SECRET is unset, verification returns
    null (no demo session) instead of throwing, so a misconfigured
    deploy degrades to "no demo access", never to "everyone is staff".
-   DEMO_COOKIE_SECRET must NOT be a NEXT_PUBLIC_* var — it is a secret.
+   DEMO_COOKIE_SECRET must NOT be a NEXT_PUBLIC_* var. It is a secret.
    ================================================================== */
 
 function getSecret(): string | null {
@@ -34,7 +34,7 @@ function computeHmac(username: string, key: string): string {
 
 /**
  * Signed cookie value for a username. When the secret is unset the value
- * is returned unsigned — verifyDemoSession rejects it, so the net effect
+ * is returned unsigned, verifyDemoSession rejects it, so the net effect
  * is fail-closed (the persona never authenticates) rather than a crash.
  */
 export function signDemoSession(username: string): string {
@@ -53,7 +53,7 @@ export function verifyDemoSession(
 ): string | null {
   if (!raw) return null;
   const key = getSecret();
-  if (!key) return null; // fail closed — no secret means no demo session
+  if (!key) return null; // fail closed. No secret means no demo session
 
   const dot = raw.lastIndexOf(".");
   // Reject values with no separator, an empty username, or an empty sig.
@@ -64,7 +64,7 @@ export function verifyDemoSession(
   const expected = computeHmac(username, key);
   const sigBuf = Buffer.from(sig);
   const expectedBuf = Buffer.from(expected);
-  // timingSafeEqual throws on a length mismatch — guard before comparing.
+  // timingSafeEqual throws on a length mismatch, guard before comparing.
   if (sigBuf.length !== expectedBuf.length) return null;
   if (!timingSafeEqual(sigBuf, expectedBuf)) return null;
 

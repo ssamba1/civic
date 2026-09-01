@@ -1,5 +1,5 @@
 -- =============================================================================
--- Civic – Contractor Portal
+-- Civic, Contractor Portal
 -- Migration: 20260709_053_contractors.sql
 --
 -- Security model (read this before touching anything below):
@@ -15,19 +15,19 @@
 --   is centralised and cannot be forged by a contractor supplying their own id.
 --
 --   Work-order RLS:
---     SELECT  – contractor sees ONLY rows where work_orders.contractor_id =
+--     SELECT. Contractor sees ONLY rows where work_orders.contractor_id =
 --               current_contractor_id(). An unassigned (NULL contractor_id) row
 --               is invisible to contractors. A contractor from city A cannot see
 --               city B's work orders.
---     UPDATE  – contractors get NO direct UPDATE policy (RLS can't restrict
+--     UPDATE. Contractors get NO direct UPDATE policy (RLS can't restrict
 --               columns, only rows). All writes go through the service-role
 --               server action updateWorkOrderProgress(), which enforces ownership
 --               AND a column whitelist. See the work_orders section below.
 --
 --   Contractors table:
 --     Admin and staff can read/write contractors (manage list, assign to WOs).
---     Contractors themselves cannot read or modify the contractors table —
---     they have no SELECT policy on it, so they cannot enumerate peers.
+--     Contractors themselves cannot read or modify the contractors table.
+--     They have no SELECT policy on it, so they cannot enumerate peers.
 --
 --   Default deny: no policy = no access. Every table created here starts
 --   with RLS enabled and no open policies.
@@ -36,7 +36,7 @@
 BEGIN;
 
 -- ---------------------------------------------------------------------------
--- 0. is_admin() helper — defined FIRST because the contractor RLS policies
+-- 0. is_admin() helper, defined FIRST because the contractor RLS policies
 --    below reference it. No earlier migration defines it, so without this the
 --    CREATE POLICY ... USING (is_admin()) calls fail on a fresh deploy
 --    (42883: function is_admin() does not exist). CREATE OR REPLACE = idempotent.
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS contractors (
   -- City that owns this contractor relationship. Contractors are city-scoped.
   city_id    uuid NOT NULL REFERENCES cities (id) ON DELETE CASCADE,
   name       text NOT NULL,
-  -- email is the join key to auth.users — must match exactly (case-insensitive
+  -- email is the join key to auth.users. Must match exactly (case-insensitive
   -- match is done in current_contractor_id() via LOWER()).
   email      text NOT NULL,
   active     boolean NOT NULL DEFAULT true,
@@ -87,7 +87,7 @@ CREATE INDEX IF NOT EXISTS idx_work_orders_contractor_id ON work_orders (contrac
   WHERE contractor_id IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
--- 3. current_contractor_id() — security-definer helper
+-- 3. current_contractor_id(), security-definer helper
 --
 -- Resolves the currently authenticated user's email to a contractors.id.
 -- Returns NULL if:
@@ -96,7 +96,7 @@ CREATE INDEX IF NOT EXISTS idx_work_orders_contractor_id ON work_orders (contrac
 --   • The contractor row has active = false
 --
 -- SECURITY DEFINER: runs as the function owner (postgres / service role), not
--- the calling role. This is intentional — contractors do not have SELECT on the
+-- the calling role. This is intentional. Contractors do not have SELECT on the
 -- contractors table, but this function must read it to resolve the mapping.
 -- The function reveals nothing: it only returns the caller's own id (or NULL).
 --
@@ -120,7 +120,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.current_contractor_id() TO authenticated;
 
 -- ---------------------------------------------------------------------------
--- 4. RLS — contractors table (admin/staff read-write only)
+-- 4. RLS. Contractors table (admin/staff read-write only)
 -- ---------------------------------------------------------------------------
 ALTER TABLE contractors ENABLE ROW LEVEL SECURITY;
 
@@ -148,14 +148,14 @@ CREATE POLICY contractors_admin_delete ON contractors
 -- this table. A contractor cannot enumerate peers or see who else is a vendor.
 
 -- ---------------------------------------------------------------------------
--- 5. RLS — work_orders: add contractor-access policies
+-- 5. RLS. Work_orders: add contractor-access policies
 --
 -- Existing staff/admin policies on work_orders are untouched. We add two new
 -- policies (SELECT, UPDATE) keyed on current_contractor_id().
 --
 -- SELECT: contractor sees ONLY rows assigned to them (contractor_id matches
 --   their resolved id). NULL contractor_id rows are invisible (COALESCE would
---   not help — we want strict equality, not a fallback).
+--   not help. We want strict equality, not a fallback).
 --
 -- UPDATE: same filter. Column whitelist is NOT enforced at the RLS layer
 --   (Postgres RLS cannot restrict individual columns on UPDATE). Instead, the
@@ -177,7 +177,7 @@ CREATE POLICY work_orders_contractor_select ON work_orders
 
 -- Contractors are intentionally granted NO direct UPDATE policy on work_orders.
 --
--- Postgres RLS cannot restrict WHICH columns an UPDATE touches — only which
+-- Postgres RLS cannot restrict WHICH columns an UPDATE touches, only which
 -- rows. A row-scoped contractor UPDATE policy would therefore let a contractor,
 -- using their own authenticated key directly against PostgREST, overwrite STAFF
 -- columns (priority_score, department, dispatched_at, …) on a work order that
@@ -199,7 +199,7 @@ DROP POLICY IF EXISTS work_orders_contractor_update ON work_orders;
 --   own workflow status while the contractor tracks their progress.
 -- contractor_note: free-text progress note from the contractor.
 -- contractor_photo_url: blurred/safe photo URL (public bucket only, same
---   policy as reports — the server action must enforce this).
+--   policy as reports. The server action must enforce this).
 -- contractor_updated_at: last time the contractor touched this row.
 -- ---------------------------------------------------------------------------
 ALTER TABLE work_orders

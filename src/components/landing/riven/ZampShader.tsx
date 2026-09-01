@@ -3,13 +3,13 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Zamp hero background — a full-bleed liquid field that covers the entire hero
+ * Zamp hero background, a full-bleed liquid field that covers the entire hero
  * viewport edge-to-edge (content sits on top). Copy of
  * src/components/landing/shader-hero.tsx (raw dependency-free WebGL, no
  * three.js) with three deliberate differences for the zamp composition:
- *   1. the radial alpha mask is REMOVED — alpha is 1.0 everywhere, so the
+ *   1. the radial alpha mask is REMOVED. Alpha is 1.0 everywhere, so the
  *      field is opaque and full-coverage rather than feathered in the middle;
- *   2. the wrapper mask-image / opacity are REMOVED — the canvas fills inset:0;
+ *   2. the wrapper mask-image / opacity are REMOVED. The canvas fills inset:0;
  *   3. the colors are tuned to a saturated Civic blue (mirrors how the live
  *      Riven zamp hero reads as white blobs on a rich green wash).
  * The original shader-hero.tsx is left untouched.
@@ -26,7 +26,7 @@ void main() {
 
 // Fragment logic mirrors shader-hero.tsx: wave-warp the UVs, build a layered
 // sin/cos noise field, mix between two colors, blow out the noise peaks toward
-// white. The radial-feather alpha is dropped — alpha is a flat 1.0 so the field
+// white. The radial-feather alpha is dropped. Alpha is a flat 1.0 so the field
 // fully covers the hero.
 const FRAG = `
 precision highp float;
@@ -45,7 +45,7 @@ void main() {
   noise += sin(uv.x * 70.0 - time * 2.0) * cos(uv.y * 50.0 + time * 1.2) * 0.5;
 
   vec3 color = mix(color1, color2, noise * 0.5 + 0.5);
-  // White blowout on the noise peaks — pushed harder than the masked hero so
+  // White blowout on the noise peaks, pushed harder than the masked hero so
   // it reads as bright white blobs on the rich blue base.
   color = mix(color, vec3(1.0), pow(abs(noise), 2.0) * intensity);
 
@@ -80,7 +80,7 @@ export default function ZampShader({ className = "" }: { className?: string }) {
     gl.attachShader(program, compile(gl.VERTEX_SHADER, VERT));
     gl.attachShader(program, compile(gl.FRAGMENT_SHADER, FRAG));
     gl.linkProgram(program);
-    // `useProgram` is the WebGL context method, not a React hook — call it via
+    // `useProgram` is the WebGL context method, not a React hook, call it via
     // a bound alias so the linter's `use*` hook heuristic doesn't flag it.
     const activateProgram = gl.useProgram.bind(gl);
     activateProgram(program);
@@ -103,8 +103,8 @@ export default function ZampShader({ className = "" }: { className?: string }) {
     const uColor2 = gl.getUniformLocation(program, "color2");
     // color1 = saturated Civic blue (#0a84ff). color2 = lighter sky/white-
     // leaning blue so the field reads as white blobs over rich blue.
-    gl.uniform3f(uColor1, 0.039, 0.518, 1.0); // #0a84ff — maps Riven's #10B981
-    gl.uniform3f(uColor2, 0.737, 0.863, 1.0); // #BCDCFF — maps Riven's #A7F3D0
+    gl.uniform3f(uColor1, 0.039, 0.518, 1.0); // #0a84ff, maps Riven's #10B981
+    gl.uniform3f(uColor2, 0.737, 0.863, 1.0); // #BCDCFF, maps Riven's #A7F3D0
 
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);

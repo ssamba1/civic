@@ -54,7 +54,7 @@ export function AnalyticsInteractive() {
   // filter change never blocks the click feedback on large datasets.
   const filtered = useDeferredValue(liveFiltered);
   const previous = useDeferredValue(livePrevious);
-  // True while React is still rendering the deferred (stale) data — used to dim
+  // True while React is still rendering the deferred (stale) data, used to dim
   // the grid with a brief pulse so the lag reads as intentional, not frozen.
   const isPending = filtered !== liveFiltered;
 
@@ -110,8 +110,8 @@ export function AnalyticsInteractive() {
         <KpiCards kpis={kpis} />
 
         {/* Charts bento (lhs) + live reports rail (rhs).
-         Mobile: single column stack — charts first, then report feed below.
-         lg+: 12-col split — charts col-span-8, sticky feed col-span-4.
+         Mobile: single column stack, charts first, then report feed below.
+         lg+: 12-col split, charts col-span-8, sticky feed col-span-4.
          The bento keeps its own internal 12-col grid at lg+, so widening
          this wrapper rescales every tile without touching their spans. */}
         <div className="grid gap-4 lg:grid-cols-12 lg:items-start">
@@ -131,7 +131,7 @@ export function AnalyticsInteractive() {
           </div>
 
           {/* Right column: live feed + ops widgets, stacked and scrolling with
-           the page. Was sticky, but a sticky rail only fits one short panel — a
+           the page. Was sticky, but a sticky rail only fits one short panel. A
            stack has to scroll, so the widgets can live below the feed. */}
           <div className="lg:col-span-4 flex flex-col gap-4">
             <RecentReports

@@ -32,9 +32,9 @@ describe("formatCost", () => {
   });
 
   it("returns an em dash for null / NaN (never $NaN)", () => {
-    expect(formatCost(null)).toBe("—");
-    expect(formatCost(Number.NaN)).toBe("—");
-    expect(formatCost(undefined)).toBe("—");
+    expect(formatCost(null)).toBe("-");
+    expect(formatCost(Number.NaN)).toBe("-");
+    expect(formatCost(undefined)).toBe("-");
   });
 });
 
@@ -58,7 +58,7 @@ describe("formatLocalDate", () => {
   });
 
   it("returns an em dash for missing/invalid input", () => {
-    expect(formatLocalDate(null)).toBe("—");
-    expect(formatLocalDate("not-a-date")).toBe("—");
+    expect(formatLocalDate(null)).toBe("-");
+    expect(formatLocalDate("not-a-date")).toBe("-");
   });
 });

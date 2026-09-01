@@ -1,6 +1,6 @@
 /**
  * Map-route shell. Exists only to emit the 3D-globe resource hints as early in
- * the streamed HTML as possible — a layout renders (and so flushes its hoisted
+ * the streamed HTML as possible, a layout renders (and so flushes its hoisted
  * <link>s) ahead of the page body, which on this route sits behind ~0.5 MB of
  * flight data for the shared report corpus. Renders nothing of its own, so the
  * map view is byte-identical.

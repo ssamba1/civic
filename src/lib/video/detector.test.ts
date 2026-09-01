@@ -119,7 +119,7 @@ describe("decodeYoloOutput", () => {
 
   it("keeps the right edge put when the left edge clamps to 0", () => {
     // cx=20, w=100 -> the true box spans [-30, 70] px. Clamping only the left
-    // edge and keeping w produced [0, 100] — the same width, translated right,
+    // edge and keeping w produced [0, 100], the same width, translated right,
     // pointing at a different part of the road. The right edge must stay at 70.
     const n = 1;
     const data = channelFirst(

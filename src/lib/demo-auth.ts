@@ -2,11 +2,11 @@ import { DEFAULT_CREW_TYPES } from "@/lib/crew-types";
 import { TEAM_LIST, type TeamId } from "@/lib/teams";
 
 /* ==================================================================
-   Demo personas — hackathon sign-in.
+   Demo personas, hackathon sign-in.
 
    DEMO ONLY. These are plaintext credentials baked into the bundle so a
    presenter can log in as each surface (resident, city admin, any team)
-   without a real auth backend. They gate NOTHING sensitive — routing is
+   without a real auth backend. They gate NOTHING sensitive. Routing is
    soft (login drops you at the persona's home; every URL stays open) and
    the cookie only records which persona is active for the header label +
    logout. Never reuse this pattern for real authentication.
@@ -16,7 +16,7 @@ export type DemoRole = "user" | "admin" | "team" | "crew";
 
 export interface DemoAccount {
   username: string;
-  /** DEMO ONLY — plaintext, not real auth. */
+  /** DEMO ONLY, plaintext, not real auth. */
   password: string;
   role: DemoRole;
   /** Present iff role === "team". */
@@ -31,7 +31,7 @@ export interface DemoAccount {
 
 export const DEMO_SESSION_COOKIE = "civic_demo_session";
 
-/** The only live city in KNOWN_CITIES — every persona is scoped here. Exported
+/** The only live city in KNOWN_CITIES. Every persona is scoped here. Exported
  *  so surfaces that stay public for the demo city (e.g. the city work-order grid)
  *  can gate every OTHER city behind staff auth against a single source of truth. */
 export const DEMO_CITY = "cumming";
@@ -55,7 +55,7 @@ const STATIC_ACCOUNTS: DemoAccount[] = [
 
 // One account per operational team, numbered teamtest1..N in TEAM_LIST order
 // (excluding the "all" admin pseudo-team). Generated so the mapping has a
-// single source of truth — adding a team to TEAMS adds an account automatically.
+// single source of truth. Adding a team to TEAMS adds an account automatically.
 const TEAM_ACCOUNTS: DemoAccount[] = TEAM_LIST.filter(
   (t) => t.id !== "all",
 ).map((t, i) => ({
@@ -67,7 +67,7 @@ const TEAM_ACCOUNTS: DemoAccount[] = TEAM_LIST.filter(
   label: t.shortLabel,
 }));
 
-// One account per built-in crew type, crewtest1..N — same single-source-of-
+// One account per built-in crew type, crewtest1..N, same single-source-of-
 // truth pattern as TEAM_ACCOUNTS: adding a default crew type adds a login.
 const CREW_ACCOUNTS: DemoAccount[] = DEFAULT_CREW_TYPES.map((t, i) => ({
   username: `crewtest${i + 1}`,
@@ -78,11 +78,11 @@ const CREW_ACCOUNTS: DemoAccount[] = DEFAULT_CREW_TYPES.map((t, i) => ({
   label: `${t.label} Crew`,
 }));
 
-// One account per SEEDED crew instance (not just crew type) — lands on that
+// One account per SEEDED crew instance (not just crew type). Lands on that
 // crew's own portal via the ?crew=<exact name> instance scope (see
 // src/app/city/[slug]/crew/[crewType]/page.tsx, which resolves the query
 // param against fetchCityCrews() by case-sensitive name + crewType match).
-// MUST stay in sync with CREW_ROSTER in supabase/seed/demo-crews.mjs — same
+// MUST stay in sync with CREW_ROSTER in supabase/seed/demo-crews.mjs, same
 // names/crew_type values, else the login lands on a real portal but the
 // ?crew= scope silently fails to resolve (falls back to the type-level view).
 export const CREW_UNIT_ROSTER: {
@@ -140,7 +140,7 @@ export function authenticateDemo(
   return account;
 }
 
-/** Look up an account by username. PURE resolver — takes a username, not a
+/** Look up an account by username. PURE resolver. Takes a username, not a
  *  raw cookie: it does NOT verify the cookie's HMAC signature, so it is not a
  *  security gate on its own. Security-gated readers MUST call
  *  findVerifiedDemoAccount() (lib/demo-cookie) which verifies the signature
@@ -155,7 +155,7 @@ export function findDemoAccount(
 }
 
 /** True iff the persona is operational staff (city admin, a team crew, or a
- *  crew-type portal) — the demo analog of a real staff_dispatcher/
+ *  crew-type portal), the demo analog of a real staff_dispatcher/
  *  staff_supervisor/admin role. Residents (role "user") are NOT staff and
  *  must never pass an operational-access check. Single source of truth for
  *  "which demo personas count as staff". */

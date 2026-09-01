@@ -11,7 +11,7 @@ export interface DuplicateMatch {
 }
 
 /**
- * Find an earlier open report that `reportId` duplicates — same category,
+ * Find an earlier open report that `reportId` duplicates, same category,
  * within DEDUP_RADIUS_M metres, within the last 30 days. Thin wrapper over the
  * find_duplicate_report RPC (migration 011, geo + category + time matching).
  *
@@ -38,7 +38,7 @@ export async function findDuplicate(
       }>();
 
     if (error) {
-      // Un-migrated DB (function does not exist) or transient error — log and
+      // Un-migrated DB (function does not exist) or transient error. Log and
       // fall through to normal processing.
       log.error("dedup_rpc_failed", undefined, {
         reportId,

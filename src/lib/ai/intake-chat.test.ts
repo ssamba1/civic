@@ -30,9 +30,9 @@ describe("stripCodeFences", () => {
   });
 });
 
-// ── parseIntakeResponse — empty / malformed ───────────────────────────────────
+// ── parseIntakeResponse, empty / malformed ───────────────────────────────────
 
-describe("parseIntakeResponse — empty / malformed", () => {
+describe("parseIntakeResponse, empty / malformed", () => {
   it("returns ok:false on empty string", () => {
     const result = parseIntakeResponse("");
     expect(result.ok).toBe(false);
@@ -74,9 +74,9 @@ describe("parseIntakeResponse — empty / malformed", () => {
   });
 });
 
-// ── parseIntakeResponse — interim (no sentinel) ───────────────────────────────
+// ── parseIntakeResponse, interim (no sentinel) ───────────────────────────────
 
-describe("parseIntakeResponse — interim turns", () => {
+describe("parseIntakeResponse, interim turns", () => {
   it("returns done:false and the reply text when no sentinel present", () => {
     const raw = "Can you describe where the pothole is located?";
     const result = parseIntakeResponse(raw);
@@ -98,9 +98,9 @@ describe("parseIntakeResponse — interim turns", () => {
   });
 });
 
-// ── parseIntakeResponse — final draft ────────────────────────────────────────
+// ── parseIntakeResponse, final draft ────────────────────────────────────────
 
-describe("parseIntakeResponse — final draft", () => {
+describe("parseIntakeResponse, final draft", () => {
   const validDraftJSON = JSON.stringify({
     category: "pothole",
     description: "Large pothole on Main St causing flat tires",

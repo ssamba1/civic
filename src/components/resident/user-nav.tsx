@@ -33,7 +33,7 @@ export function UserNav({ citySlug }: { citySlug?: string }) {
 
   return (
     /*
-     * hidden on mobile — the BottomTabBar covers the same nav items there.
+     * hidden on mobile, the BottomTabBar covers the same nav items there.
      * md:block restores the fixed header on tablet+.
      */
     <header className="hidden md:block fixed top-0 inset-x-0 z-40 border-b border-hairline bg-glass backdrop-blur-xl supports-[backdrop-filter]:bg-glass">
@@ -111,7 +111,7 @@ export function UserNav({ citySlug }: { citySlug?: string }) {
 
           <ViewSwitch citySlug={citySlug} />
           <EnvSwitch />
-          {/* Light ⇄ dark theme toggle — mirrors CityNav's placement. */}
+          {/* Light ⇄ dark theme toggle, mirrors CityNav's placement. */}
           <ThemeToggle />
         </nav>
       </div>

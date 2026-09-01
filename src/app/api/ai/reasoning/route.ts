@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     // Require an authenticated session OR the internal secret. The internal
     // secret lets server actions and background jobs call this without
     // forwarding browser cookies; everyone else must be a logged-in user.
-    // Truly anonymous external callers get 401 — the live Gemini path is
+    // Truly anonymous external callers get 401. The live Gemini path is
     // expensive, so we do not let logged-out visitors trigger model spend.
     const user = await getAuthUser();
     const internalKey = request.headers.get("x-internal-key");
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     }
 
     // Rate limit non-internal callers (browser users). Internal-key callers
-    // (server actions, jobs) bypass — they are trusted and not user-facing.
+    // (server actions, jobs) bypass. They are trusted and not user-facing.
     if (!isInternal) {
       const ip = clientIp(request);
       const rl = checkRateLimit(`reasoning:${ip}`);
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
 
     // Object-level authorization for LIVE (DB-backed) reports. Corpus reports are
     // public demo seed data (no PII) and need no per-object check. A live report
-    // must belong to — or be staffed by — the caller: the SSR client is
+    // must belong to (or be staffed by) the caller: the SSR client is
     // RLS-scoped, so reports_select_own (reporter_id = auth.uid()) and
     // reports_select_staff (is_staff + city) return a row only for an authorized
     // caller; no row -> 404 (don't disclose existence). Without this any authed
@@ -267,7 +267,7 @@ function templateReasoningForReport(
       {
         title: "Operational Complexity",
         value:
-          "Standard dispatch protocols apply. Predictable workflow with well-defined procedures—no novel coordination challenges.",
+          "Standard dispatch protocols apply. Predictable workflow with well-defined procedures, no novel coordination challenges.",
       },
       {
         title: "Crew & Resources",
@@ -306,7 +306,7 @@ function templateReasoningForReport(
       {
         title: "Impact Assessment",
         value:
-          "Coordination overhead and specialized equipment drive cost significantly above baseline. Public impact visible—community communication recommended.",
+          "Coordination overhead and specialized equipment drive cost significantly above baseline. Public impact visible, community communication recommended.",
       },
     ],
     4: [
@@ -331,13 +331,13 @@ function templateReasoningForReport(
       {
         title: "Impact Assessment",
         value:
-          "Significant stakeholder communications overhead—elected officials, press liaisons, and department heads may require briefings. Incident management coordination adds hidden labor cost.",
+          "Significant stakeholder communications overhead, elected officials, press liaisons, and department heads may require briefings. Incident management coordination adds hidden labor cost.",
       },
     ],
     5: [
       {
         title: "Base Calculation",
-        value: `$12 (base rate) + $${report.severity * 18} (severity multiplier) = $${estimatedCost} estimated total — actual costs may escalate substantially`,
+        value: `$12 (base rate) + $${report.severity * 18} (severity multiplier) = $${estimatedCost} estimated total. Actual costs may escalate substantially`,
       },
       {
         title: "Operational Complexity",
@@ -352,7 +352,7 @@ function templateReasoningForReport(
       {
         title: "Timeline & Logistics",
         value:
-          "Immediate response, no queuing. Round-the-clock monitoring with shift supervisors. Operations continue until scene is fully stabilized—timeline is open-ended.",
+          "Immediate response, no queuing. Round-the-clock monitoring with shift supervisors. Operations continue until scene is fully stabilized, timeline is open-ended.",
       },
       {
         title: "Impact Assessment",
@@ -367,7 +367,7 @@ function templateReasoningForReport(
       {
         title: "Classification",
         value:
-          "Severity 1 — Minor issue with no immediate safety impact on residents or infrastructure integrity.",
+          "Severity 1, Minor issue with no immediate safety impact on residents or infrastructure integrity.",
       },
       {
         title: "Examples",
@@ -380,12 +380,12 @@ function templateReasoningForReport(
       },
       {
         title: "SLA Target",
-        value: `${slaHours} hours — standard maintenance window scheduling applies.`,
+        value: `${slaHours} hours. Standard maintenance window scheduling applies.`,
       },
       {
         title: "Response Strategy",
         value:
-          "Batched with other Level-1 items for efficient crew routing. No dedicated dispatch—folded into scheduled maintenance runs.",
+          "Batched with other Level-1 items for efficient crew routing. No dedicated dispatch, folded into scheduled maintenance runs.",
       },
       {
         title: "Escalation Trigger",
@@ -397,7 +397,7 @@ function templateReasoningForReport(
       {
         title: "Classification",
         value:
-          "Severity 2 — Noticeable issue affecting user comfort or creating minor service gaps without safety risk.",
+          "Severity 2, Noticeable issue affecting user comfort or creating minor service gaps without safety risk.",
       },
       {
         title: "Examples",
@@ -406,11 +406,11 @@ function templateReasoningForReport(
       {
         title: "Public Impact",
         value:
-          "Low. Affects specific locations or user subgroups. Not systemic—does not indicate broader infrastructure failure.",
+          "Low. Affects specific locations or user subgroups. Not systemic, does not indicate broader infrastructure failure.",
       },
       {
         title: "SLA Target",
-        value: `${slaHours} hours — resolved within routine dispatch cycle without emergency allocation.`,
+        value: `${slaHours} hours. Resolved within routine dispatch cycle without emergency allocation.`,
       },
       {
         title: "Response Strategy",
@@ -427,7 +427,7 @@ function templateReasoningForReport(
       {
         title: "Classification",
         value:
-          "Severity 3 — Problem impacting public accessibility or approaching safety threshold. Requires prioritized attention.",
+          "Severity 3, Problem impacting public accessibility or approaching safety threshold. Requires prioritized attention.",
       },
       {
         title: "Examples",
@@ -440,7 +440,7 @@ function templateReasoningForReport(
       },
       {
         title: "SLA Target",
-        value: `${slaHours} hours — accelerated relative to standard queue, with interim safety mitigation (cones, signage) deployed immediately.`,
+        value: `${slaHours} hours, accelerated relative to standard queue, with interim safety mitigation (cones, signage) deployed immediately.`,
       },
       {
         title: "Response Strategy",
@@ -457,7 +457,7 @@ function templateReasoningForReport(
       {
         title: "Classification",
         value:
-          "Severity 4 — Serious hazard with significant public impact. Represents widespread outage or imminent injury risk.",
+          "Severity 4, Serious hazard with significant public impact. Represents widespread outage or imminent injury risk.",
       },
       {
         title: "Examples",
@@ -470,7 +470,7 @@ function templateReasoningForReport(
       },
       {
         title: "SLA Target",
-        value: `${slaHours} hours maximum — this is a ceiling. Internal target is 24-hour initial response with full resolution as rapidly as possible.`,
+        value: `${slaHours} hours maximum. This is a ceiling. Internal target is 24-hour initial response with full resolution as rapidly as possible.`,
       },
       {
         title: "Response Strategy",
@@ -487,7 +487,7 @@ function templateReasoningForReport(
       {
         title: "Classification",
         value:
-          "Severity 5 — Life-safety emergency or catastrophic infrastructure failure. Highest response tier, all resources authorized.",
+          "Severity 5, Life-safety emergency or catastrophic infrastructure failure. Highest response tier, all resources authorized.",
       },
       {
         title: "Examples",
@@ -500,7 +500,7 @@ function templateReasoningForReport(
       },
       {
         title: "SLA Target",
-        value: `${slaHours} hours is superseded — emergency escalation overrides standard SLA. Stabilization is the only acceptable outcome metric.`,
+        value: `${slaHours} hours is superseded. Emergency escalation overrides standard SLA. Stabilization is the only acceptable outcome metric.`,
       },
       {
         title: "Response Strategy",

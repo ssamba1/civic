@@ -15,7 +15,7 @@ interface CityHeaderProps {
   cityState?: string | null;
   /** Server-computed VIDEO_PIPELINE flag, threaded to CityNav. */
   videoEnabled?: boolean;
-  /** Server-computed staff status (or demo city) — controls whether CityNav
+  /** Server-computed staff status (or demo city). Controls whether CityNav
    *  shows the Grid tab, which is staff-gated server-side. */
   isStaff: boolean;
 }
@@ -64,7 +64,7 @@ export function CityHeader({
               className="min-w-0"
             />
           </div>
-          {/* Action buttons — mobile only slot */}
+          {/* Action buttons, mobile only slot */}
           <div className="flex shrink-0 items-center gap-2">
             <ViewSwitch citySlug={slug} />
             <CityNav

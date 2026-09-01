@@ -105,7 +105,7 @@ async function main(): Promise<void> {
 
   if (missing.length) {
     console.log(
-      `⚠ ${missing.length} manifest sample(s) have no image in tests/golden/images/ — skipped: ${missing
+      `⚠ ${missing.length} manifest sample(s) have no image in tests/golden/images/, skipped: ${missing
         .map((s) => s.image)
         .join(", ")}`,
     );
@@ -118,7 +118,7 @@ async function main(): Promise<void> {
   }
 
   if (MOCK) {
-    console.log("[mock] echoing expected labels — no Gemini call, no image reads.");
+    console.log("[mock] echoing expected labels, no Gemini call, no image reads.");
   }
 
   const model = MOCK
@@ -147,7 +147,7 @@ async function main(): Promise<void> {
 
   const rows: Row[] = [];
   for (const s of present) {
-    // Mock: echo the expected labels — a deterministic 100%-accurate run that
+    // Mock: echo the expected labels. A deterministic 100%-accurate run that
     // proves the scoring + report code without a model or image bytes.
     if (MOCK) {
       rows.push({
@@ -291,7 +291,7 @@ async function main(): Promise<void> {
     `🚨 emergency FALSE-NEGATIVE rate: ${pct(summary.emergency.falseNegativeRate)}  (${fn} missed of ${tp + fn} real)`,
   );
   console.log(
-    `confidence calibration: correct=${summary.confidence.meanWhenCorrect ?? "—"} wrong=${summary.confidence.meanWhenWrong ?? "—"}`,
+    `confidence calibration: correct=${summary.confidence.meanWhenCorrect ?? "-"} wrong=${summary.confidence.meanWhenWrong ?? "-"}`,
   );
   console.log("──────────────────────────────\n");
 
@@ -307,7 +307,7 @@ function round(v: number | null): number | null {
   return v === null ? null : Math.round(v * 1000) / 1000;
 }
 function pct(v: number | null): string {
-  return v === null ? "—" : `${(v * 100).toFixed(1)}%`;
+  return v === null ? "-" : `${(v * 100).toFixed(1)}%`;
 }
 
 main().catch((err) => {

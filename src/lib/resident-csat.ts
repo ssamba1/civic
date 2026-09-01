@@ -7,7 +7,7 @@ import { validateCsatRatings } from "@/lib/schemas";
    Resident satisfaction (CSAT) overlay store.
 
    When a resident rates a resolved report ("Was this fixed?" 👍/👎), the
-   verdict lives here — keyed by report id — not on the report itself (the
+   verdict lives here (keyed by report id) not on the report itself (the
    demo corpus has no write API, and real persistence is a Phase-1b backend
    concern). Mirrors task-completion.ts exactly: a module-level snapshot read
    synchronously, useSyncExternalStore for React reactivity, persisted to
@@ -61,7 +61,7 @@ function getSnapshot(): CsatMap {
   return snapshot;
 }
 
-// Server render has no localStorage — return a stable empty map so SSR and the
+// Server render has no localStorage. Return a stable empty map so SSR and the
 // first client paint agree (no hydration mismatch); the effect-driven
 // subscribe/getSnapshot fills it in after mount.
 const SERVER_SNAPSHOT: CsatMap = {};
@@ -76,7 +76,7 @@ export function rateReport(reportId: string, rating: Rating): void {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
   } catch {
-    // Quota / private mode — keep the in-memory verdict, just don't persist.
+    // Quota / private mode. Keep the in-memory verdict, just don't persist.
   }
   emit();
 }

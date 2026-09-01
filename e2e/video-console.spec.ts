@@ -8,7 +8,7 @@ import { expect, type Locator, type Page, test } from "playwright/test";
  *
  * SETUP: needs VIDEO_PIPELINE=1 in .env.local (the page 404s without it) and
  * seeded clips (scripts/seed-demo-video.mjs). It does NOT need
- * DEV_AUTH_BYPASS — the demo city's console is public read-only (0d4782d), and
+ * DEV_AUTH_BYPASS. The demo city's console is public read-only (0d4782d), and
  * setting the bypass makes the auth-gate assertions in staff-triage.spec.ts
  * fail, because every admin route then answers 200.
  *
@@ -200,7 +200,7 @@ test("opening an evidence thumbnail shows the full frame with its box", async ({
 
   // The rail is the only detections surface now (the standalone Detections
   // section was deleted), so every evidence thumbnail lives inside a rail
-  // item's disclosure — open one before it can be clicked.
+  // item's disclosure, open one before it can be clicked.
   const items = railItems(page);
   const disclosure = items.nth((await items.count()) - 1).locator("summary");
   await disclosure.click();

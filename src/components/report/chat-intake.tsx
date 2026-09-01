@@ -99,7 +99,7 @@ export function ChatIntake({ onDraft, className = "" }: ChatIntakeProps) {
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
-      setError(`Something went wrong — please try again. (${msg})`);
+      setError(`Something went wrong, please try again. (${msg})`);
     } finally {
       setLoading(false);
     }
@@ -127,7 +127,7 @@ export function ChatIntake({ onDraft, className = "" }: ChatIntakeProps) {
       <div className="border-b border-gray-100 px-4 py-3">
         <h2 className="text-sm font-semibold text-gray-800">Report an Issue</h2>
         <p className="text-xs text-gray-500">
-          Tell us what you see — I&apos;ll help fill out the details.
+          Tell us what you see, I&apos;ll help fill out the details.
         </p>
       </div>
 

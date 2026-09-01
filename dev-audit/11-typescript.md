@@ -105,7 +105,7 @@ src/components/report/camera-capture.tsx:284, 299
   } as unknown as MediaTrackConstraints (2× calls)
   → MediaTrackConstraints is overly narrow; needs type assertion for dynamically-built constraint objects
 
-src/components/staff/staff-inbox.tsx:415–417, 442–444, 490–494 (6 instances)
+src/components/staff/staff-inbox.tsx:415-417, 442-444, 490-494 (6 instances)
   report={wo.report as unknown as Report}
   classification={wo.classification as unknown as Classification}
   workOrder={wo as unknown as WorkOrder}

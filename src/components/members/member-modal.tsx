@@ -20,14 +20,14 @@ import { lockBodyScroll } from "@/lib/utils/scroll-lock";
    it), so "mounted" here is purely the SSR/hydration portal gate.
    ================================================================== */
 
-// Shared control skins — same hairline/overlay register and ring-accent focus
+// Shared control skins, same hairline/overlay register and ring-accent focus
 // pattern as the members table controls.
 export const CONTROL_CLASS =
   "h-9 w-full rounded-[var(--radius-md)] border border-hairline bg-overlay px-3 text-[13px] text-foreground placeholder:text-faint outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background";
 
 const FIELD_LABEL_CLASS = "text-[12px] font-medium text-subtle";
 
-// Role options in request-defaulting order (Dispatcher first — the common
+// Role options in request-defaulting order (Dispatcher first, the common
 // staff grant). Values are the canonical MemberRole union.
 export const ROLE_OPTIONS: ReadonlyArray<{ value: MemberRole; label: string }> =
   [
@@ -43,7 +43,7 @@ export function roleRequiresTeam(role: MemberRole): boolean {
   return role === "staff_dispatcher" || role === "staff_supervisor";
 }
 
-// TEAM_LIST minus the synthetic "all" bucket — a member is scoped to one team
+// TEAM_LIST minus the synthetic "all" bucket. A member is scoped to one team
 // or none, never the admin meta-team.
 const TEAM_OPTIONS = TEAM_LIST.filter((t) => t.id !== "all");
 
@@ -55,7 +55,7 @@ const ERROR_COPY: Record<string, string> = {
   email_already_member: "That email is already a member.",
   cannot_change_own_role: "You can't change your own role.",
   invalid_email: "Enter a valid email address.",
-  invalid_input: "Something in the form looks off — double-check the fields.",
+  invalid_input: "Something in the form looks off. Double-check the fields.",
   missing_fields: "Fill in the required fields.",
   team_required: "Pick a team for this staff role.",
   not_authorized: "You don't have permission to do that.",
@@ -68,7 +68,7 @@ const ERROR_COPY: Record<string, string> = {
   invalid_crew: "One of the selected crews no longer exists.",
   crew_team_mismatch: "Crews must belong to the member's own division.",
   crew_sync_failed:
-    "The member was saved but crew assignments failed — retry from Edit member.",
+    "The member was saved but crew assignments failed, retry from Edit member.",
   lead_not_on_crew: "The crew lead must be on the crew.",
   member_not_in_city: "Someone selected is not a member of this city.",
   crew_create_failed: "Couldn't create the crew. Please try again.",
@@ -84,7 +84,7 @@ const ERROR_COPY: Record<string, string> = {
   crew_type_delete_failed: "Couldn't delete the crew type. Please try again.",
   // Invite-flow codes.
   invite_failed: "Couldn't send the invite. Please try again.",
-  member_row_failed: "The invite was sent but the profile failed — try again.",
+  member_row_failed: "The invite was sent but the profile failed, try again.",
 };
 
 export function humanizeMemberError(code: string): string {
@@ -150,7 +150,7 @@ export function TeamSelect({
   );
 }
 
-/** Crew as the member dialogs see it — id/name/division only (no roster). */
+/** Crew as the member dialogs see it, id/name/division only (no roster). */
 export interface CrewOption {
   id: string;
   teamKey: string;
@@ -159,14 +159,14 @@ export interface CrewOption {
   /** Display label from the city's crew_types catalog; falls back to the raw
    *  key when the catalog has no row (orphan key or pre-031 DB). */
   crewTypeLabel?: string | null;
-  /** Catalog description — surfaced as a tooltip so the inviter knows what
+  /** Catalog description, surfaced as a tooltip so the inviter knows what
    *  kind of work they're assigning someone to. */
   crewTypeDescription?: string | null;
 }
 
 /**
  * Crew membership checklist, scoped to the selected division. Renders nothing
- * without a team — a crew assignment only exists inside one — and an inline
+ * without a team (a crew assignment only exists inside one), and an inline
  * empty line when the division has no crews yet (created from the Crews panel
  * on the members page).
  */
@@ -189,7 +189,7 @@ export function CrewChecklist({
       <legend className={FIELD_LABEL_CLASS}>Crews</legend>
       {options.length === 0 ? (
         <p className="text-[12px] text-faint">
-          No crews in this division yet — create one from the Crews panel.
+          No crews in this division yet, create one from the Crews panel.
         </p>
       ) : (
         <div className="flex flex-col gap-0.5 rounded-[var(--radius-md)] border border-hairline bg-overlay p-1.5">
@@ -297,7 +297,7 @@ export function MemberModalShell({
   onClose: () => void;
   children: ReactNode;
 }) {
-  // Portal mount gate — SSR + first CSR render both return null so the
+  // Portal mount gate. SSR + first CSR render both return null so the
   // hydration trees match before createPortal runs on the second commit.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);

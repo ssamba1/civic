@@ -6,19 +6,19 @@ import { ensureAnonSession } from "@/components/report/ensure-anon-session";
 
 /**
  * Resident anon-first bootstrap (PLAN.md §7). The resident surface has no login
- * wall — if the visitor has no Supabase session, silently create an anonymous
+ * wall, if the visitor has no Supabase session, silently create an anonymous
  * one so reports, upvotes, and "my reports" attach to a stable id without a
  * sign-in step. Renders nothing; mirrors the effect in /report's page. Sign-in
  * (to upgrade to a cross-device account) stays available via the nav.
  *
  * Once a session exists (new or existing), self-heal the resident's
  * public.users row so the status-change notification trigger has a row to write
- * against — closing the gap where a fresh anon user filed a report before any
+ * against, closing the gap where a fresh anon user filed a report before any
  * users row existed.
  */
 export function AnonBootstrap() {
   useEffect(() => {
-    // Reuse a persisted session or mint an anonymous guest one — deduped and
+    // Reuse a persisted session or mint an anonymous guest one, deduped and
     // backed off on the shared project's signup rate limit via the same helper
     // /report uses, so the two mount points can't race into a 429.
     ensureAnonSession().then(() => {

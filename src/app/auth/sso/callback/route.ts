@@ -1,4 +1,4 @@
-// SSO SAML callback route — scaffold only (NEXT_100 #83).
+// SSO SAML callback route, scaffold only (NEXT_100 #83).
 //
 // TODO (required before enabling production SSO):
 // 1. Parse the `SAMLResponse` from the POST body (URL-decoded base64 XML).

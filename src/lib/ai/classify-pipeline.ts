@@ -49,8 +49,8 @@ type SupabaseLike = ReturnType<typeof createServerClient>;
 
 /**
  * Active crews (name/type/description) for the ## CREWS prompt section.
- * Best-effort: [] on any failure — including a pre-032 DB where
- * crews.description doesn't exist yet — keeps the prompt byte-identical to
+ * Best-effort: [] on any failure, including a pre-032 DB where
+ * crews.description doesn't exist yet. Keeps the prompt byte-identical to
  * the no-crews form, so the AI call itself never depends on this data.
  */
 async function fetchPromptCrews(
@@ -95,7 +95,7 @@ async function fetchPromptCrews(
  * Flag-gated AND no-op-safe:
  *  - When ASYNC_CLASSIFY is OFF this is a hard no-op, so the synchronous demo
  *    path NEVER references the classify_status column. The column ships in
- *    migration 007, which is NOT auto-applied — so any unguarded reference
+ *    migration 007, which is NOT auto-applied, so any unguarded reference
  *    would break the default sync path on un-migrated databases.
  *  - Errors are logged, never thrown: a missing column / failed write must not
  *    abort the pipeline (the demo thread must never break).
@@ -107,11 +107,11 @@ async function markClassifyStatus(
   log: ReturnType<typeof createLogger>,
 ): Promise<void> {
   if (!ASYNC_CLASSIFY) return;
-  // Separate update — intentionally NOT merged into the status:"dispatched"
+  // Separate update, intentionally NOT merged into the status:"dispatched"
   // write, so a missing column can only drop the status stamp, never the
   // primary report status transition.
   // classify_status ships in migration 007 but isn't reflected in the generated
-  // Supabase types yet — cast the patch so the typed .update() accepts it.
+  // Supabase types yet, cast the patch so the typed .update() accepts it.
   const patch = { classify_status: status } as Record<string, unknown>;
   const { error } = await supabase
     .from("reports")
@@ -128,7 +128,7 @@ async function markClassifyStatus(
 
 /**
  * Stamp est_cost + wo_source (+ AI rationale) on a work order. Separate guarded
- * write — these columns ship in migrations 010/013, which are NOT auto-applied.
+ * write. These columns ship in migrations 010/013, which are NOT auto-applied.
  * Mirroring markClassifyStatus, a missing column logs an error but never throws,
  * so the core work_orders insert (which omits these columns) still succeeds on
  * an un-migrated database. The demo thread must never break.
@@ -161,7 +161,7 @@ async function stampWorkOrderCost(
 }
 
 /**
- * Core classify pipeline — fetches the report photo from storage, runs Gemini,
+ * Core classify pipeline. Fetches the report photo from storage, runs Gemini,
  * persists the classification + work order, and updates report status.
  *
  * Called directly from server actions (no HTTP round-trip) and from the
@@ -194,7 +194,7 @@ export async function runClassifyPipeline(
     return { ok: false, error: msg };
   }
 
-  // Classify the RAW (unblurred) image for accuracy — the public copy has
+  // Classify the RAW (unblurred) image for accuracy. The public copy has
   // faces/plates blurred which degrades classification.
   //
   // The path comes from buildPhotoPaths, the SAME function the upload writes
@@ -204,7 +204,7 @@ export async function runClassifyPipeline(
   // (`${city_id}/${id}/${idx}.jpg`). The download then missed on every newly
   // submitted report: storage answered "Object not found", the guard below
   // swallowed it exactly as designed, and every report a resident filed came
-  // out classified `other` at confidence 0 with no crew — while the seeded
+  // out classified `other` at confidence 0 with no crew, while the seeded
   // reports still looked perfect, because the seed writes classifications
   // directly instead of going through this pipeline.
   //
@@ -215,8 +215,8 @@ export async function runClassifyPipeline(
     .from("photos-raw")
     .download(storagePath);
 
-  // Resilience: a missing/failed raw download must not abort the pipeline —
-  // skip Gemini and fall back so a work order is still created.
+  // Resilience: a missing/failed raw download must not abort the pipeline.
+  // Skip Gemini and fall back so a work order is still created.
   let classificationResult: Result<{
     classification: Classification;
     rawText: string;
@@ -239,7 +239,7 @@ export async function runClassifyPipeline(
     const bytes = new Uint8Array(await photoBlob.arrayBuffer());
     sniffed = sniffImageMime(bytes) ?? "image/jpeg";
     const imageBase64 = Buffer.from(bytes).toString("base64");
-    // OUTFLANK #7 — inject this city's past staff corrections as few-shot
+    // OUTFLANK #7, inject this city's past staff corrections as few-shot
     // guidance. Best-effort: empty string on a fresh city or any error, so the
     // base prompt (and thus classification behaviour) is unchanged.
     const corrections = await fetchCorrectionExamples(report.city_id);
@@ -250,7 +250,7 @@ export async function runClassifyPipeline(
         pairs: corrections.length,
       });
     }
-    // Issue #6 — offer this city's custom issue types (with AI descriptions)
+    // Issue #6, offer this city's custom issue types (with AI descriptions)
     // alongside the built-ins, so a runtime-added category can be auto-classified.
     // Best-effort: [] on any failure keeps classification to the 12 built-ins.
     const customCategories = await fetchCustomCategoryDefs(report.city_id);
@@ -270,7 +270,7 @@ export async function runClassifyPipeline(
   }
 
   // Resilience: if Gemini fails (network/rate/latency), DON'T abort the
-  // pipeline — fall back to a neutral classification so a work order is still
+  // pipeline. Fall back to a neutral classification so a work order is still
   // created and the report reaches the staff inbox. The demo thread never breaks.
   let classification: Classification;
   let modelVersion = GEMINI_MODEL;
@@ -297,7 +297,7 @@ export async function runClassifyPipeline(
       is_emergency: false,
       confidence: 0,
       reasoning:
-        "Automatic classification unavailable — queued for manual triage.",
+        "Automatic classification unavailable, queued for manual triage.",
       no_issue_detected: false,
       alternate_categories: [],
     };
@@ -338,7 +338,7 @@ export async function runClassifyPipeline(
 
   log.info("classification_persisted", { reportId });
 
-  // Optional hazard grading — best-effort; never blocks or aborts the pipeline.
+  // Optional hazard grading, best-effort; never blocks or aborts the pipeline.
   // Stamps hazard_severity + hazard_rationale on the reports row (migration 044).
   // Skipped gracefully on fallback classification (no image) or any Gemini error.
   if (classificationResult.ok && photoBlob) {
@@ -389,7 +389,7 @@ export async function runClassifyPipeline(
 
   // Manual-review gate: hold the report at 'open' instead of auto-dispatching
   // when the AI itself signals it isn't confident enough to route this safely.
-  // Emergencies always bypass this — life safety never waits on a human.
+  // Emergencies always bypass this, life safety never waits on a human.
   // (Previously emergencies short-circuited here and got no work order at all,
   // making the +50 priority term dead code and preventing cost actuals from
   // ever being captured for emergencies. Now they fall through to work order
@@ -397,13 +397,13 @@ export async function runClassifyPipeline(
   // high-confidence reports, but carrying the +50 priority boost.)
   // A failed/zero-confidence classification is always flagged;
   // otherwise check the model's own uncertainty signals.
-  // Emergencies skip the review gate entirely — auto-dispatch immediately.
+  // Emergencies skip the review gate entirely. Auto-dispatch immediately.
   const reviewReasons: string[] = [];
   if (classification.is_emergency) {
     // No review reasons; falls through to work order creation + auto-dispatch.
   } else if (classification.confidence === 0) {
     reviewReasons.push(
-      "AI classification unavailable or failed — needs manual triage",
+      "AI classification unavailable or failed. Needs manual triage",
     );
   } else {
     if (classification.no_issue_detected) {
@@ -428,7 +428,7 @@ export async function runClassifyPipeline(
     log.info("flagged_for_manual_review", { reportId, reviewReason });
   }
 
-  // Duplicate detection (non-emergency only — emergencies are never suppressed:
+  // Duplicate detection (non-emergency only, emergencies are never suppressed:
   // merging one would silently swallow an auto-dispatch. The is_emergency guard
   // was lost when the emergency short-circuit above was removed for issue-8;
   // this reinstates it explicitly). A match marks THIS report 'merged', records
@@ -444,7 +444,7 @@ export async function runClassifyPipeline(
         similarity_score: dup.similarityScore,
       });
       if (mergeErr) {
-        // Could not record the merge — do NOT mark the report merged (that would
+        // Could not record the merge. Do NOT mark the report merged (that would
         // orphan it with no link to its primary). Fall through to normal
         // work-order creation instead.
         log.error("merge_insert_failed_falling_through", undefined, {
@@ -463,7 +463,7 @@ export async function runClassifyPipeline(
             error: statusErr.message,
           });
         }
-        // Escalate the primary's work-order priority — a repeat report is a
+        // Escalate the primary's work-order priority. A repeat report is a
         // demand signal. Atomic increment via RPC (migration 014); guarded +
         // best-effort: a missing RPC (un-migrated DB) or primary-without-work-
         // order (e.g. emergency) is a logged no-op, never a thrown error.
@@ -507,7 +507,7 @@ export async function runClassifyPipeline(
 
   // Effective work order fields. Start from rules; override with AI output when
   // AI_WORK_ORDER is enabled AND the AI call succeeds. priority_score ALWAYS
-  // stays deterministic — the AI sizes crew/materials/minutes/cost, not the
+  // stays deterministic. The AI sizes crew/materials/minutes/cost, not the
   // dispatch priority math.
   let department = rulesWorkOrder.department;
   // string (not the static CrewType union): the AI path picks from the city's
@@ -524,7 +524,7 @@ export async function runClassifyPipeline(
   let crewHint: string | null = null;
 
   if (AI_WORK_ORDER) {
-    // City catalog with descriptions — degrades to the app defaults when the
+    // City catalog with descriptions, degrades to the app defaults when the
     // city has no rows or 031 isn't applied, so this never blocks the call.
     const cityCrewTypes = await fetchActiveCrewTypeDefs(report.city_id);
     // Active crews (name/type/description) feed the ## CREWS prompt section.
@@ -541,7 +541,7 @@ export async function runClassifyPipeline(
       crewType = aiResult.data.crew_type;
       estMinutes = aiResult.data.est_minutes;
       materials = aiResult.data.materials;
-      // Math.max preserves the rules floor — a lower AI estimate must not
+      // Math.max preserves the rules floor. A lower AI estimate must not
       // undercut the deterministic material+labor floor from work-order-rules.ts.
       estCost = Math.max(rulesWorkOrder.est_cost, aiResult.data.est_cost);
       woRationale = aiResult.data.rationale;
@@ -560,7 +560,7 @@ export async function runClassifyPipeline(
   // idempotent: a 2nd run (staff re-run, retry, or a concurrent submit+Open311
   // race) updates the existing work order instead of hitting a unique violation
   // that would stamp classify_status=failed AFTER classifications already
-  // upserted — leaving the report in a divergent half-classified state.
+  // upserted, leaving the report in a divergent half-classified state.
   const { data: insertedWorkOrder, error: woErr } = await supabase
     .from("work_orders")
     .upsert(
@@ -572,7 +572,7 @@ export async function runClassifyPipeline(
         est_minutes: estMinutes,
         materials,
         // Set directly on the primary write (not a best-effort stamp like
-        // est_cost below) — this flag is safety/correctness-critical and must
+        // est_cost below). This flag is safety/correctness-critical and must
         // never silently fail to apply.
         needs_manual_review: needsManualReview,
         review_reason: reviewReason,
@@ -596,7 +596,7 @@ export async function runClassifyPipeline(
   }
 
   // Persist the owning team via a separate guarded write (migration 026
-  // column; no-op-safe on un-migrated DBs — the read path falls back to the
+  // column; no-op-safe on un-migrated DBs. The read path falls back to the
   // static category→team default when team_key is null). Resolved from the
   // city's own city_teams config so per-city routing takes effect at creation.
   let resolvedTeamKey: string | null = null;
@@ -609,7 +609,7 @@ export async function runClassifyPipeline(
     );
     // Geographic override (LCP-15, migration 033): if the report's point falls
     // inside a routing_zone, that zone's team wins over the category default.
-    // No-op-safe — the RPC returns null (or errors on an un-migrated DB) unless
+    // No-op-safe. The RPC returns null (or errors on an un-migrated DB) unless
     // the city has opted into zones, leaving category routing untouched.
     try {
       const { data: zoneTeam, error: zoneErr } = await supabase.rpc(
@@ -688,7 +688,7 @@ export async function runClassifyPipeline(
   // Cross-jurisdiction ownership (migration 034; no-op-safe). If the category
   // escalates to the parent jurisdiction, stamp owner_city_id so the parent
   // owns the work order; otherwise it stays NULL (report's own city). Dark
-  // until a city seeds escalates_to_parent — resolveOwningCity returns the
+  // until a city seeds escalates_to_parent. ResolveOwningCity returns the
   // report's own city in every other case.
   try {
     const owningCity = await resolveOwningCity(
@@ -723,7 +723,7 @@ export async function runClassifyPipeline(
 
   // Auto-assign an actual crew (migration 030/031; AI_CREW_ASSIGN flag).
   // Deterministic pick over the city's active crews matching this work order's
-  // team + crew_type — best-effort like the team_key stamp above, and skipped
+  // team + crew_type, best-effort like the team_key stamp above, and skipped
   // for flagged reports (a human is about to review; a category override would
   // re-route the team and orphan the pick). Runs for emergencies: they skip
   // manual review by design and need a crew soonest.
@@ -770,7 +770,7 @@ export async function runClassifyPipeline(
   insertedWorkOrder.wo_source = woSource;
   insertedWorkOrder.wo_rationale = woRationale;
 
-  // Flagged reports stay at 'open' — never silently auto-dispatched. Staff
+  // Flagged reports stay at 'open'. Never silently auto-dispatched. Staff
   // see them in the inbox with a "Needs Review" badge and must explicitly
   // dispatch (after optionally correcting the category) via existing actions.
   if (!needsManualReview) {

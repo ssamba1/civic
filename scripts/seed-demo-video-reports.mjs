@@ -1,8 +1,8 @@
 // Carry the seeded demo detection clusters through to dispatched reports.
 //
 // scripts/seed-demo-video.mjs stops at 'candidate' clusters. This script does
-// what src/lib/video/decide.ts does on a 'dispatch' decision — without the
-// Gemini call — so the console demo shows the whole chain: clip → detections →
+// what src/lib/video/decide.ts does on a 'dispatch' decision, without the
+// Gemini call, so the console demo shows the whole chain: clip → detections →
 // clusters → real reports that look like resident submissions.
 //
 // For each of the three demo clusters it:
@@ -13,7 +13,7 @@
 //     in the private 'photos-raw' bucket at {city_id}/{report_id}.jpg
 //   - flips the cluster to dispatched/dispatch with the report attached
 //
-// Hard rule 2: the unblurred camera frame NEVER enters photos-public — the
+// Hard rule 2: the unblurred camera frame NEVER enters photos-public, the
 // public row carries the static placeholder, same as decide.ts.
 //
 // Idempotent: exits early once the demo clusters already carry report_id.
@@ -43,7 +43,7 @@ if (!url || !key) {
 
 const slug = process.argv[2] ?? "cumming";
 // Same center + offsets seed-demo-video.mjs used, so report locations line up
-// with the cluster points (the DB returns those as WKB — never decode them).
+// with the cluster points (the DB returns those as WKB, never decode them).
 const CENTER = { lng: -84.14, lat: 34.21 };
 const FRAMES_BUCKET = "video-frames";
 const RAW_BUCKET = "photos-raw";
@@ -151,9 +151,9 @@ const PLAN = {
     severity: 4,
     address: "1245 Peachtree Industrial Blvd, Cumming, GA 30041",
     description:
-      "Deep pothole in the right wheel track on Peachtree Industrial Blvd — grows after every rain, cars swerve into the next lane to miss it.",
+      "Deep pothole in the right wheel track on Peachtree Industrial Blvd, grows after every rain, cars swerve into the next lane to miss it.",
     rationale:
-      "High-confidence pothole tracked across 24 frames on an arterial — dispatch for repair.",
+      "High-confidence pothole tracked across 24 frames on an arterial. Dispatch for repair.",
     subcategory: "asphalt pothole in travel lane",
   },
   alligator_crack: {
@@ -164,7 +164,7 @@ const PLAN = {
     description:
       "The pavement outside 310 Canton Hwy has cracked into a web of squares. It has been spreading all summer and the edge is starting to crumble where people step off the curb.",
     rationale:
-      "Alligator cracking over a sustained stretch — surface failure, dispatch for assessment.",
+      "Alligator cracking over a sustained stretch. Surface failure, dispatch for assessment.",
     subcategory: "alligator cracking / surface fatigue",
   },
   debris: {
@@ -175,7 +175,7 @@ const PLAN = {
     description:
       "There's a pile of broken-up asphalt and a chunk of bumper sitting in the shoulder near 525 Buford Hwy. Cyclists have to pull out into traffic to get around it.",
     rationale:
-      "Loose debris in the shoulder blocking the bike route — dispatch for pickup.",
+      "Loose debris in the shoulder blocking the bike route. Dispatch for pickup.",
     subcategory: "roadway debris in shoulder",
   },
 };
@@ -198,12 +198,12 @@ const clusters = await rest(
   `video_detection_clusters?city_id=eq.${city.id}&class=in.(pothole,alligator_crack,debris)&select=id,class,max_confidence,frame_count,report_id&order=created_at.asc`,
 );
 if (clusters.length === 0) {
-  console.error("No demo clusters — run scripts/seed-demo-video.mjs first.");
+  console.error("No demo clusters, run scripts/seed-demo-video.mjs first.");
   process.exit(1);
 }
 if (clusters.every((c) => c.report_id)) {
   console.log(
-    `Demo clusters already dispatched for ${city.name} — nothing to do.`,
+    `Demo clusters already dispatched for ${city.name}. Nothing to do.`,
   );
   process.exit(0);
 }
@@ -213,7 +213,7 @@ const [clip] = await rest(
   `video_clips?city_id=eq.${city.id}&storage_path=like.*demo-sample.mp4&select=id,created_by`,
 );
 if (!clip) {
-  console.error("No demo clip — run scripts/seed-demo-video.mjs first.");
+  console.error("No demo clip, run scripts/seed-demo-video.mjs first.");
   process.exit(1);
 }
 
@@ -253,7 +253,7 @@ for (const cluster of clusters) {
     location: point,
     class: cluster.class,
     // Keep the evidence frame's confidence consistent with the cluster it
-    // represents — a best detection stronger than its cluster reads as a bug.
+    // represents. A best detection stronger than its cluster reads as a bug.
     confidence: cluster.max_confidence,
     bbox: bestBox(plan.frame),
     cluster_id: cluster.id,
@@ -270,7 +270,7 @@ for (const cluster of clusters) {
     reporter_id: reporter.id,
     location: point,
     // Unblurred camera frame stays private; the public row carries the static
-    // placeholder (hard rule 2 — no raw photo in the public bucket).
+    // placeholder (hard rule 2, no raw photo in the public bucket).
     photo_public_url: VIDEO_PLACEHOLDER_PUBLIC_PATH,
     photo_raw_url: `${RAW_BUCKET}/${rawPath}`,
     address: plan.address,

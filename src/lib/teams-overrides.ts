@@ -11,7 +11,7 @@ import { createListenerHub, frozenSnapshot } from "@/lib/utils/reactive-store";
 /* ==================================================================
    Per-report team override store.
 
-   Reports do not carry a persisted `assigned_team` field — default
+   Reports do not carry a persisted `assigned_team` field. Default
    routing is derived from `categoryToTeam(report.category)`. Dispatchers
    may override that default for a single report (e.g. a "downed_sign"
    that's actually a fallen tree → reassign from Traffic Engineering to
@@ -26,7 +26,7 @@ import { createListenerHub, frozenSnapshot } from "@/lib/utils/reactive-store";
    A parallel `historySnapshot` records every reassignment event
    (`{ from, to, ts }`) keyed by report id, so the delegation panel can
    render a per-report audit trail. The `OverrideMap` shape is
-   unchanged — existing consumers (filter-reports, aggregateByTeam,
+   unchanged, existing consumers (filter-reports, aggregateByTeam,
    dashboard derive utils) keep reading `overrides[id]` as a TeamId.
 
    `setReportTeam` / `clearReportTeam` now accept the report object
@@ -36,7 +36,7 @@ import { createListenerHub, frozenSnapshot } from "@/lib/utils/reactive-store";
 
    When Supabase tables land, swap the localStorage read/write inside
    this module for an RPC. Call-sites (filter-reports, derive utils,
-   delegation panel) keep their current shape — `setReportTeam` becomes
+   delegation panel) keep their current shape. `setReportTeam` becomes
    async, `getReportTeam` reads from a cached snapshot.
    ================================================================== */
 
@@ -70,7 +70,7 @@ let snapshot: OverrideMap = {};
 let historySnapshot: HistoryMap = {};
 let hydrated = false;
 
-// One shared listener hub — a single `emit()` must notify both the
+// One shared listener hub. A single `emit()` must notify both the
 // primary-map and history `useSyncExternalStore` subscriptions below.
 const { subscribe, emit } = createListenerHub();
 
@@ -91,7 +91,7 @@ function writeStorage(map: OverrideMap) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
   } catch {
-    // Quota / private mode — silently drop. In-memory snapshot still works.
+    // Quota / private mode. Silently drop. In-memory snapshot still works.
   }
 }
 
@@ -138,7 +138,7 @@ function writeHistoryStorage(map: HistoryMap) {
   try {
     window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(map));
   } catch {
-    // Quota / private mode — silently drop. In-memory snapshot still works.
+    // Quota / private mode. Silently drop. In-memory snapshot still works.
   }
 }
 

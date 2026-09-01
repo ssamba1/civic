@@ -59,7 +59,7 @@ export interface RoutingWeights {
 /**
  * Cost/SLA-weighted default (the chosen policy). Load, cost and SLA share the
  * weight so a contractor (cost > 0) only wins once internal crews are filling
- * up OR when it is materially faster on an at-risk work order — internal
+ * up OR when it is materially faster on an at-risk work order, internal
  * spillover as an emergent property, not a hard rule.
  */
 export const DEFAULT_WEIGHTS: RoutingWeights = {
@@ -92,10 +92,10 @@ export function effectiveCategories(
 /**
  * Prune the tree to the assignable LEAF units valid for a report:
  *   - active,
- *   - a leaf (no active children — only leaves take work),
+ *   - a leaf (no active children, only leaves take work),
  *   - the report's category is in its (inherited) categories,
  *   - when a crewType is given, it is in the unit's skills (a unit with empty
- *     skills is a wildcard — it accepts any crew_type, matching a generic crew).
+ *     skills is a wildcard, it accepts any crew_type, matching a generic crew).
  *
  * Pure: `units` is the full active set for one city. Returns candidates with
  * openWorkOrders defaulted to 0 (the DB wrapper fills real load in).
@@ -124,7 +124,7 @@ export function resolveCandidates(
 }
 
 /**
- * Score one candidate — LOWER is better. Terms, each normalized to ~[0,1] so
+ * Score one candidate. LOWER is better. Terms, each normalized to ~[0,1] so
  * the weights are comparable:
  *   load  = fill (open / capacity); unbounded capacity uses a soft cap so
  *           adding work still costs something and load still spreads.
@@ -170,12 +170,12 @@ export function scoreUnit(
 }
 
 /**
- * Pick the best candidate — min score after hard filters. Hard filters:
+ * Pick the best candidate, min score after hard filters. Hard filters:
  *   - a bounded unit at/over capacity is out (never overfill),
  * then rank by score, tie-break on id for a stable, reproducible pick.
  *
  * Returns null when every candidate is filtered out (all at capacity) or the
- * list is empty — caller leaves the work order unassigned for manual dispatch.
+ * list is empty. Caller leaves the work order unassigned for manual dispatch.
  */
 export function assignBestUnit(
   candidates: AssignCandidate[],
@@ -212,8 +212,8 @@ export function assignBestUnit(
 
 /**
  * Persist an APPROVED org-tree proposal for a city (advanced routing 042).
- * Inserts in dependency order — a node's parent is inserted first so its DB id
- * is known — because org_units.parent_id is a real FK and the path trigger
+ * Inserts in dependency order. A node's parent is inserted first so its DB id
+ * is known, because org_units.parent_id is a real FK and the path trigger
  * looks up the parent's path at insert time. Returns the key → new id map.
  *
  * `proposalUnits` is the human-approved flat list (validated upstream by
@@ -308,7 +308,7 @@ function rowToUnit(r: Record<string, unknown>): OrgUnit {
 /**
  * Auto-assign the best org unit to a freshly created work order (042 successor
  * to autoAssignCrew). Best-effort: any failure logs and returns null, never
- * throws — the pipeline must survive an un-migrated DB or a transient error.
+ * throws. The pipeline must survive an un-migrated DB or a transient error.
  * The UPDATE is guarded with `.is("assigned_unit_id", null)` so a re-run never
  * overwrites a manual assignment.
  */
@@ -321,7 +321,7 @@ export async function autoAssignUnit(
     crewType: string | null;
     /** work_orders.due_at (ISO) if stamped, for SLA-risk scoring. */
     dueAt?: string | null;
-    /** Server "now" epoch ms — passed in for testability / determinism. */
+    /** Server "now" epoch ms, passed in for testability / determinism. */
     nowMs: number;
     weights?: RoutingWeights;
     log: Logger;
@@ -349,7 +349,7 @@ export async function autoAssignUnit(
     if (candidates.length === 0) return null;
 
     // Live load: open (not completed) work orders per candidate unit. Mirror
-    // the crew load query (030) — exclude dead reports so rejected/merged work
+    // the crew load query (030), exclude dead reports so rejected/merged work
     // never permanently skews a unit's fill.
     const ids = candidates.map((c) => c.id);
     const openCounts = new Map<string, number>();

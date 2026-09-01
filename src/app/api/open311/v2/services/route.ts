@@ -7,11 +7,11 @@ import { toServicesXml } from "@/lib/open311/xml";
 /**
  * GET /api/open311/v2/services
  *
- * Open311 GeoReport v2 — list all available service types.
+ * Open311 GeoReport v2, list all available service types.
  * Public endpoint, no auth required.
  *
  * Content negotiation: ?format=xml or Accept: text/xml → XML, otherwise JSON.
- * Note: canonical Open311 URL is /services.json — this route handles the
+ * Note: canonical Open311 URL is /services.json. This route handles the
  * equivalent via query-param format selection. A Next.js middleware rewrite
  * can map /services.json → /services?format=json if needed.
  */

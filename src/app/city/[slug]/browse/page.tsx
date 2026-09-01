@@ -23,7 +23,7 @@ export default async function BrowsePage({ params }: PageProps) {
   // Center on the city itself: hardcoded coords for ship-with cities, else the
   // real geocoded center (city_center RPC / live geocode) so an onboarded city's
   // dashboard map doesn't fall back to Cumming. Stats and center are
-  // independent of each other once the city resolves — fetch them together
+  // independent of each other once the city resolves, fetch them together
   // rather than paying two serial round trips.
   const [stats, geocodedCenter] = await Promise.all([
     fetchCityStats(city.id),

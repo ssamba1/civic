@@ -11,9 +11,9 @@
 **14 documentation gaps found** across environment variables, API routes, feature status, and data model claims.
 
 **Severity breakdown:**
-- **P0 (Critical)**: 2 — undocumented required env vars, missing API endpoints in README
-- **P1 (High)**: 5 — undocumented optional env vars, feature status overclaims  
-- **P2 (Medium)**: 7 — missing table documentation, stale feature descriptions, env schema gaps
+- **P0 (Critical)**: 2, undocumented required env vars, missing API endpoints in README
+- **P1 (High)**: 5, undocumented optional env vars, feature status overclaims  
+- **P2 (Medium)**: 7, missing table documentation, stale feature descriptions, env schema gaps
 
 **Most important issue**: Open311 POST /api/open311/v2/requests endpoint is undocumented in README API table, and three environment variables (OPEN311_API_KEY, OPEN311_SYSTEM_USER_ID, NEXT_PUBLIC_ASYNC_CLASSIFY) are required/used but absent from .env.example.
 
@@ -26,8 +26,8 @@
 | 1 | .env.example (missing) | P0 | OPEN311_API_KEY not documented | Required by src/app/api/open311/v2/requests/route.ts:157 for POST /api/open311/v2/requests auth | Add to .env.example: `OPEN311_API_KEY=` with comment on external Open311 clients |
 | 2 | .env.example (missing) | P0 | OPEN311_SYSTEM_USER_ID not documented | Required by src/app/api/open311/v2/requests/route.ts:229; returns 500 if not set | Add to .env.example: `OPEN311_SYSTEM_USER_ID=` with comment on system user UUID |
 | 3 | .env.example (missing) | P1 | NEXT_PUBLIC_ASYNC_CLASSIFY not documented | Used in src/lib/ai/config.ts:30; controls async classification mode (feature flag) | Add to .env.example: `NEXT_PUBLIC_ASYNC_CLASSIFY=` with comment on setting to '1' |
-| 4 | README.md §API (79–89) | P0 | POST /api/open311/v2/requests missing from table | Endpoint exists, accepts api_key + service_code + lat/long + description/media_url, creates reports | Add row to README API table: `POST /api/open311/v2/requests \| Open311 API key \| Create service request` |
-| 5 | README.md §API (79–89) | P1 | GET /api/auth/logout missing from table | Route exists at src/app/api/auth/logout/route.ts, handles Supabase signout | Add row: `GET /api/auth/logout \| Session \| Sign out current user` |
+| 4 | README.md §API (79-89) | P0 | POST /api/open311/v2/requests missing from table | Endpoint exists, accepts api_key + service_code + lat/long + description/media_url, creates reports | Add row to README API table: `POST /api/open311/v2/requests \| Open311 API key \| Create service request` |
+| 5 | README.md §API (79-89) | P1 | GET /api/auth/logout missing from table | Route exists at src/app/api/auth/logout/route.ts, handles Supabase signout | Add row: `GET /api/auth/logout \| Session \| Sign out current user` |
 | 6 | README.md §Features (24) | P1 | "Upvote persistence + triggers" (🟠 migration pending) | No upvote table in migrations. Only verification_vote (citizen voting) exists. Feature doesn't exist, no migration pending. | Change to 🔴 not built; OR clarify "Citizen verification" vs "Upvotes" as separate features |
 | 7 | README.md §Features (25) | P1 | "Cost + SLA in staff detail" (🟠 wired, not persisted) | CATEGORY_SLA_TARGETS wired + displayed in src/components/analytics/report-detail.tsx:385, src/app/api/ai/reasoning/route.ts:276-287. Status understates actual implementation. | Change to ✅; clarify SLA targets are category constants; document what "cost persisted" means |
 | 8 | README.md §Features (26) | P1 | "Scoreboard / neighborhood equity view" (🔴 not built) | Neighborhood analysis IS built: TopNeighborhoods in analytics-bento.tsx:2883, fetchTopNeighborhoods in resident-data.ts:495, neighborhood-scale clustering in report-map.tsx:291 | Change to 🟠 partially built; split into "Neighborhood equity ✅" and "Scoreboard benchmarks 🔴" |
@@ -35,16 +35,16 @@
 | 10 | README.md §Features (27) | P2 | "Web push notifications" (🔴 not built) accurately claimed | No service-worker, Web Push API, push event handlers. Email-only (RESEND_API_KEY). | Keep as-is (accurate); optionally clarify "Email via Resend ✅; web push not built" |
 | 11 | README.md §Features (28) | P2 | "Offline submit (IndexedDB + BG Sync)" (🔴 not built) accurately claimed | No IndexedDB init, no Background Sync. Claim correct. | Keep as-is (accurate) |
 | 12 | README.md §Features (15) | P2 | AI classification description ambiguous re: sync/async | Says "✅" but code supports both sync (default) and async (NEXT_PUBLIC_ASYNC_CLASSIFY=1). Design doesn't clarify mode. | Update to: "AI classification (Gemini 2.5 Flash, structured JSON, sync/async modes) ✅" |
-| 13 | src/lib/env.ts (3–14) | P2 | Env schema incomplete (missing 9 vars) | serverEnv schema missing OPEN311_API_KEY, OPEN311_SYSTEM_USER_ID; clientEnv missing NEXT_PUBLIC_ASYNC_CLASSIFY, NEXT_PUBLIC_DEMO_MODE, NEXT_PUBLIC_SITE_URL, etc. | Add optional fields to schemas, or document why omitted (build-time inlining, optional at runtime) |
-| 14 | docs/CODE_REVIEW_2026-06.md (68–72) | P2 | Fire-and-forget classification issue confuses two separate concerns | Describes ASYNC_CLASSIFY as serverless workaround, but it controls resident wait, not fire-and-forget pattern. Both sync and async paths have fire-and-forget classify fetch. | Clarify ASYNC_CLASSIFY vs fire-and-forget are different concerns; update P0/P1 reasoning |
+| 13 | src/lib/env.ts (3-14) | P2 | Env schema incomplete (missing 9 vars) | serverEnv schema missing OPEN311_API_KEY, OPEN311_SYSTEM_USER_ID; clientEnv missing NEXT_PUBLIC_ASYNC_CLASSIFY, NEXT_PUBLIC_DEMO_MODE, NEXT_PUBLIC_SITE_URL, etc. | Add optional fields to schemas, or document why omitted (build-time inlining, optional at runtime) |
+| 14 | docs/CODE_REVIEW_2026-06.md (68-72) | P2 | Fire-and-forget classification issue confuses two separate concerns | Describes ASYNC_CLASSIFY as serverless workaround, but it controls resident wait, not fire-and-forget pattern. Both sync and async paths have fire-and-forget classify fetch. | Clarify ASYNC_CLASSIFY vs fire-and-forget are different concerns; update P0/P1 reasoning |
 
 ---
 
-## Details — Critical & High Findings
+## Details: Critical & High Findings
 
 ### P0-1: OPEN311_API_KEY undocumented, required for POST /api/open311/v2/requests
 
-**File**: .env.example (missing) and src/app/api/open311/v2/requests/route.ts:154–160
+**File**: .env.example (missing) and src/app/api/open311/v2/requests/route.ts:154-160
 
 **Code**:
 ```ts
@@ -67,7 +67,7 @@ OPEN311_API_KEY=your-open311-api-key
 
 ### P0-2: OPEN311_SYSTEM_USER_ID undocumented, required for POST /api/open311/v2/requests
 
-**File**: .env.example (missing) and src/app/api/open311/v2/requests/route.ts:227–236
+**File**: .env.example (missing) and src/app/api/open311/v2/requests/route.ts:227-236
 
 **Code**:
 ```ts
@@ -93,7 +93,7 @@ OPEN311_SYSTEM_USER_ID=
 
 ### P0-4: POST /api/open311/v2/requests missing from README API table
 
-**Files**: README.md lines 79–89 vs src/app/api/open311/v2/requests/route.ts:140–299
+**Files**: README.md lines 79-89 vs src/app/api/open311/v2/requests/route.ts:140-299
 
 **README API table documents**:
 - GET /api/health
@@ -103,7 +103,7 @@ OPEN311_SYSTEM_USER_ID=
 - GET /api/open311/v2/requests
 - GET /api/open311/v2/requests/[id]
 
-**Missing**: POST /api/open311/v2/requests — a full endpoint that accepts external Open311 service requests.
+**Missing**: POST /api/open311/v2/requests, a full endpoint that accepts external Open311 service requests.
 
 **Implementation**: Requires OPEN311_API_KEY, accepts body with service_code, lat, long, address_string, description, media_url. Creates reports in the system and triggers async AI classification.
 
@@ -125,7 +125,7 @@ OPEN311_SYSTEM_USER_ID=
 
 **Reality**: 
 - No `upvotes` or `votes` table in any migration
-- Migration 001 creates `verifications` table with `verification_vote` enum (confirmed/disputed) — this is citizen verification voting, NOT upvotes
+- Migration 001 creates `verifications` table with `verification_vote` enum (confirmed/disputed). This is citizen verification voting, NOT upvotes
 - No upvote-related triggers exist
 - Feature is not in-progress; it's not built
 
@@ -152,7 +152,7 @@ OPEN311_SYSTEM_USER_ID=
 - CATEGORY_SLA_TARGETS is fully wired and displayed:
   - src/lib/constants.ts defines SLA targets per category
   - src/components/analytics/report-detail.tsx:310, 385 displays SLA target in staff detail view
-  - src/app/api/ai/reasoning/route.ts:100, 123, 276–287 includes SLA target in AI reasoning payload
+  - src/app/api/ai/reasoning/route.ts:100, 123, 276-287 includes SLA target in AI reasoning payload
   - All staff views show SLA targets prominently
 - Cost estimates are derived from Gemini classification confidence/severity
 
@@ -222,6 +222,6 @@ Or if cost estimation should persist to work_orders table, add migration to crea
 - ✅ Environment variables verified via grep for process.env.* / NEXT_PUBLIC_*
 - ✅ API routes enumerated and compared to README table
 - ✅ Feature table checked against migrations and component implementations
-- ✅ Data model verified against all migration files (001–009)
+- ✅ Data model verified against all migration files (001-009)
 - ✅ No false positives; all are confirmed mismatches between docs and code
 

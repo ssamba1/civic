@@ -1,10 +1,10 @@
-# Custom Crew Types + Crew Email Invites + Unified Staff Dropdowns — Implementation Plan
+# Custom Crew Types + Crew Email Invites + Unified Staff Dropdowns: Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Let city admins define custom crew types (with a ≥10-word description the AI uses for routing), invite crew members by email directly from the crew dialog, and replace the staff console's native `<select>`s with one consistent, polished popover-listbox component.
 
-**Architecture:** Custom crew types live in a new per-city config table `city_crew_types` (migration 031, follows the 024/030 idiom: city-scoped, staff RLS). A single shared module `src/lib/crew-types.ts` becomes the source of truth for the 7 built-in types and all name/description validation, consumed by the UI, the server actions, and the AI schema. The Gemini work-order generator gets per-call schema/prompt builders that union the built-ins with the city's custom types — with zero custom types the output is byte-identical to today's, so existing cities see no behavioral drift. A new `MenuSelect` component (portal-positioned listbox, `aria-activedescendant` pattern) replaces the staff console's native selects and hosts the "+ New type…" creation flow. Crew email invites reuse the existing `inviteMember` action (which already handles no-account users via `supabase.auth.admin.inviteUserByEmail`), extended to return the new `userId` so the crew dialog can add the invitee to its roster immediately.
+**Architecture:** Custom crew types live in a new per-city config table `city_crew_types` (migration 031, follows the 024/030 idiom: city-scoped, staff RLS). A single shared module `src/lib/crew-types.ts` becomes the source of truth for the 7 built-in types and all name/description validation, consumed by the UI, the server actions, and the AI schema. The Gemini work-order generator gets per-call schema/prompt builders that union the built-ins with the city's custom types. With zero custom types the output is byte-identical to today's, so existing cities see no behavioral drift. A new `MenuSelect` component (portal-positioned listbox, `aria-activedescendant` pattern) replaces the staff console's native selects and hosts the "+ New type…" creation flow. Crew email invites reuse the existing `inviteMember` action (which already handles no-account users via `supabase.auth.admin.inviteUserByEmail`), extended to return the new `userId` so the crew dialog can add the invitee to its roster immediately.
 
 **Tech Stack:** Next.js 16 App Router, TypeScript strict, Supabase (Postgres + RLS), zod v4, Tailwind v4 (grayscale staff register: `border-hairline`, `bg-overlay`, `bg-surface`, `text-subtle`/`text-faint`), Vitest, Gemini via `@google/generative-ai` structured output.
 
@@ -28,10 +28,10 @@
 
 | File | Action | Responsibility |
 |---|---|---|
-| `src/lib/crew-types.ts` | Create | Built-in crew type list, name normalization, description validation, labels — single source of truth |
+| `src/lib/crew-types.ts` | Create | Built-in crew type list, name normalization, description validation, labels, single source of truth |
 | `src/lib/crew-types.test.ts` | Create | Unit tests for the above |
 | `supabase/migrations/20260708_031_city_crew_types.sql` | Create | `city_crew_types` table + RLS |
-| `src/lib/db/crew-types.ts` | Create | `fetchCityCrewTypes(cityId)` — never throws, `[]` on un-migrated DB |
+| `src/lib/db/crew-types.ts` | Create | `fetchCityCrewTypes(cityId)`. Never throws, `[]` on un-migrated DB |
 | `src/app/city/[slug]/members/crew-actions.ts` | Modify | `createCrewType` action; relax `crewTypeSchema` to validated free text |
 | `src/app/city/[slug]/members/actions.ts` | Modify | `inviteMember` returns `userId` |
 | `src/components/ui/menu-select.tsx` | Create | The popover listbox component |
@@ -51,7 +51,7 @@
 
 ### Task 1: Shared crew-type module (source of truth + validation)
 
-The 7 built-in type strings are currently duplicated in THREE files (`crews-panel.tsx:45`, `crew-actions.ts:19`, `work-order-schema.ts:13`). This task consolidates them and adds the validation logic every later task imports. Pure logic — fully unit-testable.
+The 7 built-in type strings are currently duplicated in THREE files (`crews-panel.tsx:45`, `crew-actions.ts:19`, `work-order-schema.ts:13`). This task consolidates them and adds the validation logic every later task imports. Pure logic, fully unit-testable.
 
 **Files:**
 - Create: `src/lib/crew-types.ts`
@@ -129,14 +129,14 @@ describe("crewTypeLabel", () => {
 - [ ] **Step 2: Run tests to verify they fail**
 
 Run (from `-Social-Impact-/`): `pnpm vitest run src/lib/crew-types.test.ts`
-Expected: FAIL — module `./crew-types` not found.
+Expected: FAIL, module `./crew-types` not found.
 
 - [ ] **Step 3: Write the implementation**
 
 ```ts
 // src/lib/crew-types.ts
 /* ==================================================================
-   Crew types — single source of truth.
+   Crew types, single source of truth.
 
    The 7 built-in labor types are what the AI work-order generator
    knows natively (they were previously duplicated in crews-panel,
@@ -145,8 +145,8 @@ Expected: FAIL — module `./crew-types` not found.
    >=10-word description that gets injected into the AI prompt so the
    generator can route work orders to it.
 
-   Shared by client (crew dialog) and server (actions, AI schema) —
-   keep this module dependency-free and isomorphic.
+   Shared by client (crew dialog) and server (actions, AI schema).
+   Keep this module dependency-free and isomorphic.
    ================================================================== */
 
 export const BUILT_IN_CREW_TYPES = [
@@ -177,7 +177,7 @@ const NAME_RE = /^[a-z0-9][a-z0-9_]{1,39}$/;
  * trimmed, internal whitespace/underscore runs collapsed to a single
  * underscore ("Street Lights" -> "street_lights"). Returns null when
  * the result isn't a valid name (2-40 chars of [a-z0-9_], starting
- * alphanumeric) — callers surface that as a validation error.
+ * alphanumeric), callers surface that as a validation error.
  */
 export function normalizeCrewTypeName(raw: string): string | null {
   const normalized = raw
@@ -192,7 +192,7 @@ export function isBuiltInCrewType(name: string): boolean {
   return (BUILT_IN_CREW_TYPES as readonly string[]).includes(name);
 }
 
-/** Whitespace-separated word count — the >=10-word description gate. */
+/** Whitespace-separated word count, the >=10-word description gate. */
 export function descriptionWordCount(text: string): number {
   const trimmed = text.trim();
   return trimmed === "" ? 0 : trimmed.split(/\s+/).length;
@@ -213,31 +213,31 @@ Expected: PASS (all).
 
 ```bash
 git add src/lib/crew-types.ts src/lib/crew-types.test.ts
-git commit -m "feat(crews): shared crew-type module — built-ins, normalization, description gate"
+git commit -m "feat(crews): shared crew-type module, built-ins, normalization, description gate"
 ```
 
 ---
 
-### Task 2: Migration 031 — `city_crew_types` table + RLS
+### Task 2: Migration 031: `city_crew_types` table + RLS
 
 New table following the exact idiom of migrations 024/030: city-scoped, idempotent DDL, staff-scoped RLS, comments. The ≥10-word rule is enforced app-side (zod); the DB CHECK only guards non-empty (word-splitting in SQL is brittle and the app is the only writer).
 
 **Files:**
 - Create: `supabase/migrations/20260708_031_city_crew_types.sql`
-- Modify: the RLS test harness (locate via `pnpm test:rls` script — `scripts/test-rls.mjs`; mirror its existing `crews` coverage block)
+- Modify: the RLS test harness (locate via `pnpm test:rls` script, `scripts/test-rls.mjs`; mirror its existing `crews` coverage block)
 
 - [ ] **Step 1: Write the migration**
 
 ```sql
--- 031: city_crew_types — per-city CUSTOM crew labor types, additive to the
+-- 031: city_crew_types, per-city CUSTOM crew labor types, additive to the
 -- 7 built-ins hardcoded in src/lib/crew-types.ts (paving, line_crew,
--- sign_crew, cleanup, concrete, arborist, drain_crew — those never get rows
+-- sign_crew, cleanup, concrete, arborist, drain_crew. Those never get rows
 -- here; the app rejects reserved names).
 --
 -- description is the AI-routing signal: >=10 words describing what the crew
 -- does, injected into the work-order generator prompt so Gemini can route
 -- matching work orders to this type (crews.crew_type and
--- work_orders.crew_type are already free text — no change needed there).
+-- work_orders.crew_type are already free text, no change needed there).
 -- The word-count rule is enforced app-side (zod, both client and server);
 -- the CHECK below only guards non-empty.
 
@@ -253,7 +253,7 @@ CREATE TABLE IF NOT EXISTS city_crew_types (
 
 CREATE INDEX IF NOT EXISTS idx_city_crew_types_city ON city_crew_types (city_id);
 
--- RLS — same posture as crews (030): staff-only read scoped to own city
+-- RLS. Same posture as crews (030): staff-only read scoped to own city
 -- (descriptions are internal operational config), staff write as defense in
 -- depth (the admin-gated server action runs service-role and bypasses RLS).
 
@@ -273,22 +273,22 @@ GRANT SELECT ON city_crew_types TO authenticated;
 GRANT INSERT, UPDATE, DELETE ON city_crew_types TO authenticated;
 
 COMMENT ON TABLE city_crew_types IS 'Per-city custom crew labor types, additive to the built-in 7. 031.';
-COMMENT ON COLUMN city_crew_types.description IS 'What this crew does (>=10 words, app-enforced) — injected into the AI work-order prompt for routing.';
+COMMENT ON COLUMN city_crew_types.description IS 'What this crew does (>=10 words, app-enforced). Injected into the AI work-order prompt for routing.';
 ```
 
 - [ ] **Step 2: Apply the migration**
 
-Do NOT run `pnpm db:migrate` (naive `supabase db push` — the remote migration ledger is unrecorded; see docs/runbooks). Apply the same way 024–030 were applied:
+Do NOT run `pnpm db:migrate` (naive `supabase db push`, the remote migration ledger is unrecorded; see docs/runbooks). Apply the same way 024-030 were applied:
 
 1. Read `scripts/run-migrations.mjs` (documented applier in the 024 header) to confirm invocation.
 2. If it applies pending files in filesystem order: run `node scripts/run-migrations.mjs` from `-Social-Impact-/`.
-3. If that script is absent/stale, apply via the Supabase Management API `POST /v1/projects/{ref}/database/query` using the PAT in `.env.local` (established procedure for this project — the executor should read `.env.local` for the token/ref var names, not guess).
+3. If that script is absent/stale, apply via the Supabase Management API `POST /v1/projects/{ref}/database/query` using the PAT in `.env.local` (established procedure for this project, the executor should read `.env.local` for the token/ref var names, not guess).
 
 Expected: statement runs clean; re-running is a no-op (idempotent DDL).
 
 - [ ] **Step 3: Add RLS regression coverage**
 
-Open `scripts/test-rls.mjs`, find the block covering `crews` (added with migration 030), and add an equivalent block for `city_crew_types` asserting: (a) staff of city A can SELECT city A rows, (b) staff of city A cannot SELECT city B rows, (c) anon gets zero rows. Mirror the existing block's structure exactly — same helpers, same assertion style.
+Open `scripts/test-rls.mjs`, find the block covering `crews` (added with migration 030), and add an equivalent block for `city_crew_types` asserting: (a) staff of city A can SELECT city A rows, (b) staff of city A cannot SELECT city B rows, (c) anon gets zero rows. Mirror the existing block's structure exactly, same helpers, same assertion style.
 
 - [ ] **Step 4: Run RLS tests**
 
@@ -299,7 +299,7 @@ Expected: PASS including the new `city_crew_types` assertions.
 
 ```bash
 git add supabase/migrations/20260708_031_city_crew_types.sql scripts/test-rls.mjs
-git commit -m "feat(crews): city_crew_types table (031) — custom types with AI-routing descriptions"
+git commit -m "feat(crews): city_crew_types table (031), custom types with AI-routing descriptions"
 ```
 
 ---
@@ -324,7 +324,7 @@ const log = createLogger("db-crew-types");
 
 /**
  * All custom crew types of `cityId`, name-ordered. Best-effort: any failure
- * (including an un-migrated DB missing the 031 table) logs and returns [] —
+ * (including an un-migrated DB missing the 031 table) logs and returns [],
  * callers then behave exactly as before custom types existed.
  */
 export async function fetchCityCrewTypes(
@@ -352,7 +352,7 @@ export async function fetchCityCrewTypes(
 }
 ```
 
-Note: if `createLogger`'s instance has no `.warn`, use `.error` with `undefined` err arg — match `lib/db/crews.ts` usage.
+Note: if `createLogger`'s instance has no `.warn`, use `.error` with `undefined` err arg, match `lib/db/crews.ts` usage.
 
 - [ ] **Step 2: Typecheck**
 
@@ -363,12 +363,12 @@ Expected: clean.
 
 ```bash
 git add src/lib/db/crew-types.ts
-git commit -m "feat(crews): fetchCityCrewTypes accessor — best-effort, [] on un-migrated DB"
+git commit -m "feat(crews): fetchCityCrewTypes accessor, best-effort, [] on un-migrated DB"
 ```
 
 ---
 
-### Task 4: Server actions — `createCrewType`, relaxed `crewTypeSchema`, `inviteMember` returns userId
+### Task 4: Server actions: `createCrewType`, relaxed `crewTypeSchema`, `inviteMember` returns userId
 
 **Files:**
 - Modify: `src/app/city/[slug]/members/crew-actions.ts`
@@ -376,7 +376,7 @@ git commit -m "feat(crews): fetchCityCrewTypes accessor — best-effort, [] on u
 
 - [ ] **Step 1: Rework `crew-actions.ts`**
 
-(a) Delete the local `CREW_TYPE_VALUES` array (lines 17–27) and import from the shared module:
+(a) Delete the local `CREW_TYPE_VALUES` array (lines 17-27) and import from the shared module:
 
 ```ts
 import {
@@ -388,7 +388,7 @@ import {
 } from "@/lib/crew-types";
 ```
 
-(b) Replace the enum `crewTypeSchema` (line 30) with validated free text — shape only; existence is checked against the DB in the actions:
+(b) Replace the enum `crewTypeSchema` (line 30) with validated free text. Shape only; existence is checked against the DB in the actions:
 
 ```ts
 // Free text, but canonical: 2-40 chars of [a-z0-9_]. Existence (built-in or
@@ -402,7 +402,7 @@ const crewTypeSchema = z
 (c) Add a helper that verifies a submitted type exists for this city, and call it inside BOTH `createCrew` and `updateCrew` right after the `getCityAdminContext` gate (before the insert/update):
 
 ```ts
-/** A crew's type must be a built-in or one of this city's custom types —
+/** A crew's type must be a built-in or one of this city's custom types,
  *  rejects forged values that would silently break dispatch auto-suggest. */
 async function crewTypeExists(
   db: ReturnType<typeof createServerClient>,
@@ -431,7 +431,7 @@ if (crewType && !(await crewTypeExists(db, ctx.cityId, crewType)))
   return { ok: false, error: "unknown_crew_type" };
 ```
 
-(`createCrew` constructs `db` after the gate already; `updateCrew` likewise — insert the check after `const db = createServerClient();`.)
+(`createCrew` constructs `db` after the gate already; `updateCrew` likewise, insert the check after `const db = createServerClient();`.)
 
 (d) Add the `createCrewType` action at the end of the file:
 
@@ -448,7 +448,7 @@ const createTypeSchema = z.object({
 
 /**
  * Create a custom crew type for the admin's city. The description is
- * mandatory and must run >=10 words — it is the signal the AI work-order
+ * mandatory and must run >=10 words. It is the signal the AI work-order
  * generator uses to route work to this type, so a bare label is useless.
  * Admin-gated.
  */
@@ -495,7 +495,7 @@ export type InviteMemberResult =
   | { ok: false; error: string };
 ```
 
-Change `inviteMember`'s return type from `Promise<MemberActionResult>` to `Promise<InviteMemberResult>`, and its two success/exit points: the final `return { ok: true };` becomes `return { ok: true, userId };`; the crew-sync-failure branch keeps returning the error shape (unchanged). `updateMember` keeps `MemberActionResult`. The existing caller (`invite-member-modal.tsx`) only reads `res.ok` — no change required there.
+Change `inviteMember`'s return type from `Promise<MemberActionResult>` to `Promise<InviteMemberResult>`, and its two success/exit points: the final `return { ok: true };` becomes `return { ok: true, userId };`; the crew-sync-failure branch keeps returning the error shape (unchanged). `updateMember` keeps `MemberActionResult`. The existing caller (`invite-member-modal.tsx`) only reads `res.ok`, no change required there.
 
 - [ ] **Step 3: Typecheck + lint**
 
@@ -511,13 +511,13 @@ git commit -m "feat(crews): createCrewType action, free-text crew_type validatio
 
 ---
 
-### Task 5: `MenuSelect` — the staff-console popover listbox
+### Task 5: `MenuSelect`: the staff-console popover listbox
 
 The one component both "make dropdowns nicer/consistent" and "+ New type…" hang off. Design constraints:
 
 - **Trigger** looks exactly like the other modal controls: reuse `CONTROL_CLASS` metrics (h-9, hairline border, overlay bg, ring-accent focus) + a right chevron.
-- **Menu portals to `document.body`** — the crew dialog's body is `overflow-y-auto`, which would clip an in-flow absolute menu. Fixed-position via `getBoundingClientRect`, flips above the trigger when there's <260px below, repositions on scroll/resize (capture phase), max-height 240px with the app's `custom-scrollbar`.
-- **Focus never leaves the trigger** (`aria-activedescendant` listbox pattern). This is deliberate: the menu lives OUTSIDE the dialog DOM, and `MemberModalShell`'s focus trap only queries inside the dialog — moving real focus into the portal would fight the trap. Keyboard: ArrowDown/ArrowUp/Home/End move the active option, Enter/Space select, Escape closes (and stops propagation so the modal doesn't also close), printable chars typeahead (500ms buffer). Menu closes on outside `pointerdown`, selection, or Tab.
+- **Menu portals to `document.body`**: the crew dialog's body is `overflow-y-auto`, which would clip an in-flow absolute menu. Fixed-position via `getBoundingClientRect`, flips above the trigger when there's <260px below, repositions on scroll/resize (capture phase), max-height 240px with the app's `custom-scrollbar`.
+- **Focus never leaves the trigger** (`aria-activedescendant` listbox pattern). This is deliberate: the menu lives OUTSIDE the dialog DOM, and `MemberModalShell`'s focus trap only queries inside the dialog. Moving real focus into the portal would fight the trap. Keyboard: ArrowDown/ArrowUp/Home/End move the active option, Enter/Space select, Escape closes (and stops propagation so the modal doesn't also close), printable chars typeahead (500ms buffer). Menu closes on outside `pointerdown`, selection, or Tab.
 - Options support optional `swatch` (division color dot) and `hint` (faint right-aligned note). Selected option shows a check.
 - Grayscale register only: `bg-surface`, `border-hairline`, hover/active `bg-overlay-strong`, `shadow-[var(--shadow-pop)]`, radius `var(--radius-md)`. Entry animation reuses the existing `city-pop` keyframe with `motion-reduce:animate-none`.
 
@@ -543,7 +543,7 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
-   MenuSelect — the staff-console dropdown.
+   MenuSelect, the staff-console dropdown.
 
    A button-trigger + portal listbox replacing native <select> in the
    admin modals (Role, Team, Division, Crew type). Native selects
@@ -915,7 +915,7 @@ Expected: clean.
 
 ```bash
 git add src/components/ui/menu-select.tsx
-git commit -m "feat(ui): MenuSelect — portal popover listbox for staff console dropdowns"
+git commit -m "feat(ui): MenuSelect, portal popover listbox for staff console dropdowns"
 ```
 
 ---
@@ -975,14 +975,14 @@ Note: `<label htmlFor>` pointing at a `<button>` works for click-to-focus; keep 
 Also extend `ERROR_COPY` with the new server codes:
 
 ```ts
-  unknown_crew_type: "That crew type no longer exists — pick another or create it again.",
+  unknown_crew_type: "That crew type no longer exists. Pick another or create it again.",
   invalid_type_name: "Type names are 2-40 characters: letters, numbers, spaces.",
-  crew_type_reserved: "That's a built-in type — pick it from the list instead.",
+  crew_type_reserved: "That's a built-in type. Pick it from the list instead.",
   type_description_too_short: "Describe what this crew does in at least 10 words.",
   crew_type_taken: "This city already has a crew type with that name.",
   crew_type_create_failed: "Couldn't create the crew type. Please try again.",
   invite_failed: "Couldn't send the invite. Please try again.",
-  member_row_failed: "The invite was sent but the profile failed — try again.",
+  member_row_failed: "The invite was sent but the profile failed, try again.",
 ```
 
 - [ ] **Step 2: Verify in browser**
@@ -998,7 +998,7 @@ git commit -m "feat(members): RoleSelect/TeamSelect on MenuSelect + new error co
 
 ---
 
-### Task 7: Crew dialog — MenuSelect everywhere, "+ New type…" flow, custom types plumbed from the page
+### Task 7: Crew dialog: MenuSelect everywhere, "+ New type…" flow, custom types plumbed from the page
 
 **Files:**
 - Modify: `src/components/crews/crews-panel.tsx`
@@ -1019,7 +1019,7 @@ Executor: read the page first; mirror however `crews` currently flows into `Crew
 
 - [ ] **Step 2: Rework `crews-panel.tsx`**
 
-(a) Imports: drop the local `CREW_TYPE_OPTIONS` array (lines 43–53) and the local `typeLabel` (line 57); import instead:
+(a) Imports: drop the local `CREW_TYPE_OPTIONS` array (lines 43-53) and the local `typeLabel` (line 57); import instead:
 
 ```ts
 import {
@@ -1037,7 +1037,7 @@ Replace remaining `typeLabel(` call sites with `crewTypeLabel(`.
 
 (b) `CrewsPanel` and `CrewDialog` props gain `crewTypes: CityCrewType[]` (panel passes it through to the dialog).
 
-(c) **Division select** (create mode, lines 409–424) becomes:
+(c) **Division select** (create mode, lines 409-424) becomes:
 
 ```tsx
 <div className="flex flex-col gap-1.5">
@@ -1055,9 +1055,9 @@ Replace remaining `typeLabel(` call sites with `crewTypeLabel(`.
 </div>
 ```
 
-(No `placeholder` — division is always set; a null onChange value can't occur without one.)
+(No `placeholder`, division is always set; a null onChange value can't occur without one.)
 
-(d) **Crew type select** (lines 428–445): the dialog keeps `crewType` state plus new state for the creation sub-form and locally-added types:
+(d) **Crew type select** (lines 428-445): the dialog keeps `crewType` state plus new state for the creation sub-form and locally-added types:
 
 ```tsx
 const [localTypes, setLocalTypes] = useState<CityCrewType[]>([]);
@@ -1068,7 +1068,7 @@ const [typeError, setTypeError] = useState<string | null>(null);
 const [typePending, startTypeTransition] = useTransition();
 ```
 
-Options = built-ins ∪ server customs ∪ session-created customs ∪ (current value if unknown — e.g. its row was deleted after the crew was typed):
+Options = built-ins ∪ server customs ∪ session-created customs ∪ (current value if unknown, e.g. its row was deleted after the crew was typed):
 
 ```tsx
 const typeOptions = useMemo(() => {
@@ -1193,11 +1193,11 @@ The field:
 
 (Import `cn` from `@/lib/utils/cn`; `CONTROL_CLASS` is height-locked at h-9, hence the `h-auto` override for the textarea.)
 
-Note the sub-form uses `type="button"` everywhere — it must never submit the surrounding crew form.
+Note the sub-form uses `type="button"` everywhere. It must never submit the surrounding crew form.
 
 - [ ] **Step 3: Typecheck + browser check**
 
-`pnpm typecheck`, then in the browser: create a custom type ("street lights", a 12-word description), watch the counter flip, confirm it lands selected and appears in the menu with its description hint; create the crew; reopen dialog — type persists (served from the DB this time).
+`pnpm typecheck`, then in the browser: create a custom type ("street lights", a 12-word description), watch the counter flip, confirm it lands selected and appears in the menu with its description hint; create the crew; reopen dialog, type persists (served from the DB this time).
 
 - [ ] **Step 4: Commit**
 
@@ -1225,7 +1225,7 @@ const [inviteEmail, setInviteEmail] = useState("");
 const [inviteName, setInviteName] = useState("");
 const [inviteError, setInviteError] = useState<string | null>(null);
 const [invitePending, startInviteTransition] = useTransition();
-// People invited from this dialog — appended to the candidate list so they
+// People invited from this dialog, appended to the candidate list so they
 // can sit on the roster before the page refetches.
 const [invited, setInvited] = useState<CrewCandidate[]>([]);
 ```
@@ -1277,7 +1277,7 @@ function handleInvite() {
 }
 ```
 
-UI — after the candidates list (or the "no members" empty state) inside the Members fieldset:
+UI, after the candidates list (or the "no members" empty state) inside the Members fieldset:
 
 ```tsx
 {!inviteOpen ? (
@@ -1336,13 +1336,13 @@ UI — after the candidates list (or the "no members" empty state) inside the Me
 ```
 
 Behavioral notes:
-- The invite fires immediately (real email, real pending member) — the crew's roster membership only lands when the crew form is submitted (`setCrewMembers`). If the admin cancels the crew dialog afterward, the person remains an invited member of the division without a crew: accepted trade-off, decided during design.
+- The invite fires immediately (real email, real pending member). The crew's roster membership only lands when the crew form is submitted (`setCrewMembers`). If the admin cancels the crew dialog afterward, the person remains an invited member of the division without a crew: accepted trade-off, decided during design.
 - `roleRequiresTeam("staff_dispatcher")` is satisfied because `teamKey` is always a real division in this dialog.
-- In edit mode the division is fixed; in create mode, `handleTeamChange` already clears `roster` — invited people from another division disappear from candidates (correct: they were invited into the OLD division; note this stays visible in the members table).
+- In edit mode the division is fixed; in create mode, `handleTeamChange` already clears `roster`, invited people from another division disappear from candidates (correct: they were invited into the OLD division; note this stays visible in the members table).
 
 - [ ] **Step 2: Browser check**
 
-Invite a throwaway email from the crew dialog: confirm inline success (row appears checked in the roster), submit the crew, reopen — the invitee is on the crew; the members table shows the pending member.
+Invite a throwaway email from the crew dialog: confirm inline success (row appears checked in the roster), submit the crew, reopen. The invitee is on the crew; the members table shows the pending member.
 
 - [ ] **Step 3: Commit**
 
@@ -1450,11 +1450,11 @@ describe("buildWorkOrderPrompt", () => {
 - [ ] **Step 2: Run tests to verify they fail**
 
 Run: `pnpm vitest run src/lib/ai/work-order-schema.test.ts src/lib/ai/prompt.test.ts`
-Expected: FAIL — builders not exported.
+Expected: FAIL, builders not exported.
 
 - [ ] **Step 3: Implement the builders**
 
-In `work-order-schema.ts`: replace the local `CREW_TYPES` const (lines 13–21) with an import from the shared module, and add builders AFTER the existing exports (keep `aiWorkOrderSchema` and `GEMINI_WORK_ORDER_SCHEMA` exported and unchanged in shape — other code/tests may reference them):
+In `work-order-schema.ts`: replace the local `CREW_TYPES` const (lines 13-21) with an import from the shared module, and add builders AFTER the existing exports (keep `aiWorkOrderSchema` and `GEMINI_WORK_ORDER_SCHEMA` exported and unchanged in shape, other code/tests may reference them):
 
 ```ts
 import { BUILT_IN_CREW_TYPES } from "@/lib/crew-types";
@@ -1486,7 +1486,7 @@ export function buildAiWorkOrderSchema(customNames: string[]) {
 /**
  * Gemini structured-output schema with the crew_type enum widened to this
  * city's custom types. With no custom names this deep-equals
- * GEMINI_WORK_ORDER_SCHEMA — the zero-drift guarantee for existing cities.
+ * GEMINI_WORK_ORDER_SCHEMA, the zero-drift guarantee for existing cities.
  */
 export function buildGeminiWorkOrderSchema(customNames: string[]): ObjectSchema {
   return {
@@ -1504,7 +1504,7 @@ export function buildGeminiWorkOrderSchema(customNames: string[]): ObjectSchema 
 }
 ```
 
-`aiWorkOrderSchema.extend` requires the base to be a plain `z.object` — it is. If the zod v4 `.extend` signature complains, rebuild via `aiWorkOrderSchema.omit({ crew_type: true }).extend({...})` — semantics identical.
+`aiWorkOrderSchema.extend` requires the base to be a plain `z.object`: it is. If the zod v4 `.extend` signature complains, rebuild via `aiWorkOrderSchema.omit({ crew_type: true }).extend({...})`, semantics identical.
 
 In `prompt.ts`, add after `WORK_ORDER_PROMPT`:
 
@@ -1513,7 +1513,7 @@ import type { CityCrewType } from "@/lib/crew-types";
 
 /**
  * Work-order prompt with this city's custom crew types injected (name +
- * admin-written description — the routing signal). Zero custom types returns
+ * admin-written description. The routing signal). Zero custom types returns
  * WORK_ORDER_PROMPT unchanged, so existing cities see an identical prompt.
  */
 export function buildWorkOrderPrompt(customTypes: CityCrewType[]): string {
@@ -1533,7 +1533,7 @@ export function buildWorkOrderPrompt(customTypes: CityCrewType[]): string {
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `pnpm vitest run src/lib/ai/work-order-schema.test.ts src/lib/ai/prompt.test.ts`
-Expected: PASS. Also run `pnpm vitest run src/lib/ai` — pre-existing AI tests must stay green (the static exports are unchanged).
+Expected: PASS. Also run `pnpm vitest run src/lib/ai`. Pre-existing AI tests must stay green (the static exports are unchanged).
 
 - [ ] **Step 5: Commit**
 
@@ -1544,7 +1544,7 @@ git commit -m "feat(ai): per-city crew-type schema + prompt builders (zero-custo
 
 ---
 
-### Task 10: Wire the pipeline — `generateWorkOrderAI(classification, customTypes)`
+### Task 10: Wire the pipeline: `generateWorkOrderAI(classification, customTypes)`
 
 **Files:**
 - Modify: `src/lib/ai/work-order-ai.ts`
@@ -1554,7 +1554,7 @@ git commit -m "feat(ai): per-city crew-type schema + prompt builders (zero-custo
 
 - [ ] **Step 1: Widen types**
 
-In `src/lib/types.ts`: find `CrewType` and `WorkOrder`. Keep `CrewType` (the built-in union — `work-order-rules.ts` depends on it). Where `WorkOrder.crew_type` (and any other persisted work-order surface) is typed `CrewType | null`, widen to `string | null` with the comment:
+In `src/lib/types.ts`: find `CrewType` and `WorkOrder`. Keep `CrewType` (the built-in union, `work-order-rules.ts` depends on it). Where `WorkOrder.crew_type` (and any other persisted work-order surface) is typed `CrewType | null`, widen to `string | null` with the comment:
 
 ```ts
   // string, not the CrewType union: cities can define custom crew types
@@ -1562,7 +1562,7 @@ In `src/lib/types.ts`: find `CrewType` and `WorkOrder`. Keep `CrewType` (the bui
   crew_type: string | null;
 ```
 
-Run `pnpm typecheck` after; chase any downstream comparisons that assumed the union (e.g. dispatch auto-suggest matching in `work-order-detail.tsx` / `dashboard-grid-data.ts` — string comparisons keep compiling; exhaustive switches would need a default arm).
+Run `pnpm typecheck` after; chase any downstream comparisons that assumed the union (e.g. dispatch auto-suggest matching in `work-order-detail.tsx` / `dashboard-grid-data.ts`, string comparisons keep compiling; exhaustive switches would need a default arm).
 
 - [ ] **Step 2: `work-order-ai.ts`**
 
@@ -1615,7 +1615,7 @@ import { fetchCityCrewTypes } from "@/lib/db/crew-types";
     const aiResult = await generateWorkOrderAI(classification, customTypes);
 ```
 
-`crewType` local (line 371) is inferred from `rulesWorkOrder.crew_type` (`CrewType | null`) then assigned an AI `string | null` — widen the declaration:
+`crewType` local (line 371) is inferred from `rulesWorkOrder.crew_type` (`CrewType | null`) then assigned an AI `string | null`, widen the declaration:
 
 ```ts
   let crewType: string | null = rulesWorkOrder.crew_type;
@@ -1648,7 +1648,7 @@ git commit -m "feat(ai): route work orders to per-city custom crew types via des
 pnpm typecheck && pnpm lint && pnpm test && pnpm test:rls
 ```
 
-All PASS. Report any failure verbatim — do not paper over.
+All PASS. Report any failure verbatim. Do not paper over.
 
 - [ ] **Step 2: End-to-end browser pass (dev server)**
 
@@ -1658,12 +1658,12 @@ All PASS. Report any failure verbatim — do not paper over.
 4. Create the crew with the custom type; card shows `street lights` tag. Reopen dialog: type still listed (now DB-served).
 5. In the crew dialog roster: **Invite by email** with a throwaway address → appears checked in roster; submit; reopen → invitee on crew; members table shows pending dispatcher in the crew's division.
 6. Duplicate-name checks: same custom type name again → "already has a crew type"; name `paving` → reserved error.
-7. Dropdown clipping: with the modal body scrolled, open every menu — renders above the modal (z-60), never clipped; near viewport bottom it flips upward.
-8. Theme: repeat a spot-check in dark mode (tokens are theme-aware — verify contrast of hint text + swatches).
+7. Dropdown clipping: with the modal body scrolled, open every menu, renders above the modal (z-60), never clipped; near viewport bottom it flips upward.
+8. Theme: repeat a spot-check in dark mode (tokens are theme-aware, verify contrast of hint text + swatches).
 
 - [ ] **Step 3: AI routing smoke (optional, needs GEMINI key + AI_WORK_ORDER flag)**
 
-Submit a demo report whose photo matches the custom type's description; inspect the created work order's `crew_type` in the DB or the work-order panel. Not CI-blocking — the schema/prompt unit tests are the gate; note the result either way.
+Submit a demo report whose photo matches the custom type's description; inspect the created work order's `crew_type` in the DB or the work-order panel. Not CI-blocking. The schema/prompt unit tests are the gate; note the result either way.
 
 - [ ] **Step 4: Update REVAMP/STATE docs only if they reference crew types (check, don't assume) and final commit + push**
 
@@ -1672,12 +1672,12 @@ git status   # confirm only intended files
 git push origin main
 ```
 
-(Remote is SSH — HTTPS 404s on this repo.)
+(Remote is SSH, HTTPS 404s on this repo.)
 
 ---
 
 ## Self-Review Notes (already applied)
 
-- **Spec coverage:** custom types + persistence (T1–T4, T7), ≥10-word description for AI (T1 gate, T2 storage, T4 server enforcement, T7 UI counter, T9 injection), nicer/consistent dropdowns (T5–T7), add-existing-members (already existed, preserved T7/T8), email invite incl. no-account users (T8 via existing `inviteUserByEmail`), AI routing (T9–T10). No gaps found.
-- **Type consistency:** `CityCrewType` defined once (T1), imported everywhere; `createCrewType` returns `{ ok, name, description }` and T7 consumes exactly that; `inviteMember` returns `userId` (T4) and T8 consumes `res.userId`; builders named `buildAiWorkOrderSchema` / `buildGeminiWorkOrderSchema` / `buildWorkOrderPrompt` consistently across T9–T10.
+- **Spec coverage:** custom types + persistence (T1, T4, T7), ≥10-word description for AI (T1 gate, T2 storage, T4 server enforcement, T7 UI counter, T9 injection), nicer/consistent dropdowns (T5, T7), add-existing-members (already existed, preserved T7/T8), email invite incl. no-account users (T8 via existing `inviteUserByEmail`), AI routing (T9, T10). No gaps found.
+- **Type consistency:** `CityCrewType` defined once (T1), imported everywhere; `createCrewType` returns `{ ok, name, description }` and T7 consumes exactly that; `inviteMember` returns `userId` (T4) and T8 consumes `res.userId`; builders named `buildAiWorkOrderSchema` / `buildGeminiWorkOrderSchema` / `buildWorkOrderPrompt` consistently across T9, T10.
 - **Known judgment calls the executor may adjust:** exact insertion point of the invite button inside the fieldset; `log.warn` availability in T3; zod `.extend` vs `.omit().extend()` in T9; `scripts/run-migrations.mjs` vs Management API in T2 Step 2.

@@ -5,12 +5,12 @@ import { useCallback, useEffect, useState } from "react";
 interface PhotoGalleryProps {
   /** Public URLs of the blurred photos, ordered by idx. */
   urls: string[];
-  /** Alt text prefix — index is appended automatically. */
+  /** Alt text prefix. Index is appended automatically. */
   altPrefix?: string;
 }
 
 /**
- * PhotoGallery — responsive thumbnail grid with a click-to-enlarge lightbox.
+ * PhotoGallery, responsive thumbnail grid with a click-to-enlarge lightbox.
  *
  * No new dependencies: uses plain React state + a fixed overlay for the
  * lightbox. Keyboard-navigable (Escape to close, arrow keys to advance).
@@ -77,7 +77,7 @@ export default function PhotoGallery({
           <li key={url} className="contents">
             <button
               type="button"
-              aria-label={`${altPrefix} ${i + 1} — tap to enlarge`}
+              aria-label={`${altPrefix} ${i + 1}, tap to enlarge`}
               onClick={() => openLightbox(i)}
               className="group relative aspect-square overflow-hidden rounded-lg border border-hairline bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
             >

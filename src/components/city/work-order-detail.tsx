@@ -23,10 +23,10 @@ import { cn } from "@/lib/utils/cn";
 import { timeAgo } from "@/lib/utils/time-ago";
 
 /* ==================================================================
-   Work-order detail pane — right-hand column of the grid explorer.
+   Work-order detail pane, right-hand column of the grid explorer.
 
    The grid sibling of analytics' ReportDetail. Both render a photo +
-   overlaid chips, a title row, and a stat grid — but this one reads a
+   overlaid chips, a title row, and a stat grid, but this one reads a
    GridReportRow (report + work-order join), so it surfaces the
    operational fields the grid is FOR (department, crew, priority,
    est cost/time, source, review flag) rather than the resident-facing
@@ -34,8 +34,8 @@ import { timeAgo } from "@/lib/utils/time-ago";
    and a grid row does not carry.
 
    Small helpers (titleize, severity ramp, status maps) are
-   re-implemented locally rather than imported from work-order-grid —
-   the grid's copies are module-private, matching the same convention
+   re-implemented locally rather than imported from work-order-grid.
+   The grid's copies are module-private, matching the same convention
    report-detail.tsx follows against analytics-bento.
    ================================================================== */
 
@@ -137,7 +137,7 @@ function StatusPill({ status }: { status: string }) {
 const VIDEO_PLACEHOLDER_PUBLIC_PATH = "/video-detection-placeholder.svg";
 
 /**
- * Camera-detected reports carry that placeholder as their PUBLIC photo — the
+ * Camera-detected reports carry that placeholder as their PUBLIC photo. The
  * real evidence is unblurred street footage that never leaves the private
  * bucket. Staff get the real thing: a staff-gated action mints a short-lived
  * signed URL for the whole captured frame and hands back the detector's own
@@ -145,7 +145,7 @@ const VIDEO_PLACEHOLDER_PUBLIC_PATH = "/video-detection-placeholder.svg";
  * (same presentation, one place).
  *
  * The frame renders at its natural aspect, not the 16/9 crop the resident photo
- * uses — the box coordinates only line up against the uncropped frame.
+ * uses, the box coordinates only line up against the uncropped frame.
  *
  * Anything that doesn't resolve (older rows, a cluster with no best detection,
  * a non-staff caller) falls back to `fallback`, i.e. the placeholder.
@@ -186,7 +186,7 @@ function VideoEvidenceFrame({
   );
 }
 
-/** Report photo with a graceful fallback — mirrors report-detail.tsx's
+/** Report photo with a graceful fallback, mirrors report-detail.tsx's
     ReportImage. Keyed by report id at the call site so a dead link on one
     selection doesn't poison the next. */
 function WorkOrderImage({ src, alt }: { src: string; alt: string }) {
@@ -215,7 +215,7 @@ function WorkOrderImage({ src, alt }: { src: string; alt: string }) {
 }
 
 /**
- * Assigned-crew dropdown — the grid's deliberate assignment control. Own-
+ * Assigned-crew dropdown. The grid's deliberate assignment control. Own-
  * division crews list first (suggested = crew_type match), the rest follow
  * under an optgroup. Optimistic: the select flips immediately and rolls back
  * on a failed server write. Keyed by report id at the call site so state
@@ -293,7 +293,7 @@ function CrewAssignControl({
       </select>
       {failed && (
         <span className="text-[11px] text-[var(--status-danger-fg)]">
-          Couldn't save — try again.
+          Couldn't save, try again.
         </span>
       )}
     </div>
@@ -310,7 +310,7 @@ export function WorkOrderDetail({
   canAssign?: boolean;
 }) {
   const currency = useCurrency();
-  // Slug from the route (this pane only mounts under /city/[slug]/…) — used
+  // Slug from the route (this pane only mounts under /city/[slug]/…), used
   // to link the liability contractor name into the Contractors workspace.
   const params = useParams<{ slug?: string }>();
   const citySlug = typeof params?.slug === "string" ? params.slug : null;
@@ -437,7 +437,7 @@ export function WorkOrderDetail({
       <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
         <Stat
           label="Severity"
-          value={row.severity != null ? `Sev ${row.severity}` : "—"}
+          value={row.severity != null ? `Sev ${row.severity}` : "-"}
           hint={row.severity != null ? SEVERITY_DESC[row.severity] : undefined}
         />
         {row.hazard_radius_m != null && row.hazard_radius_m > 0 && (
@@ -447,7 +447,7 @@ export function WorkOrderDetail({
             hint="AI-estimated radius of the affected/unsafe area from the photo."
           />
         )}
-        {/* Liability verdict — only when the engine has actually written a
+        {/* Liability verdict, only when the engine has actually written a
             report_liability row. Absent data shows nothing at all rather than
             implying the city owns the cost. */}
         {row.liability && (
@@ -502,7 +502,7 @@ export function WorkOrderDetail({
         <Stat label="Report ID" value={row.report_id.slice(0, 8)} />
       </div>
 
-      {/* 4. Work-order section — the operational payload the grid exists for.
+      {/* 4. Work-order section. The operational payload the grid exists for.
           Null when the report has no work order yet (emergency / merged /
           not-yet-dispatched), so the "no WO" reality shows instead of blanks. */}
       <div className="flex flex-col gap-4 border-t border-hairline pt-6">
@@ -534,17 +534,17 @@ export function WorkOrderDetail({
                 </span>
               ) : (
                 <span className="text-[15px] font-medium text-faint leading-tight">
-                  —
+                  ,
                 </span>
               )}
             </div>
             <Stat
               label="Department"
-              value={row.department ? titleize(row.department) : "—"}
+              value={row.department ? titleize(row.department) : "-"}
             />
             <Stat
               label="Crew type"
-              value={row.crew_type ? titleize(row.crew_type) : "—"}
+              value={row.crew_type ? titleize(row.crew_type) : "-"}
             />
             <div className="flex flex-col gap-1">
               <span className="text-[11px] uppercase tracking-wider text-faint">
@@ -561,7 +561,7 @@ export function WorkOrderDetail({
                 />
               ) : (
                 <span className="text-[15px] font-medium text-foreground leading-tight">
-                  {row.assigned_crew_name ?? "—"}
+                  {row.assigned_crew_name ?? "-"}
                 </span>
               )}
             </div>
@@ -571,17 +571,17 @@ export function WorkOrderDetail({
             />
             <Stat
               label="Est. time"
-              value={row.est_minutes != null ? `${row.est_minutes}m` : "—"}
+              value={row.est_minutes != null ? `${row.est_minutes}m` : "-"}
             />
             <Stat
               label="Source"
-              value={row.wo_source ? row.wo_source.toUpperCase() : "—"}
+              value={row.wo_source ? row.wo_source.toUpperCase() : "-"}
             />
           </div>
         ) : (
           <p className="text-[13px] text-faint">
             {row.is_emergency
-              ? "Emergency — dispatched directly, no work order created."
+              ? "Emergency. Dispatched directly, no work order created."
               : "No work order yet for this report."}
           </p>
         )}

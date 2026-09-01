@@ -22,7 +22,7 @@ export const NWS_TIMEOUT_MS = 5000;
 /**
  * How far back to look for alerts that were in effect, so the advisory keeps
  * showing for a while after a storm passes (not just while a warning is
- * literally still active) — covers "open it after a massive storm."
+ * literally still active), covers "open it after a massive storm."
  */
 export const LOOKBACK_HOURS = 12;
 
@@ -45,7 +45,7 @@ export interface StormProfile {
  * Deterministic event-type -> impact-profile table. There is no
  * storm-correlated historical training set in this system, so this is a
  * heuristic (event severity x affected categories x baseline rate), not a
- * trained model — surfaced as such in the API response.
+ * trained model, surfaced as such in the API response.
  */
 export const STORM_PROFILES: ReadonlyArray<{
   matches: RegExp;

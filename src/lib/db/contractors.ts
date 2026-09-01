@@ -11,7 +11,7 @@ const logger = createLogger("[contractors-db]");
    Contractors workspace queries.
 
    contractors (migration 053/062) deliberately carries NO client-readable
-   RLS policy — a vendor must never enumerate a city's other vendors. Every
+   RLS policy. A vendor must never enumerate a city's other vendors. Every
    read here therefore runs on the service-role client with an explicit
    city_id filter, the same trust model as the documents actions.
 
@@ -29,7 +29,7 @@ export interface ContractorListRow {
   jobCount: number;
   /** Warranty windows containing today. */
   liveWarranties: number;
-  /** Soonest ends_on among live warranties, ISO date — the sweep signal. */
+  /** Soonest ends_on among live warranties, ISO date, the sweep signal. */
   nextExpiry: string | null;
   /** Documents filed under this vendor. */
   documentCount: number;
@@ -88,7 +88,7 @@ export interface ContractorDetail {
   liableReports: ContractorLiableReport[];
 }
 
-/** UTC calendar date of "now" — warranty windows are dates, not instants. */
+/** UTC calendar date of "now". Warranty windows are dates, not instants. */
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -96,7 +96,7 @@ function todayIso(): string {
 /**
  * All contractors for a city with the aggregates the list view filters on.
  * Four batched queries (contractors, jobs+warranties, documents, liability),
- * joined in memory — vendor counts are tens, not thousands.
+ * joined in memory. Vendor counts are tens, not thousands.
  */
 export async function listContractors(
   cityId: string,
@@ -215,7 +215,7 @@ export async function listContractors(
 /**
  * One contractor with everything the detail page shows: capital jobs and
  * their warranty windows, documents filed under the vendor, and the reports
- * currently attributed to it. City scoping on every query — a contractor id
+ * currently attributed to it. City scoping on every query. A contractor id
  * from another city returns not_found, never data.
  */
 export async function getContractorDetail(
@@ -383,7 +383,7 @@ export async function getContractorDetail(
 
 /**
  * Lightweight id+name list for the Documents upload dropdown. Active vendors
- * only — a document filed today concerns a vendor the city still works with.
+ * only, a document filed today concerns a vendor the city still works with.
  */
 export async function listContractorOptions(
   cityId: string,

@@ -1,6 +1,6 @@
-# F5 — Cold-Start Ingest Engine
+# F5: Cold-Start Ingest Engine
 
-> Fills a freshly-provisioned city with reports so the dashboard isn't empty —
+> Fills a freshly-provisioned city with reports so the dashboard isn't empty,
 > the "wow" of onboarding (ONBOARDING.md F5). Adapters → one normalizer → DB writer
 > (reports + classifications + work_orders, **no vision for imports**) → optional
 > dedup, tracked by a `provision_jobs` row for the wizard StatusBar. Grounded in the
@@ -17,7 +17,7 @@ adapter (arcgis | synthetic | csv | open311)  →  NormalizedReport[]
    → optional dedup pass
    → provision_jobs row updated throughout  →  Realtime  →  wizard StatusBar
 ```
-**Do NOT route imports through `runClassifyPipeline`** — it downloads a raw photo and
+**Do NOT route imports through `runClassifyPipeline`**: it downloads a raw photo and
 runs Gemini; imports have no photo → everything lands `category:'other', confidence:0`.
 Instead F5 writes the classification directly from the source/synthetic category
 (§9.4 decision: map, don't re-classify). Vision stays for **new resident** reports only.
@@ -71,10 +71,10 @@ photo_public_url = photoUrl ?? categorySeedPhoto(category),  -- NOT NULL → pla
 photo_raw_url = NULL,
 address, status, created_at = createdAt    -- preserve source timestamp
 ```
-- **`reporter_id` NOT NULL gotcha** ([001:93](../../supabase/migrations/20260527_001_initial_schema.sql)): real schema requires it (FK→users→auth.users). Imports have no reporter. **015 makes it nullable**; resident inserts still set it (RLS `reports_insert_resident` unaffected — imports go via service-role).
+- **`reporter_id` NOT NULL gotcha** ([001:93](../../supabase/migrations/20260527_001_initial_schema.sql)): real schema requires it (FK→users→auth.users). Imports have no reporter. **015 makes it nullable**; resident inserts still set it (RLS `reports_insert_resident` unaffected, imports go via service-role).
 - **`photo_public_url` NOT NULL**: use the existing category seed images (`photos-public/seed/<category>.jpg`, dashboard-data.ts:391) as placeholder so lists/map render. Synthetic is badged anyway.
 
-**classifications** insert (direct — NO Gemini):
+**classifications** insert (direct, NO Gemini):
 ```
 report_id, category, severity, subcategory='imported'|'synthetic',
 hazard_radius_m=0, visible_size_estimate='unknown', is_emergency=false,
@@ -82,7 +82,7 @@ confidence = (source category ? 1.0 : 0), reasoning='Imported from <source>',
 model_version='import:<source>', raw_response = raw
 ```
 
-**work_orders** insert — reuse the deterministic generator (no AI needed at bulk; AI
+**work_orders** insert, reuse the deterministic generator (no AI needed at bulk; AI
 optional + batched):
 ```ts
 const wo = generateWorkOrder(classification, {isSchoolZone:false, footTrafficWeight:1, recurrenceCount:0});
@@ -99,9 +99,9 @@ so `city_stats.avg_hours` (resolution time) is real.
 - **Imports:** map source category → taxonomy; deterministic `generateWorkOrder` for
   crew/materials/minutes/cost. Skip vision (no photo). Optional: a **batched** AI
   work-order refine pass post-insert (`generateWorkOrderAI`, Gemini batch ≈
-  $0.0011/report) — flag-gated, off for v1 (deterministic is fine for cold-start).
+  $0.0011/report). Flag-gated, off for v1 (deterministic is fine for cold-start).
 - **Synthetic:** category is generated → same deterministic work-order path.
-- **New resident reports (post-launch):** unchanged — full `runClassifyPipeline`
+- **New resident reports (post-launch):** unchanged. Full `runClassifyPipeline`
   (vision on the photo). F5 does not touch that path.
 - **Never auto-dispatch fake emergencies:** synthetic/import `is_emergency=false`
   always (emergencies auto-set status `dispatched` + skip dedup in the pipeline).
@@ -113,7 +113,7 @@ so `city_stats.avg_hours` (resolution time) is real.
 The live `find_duplicate_report` RPC (migration 011) is **per-report**. For a bulk
 import: run a **post-insert dedup pass** over the batch (or rely on it being off for
 v1 cold-start, since a single source rarely self-duplicates). Synthetic scatters points
-so it won't dup-flag. Emergencies never deduped (moot — synthetic has none).
+so it won't dup-flag. Emergencies never deduped (moot, synthetic has none).
 Keep `DEDUP_REPORTS` flag semantics; log any merges.
 
 ---
@@ -128,7 +128,7 @@ status: 'pending'|'ingesting'|'classifying'|'ready'|'error'
 - F5 updates `ingested`/`classified`/`status` as it streams → wizard subscribes via
   **Supabase Realtime** (UI §11.3) → StatusBar shows live counts.
 - `status='error'` carries `message` → StatusBar `role=alert` + Retry / Continue-partial.
-- `source` lets the bar say "No ArcGIS source — filled 200 synthetic" (honest degraded
+- `source` lets the bar say "No ArcGIS source, filled 200 synthetic" (honest degraded
   state, UI §3).
 
 ---
@@ -136,7 +136,7 @@ status: 'pending'|'ingesting'|'classifying'|'ready'|'error'
 ## 7. Privacy
 
 - Imports rarely carry photos. **If a source photo exists**, it must go through the
-  blur/raw-bucket path (AGENTS.md #2) — never straight to `photos-public`. v1: if a
+  blur/raw-bucket path (AGENTS.md #2), never straight to `photos-public`. v1: if a
   source provides a public photo URL, store the URL but flag for review; do NOT
   auto-republish unblurred third-party media. Default = category placeholder.
 - Synthetic photos = the CC-licensed category seed images (already public, safe).
@@ -170,14 +170,14 @@ status: 'pending'|'ingesting'|'classifying'|'ready'|'error'
 
 ## 10. Open decisions
 
-1. **Synthetic point distribution** — random-in-polygon (`ST_GeneratePoints`) vs snap
+1. **Synthetic point distribution**: random-in-polygon (`ST_GeneratePoints`) vs snap
    to OSM road network. Recommend random-in-polygon v1 (no OSM dependency); road-snap
    later for realism.
-2. **Batch AI work-order refine** on import — on/off default. Recommend off v1
+2. **Batch AI work-order refine** on import, on/off default. Recommend off v1
    (deterministic est_cost is enough; saves the per-record AI even though it's cheap).
-3. **Re-import idempotency** — dedupe on `sourceExternalId` (needs a column or a
+3. **Re-import idempotency**: dedupe on `sourceExternalId` (needs a column or a
    `classifications.raw_response` lookup). Recommend a `reports.source_external_id`
-   text + unique(city_id, source, source_external_id) — add to 015 **if** re-import
+   text + unique(city_id, source, source_external_id). Add to 015 **if** re-import
    matters for v1; else skip.
-4. **completed_at backfill** from import close-dates — yes (makes resolution-time KPI
+4. **completed_at backfill** from import close-dates. Yes (makes resolution-time KPI
    real), but only when the source exposes a close timestamp.

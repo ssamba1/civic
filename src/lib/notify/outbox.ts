@@ -14,7 +14,7 @@ const logger = createLogger("[notify-outbox]");
    The DB trigger (migration 006) writes the in-app notification row on every
    status change; the out-of-band email leg (status-notify.ts) is a separate,
    best-effort `after()` send. Migration 025 added delivered_at / delivery_error
-   to notifications so that send has somewhere to record its outcome — this
+   to notifications so that send has somewhere to record its outcome. This
    module owns those two columns.
 
    Two operations:
@@ -27,16 +27,16 @@ const logger = createLogger("[notify-outbox]");
 
    Retry policy by DeliveryResult.reason:
      ok           → delivered, stamp delivered_at
-     no-recipient → terminal (anon reporter, no email) — stamp delivered_at so it
-     disabled     → terminal (NOTIFY_DISABLE / env) — leaves the queue; the
+     no-recipient → terminal (anon reporter, no email), stamp delivered_at so it
+     disabled     → terminal (NOTIFY_DISABLE / env). Leaves the queue; the
      no-key       → reason is recorded in delivery_error for visibility
-     send-error   → TRANSIENT — leave delivered_at NULL, set delivery_error; the
+     send-error   → TRANSIENT. Leave delivered_at NULL, set delivery_error; the
                     drain retries it on its next pass
    ================================================================== */
 
 // Only these transitions send an out-of-band email (see status-notify.ts). The
 // DB trigger tags the 'closed' transition 'resolved' and everything else
-// 'status_change', so 'resolved' is the only unambiguous status↔type mapping —
+// 'status_change', so 'resolved' is the only unambiguous status↔type mapping,
 // and the resolution email (photo + CSAT) is the high-value one to never lose.
 // dispatched/rejected ride 'status_change' rows shared with other transitions,
 // so they are best-effort only and are not drained.
@@ -74,7 +74,7 @@ export async function stampNotificationOutcome(
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle<{ id: string }>();
-    if (!row) return; // un-migrated DB or already stamped — nothing to do.
+    if (!row) return; // un-migrated DB or already stamped. Nothing to do.
 
     const patch = isTerminal(result)
       ? {
@@ -102,7 +102,7 @@ export interface DrainSummary {
 /**
  * Retry the email leg for resolution notifications that never landed. Selects
  * undelivered 'resolved' rows past a short grace window (so an in-flight
- * synchronous send isn't double-fired), then re-runs the composer for each —
+ * synchronous send isn't double-fired), then re-runs the composer for each,
  * which re-stamps the row via stampNotificationOutcome on the way out.
  *
  * Idempotent and safe to run on a schedule: a delivered row has delivered_at
@@ -142,7 +142,7 @@ export async function drainUndelivered(
   let stillFailing = 0;
   for (const row of rows) {
     if (!row.report_id) {
-      // Orphan notification (report deleted) — stamp so it drops out.
+      // Orphan notification (report deleted), stamp so it drops out.
       await db
         .from("notifications")
         .update({

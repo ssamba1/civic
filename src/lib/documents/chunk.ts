@@ -1,7 +1,7 @@
 /**
  * Deterministic document chunker for the Documents workspace.
  *
- * The same text always produces the same chunks — no model, no randomness — so
+ * The same text always produces the same chunks (no model, no randomness), so
  * a re-upload of an amended policy diffs cleanly against the previous one.
  *
  * Strategy, in order of preference:
@@ -10,7 +10,7 @@
  *      `heading` so a retrieved fragment can say where it came from.
  *   2. Within a section, pack whole paragraphs up to MAX_CHARS.
  *   3. Only a paragraph that is itself larger than MAX_CHARS is cut, and then
- *      always at a word boundary — never mid-word.
+ *      always at a word boundary, never mid-word.
  *
  * Consecutive chunks WITHIN a section overlap by ~OVERLAP_CHARS so a sentence
  * straddling a boundary is still fully present in one of them. Overlap does not
@@ -79,7 +79,7 @@ function splitParagraphs(body: string): string[] {
 /**
  * Cut an oversized paragraph into <= MAX_CHARS pieces at word boundaries.
  * A single unbroken token longer than the limit is emitted whole rather than
- * severed — a URL or a parcel id stays usable.
+ * severed. A URL or a parcel id stays usable.
  */
 function splitLongParagraph(paragraph: string): string[] {
   const pieces: string[] = [];

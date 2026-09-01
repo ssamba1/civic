@@ -43,7 +43,7 @@ function loadEnv() {
 
 /**
  * `required: false` marks a step whose absence degrades the demo but does not
- * break it — a missing contractor costs you one screen, a missing city costs
+ * break it. A missing contractor costs you one screen, a missing city costs
  * you the whole thing.
  */
 const STEPS = [
@@ -153,7 +153,7 @@ for (const [i, step] of selected.entries()) {
   if (step.required && !keepGoing) {
     console.error(
       `Stopping: "${step.key}" is required and everything after it depends on it.\n` +
-        "Fix the error above, then re-run — every step is idempotent.\n" +
+        "Fix the error above, then re-run. Every step is idempotent.\n" +
         "Pass --continue to push past failures anyway.",
     );
     process.exit(1);

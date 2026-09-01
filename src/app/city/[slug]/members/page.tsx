@@ -20,7 +20,7 @@ import {
 import { getCityAdminContext, getStaffAccessForCity } from "@/lib/staff-access";
 
 // Auth-gated per request (reads cookies via isStaffForCity) and exposes member
-// PII — never prerender or cache.
+// PII, never prerender or cache.
 export const dynamic = "force-dynamic";
 
 interface PageProps {
@@ -40,8 +40,8 @@ export async function generateMetadata({
   if (!city) city = await fetchCityMock(slug);
   if (!city) return { title: "City not found | Civic" };
   return {
-    title: `Civic | ${city.name}, ${city.state} — Members`,
-    description: `People with access to the ${city.name} console — residents, dispatchers, supervisors, and admins.`,
+    title: `Civic | ${city.name}, ${city.state}, Members`,
+    description: `People with access to the ${city.name} console. Residents, dispatchers, supervisors, and admins.`,
     // Member emails are PII behind an auth gate; keep this out of search indexes.
     robots: { index: false, follow: false },
   };
@@ -64,7 +64,7 @@ export default async function CityMembersPage({ params }: PageProps) {
   // Access gate. Unlike the grid, there is NO public demo-city bypass here:
   // this page exposes member emails (PII) and must never be public, even for
   // the demo slug. Demo staff sessions may view the roster, but demo
-  // credentials are public — so "demo" access gets emails masked server-side
+  // credentials are public, so "demo" access gets emails masked server-side
   // (the raw addresses never reach the client). Only "real" staff (an
   // authenticated user whose city matches) see raw emails.
   const access = await getStaffAccessForCity(slug);
@@ -72,12 +72,12 @@ export default async function CityMembersPage({ params }: PageProps) {
     redirect(`/login?redirect=/city/${slug}/members`);
   }
 
-  // Management (invite / edit) is gated on a genuine city admin — never a demo
+  // Management (invite / edit) is gated on a genuine city admin, never a demo
   // session, whose public credentials prove nothing about the visitor.
   const adminCtx = access === "real" ? await getCityAdminContext(slug) : null;
   const canManage = adminCtx !== null;
 
-  // All five datasets depend only on the resolved city id — fetch them in
+  // All five datasets depend only on the resolved city id, fetch them in
   // parallel so the page waits one roundtrip, not a five-deep waterfall.
   // Synthetic (non-DB) cities have no rows for any of them.
   const [
@@ -89,10 +89,10 @@ export default async function CityMembersPage({ params }: PageProps) {
   ] = dbCity
     ? await Promise.all([
         fetchCityMembers(dbCity.id),
-        // City vendors — the Contractors chip. Same PII rule as members:
+        // City vendors, the Contractors chip. Same PII rule as members:
         // demo sessions get masked emails. Degrades to empty on error.
         listContractors(dbCity.id, { maskPii: access === "demo" }),
-        // Crews — the panel below the roster plus the invite/edit pickers.
+        // Crews, the panel below the roster plus the invite/edit pickers.
         // Degrades to empty (e.g. before migration 030).
         fetchCityCrews(dbCity.id),
         // Per-crew workload metrics for the crew panel's load badges.
@@ -125,7 +125,7 @@ export default async function CityMembersPage({ params }: PageProps) {
   const crewTypeRows = crewTypesResult?.ok ? crewTypesResult.types : [];
   // Defaults apply only when the city has NO catalog (pre-031 DB or a city
   // created after the seed). A catalog where every row is deactivated is a
-  // deliberate admin choice — honor it with an empty select, don't silently
+  // deliberate admin choice. Honor it with an empty select, don't silently
   // resurrect the built-ins.
   const activeCrewTypes: CrewTypeDef[] =
     crewTypeCatalogAvailable && crewTypeRows.length > 0
@@ -161,9 +161,9 @@ export default async function CityMembersPage({ params }: PageProps) {
               Members
             </h1>
             <p className="text-[13px] text-faint">
-              People with access to {city.name} — residents, dispatchers,
+              People with access to {city.name}, residents, dispatchers,
               supervisors, and admins.
-              {access === "demo" && " Demo session — member emails are masked."}
+              {access === "demo" && " Demo session. Member emails are masked."}
             </p>
           </div>
           {canManage && <InviteMemberModal slug={slug} crews={crewOptions} />}
@@ -175,8 +175,8 @@ export default async function CityMembersPage({ params }: PageProps) {
               Couldn't load members
             </p>
             <p className="mt-1.5 text-[13px] text-faint">
-              Something went wrong fetching the roster. Refresh to try again —
-              if it persists, check the server logs.
+              Something went wrong fetching the roster. Refresh to try again, if
+              it persists, check the server logs.
             </p>
           </div>
         ) : dbCity ? (

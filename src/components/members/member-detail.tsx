@@ -16,12 +16,12 @@ import {
 } from "./member-activity-timeline";
 
 /* ==================================================================
-   Member detail — a single member's profile, activity, and report
+   Member detail, a single member's profile, activity, and report
    history. Server component: it does all the report/event merge and
    label/time formatting, handing the interactive timeline island a
    flat, serializable entry list.
 
-   Grayscale enterprise register — differentiation is weight and
+   Grayscale enterprise register. Differentiation is weight and
    outline, never hue. Contact PII is masked upstream (in the page) for
    demo sessions; this component only renders what it is given.
    ================================================================== */
@@ -30,7 +30,7 @@ import {
 // returned array is at the cap the true count is unknown, so the tile reads "N+".
 const EVENTS_CAP = 100;
 
-// Grayscale role badges — copied from members-table (module-private there) so
+// Grayscale role badges, copied from members-table (module-private there) so
 // the badge here matches the roster exactly.
 const ROLE_META: Record<MemberRow["role"], { label: string; badge: string }> = {
   admin: {
@@ -101,13 +101,13 @@ function iconKind(type: string): string {
   return KNOWN_EVENT_KINDS.has(type) ? type : "generic";
 }
 
-// Coarse relative time — mirrors the roster table's helper (module-private
+// Coarse relative time, mirrors the roster table's helper (module-private
 // there). Computed server-side so timestamps match the request render and never
 // hydrate-mismatch; no date library dependency.
 function relativeTime(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return "—";
+  if (Number.isNaN(then)) return "-";
   const secs = Math.floor((Date.now() - then) / 1000);
   if (secs < 45) return "just now";
   const mins = Math.floor(secs / 60);
@@ -121,11 +121,11 @@ function relativeTime(iso: string | null): string {
   return `${Math.floor(days / 365)}y ago`;
 }
 
-// Absolute calendar date — mirrors absoluteDate in report-timeline.
+// Absolute calendar date, mirrors absoluteDate in report-timeline.
 function absoluteDate(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
@@ -138,7 +138,7 @@ function categoryLabel(category: string | null): string {
   return CATEGORY_META[category as ReportCategory]?.label ?? category;
 }
 
-// Status chip tolerant of unknown status strings — the contract types status as
+// Status chip tolerant of unknown status strings, the contract types status as
 // a plain string, so an out-of-band value degrades to a neutral chip rather than
 // mis-rendering with an unrelated tone.
 function statusChip(status: string): { cls: string; label: string } {
@@ -151,7 +151,7 @@ function statusChip(status: string): { cls: string; label: string } {
 
 // Merge reports (as submissions) + lifecycle events into one newest-first feed.
 // `report_created` events are dropped because reports[] already represents each
-// submission — keeping both would double every filing.
+// submission. Keeping both would double every filing.
 function buildTimeline(
   slug: string,
   detail: MemberDetailData,
@@ -272,7 +272,7 @@ export function MemberDetail({ slug, detail, demo }: MemberDetailProps) {
                   strokeWidth={2}
                   aria-hidden="true"
                 />
-                <span className="truncate">{member.email ?? "—"}</span>
+                <span className="truncate">{member.email ?? "-"}</span>
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <Phone
@@ -280,13 +280,13 @@ export function MemberDetail({ slug, detail, demo }: MemberDetailProps) {
                   strokeWidth={2}
                   aria-hidden="true"
                 />
-                {member.phone ?? "—"}
+                {member.phone ?? "-"}
               </span>
             </div>
 
             {demo && (
               <p className="mt-2.5 text-[12px] text-faint">
-                Demo session — contact details are masked.
+                Demo session. Contact details are masked.
               </p>
             )}
           </div>
@@ -401,7 +401,7 @@ export function MemberDetail({ slug, detail, demo }: MemberDetailProps) {
                           </td>
                           <td className="px-4 py-3 align-middle text-subtle">
                             <span className="line-clamp-1">
-                              {r.address ?? "—"}
+                              {r.address ?? "-"}
                             </span>
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 align-middle tabular-nums text-subtle">

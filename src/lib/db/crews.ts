@@ -11,7 +11,7 @@ export interface CrewMemberInfo {
   isLead: boolean;
 }
 
-/** One crew (sub-team unit inside a division). Members are embedded — city
+/** One crew (sub-team unit inside a division). Members are embedded. City
  *  crews are small (a handful per division), so the roster always travels
  *  with the crew instead of a second fetch. */
 export interface CrewRow {
@@ -33,7 +33,7 @@ interface CrewRowRaw {
   team_key: string;
   name: string;
   crew_type: string | null;
-  // Pre-032 DBs don't have this column yet — PostgREST simply omits the key.
+  // Pre-032 DBs don't have this column yet, PostgREST simply omits the key.
   description?: string;
   active: boolean;
 }
@@ -51,7 +51,7 @@ function chunk<T>(items: T[], size: number): T[][] {
 }
 
 /**
- * Load every crew of `cityId` with its member roster. Service-role client —
+ * Load every crew of `cityId` with its member roster. Service-role client,
  * call only behind a staff-access gate (crew rosters name staff, so unlike
  * city_teams this data is never public). Never throws: a failure on the
  * primary crews query returns a tagged error; membership/display-name lookups
@@ -121,7 +121,7 @@ export async function fetchCityCrews(cityId: string): Promise<CityCrewsResult> {
       });
       membersByCrew.set(m.crew_id, list);
     }
-    // Leads first, then alphabetical — matches how a roster is read.
+    // Leads first, then alphabetical. Matches how a roster is read.
     for (const list of membersByCrew.values()) {
       list.sort((a, b) => {
         if (a.isLead !== b.isLead) return a.isLead ? -1 : 1;
@@ -150,7 +150,7 @@ export async function fetchCityCrews(cityId: string): Promise<CityCrewsResult> {
 /**
  * Map of userId → crew ids they belong to, across all crews of `cityId`.
  * Best-effort: any failure returns what was collected (callers treat a missing
- * user as "no crews") — crew membership is supplementary roster data, never
+ * user as "no crews"). Crew membership is supplementary roster data, never
  * the source of truth for access.
  */
 export async function fetchCrewIdsByUser(

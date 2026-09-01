@@ -1,7 +1,7 @@
 "use client";
 
 /* ==================================================================
-   Public trending feed — renders pre-ranked reports without auth.
+   Public trending feed, renders pre-ranked reports without auth.
 
    Unlike TrendingFeed (which uses the upvote store + UpvoteButton
    for live interactivity), this is read-only: ranking is done server-
@@ -21,7 +21,7 @@ interface PublicTrendingProps {
 
 export function PublicTrending({
   reports,
-  emptyMessage = "No open reports right now — the whole backlog is clear.",
+  emptyMessage = "No open reports right now. The whole backlog is clear.",
 }: PublicTrendingProps) {
   if (reports.length === 0) {
     return (

@@ -3,7 +3,7 @@ import { currencyForCitySlug } from "@/lib/currency";
 import { listClaims, requireClaimsAdmin } from "./actions";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Claims – Admin" };
+export const metadata = { title: "Claims, Admin" };
 
 export default async function AdminClaimsPage() {
   const [admin, claims] = await Promise.all([
@@ -21,7 +21,7 @@ export default async function AdminClaimsPage() {
         <p className="mt-1 max-w-2xl text-sm text-[var(--color-muted)]">
           Defects attributed to a contractor warranty or a utility restoration
           window are drafted here as claim packets. Nothing is sent
-          automatically — review the evidence, then approve. Approving assigns
+          automatically, review the evidence, then approve. Approving assigns
           the work order to the contractor and delivers one batched letter per
           vendor.
         </p>

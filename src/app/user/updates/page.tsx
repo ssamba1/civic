@@ -10,7 +10,7 @@ const CITY_NAME = KNOWN_CITIES.cumming.name;
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: `Civic | ${CITY_NAME} — Updates`,
+    title: `Civic | ${CITY_NAME}, Updates`,
     description: `Status changes on community reports and city-wide announcements for ${CITY_NAME}.`,
   };
 }

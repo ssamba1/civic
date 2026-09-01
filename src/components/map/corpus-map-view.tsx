@@ -20,7 +20,7 @@ interface CorpusMapViewProps {
 /**
  * Shared fullscreen map for both the city (all teams) and team (locked) views.
  * Reads the one shared, completion-resolved corpus so both maps draw from the
- * SAME dataset — all-teams is always a superset of any single team, and a task
+ * SAME dataset. All-teams is always a superset of any single team, and a task
  * marked done reads "closed" everywhere. `demo` reports are stripped because the
  * orchestrator re-merges the demo overlay itself (avoids double markers).
  */

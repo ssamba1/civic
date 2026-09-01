@@ -1,16 +1,16 @@
 -- =============================================================================
--- Civic – Cross-jurisdiction routing (DA-02)
+-- Civic, Cross-jurisdiction routing (DA-02)
 -- Migration: 20260708_034_cross_jurisdiction.sql
 --
 -- category_routing.escalates_to_parent (migration 024) and cities.parent_id
 -- (024) both exist but nothing reads them: a report on a county-owned asset
 -- inside a city boundary still lands with the city. This adds the resolution:
 --
---   1. work_orders.owner_city_id — the jurisdiction that actually owns the work
+--   1. work_orders.owner_city_id, the jurisdiction that actually owns the work
 --      order, when it differs from the report's city (NULL = owned by the
 --      report's own city; the common case). Additive + nullable, same pattern
 --      as team_key (026) / due_at (032).
---   2. resolve_report_jurisdiction(_report_id) — returns the owning city id:
+--   2. resolve_report_jurisdiction(_report_id). Returns the owning city id:
 --      the parent city when the report's category is flagged
 --      escalates_to_parent AND the city has a parent_id, else the report's own
 --      city. Pure lookup over existing config; the pipeline stamps owner_city_id

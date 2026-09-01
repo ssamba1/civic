@@ -28,7 +28,7 @@ export const HELP_CORPUS: HelpDoc[] = [
     id: "open311",
     title: "Does Civic replace the city's 311 system?",
     tags: ["open311", "integration", "311", "export", "city"],
-    body: "No — Civic complements existing systems. Every report is exportable in Open311 GeoReport v2 (JSON and XML), and external clients can push reports in, so a city can adopt Civic without ripping out its current 311 tooling.",
+    body: "No. Civic complements existing systems. Every report is exportable in Open311 GeoReport v2 (JSON and XML), and external clients can push reports in, so a city can adopt Civic without ripping out its current 311 tooling.",
   },
   {
     id: "cost-free",
@@ -46,7 +46,7 @@ export const HELP_CORPUS: HelpDoc[] = [
     id: "accountability",
     title: "What if the city ignores a report?",
     tags: ["accountability", "sla", "dashboard", "public", "equity"],
-    body: "Every report is on a public dashboard with timestamps and SLA badges, and a neighborhood equity view surfaces underserved areas. That public record is the accountability pressure — reports do not quietly disappear.",
+    body: "Every report is on a public dashboard with timestamps and SLA badges, and a neighborhood equity view surfaces underserved areas. That public record is the accountability pressure. Reports do not quietly disappear.",
   },
   {
     id: "which-cities",
@@ -64,6 +64,6 @@ export const HELP_CORPUS: HelpDoc[] = [
     id: "anonymous",
     title: "Do I need an account to report?",
     tags: ["account", "anonymous", "login", "sign up"],
-    body: "No account is required to submit or track a report — you get a private tracking link. You can optionally add an email later to link your reports to an account and get email updates.",
+    body: "No account is required to submit or track a report. You get a private tracking link. You can optionally add an email later to link your reports to an account and get email updates.",
   },
 ];

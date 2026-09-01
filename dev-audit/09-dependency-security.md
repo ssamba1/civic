@@ -32,7 +32,7 @@ Key dependencies are on recent, maintained versions. All auth/crypto packages ar
 
 | Package | Version | Status | Notes |
 |---------|---------|--------|-------|
-| `@google/generative-ai` | 0.24.1 | ✅ Safe | Actively maintained. No vulns. Calls external Gemini API (safe — external service, not local code). |
+| `@google/generative-ai` | 0.24.1 | ✅ Safe | Actively maintained. No vulns. Calls external Gemini API (safe, external service, not local code). |
 | `pg` | 8.21.0 | ✅ Safe | PostgreSQL driver. Mature, maintained. Only used in seed scripts (not in production code path). |
 | `maplibre-gl` | 5.24.0 | ✅ Safe | Map library. No known vulns. Render-only (read-only on user maps). |
 | `@deck.gl/*` | 9.3.2 | ✅ Safe | Uber's WebGL visualization. Render-only, no data-touching. |
@@ -57,7 +57,7 @@ All dev dependencies (`biome`, `eslint`, `vitest`, `tailwindcss`, etc.) are:
 
 ### ✅ Dependency Tree Depth
 
-- Shallow (most dependencies are 1–2 hops from root).
+- Shallow (most dependencies are 1-2 hops from root).
 - No extreme transitive chains.
 - No unusual circular dependencies.
 
@@ -81,11 +81,11 @@ Scanned the following for CVEs:
 ### ✅ Properly Isolated
 
 All secrets are defined in `.env.example` (no defaults in code):
-- `SUPABASE_SERVICE_ROLE_KEY` — server-only
-- `GEMINI_API_KEY` — server-only
-- `INTERNAL_CLASSIFY_SECRET` — server-only
-- `RESEND_API_KEY` — server-only
-- `SENTRY_DSN` — safe to expose (no credentials)
+- `SUPABASE_SERVICE_ROLE_KEY`: server-only
+- `GEMINI_API_KEY`: server-only
+- `INTERNAL_CLASSIFY_SECRET`: server-only
+- `RESEND_API_KEY`: server-only
+- `SENTRY_DSN`: safe to expose (no credentials)
 
 **No secrets found in code or default configs.**
 

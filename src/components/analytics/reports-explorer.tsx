@@ -85,7 +85,7 @@ export function ReportsExplorer({
               className={cn(
                 /* min-h-[56px] ensures 44px+ tap target on mobile.
                    Single transition covers both bg (hover/select) and the
-                   active press scale — separate transition-* utilities would
+                   active press scale. Separate transition-* utilities would
                    clobber each other's transition-property. */
                 "w-full text-left flex flex-col gap-1 min-h-[56px] py-3 px-3 rounded-md",
                 "transition-[background-color,transform] duration-100 active:scale-[0.98] active:duration-75 motion-reduce:active:scale-100",
@@ -167,12 +167,12 @@ export function ReportsExplorer({
           </header>
 
           <div className="flex flex-1 min-h-0">
-            {/* List — full width on mobile, fixed sidebar on md+ */}
+            {/* List, full width on mobile, fixed sidebar on md+ */}
             <div className="w-full md:w-[340px] lg:w-[380px] flex-shrink-0 md:border-r md:border-hairline overflow-y-auto custom-scrollbar pb-safe">
               {reportListContent}
             </div>
 
-            {/* Detail panel — hidden on mobile (uses Drawer instead), visible md+ */}
+            {/* Detail panel. Hidden on mobile (uses Drawer instead), visible md+ */}
             <div className="hidden md:flex flex-1 min-w-0 overflow-y-auto custom-scrollbar p-6 pb-safe">
               <div className="flex-1">
                 <ReportDetail report={selectedReport} />

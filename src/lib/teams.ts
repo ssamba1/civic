@@ -11,10 +11,10 @@ import type { ReportCategory } from "@/lib/types";
    grey #b6b6bc, indistinguishable from All Teams and General Admin), so it
    took the open teal slot. All Teams and General Admin stay deliberately
    neutral (aggregate / triage) and are separated by lightness, not hue.
-   Used as TEXT anywhere? Mix toward --team-text-mix (see globals.css) —
-   the raw hues sit at ~3.3-3.9:1 on white, which is graphic-only contrast.
+   Used as TEXT anywhere? Mix toward --team-text-mix (see globals.css).
+   The raw hues sit at ~3.3-3.9:1 on white, which is graphic-only contrast.
 
-   Civil teams — based on US municipal department research.
+   Civil teams, based on US municipal department research.
    Each team owns specific report categories and auto-receives reports
    matching their assigned categories via categoryToTeam().
    ------------------------------------------------------------------ */
@@ -189,7 +189,7 @@ export function categoryToTeamDefault(category: ReportCategory): TeamId {
 // aggregateByTeam, server-rendered code) can keep their existing shape.
 export function categoryToTeam(category: ReportCategory): TeamId {
   // The snapshot lives in a `"use client"` module, and React THROWS on any
-  // attempt to invoke one of those from the server — "Attempted to call
+  // attempt to invoke one of those from the server, "Attempted to call
   // getCategoryOverridesSnapshot() from the server". That is not a degraded
   // render, it kills the whole component tree.
   //
@@ -200,8 +200,8 @@ export function categoryToTeam(category: ReportCategory): TeamId {
   // because no seeded report had a public_token, so every one of those URLs
   // 404'd before it could reach the render.
   //
-  // The overrides are a per-browser staff preference — the routing-matrix
-  // dropdown writes them into a client store — so they do not exist on the
+  // The overrides are a per-browser staff preference. The routing-matrix
+  // dropdown writes them into a client store, so they do not exist on the
   // server in any meaningful sense, and the baseline IS the server's correct
   // answer rather than a fallback. Guarding here fixes every server caller at
   // once (dashboard-queries, delegation-history, the onboarding modules) rather

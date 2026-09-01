@@ -13,7 +13,7 @@ import {
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "How Civic collects, uses, shares, and protects your information — including photos, location, and AI classification.",
+    "How Civic collects, uses, shares, and protects your information, including photos, location, and AI classification.",
 };
 
 export default function PrivacyPage() {
@@ -28,8 +28,8 @@ export default function PrivacyPage() {
           (&ldquo;Civic&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;), operated by{" "}
           {ORG}, collects when you use our infrastructure-reporting app, how we
           use and share it, and the choices you have. Civic lets residents
-          photograph and report public infrastructure issues — like potholes and
-          broken streetlights — so they can be classified and routed to the
+          photograph and report public infrastructure issues, like potholes and
+          broken streetlights, so they can be classified and routed to the
           responsible city.
         </>
       }
@@ -39,7 +39,7 @@ export default function PrivacyPage() {
           <List
             items={[
               <>
-                <strong>Sign-in method</strong> — a Google account, an email and
+                <strong>Sign-in method</strong>, a Google account, an email and
                 password, or an anonymous guest session. Guest sessions let you
                 report without giving us an email.
               </>,
@@ -116,8 +116,8 @@ export default function PrivacyPage() {
             </>,
             <>
               The <strong>blurred copy</strong> is stored on a public
-              content-delivery network and may be displayed publicly — on city
-              maps, in issue feeds, and to other residents — as part of the
+              content-delivery network and may be displayed publicly, on city
+              maps, in issue feeds, and to other residents, as part of the
               report.
             </>,
             <>
@@ -134,7 +134,7 @@ export default function PrivacyPage() {
         />
         <Callout
           tone="info"
-          title="Blurred photos may be public — and stay public"
+          title="Blurred photos may be public, and stay public"
         >
           <P>
             Once a blurred photo is part of a report, it may remain publicly
@@ -149,8 +149,8 @@ export default function PrivacyPage() {
             blurring the top and bottom portions of the image, which may not
             cover a person centered in the frame. Because blurring is{" "}
             <strong>not guaranteed</strong>, please avoid photographing
-            identifiable people, bystanders, or readable license plates —
-            capture only the infrastructure issue itself.
+            identifiable people, bystanders, or readable license plates, capture
+            only the infrastructure issue itself.
           </P>
         </Callout>
       </Section>
@@ -228,20 +228,20 @@ export default function PrivacyPage() {
           <List
             items={[
               <>
-                <strong>Supabase</strong> — database, file storage, and
+                <strong>Supabase</strong>, database, file storage, and
                 authentication.
               </>,
               <>
-                <strong>Google</strong> — AI classification of report photos
+                <strong>Google</strong>, AI classification of report photos
                 (Gemini).
               </>,
               <>
-                <strong>Sentry</strong> — error and crash reporting. Error logs
+                <strong>Sentry</strong>, error and crash reporting. Error logs
                 may include a report&rsquo;s ID and technical details.
               </>,
               <>
-                <strong>Map providers</strong> (OpenStreetMap, CartoDB, ArcGIS)
-                — map tiles. Maps render in your browser; we do not send your
+                <strong>Map providers</strong> (OpenStreetMap, CartoDB, ArcGIS),
+                map tiles. Maps render in your browser; we do not send your
                 account details to these providers.
               </>,
               <>Our hosting provider, which runs the app.</>,
@@ -252,11 +252,11 @@ export default function PrivacyPage() {
           <List
             items={[
               <>
-                Reports — including the{" "}
+                Reports, including the{" "}
                 <strong>
                   blurred photo, location, description, and classification
                 </strong>{" "}
-                — are shared with the city responsible for the area so it can
+                . Are shared with the city responsible for the area so it can
                 act on the issue.
               </>,
               <>
@@ -297,24 +297,24 @@ export default function PrivacyPage() {
         <List
           items={[
             <>
-              <strong>Original (unblurred) photos</strong> — automatically
+              <strong>Original (unblurred) photos</strong>, automatically
               deleted after 30 days.
             </>,
             <>
-              <strong>Blurred photos</strong> — kept as part of the public
-              report record and may remain available indefinitely.
+              <strong>Blurred photos</strong>, kept as part of the public report
+              record and may remain available indefinitely.
             </>,
             <>
-              <strong>Reports, classifications, and your account</strong> — kept
+              <strong>Reports, classifications, and your account</strong>, kept
               while your account or the report is active, and as needed to
               provide the service, resolve issues, and meet legal obligations.
             </>,
             <>
-              <strong>IP addresses</strong> — not stored (used only in-memory
-              for rate limiting).
+              <strong>IP addresses</strong>, not stored (used only in-memory for
+              rate limiting).
             </>,
             <>
-              <strong>Error logs</strong> — retained by us and Sentry for a
+              <strong>Error logs</strong>, retained by us and Sentry for a
               limited period to debug problems.
             </>,
           ]}
@@ -329,24 +329,23 @@ export default function PrivacyPage() {
         <List
           items={[
             <>
-              <strong>Access</strong> — request a copy of the personal
+              <strong>Access</strong>, request a copy of the personal
               information we hold about you.
             </>,
             <>
-              <strong>Correction</strong> — ask us to fix inaccurate
-              information.
+              <strong>Correction</strong>. Ask us to fix inaccurate information.
             </>,
             <>
-              <strong>Deletion</strong> — ask us to delete your account and
+              <strong>Deletion</strong>. Ask us to delete your account and
               personal information, subject to records a city may already hold
               or that we must keep by law.
             </>,
             <>
-              <strong>Location</strong> — allow or deny location access in your
+              <strong>Location</strong>, allow or deny location access in your
               browser or device settings at any time.
             </>,
             <>
-              <strong>Photos</strong> — you choose what to photograph; avoid
+              <strong>Photos</strong>. You choose what to photograph; avoid
               capturing people or readable plates.
             </>,
           ]}

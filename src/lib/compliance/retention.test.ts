@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * Tests for validateRetention — imported directly since it's a pure function
+ * Tests for validateRetention, imported directly since it's a pure function
  * that requires no DB or auth context.  The "use server" directive is stripped
  * by the vitest module resolver (same pattern used in other admin action tests).
  */

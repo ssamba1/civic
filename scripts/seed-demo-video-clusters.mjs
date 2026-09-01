@@ -19,7 +19,7 @@
 // Idempotent: every cluster this script writes carries the
 // decision_dossier.seed marker below, and the previous run's clusters,
 // detections, reports and classifications are deleted first. All deletes are
-// scoped to the demo clip / the demo feed's city — non-demo data is untouched.
+// scoped to the demo clip / the demo feed's city. Non-demo data is untouched.
 //
 // Hard rule 2 holds: the unblurred frame goes to the private photos-raw
 // bucket only; the public row carries the static placeholder.
@@ -71,7 +71,7 @@ const RAW_BUCKET = "photos-raw";
 /** Mirrors VIDEO_PLACEHOLDER_PUBLIC_PATH in src/lib/video/decide.ts. */
 const VIDEO_PLACEHOLDER_PUBLIC_PATH = "/video-detection-placeholder.svg";
 
-// Short road-shaped path through Cumming, GA — a slight dogleg rather than a
+// Short road-shaped path through Cumming, GA, a slight dogleg rather than a
 // straight line so clusters land at visibly distinct points on the map.
 const ROAD = [
   { t: 0, lng: -84.1452, lat: 34.2076 },
@@ -195,7 +195,7 @@ function trackBoxes(frames) {
 }
 
 /**
- * Class from box geometry — the detector head emits no label, so assign
+ * Class from box geometry, the detector head emits no label, so assign
  * deterministically over the RDD2022 vocabulary in src/lib/video/config.ts:
  *   area >= 0.08          → alligator_crack  (large fatigued surface patch)
  *   aspect >= 2.0         → transverse_crack (wide and short, across the lane)
@@ -213,7 +213,7 @@ function classifyBox(box) {
 
 /**
  * Location at `t` seconds along ROAD. Linear interpolation between the
- * bracketing waypoints, clamped to the ends — mirrors interpolateTrack() in
+ * bracketing waypoints, clamped to the ends, mirrors interpolateTrack() in
  * src/lib/video/track.ts (that module is TS and read-only, so the logic is
  * reproduced rather than imported).
  */
@@ -266,7 +266,7 @@ const CLASS_COPY = {
     subcategory: "alligator cracking / surface fatigue",
     description: (street) =>
       `The pavement along ${street} has cracked into a web of squares. It has been spreading all summer and the edge is starting to crumble.`,
-    rationale: "Large fatigued surface patch — spreading pavement failure",
+    rationale: "Large fatigued surface patch, spreading pavement failure",
   },
   transverse_crack: {
     category: "pothole",
@@ -328,7 +328,7 @@ const [clip] = await rest(
   `video_clips?city_id=eq.${city.id}&storage_path=like.*demo-sample.mp4&select=id`,
 );
 if (!clip) {
-  console.error("No demo clip — run scripts/seed-demo-video.mjs first.");
+  console.error("No demo clip, run scripts/seed-demo-video.mjs first.");
   process.exit(1);
 }
 
@@ -478,7 +478,7 @@ for (const [idx, k] of kept.entries()) {
     const rawPath = `${city.id}/${reportId}.jpg`;
     await upload(RAW_BUCKET, rawPath, jpg);
 
-    const rationale = `${copy.rationale} (${k.frameCount} frames, peak ${k.conf.toFixed(2)}) — dispatch.`;
+    const rationale = `${copy.rationale} (${k.frameCount} frames, peak ${k.conf.toFixed(2)}). Dispatch.`;
 
     await rest("POST", "reports", {
       id: reportId,

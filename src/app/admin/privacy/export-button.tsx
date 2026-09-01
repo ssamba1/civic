@@ -4,7 +4,7 @@ import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PrivacyAuditReport } from "@/lib/privacy/audit";
 
-// Client-side JSON export of the already-rendered audit report — a legal /
+// Client-side JSON export of the already-rendered audit report, a legal /
 // records-request artifact. No network round-trip: the report is serialized
 // from the props the server component already computed.
 export function ExportButton({ report }: { report: PrivacyAuditReport }) {

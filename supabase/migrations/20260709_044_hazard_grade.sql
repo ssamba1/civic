@@ -5,7 +5,7 @@
 -- Columns are nullable: pre-graded reports (created before this migration)
 -- or any report where gradeHazard() fails gracefully will have NULLs.
 --
--- RLS: inherits reports table policies unchanged — no new policies needed.
+-- RLS: inherits reports table policies unchanged. No new policies needed.
 -- The classify pipeline writes these via the service-role client (same as
 -- all other pipeline writes), so the existing service_role bypass applies.
 

@@ -1,11 +1,11 @@
 -- =============================================================================
--- Civic — Synthetic report seed (120 reports for Cumming, GA)
+-- Civic, Synthetic report seed (120 reports for Cumming, GA)
 -- Generated from buildCorpus() in src/lib/dashboard-data.ts.
 -- Paste into the Supabase SQL editor and Run.
 --
 -- Notes:
 --   * Resolves the target city ('cumming') and an existing reporter user from
---     rows already in the DB — run the base seed (city + users) first.
+--     rows already in the DB. Run the base seed (city + users) first.
 --   * Inserts into reports + classifications (the tables every dashboard /
 --     analytics / map widget derives from). lng/lat come from the location
 --     POINT via the dashboard_reports_view; upvote_count defaults to 0.
@@ -22,7 +22,7 @@ DECLARE
 BEGIN
   SELECT id INTO v_city_id FROM public.cities WHERE slug = 'cumming';
   IF v_city_id IS NULL THEN
-    RAISE EXCEPTION 'City "cumming" not found — seed the city first.';
+    RAISE EXCEPTION 'City "cumming" not found. Seed the city first.';
   END IF;
 
   -- Prefer a resident; fall back to any user in the city.
@@ -32,7 +32,7 @@ BEGIN
    ORDER BY (role = 'resident') DESC
    LIMIT 1;
   IF v_reporter IS NULL THEN
-    RAISE EXCEPTION 'No user found for the city — run the base seed (users) first.';
+    RAISE EXCEPTION 'No user found for the city. Run the base seed (users) first.';
   END IF;
 
   --   1  tree_down / sev 2 / dispatched

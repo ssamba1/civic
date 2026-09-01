@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils/cn";
 import { timeAgo } from "@/lib/utils/time-ago";
 
 /* ==================================================================
-   Report detail pane — right-hand column of the reports explorer.
+   Report detail pane, right-hand column of the reports explorer.
 
    Given a selected report (or null) it renders the photo, an info
    grid, and the AI reasoning (Cost + Scoring). The reasoning payload
@@ -30,11 +30,11 @@ import { timeAgo } from "@/lib/utils/time-ago";
    resolving after the user has moved to a different report.
 
    Helpers (status maps, severity colors, the Stat style) mirror the
-   sibling components but are re-implemented locally — the originals
+   sibling components but are re-implemented locally. The originals
    are module-private and not exported.
    ================================================================== */
 
-// The app-wide ordinal severity ramp (@/lib/severity-colors) — same map the
+// The app-wide ordinal severity ramp (@/lib/severity-colors). Same map the
 // analytics donut, the work-order grid and the field view read, so a severity
 // chip reads identically everywhere.
 const SEVERITY_COLORS = SEVERITY_HUE;
@@ -69,7 +69,7 @@ function absoluteDate(iso: string): string {
 }
 
 /* ------------------------------------------------------------------
-   Small Stat helper — mirrors the analytics bento label/value style.
+   Small Stat helper, mirrors the analytics bento label/value style.
    ------------------------------------------------------------------ */
 
 function Stat({
@@ -148,7 +148,7 @@ function ReasoningColumn({
 }
 
 /* ------------------------------------------------------------------
-   Reasoning fetch — ported from reasoning-hover.tsx, adapted to a
+   Reasoning fetch, ported from reasoning-hover.tsx, adapted to a
    report-id effect. Per-id cache keeps re-selection instant; a
    `cancelled` flag guards against a slow fetch resolving after the
    selection has changed. Adds an error state the hover card lacks.
@@ -180,7 +180,7 @@ function buildDemoReasoningResponse(
     scoringExplanation: [
       {
         title: "Severity",
-        value: "3 / 5 — property access blocked, no injury risk",
+        value: "3 / 5, property access blocked, no injury risk",
       },
       { title: "Category", value: "tree_down (confidence 93%)" },
       { title: "Priority score", value: "72 / 100" },
@@ -198,7 +198,7 @@ function useReasoning(
   const [state, setState] = useState<ReasoningState>({ phase: "loading" });
   const reportId = report?.id ?? null;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: depend on the primitive report fields used (id captured as reportId, demo, ai_reasoning), not the whole report object — its identity changes every parent render and would refetch/reset state on each render
+  // biome-ignore lint/correctness/useExhaustiveDependencies: depend on the primitive report fields used (id captured as reportId, demo, ai_reasoning), not the whole report object. Its identity changes every parent render and would refetch/reset state on each render
   useEffect(() => {
     if (!reportId || !report) {
       setState({ phase: "loading" });
@@ -391,7 +391,7 @@ export function ReportDetail({ report }: { report: DashboardReport | null }) {
 
         {reasoning.phase === "loading" && (
           /* Skeleton mirrors the two-column ReasoningColumn grid so the section
-             reserves its real height — no layout shift when data lands. */
+             reserves its real height, no layout shift when data lands. */
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {[0, 1].map((col) => (
               <div key={col} className="flex flex-col gap-4">

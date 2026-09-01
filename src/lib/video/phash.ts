@@ -1,5 +1,5 @@
 /**
- * Server-side aHash — the same 64-bit average hash the client blur pipeline
+ * Server-side aHash, the same 64-bit average hash the client blur pipeline
  * computes for report photos (photo_phash), so hashes are comparable across
  * both intake channels. Pure functions; the 8×8 grayscale bytes come from
  * ffmpeg (frame-extract.ts).

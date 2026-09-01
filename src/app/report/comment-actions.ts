@@ -70,7 +70,7 @@ async function resolveReportAccess(
     return { ok: false, error: "forbidden" };
   }
 
-  // Return the resolved staffAccess so the caller reuses it (no second lookup —
+  // Return the resolved staffAccess so the caller reuses it (no second lookup,
   // avoids a TOCTOU where the two calls disagree).
   return {
     ok: true,
@@ -118,7 +118,7 @@ export async function postComment(
 
   // author_role is "staff" ONLY for a verified REAL staff session. "demo" access
   // is public-bundle-baked (proves nothing about the visitor), so a demo user
-  // must never be able to post an official-looking "staff" reply — they post as
+  // must never be able to post an official-looking "staff" reply, they post as
   // "resident". Reuse the staffAccess already resolved above (no second call).
   const { staffAccess } = accessResult.data;
   const authorRole = staffAccess === "real" ? "staff" : "resident";
@@ -163,7 +163,7 @@ export async function postComment(
 /**
  * Hide (soft-delete) a comment. Staff only.
  *
- * Does not expose the hidden comment to the caller — the return value only
+ * Does not expose the hidden comment to the caller. The return value only
  * confirms success or describes the error.
  */
 export async function hideComment(
@@ -191,8 +191,8 @@ export async function hideComment(
   }
 
   // Existence must not leak to non-staff. A missing comment, a comment with no
-  // resolvable city, and a non-staff caller all return the SAME "forbidden" —
-  // otherwise a resident could enumerate valid comment ids by observing
+  // resolvable city, and a non-staff caller all return the SAME "forbidden".
+  // Otherwise a resident could enumerate valid comment ids by observing
   // "comment_not_found" vs "forbidden". Moderation requires REAL staff (a
   // public-bundle "demo" session must not hide real residents' comments).
   const citySlug = comment

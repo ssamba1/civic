@@ -1,7 +1,7 @@
 // Route-level Suspense fallback. Mirrors CameraCapture's neutral first paint
 // (full-screen viewfinder shell + centered spinner) so the shell shows instant
 // feedback while anonymous sign-in / GPS acquisition / client JS boot. The
-// viewfinder is structurally black-first, so this shell forces `.dark` — the
+// viewfinder is structurally black-first, so this shell forces `.dark`, the
 // shared `.skeleton` + `foreground` tokens then resolve to their dark values
 // (mirroring the real panel in both light and dark app themes) instead of being
 // hand-hardcoded. A faint shimmer bar hints the viewfinder is loading, not

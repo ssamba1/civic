@@ -6,7 +6,7 @@
 -- OWNER-APPLY ONLY. Unlike the analytics RPCs, this migration:
 --   1. enables the pg_cron extension (a project-level change), and
 --   2. schedules a RECURRING DELETE against storage.objects.
--- It was intentionally NOT auto-applied by the agent — apply it deliberately
+-- It was intentionally NOT auto-applied by the agent. Apply it deliberately
 -- against a shadow project first, confirm the 30-day window is correct for the
 -- deployment's records law, then apply to prod. Configurable per-city retention
 -- (OUTFLANK #38) can later parameterize the interval.

@@ -39,7 +39,7 @@ const VALID_TRANSITIONS: Record<
 > = {
   assigned: new Set<ContractorStatus>(["accepted", "declined"]),
   accepted: new Set<ContractorStatus>(["in_progress", "declined"]),
-  declined: new Set<ContractorStatus>([]), // terminal — staff must re-assign
+  declined: new Set<ContractorStatus>([]), // terminal. Staff must re-assign
   in_progress: new Set<ContractorStatus>(["complete"]),
   complete: new Set<ContractorStatus>([]), // terminal
 };
@@ -74,7 +74,7 @@ export type ProgressUpdateError =
  * Validates the shape of a progress update before it touches the DB.
  * Returns { ok: true } or { ok: false, error }.
  *
- * Does NOT check whether the transition is legal from the current DB state —
+ * Does NOT check whether the transition is legal from the current DB state,
  * that requires knowing the current status, which is done in the server action
  * after fetching the row (so we can defend against race conditions).
  */

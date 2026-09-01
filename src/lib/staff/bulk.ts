@@ -1,6 +1,6 @@
 /**
  * Pure validation helpers for bulk staff operations.
- * No DB calls, no server-only imports — safe to import anywhere.
+ * No DB calls, no server-only imports, safe to import anywhere.
  */
 
 import type { Result } from "@/lib/types";
@@ -78,7 +78,7 @@ export function validateBulkSelection(ids: unknown): Result<string[]> {
 
   for (const id of deduped) {
     if (!isUuid(id)) {
-      // Do NOT echo the raw id back — it's untrusted input that lands in toasts.
+      // Do NOT echo the raw id back, it's untrusted input that lands in toasts.
       return { ok: false, error: "invalid_uuid" };
     }
   }

@@ -91,7 +91,7 @@ Imports are not sorted according to Biome's convention:
 
 ### Impact
 - **Scope:** 73 files (mostly in `src/app/`)
-- **Risk:** None—pure formatting change
+- **Risk:** None, pure formatting change
 - **Time to fix:** <1 second (automated)
 
 ---
@@ -421,8 +421,8 @@ Update `lineEnding: "lf"` and elevate critical a11y rules to `error` level.
 | Phase | Task | Effort | Owner | Timeline |
 |-------|------|--------|-------|----------|
 | **1** | `biome check --fix` | 5 min | Automated | Immediate |
-| **2** | a11y fixes | 2–3 hrs | Frontend Lead | This sprint |
-| **3** | Code quality | 1–2 hrs | Team | This sprint |
+| **2** | a11y fixes | 2-3 hrs | Frontend Lead | This sprint |
+| **3** | Code quality | 1-2 hrs | Team | This sprint |
 | **4** | Config update | 15 min | Lead | Before next commit |
 
 ---
@@ -502,8 +502,8 @@ npm run dev
 |----------|-------|---------|--------|
 | Format | 264 | 100% | <1s |
 | Imports | 73 | 100% | <1s |
-| a11y | 79 | 60–80% | 2–3h |
-| Code Quality | 80 | 40–60% | 1–2h |
-| **Total** | **496** | **~75%** | **3–6h** |
+| a11y | 79 | 60-80% | 2-3h |
+| Code Quality | 80 | 40-60% | 1-2h |
+| **Total** | **496** | **~75%** | **3-6h** |
 
-**Recommendation:** Execute Phase 1 immediately (automated), then incrementally address Phases 2–4 over the sprint.
+**Recommendation:** Execute Phase 1 immediately (automated), then incrementally address Phases 2-4 over the sprint.

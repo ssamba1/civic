@@ -5,7 +5,7 @@ import { generateWalkupQr } from "./actions";
 
 /**
  * Operator tool to mint a printable walk-up QR (NEXT_100 #16). Enter a location
- * (and optional asset id), generate the SVG, then print — stick it on the sign,
+ * (and optional asset id), generate the SVG, then print. Stick it on the sign,
  * bus stop, or failing asset. Scanning opens the report flow with the location
  * pre-tagged, no account required.
  */
@@ -48,7 +48,7 @@ export function QrTool() {
       </h1>
       <p className="mt-1 text-sm text-zinc-500">
         Print a QR for a physical location. Residents scan it to file a report
-        with the spot pre-tagged — no typing, no account.
+        with the spot pre-tagged, no typing, no account.
       </p>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">

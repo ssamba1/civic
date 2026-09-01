@@ -11,7 +11,7 @@ const logger = createLogger("[city-grid]");
  * short-circuit the classify pipeline before a work_orders row is created (and
  * merged reports never get one either), so a work-order-first query silently
  * hides the most urgent class of report. Here every classified report appears;
- * the work-order fields are simply null when no work order exists yet — which
+ * the work-order fields are simply null when no work order exists yet, which
  * surfaces the "emergency = dispatched, no priority/cost" reality instead of
  * burying it.
  */
@@ -32,7 +32,7 @@ export interface GridReportRow {
   work_order_id: string | null;
   department: string | null;
   crew_type: string | null;
-  /** Real crew assignment (crews table) — null until a staffer assigns one. */
+  /** Real crew assignment (crews table), null until a staffer assigns one. */
   assigned_crew_id: string | null;
   assigned_crew_name: string | null;
   priority_score: number | null;
@@ -62,7 +62,7 @@ export interface GridLiability {
   permitRef: string | null;
 }
 
-/** One assignable crew for the grid's crew control (no roster — the grid
+/** One assignable crew for the grid's crew control (no roster, the grid
  *  doesn't need names, just the unit). */
 export interface GridCrewOption {
   id: string;
@@ -73,7 +73,7 @@ export interface GridCrewOption {
 
 /**
  * Active crews of a city for the grid's assignment dropdown. Degrades to []
- * on any failure (including the crews table not existing yet — migration 030),
+ * on any failure (including the crews table not existing yet, migration 030),
  * so the grid renders without an assignment control rather than 500-ing.
  */
 export async function getCityCrewOptions(
@@ -107,7 +107,7 @@ export async function getCityCrewOptions(
 }
 
 /** Supabase embeds a to-one relation as either an object or a 1-element array
- *  depending on the relationship metadata — normalize both to a record. */
+ *  depending on the relationship metadata, normalize both to a record. */
 function firstOf(v: unknown): Record<string, unknown> | null {
   if (Array.isArray(v)) return (v[0] as Record<string, unknown>) ?? null;
   return (v as Record<string, unknown>) ?? null;
@@ -159,8 +159,8 @@ export async function getGridRows(cityId: string): Promise<GridReportRow[]> {
     return [];
   }
 
-  // Resolve assigned crew ids to names in JS rather than a PostgREST embed —
-  // the embed needs the FK from migration 030, so it would hard-fail the whole
+  // Resolve assigned crew ids to names in JS rather than a PostgREST embed.
+  // The embed needs the FK from migration 030, so it would hard-fail the whole
   // grid query on a database that hasn't applied it yet. This lookup just
   // degrades to null names.
   const crewNameById = new Map<string, string>();
@@ -220,7 +220,7 @@ export async function getGridRows(cityId: string): Promise<GridReportRow[]> {
 /**
  * report_liability rows for a page of reports, with contractor names and the
  * matched contract/permit references resolved. Returns an empty map on any
- * failure — including the table not existing yet (migration 062) — so the
+ * failure (including the table not existing yet (migration 062)), so the
  * liability badge simply does not render.
  */
 async function fetchLiability(

@@ -3,8 +3,8 @@
  * store pattern (category-overrides.ts, custom-categories.ts, demo-reports.ts,
  * task-completion.ts, teams-overrides.ts, theme.ts, upvotes.ts).
  *
- * Each store keeps its OWN mutable snapshot variable in file scope — mutation
- * methods keep reading/reassigning it directly, unchanged — and hands this
+ * Each store keeps its OWN mutable snapshot variable in file scope. Mutation
+ * methods keep reading/reassigning it directly, unchanged, and hands this
  * helper a getter closing over that variable so `getSnapshot` always reflects
  * the current value. This module only owns the part that was byte-identical
  * across every store: the `Set<() => void>` of listeners, `subscribe`,
@@ -13,7 +13,7 @@
  *
  * `createReactiveStore` is the one-snapshot-per-store case (6 of the 7
  * files). A store with two independent snapshots sharing a single listener
- * set/emit (category-overrides.ts, teams-overrides.ts — one `emit()` must
+ * set/emit (category-overrides.ts, teams-overrides.ts, one `emit()` must
  * notify both the primary-map and history subscriptions) should use
  * `createListenerHub` + `frozenSnapshot` directly instead; see those files.
  */

@@ -63,7 +63,7 @@ export function WebhooksTable({ endpoints: initial }: Props) {
           {endpoints.map((ep) => (
             <tr key={ep.id} className="py-2">
               <td className="py-2 pr-4 font-medium text-zinc-900 dark:text-zinc-100">
-                {ep.label ?? "—"}
+                {ep.label ?? "-"}
               </td>
               <td className="py-2 pr-4 max-w-[180px] truncate text-zinc-600 dark:text-zinc-400">
                 <span title={ep.url}>{ep.url}</span>

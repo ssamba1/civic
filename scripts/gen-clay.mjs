@@ -1,8 +1,8 @@
-// Clay asset generator for the Bento hero — cohesive claymorphism set → public/landing-clay/ webp.
+// Clay asset generator for the Bento hero. Cohesive claymorphism set → public/landing-clay/ webp.
 //
 // Two providers:
-//   PROVIDER=pollinations (default) — keyless FLUX, genuinely free, no billing. For the free preview.
-//   PROVIDER=gemini                 — gemini-3.1-flash-image; needs BILLING enabled (free tier = 0 quota).
+//   PROVIDER=pollinations (default), keyless FLUX, genuinely free, no billing. For the free preview.
+//   PROVIDER=gemini. Gemini-3.1-flash-image; needs BILLING enabled (free tier = 0 quota).
 //                                     Higher quality + true pixel-edit heal (fixed = edit of broken).
 //
 //   node scripts/gen-clay.mjs anchor                                   # anchor only (Pollinations)
@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-// pnpm strict: sharp is not hoisted to top-level node_modules — resolve from the store.
+// pnpm strict: sharp is not hoisted to top-level node_modules. Resolve from the store.
 const sharp = require(
   fileURLToPath(
     new URL(
@@ -32,7 +32,7 @@ const SEED = 42; // fixed → FLUX keeps composition stable across broken/fixed 
 
 const KEY = process.env.GEMINI_API_KEY;
 if (PROVIDER === "gemini" && !KEY)
-  throw new Error("GEMINI_API_KEY missing — run with --env-file=.env.local");
+  throw new Error("GEMINI_API_KEY missing, run with --env-file=.env.local");
 
 const MODEL = "gemini-3.1-flash-image";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${KEY}`;
@@ -42,7 +42,7 @@ const RAW = `${OUT}_raw/`; // keep source PNGs for re-compression / debugging
 mkdirSync(OUT, { recursive: true });
 mkdirSync(RAW, { recursive: true });
 
-// Shared style spine — every prompt inherits this so the set reads as one material.
+// Shared style spine, every prompt inherits this so the set reads as one material.
 const STYLE =
   "soft claymorphism 3D render, matte modeling-clay material with subtle fingerprint texture, " +
   "soft pastel palette with a single bright blue accent (#3b6ef6), soft diffuse studio lighting with no harsh shadows, " +
@@ -110,7 +110,7 @@ async function run() {
   console.log(`gen-clay: provider=${PROVIDER}${PROVIDER === "gemini" ? ` model=${MODEL}` : ""} mode=${mode}`);
   const ext = PROVIDER === "pollinations" ? "jpg" : "png";
 
-  // 1. Style anchor — the broken neighborhood. Gemini reuses its bytes as a ref.
+  // 1. Style anchor, the broken neighborhood. Gemini reuses its bytes as a ref.
   console.log("→ neighborhood-broken (anchor)");
   const anchor = await generate({ prompt: BROKEN_PROMPT, aspect: "4:3" });
   await save("neighborhood-broken", anchor, { width: 960, ext });

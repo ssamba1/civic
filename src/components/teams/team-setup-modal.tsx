@@ -231,7 +231,7 @@ export function TeamSetupModal({
 }) {
   const { setCategoryTeam } = useCategoryOverrides();
 
-  // Portal mount gate — SSR + first CSR render both return null so the
+  // Portal mount gate. SSR + first CSR render both return null so the
   // hydration trees match before createPortal runs on the second commit.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -248,12 +248,12 @@ export function TeamSetupModal({
   >(new Set());
   // User-defined report types added inline. Kept in local state (not the
   // ReportCategory-keyed override store) because the category union is closed
-  // at compile time — see the note on handleSubmit.
+  // at compile time. See the note on handleSubmit.
   const [customCategories, setCustomCategories] = useState<
     { id: string; label: string; color: string }[]
   >([]);
   const [selectedCustom, setSelectedCustom] = useState<Set<string>>(new Set());
-  // Monotonic id source — never reuses a suffix after a removal, so two live
+  // Monotonic id source, never reuses a suffix after a removal, so two live
   // custom rows can't collide (a .length-based id would).
   const customIdRef = useRef(0);
   const [addingCategory, setAddingCategory] = useState(false);
@@ -483,7 +483,7 @@ export function TeamSetupModal({
               {customCategories.length > 0 && (
                 <p className="text-[12px] text-faint">
                   {customCategories.length} custom type
-                  {customCategories.length !== 1 ? "s" : ""} added — not routed
+                  {customCategories.length !== 1 ? "s" : ""} added, not routed
                   until added to the classifier.
                 </p>
               )}
@@ -659,7 +659,7 @@ export function TeamSetupModal({
                   </span>
                   <textarea
                     rows={3}
-                    placeholder="Describe what this team handles — shown on hover in the dashboard."
+                    placeholder="Describe what this team handles, shown on hover in the dashboard."
                     value={duties}
                     onChange={(e) => setDuties(e.target.value)}
                     className="resize-none rounded-lg border border-hairline bg-overlay px-3 py-2 text-sm text-foreground placeholder:text-faint outline-none focus:border-[color-mix(in_srgb,var(--color-primary)_60%,transparent)] focus:ring-1 focus:ring-[color-mix(in_srgb,var(--color-primary)_40%,transparent)]"
@@ -790,7 +790,7 @@ export function TeamSetupModal({
                   })}
                 </ul>
 
-                {/* Add a custom report type. Lives in local state only — see
+                {/* Add a custom report type. Lives in local state only. See
                     the note on handleSubmit for why it can't route for real. */}
                 {addingCategory ? (
                   <div className="space-y-2.5 rounded-lg border border-hairline bg-overlay p-3">
@@ -798,7 +798,7 @@ export function TeamSetupModal({
                       type="text"
                       // biome-ignore lint/a11y/noAutofocus: intentional focus when the add-category input is revealed by an explicit user action (clicking "add report type"), not on page load
                       autoFocus
-                      placeholder="New report type — e.g. Broken Bench"
+                      placeholder="New report type, e.g. Broken Bench"
                       value={draftLabel}
                       onChange={(e) => setDraftLabel(e.target.value)}
                       onKeyDown={(e) => {

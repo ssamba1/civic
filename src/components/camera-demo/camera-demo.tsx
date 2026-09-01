@@ -21,7 +21,7 @@ import {
  * _PIPELINE.md). Detections were precomputed offline over the demo clip
  * (services/detector/export_detections.py); the page replays them client-side:
  * boxes over the video, the bus tracing a Cumming route, an agent card per
- * promoted cluster. No live model, no DB writes — demo only, and labeled so.
+ * promoted cluster. No live model, no DB writes, demo only, and labeled so.
  */
 
 const VIDEO_SRC = "/camera-demo/bus-feed.mp4";
@@ -137,7 +137,7 @@ export function CameraDemo() {
       {/* Feed */}
       <section className="relative flex min-h-[46vh] flex-col overflow-hidden rounded-lg border bg-card lg:min-h-0">
         <header className="flex items-center justify-between border-b px-3 py-2">
-          <h2 className="font-medium text-sm">Bus 12 — forward camera</h2>
+          <h2 className="font-medium text-sm">Bus 12, forward camera</h2>
           <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
             demo footage · precomputed detections
           </span>

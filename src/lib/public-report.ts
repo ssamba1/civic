@@ -11,17 +11,17 @@ import type { ReportCategory, ReportStatus } from "@/lib/types";
 import { HOUR_MS } from "@/lib/utils/time-constants";
 
 /* ==================================================================
-   Public, account-less report status — the tokenized status page that lets an
+   Public, account-less report status, the tokenized status page that lets an
    anonymous reporter (no email, no login) check their report.
 
    Open311 GeoReport v2 has no push, and FixMyStreet's model is a stable public
-   URL keyed by an UNGUESSABLE token (never a sequential id — that would leak
+   URL keyed by an UNGUESSABLE token (never a sequential id, that would leak
    every report's location to anyone iterating ids). We derive the token
    deterministically from the report id + a salt, so no DB column is needed and
    the same report always resolves to the same opaque URL.
 
    The view is PII-safe: category, public status, approximate address, the
-   (already face/plate-blurred) public photo, and — when resolved — the
+   (already face/plate-blurred) public photo, and (when resolved) the
    resolution photo + date. No reporter id, no raw photo, no contact info.
    ================================================================== */
 
@@ -40,7 +40,7 @@ export interface PublicUpdate {
 
 export interface PublicReportView {
   token: string;
-  /** Internal report id — used server-side only (e.g. CSAT); never rendered. */
+  /** Internal report id, used server-side only (e.g. CSAT); never rendered. */
   reportId: string;
   category: ReportCategory;
   categoryLabel: string;
@@ -58,7 +58,7 @@ export interface PublicReportView {
    * filed date + the category's SLA window. Omitted once resolved.
    */
   estimatedFixBy?: string;
-  /** Real status history (report_updates) — live reports only, PII-safe. */
+  /** Real status history (report_updates). Live reports only, PII-safe. */
   updates?: PublicUpdate[];
 }
 
@@ -123,7 +123,7 @@ function toView(report: DashboardReport): PublicReportView {
 
 /**
  * Resolve a public token to a PII-safe report view, or null if no report maps
- * to it. O(n) over the corpus — fine for the demo set; live reports resolve
+ * to it. O(n) over the corpus. Fine for the demo set; live reports resolve
  * via {@link resolvePublicReport} instead. Never throws.
  */
 export function getPublicReport(token: string): PublicReportView | null {
@@ -159,7 +159,7 @@ interface LiveTokenRow {
     | null;
 }
 
-// Public projection of an internal status — mirrors toPublicStatus's collapse
+// Public projection of an internal status, mirrors toPublicStatus's collapse
 // so history entries never reveal more than the page's own status chip.
 function publicUpdateLabel(status: ReportStatus): string {
   return toPublicStatus(status).label;
@@ -169,7 +169,7 @@ function publicUpdateLabel(status: ReportStatus): string {
  * Token resolution for BOTH deployments: the in-memory demo corpus first (it
  * covers every synthetic report), then the live DB via the indexed
  * reports.public_token column (stamped by status-notify the first time a link
- * leaves the system). Service-role read — the page itself is the public
+ * leaves the system). Service-role read. The page itself is the public
  * surface and the view is PII-safe by construction. Never throws.
  */
 export async function resolvePublicReport(

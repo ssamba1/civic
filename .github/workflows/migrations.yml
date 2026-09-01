@@ -8,13 +8,13 @@ name: migrations
 # migration file, and fix two files that had been given the same sequence
 # number. Nothing stopped a repeat.
 #
-# This job applies every migration, in order, to an empty Postgres with PostGIS
-# — the same thing a new city deployment does — and fails if any file errors.
+# This job applies every migration, in order, to an empty Postgres with PostGIS.
+# The same thing a new city deployment does, and fails if any file errors.
 # It needs no secrets, so it runs on every PR and push.
 #
 # What it deliberately does NOT do: assert the resulting schema matches the live
 # project. That would need production credentials in CI. This answers the
-# narrower, still-valuable question — "would a fresh deploy succeed?"
+# narrower, still-valuable question. "would a fresh deploy succeed?"
 
 on:
   pull_request:
@@ -65,8 +65,8 @@ jobs:
             echo "Duplicate migration sequence number(s):"
             echo "$dupes"
             echo "Known: 056 is used by both routing_decisions and video_pipeline."
-            echo "Renaming an APPLIED migration is its own risk — the tracking"
-            echo "table keys on filename — so this is a warning, not a failure."
+            echo "Renaming an APPLIED migration is its own risk, the tracking"
+            echo "table keys on filename, so this is a warning, not a failure."
           else
             echo "No duplicate sequence numbers."
           fi
@@ -84,7 +84,7 @@ jobs:
           # Supabase provides these roles and the auth schema; a bare Postgres
           # does not, so stand in for them. Without this every RLS policy that
           # references authenticated/anon fails, and every `auth.uid()` call
-          # errors — neither of which is a real defect in the migration.
+          # errors, neither of which is a real defect in the migration.
           $PSQL <<'SQL'
             create extension if not exists postgis;
             create extension if not exists pgcrypto;

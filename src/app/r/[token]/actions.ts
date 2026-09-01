@@ -9,7 +9,7 @@ import type { Result } from "@/lib/types";
 const logger = createLogger("[public-reopen]");
 
 /* Reopen a resolved report from the public status page (NEXT_100 #7).
-   Possession of the unguessable token IS the auth — the reporter is the only
+   Possession of the unguessable token IS the auth. The reporter is the only
    one who has it (same model as one-tap CSAT). Only a resolved/closed report
    can be reopened; writes a timeline row so staff see why it came back. */
 export async function reopenReport(token: string): Promise<Result<void>> {
@@ -34,7 +34,7 @@ export async function reopenReport(token: string): Promise<Result<void>> {
     report_id: report.reportId,
     status: "open",
     actor: "resident",
-    note: "Reporter reopened this — the issue is still not resolved.",
+    note: "Reporter reopened this. The issue is still not resolved.",
   });
 
   revalidatePath(`/r/${token}`);

@@ -14,7 +14,7 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
-   MenuSelect — the staff-console dropdown.
+   MenuSelect, the staff-console dropdown.
 
    A button-trigger + portal listbox replacing native <select> in the
    admin modals (Role, Team, Division, Crew type). Native selects
@@ -164,7 +164,7 @@ export function MenuSelect({
   }, [open, position]);
 
   // Outside pointerdown closes. The trigger's own pointerdown toggles instead.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally keyed on `open` alone — the listener must (un)subscribe when the menu opens/closes, not re-run each render. `close`, `menuRef`, and `triggerRef` are stable (state setters / refs), so no stale closure.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally keyed on `open` alone. The listener must (un)subscribe when the menu opens/closes, not re-run each render. `close`, `menuRef`, and `triggerRef` are stable (state setters / refs), so no stale closure.
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (e: PointerEvent) => {
@@ -322,7 +322,7 @@ export function MenuSelect({
                 if (row.kind === "action") {
                   return (
                     <div key="__action" role="presentation">
-                      {/* biome-ignore lint/a11y/useFocusableInteractive: aria-activedescendant listbox — focus stays on the trigger by design; options are not individually tabbable. */}
+                      {/* biome-ignore lint/a11y/useFocusableInteractive: aria-activedescendant listbox. Focus stays on the trigger by design; options are not individually tabbable. */}
                       {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard is handled on the trigger's onKeyDown (roving activedescendant); onClick is the pointer-only fallback. */}
                       <div
                         id={`${listboxId}-${i}`}
@@ -346,7 +346,7 @@ export function MenuSelect({
                 }
                 const isSelected = row.value === value;
                 return (
-                  // biome-ignore lint/a11y/useFocusableInteractive: aria-activedescendant listbox — focus stays on the trigger by design; options are not individually tabbable.
+                  // biome-ignore lint/a11y/useFocusableInteractive: aria-activedescendant listbox. Focus stays on the trigger by design; options are not individually tabbable.
                   // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard is handled on the trigger's onKeyDown (roving activedescendant); onClick is the pointer-only fallback.
                   <div
                     key={row.value ?? "__null"}

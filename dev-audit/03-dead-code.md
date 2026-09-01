@@ -68,7 +68,7 @@ export function getGeminiRateLimitStats() {
 **Why:** Exported for admin dashboards or health checks but never called. `checkAndRecordGeminiCall()` is used; stats function orphaned.
 **Fix:** Delete the `export` keyword. If stats needed for monitoring, add to a dedicated `/api/health` endpoint instead.
 
-#### F004–F007: Dead Analytics Fetchers (analytics-data.ts)
+#### F004, F007: Dead Analytics Fetchers (analytics-data.ts)
 ```typescript
 // Line 109
 export async function fetchAnalyticsKpis(cityId: string): Promise<AnalyticsKpis> { ... }
@@ -100,7 +100,7 @@ export function useBentoMotionStyles() { ... }
 **Why:** Exported from component but only used internally within the same file (bento-primitives.tsx). No other component imports it.
 **Fix:** Remove `export` keyword; make it a private helper function.
 
-#### F013–F014: Orphaned Landing Components
+#### F013, F014: Orphaned Landing Components
 ```typescript
 // civic-globe.tsx:36
 export function CivicGlobe({ className }: { className?: string }) { ... }
@@ -149,15 +149,15 @@ export async function uploadReportPhotos(
 
 | Artifact | Type | Recommendation |
 |----------|------|-----------------|
-| `civic_outreach.NEW.csv` | Backup | Delete — appears to be staging version, use `civic_outreach.csv` only. |
-| `civic_outreach.before.csv` | Backup | Delete — dated backup from 2026-06-12. |
-| `civic_outreach.before283.csv` | Backup | Delete — intermediate version. |
-| `civic_outreach_review.NEW.csv` | Backup | Delete — staging file. |
+| `civic_outreach.NEW.csv` | Backup | Delete. Appears to be staging version, use `civic_outreach.csv` only. |
+| `civic_outreach.before.csv` | Backup | Delete, dated backup from 2026-06-12. |
+| `civic_outreach.before283.csv` | Backup | Delete, intermediate version. |
+| `civic_outreach_review.NEW.csv` | Backup | Delete. Staging file. |
 | `tsconfig.tsbuildinfo` | Build artifact | Add to `.gitignore` if not present; should not be committed. |
 | `RESEARCH_PROMPT.md` | Documentation | Move to `/docs/RESEARCH_PROMPT.md` if content is worth preserving. |
 | `civic_research_findings.md` | Documentation | Move to `/docs/civic_research_findings.md` or consolidate into project CLAUDE.md. |
 
-## Backlog — Recommended Actions
+## Backlog: Recommended Actions
 
 1. **Delete dead exports (5 min, P0):**
    - [ ] Remove `export` from `getGeminiRateLimitStats` (rate-limiter.ts:87)
@@ -182,7 +182,7 @@ export async function uploadReportPhotos(
    - [ ] Move `RESEARCH_PROMPT.md` and `civic_research_findings.md` to `/docs/` or delete if not needed.
 
 5. **Verify imports in adjacent areas (15 min, P1):**
-   - [ ] Search `/app/report/actions.ts` for photo upload logic — ensure it's not using a non-imported path.
+   - [ ] Search `/app/report/actions.ts` for photo upload logic, ensure it's not using a non-imported path.
    - [ ] Search `/app/api` routes for any dynamic calls to privacy functions (e.g., via `import()` or string-based lookups).
    - [ ] Audit `/app/admin` or `/app/staff` routes to confirm no missing staff photo feature.
 
@@ -195,7 +195,7 @@ export async function uploadReportPhotos(
 | Dead exports (types) | 3 | P0 |
 | Dead privacy functions | 3 | P1 |
 | Stray repo artifacts | 7 | P2 |
-| **Total** | **25** | — |
+| **Total** | **25** | - |
 
 ## Verified Clean (No Dead Code Found)
 
@@ -204,9 +204,9 @@ export async function uploadReportPhotos(
 **src/lib constants & config:** All constants in `ai/config.ts`, `delegation-history.ts`, `privacy/retention.ts` have call sites.
 
 **Function call frequency:** High-value utilities called multiple times across codebase:
-- `timeAgo()` — 31 occurrences (time formatting utility)
-- `lockBodyScroll()` — 17 occurrences (scroll lock)
-- `storagePath()` — 9 occurrences (Supabase path builder)
+- `timeAgo()`: 31 occurrences (time formatting utility)
+- `lockBodyScroll()`: 17 occurrences (scroll lock)
+- `storagePath()`: 9 occurrences (Supabase path builder)
 
 **Test coverage:** 11 test files (vi/jest); test setup functions and mocks are properly used.
 

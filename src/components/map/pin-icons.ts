@@ -5,12 +5,12 @@ import { categoryToTeam, TEAMS, type TeamId } from "@/lib/teams";
    Teardrop pin icons for the report map (IconLayer, deck.gl v9).
 
    Single source of truth for BOTH the SVG markers rendered on the GPU
-   and the legend swatches in report-map.tsx — a color literal lives
+   and the legend swatches in report-map.tsx. A color literal lives
    here exactly once so the map and its legend can never drift apart.
 
    Design mirrors the landing hero pin (components/landing/riven/
    MapPinStory.tsx): a solid teardrop with a thin (~1.2 unit) border and
-   a centered glyph in the head —
+   a centered glyph in the head,
    the report's CATEGORY icon (lucide path data inlined below, mapped
    via CATEGORY_META's icon names), overridden by a check on completed
    pins. The tip of the pin sits on the report location (anchorY =
@@ -60,15 +60,15 @@ export interface PinIcon {
   anchorY: number;
 }
 
-const RASTER = 48; // 2x of the 24-unit viewBox — crisp on retina
+const RASTER = 48; // 2x of the 24-unit viewBox, crisp on retina
 const iconCache = new Map<string, PinIcon>();
 
 /* ------------------------------------------------------------------
-   Category glyphs — lucide path data copied verbatim from
+   Category glyphs, lucide path data copied verbatim from
    node_modules/lucide-react/dist/esm/icons/*.mjs (24-unit space),
    keyed by the icon-name strings CATEGORY_META already assigns per
    category (so popup, list rows, and pins share one mapping). Raw
-   fragments only — fill/stroke/caps are inherited from the wrapping
+   fragments only. Fill/stroke/caps are inherited from the wrapping
    <g> in buildPinSVG. "waves" = lucide waves-horizontal; "help-circle"
    = lucide circle-question-mark (aliases in the installed version).
    ------------------------------------------------------------------ */
@@ -97,7 +97,7 @@ const GLYPHS: Record<string, string> = {
   "help-circle": `<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>`,
 };
 
-// Check glyph — completed pins. Drawn in pin space (not the scaled-down
+// Check glyph, completed pins. Drawn in pin space (not the scaled-down
 // lucide space) so it stays a touch bolder than the category glyphs.
 const CHECK_GLYPH = `<path d="M8.4 11.7 11 14.4 16 8.9"/>`;
 
@@ -109,7 +109,7 @@ function buildPinSVG(fill: string, border: string, glyphId: string): string {
   const glyphColor = isWhite ? "#3c4252" : "#ffffff";
   // Category glyphs: lucide 24-unit art scaled to 0.3 (~7.2 units ≈ 45% of
   // the 16-unit head diameter), centered on the head (12, 11.5). stroke-width
-  // 2.75 pre-scale ≈ 0.83 pin units — reads at the ~26-34px render size.
+  // 2.75 pre-scale ≈ 0.83 pin units. Reads at the ~26-34px render size.
   const glyph =
     glyphId === "check"
       ? `<g fill="none" stroke="${glyphColor}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${CHECK_GLYPH}</g>`
@@ -139,7 +139,7 @@ function makePin(fill: string, border: string, glyphId: string): PinIcon {
 }
 
 /* ------------------------------------------------------------------
-   Per-mode fill/border resolution — shared by the pin icon and the
+   Per-mode fill/border resolution, shared by the pin icon and the
    focus-halo color so both come from one place.
    ------------------------------------------------------------------ */
 
@@ -209,7 +209,7 @@ export function pinColorRGB(
 }
 
 /* ------------------------------------------------------------------
-   Legend metadata — the report-map legend renders straight from these
+   Legend metadata, the report-map legend renders straight from these
    so no color literal is duplicated in JSX.
    ------------------------------------------------------------------ */
 

@@ -47,7 +47,7 @@ const STAGES: Stage[] = [
   },
   {
     label: "Claim packet drafted",
-    detail: () => "queued for staff review — nothing auto-sends",
+    detail: () => "queued for staff review. Nothing auto-sends",
     doneAt: 4.8,
   },
 ];
@@ -112,7 +112,7 @@ export function AgentFeed({
       </header>
       {live.length === 0 && (
         <p className="rounded-md border border-dashed p-3 text-muted-foreground text-xs">
-          Watching the feed — agents appear when a defect is confirmed across
+          Watching the feed, agents appear when a defect is confirmed across
           repeat passes.
         </p>
       )}

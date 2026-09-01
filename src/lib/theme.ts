@@ -4,7 +4,7 @@ import { useCallback, useSyncExternalStore } from "react";
 import { createReactiveStore } from "@/lib/utils/reactive-store";
 
 /* ==================================================================
-   Theme store — light ⇄ dark, class-driven.
+   Theme store, light ⇄ dark, class-driven.
 
    Mirrors the house store pattern (demo-reports.ts, category-overrides.ts):
    a module-level snapshot + useSyncExternalStore for React reactivity,
@@ -66,7 +66,7 @@ export function setTheme(next: Theme) {
   try {
     window.localStorage.setItem(STORAGE_KEY, next);
   } catch {
-    // Private mode / quota — in-memory + the live class still drive the UI.
+    // Private mode / quota. In-memory + the live class still drive the UI.
   }
   emit();
 }

@@ -1,13 +1,13 @@
 // @vitest-environment node
 //
-// RLS regression tests for the migration 025–028 tables (agents.md hard rule
+// RLS regression tests for the migration 025-028 tables (agents.md hard rule
 // #3): report_updates, report_csat (025), report_upvotes, issue_types (027),
-// api_keys (028). Same opt-in model as rls.test.ts — hermetic `pnpm test`
-// skips these; run with `pnpm test:rls` against a DB that has 025–028 applied.
+// api_keys (028). Same opt-in model as rls.test.ts. Hermetic `pnpm test`
+// skips these; run with `pnpm test:rls` against a DB that has 025-028 applied.
 //
 // Existence-dependent assertions (service-role control reads, RPC grants) are
-// additionally gated on CHECK_MIGRATIONS_025_028=1 — mirroring the CHECK_012
-// precedent — so this file doesn't read as a regression against a database
+// additionally gated on CHECK_MIGRATIONS_025_028=1. Mirroring the CHECK_012
+// precedent, so this file doesn't read as a regression against a database
 // where the migrations are still pending.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -26,7 +26,7 @@ function loadEnvLocal() {
       }
     }
   } catch {
-    // No .env.local — rely on the process environment.
+    // No .env.local, rely on the process environment.
   }
 }
 
@@ -51,7 +51,7 @@ const ANON_DENIED_TABLES = [
 
 const NIL = "00000000-0000-0000-0000-000000000000";
 
-describe.skipIf(!HAS_ENV)("RLS 025–028: anonymous access", () => {
+describe.skipIf(!HAS_ENV)("RLS 025-028: anonymous access", () => {
   let anon: SupabaseClient;
 
   beforeAll(() => {
@@ -137,7 +137,7 @@ describe.skipIf(!HAS_ENV)("RLS 025–028: anonymous access", () => {
 });
 
 describe.skipIf(!CHECK_APPLIED)(
-  "RLS 025–028: service role control (proves denials above are RLS)",
+  "RLS 025-028: service role control (proves denials above are RLS)",
   () => {
     let service: SupabaseClient;
 
@@ -165,7 +165,7 @@ describe.skipIf(!CHECK_APPLIED)(
       const hash = `test_${NIL.replace(/-/g, "")}${Date.now()}`;
       // Need a real user + city FK; grab the first of each.
       const { data: u } = await service.from("users").select("id").limit(1).single();
-      if (!u) return; // empty DB — nothing to attribute a key to
+      if (!u) return; // empty DB, nothing to attribute a key to
       const { data: minted, error: mintErr } = await service
         .from("api_keys")
         .insert({
@@ -207,7 +207,7 @@ describe.skipIf(!CHECK_APPLIED)(
   },
 );
 
-describe.skipIf(HAS_ENV)("RLS 025–028: skipped (no Supabase env)", () => {
+describe.skipIf(HAS_ENV)("RLS 025-028: skipped (no Supabase env)", () => {
   it("documents that these integration tests need live credentials", () => {
     expect(HAS_ENV).toBe(false);
   });

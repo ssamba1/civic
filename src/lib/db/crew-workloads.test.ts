@@ -88,8 +88,8 @@ describe("aggregateCrewWorkloads", () => {
 
   it("skips null crew and null (dead-embed) report rows", () => {
     const rows = [
-      row(null, "open", 4, null), // unassigned — skipped
-      row("__noreport__", "open", 4, null), // reports embed null — skipped
+      row(null, "open", 4, null), // unassigned, skipped
+      row("__noreport__", "open", 4, null), // reports embed null, skipped
       row("cr9", "open", 4, null),
     ];
     const wl = aggregateCrewWorkloads(rows, NOW);

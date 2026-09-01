@@ -1,5 +1,5 @@
 /**
- * Frame extraction via the system ffmpeg binary — stage 1 of the video
+ * Frame extraction via the system ffmpeg binary, stage 1 of the video
  * damage-mapping pipeline. No node-level image dependency: ffmpeg also
  * produces the raw RGB tensors the ONNX detector consumes and the 8×8
  * grayscale bytes aHash needs, so one external tool covers all image work.
@@ -24,7 +24,7 @@ export interface SampledFrame {
 
 /**
  * ffmpeg argv for sampling `fps` JPEG frames/sec from a clip.
- * Pure — unit-testable without ffmpeg installed.
+ * Pure, unit-testable without ffmpeg installed.
  */
 export function buildSampleArgs(
   inputPath: string,
@@ -46,7 +46,7 @@ export function buildSampleArgs(
 }
 
 /**
- * ffmpeg argv to decode one image to raw RGB bytes at size×size on stdout —
+ * ffmpeg argv to decode one image to raw RGB bytes at size×size on stdout,
  * the detector's input tensor source. Plain stretch (no letterbox): bbox
  * output is normalized to [0,1] frame coordinates so the distortion cancels
  * out for our purposes (localizing damage within a frame). Pure.
@@ -107,7 +107,7 @@ function runFfmpeg(args: string[]): Promise<Buffer> {
       reject(
         err instanceof Error && "code" in err && err.code === "ENOENT"
           ? new Error(
-              "ffmpeg binary not found — install ffmpeg on the deploy host (see docs/runbooks/video-pipeline.md)",
+              "ffmpeg binary not found. Install ffmpeg on the deploy host (see docs/runbooks/video-pipeline.md)",
             )
           : err,
       );

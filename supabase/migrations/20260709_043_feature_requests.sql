@@ -1,8 +1,8 @@
--- 043 feature / help requests — inbound channel for cities and users to ask for
+-- 043 feature / help requests, inbound channel for cities and users to ask for
 -- features, QoL improvements, or hands-on help setting up their city. Distinct
 -- from /onboard (self-serve tenant provisioning): this is a lightweight "talk to
 -- us" inbox surfaced in /admin/requests. Writes go through a server action using
--- the service-role client, so — like council_districts (041) — RLS is
+-- the service-role client, so (like council_districts (041)) RLS is
 -- default-deny with NO policies: anon/authenticated cannot read or write
 -- directly, service_role bypasses. (agents.md rule 3.)
 

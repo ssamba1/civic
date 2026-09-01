@@ -11,14 +11,14 @@ import { timeAgo } from "@/lib/utils/time-ago";
 
 /* ==================================================================
    Routing activity feed. Sits under the Default routing matrix and
-   gives the dispatcher a timestamped memory of what they re-routed —
-   both category-level re-routes (from the matrix directly above) and
+   gives the dispatcher a timestamped memory of what they re-routed.
+   Both category-level re-routes (from the matrix directly above) and
    per-report reassignments (from the delegation panel below).
 
    Both sources persist a `{ from, to, ts }` history; this component
    merges them, sorts most-recent-first, and renders a read-only feed.
    Revert lives at the source (matrix RotateCcw, delegation panel), so
-   this stays a pure audit surface — no duplicated mutation logic.
+   this stays a pure audit surface, no duplicated mutation logic.
    ================================================================== */
 
 const MAX_ROWS = 7;
@@ -91,7 +91,7 @@ function RoutingChangesLogInner() {
             No routing changes yet
           </p>
           <p className="max-w-[34ch] text-[12px] leading-snug text-faint">
-            Re-route a category above or reassign a report — every change shows
+            Re-route a category above or reassign a report. Every change shows
             up here with a timestamp.
           </p>
         </div>

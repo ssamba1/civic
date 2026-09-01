@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils/cn";
 import { timeAgo } from "@/lib/utils/time-ago";
 import { AttributedReportsCard } from "../attributed-reports-card";
 
-// Staff-gated per-request surface (cookies) — never prerender or cache.
+// Staff-gated per-request surface (cookies), never prerender or cache.
 export const dynamic = "force-dynamic";
 
 interface PageProps {
@@ -42,7 +42,7 @@ function titleize(value: string): string {
     .join(" ");
 }
 
-// Same tile as the member detail page — the two profile surfaces must read
+// Same tile as the member detail page. The two profile surfaces must read
 // as one system.
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
@@ -99,7 +99,7 @@ export default async function ContractorDetailPage({ params }: PageProps) {
     <div className="flex flex-col min-h-dvh bg-background">
       <div className="flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
         <div className="flex flex-col gap-4">
-          {/* Profile header — same card as the member detail page. */}
+          {/* Profile header, same card as the member detail page. */}
           <section className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-5 shadow-[var(--shadow-card)] sm:p-6">
             <Link
               href={`/city/${slug}/members`}
@@ -140,12 +140,12 @@ export default async function ContractorDetailPage({ params }: PageProps) {
                       strokeWidth={2}
                       aria-hidden="true"
                     />
-                    <span className="truncate">{contractor.email ?? "—"}</span>
+                    <span className="truncate">{contractor.email ?? "-"}</span>
                   </span>
                 </div>
                 {access === "demo" && (
                   <p className="mt-2.5 text-[12px] text-faint">
-                    Demo session — contact details are masked.
+                    Demo session. Contact details are masked.
                   </p>
                 )}
               </div>

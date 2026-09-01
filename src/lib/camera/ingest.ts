@@ -40,7 +40,7 @@ export const DETECTOR_MIN_SCORE = 0.5;
 const DETECT_TIMEOUT_MS = 30_000;
 
 export interface CameraFrame {
-  /** Device-local frame id — the idempotency key. */
+  /** Device-local frame id, the idempotency key. */
   externalId: string;
   capturedAt: string;
   lng: number;
@@ -102,7 +102,7 @@ function detectorBaseUrl(deps: IngestDeps): string | null {
 
 /**
  * Call the sidecar's /detect for one frame. Any transport or protocol failure
- * is `retryable` — frames queue and the batch is retried; ingest must never
+ * is `retryable`. Frames queue and the batch is retried; ingest must never
  * block report creation from other sources (spec §6).
  */
 async function detectFrame(
@@ -168,7 +168,7 @@ async function detectFrame(
   }
 }
 
-/** Frame ids already ingested for this device — free replay safety. */
+/** Frame ids already ingested for this device, free replay safety. */
 async function existingFrameIds(
   db: SupabaseLike,
   deviceId: string,
@@ -196,7 +196,7 @@ async function existingFrameIds(
 }
 
 /**
- * Nearby clusters via PostGIS (agents.md rule #7 — no haversine in app code).
+ * Nearby clusters via PostGIS (agents.md rule #7, no haversine in app code).
  *
  * DEPENDS ON migration 064 shipping `camera_nearby_clusters(_city_id, _lng,
  * _lat, _radius_m, _damage_class)` returning cluster rows plus `distance_m`.
@@ -214,7 +214,7 @@ async function nearbyClusters(
     _city_id: cityId,
     _lng: frame.lng,
     _lat: frame.lat,
-    // Same bound assignCluster re-asserts — a wider query would only return
+    // Same bound assignCluster re-asserts. A wider query would only return
     // clusters the pure function then rejects.
     _radius_m: CLUSTER_RADIUS_M,
     _damage_class: damageClass,
@@ -307,7 +307,7 @@ export async function ingestFrameBatch(
     if (!detected.ok) return detected;
 
     if (detected.data.length === 0) {
-      // ~95% of frames land here. Nothing is written — not the frame, not a row.
+      // ~95% of frames land here. Nothing is written, not the frame, not a row.
       summary.frames.push({
         externalId: frame.externalId,
         status: "no_detection",
@@ -324,7 +324,7 @@ export async function ingestFrameBatch(
 
       // --- privacy gate ---------------------------------------------------
       // Blur first, upload second. If blur fails the crop is dropped and the
-      // detection is not recorded at all — there is no unblurred fallback.
+      // detection is not recorded at all. There is no unblurred fallback.
       const blurred = await blur(Buffer.from(box.cropBase64, "base64"));
       if (!blurred.ok) {
         blurDropped++;
@@ -475,7 +475,7 @@ const BUMP_CAS_ATTEMPTS = 5;
 /**
  * Roll one detection into its cluster's running stats.
  *
- * This is a read-modify-write on a row that concurrent ingests contend for —
+ * This is a read-modify-write on a row that concurrent ingests contend for,
  * two cameras covering the same intersection bump the same cluster at the same
  * time. A plain SELECT-then-UPDATE loses increments: both readers see
  * observation_count = 10, both write 11, and one observation vanishes. Since
@@ -525,7 +525,7 @@ async function bumpCluster(
             : row.first_seen_at,
       })
       .eq("id", clusterId)
-      // CAS guard — no match means someone else bumped it since our read.
+      // CAS guard. No match means someone else bumped it since our read.
       .eq("observation_count", seen)
       .select("id");
 
@@ -536,7 +536,7 @@ async function bumpCluster(
 
 /**
  * Promote a cluster to a report once it clears the confirmation threshold.
- * Only this event calls Gemini — one LLM call per real defect, not per frame.
+ * Only this event calls Gemini, one LLM call per real defect, not per frame.
  */
 async function maybePromote(
   db: SupabaseLike,
@@ -558,7 +558,7 @@ async function maybePromote(
   };
 
   // Bounded. A cluster on a busy route accumulates a detection per camera pass
-  // indefinitely, and this ran on every stored box with no limit — the row set
+  // indefinitely, and this ran on every stored box with no limit. The row set
   // grows without bound while the two things it feeds need very little of it:
   // shouldPromote wants >= PROMOTE_MIN_PASSES (3) rows across >=
   // PROMOTE_MIN_DISTINCT_DAYS (2) days, and pickBestObservation wants the
@@ -601,7 +601,7 @@ async function maybePromote(
   // Writer semantics per F5_INGEST.md §3 + spec §4.6:
   //  - source 'camera' keeps this out of resident-engagement KPIs
   //  - source_external_id = cluster id, so a replayed promotion is a no-op
-  //  - reporter_id NULL (migration 015 allows it) — there is no reporter
+  //  - reporter_id NULL (migration 015 allows it). There is no reporter
   //  - created_at = first observation, so the liability window is evaluated
   //    against when the defect actually appeared, not when it was confirmed
   const { data: reportRow, error: rErr } = await db
@@ -641,7 +641,7 @@ async function maybePromote(
   try {
     await classify(reportId);
   } catch (err) {
-    // Existing fallback classification handles this (spec §6) — the cluster is
+    // Existing fallback classification handles this (spec §6). The cluster is
     // still a report either way.
     logger.error("camera_classify_failed", err, { reportId });
   }

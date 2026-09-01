@@ -1,7 +1,7 @@
 // One-shot Vercel deploy for the hosted demo.
 //
 // Usage:
-//   npx vercel login          # once, interactive — only you can do this
+//   npx vercel login          # once, interactive. Only you can do this
 //   npx vercel link           # once, pick/create the project
 //   node scripts/deploy-vercel.mjs           # push env + deploy preview
 //   node scripts/deploy-vercel.mjs --prod    # push env + deploy production
@@ -12,7 +12,7 @@
 //
 // Why a script instead of the dashboard: server env validation throws on a
 // missing RATE_LIMIT_TRUSTED_HEADER or PUBLIC_TOKEN_SALT, and demo sign-in
-// fails CLOSED without DEMO_COOKIE_SECRET — a judge would get a login form
+// fails CLOSED without DEMO_COOKIE_SECRET. A judge would get a login form
 // that accepts the password and lands nowhere. Setting sixteen variables by
 // hand at 11pm is how one of them gets missed.
 import { execFileSync } from "node:child_process";
@@ -23,7 +23,7 @@ const PROD = process.argv.includes("--prod");
 const TARGET = PROD ? "production" : "preview";
 
 if (!existsSync(".env.local")) {
-  console.error("no .env.local — copy .env.example and fill it in first");
+  console.error("no .env.local, copy .env.example and fill it in first");
   process.exit(1);
 }
 
@@ -36,7 +36,7 @@ const local = Object.fromEntries(
 
 // Secrets that only matter in production, so .env.local has never needed them.
 // Persisted to .env.production.local (gitignored by the leading `.env*` rule)
-// so a redeploy reuses the same values — regenerating PUBLIC_TOKEN_SALT would
+// so a redeploy reuses the same values. Regenerating PUBLIC_TOKEN_SALT would
 // invalidate every public /r/<token> status link already handed out.
 const GENERATED = ".env.production.local";
 const carried = existsSync(GENERATED)
@@ -121,7 +121,7 @@ for (const [k, v] of Object.entries(env)) {
 console.log(`\ndeploying (${TARGET})...`);
 vercel(PROD ? ["--prod"] : []);
 console.log(
-  "\nDone. Before sharing the link, open /api/health — it must report" +
+  "\nDone. Before sharing the link, open /api/health. It must report" +
     ' {"database":true,"ai":true}. A missing service key renders pages empty' +
     " and healthy-looking, which is the failure that fools a rehearsal.",
 );

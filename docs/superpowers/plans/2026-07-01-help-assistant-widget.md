@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship a floating, help-first AI assistant (bottom-right, all pages) that answers help/FAQ, reads the current user's RLS-scoped data, and opens screens — read + navigate only, no writes.
+**Goal:** Ship a floating, help-first AI assistant (bottom-right, all pages) that answers help/FAQ, reads the current user's RLS-scoped data, and opens screens. Read + navigate only, no writes.
 
 **Architecture:** A client widget uses the Vercel AI SDK `useChat` hook to stream from a server route `/api/ai/chat`. The route authenticates with the user's own cookie-scoped Supabase client (so Postgres RLS enforces all data access), runs Gemini via `@ai-sdk/google`, and exposes read/navigate tools. Retrieval over a small static help corpus is lexical (no pgvector). No data mutations.
 
@@ -14,9 +14,9 @@
 
 ## Conventions (read before starting)
 
-- Import zod as `import { z } from "zod/v4";` (repo standard — see `src/lib/env.ts`).
+- Import zod as `import { z } from "zod/v4";` (repo standard, see `src/lib/env.ts`).
 - Server AI calls only. The widget never calls Gemini; it only calls `/api/ai/chat`.
-- Data tools use the **cookie-scoped SSR client** (`createSSRClient()` / the client from `resolveChatContext`) — **never** the service-role client in `src/lib/db/client.ts`.
+- Data tools use the **cookie-scoped SSR client** (`createSSRClient()` / the client from `resolveChatContext`), **never** the service-role client in `src/lib/db/client.ts`.
 - Tagged results `{ ok: true, data } | { ok: false, error }` for server helpers that can fail (repo style).
 - Run tests from the app root: `cd "-Social-Impact-"`. Commands below assume that cwd.
 - Commit after each task. Commit messages end with the repo's normal style (no co-author trailer needed unless your workflow adds one).
@@ -24,22 +24,22 @@
 ## File Structure
 
 Create:
-- `src/lib/ai/help-corpus.ts` — static help/FAQ corpus.
-- `src/lib/ai/chat/retrieval.ts` — lexical `searchCorpus`.
-- `src/lib/ai/chat/navigation.ts` — `ALLOWED_ROUTES`, `isRouteAllowed` (pure, server-shared).
-- `src/lib/ai/chat/scope.ts` — `ChatRole`, `ChatScope`, `deriveScope` (pure).
-- `src/lib/ai/chat/context.ts` — `resolveChatContext` (I/O: auth + scope + client).
-- `src/lib/ai/chat/tools.ts` — `buildChatTools(ctx)`.
-- `src/lib/ai/chat/system-prompt.ts` — `buildSystemPrompt(scope)`.
-- `src/app/api/ai/chat/route.ts` — streaming endpoint.
-- `src/components/assistant/pick-navigation.ts` — pure client helper to extract a pending navigation from messages.
-- `src/components/assistant/assistant-message.tsx` — renders one message's parts.
-- `src/components/assistant/assistant-widget.tsx` — launcher + panel + `useChat`.
+- `src/lib/ai/help-corpus.ts`: static help/FAQ corpus.
+- `src/lib/ai/chat/retrieval.ts`: lexical `searchCorpus`.
+- `src/lib/ai/chat/navigation.ts`: `ALLOWED_ROUTES`, `isRouteAllowed` (pure, server-shared).
+- `src/lib/ai/chat/scope.ts`: `ChatRole`, `ChatScope`, `deriveScope` (pure).
+- `src/lib/ai/chat/context.ts`: `resolveChatContext` (I/O: auth + scope + client).
+- `src/lib/ai/chat/tools.ts`: `buildChatTools(ctx)`.
+- `src/lib/ai/chat/system-prompt.ts`: `buildSystemPrompt(scope)`.
+- `src/app/api/ai/chat/route.ts`: streaming endpoint.
+- `src/components/assistant/pick-navigation.ts`: pure client helper to extract a pending navigation from messages.
+- `src/components/assistant/assistant-message.tsx`: renders one message's parts.
+- `src/components/assistant/assistant-widget.tsx`: launcher + panel + `useChat`.
 - Tests colocated as `*.test.ts`, plus `e2e/assistant.spec.ts`.
 
 Modify:
-- `src/lib/ai/config.ts` — add chat constants + feature flag.
-- `src/app/layout.tsx` — mount the widget.
+- `src/lib/ai/config.ts`: add chat constants + feature flag.
+- `src/app/layout.tsx`: mount the widget.
 
 ---
 
@@ -55,7 +55,7 @@ Run (from `-Social-Impact-`):
 ```bash
 pnpm add ai @ai-sdk/google @ai-sdk/react react-markdown
 ```
-Expected: `package.json` gains the four deps; `pnpm-lock.yaml` updates. No new env var required — the Google provider is constructed with the existing `GEMINI_API_KEY`.
+Expected: `package.json` gains the four deps; `pnpm-lock.yaml` updates. No new env var required. The Google provider is constructed with the existing `GEMINI_API_KEY`.
 
 - [ ] **Step 2: Write the failing test**
 
@@ -78,7 +78,7 @@ describe("chat config", () => {
 - [ ] **Step 3: Run test to verify it fails**
 
 Run: `pnpm test -- config.test`
-Expected: FAIL — `CHAT_MODEL`/`CHAT_MAX_STEPS`/`CHAT_HISTORY_LIMIT` are not exported.
+Expected: FAIL, `CHAT_MODEL`/`CHAT_MAX_STEPS`/`CHAT_HISTORY_LIMIT` are not exported.
 
 - [ ] **Step 4: Add the constants**
 
@@ -151,7 +151,7 @@ describe("HELP_CORPUS", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test -- help-corpus.test`
-Expected: FAIL — module not found.
+Expected: FAIL, module not found.
 
 - [ ] **Step 3: Create the corpus**
 
@@ -187,7 +187,7 @@ export const HELP_CORPUS: HelpDoc[] = [
     id: "open311",
     title: "Does Civic replace the city's 311 system?",
     tags: ["open311", "integration", "311", "export", "city"],
-    body: "No — Civic complements existing systems. Every report is exportable in Open311 GeoReport v2 (JSON and XML), and external clients can push reports in, so a city can adopt Civic without ripping out its current 311 tooling.",
+    body: "No. Civic complements existing systems. Every report is exportable in Open311 GeoReport v2 (JSON and XML), and external clients can push reports in, so a city can adopt Civic without ripping out its current 311 tooling.",
   },
   {
     id: "cost-free",
@@ -205,7 +205,7 @@ export const HELP_CORPUS: HelpDoc[] = [
     id: "accountability",
     title: "What if the city ignores a report?",
     tags: ["accountability", "sla", "dashboard", "public", "equity"],
-    body: "Every report is on a public dashboard with timestamps and SLA badges, and a neighborhood equity view surfaces underserved areas. That public record is the accountability pressure — reports do not quietly disappear.",
+    body: "Every report is on a public dashboard with timestamps and SLA badges, and a neighborhood equity view surfaces underserved areas. That public record is the accountability pressure. Reports do not quietly disappear.",
   },
   {
     id: "which-cities",
@@ -223,7 +223,7 @@ export const HELP_CORPUS: HelpDoc[] = [
     id: "anonymous",
     title: "Do I need an account to report?",
     tags: ["account", "anonymous", "login", "sign up"],
-    body: "No account is required to submit or track a report — you get a private tracking link. You can optionally add an email later to link your reports to an account and get email updates.",
+    body: "No account is required to submit or track a report. You get a private tracking link. You can optionally add an email later to link your reports to an account and get email updates.",
   },
 ];
 ```
@@ -272,7 +272,7 @@ describe("searchCorpus", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test -- retrieval.test`
-Expected: FAIL — module not found.
+Expected: FAIL, module not found.
 
 - [ ] **Step 3: Implement retrieval**
 
@@ -299,7 +299,7 @@ function docTerms(doc: HelpDoc): string[] {
 
 /**
  * Lexical top-k over the help corpus. Scores by query-term overlap, weighting
- * title/tag matches higher than body matches. Pure and synchronous — the seam
+ * title/tag matches higher than body matches. Pure and synchronous. The seam
  * a future pgvector implementation would replace.
  */
 export function searchCorpus(query: string, k = 3): HelpDoc[] {
@@ -376,7 +376,7 @@ describe("isRouteAllowed", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test -- navigation.test`
-Expected: FAIL — module not found.
+Expected: FAIL, module not found.
 
 - [ ] **Step 3: Implement the allow-list**
 
@@ -387,7 +387,7 @@ import type { ChatRole } from "@/lib/ai/chat/scope";
 /**
  * Server-authoritative navigation allow-list for the navigateTo tool. Only
  * these path shapes may be returned to the client for router.push. No query
- * strings are permitted (no PII in URLs — AGENTS.md rule 4).
+ * strings are permitted (no PII in URLs, AGENTS.md rule 4).
  */
 const RESIDENT_ROUTES: RegExp[] = [
   /^\/$/,
@@ -482,7 +482,7 @@ describe("deriveScope", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test -- scope.test`
-Expected: FAIL — module not found.
+Expected: FAIL, module not found.
 
 - [ ] **Step 3: Implement scope**
 
@@ -711,7 +711,7 @@ describe("buildChatTools", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test -- tools.test`
-Expected: FAIL — module not found.
+Expected: FAIL, module not found.
 
 - [ ] **Step 3: Implement the tools**
 
@@ -729,7 +729,7 @@ const REPORT_LIMIT = 20;
 /**
  * Build the read/navigate tool set bound to a request's ChatContext. All data
  * reads use ctx.supabase (RLS-scoped); no tool mutates data. Tool execute
- * functions never throw — they return a structured `{ error }` so the model can
+ * functions never throw. They return a structured `{ error }` so the model can
  * recover conversationally.
  */
 export function buildChatTools(ctx: ChatContext) {
@@ -855,7 +855,7 @@ export function scopeAllowsStaffReads(ctx: ChatContext): boolean {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pnpm test -- tools.test`
-Expected: PASS. If the fake builder needs another method for a tool you touched, add it to the fake — do not add methods to production code to satisfy the test.
+Expected: PASS. If the fake builder needs another method for a tool you touched, add it to the fake. Do not add methods to production code to satisfy the test.
 
 - [ ] **Step 5: Commit**
 
@@ -898,7 +898,7 @@ describe("buildSystemPrompt", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test -- system-prompt.test`
-Expected: FAIL — module not found.
+Expected: FAIL, module not found.
 
 - [ ] **Step 3: Implement the system prompt**
 
@@ -972,7 +972,7 @@ describe("POST /api/ai/chat (feature flag off)", () => {
 - [ ] **Step 6: Run test to verify it fails**
 
 Run: `pnpm test -- "route.test"`
-Expected: FAIL — `./route` module not found.
+Expected: FAIL. `./route` module not found.
 
 - [ ] **Step 7: Implement the route**
 
@@ -1107,7 +1107,7 @@ describe("pickPendingNavigation", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test -- pick-navigation.test`
-Expected: FAIL — module not found.
+Expected: FAIL, module not found.
 
 - [ ] **Step 3: Implement the helper**
 
@@ -1116,7 +1116,7 @@ Create `src/components/assistant/pick-navigation.ts`:
 import type { UIMessage } from "ai";
 
 export interface PendingNavigation {
-  /** toolCallId — stable, so the widget fires each navigation exactly once. */
+  /** toolCallId, stable, so the widget fires each navigation exactly once. */
   key: string;
   route: string;
 }
@@ -1413,7 +1413,7 @@ git commit -m "feat(assistant): mount help widget in root layout (flag-gated)"
 **Files:**
 - Create: `e2e/assistant.spec.ts`
 
-This asserts the widget shell works and posts to `/api/ai/chat` — without depending on a live Gemini key. The route is intercepted and fulfilled with a minimal streamed UI-message response so the assertion is deterministic. The full model+tool loop is checked in manual verification (Task 13).
+This asserts the widget shell works and posts to `/api/ai/chat`. Without depending on a live Gemini key. The route is intercepted and fulfilled with a minimal streamed UI-message response so the assertion is deterministic. The full model+tool loop is checked in manual verification (Task 13).
 
 - [ ] **Step 1: Write the e2e test**
 
@@ -1509,13 +1509,13 @@ git commit -m "chore(assistant): verification pass for help widget"
 
 ## Definition of Done
 
-- All of Tasks 1–13 committed; `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm test:rls` green.
+- All of Tasks 1-13 committed; `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm test:rls` green.
 - Widget mounts only when `NEXT_PUBLIC_HELP_ASSISTANT=1`; route 404s when off.
 - Data tools proven to query as the user (reporter_id filter) and to refuse anon; navigation allow-list proven per role.
 - No service-role client used anywhere in `src/lib/ai/chat/*`.
 - Manual E2E behaviours in Task 13 verified.
 
-## Known limitation — demo mode (decide before Phase 2)
+## Known limitation: demo mode (decide before Phase 2)
 
 `resolveChatContext` uses `getAuthUser()`, which returns null under the demo
 cookie-persona (`src/lib/demo-auth.ts`) because there is no real Supabase JWT.
@@ -1526,11 +1526,11 @@ service-role bypass) but diverges from the spec's "scope to persona" line.
 
 If demo personas must see "their" reports through the bot, add a demo branch in
 `resolveChatContext` that reads the persona from `demo-auth.ts` and scopes reads
-by the persona's `reporter_id`/city **without** the service-role client — a
+by the persona's `reporter_id`/city **without** the service-role client, a
 small, self-contained follow-up. Left out of MVP deliberately; confirm with the
 product owner.
 
 ## Notes / deferred (do NOT build now)
 
-- Staff read tier (`queryWorkOrders`), submit-assist + staff write tools (behind confirm-preview via existing server actions), pgvector semantic help, conversation persistence — all Phase 2 per the spec.
+- Staff read tier (`queryWorkOrders`), submit-assist + staff write tools (behind confirm-preview via existing server actions), pgvector semantic help, conversation persistence, all Phase 2 per the spec.
 ```

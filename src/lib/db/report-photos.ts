@@ -55,7 +55,7 @@ export async function getReportPhotos(
  *
  * @param cityId  - UUID of the city (folder prefix, matches the single-photo convention)
  * @param reportId - UUID of the report
- * @param count   - number of photos (1–6)
+ * @param count   - number of photos (1-6)
  */
 export function buildPhotoPaths(
   cityId: string,

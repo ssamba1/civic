@@ -24,7 +24,7 @@ export default async function TeamMapPage({ params }: PageProps) {
       -84.14, 34.21,
     ];
 
-  // Full-bleed team map — the layout's lockedTeam filter already scopes the
+  // Full-bleed team map, the layout's lockedTeam filter already scopes the
   // corpus; teamId here just labels and colors the view.
   return (
     <CorpusMapView

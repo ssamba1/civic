@@ -3,7 +3,7 @@ import type { Promotion } from "./promotions";
 /**
  * Deterministic mock vendors/contracts for the camera demo. Picked by cluster
  * id hash so cards and detail panels never shuffle between renders. Demo-only
- * fabrications — the real join reads capital_jobs/warranties (migration 062).
+ * fabrications. The real join reads capital_jobs/warranties (migration 062).
  */
 
 export interface MockContract {
@@ -22,7 +22,7 @@ const CONTRACTS: MockContract[] = [
   {
     vendor: "Blackshear Paving Co.",
     contractRef: "#2024-17",
-    jobType: "Resurfacing — 2024 program",
+    jobType: "Resurfacing, 2024 program",
     completedOn: "2024-06-14",
     warrantyType: "Workmanship (1 yr) + pavement performance (3 yr)",
     windowEndsOn: "2026-10-09",
@@ -33,7 +33,7 @@ const CONTRACTS: MockContract[] = [
   {
     vendor: "North GA Asphalt LLC",
     contractRef: "#2023-42",
-    jobType: "Mill & overlay — Canton Hwy corridor",
+    jobType: "Mill & overlay, Canton Hwy corridor",
     completedOn: "2023-11-02",
     warrantyType: "Pavement performance (5 yr)",
     windowEndsOn: "2027-01-22",
@@ -44,13 +44,13 @@ const CONTRACTS: MockContract[] = [
   {
     vendor: "Sawnee Utilities",
     contractRef: "Permit P-8821",
-    jobType: "Utility cut restoration — trench liability",
+    jobType: "Utility cut restoration, trench liability",
     completedOn: "2025-03-30",
     warrantyType: "Degradation liability (2 yr)",
     windowEndsOn: "2027-06-20",
     daysLeft: 301,
-    bondRef: "—",
-    contractValue: "—",
+    bondRef: "-",
+    contractValue: "-",
   },
 ];
 

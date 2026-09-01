@@ -1,5 +1,5 @@
 /**
- * useBulkSelection — manages row-checkbox selection state for a list of items.
+ * useBulkSelection, manages row-checkbox selection state for a list of items.
  *
  * Pure hook: no server calls, no side effects beyond useState.
  * Suitable for colocating tests or importing in server-component pages (will
@@ -24,7 +24,7 @@ export interface UseBulkSelectionReturn {
   hasSelection: boolean;
   /** True when every item in allIds is selected */
   isAllSelected: boolean;
-  /** True when some (but not all) items are selected — for indeterminate checkbox */
+  /** True when some (but not all) items are selected, for indeterminate checkbox */
   isIndeterminate: boolean;
   /** Toggle a single ID in/out of the selection */
   toggle: (id: string) => void;

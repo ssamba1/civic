@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils/cn";
    "downed_sign" report at Streets & Roads instead of Traffic Eng).
 
    Built-in categories flow through `useCategoryOverrides()`. User-added
-   issue types flow through `useCustomCategories()` — a parallel store
+   issue types flow through `useCustomCategories()`, a parallel store
    (they can't join the compile-time `ReportCategory` union). Both write
    to module-level snapshots, so changes propagate to every consumer
    without prop drilling.

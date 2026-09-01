@@ -1,4 +1,4 @@
-# Debug Cruft Audit — Detailed Findings
+# Debug Cruft Audit: Detailed Findings
 
 **Summary:** 23 console.* occurrences found across 14 files. **1 P0 finding (PII leakage in email logs)**. 14 P1 (fallback warnings + error logging should use logger). 3 intentional logger infrastructure (KEEP). 5 intentional error logging (KEEP, but consider migrating to logger for Sentry integration).
 
@@ -8,29 +8,29 @@
 
 | ID | file:line | severity | statement | context | assessment |
 |----|-----------|-----------|-----------|---------|----|
-| 1 | src/lib/notify/deliver.ts:76 | **P0** | `console.info(...${m.to}...)` | Logs recipient email when disabled | **REMOVE** — PII leakage; logs plaintext email address |
-| 2 | src/lib/notify/deliver.ts:82 | **P0** | `console.info(...${m.to}...)` | Logs recipient email when no key | **REMOVE** — PII leakage; logs plaintext email address |
-| 3 | src/app/report/actions.ts:212 | **P1** | `console.error("submit-report: classify backstop failed for ...", message, logErr)` | Async pipeline error fallback | **MIGRATE** — Use logger for Sentry integration + correlation ID |
-| 4 | src/lib/analytics-data.ts:122 | **P1** | `console.warn("analytics-data: falling back to literals")` | Fallback after query error | **MIGRATE** — Use logger for consistent structured output |
-| 5 | src/lib/analytics-data.ts:176 | **P1** | `console.warn("analytics-data: falling back to literals")` | Fallback after catch block | **MIGRATE** — Use logger for consistent structured output |
-| 6 | src/lib/dashboard-data.ts:243 | **P1** | `console.warn("dashboard-data: falling back to placeholder city")` | Fallback after query error | **MIGRATE** — Use logger for consistent structured output |
-| 7 | src/lib/dashboard-data.ts:250 | **P1** | `console.warn("dashboard-data: falling back to placeholder city")` | Fallback after catch block | **MIGRATE** — Use logger for consistent structured output |
-| 8 | src/lib/resident-data.ts:295 | **P1** | `console.warn("resident-data: falling back to synthetic corpus")` | Fallback after auth check | **MIGRATE** — Use logger for consistent structured output |
-| 9 | src/lib/resident-data.ts:310 | **P1** | `console.warn("resident-data: falling back to synthetic corpus")` | Fallback after query error | **MIGRATE** — Use logger for consistent structured output |
-| 10 | src/lib/resident-data.ts:340 | **P1** | `console.warn("resident-data: falling back to synthetic corpus")` | Fallback after catch block | **MIGRATE** — Use logger for consistent structured output |
-| 11 | src/lib/resident-data.ts:627 | **P1** | `console.warn("resident-data: falling back to synthetic corpus")` | Fallback for notifications | **MIGRATE** — Use logger for consistent structured output |
-| 12 | src/lib/notify/deliver.ts:103 | **P1** | `console.error(\`[notify] resend ${res.status}: ...\`)` | Email send failure | **MIGRATE** — Use logger for Sentry integration + correlation ID |
-| 13 | src/lib/notify/deliver.ts:108 | **P1** | `console.error(\`[notify] send threw: ...\`)` | Exception during send | **MIGRATE** — Use logger for Sentry integration + correlation ID |
-| 14 | src/lib/notify/status-notify.ts:150 | **P1** | `console.error(\`[notify] composer threw for ${reportId}: ...\`)` | Unhandled exception in composer | **MIGRATE** — Use logger for Sentry integration + correlation ID |
-| 15 | src/app/api/open311/v2/requests/route.ts:97 | **P1** | `console.error("Open311 requests query error:", error)` | GET query failure | **MIGRATE** — Use logger for Sentry integration + correlation ID |
-| 16 | src/app/api/open311/v2/requests/route.ts:122 | **P1** | `console.error("Open311 GET /requests error:", err)` | GET catch handler | **MIGRATE** — Use logger for Sentry integration + correlation ID |
-| 17 | src/app/api/open311/v2/requests/route.ts:268 | **P1** | `console.error("Open311 POST insert error:", insertError)` | POST insert failure | **MIGRATE** — Use logger for Sentry integration + correlation ID |
-| 18 | src/app/api/open311/v2/requests/route.ts:313 | **P1** | `console.error("Open311 POST /requests error:", err)` | POST catch handler | **MIGRATE** — Use logger for Sentry integration + correlation ID |
-| 19 | src/app/api/ai/classify/route.ts:86 | **P1** | `console.error("[classify] unhandled error:", err)` | POST catch handler | **MIGRATE** — Use logger for Sentry integration + correlation ID |
-| 20 | src/app/api/ai/reasoning/route.ts:111 | **P1** | `console.error("[reasoning] unhandled error:", err)` | POST catch handler | **MIGRATE** — Use logger for Sentry integration + correlation ID |
-| 21 | src/app/staff/layout.tsx:64 | **P1** | `console.error("[staff/layout] profile fetch failed:", error.message)` | Profile query error | **MIGRATE** — Use logger for Sentry integration + correlation ID |
-| 22 | src/app/staff/page.tsx:53 | **P1** | `console.error("Failed to fetch work orders:", error.message)` | Work order query error | **MIGRATE** — Use logger for Sentry integration + correlation ID |
-| 23 | src/app/api/open311/v2/requests/[id]/route.ts:74 | **P1** | `console.error("Open311 GET /requests/[id] error:", err)` | GET catch handler | **MIGRATE** — Use logger for Sentry integration + correlation ID |
+| 1 | src/lib/notify/deliver.ts:76 | **P0** | `console.info(...${m.to}...)` | Logs recipient email when disabled | **REMOVE**, PII leakage; logs plaintext email address |
+| 2 | src/lib/notify/deliver.ts:82 | **P0** | `console.info(...${m.to}...)` | Logs recipient email when no key | **REMOVE**, PII leakage; logs plaintext email address |
+| 3 | src/app/report/actions.ts:212 | **P1** | `console.error("submit-report: classify backstop failed for ...", message, logErr)` | Async pipeline error fallback | **MIGRATE**. Use logger for Sentry integration + correlation ID |
+| 4 | src/lib/analytics-data.ts:122 | **P1** | `console.warn("analytics-data: falling back to literals")` | Fallback after query error | **MIGRATE**. Use logger for consistent structured output |
+| 5 | src/lib/analytics-data.ts:176 | **P1** | `console.warn("analytics-data: falling back to literals")` | Fallback after catch block | **MIGRATE**. Use logger for consistent structured output |
+| 6 | src/lib/dashboard-data.ts:243 | **P1** | `console.warn("dashboard-data: falling back to placeholder city")` | Fallback after query error | **MIGRATE**. Use logger for consistent structured output |
+| 7 | src/lib/dashboard-data.ts:250 | **P1** | `console.warn("dashboard-data: falling back to placeholder city")` | Fallback after catch block | **MIGRATE**. Use logger for consistent structured output |
+| 8 | src/lib/resident-data.ts:295 | **P1** | `console.warn("resident-data: falling back to synthetic corpus")` | Fallback after auth check | **MIGRATE**. Use logger for consistent structured output |
+| 9 | src/lib/resident-data.ts:310 | **P1** | `console.warn("resident-data: falling back to synthetic corpus")` | Fallback after query error | **MIGRATE**. Use logger for consistent structured output |
+| 10 | src/lib/resident-data.ts:340 | **P1** | `console.warn("resident-data: falling back to synthetic corpus")` | Fallback after catch block | **MIGRATE**. Use logger for consistent structured output |
+| 11 | src/lib/resident-data.ts:627 | **P1** | `console.warn("resident-data: falling back to synthetic corpus")` | Fallback for notifications | **MIGRATE**. Use logger for consistent structured output |
+| 12 | src/lib/notify/deliver.ts:103 | **P1** | `console.error(\`[notify] resend ${res.status}: ...\`)` | Email send failure | **MIGRATE**. Use logger for Sentry integration + correlation ID |
+| 13 | src/lib/notify/deliver.ts:108 | **P1** | `console.error(\`[notify] send threw: ...\`)` | Exception during send | **MIGRATE**. Use logger for Sentry integration + correlation ID |
+| 14 | src/lib/notify/status-notify.ts:150 | **P1** | `console.error(\`[notify] composer threw for ${reportId}: ...\`)` | Unhandled exception in composer | **MIGRATE**. Use logger for Sentry integration + correlation ID |
+| 15 | src/app/api/open311/v2/requests/route.ts:97 | **P1** | `console.error("Open311 requests query error:", error)` | GET query failure | **MIGRATE**. Use logger for Sentry integration + correlation ID |
+| 16 | src/app/api/open311/v2/requests/route.ts:122 | **P1** | `console.error("Open311 GET /requests error:", err)` | GET catch handler | **MIGRATE**. Use logger for Sentry integration + correlation ID |
+| 17 | src/app/api/open311/v2/requests/route.ts:268 | **P1** | `console.error("Open311 POST insert error:", insertError)` | POST insert failure | **MIGRATE**. Use logger for Sentry integration + correlation ID |
+| 18 | src/app/api/open311/v2/requests/route.ts:313 | **P1** | `console.error("Open311 POST /requests error:", err)` | POST catch handler | **MIGRATE**. Use logger for Sentry integration + correlation ID |
+| 19 | src/app/api/ai/classify/route.ts:86 | **P1** | `console.error("[classify] unhandled error:", err)` | POST catch handler | **MIGRATE**. Use logger for Sentry integration + correlation ID |
+| 20 | src/app/api/ai/reasoning/route.ts:111 | **P1** | `console.error("[reasoning] unhandled error:", err)` | POST catch handler | **MIGRATE**. Use logger for Sentry integration + correlation ID |
+| 21 | src/app/staff/layout.tsx:64 | **P1** | `console.error("[staff/layout] profile fetch failed:", error.message)` | Profile query error | **MIGRATE**. Use logger for Sentry integration + correlation ID |
+| 22 | src/app/staff/page.tsx:53 | **P1** | `console.error("Failed to fetch work orders:", error.message)` | Work order query error | **MIGRATE**. Use logger for Sentry integration + correlation ID |
+| 23 | src/app/api/open311/v2/requests/[id]/route.ts:74 | **P1** | `console.error("Open311 GET /requests/[id] error:", err)` | GET catch handler | **MIGRATE**. Use logger for Sentry integration + correlation ID |
 | K1 | src/lib/logger.ts:27 | KEEP | `console.error(entry)` | Logger abstraction emit() | Intentional; structured JSON to stderr |
 | K2 | src/lib/logger.ts:29 | KEEP | `console.warn(entry)` | Logger abstraction emit() | Intentional; structured JSON to stderr |
 | K3 | src/lib/logger.ts:31 | KEEP | `console.log(entry)` | Logger abstraction emit() | Intentional; structured JSON to stdout |
@@ -62,7 +62,7 @@ if (!key) {
 - Email addresses are PII; logging them violates privacy principles
 - Logs may be persisted in development/staging environments without proper access controls
 - Log aggregators, container stdout/stderr, and CI/CD may expose these logs
-- "Disabled" logs are still logs — they will appear in production logs if the flag is not set
+- "Disabled" logs are still logs. They will appear in production logs if the flag is not set
 
 **Recommended fix:**
 ```typescript
@@ -101,7 +101,7 @@ src/lib/logger.ts provides:
 - No Sentry integration (errors not surfaced to ops)
 - Cannot filter by context or severity in log dashboards
 
-### Pattern: 8 Fallback Warnings (IDs 4–11)
+### Pattern: 8 Fallback Warnings (IDs 4-11)
 
 **Current (unstructured):**
 ```typescript
@@ -143,7 +143,7 @@ Apply this pattern to all 8 fallback warnings:
 - src/lib/dashboard-data.ts:243, 250
 - src/lib/resident-data.ts:295, 310, 340, 627
 
-### Pattern: 8 Error Logging (IDs 3, 12–23)
+### Pattern: 8 Error Logging (IDs 3, 12-23)
 
 **Current (unstructured, no Sentry):**
 ```typescript
@@ -225,14 +225,14 @@ Apply to all error logging points:
 
 | Category | Count | Status | Priority |
 |----------|-------|--------|----------|
-| **PII in logs** | 2 | 🔴 P0 — Fix immediately | Critical |
-| **Fallback warnings (unstructured)** | 8 | 🟠 P1 — Migrate to logger | High |
-| **Error logging (no Sentry)** | 10 | 🟠 P1 — Migrate to logger | High |
-| **Test scaffolding (.only/.skip)** | 0 | ✓ Clean | — |
-| **Dead code (if true/false)** | 0 | ✓ Clean | — |
-| **Commented-out code** | 0 | ✓ Clean | — |
-| **Dev toggles (properly gated)** | 3 | ✓ Clean | — |
-| **Intentional logger infra** | 3 | ✓ KEEP | — |
+| **PII in logs** | 2 | 🔴 P0. Fix immediately | Critical |
+| **Fallback warnings (unstructured)** | 8 | 🟠 P1, Migrate to logger | High |
+| **Error logging (no Sentry)** | 10 | 🟠 P1, Migrate to logger | High |
+| **Test scaffolding (.only/.skip)** | 0 | ✓ Clean | - |
+| **Dead code (if true/false)** | 0 | ✓ Clean | - |
+| **Commented-out code** | 0 | ✓ Clean | - |
+| **Dev toggles (properly gated)** | 3 | ✓ Clean | - |
+| **Intentional logger infra** | 3 | ✓ KEEP | - |
 
 ---
 

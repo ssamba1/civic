@@ -13,7 +13,7 @@ export default function BrowseLoading() {
       aria-busy="true"
       aria-label="Loading reports"
     >
-      {/* Header — eyebrow (city name) is data, so it shimmers; the title and
+      {/* Header. Eyebrow (city name) is data, so it shimmers; the title and
           subtitle are static copy and render as real text (zero-shift swap). */}
       <section className="mb-6 sm:mb-8">
         <div className="skeleton h-3 w-32 rounded" />
@@ -25,7 +25,7 @@ export default function BrowseLoading() {
         </p>
       </section>
 
-      {/* Filter bar — mobile is a min-h-11 trigger button, desktop a 52px bar. */}
+      {/* Filter bar. Mobile is a min-h-11 trigger button, desktop a 52px bar. */}
       <div className="mb-4 sm:mb-6">
         <div className="skeleton h-11 w-full rounded-[14px] md:h-[52px]" />
       </div>

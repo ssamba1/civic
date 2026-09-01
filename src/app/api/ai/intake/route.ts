@@ -69,7 +69,7 @@ export async function POST(request: Request) {
   const rl = checkRateLimit(`intake:${clientIp(request)}`);
   if (!rl.allowed) {
     return NextResponse.json(
-      { error: "Too many requests — please wait a moment." },
+      { error: "Too many requests, please wait a moment." },
       {
         status: 429,
         headers: { "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)) },
@@ -119,14 +119,14 @@ export async function POST(request: Request) {
     logger.warn("Gemini rate limit hit on intake route", {
       reason: budget.reason,
     });
-    // Fall back gracefully — don't surface "rate limited" to the resident.
+    // Fall back gracefully. Don't surface "rate limited" to the resident.
     return NextResponse.json(scriptedFallback(messages));
   }
 
   // ── API key check ──────────────────────────────────────────────────────────
   const apiKey = serverEnv.GEMINI_API_KEY;
   if (!apiKey) {
-    logger.warn("GEMINI_API_KEY not set — using scripted fallback");
+    logger.warn("GEMINI_API_KEY not set, using scripted fallback");
     return NextResponse.json(scriptedFallback(messages));
   }
 
@@ -174,7 +174,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(parsed.data);
   } catch (err) {
-    // Never leak raw model errors — log server-side, respond with fallback.
+    // Never leak raw model errors, log server-side, respond with fallback.
     const msg = err instanceof Error ? err.message : String(err);
     logger.error("Intake model error", new Error(msg));
     return NextResponse.json(scriptedFallback(messages));

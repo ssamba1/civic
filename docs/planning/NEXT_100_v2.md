@@ -1,10 +1,10 @@
-# NEXT 100 v2 — the roadmap after the first 100
+# NEXT 100 v2: the roadmap after the first 100
 
 > Compiled 2026-08-30 from a line-by-line code audit of `docs/planning/NEXT_100.md` (v1, 2026-07-08) against `main` @ `0d4782d`.
 >
-> **v1 scoreboard: 43 SHIPPED · 32 PARTIAL · 25 NOT BUILT.** v2 does not re-list the 43. It picks up the 32 partials (most are one wire away from real), the 25 unbuilt items still worth building, and — the bigger half — the **capabilities that landed since v1 and have no roadmap at all**: the video damage-mapping pipeline, fleet-camera ingest, liability→claims attribution, city documents + RAG, and the org_units routing engine. Those five shipped as demos on a golden path; none is operable by a city yet.
+> **v1 scoreboard: 43 SHIPPED · 32 PARTIAL · 25 NOT BUILT.** v2 does not re-list the 43. It picks up the 32 partials (most are one wire away from real), the 25 unbuilt items still worth building, and (the bigger half) the **capabilities that landed since v1 and have no roadmap at all**: the video damage-mapping pipeline, fleet-camera ingest, liability→claims attribution, city documents + RAG, and the org_units routing engine. Those five shipped as demos on a golden path; none is operable by a city yet.
 >
-> **Legend:** Impact 1–5. Effort S/M/L/XL. Moat = defensibility. `→` = the file that already exists and needs finishing.
+> **Legend:** Impact 1-5. Effort S/M/L/XL. Moat = defensibility. `→` = the file that already exists and needs finishing.
 
 ---
 
@@ -12,7 +12,7 @@
 
 Three things are true about the codebase after v1:
 
-1. **Breadth is done; depth is not.** 43 features shipped and ~70 routes exist. Almost nothing has an operations story — no queue, no worker, no deploy target, no alerting on the pipelines that now run AI inference on a request lifecycle.
+1. **Breadth is done; depth is not.** 43 features shipped and ~70 routes exist. Almost nothing has an operations story, no queue, no worker, no deploy target, no alerting on the pipelines that now run AI inference on a request lifecycle.
 2. **The strongest new assets are the least finished.** Video, camera, liability and claims are the only capabilities no competitor has *at all*. They exist as a scripted demo (`/demo/camera`) and a console over seeded data. Turning them into something a city can run against a real truck fleet is the highest-leverage work available.
 3. **Two features are dark for want of a secret, not code.** Email/SMS delivery (v1 #1) and the golden-set eval gate (v1 #36) have complete implementations and no credentials/corpus. They are the cheapest wins on this list and have been blocked for seven weeks.
 
@@ -20,22 +20,22 @@ Priority order this implies: **finish the dark code → operationalize the visio
 
 ---
 
-## A. Ship the dark code (highest ROI — code exists, nothing runs)
+## A. Ship the dark code (highest ROI: code exists, nothing runs)
 
 1. **Turn on Resend + Twilio for real.** `deliver.ts`/`deliver-sms.ts` are wired into `status-notify.ts:188,205` and send nothing. Add `RESEND_API_KEY`, `TWILIO_*` to `.env.example`, a `/api/health` delivery probe, and a bounce/failure log table. Impact 5, Effort S. → `src/lib/notify/deliver.ts`
-2. **Label the golden set and gate CI on it.** `tests/golden/images/` is empty; `scripts/eval-classify.ts` runs. 60–100 labeled photos + a CI job that fails under a per-category accuracy floor. Impact 4, Effort M. → `scripts/eval-classify.ts`
-3. **Web Share Target POST handler.** `public/manifest.json` declares `share_target` at `/report` and no POST route exists — the manifest advertises a 405. Impact 3, Effort S. → `src/app/report/`
+2. **Label the golden set and gate CI on it.** `tests/golden/images/` is empty; `scripts/eval-classify.ts` runs. 60-100 labeled photos + a CI job that fails under a per-category accuracy floor. Impact 4, Effort M. → `scripts/eval-classify.ts`
+3. **Web Share Target POST handler.** `public/manifest.json` declares `share_target` at `/report` and no POST route exists, the manifest advertises a 405. Impact 3, Effort S. → `src/app/report/`
 4. **Finish the connector scaffolds or delete them.** `connectors.ts` self-labels "SCAFFOLDS" for Cityworks/Accela/ArcGIS/Tyler/Salesforce, is env-gated, and is called on every status change. Pick Cityworks, build it against a real sandbox with retries + a dead-letter table; mark the rest explicitly unbuilt. Impact 5, Effort L, Moat high. → `src/lib/integrations/connectors.ts`
-5. **Real SAML assertion validation.** `src/lib/auth/sso.ts:3` says no live IdP. Signature verify, clock skew, replay cache, IdP metadata parse — or gate `/admin/sso` behind a "not for production" flag. Impact 4, Effort M. *(security-critical: a half-SSO is worse than none)*
+5. **Real SAML assertion validation.** `src/lib/auth/sso.ts:3` says no live IdP. Signature verify, clock skew, replay cache, IdP metadata parse, or gate `/admin/sso` behind a "not for production" flag. Impact 4, Effort M. *(security-critical: a half-SSO is worse than none)*
 6. **Crew-dispatch SMS send path.** Phones stored (migration 029), sender exists, nothing calls it on assignment. Impact 3, Effort S. → `src/lib/notify/deliver-sms.ts`
 7. **Resident-facing weather alerts.** `storm-advisory.ts` feeds `/api/admin/surge` only. Same signal → "flooding likely on your street" to subscribed residents. Impact 3, Effort M. → `src/lib/weather/storm-advisory.ts`
 8. **Materials + labor entry UI.** Columns exist (`materials` jsonb, `actual_minutes`, `actual_cost`); no way for a crew to fill them, so every cost analytic runs on estimates. Impact 4, Effort M. → `src/app/city/[slug]/team/[teamId]/field/`
 9. **Public CSAT trend surface.** `report_csat` collects ratings; no public rolling %. One card on `/city/[slug]` = accountability pressure. Impact 3, Effort S. → `src/lib/notify/csat.ts`
 10. **Translate the intake form, not just the status page.** `translate.ts` is applied at `/r/[token]` only. Impact 4, Effort S. → `src/app/report/page.tsx`
 11. **Offline submit queue.** The service worker caches reads; a report composed offline is lost. IndexedDB queue + background sync. Impact 4, Effort M. → `public/sw.js`
-12. **Estimated-fix confidence band.** `/r/[token]` shows a hard `due_at`; show "usually 3–6 days for this category here" from real MTTR. Under-promising beats a missed date. Impact 4, Effort M. → `src/app/r/[token]/page.tsx:235`
+12. **Estimated-fix confidence band.** `/r/[token]` shows a hard `due_at`; show "usually 3-6 days for this category here" from real MTTR. Under-promising beats a missed date. Impact 4, Effort M. → `src/app/r/[token]/page.tsx:235`
 
-## B. Video, camera & liability — from demo to operable (the uncontested moat)
+## B. Video, camera & liability: from demo to operable (the uncontested moat)
 
 13. **RTSP puller worker.** `VIDEO_PIPELINE.md` Phase 2. Long-running process outside Next.js chunking live streams into `video_clips`. Schema ready; this is deploy infra. Impact 5, Effort L, Moat very high.
 14. **Move clip processing off `after()` onto a real queue.** Inference on the request lifecycle will fall over at volume; it also blocks retry-on-failure. Impact 5, Effort M. → `src/lib/video/pipeline.ts`
@@ -48,7 +48,7 @@ Priority order this implies: **finish the dark code → operationalize the visio
 21. **Contractor claim-response portal.** Contractors can see work orders; they cannot see, contest, or accept a claim against them. One-sided attribution won't survive first contact. Impact 4, Effort M.
 22. **Street-segment resolver.** `CAMERA_LIABILITY_PIPELINE.md:222` deferred it: v1 accepts a drawn line. Real segment matching (OSM/TIGER) makes attribution defensible. Impact 4, Effort L, Moat high.
 23. **Damage-progression tracking across passes.** Same defect seen weekly → severity trend → "this crack became a pothole in 18 days." Nobody has this. Impact 4, Effort M, Moat very high.
-24. **Video retention + privacy enforcement.** Clips are raw street footage with faces and plates. Blur must apply to video frames and a TTL must be enforced, same as `photos-raw`. Impact 5, Effort M. *(hard-rule adjacency — currently the largest privacy gap in the product)*
+24. **Video retention + privacy enforcement.** Clips are raw street footage with faces and plates. Blur must apply to video frames and a TTL must be enforced, same as `photos-raw`. Impact 5, Effort M. *(hard-rule adjacency, currently the largest privacy gap in the product)*
 
 ## C. Documents & institutional knowledge
 
@@ -70,7 +70,7 @@ Priority order this implies: **finish the dark code → operationalize the visio
 37. **Resident-visible crew ETA on scheduled work.** Schedule data exists (migration 051) and never reaches the resident. Impact 4, Effort S.
 38. **Better duplicate deflection at intake.** Show the existing report + "+1 this" before submit; measure the deflection rate. Impact 4, Effort M.
 39. **Closure-quality scoring visible to staff leads.** `closure-quality.ts` grades every closure; nobody sees the aggregate. Impact 3, Effort S.
-40. **Post-resolution follow-up at 30 days.** "Still fixed?" — catches bad repairs and feeds the repeat-offender registry. Impact 3, Effort S.
+40. **Post-resolution follow-up at 30 days.** "Still fixed?", catches bad repairs and feeds the repeat-offender registry. Impact 3, Effort S.
 
 ## E. Intake channels & accessibility
 
@@ -81,7 +81,7 @@ Priority order this implies: **finish the dark code → operationalize the visio
 45. **Explicit consent flow at intake.** Zero `consent` matches in `src/`. Photo/location/contact consent is a GDPR-adjacent procurement question. Impact 3, Effort S.
 46. **Kiosk mode.** Library / city-hall touchscreen, session reset, no keyboard assumptions. Impact 2, Effort M.
 47. **Resident video intake.** The detector pipeline exists for fleet clips; residents still cannot attach one. Impact 3, Effort M.
-48. **Photo quality coach pre-submit.** "Too dark / too far — retake?" cuts garbage classifications at the source. Impact 3, Effort S.
+48. **Photo quality coach pre-submit.** "Too dark / too far, retake?" cuts garbage classifications at the source. Impact 3, Effort S.
 49. **IVR / phone bridge.** Denver's "Sunny": $0.35 vs $4 per call. Impact 3, Effort L.
 
 ## F. AI intelligence
@@ -93,7 +93,7 @@ Priority order this implies: **finish the dark code → operationalize the visio
 54. **Auto-fill address from photo landmarks.** GPS-off fallback beyond Nominatim reverse geocode. Impact 3, Effort M.
 55. **Model cost + latency dashboard.** Gemini calls are unmetered per city; no unit-economics number exists. Impact 4, Effort S.
 56. **Model fallback + circuit breaker.** Gemini down means intake classification down, with no degraded path. Impact 4, Effort S.
-57. **Fine-tune run on the correction corpus.** `feedback-corpus.ts` emits JSONL and nothing consumes it — the compounding moat is one training run away. Impact 4, Effort M, Moat high.
+57. **Fine-tune run on the correction corpus.** `feedback-corpus.ts` emits JSONL and nothing consumes it. The compounding moat is one training run away. Impact 4, Effort M, Moat high.
 58. **Eval harness for the assistant's tool-calling.** `chat/tools.ts` mutates data with no regression suite. Impact 4, Effort M.
 
 ## G. Analytics & forecasting
@@ -102,7 +102,7 @@ Priority order this implies: **finish the dark code → operationalize the visio
 60. **Predictive next-failure, not just recurrence.** `037_recurring_hotspots` detects repeats; predict the date. Impact 4, Effort L, Moat high.
 61. **Weather-correlated demand forecast.** NWS is integrated and used only for advisories. Impact 3, Effort M.
 62. **Census-tract + income equity, not just district.** `equity.ts` is district-level; the Title-VI story needs ACS joins. Impact 5, Effort M, Moat high.
-63. **Real sentiment from resident text.** `getCityMorale` is throughput-derived — it cannot detect anger. Impact 3, Effort M.
+63. **Real sentiment from resident text.** `getCityMorale` is throughput-derived. It cannot detect anger. Impact 3, Effort M.
 64. **Scheduled analytics email to city leadership.** Monthly rollup pushed, not pulled. Impact 3, Effort S.
 65. **Cohort analysis on reporter retention.** Do residents who get a good closure report again? The core product-health metric, unmeasured. Impact 3, Effort M.
 66. **Analytics query performance budget.** `analytics-data.ts` is 18K and unbounded; no page-load budget or index audit. Impact 3, Effort M.
@@ -161,7 +161,7 @@ Priority order this implies: **finish the dark code → operationalize the visio
 
 ---
 
-## TOP 15 — build these first
+## TOP 15: build these first
 
 Ranked by (Impact × Moat) ÷ Effort, weighted toward unblocking a real pilot.
 
@@ -183,13 +183,13 @@ Ranked by (Impact × Moat) ÷ Effort, weighted toward unblocking a real pilot.
 | 8 | Materials/labor entry UI | Every cost analytic currently runs on estimates | 4 | M |
 | 77 | Real 911/EMA escalation | The life-safety path is a `tel:` link | 5 | M |
 
-**The week-one five:** #1 (secrets), #43 (Lighthouse run), #3 (share-target 405), #9 (public CSAT), #91 (roadmap wiring) — all S, all removable from this list in a day.
+**The week-one five:** #1 (secrets), #43 (Lighthouse run), #3 (share-target 405), #9 (public CSAT), #91 (roadmap wiring), all S, all removable from this list in a day.
 
 ---
 
 ## What v2 deliberately drops from v1
 
-Built and no longer roadmap items: SMS/WhatsApp inbound, QR walk-up, hazard grading, damage-dimension estimation, drift monitor, equity panel, district rollups, peer benchmark, leaderboard, hotspots, open-data API, report pack, field portal, scheduling, route optimization, bulk actions, contractor dispatch, surge mode, fleet detection, webhooks, embed widget, legacy importer, trending feed, OG cards, comments, PII redaction, privacy dashboard, compliance PDF, retention UI, RLS suite. **43 items — status evidence per item is in the audit trail below.**
+Built and no longer roadmap items: SMS/WhatsApp inbound, QR walk-up, hazard grading, damage-dimension estimation, drift monitor, equity panel, district rollups, peer benchmark, leaderboard, hotspots, open-data API, report pack, field portal, scheduling, route optimization, bulk actions, contractor dispatch, surge mode, fleet detection, webhooks, embed widget, legacy importer, trending feed, OG cards, comments, PII redaction, privacy dashboard, compliance PDF, retention UI, RLS suite. **43 items. Status evidence per item is in the audit trail below.**
 
 Dropped as not worth building now: digital-twin feed (v1 #72, 24+ months out), GTFS routing (v1 #85, no demand signal), GovRAMP (v1 #95, follows SOC 2 by a year).
 
@@ -203,11 +203,11 @@ Dropped as not worth building now: digital-twin feed (v1 #72, 24+ months out), G
 
 **NOT BUILT (25):** 8, 10, 11, 15, 21, 23, 24, 25, 30, 34, 35, 42, 60, 61, 64, 65, 68, 69, 71, 72, 84, 85, 88, 89, 91
 
-Per-theme shipped rate: A 7/14 · B 2/11 · C 6/12 · D 12/14 · E 6/11 · F 1/6 · G 1/5 · H 3/12 · I 5/8 · J 5/7. The weak themes — intake channels (B), emergency (F), sensors (G) and integrations (H) — are where v2 concentrates.
+Per-theme shipped rate: A 7/14 · B 2/11 · C 6/12 · D 12/14 · E 6/11 · F 1/6 · G 1/5 · H 3/12 · I 5/8 · J 5/7. The weak themes (intake channels (B), emergency (F), sensors (G) and integrations (H)) are where v2 concentrates.
 
 ### Capabilities that shipped with no roadmap entry
 
-Not in v1 at all, and therefore not re-listed above: the fleet-camera → liability → claims pipeline (migrations 062–064, `src/lib/liability/*`, `/admin/liability`, `/admin/claims`); the video damage-mapping pipeline (migration 056, `src/lib/video/*`, `services/detector/`, `/city/[slug]/video`); camera frame ingest + clustering (`src/lib/camera/*`, `/api/camera/frames`, `/demo/camera`); city documents + RAG (migrations 065–066, `src/lib/documents/*`, `/city/[slug]/documents`); the org_units routing tree and decision engine (migrations 042, 056–061, `/admin/org-tree`, `/city/[slug]/routing`); the Cesium 3D globe / deck.gl map stack; the full Open311 GeoReport v2 server; TIGER-boundary city onboarding; the staff duplicate-merge console (migration 052); crew-types AI auto-assign (migrations 030/031/067); plus the automation-rules engine, API-key issuance, feature-request board, AG-Grid work-order explorer, staff AI assistant with tool-calling, CSP inline-script hashing, and the analytics heatmap. Sections B, C and M above are the follow-on work these created.
+Not in v1 at all, and therefore not re-listed above: the fleet-camera → liability → claims pipeline (migrations 062-064, `src/lib/liability/*`, `/admin/liability`, `/admin/claims`); the video damage-mapping pipeline (migration 056, `src/lib/video/*`, `services/detector/`, `/city/[slug]/video`); camera frame ingest + clustering (`src/lib/camera/*`, `/api/camera/frames`, `/demo/camera`); city documents + RAG (migrations 065-066, `src/lib/documents/*`, `/city/[slug]/documents`); the org_units routing tree and decision engine (migrations 042, 056-061, `/admin/org-tree`, `/city/[slug]/routing`); the Cesium 3D globe / deck.gl map stack; the full Open311 GeoReport v2 server; TIGER-boundary city onboarding; the staff duplicate-merge console (migration 052); crew-types AI auto-assign (migrations 030/031/067); plus the automation-rules engine, API-key issuance, feature-request board, AG-Grid work-order explorer, staff AI assistant with tool-calling, CSP inline-script hashing, and the analytics heatmap. Sections B, C and M above are the follow-on work these created.
 
 ---
 

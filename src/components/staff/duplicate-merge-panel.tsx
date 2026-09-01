@@ -171,7 +171,7 @@ function MergeConfirmDialog({
           rows={3}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="e.g. Same pothole — resident submitted twice from different angles"
+          placeholder="e.g. Same pothole, resident submitted twice from different angles"
           className="mt-1 w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
         />
 
@@ -201,7 +201,7 @@ function MergeConfirmDialog({
 // ─── DuplicateMergePanel (main export) ───────────────────────────────────────
 
 interface DuplicateMergePanelProps {
-  /** The canonical report ID — the one that will SURVIVE the merge. */
+  /** The canonical report ID, the one that will SURVIVE the merge. */
   reportId: string;
   /** Pre-loaded candidates (optional). If omitted, panel loads them on mount. */
   initialCandidates?: ScoredCandidate[];

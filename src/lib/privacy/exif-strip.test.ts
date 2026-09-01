@@ -52,7 +52,7 @@ function pngChunk(type: string, data: Buffer): Buffer {
   return Buffer.concat([len, Buffer.from(type, "latin1"), data, crc]);
 }
 
-describe("stripImageMetadata — JPEG", () => {
+describe("stripImageMetadata, JPEG", () => {
   it("drops the EXIF APP1 (GPS) segment but keeps scan data", () => {
     const input = Buffer.concat([SOI, exifApp1(), SOS, EOI]);
     const out = stripImageMetadata(input);
@@ -105,7 +105,7 @@ describe("stripImageMetadata — JPEG", () => {
   });
 });
 
-describe("stripImageMetadata — WebP", () => {
+describe("stripImageMetadata, WebP", () => {
   it("drops EXIF and XMP chunks, keeps VP8 image data", () => {
     const vp8 = webpChunk("VP8 ", Buffer.from([0x01, 0x02, 0x03, 0x04]));
     const exif = webpChunk("EXIF", Buffer.from("GPS 12.34,-56.78"));
@@ -149,7 +149,7 @@ describe("stripImageMetadata — WebP", () => {
   });
 });
 
-describe("stripImageMetadata — PNG", () => {
+describe("stripImageMetadata, PNG", () => {
   it("drops eXIf and text chunks, keeps IHDR/IDAT/IEND", () => {
     const ihdr = pngChunk("IHDR", Buffer.alloc(13));
     const exif = pngChunk("eXIf", Buffer.from("MM\0* gps payload"));
@@ -175,7 +175,7 @@ describe("stripImageMetadata — PNG", () => {
   });
 });
 
-describe("stripImageMetadata — unknown/garbage input", () => {
+describe("stripImageMetadata, unknown/garbage input", () => {
   it("returns non-image bytes unchanged", () => {
     const input = Buffer.from("not an image at all");
     expect(stripImageMetadata(input).equals(input)).toBe(true);

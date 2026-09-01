@@ -1,21 +1,21 @@
 import type { StyleSpecification } from "maplibre-gl";
 import { SATELLITE_STYLE } from "@/components/map/satellite-style";
 
-// deck.gl layer builders live in ./mapLayers — kept out of this module so the
+// deck.gl layer builders live in ./mapLayers, kept out of this module so the
 // heavy @deck.gl/* imports don't enter the landing route's critical path
 // (MapPresetContext imports the preset data below at module load). The builders
 // are imported only by the lazily-loaded ZampMapBackdrop.
 
 /**
- * Landing-hero map presets — the "looks" the tweaks menu switches between.
+ * Landing-hero map presets. The "looks" the tweaks menu switches between.
  *
  * The hero map is a non-interactive BACKDROP (pointer-events-none), so each
  * preset is a self-contained visual recipe: basemap + camera + which render
  * mode (DOM marker pins vs a deck.gl aggregation overlay) + scrim + motion +
  * which ink the hero wordmark needs to stay legible over it.
  *
- * The deck.gl layer constants (colorRange / radius / intensity) are copied —
- * deliberately, not imported — from components/map/report-map.tsx so the two
+ * The deck.gl layer constants (colorRange / radius / intensity) are copied,
+ * deliberately, not imported, from components/map/report-map.tsx so the two
  * maps read as one family without coupling the landing page to the dashboard's
  * DashboardReport type. If you retune one, eyeball the other.
  */
@@ -49,7 +49,7 @@ export function rgbCss([r, g, b]: [number, number, number]): string {
 }
 
 /**
- * Deterministic synthetic report field — a seeded LCG so the same points
+ * Deterministic synthetic report field, a seeded LCG so the same points
  * render every time (no flicker, identical SSR/CSR). Area-uniform (sqrt radius)
  * within ~3.5km of Cumming center, latitude squeezed 0.7× to sit inside the
  * tilted frame. Richer than the old 38-pin field so the heat/hex aggregations
@@ -78,7 +78,7 @@ export function makePoints(count: number): CivicPoint[] {
   };
   const [lng0, lat0] = CUMMING;
   // Four seeded hotspots within ~3km of center. Most points cluster around them
-  // so report DENSITY varies across space — uniform-random reads as one flat
+  // so report DENSITY varies across space. Uniform-random reads as one flat
   // color in the hex/heat aggregations (vision QA: hexes were monochrome). The
   // wide-but-sparse fringe keeps the frame filled.
   const HOTSPOTS = Array.from({ length: 4 }, () => {
@@ -144,7 +144,7 @@ export type MapPreset = {
   // Extrude the basemap's building footprints into 3D (Carto vector tiles carry
   // render_height). Only valid on the Carto vector basemaps (source id "carto").
   buildings3d?: boolean;
-  // CSS filter applied to the whole map canvas — combats washed-out basemaps
+  // CSS filter applied to the whole map canvas, combats washed-out basemaps
   // and boosts pin/neon saturation (vision QA).
   mapFilter: string;
   // CSS background for the scrim overlay that seats the hero copy.
@@ -154,7 +154,7 @@ export type MapPreset = {
 };
 
 /**
- * 3D building extrusion — added on top of the Carto vector basemap (source id
+ * 3D building extrusion, added on top of the Carto vector basemap (source id
  * "carto", source-layer "building", which carries render_height /
  * render_min_height). Spread into a react-map-gl <Layer>. Height-graded blue
  * so taller blocks read brighter; kept dim so the status pins stay the hero.
@@ -211,7 +211,7 @@ const SAT_SCRIM = [
   "linear-gradient(to top, rgba(6,10,16,0.88) 0%, rgba(6,10,16,0.40) 30%, rgba(6,10,16,0) 56%)",
 ].join(", ");
 
-// Heavier top fade than DARK_SCRIM — at the high pitch of the 3D city the upper
+// Heavier top fade than DARK_SCRIM, at the high pitch of the 3D city the upper
 // frame is empty horizon/sky, so we fade it to atmosphere and seat the nav.
 const CITY3D_SCRIM = [
   "linear-gradient(to bottom, rgba(8,10,18,0.96) 0%, rgba(8,10,18,0.5) 16%, rgba(8,10,18,0) 36%)",

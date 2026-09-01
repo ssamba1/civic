@@ -33,7 +33,7 @@ export async function generateMetadata({
   const city = KNOWN_CITIES[slug];
   const name = city?.name ?? slug;
   return {
-    title: `Civic | ${name} — Walk-up QR Poster`,
+    title: `Civic | ${name}, Walk-up QR Poster`,
     description: `Printable QR poster for ${name}. Scan to report an issue without an account.`,
     robots: { index: false, follow: false },
   };
@@ -66,9 +66,9 @@ export default async function CityQrPage({ params, searchParams }: PageProps) {
 
   return (
     <main className="min-h-dvh bg-background print:bg-white">
-      {/* Screen wrapper — centers the poster and provides a print button */}
+      {/* Screen wrapper, centers the poster and provides a print button */}
       <div className="mx-auto flex max-w-lg flex-col items-center gap-6 px-4 py-16 print:p-0">
-        {/* Print instructions — hidden on print */}
+        {/* Print instructions, hidden on print */}
         <div className="w-full rounded-lg border border-hairline bg-surface p-4 text-[13px] text-subtle print:hidden">
           <p className="font-medium text-foreground">Print this poster</p>
           <p className="mt-1">

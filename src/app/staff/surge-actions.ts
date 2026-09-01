@@ -74,7 +74,7 @@ export async function getSurgeState(): Promise<Result<SurgeState>> {
       .maybeSingle();
 
     if (error) {
-      // Table doesn't exist yet — graceful degrade
+      // Table doesn't exist yet, graceful degrade
       logger.warn("surge_state table unavailable (migration pending?)", {
         error: error.message,
       });
@@ -304,7 +304,7 @@ async function applySurgeToReports(
     if (toUpdate.length === 0) return 0;
 
     // Batch the priority_score writes (one update per report to avoid
-    // constructing a complex CASE WHEN — acceptable at expected surge batch sizes).
+    // constructing a complex CASE WHEN, acceptable at expected surge batch sizes).
     let count = 0;
     for (const r of toUpdate) {
       const { error: updateErr } = await db

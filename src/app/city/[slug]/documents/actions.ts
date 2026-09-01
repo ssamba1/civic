@@ -36,7 +36,7 @@ async function requireDocumentsStaff(
     .maybeSingle<{ id: string }>();
   if (!city) return { ok: false, error: "unknown_city" };
   // uploaded_by is nullable, so the local dev bypass (staff without a session)
-  // can still ingest — unlike a clip, a document needs no attributable author.
+  // can still ingest, unlike a clip, a document needs no attributable author.
   return { ok: true, data: { cityId: city.id, userId: user?.id ?? null } };
 }
 
@@ -46,7 +46,7 @@ const ingestSchema = z.object({
   filename: z.string().min(1).max(200),
   docKind: z.enum(DOC_KINDS),
   text: z.string().min(1).max(MAX_DOC_CHARS),
-  /** Vendor this document concerns (066) — optional; null files it as a
+  /** Vendor this document concerns (066), optional; null files it as a
    *  general city document. */
   contractorId: z.uuid().nullable().optional(),
 });
@@ -71,7 +71,7 @@ export async function ingestDocument(
   const db = createServerClient();
 
   // The contractor link is taken only after proving the id belongs to THIS
-  // city — a forged id from another city must not attach, and contractors has
+  // city. A forged id from another city must not attach, and contractors has
   // no client-readable RLS to catch it (service role bypasses RLS).
   let contractorId: string | null = null;
   if (parsed.data.contractorId) {
@@ -180,7 +180,7 @@ export async function deleteDocument(
     logger.error("document delete failed", error, { documentId: doc.id });
     return { ok: false, error: "delete_failed" };
   }
-  // Path is read back from the row, never from the caller — it cannot be
+  // Path is read back from the row, never from the caller. It cannot be
   // pointed at another city's folder.
   if (doc.storage_path) {
     await db.storage.from(DOCS_BUCKET).remove([doc.storage_path]);

@@ -10,7 +10,7 @@ allowBuilds:
   unrs-resolver: true
 ignoredBuiltDependencies:
   # onnxruntime-node ships prebuilt CPU binaries in the npm package; its
-  # postinstall only fetches optional extras (GPU libs) — safe to skip.
+  # postinstall only fetches optional extras (GPU libs), safe to skip.
   - onnxruntime-node
   - sharp
   - unrs-resolver

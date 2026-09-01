@@ -47,7 +47,7 @@ export function AddCategoryModal({
 }) {
   const { addCustomCategory } = useCustomCategories();
 
-  // Portal mount gate — SSR + first CSR render both return null so the
+  // Portal mount gate. SSR + first CSR render both return null so the
   // hydration trees match before createPortal runs on the second commit.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -190,7 +190,7 @@ export function AddCategoryModal({
                 />
               </label>
 
-              {/* Description — AI-facing. Drives auto-classification: the model
+              {/* Description, AI-facing. Drives auto-classification: the model
                   reads it to decide whether a photo fits this custom type. */}
               <label className="flex flex-col gap-1.5">
                 <span className="text-[12px] font-medium text-subtle">

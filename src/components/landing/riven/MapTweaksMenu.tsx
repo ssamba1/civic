@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { useMapPreset } from "./MapPresetContext";
 
 /**
- * Gated hero-look chooser. Hidden from public visitors — revealed only via
+ * Gated hero-look chooser. Hidden from public visitors, revealed only via
  * ?tweaks=1 (which latches a localStorage flag). The selected preset persists
  * per-browser; it does NOT change what other visitors see. To change the
  * shipped default for everyone, edit DEFAULT_PRESET_ID in mapPresets.ts.

@@ -74,7 +74,7 @@ describe("deriveSlaRisk", () => {
     });
   });
 
-  it("ignores resolved/terminal reports — only the open backlog is at risk", () => {
+  it("ignores resolved/terminal reports, only the open backlog is at risk", () => {
     const reports = [
       aged(80, { id: "a", status: "closed" }),
       aged(80, { id: "b", status: "rejected" }),

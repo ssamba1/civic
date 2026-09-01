@@ -32,7 +32,7 @@ export function UpvoteButton({
     <button
       type="button"
       onClick={(e) => {
-        // List rows are often clickable (select/focus a report) — don't let the
+        // List rows are often clickable (select/focus a report). Don't let the
         // upvote bubble up and trigger selection.
         e.stopPropagation();
         toggle(reportId);
@@ -40,7 +40,7 @@ export function UpvoteButton({
       aria-pressed={active}
       aria-label={`${active ? "Remove your upvote, " : "Upvote, "}${n} ${
         n === 1 ? "upvote" : "upvotes"
-      }${DEMO_MODE ? " — saved on this device" : ""}`}
+      }${DEMO_MODE ? ", saved on this device" : ""}`}
       className={cn(
         "inline-flex flex-col items-center justify-center rounded-lg border transition-colors active:scale-90 motion-reduce:active:scale-100 motion-reduce:transition-none tabular-nums",
         size === "sm" ? "h-11 w-9 text-[11px]" : "h-12 w-10 text-xs",

@@ -1,7 +1,7 @@
 /**
  * Storm/emergency surge reprioritisation (NEXT_100 #63).
  *
- * Pure module — no I/O, no DB, no Next.js dependencies.
+ * Pure module, no I/O, no DB, no Next.js dependencies.
  * The server action layer (src/app/staff/surge-actions.ts) handles persistence.
  *
  * Co-located tests: surge.test.ts
@@ -22,7 +22,7 @@ export interface SurgeReport {
   priority_score: number;
   /** City/geo identifier used to match `surgeConfig.city_id`. */
   city_id: string;
-  /** Created ISO string — used as tiebreaker. */
+  /** Created ISO string, used as tiebreaker. */
   created_at: string;
 }
 
@@ -101,7 +101,7 @@ export function reprioritize(
   _now: string = new Date().toISOString(),
 ): ReportWithSurge[] {
   if (!surgeConfig.active || surgeConfig.categories.length === 0) {
-    // Surge inactive — return as-is, typed correctly.
+    // Surge inactive. Return as-is, typed correctly.
     return reports as ReportWithSurge[];
   }
 

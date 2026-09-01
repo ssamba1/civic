@@ -12,7 +12,7 @@
 /** Maximum number of days raw photos are retained before deletion. */
 export const RAW_PHOTO_TTL_DAYS = 30;
 
-/** Cron schedule expression — daily at 03:00 UTC. */
+/** Cron schedule expression, daily at 03:00 UTC. */
 export const RETENTION_CRON_SCHEDULE = "0 3 * * *";
 
 /**

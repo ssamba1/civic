@@ -16,7 +16,7 @@ import type { Result } from "@/lib/types";
 const log = createLogger("admin-automation-actions");
 
 // ---------------------------------------------------------------------------
-// Admin guard — mirrors pattern from admin/webhooks/actions.ts
+// Admin guard, mirrors pattern from admin/webhooks/actions.ts
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
@@ -33,7 +33,7 @@ export async function listRulesAction(
   const admin = await requireAdminScope();
   if (!admin) return { ok: false, error: "unauthorized" };
 
-  // Ignore the caller-supplied cityId — an admin only ever sees their own city.
+  // Ignore the caller-supplied cityId. An admin only ever sees their own city.
   const parsedCityId = z.string().uuid().safeParse(admin.cityId);
   if (!parsedCityId.success) return { ok: false, error: "invalid_id" };
 
@@ -74,7 +74,7 @@ export async function createRuleAction(input: {
   const admin = await requireAdminScope();
   if (!admin) return { ok: false, error: "unauthorized" };
 
-  // Ignore input.cityId — an admin only ever writes rules for their own city.
+  // Ignore input.cityId. An admin only ever writes rules for their own city.
   const parsedCityId = z.string().uuid().safeParse(admin.cityId);
   if (!parsedCityId.success) return { ok: false, error: "invalid_id" };
 
@@ -137,7 +137,7 @@ export async function updateRuleAction(
 
   // Validate if conditions/actions are being updated
   if (input.conditions !== undefined || input.actions !== undefined) {
-    // We need name too — fetch it if not provided
+    // We need name too, fetch it if not provided
     let name = input.name;
     if (!name) {
       const db = createServerClient();

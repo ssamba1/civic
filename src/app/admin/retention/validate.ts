@@ -32,7 +32,7 @@ export const retentionSchema = z.object({
     .max(3650, "TTL cannot exceed 10 years"),
 });
 
-/** Pure validation helper — no I/O. */
+/** Pure validation helper, no I/O. */
 export function validateRetention(input: unknown): Result<RetentionInput> {
   const parsed = retentionSchema.safeParse(input);
   if (!parsed.success) {

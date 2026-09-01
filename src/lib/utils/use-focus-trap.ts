@@ -13,7 +13,7 @@ const FOCUSABLE_SELECTOR = [
 
 /**
  * Trap Tab / Shift+Tab focus inside a dialog panel while `active` (WCAG 2.4.3 /
- * 2.1.2 — no keyboard trap escaping the modal, but focus must not leak to the
+ * 2.1.2, no keyboard trap escaping the modal, but focus must not leak to the
  * inert background either). Shared by Modal / Drawer / BottomSheet, which
  * already handle Esc, scroll-lock, and focus-restore; this adds the missing
  * cycle so keyboard users can't Tab out of an open dialog into background
@@ -39,7 +39,7 @@ export function useFocusTrap(
         (el) => el.offsetParent !== null || el === document.activeElement,
       );
       if (focusable.length === 0) {
-        // Nothing focusable but the panel itself — keep focus on the panel.
+        // Nothing focusable but the panel itself. Keep focus on the panel.
         e.preventDefault();
         panel.focus();
         return;

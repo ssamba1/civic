@@ -15,7 +15,7 @@ export function wantsXml(request: NextRequest): boolean {
 }
 
 /**
- * Open311 error response in the negotiated format — XML <errors> or the JSON
+ * Open311 error response in the negotiated format, XML <errors> or the JSON
  * `[{ code, description }]` array shape the spec's clients expect.
  */
 export function open311Error(

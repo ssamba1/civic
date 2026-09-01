@@ -1,5 +1,5 @@
 -- =============================================================================
--- Civic – Resident Notifications
+-- Civic, Resident Notifications
 -- Migration: 20260528_006_resident_notifications.sql
 --
 -- Production schema for resident-facing notifications. Each resident receives a
@@ -85,7 +85,7 @@ CREATE POLICY notifications_update_own ON public.notifications
 --    Fires on reports AFTER UPDATE OF status. When the status actually
 --    changes, inserts a notification for the report's reporter. SECURITY
 --    DEFINER so the insert bypasses the notifications INSERT-policy (residents
---    have no INSERT policy — only the system creates notifications).
+--    have no INSERT policy, only the system creates notifications).
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION notify_report_status_change()
 RETURNS trigger
@@ -101,7 +101,7 @@ BEGIN
     IF NEW.status = 'closed' THEN
       n_type  := 'resolved';
       n_title := 'Your report was resolved';
-      n_body  := 'Great news — the issue you reported has been marked resolved. Thanks for helping improve your city.';
+      n_body  := 'Great news, the issue you reported has been marked resolved. Thanks for helping improve your city.';
     ELSE
       n_type  := 'status_change';
       n_title := 'Your report status changed';

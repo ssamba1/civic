@@ -19,7 +19,7 @@ import { useCurrency } from "@/lib/use-currency";
    Cesium inlines binary payloads as strings containing NUL escapes, and
    the bundler re-emits those inside template literals, which is a hard
    parse error ("Octal escape sequences are not allowed in template
-   strings"). That kills the whole 4.8 MB chunk — and with it every
+   strings"). That kills the whole 4.8 MB chunk, and with it every
    client component on the page, so the map rendered nothing at all and
    even the MapLibre fallback never got a chance to mount.
 
@@ -42,7 +42,7 @@ function loadCesium(): Promise<typeof CesiumNS> {
   if (cesiumLoader) return cesiumLoader;
 
   cesiumLoader = new Promise<typeof CesiumNS>((resolve, reject) => {
-    // Must be set before Cesium.js evaluates — it reads this to resolve
+    // Must be set before Cesium.js evaluates. It reads this to resolve
     // its Workers/Assets/Widgets URLs.
     window.CESIUM_BASE_URL = "/cesium";
 
@@ -76,7 +76,7 @@ function loadCesium(): Promise<typeof CesiumNS> {
 /* ==================================================================
    CesiumJS 3D globe renderer for the report map.
 
-   Modeled on bilawalsidhu/gods-eye-view (MIT) — specifically its viewer
+   Modeled on bilawalsidhu/gods-eye-view (MIT), specifically its viewer
    bootstrap (all default widget chrome off, an explicit credit container
    we can style, targetFrameRate capped at 60 so the loop doesn't run at
    a 120 Hz panel's refresh for zero visual benefit). None of its app code
@@ -84,7 +84,7 @@ function loadCesium(): Promise<typeof CesiumNS> {
 
    This component renders the SAME report corpus with the SAME teardrop
    pin SVGs and the SAME color modes as the deck.gl IconLayer path in
-   report-map.tsx — pinIconFor / pinColorRGB stay the single source of
+   report-map.tsx. PinIconFor / pinColorRGB stay the single source of
    truth, so the legend can never drift from the globe. Clicking a pin
    calls onSelectMarker with the report id, i.e. the identical selection
    contract the Dispatch panel already consumes.
@@ -107,7 +107,7 @@ interface GlobeMapProps {
   onSelectMarker?: (id: string) => void;
   colorMode: MarkerColorMode;
   mapTheme: GlobeBasemap;
-  /** Called once if WebGL2/Cesium cannot initialise — parent falls back. */
+  /** Called once if WebGL2/Cesium cannot initialise. Parent falls back. */
   onInitError: (reason: string) => void;
 }
 
@@ -119,7 +119,7 @@ const ION_TOKEN = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN ?? "";
    Deliberately NOT the Carto raster endpoints that mirror the MapLibre
    styles: Carto's *vector* styles (what report-map.tsx loads) are keyless,
    but every `basemaps.cartocdn.com` RASTER tile now comes back stamped
-   "API KEY REQUIRED" — verified 2026-08 against dark_all, light_all and
+   "API KEY REQUIRED", verified 2026-08 against dark_all, light_all and
    rastertiles/voyager. Esri's Canvas Dark/Light Gray pair is the keyless
    equivalent, is the same cartographic register as dark-matter/voyager,
    and lives on a host (*.arcgisonline.com) that the CSP already allows
@@ -141,7 +141,7 @@ const ESRI_CANVAS: Record<"dark" | "light", { base: string; ref: string }> = {
 // The Canvas services stop at z16; past it Cesium upsamples the last real tile.
 const ESRI_CANVAS_MAX_ZOOM = 16;
 // Same Esri service (and the same z18 real-imagery ceiling) as
-// ./satellite-style — past z18 Esri returns a grey placeholder, so cap it and
+// ./satellite-style. Past z18 Esri returns a grey placeholder, so cap it and
 // let Cesium upsample instead.
 const ESRI_SAT = `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`;
 const ESRI_MAX_ZOOM = 18;
@@ -151,7 +151,7 @@ const ESRI_MAX_ZOOM = 18;
  * ground span a Web-Mercator map at `zoom` would show in a viewport this wide.
  * Cesium's default frustum uses `fov` as the HORIZONTAL field of view whenever
  * the canvas is wider than it is tall, which is the case for every map surface
- * here — hence width, not height.
+ * here, hence width, not height.
  */
 function rangeForZoom(
   zoom: number,
@@ -266,7 +266,7 @@ export function GlobeMap({
         if (ION_TOKEN) Cesium.Ion.defaultAccessToken = ION_TOKEN;
 
         const viewer = new Cesium.Viewer(el, {
-          // Minimal chrome — every default widget off (gods-eye-view pattern).
+          // Minimal chrome, every default widget off (gods-eye-view pattern).
           timeline: false,
           animation: false,
           baseLayerPicker: false,
@@ -305,7 +305,7 @@ export function GlobeMap({
         );
 
         // Popup follows its report every frame. Written straight to the DOM
-        // rather than through React state — a setState per rendered frame
+        // rather than through React state. A setState per rendered frame
         // would thrash reconciliation for a purely positional update.
         viewer.scene.postRender.addEventListener(() => {
           const node = popupElRef.current;
@@ -363,7 +363,7 @@ export function GlobeMap({
       destroyed = true;
       // Destroying the viewer is what releases the WebGL context, the render
       // loop, and every worker it spawned. Skipping it is the classic Cesium
-      // leak — a remount then runs two globes against one GPU.
+      // leak. A remount then runs two globes against one GPU.
       const v = viewerRef.current;
       viewerRef.current = null;
       imageryLayerRef.current = [];
@@ -431,7 +431,7 @@ export function GlobeMap({
           // on the report location and the head rises above it.
           verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
           scale: pinPixelHeight(r, focused) / icon.height,
-          // Pins are an overlay, not geometry — never occluded by terrain or
+          // Pins are an overlay, not geometry. Never occluded by terrain or
           // buildings. This is the Cesium analogue of the deck.gl layers'
           // depthCompare:"always".
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
@@ -439,7 +439,7 @@ export function GlobeMap({
         },
       });
       if (r.demo) {
-        // Blue presenter glow beneath the demo report — same affordance the
+        // Blue presenter glow beneath the demo report, same affordance the
         // deck.gl ScatterplotLayer carries on the 2D map.
         const radius = 220 + r.severity * 60;
         ents.add({
@@ -513,7 +513,7 @@ export function GlobeMap({
         data-testid="globe-map-container"
       />
 
-      {/* Popup — same renderPopupHTML the MapLibre path uses, so the card is
+      {/* Popup. Same renderPopupHTML the MapLibre path uses, so the card is
           byte-identical between renderers. Positioned imperatively above. */}
       <div
         ref={popupElRef}
@@ -534,7 +534,7 @@ export function GlobeMap({
           not bottom-right: in fullscreen the Dispatch panel owns the right
           edge and the legend/HUD stack owns the left one. */}
       <div className="civic-globe-credits pointer-events-none absolute inset-x-0 bottom-1 z-20 flex flex-col items-center gap-0.5 text-[10px] text-faint">
-        {/* The keyless globe renders a plain ellipsoid — correct, just without
+        {/* The keyless globe renders a plain ellipsoid, correct, just without
             terrain or 3D buildings. This used to print
             "Set NEXT_PUBLIC_CESIUM_ION_TOKEN …" into the map surface, which
             reads to anyone looking at the product as an unfinished build. The

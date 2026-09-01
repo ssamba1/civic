@@ -27,7 +27,7 @@ CREATE INDEX IF NOT EXISTS work_orders_needs_review_idx
 
 -- Re-point the report_events trigger (migration 016) so a flagged work order
 -- logs a distinct 'flagged_for_manual_review' event instead of the generic
--- 'work_order_created' — CREATE OR REPLACE updates the existing trigger's
+-- 'work_order_created', CREATE OR REPLACE updates the existing trigger's
 -- behavior in place, no need to touch the trigger itself.
 CREATE OR REPLACE FUNCTION _evt_work_order_created()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$

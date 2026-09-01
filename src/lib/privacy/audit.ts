@@ -14,7 +14,7 @@ const RAW_BUCKET = "photos-raw";
  * Cross-reference public bucket contents against the raw bucket.
  *
  * A "violation" means a file exists in `photos-public` whose exact path
- * also exists in `photos-raw` AND has the same file size — a strong signal
+ * also exists in `photos-raw` AND has the same file size, a strong signal
  * that the raw original was uploaded to the public bucket instead of
  * (or in addition to) the blurred version.
  *
@@ -94,7 +94,7 @@ export interface PrivacyAuditReport {
 }
 
 /**
- * OUTFLANK #34 — whole-deployment privacy audit for the admin dashboard + a
+ * OUTFLANK #34, whole-deployment privacy audit for the admin dashboard + a
  * legal-exportable JSON. Runs {@link auditPublicBucket} for every city and rolls
  * up a pass/fail summary. `generatedAt` is passed in (callers stamp it) so the
  * function stays deterministic/testable.
@@ -115,7 +115,7 @@ export async function auditAllCities(
       .list(city.id, { limit: 1000 });
     const { violations } = await auditPublicBucket(city.id);
 
-    // Blur coverage — share of the city's reports that recorded a blur_version
+    // Blur coverage, share of the city's reports that recorded a blur_version
     // (migration 040). Legacy rows are null (blur ran but pre-tracking); a
     // healthy live deployment trends to 100% as new reports flow in.
     const base = () =>

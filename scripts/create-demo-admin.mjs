@@ -1,5 +1,5 @@
 // One-shot: create (or repair) a demo admin account for the live demo.
-// DEMO ONLY — do not run against production. Creates a known-credential admin.
+// DEMO ONLY. Do not run against production. Creates a known-credential admin.
 //
 //   node scripts/create-demo-admin.mjs
 //
@@ -54,7 +54,7 @@ const { data: created, error: createErr } = await admin.auth.admin.createUser({
 
 if (createErr) {
   if (/already|registered|exists/i.test(createErr.message)) {
-    // already there — look it up and reset password + metadata
+    // already there. Look it up and reset password + metadata
     const { data: list } = await admin.auth.admin.listUsers({ perPage: 1000 });
     const existing = list?.users?.find((u) => u.email === EMAIL);
     if (!existing) {

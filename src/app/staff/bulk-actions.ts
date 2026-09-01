@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * Bulk staff operations — server actions.
+ * Bulk staff operations, server actions.
  *
  * Security model
  * - FAIL CLOSED: if getStaffUser() returns null for any reason (unauthenticated,
@@ -30,7 +30,7 @@ const STAFF_ROLES = ["staff_dispatcher", "staff_supervisor", "admin"] as const;
 
 // ---------------------------------------------------------------------------
 // Internal auth helper (mirrors the pattern in actions.ts, cannot import it
-// directly as it's not exported — keep in sync if that changes).
+// directly as it's not exported. Keep in sync if that changes).
 // ---------------------------------------------------------------------------
 
 type StaffUser = { id: string; role: string; city_id: string | null };
@@ -103,9 +103,9 @@ export async function bulkUpdateReports(
   const staff = await getStaffUser();
   if (!staff) return { ok: false, error: "unauthorized" };
 
-  // FAIL CLOSED: null city_id means no city scope — cannot act on any reports.
+  // FAIL CLOSED: null city_id means no city scope. Cannot act on any reports.
   if (!staff.city_id) {
-    logger.error("Staff user has null city_id — bulk action denied", null, {
+    logger.error("Staff user has null city_id, bulk action denied", null, {
       staffId: staff.id,
     });
     return { ok: false, error: "no_city_scope" };

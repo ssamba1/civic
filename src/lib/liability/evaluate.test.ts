@@ -58,7 +58,7 @@ function permit(over: Partial<UtilityPermitRow> = {}): UtilityPermitRow {
   };
 }
 
-describe("pickVerdict — verdict selection", () => {
+describe("pickVerdict, verdict selection", () => {
   it("returns contractor_warranty when a warranty is in window", () => {
     const v = pickVerdict([job()], [warranty()], [], report());
     expect(v.verdict).toBe("contractor_warranty");
@@ -118,7 +118,7 @@ describe("pickVerdict — verdict selection", () => {
   });
 });
 
-describe("pickVerdict — warranty windows and category coverage", () => {
+describe("pickVerdict, warranty windows and category coverage", () => {
   it("expired warranty produces no match", () => {
     const v = pickVerdict(
       [job()],
@@ -181,7 +181,7 @@ describe("pickVerdict — warranty windows and category coverage", () => {
   });
 });
 
-describe("pickVerdict — nearest match wins", () => {
+describe("pickVerdict, nearest match wins", () => {
   it("picks the nearest warranted job", () => {
     const jobs = [
       job({ id: "far", distance_m: 12 }),
@@ -232,7 +232,7 @@ describe("pickVerdict — nearest match wins", () => {
   });
 });
 
-describe("pickVerdict — empty vs populated sources", () => {
+describe("pickVerdict, empty vs populated sources", () => {
   it("empty source tables for the city produce unknown, NOT city_cost", () => {
     const v = pickVerdict([], [], [], report({ hasSourceData: false }));
     expect(v.verdict).toBe("unknown");
@@ -259,7 +259,7 @@ describe("pickVerdict — empty vs populated sources", () => {
   });
 });
 
-describe("pickVerdict — confidence", () => {
+describe("pickVerdict, confidence", () => {
   it("scores a perfect warranty match at 1", () => {
     // distanceScore 1 (0m) * 0.5 + compat 1 * 0.3 + arcgis 1.0 * 0.2 = 1
     const v = pickVerdict(

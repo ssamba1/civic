@@ -41,7 +41,7 @@ export async function generateMetadata({
   const resolved = await resolveCity(slug);
   if (!resolved) return { title: "Team not found | Civic" };
   return {
-    title: `Civic | ${TEAMS[teamId].shortLabel} — ${resolved.name} Overview`,
+    title: `Civic | ${TEAMS[teamId].shortLabel}, ${resolved.name} Overview`,
     description: `Workload, routing, and queue depth for ${TEAMS[teamId].label} in ${resolved.name}, ${resolved.state}.`,
   };
 }
@@ -55,7 +55,7 @@ export default async function TeamOverviewPage({ params }: PageProps) {
   const meta = TEAMS[teamId];
 
   // Staff-gated crew breakdown. Logged-out / non-staff visitors see nothing.
-  // fetchCity is React-cached, so this shares resolveCity's query — the only
+  // fetchCity is React-cached, so this shares resolveCity's query. The only
   // extra cost is the id it needs (resolveCity discards it). Synthetic
   // KNOWN_CITIES slugs have no DB row, so there are no crews to show.
   const access = await getStaffAccessForCity(slug);
@@ -88,7 +88,7 @@ export default async function TeamOverviewPage({ params }: PageProps) {
   }
 
   // Stats and every panel derive client-side from the team-locked corpus
-  // (see TeamDashboardInteractive) so reassignments move them in lockstep —
+  // (see TeamDashboardInteractive) so reassignments move them in lockstep,
   // no server-computed snapshot to desync, and no server-side call into the
   // client-only category-override resolver.
   return (

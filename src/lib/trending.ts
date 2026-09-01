@@ -2,7 +2,7 @@
    Trending-issues ranking (NEXT_100 #86).
 
    Public, auth-free. Score = upvotes weighted by recency using a
-   time-decay half-life of 72 h (older issues fade, but not to zero —
+   time-decay half-life of 72 h (older issues fade, but not to zero,
    an issue with 50 upvotes still beats one with 2 upvotes filed
    yesterday, just by less). Pure functions so they can be tested and
    run on any runtime (edge or Node).
@@ -22,7 +22,7 @@ export interface TrendableReport {
  * score = upvotes × e^(−age / half_life)
  *
  * This keeps fresh issues surfaced even with few votes while old
- * high-vote reports still appear — they just rank slightly lower.
+ * high-vote reports still appear, they just rank slightly lower.
  * A floor of 0 is applied so negative values are impossible.
  */
 export function scoreTrending(

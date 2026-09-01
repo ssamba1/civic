@@ -1,4 +1,4 @@
-# Detector sidecar — wire contract
+# Detector sidecar: wire contract
 
 The Next.js app talks to this service over plain HTTP at `DETECTOR_URL`. It is
 the only network dependency of camera ingest, and it is allowed to be down: the
@@ -19,7 +19,7 @@ Callers in the app:
 
 Detect road damage in one frame. Returns zero or more boxes, each with a crop.
 
-**Request** — `application/json`
+**Request**: `application/json`
 
 ```jsonc
 {
@@ -30,7 +30,7 @@ Detect road damage in one frame. Returns zero or more boxes, each with a crop.
 }
 ```
 
-**Response 200** — `application/json`
+**Response 200**: `application/json`
 
 ```jsonc
 {
@@ -39,7 +39,7 @@ Detect road damage in one frame. Returns zero or more boxes, each with a crop.
       "class": "pothole",         // longitudinal_crack | transverse_crack | alligator_crack | pothole
       "score": 0.81,              // 0..1
       "bbox": [412, 300, 96, 74], // [x, y, w, h] px, origin top-left
-      "crop_base64": "<base64>"   // the bbox crop ONLY — never the full frame
+      "crop_base64": "<base64>"   // the bbox crop ONLY, never the full frame
     }
   ],
   "model_version": "rdd2022-x-2026.08"
@@ -53,10 +53,10 @@ Rules:
 - `crop_base64` is mandatory. The app cannot blur a box it has no pixels for, so
   a crop-less box is discarded outright.
 - Return an empty `detections` array for a clean frame. Do **not** 404 or error
-  — an empty result is the expected outcome for ~95% of frames.
+  - an empty result is the expected outcome for ~95% of frames.
 - Any non-2xx is treated as "sidecar unavailable": the whole batch is retried.
 
-**Response 5xx** — the app aborts the batch and retries it later. Partially
+**Response 5xx**: the app aborts the batch and retries it later. Partially
 ingesting a route is worse than a clean replay.
 
 ---
@@ -65,17 +65,17 @@ ingesting a route is worse than a clean replay.
 
 Redact faces and license plates in a crop.
 
-**Request** — raw image bytes, `Content-Type` set by the caller
+**Request**: raw image bytes, `Content-Type` set by the caller
 (`application/octet-stream` by default).
 
-**Response 200** — raw redacted image bytes.
+**Response 200**: raw redacted image bytes.
 
 | Header | Meaning |
 |---|---|
 | `x-blur-regions` | count of regions painted over; `0` is legal (nothing to redact) |
 | `x-blur-version` | stamped onto the crop so a model upgrade can trigger a re-blur |
 
-**Response non-2xx / empty body** — the app returns `{ ok: false }` and **drops
+**Response non-2xx / empty body**: the app returns `{ ok: false }` and **drops
 the crop**. Nothing is persisted.
 
 ### The hard rule
@@ -89,7 +89,7 @@ publish to a public bucket. Therefore:
 - Failing is always correct. Losing one crop costs nothing; publishing one face
   or plate is a privacy incident.
 
-The app has no unblurred path at all — there is nowhere for unredacted bytes to
+The app has no unblurred path at all. There is nowhere for unredacted bytes to
 land even if this service misbehaves, and that property must not be weakened on
 either side.
 
@@ -107,4 +107,4 @@ either side.
 ```
 
 `detector_loaded: false` means every frame will be dropped. That is a valid
-running state, not an outage — alert on it, don't fail closed the whole app.
+running state, not an outage. Alert on it, don't fail closed the whole app.

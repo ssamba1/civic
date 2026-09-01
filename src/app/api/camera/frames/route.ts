@@ -13,14 +13,14 @@ const logger = createLogger("[camera-frames]");
  *
  * Fleet dashcam frame batch upload (CAMERA_LIABILITY_PIPELINE.md §4.2).
  * Auth: `api_keys` (migration 028), SHA-256 hash lookup, scope `camera:ingest`.
- * No user session — the uploader is a depot script, not a browser.
+ * No user session. The uploader is a depot script, not a browser.
  *
  * Idempotent on `(deviceId, frame.externalId)`: replaying a batch is free, which
  * is what makes the 503-and-retry posture below safe.
  *
  * Failure posture (spec §6): the detector sidecar being down is NOT an error the
  * uploader can fix, so it returns 503 with `retryable: true` and the batch is
- * re-sent later. Nothing here may crash the request — camera ingest must never
+ * re-sent later. Nothing here may crash the request. Camera ingest must never
  * take down report creation from other sources.
  */
 

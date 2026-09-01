@@ -1,13 +1,13 @@
 -- =============================================================================
--- Civic – Liability attribution (Phase A)
+-- Civic, Liability attribution (Phase A)
 -- Migration: 20260823_062_liability.sql
 -- Spec: docs/planning/CAMERA_LIABILITY_PIPELINE.md §3.1
 --
 -- What this adds:
---   capital_jobs      – a contracted piece of work with a footprint + completion date
---   warranties        – one or more warranty windows attached to a capital job
---   utility_permits   – a utility cut/trench whose permittee owes restoration
---   report_liability  – the verdict, one immutable-ish row per report
+--   capital_jobs. A contracted piece of work with a footprint + completion date
+--   warranties, one or more warranty windows attached to a capital job
+--   utility_permits, a utility cut/trench whose permittee owes restoration
+--   report_liability, the verdict, one immutable-ish row per report
 --
 -- Security model (read before touching the policies below):
 --
@@ -15,19 +15,19 @@
 --   city believes is on the hook for a defect and how much a contract was worth.
 --   Exposure rules:
 --
---     staff  – SELECT only, scoped to their own city (is_staff() AND
+--     staff. SELECT only, scoped to their own city (is_staff() AND
 --              city_id = current_user_city_id()). report_liability has no
 --              city_id of its own, so it scopes through an EXISTS subquery on
 --              its parent report.
---     admin  – INSERT / UPDATE / DELETE (is_admin(), defined in 053).
---     contractors – NO POLICY AT ALL, deliberately. A contractor must never be
+--     admin. INSERT / UPDATE / DELETE (is_admin(), defined in 053).
+--     contractors. NO POLICY AT ALL, deliberately. A contractor must never be
 --              able to read capital_jobs (peer contract values), warranties
 --              (their own exposure window), utility_permits, or the verdict
 --              rows. Everything a contractor is allowed to see about a claim is
 --              handed to them through the `claims` snapshot in 063, never by
 --              reading these tables. Adding a contractor SELECT policy here
 --              would leak every vendor's contract_value_cents to every vendor.
---     anon   – nothing. Default deny: RLS enabled, no permissive policy.
+--     anon, nothing. Default deny: RLS enabled, no permissive policy.
 --
 --   Writes from the app all go through the service role (importers, the
 --   liability evaluator), which bypasses RLS entirely.
@@ -39,7 +39,7 @@
 BEGIN;
 
 -- ---------------------------------------------------------------------------
--- 0. reports.source — admit 'camera'
+-- 0. reports.source, admit 'camera'
 --
 -- Drop-then-add so a re-run reconciles the whole value set (the idiom from
 -- 024:39-42). The six values from 024 are repeated verbatim; 'camera' is the
@@ -53,7 +53,7 @@ ALTER TABLE reports
 -- ---------------------------------------------------------------------------
 -- 1. capital_jobs
 --
--- footprint is geography(GEOMETRY, 4326) — not POINT: a resurfacing job is a
+-- footprint is geography(GEOMETRY, 4326). Not POINT: a resurfacing job is a
 -- LINESTRING along a street centerline, an area job is a POLYGON. The evaluator
 -- matches with ST_DWithin(footprint, report.location, MATCH_TOLERANCE_M) on
 -- geography, so distances are metres and no projection choice is needed.
@@ -108,7 +108,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_capital_jobs_source_external
 -- is a child table rather than columns on capital_jobs.
 --
 -- covers_categories NULL means "all categories". A non-NULL array is an
--- allow-list of Civic report categories — the evaluator zero-scores a job whose
+-- allow-list of Civic report categories, the evaluator zero-scores a job whose
 -- warranty does not cover the report's category.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS warranties (
@@ -216,7 +216,7 @@ CREATE INDEX IF NOT EXISTS idx_report_liability_capital_job
   WHERE capital_job_id IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
--- 5. RLS — default deny everywhere, staff read own city, admin write
+-- 5. RLS. Default deny everywhere, staff read own city, admin write
 -- ---------------------------------------------------------------------------
 ALTER TABLE capital_jobs     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE warranties       ENABLE ROW LEVEL SECURITY;
@@ -370,12 +370,12 @@ CREATE POLICY report_liability_admin_delete ON report_liability
   );
 
 -- NOTE: there is intentionally NO contractor policy on any of the four tables
--- above. See the security model in the header — contractors learn about their
+-- above. See the security model in the header, contractors learn about their
 -- exposure only through the `claims` snapshot (migration 063).
 
 -- ---------------------------------------------------------------------------
 -- Candidate RPCs for the liability join (spec §3.2). Called by
--- src/lib/liability/db.ts under the service role — PostgREST filters cannot
+-- src/lib/liability/db.ts under the service role. PostgREST filters cannot
 -- express ST_DWithin, and app-side distance math is banned (AGENTS.md rule #7).
 -- Signatures mirror the contract documented in db.ts's header verbatim.
 --

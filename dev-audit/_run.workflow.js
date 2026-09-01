@@ -57,7 +57,7 @@ const COMMON = (t) => `You are a read-only code auditor on a Next.js 16 + React 
 Repo root: ${ROOT}
 Use Read/Grep/Glob to investigate. DO NOT edit any source files.
 
-TASK — ${t.title}:
+TASK, ${t.title}:
 ${t.body}
 
 Be concrete: every finding cites file:line. No vague advice. Prioritize. If a concern is clean, say so explicitly rather than padding.

@@ -145,7 +145,7 @@ function conditionValueInput(
       </select>
     );
   }
-  // tag — scalar string or array for "contains"
+  // tag, scalar string or array for "contains"
   return (
     <input
       className={inputCls}
@@ -542,7 +542,7 @@ function RulesTable({ rules, onChange }: TableProps) {
           {rules.map((rule) => (
             <tr key={rule.id} className="py-2">
               <td className="py-2 pr-4 font-medium text-zinc-900 dark:text-zinc-100">
-                {rule.name || "—"}
+                {rule.name || "-"}
               </td>
               <td className="py-2 pr-4 text-zinc-500">{rule.priority}</td>
               <td className="py-2 pr-4">

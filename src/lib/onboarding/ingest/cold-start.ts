@@ -1,4 +1,4 @@
-// Cold-start orchestrator (F5) — the single entry the wizard's background job
+// Cold-start orchestrator (F5), the single entry the wizard's background job
 // drives after provisionCity. Picks the data source (real ArcGIS if configured
 // and non-empty, else the universal synthetic fallback) and persists via the
 // writer. Honest degraded reporting: if ArcGIS was requested but yielded nothing,
@@ -55,8 +55,8 @@ export async function coldStart(
       source = "arcgis";
     } else {
       degraded = pulled.ok
-        ? "ArcGIS source returned no rows — filled with synthetic data"
-        : `ArcGIS pull failed (${pulled.error}) — filled with synthetic data`;
+        ? "ArcGIS source returned no rows. Filled with synthetic data"
+        : `ArcGIS pull failed (${pulled.error}), filled with synthetic data`;
       reports = generateSyntheticReports({
         boundary: input.boundary,
         count: input.syntheticCount ?? 200,

@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils/cn";
 /**
  * Two-state surface toggle: Resident ("User") ⇄ public city dashboard ("City").
  * Active segment is derived from the path (/user* → User, else City). Staff is
- * intentionally excluded — this never exposes the admin surface.
+ * intentionally excluded, this never exposes the admin surface.
  */
 export function ViewSwitch({
   citySlug = "cumming",
@@ -40,7 +40,7 @@ export function ViewSwitch({
   ];
 
   return (
-    // biome-ignore lint/a11y/useSemanticElements: role="group" intentional — <fieldset> adds default border/margin/min-width styling and needs a <legend>, breaking this compact pill toggle's layout
+    // biome-ignore lint/a11y/useSemanticElements: role="group" intentional. <fieldset> adds default border/margin/min-width styling and needs a <legend>, breaking this compact pill toggle's layout
     <div
       role="group"
       aria-label="Switch view"

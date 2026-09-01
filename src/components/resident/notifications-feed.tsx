@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils/cn";
 import { timeAgo } from "@/lib/utils/time-ago";
 
 /* ------------------------------------------------------------------
-   Resident updates feed — status changes on the resident's own
+   Resident updates feed. Status changes on the resident's own
    reports plus city-wide announcements. Uses the shared surface/hairline
    tokens and status tones. Unread rows carry an ink dot + a subtle bg
    wash; tapping a report-linked row marks it read and routes into the
@@ -30,8 +30,8 @@ const FILTER_OPTIONS: { value: FeedFilter; label: string }[] = [
   { value: "unread", label: "Unread" },
 ];
 
-// color is set only when the type IS a status (resolved/status update) —
-// the one place hue is warranted here. Announcement/comment stay grayscale.
+// color is set only when the type IS a status (resolved/status update).
+// The one place hue is warranted here. Announcement/comment stay grayscale.
 const TYPE_META: Record<
   NotificationItem["type"],
   { icon: LucideIcon; color?: string }
@@ -46,7 +46,7 @@ export function NotificationsFeed({
   items,
 }: {
   // `undefined` is the load-failure sentinel (the server parent passes it when
-  // the feed couldn't be fetched) — distinct from `[]`, which is a legit empty
+  // the feed couldn't be fetched), distinct from `[]`, which is a legit empty
   // feed. Rendered as an error state with Retry rather than "all caught up".
   items?: NotificationItem[];
 }) {
@@ -54,7 +54,7 @@ export function NotificationsFeed({
   const loadFailed = items === undefined;
   const safeItems = items ?? [];
   const [filter, setFilter] = useState<FeedFilter>("all");
-  // Brief confirmation window after "Mark all read" — flips the label to a
+  // Brief confirmation window after "Mark all read", flips the label to a
   // checkmark for ~1.2s so the bulk action gets visible acknowledgement.
   const [marked, setMarked] = useState(false);
   // Track ids the resident has read this session, layered over the
@@ -117,7 +117,7 @@ export function NotificationsFeed({
   // Load failure (items === undefined) reads distinctly from a legit empty feed
   // so a fetch error doesn't masquerade as "all caught up". router.refresh()
   // re-runs the server parent's data fetch. NOTE: this only triggers if the
-  // (non-owned) server parent actually passes `undefined` on failure — today it
+  // (non-owned) server parent actually passes `undefined` on failure. Today it
   // may always pass an array, in which case this branch is dormant.
   if (loadFailed) {
     return (
@@ -182,7 +182,7 @@ export function NotificationsFeed({
           message={
             filter === "unread"
               ? "You're all caught up."
-              : "No updates yet — file a report to start tracking it here."
+              : "No updates yet. File a report to start tracking it here."
           }
         />
       ) : (

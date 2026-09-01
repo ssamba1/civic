@@ -1,5 +1,5 @@
 /**
- * Pure comment moderation helpers — no I/O, no side effects.
+ * Pure comment moderation helpers, no I/O, no side effects.
  *
  * Used by the server action (comment-actions.ts) before persisting a comment.
  * All functions are safe to import from tests without a DB connection.
@@ -15,7 +15,7 @@ export const MAX_COMMENT_LENGTH = 2000;
  *
  * Returns ok:true with the trimmed body, or ok:false with a human-readable
  * error string.  The caller is responsible for PII-redacting the body
- * separately — this function only enforces shape constraints.
+ * separately, this function only enforces shape constraints.
  */
 export function validateComment(body: unknown): Result<string> {
   if (typeof body !== "string") {
@@ -46,7 +46,7 @@ export function validateComment(body: unknown): Result<string> {
  * - Strips C1 control characters (U+0080 through U+009F).
  * - Collapses runs of more than 2 consecutive newlines to 2 (paragraph breaks).
  * - Collapses horizontal whitespace runs within a line to a single space.
- * - Does NOT strip HTML — comments are stored as plain text and must be
+ * - Does NOT strip HTML. Comments are stored as plain text and must be
  *   rendered with React's textContent (not dangerouslySetInnerHTML).
  *
  * @param body - Already-trimmed comment text (run validateComment first).

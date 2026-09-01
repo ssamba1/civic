@@ -23,7 +23,7 @@ import { timeAgo } from "@/lib/utils/time-ago";
 gsap.registerPlugin(useGSAP);
 
 /* ==================================================================
-   Delegation panel — list of reports with a team-reassign control on
+   Delegation panel, list of reports with a team-reassign control on
    each row. Default team (from category routing) is shown muted; the
    live assignment is shown bright. Picking a new team writes a per-
    report override (localStorage); clicking "reset" clears it.
@@ -50,7 +50,7 @@ interface DelegationPanelProps {
   limit?: number;
 }
 
-/** Rows shown before the "Show N more" expander — keeps the phone scroll sane. */
+/** Rows shown before the "Show N more" expander. Keeps the phone scroll sane. */
 const INITIAL_VISIBLE = 8;
 
 function DelegationPanelInner({
@@ -65,8 +65,8 @@ function DelegationPanelInner({
 }: DelegationPanelProps) {
   // Subscribe to category-level overrides so the "default team" column
   // re-renders when a dispatcher re-aims a whole category from the
-  // routing matrix. We don't read the value — `categoryToTeam` already
-  // consults the module-level snapshot — but the subscription is what
+  // routing matrix. We don't read the value, `categoryToTeam` already
+  // consults the module-level snapshot, but the subscription is what
   // forces this memo'd tree back through commit.
   useCategoryOverrides();
 
@@ -326,7 +326,7 @@ function DelegationRow({
             outside the stopRowToggle wrapper so tapping it still toggles the row.
             sm+: each child is its own grid column (auto). */}
         <div className="flex items-center justify-between sm:hidden">
-          {/* biome-ignore lint/a11y/noStaticElementInteractions: not a control — wrapper only stops click/key bubbling so its child buttons don't toggle the row; keyboard path is the child buttons themselves */}
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: not a control. Wrapper only stops click/key bubbling so its child buttons don't toggle the row; keyboard path is the child buttons themselves */}
           <div
             className="flex items-center gap-1"
             onClick={stopRowToggle}
@@ -369,7 +369,7 @@ function DelegationRow({
         </div>
 
         {/* sm+: individual grid columns */}
-        {/* biome-ignore lint/a11y/noStaticElementInteractions: not a control — wrapper only stops click/key bubbling so the TeamPicker doesn't toggle the row; keyboard path is the TeamPicker itself */}
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: not a control. Wrapper only stops click/key bubbling so the TeamPicker doesn't toggle the row; keyboard path is the TeamPicker itself */}
         <div
           className="hidden sm:block"
           onClick={stopRowToggle}
@@ -383,7 +383,7 @@ function DelegationRow({
           />
         </div>
 
-        {/* biome-ignore lint/a11y/noStaticElementInteractions: not a control — wrapper only stops click/key bubbling so the reset button doesn't toggle the row; keyboard path is the reset button itself */}
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: not a control. Wrapper only stops click/key bubbling so the reset button doesn't toggle the row; keyboard path is the reset button itself */}
         <div
           className="hidden sm:block"
           onClick={stopRowToggle}

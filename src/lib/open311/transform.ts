@@ -62,7 +62,7 @@ export function expandStatus(open311Status: "open" | "closed"): ReportStatus[] {
 // Coarsen coordinates to ~3 decimal places (~110 m) for the PUBLIC,
 // unauthenticated Open311 feed: precise enough to place an issue on a block,
 // coarse enough not to pinpoint a reporter's home. The app's own map reads the
-// DB directly and is unaffected — only external Open311 consumers see this.
+// DB directly and is unaffected. Only external Open311 consumers see this.
 const COORD_PRECISION = 1000;
 function coarsenCoord(n: number): number {
   return Math.round(n * COORD_PRECISION) / COORD_PRECISION;
@@ -90,12 +90,12 @@ export function reportToOpen311(
   // expected_datetime: for still-open requests, project the resolution deadline
   // from the category SLA window (created_at + N hours). Closed/merged/rejected
   // requests are already resolved, so their expectation is null. Uses the same
-  // static CATEGORY_SLA_TARGETS the dashboard SLA metrics read — the public feed
+  // static CATEGORY_SLA_TARGETS the dashboard SLA metrics read, the public feed
   // reports the target, not a per-city override.
   //
   // CATEGORY_SLA_TARGETS is keyed by the twelve built-in categories, so a
-  // city-defined one — every `custom_`-prefixed key the onboarding wizard
-  // creates — looks up `undefined`. Multiplying that gives NaN, and
+  // city-defined one, every `custom_`-prefixed key the onboarding wizard
+  // creates. Looks up `undefined`. Multiplying that gives NaN, and
   // `new Date(NaN).toISOString()` THROWS "Invalid time value", which the route
   // catches as a 500. So this endpoint fails outright for any city using its own
   // categories. Fall back to the `other` window, and never hand an
@@ -152,8 +152,8 @@ export function reportToOpen311(
 /**
  * Read a PostgREST embedded resource that may arrive as either shape.
  *
- * PostgREST shapes an embed by cardinality — an array for to-many, a bare
- * object for to-one — and which one you get depends on whether a unique
+ * PostgREST shapes an embed by cardinality, an array for to-many, a bare
+ * object for to-one, and which one you get depends on whether a unique
  * constraint exists on the child's foreign key, so the shape flips under a
  * migration that merely adds one. Code that assumes an array silently reads
  * nothing the day that migration lands.

@@ -3,8 +3,8 @@
 // Usage: node scripts/shot-readme-gif.mjs [baseUrl]
 //
 // Produces docs/images/demo.gif: the routing page, easing from the live flow
-// chart — resident reports fanning through the classifier into twelve
-// categories, eleven divisions and their crews — down through the divisions to
+// chart, resident reports fanning through the classifier into twelve
+// categories, eleven divisions and their crews, down through the divisions to
 // the crews that actually receive the work.
 //
 // That path is chosen because it is the product's whole argument in one motion.
@@ -82,7 +82,7 @@ const src = join(TMP, webm);
 // SKIP drops the warm-up head: the run holds still for four seconds while the
 // flow chart settles, and four seconds of a motionless page is a third of the
 // file for none of the story. 64 colours rather than 256 because this page is
-// flat UI fills plus text, which quantises well — the same frames are 10.4 MB
+// flat UI fills plus text, which quantises well. The same frames are 10.4 MB
 // at 900px/12fps/full palette and 3.3 MB here, with the type still legible.
 const SKIP = "4.0";
 const palette = join(TMP, "palette.png");

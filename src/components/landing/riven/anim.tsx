@@ -1,6 +1,6 @@
 "use client";
 
-// V2 animation primitives — scroll-reveal, stagger, count-up, scroll progress.
+// V2 animation primitives, scroll-reveal, stagger, count-up, scroll progress.
 // Ported VERBATIM from Riven v2/anim.jsx. framer-motion@12 already a Civic dep.
 
 import {
@@ -23,8 +23,8 @@ import {
 
 export const EASE = [0.22, 0.61, 0.36, 1] as const;
 
-// Landing-page entrance + scroll-reveals are part of the brand experience —
-// we deliberately do NOT honor prefers-reduced-motion here.
+// Landing-page entrance + scroll-reveals are part of the brand experience.
+// We deliberately do NOT honor prefers-reduced-motion here.
 function useReducedMotion() {
   void _useReducedMotion;
   return false;
@@ -142,7 +142,7 @@ export function StaggerGroup({
   );
 }
 
-// Child of StaggerGroup — picks up parent variants.
+// Child of StaggerGroup. Picks up parent variants.
 export function StaggerItem({
   children,
   y = 44,

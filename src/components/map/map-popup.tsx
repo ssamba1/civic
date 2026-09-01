@@ -19,12 +19,12 @@ function esc(str: string | null | undefined): string {
     .replace(/'/g, "&#39;");
 }
 
-// Raw hex per status — this popup is a static HTML string (innerHTML, not
+// Raw hex per status. This popup is a static HTML string (innerHTML, not
 // JSX), so it can't use Tailwind chip classes; canonical @/lib/status only
 // exports class strings, not hex values, so the color map stays local. The
 // popup card is a fixed-dark surface (part of the always-dark map canvas,
 // independent of the app's light/dark theme), so these reference the
-// theme-invariant muted status FILL tokens (--color-success/warning —
+// theme-invariant muted status FILL tokens (--color-success/warning,
 // identical in :root and .dark per globals.css) rather than the AA-tuned
 // --status-*-fg text tokens, which are tuned per-theme and would go the
 // wrong direction on this always-dark card.
@@ -36,7 +36,7 @@ function esc(str: string | null | undefined): string {
 // the slate fill #5b6b8c does not (3.2:1), so dispatched AND in_progress use
 // the lightness-lifted slate #9db0d3 shared with fullscreen-map's
 // STATUS_TEXT_COLOR (7.8:1 here). merged/rejected keep their neutral/danger
-// reads — both statuses are excluded from every map status filter, so they
+// reads. Both statuses are excluded from every map status filter, so they
 // never actually reach this popup.
 const STATUS_COLOR: Record<ReportStatus, string> = {
   open: "var(--color-warning)",
@@ -134,7 +134,7 @@ export function renderPopupHTML(
   );
   const sla = slaWindow(report.severity);
   // Presenter-injected demo point: blue glow on the popup container + a "Live"
-  // pill so it reads as the freshly-added marker. (cn() N/A — this surface is an
+  // pill so it reads as the freshly-added marker. (cn() N/A, this surface is an
   // HTML string, not JSX, so the class is written into the root's class attr.)
   const isDemo =
     report.demo === true || report.reporter_id === DEMO_REPORTER_ID;
@@ -151,7 +151,7 @@ export function renderPopupHTML(
         />
         ${
           isDemo
-            ? // Presenter "just injected" marker — neutral (was an Apple-blue
+            ? // Presenter "just injected" marker. Neutral (was an Apple-blue
               // glow pill); it's a decorative highlight, not a status value.
               `<span style="position:absolute;top:10px;left:10px;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,0.16);color:#ffffff;font-size:11px;font-weight:600;letter-spacing:0.02em;box-shadow:0 1px 4px rgba(0,0,0,0.35);"><span style="width:6px;height:6px;border-radius:999px;background:#ffffff;"></span>Live</span>`
             : ""

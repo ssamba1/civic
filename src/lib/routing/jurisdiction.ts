@@ -12,7 +12,7 @@ type ServiceClient = ReturnType<typeof createServerClient>;
  * in one place.
  *
  * No-op-safe: on any error (un-migrated RPC included) it returns
- * `fallbackCityId` — the report's own city — so cross-jurisdiction routing
+ * `fallbackCityId` (the report's own city), so cross-jurisdiction routing
  * simply doesn't engage rather than breaking the pipeline.
  */
 export async function resolveOwningCity(

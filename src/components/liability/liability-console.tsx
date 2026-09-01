@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils/cn";
    /admin/liability interactive half: the horizon chips over the
    expiry sweep, and the v1 contract-data importer (spec 3.5).
 
-   All three horizons are fetched server-side and switched locally —
+   All three horizons are fetched server-side and switched locally.
    60/30/7 is three small lists, and a round trip per chip would make
    the highest-ROI screen in the spec feel like a report builder.
    ================================================================== */
@@ -72,9 +72,9 @@ export function LiabilityConsole({ sweeps, currency }: Props) {
               No warranties lapsing within {horizon} days.
             </p>
             <p className="mt-1 text-[12px] text-faint">
-              An empty sweep on a city with no capital jobs is not good news —
-              it means there is nothing to check against. Import a paving
-              schedule below.
+              An empty sweep on a city with no capital jobs is not good news. It
+              means there is nothing to check against. Import a paving schedule
+              below.
             </p>
           </div>
         ) : (
@@ -112,7 +112,7 @@ export function LiabilityConsole({ sweeps, currency }: Props) {
                       {r.contractRef ? `#${r.contractRef}` : "(no reference)"}
                     </td>
                     <td className="px-3 py-2.5 text-subtle">
-                      {r.contractorName ?? "—"}
+                      {r.contractorName ?? "-"}
                     </td>
                     <td className="px-3 py-2.5 text-subtle">
                       {titleize(r.jobType)}
@@ -157,7 +157,7 @@ export function LiabilityConsole({ sweeps, currency }: Props) {
 }
 
 /* ------------------------------------------------------------------
-   CSV importer — preview then confirm, mirroring /admin/import.
+   CSV importer, preview then confirm, mirroring /admin/import.
    ------------------------------------------------------------------ */
 
 function ContractImport() {
@@ -228,7 +228,7 @@ function ContractImport() {
         A paving schedule is usually one spreadsheet a year. Upload it here and
         columns are matched by header name. Coordinates are read as{" "}
         <strong className="font-medium text-foreground">EPSG:4326</strong>{" "}
-        (WGS-84 lon/lat) — nothing is reprojected, so a State Plane export must
+        (WGS-84 lon/lat). Nothing is reprojected, so a State Plane export must
         be converted before upload.
       </p>
 
@@ -326,7 +326,7 @@ function ContractImport() {
             }}
             rows={3}
             spellCheck={false}
-            placeholder="LINESTRING(-84.1408 34.2073, -84.1391 34.2090)   —or—   34.2073, -84.1408; 34.2090, -84.1391"
+            placeholder="LINESTRING(-84.1408 34.2073, -84.1391 34.2090), or, 34.2073, -84.1408; 34.2090, -84.1391"
             className="w-full rounded-[var(--radius-sm)] border border-hairline bg-[var(--background)] px-3 py-2 font-mono text-[12px] text-foreground placeholder:text-faint"
           />
           <p className="mt-1 text-[11px] text-faint">

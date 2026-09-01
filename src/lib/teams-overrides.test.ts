@@ -1,7 +1,7 @@
 // @vitest-environment node
 /**
  * teams-overrides.ts is "use client" and depends on React hooks
- * (useSyncExternalStore, useCallback, useEffect) — these cannot be called
+ * (useSyncExternalStore, useCallback, useEffect). These cannot be called
  * outside a React render. We test only the pure, hook-free exports:
  *   - getReportTeam (override map lookup + category fallback)
  *   - getReportHistory (history map lookup)
@@ -47,7 +47,7 @@ vi.mock("@/lib/category-overrides", () => ({
 import { getReportHistory, getReportTeam } from "./teams-overrides";
 
 beforeEach(() => {
-  // nothing to reset — these are pure functions with explicit map args
+  // nothing to reset. These are pure functions with explicit map args
 });
 
 describe("getReportTeam", () => {

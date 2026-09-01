@@ -12,7 +12,7 @@ type ServiceClient = ReturnType<typeof createServerClient>;
  * Prefers the city's own `sla_targets` row (migration 024); falls back to the
  * static CATEGORY_SLA_TARGETS map when the table is un-migrated, the city has
  * not seeded targets, or the lookup errors. Mirrors the graceful-degrade
- * pattern used for city_teams / crew_types — a missing DB row is never a hard
+ * pattern used for city_teams / crew_types. A missing DB row is never a hard
  * failure, just a fall-through to the shipped defaults.
  */
 export async function fetchSlaHours(

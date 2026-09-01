@@ -1,7 +1,7 @@
 import type { UIMessage } from "ai";
 
 export interface PendingNavigation {
-  /** toolCallId — stable, so the widget fires each navigation exactly once. */
+  /** toolCallId, stable, so the widget fires each navigation exactly once. */
   key: string;
   route: string;
 }

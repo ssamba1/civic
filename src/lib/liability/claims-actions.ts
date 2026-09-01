@@ -23,14 +23,14 @@ import { normalizeLocation, type Result } from "@/lib/types";
 
    Staff-gated, city-scoped, Result-returning. Three invariants:
 
-   1. `claims.packet` is written ONCE at draft time and never rewritten —
-      the claim as sent must stay reproducible when source rows are later
+   1. `claims.packet` is written ONCE at draft time and never rewritten.
+      The claim as sent must stay reproducible when source rows are later
       corrected (spec §5.2).
    2. Every state change goes through requireTransition() in claim-state.ts;
       the state machine lives there because a "use server" module may only
       export async functions.
    3. approveClaims delivers ONE email per contractor for the whole batch
-      (spec §5.3 — per-claim letters cost more staff time than the claims
+      (spec §5.3, per-claim letters cost more staff time than the claims
       recover). Delivery outcome is read with the outbox's isTerminal()
       policy: a transient send-error leaves the claim un-sent for retry
       rather than marking it delivered.
@@ -51,7 +51,7 @@ async function getStaffUser(): Promise<StaffProfile | null> {
   const db = createServerClient();
 
   if (!user) {
-    // Bypass only when DEV_AUTH_BYPASS=1 AND NODE_ENV=development — never in prod.
+    // Bypass only when DEV_AUTH_BYPASS=1 AND NODE_ENV=development, never in prod.
     if (
       process.env.NODE_ENV === "development" &&
       process.env.DEV_AUTH_BYPASS === "1"
@@ -221,7 +221,7 @@ export async function createDraftClaim(
   ) {
     return {
       ok: false,
-      error: `Report verdict is '${liability.verdict}' — no claim to make`,
+      error: `Report verdict is '${liability.verdict}'. No claim to make`,
     };
   }
 
@@ -374,13 +374,13 @@ function claimLine(packet: ClaimPacket | null, claimId: string): string {
     packet.defect.address ?? `${packet.defect.lat}, ${packet.defect.lng}`;
   const ref =
     packet.liability.contractRef ?? packet.liability.permitRef ?? "no ref";
-  return `• ${packet.defect.category} at ${where} — ${ref} — claim ${claimId}`;
+  return `• ${packet.defect.category} at ${where} (${ref}) claim ${claimId}`;
 }
 
 /**
  * Approve a batch of draft claims: mark them sent, assign the work orders to
  * the liable contractor, and mail ONE letter per contractor covering all their
- * claims. Per-contractor atomicity — a delivery that fails transiently leaves
+ * claims. Per-contractor atomicity, a delivery that fails transiently leaves
  * that contractor's claims in their prior state so the queue can retry.
  */
 export async function approveClaims(
@@ -419,7 +419,7 @@ export async function approveClaims(
       });
   }
 
-  // Group the sendable claims by contractor — one letter each (spec §5.3).
+  // Group the sendable claims by contractor, one letter each (spec §5.3).
   const byContractor = new Map<string, typeof rows>();
   for (const row of rows) {
     const transition = requireTransition(row.state, "sent");
@@ -449,10 +449,10 @@ export async function approveClaims(
     const lines = group.map((row) => claimLine(row.packet, row.id));
     const delivery = await deliverEmail({
       to: contractor?.email ?? null,
-      subject: `Warranty claim${group.length === 1 ? "" : "s"} — ${group.length} defect${group.length === 1 ? "" : "s"}`,
+      subject: `Warranty claim${group.length === 1 ? "" : "s"}, ${group.length} defect${group.length === 1 ? "" : "s"}`,
       heading: `${group.length} defect${group.length === 1 ? "" : "s"} within your liability window`,
       body: [
-        `${contractor?.name ?? "Contractor"} — the City has attributed the following defect${group.length === 1 ? "" : "s"} to work still covered by your contract or permit obligations.`,
+        `${contractor?.name ?? "Contractor"}. The City has attributed the following defect${group.length === 1 ? "" : "s"} to work still covered by your contract or permit obligations.`,
         lines.join("\n"),
         group[0]?.packet?.requestedAction ?? "",
       ]
@@ -467,7 +467,7 @@ export async function approveClaims(
       for (const row of group) {
         summary.skipped.push({
           claimId: row.id,
-          reason: `Delivery failed (${delivery.reason ?? "send-error"}) — not sent, retry`,
+          reason: `Delivery failed (${delivery.reason ?? "send-error"}), not sent, retry`,
         });
       }
       summary.deliveries.push({
@@ -570,7 +570,7 @@ export async function dismissClaim(
   return { ok: true, data: undefined };
 }
 
-/** Close the loop with the recovered amount — the recovery ledger's input. */
+/** Close the loop with the recovered amount, the recovery ledger's input. */
 export async function resolveClaim(
   claimId: string,
   recoveredCents: number,

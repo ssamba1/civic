@@ -20,17 +20,17 @@ import {
 /**
  * Shape the classify pipeline persists. Mirrors the deterministic
  * GeneratedWorkOrder minus priority_score (priority stays deterministic and
- * auditable — the AI sizes crew/materials/minutes/cost, not the dispatch
+ * auditable. The AI sizes crew/materials/minutes/cost, not the dispatch
  * priority math). materials is flattened to display strings ("item ×qty") so
  * the work_orders.materials jsonb column stays a string[] like the rules path.
  */
 export interface AiGeneratedWorkOrder {
   department: Department;
   /** A key from the city's crew_types catalog (or a default key), not the
-   *  static CrewType union — cities define their own types (031). */
+   *  static CrewType union. Cities define their own types (031). */
   crew_type: string | null;
   /** Exact crew name the model believes best fits (## CREWS section), or
-   *  null. Advisory only — autoAssignCrew honors it solely when it matches a
+   *  null. Advisory only, autoAssignCrew honors it solely when it matches a
    *  real active same-type crew; otherwise the load balancer decides. */
   crew_hint: string | null;
   est_minutes: number;
@@ -56,8 +56,8 @@ function stripCodeFences(raw: string): string {
  *
  * Same resilience contract as classifyPhoto: rate-limited, per-attempt timeout
  * + retry, structured output re-validated with zod. Returns ok:false on any
- * failure so the caller can fall back to the deterministic rules generator —
- * this call must never throw the pipeline.
+ * failure so the caller can fall back to the deterministic rules generator.
+ * This call must never throw the pipeline.
  */
 export async function generateWorkOrderAI(
   classification: Classification,
@@ -88,7 +88,7 @@ export async function generateWorkOrderAI(
       },
     });
 
-    // The classification is the entire context — append it as compact JSON.
+    // The classification is the entire context, append it as compact JSON.
     const request = `${buildWorkOrderPrompt(effectiveTypes, crews)}
 
 ## CLASSIFICATION
@@ -134,7 +134,7 @@ ${JSON.stringify(
     const wo = validation.data;
     // Ceiling: cap at 50× the deterministic rules floor for this category,
     // never above $5M. Prevents a hallucinated/malformed cost from persisting
-    // unchecked — a legitimate AI estimate should never exceed 50× the known
+    // unchecked. A legitimate AI estimate should never exceed 50× the known
     // material+labor baseline. (Math.max here would make the ceiling AT LEAST
     // $5M and the 50× cap dead code.) The Math.max floor is applied again in
     // classify-pipeline. Guard rulesFloor <= 0 so an unknown category doesn't

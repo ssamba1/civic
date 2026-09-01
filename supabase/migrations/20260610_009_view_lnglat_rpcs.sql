@@ -1,5 +1,5 @@
 -- =============================================================================
--- Civic – Dashboard read-path repair: view lng/lat + tags, city RPCs
+-- Civic. Dashboard read-path repair: view lng/lat + tags, city RPCs
 -- Migration: 20260610_009_view_lnglat_rpcs.sql
 --
 -- Fixes the dead dashboard read path:
@@ -62,7 +62,7 @@ WHERE r.status NOT IN ('rejected');
 GRANT SELECT ON dashboard_reports_view TO anon, authenticated;
 
 -- ---------------------------------------------------------------------------
--- 2. city_stats(_city_id) — single-row aggregate consumed by fetchCityStats
+-- 2. city_stats(_city_id), single-row aggregate consumed by fetchCityStats
 --    (dashboard-queries.ts:27). Column names match the caller's destructure
 --    exactly: total, open_count, resolved, this_week, prev_week, avg_hours.
 --    avg_hours uses work_orders.completed_at (the only resolution timestamp);
@@ -108,7 +108,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.city_stats(uuid) TO anon, authenticated;
 
 -- ---------------------------------------------------------------------------
--- 3. city_category_breakdown(_city_id) — per-category counts consumed by
+-- 3. city_category_breakdown(_city_id), per-category counts consumed by
 --    fetchCategoryBreakdown (dashboard-queries.ts:49). Caller maps rows of
 --    { category, count }; ordered by count desc to match the mock's ordering.
 -- ---------------------------------------------------------------------------

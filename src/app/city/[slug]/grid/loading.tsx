@@ -1,6 +1,6 @@
 /* Route-level skeleton for the Work Order Grid. The grid page is staff-gated
    and fetches rows + crews + crew types before it can render anything, and the
-   AG Grid bundle is the largest chunk on any route — so without this the
+   AG Grid bundle is the largest chunk on any route, so without this the
    content area stayed blank for the whole wait. Mirrors the real shell exactly:
    full-bleed, the same h-[calc(100dvh/var(--app-zoom,1))] height (dvh resolves
    BEFORE the html zoom scales it), the same mobile fixed-header offset, and a
@@ -9,7 +9,7 @@
    reduced-motion safe via globals.css). */
 
 /* Width class per column. Four columns share "w-[12%]", so the class string
-   cannot be the React key — that produced "Encountered two children with the
+   cannot be the React key, that produced "Encountered two children with the
    same key" on every render of this skeleton. The list is a fixed constant that
    is never reordered or filtered, so the index IS the stable identity. */
 const COLUMNS = [
@@ -45,7 +45,7 @@ export default function Loading() {
         </div>
       </div>
 
-      {/* Grid body — header row then data rows at a fixed rhythm. */}
+      {/* Grid body, header row then data rows at a fixed rhythm. */}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="flex flex-shrink-0 items-center gap-4 border-b border-hairline bg-overlay/50 px-4 py-3">
           {COLUMNS.map((col) => (

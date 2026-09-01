@@ -52,7 +52,7 @@ export function MyReportsInteractive({
 
   return (
     <div className="space-y-4 animate-in fade-in duration-500">
-      {/* Status summary — celebrate the resident's civic footprint.
+      {/* Status summary, celebrate the resident's civic footprint.
           On mobile the stats stack 2×2 naturally via StatGrid; padding
           tightened slightly so the card breathes without eating too much
           vertical real-estate on small screens. */}
@@ -72,7 +72,7 @@ export function MyReportsInteractive({
             value={String(summary.active)}
             hint={
               summary.active === 0
-                ? "Nothing pending — all caught up."
+                ? "Nothing pending. All caught up."
                 : "Crews are on it."
             }
           />
@@ -97,7 +97,7 @@ export function MyReportsInteractive({
         </StatGrid>
       </div>
 
-      {/* Filter control row — full-width on mobile so pills are easy to tap,
+      {/* Filter control row, full-width on mobile so pills are easy to tap,
           right-aligned on sm+ to match the original desktop layout. */}
       <div className="flex items-center justify-start sm:justify-end">
         <PillGroup
@@ -107,12 +107,12 @@ export function MyReportsInteractive({
         />
       </div>
 
-      {/* RecentReports is its own bordered panel — render it standalone.
+      {/* RecentReports is its own bordered panel. Render it standalone.
           On mobile let it grow freely (no max-height cap) so the user
           doesn't need to scroll within a scrolling container; on sm+
           restore the 640px cap. */}
       {/* key={filter} remounts the wrapper so the fade-in re-fires on every
-          filter switch — cross-fades between All / Active / Resolved states
+          filter switch, cross-fades between All / Active / Resolved states
           (notably the jump to/from the empty Resolved view). */}
       <div key={filter} className="animate-in fade-in duration-300">
         {visible.length === 0 ? (
@@ -122,8 +122,8 @@ export function MyReportsInteractive({
                 reports.length === 0
                   ? "No reports filed yet."
                   : filter === "resolved"
-                    ? "No resolved reports yet — they'll land here once crews wrap up."
-                    : "Nothing active right now — you're all caught up."
+                    ? "No resolved reports yet. They'll land here once crews wrap up."
+                    : "Nothing active right now, you're all caught up."
               }
             />
             {/* True zero-state gets a primary CTA so the resident never

@@ -8,7 +8,7 @@ import { getService } from "@/lib/open311/services";
  *
  * Open311 GeoReport v2 service definition for one service. All Civic services
  * declare metadata:false (no dynamic attribute forms), so the definition is the
- * static service entry plus an empty `attributes` array — the shape a spec
+ * static service entry plus an empty `attributes` array. The shape a spec
  * consumer expects when it follows a service_code. Public, no auth.
  *
  * Content negotiation: ?format=xml or Accept: text/xml → XML, else JSON.
@@ -32,7 +32,7 @@ export async function GET(
   }
 
   // GeoReport v2 service_definition: the service metadata + its attribute list
-  // (empty here — no dynamic questionnaire in v1).
+  // (empty here, no dynamic questionnaire in v1).
   const definition = { service_code: service.service_code, attributes: [] };
 
   if (xml) {

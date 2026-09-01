@@ -3,7 +3,7 @@
 /**
  * Client console for the Documents workspace: ingestion (file pick or paste),
  * per-row delete, and the retrieval tester that proves the mechanism works.
- * Utilitarian by design — this is a staff ops surface, not a resident page.
+ * Utilitarian by design. This is a staff ops surface, not a resident page.
  */
 import { Search, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -63,7 +63,7 @@ export function UploadDocument({
         setMessage(`Ingestion refused: ${result.error}`);
         return;
       }
-      setMessage(`Stored — ${result.data.chunkCount} chunks indexed.`);
+      setMessage(`Stored, ${result.data.chunkCount} chunks indexed.`);
       setTitle("");
       setPasted("");
       setContractor("");
@@ -78,7 +78,7 @@ export function UploadDocument({
     <section className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-4">
       <h2 className={`${EYEBROW} mb-3`}>Add document</h2>
 
-      {/* One field group — title/kind row, contractor, file — on a single
+      {/* One field group (title/kind row, contractor, file) on a single
           uniform gap so the bolted-on contractor select reads as part of the
           form rather than an afterthought. */}
       <div className="space-y-2">
@@ -125,7 +125,7 @@ export function UploadDocument({
               onChange={(e) => setContractor(e.target.value)}
               className={FIELD}
             >
-              <option value="">No contractor — general city document</option>
+              <option value="">No contractor, general city document</option>
               {contractors.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -171,7 +171,7 @@ export function UploadDocument({
       </div>
 
       <p className="mt-2 text-[11px] text-faint">
-        Plain text and markdown only — PDF is not supported (no PDF parser ships
+        Plain text and markdown only. PDF is not supported (no PDF parser ships
         with this app). Export or paste the text instead. Markdown headings
         become the section label on each stored chunk.
       </p>
@@ -277,7 +277,7 @@ export function RetrievalTester({ slug }: { slug: string }) {
       {!results && !error && (
         <div className="mt-3 rounded-[var(--radius-md)] border border-dashed border-hairline-strong px-4 py-8 text-center">
           <p className="text-[13px] text-subtle">
-            No lookup run yet — matched clauses appear here.
+            No lookup run yet, matched clauses appear here.
           </p>
           <p className="mt-1 text-[13px] text-faint">
             Full-text ranked, city-scoped, top matches first.
@@ -314,7 +314,7 @@ export function RetrievalTester({ slug }: { slug: string }) {
                 </span>
                 <span
                   className="ml-auto font-mono text-[11px] tabular-nums text-faint"
-                  title="Full-text match score — higher ranks first"
+                  title="Full-text match score, higher ranks first"
                 >
                   #{idx + 1} · {chunk.rank.toFixed(3)}
                 </span>

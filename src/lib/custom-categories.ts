@@ -13,13 +13,13 @@ import { createReactiveStore } from "@/lib/utils/reactive-store";
 
    The built-in report categories are a compile-time TS union
    (`ReportCategory`) and every `Record<ReportCategory, …>` is
-   exhaustive over it — so a category the dispatcher invents at runtime
+   exhaustive over it, so a category the dispatcher invents at runtime
    *cannot* join that union. It lives here instead, in a parallel store
    that the routing matrix merges in for display.
 
    Scope is deliberately the routing config only: a custom type records
    which team it should route to (editable via the same TeamPicker), but
-   it does not feed `categoryToTeam`/CATEGORY_META — the AI classifier
+   it does not feed `categoryToTeam`/CATEGORY_META, the AI classifier
    only emits the fixed union, so a custom type won't *receive*
    auto-classified reports until that classifier is extended.
 
@@ -66,7 +66,7 @@ export interface CustomCategory {
   /** Always `custom_<slug>` so it never collides with a built-in key. */
   id: string;
   label: string;
-  /** AI-facing description (issue #6) — what a photo of this issue looks like.
+  /** AI-facing description (issue #6). What a photo of this issue looks like.
    *  Empty when the dispatcher didn't supply one; then the type routes only on
    *  a manual pick, never AI auto-classification. */
   description?: string;
@@ -107,7 +107,7 @@ function writeStorage(list: CustomCategory[]) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
   } catch {
-    // Quota / private mode — silently drop. In-memory snapshot still works.
+    // Quota / private mode. Silently drop. In-memory snapshot still works.
   }
 }
 
@@ -224,7 +224,7 @@ export function useCustomCategories(): UseCustomCategoriesReturn {
 }
 
 /* ------------------------------------------------------------------
-   Issue-type resolution — unifies the built-in `ReportCategory` union
+   Issue-type resolution, unifies the built-in `ReportCategory` union
    with runtime custom categories so a manual picker (report form) can
    list both and resolve either to its routing team without the AI
    classifier. Pure functions; pass the reactive `custom` list from

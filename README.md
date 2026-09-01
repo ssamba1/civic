@@ -14,7 +14,7 @@
 [![migrations](https://github.com/ssamba1/civic/actions/workflows/migrations.yml/badge.svg)](https://github.com/ssamba1/civic/actions/workflows/migrations.yml)
 [![MIT licence](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
 
-**HackSocial · AI/ML track** — submission write-up in [`SUBMISSION.md`](SUBMISSION.md)
+**HackSocial · AI/ML track**: submission write-up in [`SUBMISSION.md`](SUBMISSION.md)
 
 </div>
 
@@ -31,16 +31,16 @@ Nobody reads a form in the middle. **The work order is the report, transformed.*
 The pilot city is Cumming, Georgia.
 
 The same pipeline runs on video. A phone mounted on a truck that already
-drives every street produces far denser data than residents ever will — and a
+drives every street produces far denser data than residents ever will, and a
 ruinous model bill, if every frame goes to a vision model. So the model is the
 *last* step: a local detector scans the frames for free, Postgres clusters the
 detections, and only a cluster that survives a confidence threshold costs a
 model call. On the seeded clip, **375 frames became 531 detections, 33
-clusters, and 27 reports** — with the model asked about a fraction of those 33.
+clusters, and 27 reports**, with the model asked about a fraction of those 33.
 See [the video vertical](#the-video-vertical-how-to-use-a-model-without-a-model-bill).
 
 We built it because the backlog everyone blames on budget or on crews is
-usually a backlog of *unstaffed triage* — and reading a photograph into a
+usually a backlog of *unstaffed triage*, and reading a photograph into a
 category is the one thing a vision model is unambiguously good at. The
 interesting question was never whether AI could do that step. It was how much
 of the process you dare let it touch, when the output is public money and a
@@ -49,7 +49,7 @@ never dispatches.**
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/landing-dark.jpg">
-  <img alt="The Civic landing page: a live map of Cumming with report pins, callouts reading 'AI TRIAGE — Pothole, classified in 1.4s' and 'ROUTED — Public Works, via Open311', over the wordmark and a card explaining photo to costed work order" src="docs/images/landing.jpg">
+  <img alt="The Civic landing page: a live map of Cumming with report pins, callouts reading 'AI TRIAGE, Pothole, classified in 1.4s' and 'ROUTED, Public Works, via Open311', over the wordmark and a card explaining photo to costed work order" src="docs/images/landing.jpg">
 </picture>
 
 <div align="center"><sub>The public landing page. The map is live, the pins are real reports, and the two callouts are the actual pipeline stages.</sub></div>
@@ -148,7 +148,7 @@ The result is the failure mode every resident recognises: you report a thing, he
 
 The cheap version of this argument is "AI saves staff time". The real one is narrower.
 
-A small city's repair backlog is not usually limited by crews. It is limited by **the triage step in front of the crews**, which is unstaffed. Remove that step and the same crews get to the same work sooner, and the city gets a defensible public record of what was reported and what was done about it — the thing that turns a complaint into evidence at a budget meeting.
+A small city's repair backlog is not usually limited by crews. It is limited by **the triage step in front of the crews**, which is unstaffed. Remove that step and the same crews get to the same work sooner, and the city gets a defensible public record of what was reported and what was done about it, the thing that turns a complaint into evidence at a budget meeting.
 
 It is cheap to run: one Postgres database, one web deployment, and a vision model call measured in fractions of a cent per report.
 
@@ -174,23 +174,23 @@ Five ideas produce those differences.
 
 The output of classification is not a label for a human to confirm. It is a **complete work order**: department, crew type, priority score, estimated minutes, materials list and a deterministic cost floor.
 
-Priority is arithmetic, not vibes — `severity × 2 + recurrence + emergency × 50` — so two reports with the same inputs always rank the same way, and a director can be told exactly why one outranked another.
+Priority is arithmetic, not vibes (`severity × 2 + recurrence + emergency × 50`), so two reports with the same inputs always rank the same way, and a director can be told exactly why one outranked another.
 
 ### 2. The model classifies. It never dispatches.
 
 This is the line the whole design is built around.
 
-Gemini decides *what the photograph shows*. Everything after that — which division owns the category, which crew is picked, what the repair costs, when the SLA expires — is a deterministic function of that answer, written in code you can read, with tests.
+Gemini decides *what the photograph shows*. Everything after that (which division owns the category, which crew is picked, what the repair costs, when the SLA expires) is a deterministic function of that answer, written in code you can read, with tests.
 
 A misclassification therefore delays a job. It cannot invent a repair, misprice one, or silently drop one. That containment is what makes it defensible to run a model in a workflow that spends public money.
 
 ### 3. Deduplication happens before a work order exists, in the database
 
-The twentieth report of the same pothole should not be a new job. `ST_DWithin` against a **GiST index** on `geography(POINT, 4326)` finds open reports within 50 m from the last 30 days, and the duplicate merges into the original — bumping its recurrence count, which raises its priority.
+The twentieth report of the same pothole should not be a new job. `ST_DWithin` against a **GiST index** on `geography(POINT, 4326)` finds open reports within 50 m from the last 30 days, and the duplicate merges into the original, bumping its recurrence count, which raises its priority.
 
 Twenty neighbours reporting the same hole is not twenty tickets. It is one job that just became more urgent, which is the correct reading of what happened.
 
-Two things are deliberately true of it. **It ships behind a flag** (`DEDUP_REPORTS=1`, off by default) because auto-merging a resident's report is the kind of thing a city should switch on knowingly rather than discover. And **an emergency is never deduped** — the one case where a false merge is unacceptable is the one where the hazard is active.
+Two things are deliberately true of it. **It ships behind a flag** (`DEDUP_REPORTS=1`, off by default) because auto-merging a resident's report is the kind of thing a city should switch on knowingly rather than discover. And **an emergency is never deduped**, the one case where a false merge is unacceptable is the one where the hazard is active.
 
 Spherical distance in the database, never haversine in application code.
 
@@ -212,7 +212,7 @@ The moment a language model produces the dollar figure on a municipal work order
 <br>
 
 - **Resolution verification.** `work_orders.resolution_photo_url` and `resolution_ai_score` already exist: the crew photographs the finished repair and the same vision path grades whether it matches the original complaint.
-- **Contractor marketplace.** Contractor crews already sit alongside municipal ones in dispatch — the seeded city routes potholes to `Northside Paving LLC`. Bidding on the backlog is the natural extension.
+- **Contractor marketplace.** Contractor crews already sit alongside municipal ones in dispatch. The seeded city routes potholes to `Northside Paving LLC`. Bidding on the backlog is the natural extension.
 - **More than one city.** Nothing in the schema is Cumming-specific. The city is a row, and five already exist in the reference database.
 
 </details>
@@ -273,7 +273,7 @@ Every stage is best-effort and idempotent. A failure logs and returns null inste
   <img alt="The routing page: intake through AI classification to twelve categories, eleven divisions and their crews, with live report counts on every node" src="docs/images/routing.png">
 </picture>
 
-<div align="center"><sub>The real pipeline with live counts on every node — 224 resident reports fanning out through twelve categories into eleven divisions and their crews.</sub></div>
+<div align="center"><sub>The real pipeline with live counts on every node, 224 resident reports fanning out through twelve categories into eleven divisions and their crews.</sub></div>
 
 This page is not a diagram of the architecture. It is a **rendering of the current configuration**, drawn from the same tables dispatch reads. If a category is routed somewhere surprising, this is where you see it, and the chip at the top says plainly when a configured org tree is routing nothing because no unit has claimed any categories.
 
@@ -281,7 +281,7 @@ A configuration screen that cannot show you its own consequences is how routing 
 
 ### The dispatcher, in full
 
-The model may hand dispatch a `crew_hint` — a name it read out of the crews' own descriptions. If that hint matches a real crew exactly, it is honoured. If it names a crew that does not exist, the miss is **logged** and the hint is discarded rather than guessed at.
+The model may hand dispatch a `crew_hint`, a name it read out of the crews' own descriptions. If that hint matches a real crew exactly, it is honoured. If it names a crew that does not exist, the miss is **logged** and the hint is discarded rather than guessed at.
 
 Everything else is `pickCrew` in [`src/lib/ai/crew-assign.ts`](src/lib/ai/crew-assign.ts): a pure comparator over five criteria in fixed order, with no model call in it.
 
@@ -305,7 +305,7 @@ const sorted = [...candidates].sort((a, b) => {
 });
 ```
 
-Load is **per capita** — open minutes divided by crew size — so a six-person crew absorbs proportionally more than a two-person crew before it looks loaded. Ranking by raw queue depth would quietly punish small crews for being small.
+Load is **per capita** (open minutes divided by crew size), so a six-person crew absorbs proportionally more than a two-person crew before it looks loaded. Ranking by raw queue depth would quietly punish small crews for being small.
 
 An unstaffed crew is still assignable, deliberately. A city creates a division before it hires into it, and work needs somewhere to land in the meantime; it just loses to any crew that has people.
 
@@ -326,13 +326,13 @@ Pulled from the running database. Each row is an actual chain of report → clas
 | Faded signage | 149 Redwood Dr | 3 | 0.90 | Public Works | **Signal & Sign Crew** | 90 min |
 | Tree down | 729 Juniper Rd | 3 | 0.90 | Parks | **Forestry Crew** | 90 min |
 
-Eight categories reach **seven crews across five departments**, and one of them is a private contractor sitting in the same dispatch path as the municipal crews — because a small city's paving is often not done by the city.
+Eight categories reach **seven crews across five departments**, and one of them is a private contractor sitting in the same dispatch path as the municipal crews, because a small city's paving is often not done by the city.
 
-Note the pothole's confidence: **0.60**. It still routed. Confidence is shown to staff, never used as a gate, because a report the model was unsure about is exactly the one that most needs a human to see it — and dropping it would be the one failure a resident would never forgive.
+Note the pothole's confidence: **0.60**. It still routed. Confidence is shown to staff, never used as a gate, because a report the model was unsure about is exactly the one that most needs a human to see it, and dropping it would be the one failure a resident would never forgive.
 
 ### The video vertical: how to use a model without a model bill
 
-A city can mount a phone on a truck that already drives every street each week. That is a far denser source of pavement condition than resident reports — and a far more expensive one, if every frame goes to a vision model.
+A city can mount a phone on a truck that already drives every street each week. That is a far denser source of pavement condition than resident reports, and a far more expensive one, if every frame goes to a vision model.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/video-dark.jpg">
@@ -399,7 +399,7 @@ Two details carry most of the weight.
 
 `issue_types` and `city_teams` hang off `cities`, which is why a city can extend its own vocabulary and its own org chart without a deploy.
 
-`work_orders.report_id` is **UNIQUE** — one report becomes exactly one job, which is what makes the dedup step load-bearing rather than cosmetic. That same unique constraint is also what caused the nastiest bug in [Proof it works](#4-proof-it-works), because it decides the *shape* PostgREST returns.
+`work_orders.report_id` is **UNIQUE**: one report becomes exactly one job, which is what makes the dedup step load-bearing rather than cosmetic. That same unique constraint is also what caused the nastiest bug in [Proof it works](#4-proof-it-works), because it decides the *shape* PostgREST returns.
 
 </details>
 
@@ -432,7 +432,7 @@ Two details carry most of the weight.
 | Never call the model from the client | All model calls go through `/api/ai/*` server routes. The key is not in any `NEXT_PUBLIC_*` var |
 | No raw photo reaches the public bucket | Blur runs on the device before upload. The original goes to a separate restricted bucket on a 30-day timer. Checked by `pnpm audit:privacy`, which passes across all 5 cities in the reference database |
 | Row-level security on every table, deny by default | 77 ordered migrations, with a dedicated regression suite in [`tests/rls/`](tests/rls/) |
-| No personal data in URLs | Public status pages use an opaque salted token (`/r/[token]`), never a report id — report ids are public through the Open311 API, so a naive status URL would let anyone enumerate every resident's report |
+| No personal data in URLs | Public status pages use an opaque salted token (`/r/[token]`), never a report id. Report ids are public through the Open311 API, so a naive status URL would let anyone enumerate every resident's report |
 | The rate limiter cannot be spoofed | It keys off the platform-set client-IP header only. Server env validation **throws** in production without it, rather than silently falling back to a forgeable `x-forwarded-for` |
 
 The blur is honest about its own limits, in a docblock at the top of [`src/lib/privacy/blur.ts`](src/lib/privacy/blur.ts): see [Honest limits](#6-honest-limits).
@@ -456,7 +456,7 @@ Every number here was produced by running the command in the middle column on th
 | End to end | `pnpm test:e2e` | 7 Playwright specs |
 | Privacy audit | `pnpm audit:privacy` | **No raw-photo leaks across 5 cities** |
 | Live health | `pnpm health` | `{"status":"ok","checks":{"database":true,"ai":true}}` |
-| Accessibility | Lighthouse | **100 / 100 / 100** — a11y, best practices, SEO — on `/` and `/report`, mobile |
+| Accessibility | Lighthouse | **100 / 100 / 100**, a11y, best practices, SEO, on `/` and `/report`, mobile |
 | Core loop, end to end | a real photo through `/report` | Filed on a phone viewport → classified **pothole at 0.95** → work order at public works / paving / 30 min / $98 |
 
 The seeded pilot city holds **158 reports, 108 work orders, 9 crews and 66 users**, across 11 divisions and 12 categories.
@@ -487,7 +487,7 @@ This matters more than it looks. An export that works is the difference between 
 
 Two workflows gate every push and pull request.
 
-**`test.yml`** runs type-check, lint, unit and RLS tests, and a production build, then Playwright and the privacy audit. It stays green on a fork with no secrets, because the database suites skip instead of failing — a CI file that only works for people holding credentials is not a gate.
+**`test.yml`** runs type-check, lint, unit and RLS tests, and a production build, then Playwright and the privacy audit. It stays green on a fork with no secrets, because the database suites skip instead of failing, a CI file that only works for people holding credentials is not a gate.
 
 **`migrations.yml`** applies all **77 migrations in order to an empty Postgres with PostGIS**, which is what standing up a new city actually does. Applying migrations one at a time to a live database hides a whole class of defect, and this repository has been bitten by it before.
 
@@ -503,7 +503,7 @@ Every check in the table above was green while all of the following were live. E
 | Symptom | Root cause | Why nothing caught it |
 |---|---|---|
 | **A report was saved, then never dispatched.** No work order, no crew. The resident saw a thank-you screen and nobody saw an error | `generateWorkOrder` did `RULES[classification.category].department` with no guard. For a city-defined category the lookup was `undefined`, and dereferencing it threw *after* the classification had already been persisted, so the catch above reported "classification service unavailable" for a report that was sitting safely in the table | The worst one. The seeded work orders exist because the seed script writes them directly instead of going through the pipeline, so the demo looked healthy while the live path was broken |
-| The Open311 export returned `200 OK` and an empty list while the reports table was full | PostgREST returns an embedded relation as an array for to-many and a bare object for to-one, and the shape flips when a migration adds a unique constraint — which `work_orders.report_id UNIQUE` is. The row schema accepted arrays only, so every row failed validation and was silently dropped | Types were fine. The shape is decided at runtime by the database |
+| The Open311 export returned `200 OK` and an empty list while the reports table was full | PostgREST returns an embedded relation as an array for to-many and a bare object for to-one, and the shape flips when a migration adds a unique constraint, which `work_orders.report_id UNIQUE` is. The row schema accepted arrays only, so every row failed validation and was silently dropped | Types were fine. The shape is decided at runtime by the database |
 | Fixing the above revealed a `500` on every city-defined category | An SLA lookup returned `undefined`, arithmetic on it produced `NaN`, and `new Date(NaN).toISOString()` throws | Hidden the whole time behind the bug that discarded the rows first |
 | A resolution email that rendered the literal word `undefined` to a resident, and an empty "what was done" note on the status timeline | The same exhaustive-over-builtins table, indexed by a city key | Visible, but to residents rather than to us |
 
@@ -513,7 +513,7 @@ Three more of the same shape were fatal only in the sense that they were wrong r
 
 A passing build and 1,419 passing tests tell you the code agrees with itself. They do not tell you the product works. A browser hitting a page and a person reading a screenshot each caught in one look what every automated check missed.
 
-The fix was not twenty patches, it was three accessors — `ruleFor()`, `categoryMeta()`, `categorySlaHours()` — each falling back to `other` for a key its table has never seen, and 22 call sites moved onto them. Call sites that iterate `CATEGORIES` rather than indexing by a runtime key were deliberately left alone: they cannot miss.
+The fix was not twenty patches, it was three accessors (`ruleFor()`, `categoryMeta()`, `categorySlaHours()`) each falling back to `other` for a key its table has never seen, and 22 call sites moved onto them. Call sites that iterate `CATEGORIES` rather than indexing by a runtime key were deliberately left alone: they cannot miss.
 
 </details>
 
@@ -529,8 +529,8 @@ A resident on a sidewalk and a director at a desk are not the same user, so they
 <td width="50%" valign="top"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/status-dark.png"><img alt="The public status page on a phone: language switcher, Streetlight In progress, the reported address, Routed to Street Lighting Division, the photo, and a card reading Target date passed" src="docs/images/status.png"></picture></td>
 </tr>
 <tr>
-<td valign="top"><b>Camera first.</b> No form to read before you can photograph a problem. Two targets, both sized for a thumb, and the primary one is the camera.<br><br>The written empty state — "Take a photo of the problem to get started" — is the entire tutorial. A resident standing in front of a broken thing will not read anything longer.<br><br><b>Camera denied falls back to upload.</b> Geolocation, unreliable on some Android builds, falls back to tapping the map.</td>
-<td valign="top"><b>The status page needs no account</b>, because requiring one is how a city loses the reporter. An opaque salted token, bookmarkable, never a report id.<br><br>It is <b>translated into six languages</b> — English, Spanish, French, Vietnamese, Chinese, Korean — batched per request. A 311 system that only answers in English does not serve the residents most likely to be ignored by one.<br><br>And it tells the truth: <b>"Target date passed"</b> when the SLA has blown, rather than showing a soothing "in progress" forever.</td>
+<td valign="top"><b>Camera first.</b> No form to read before you can photograph a problem. Two targets, both sized for a thumb, and the primary one is the camera.<br><br>The written empty state ("Take a photo of the problem to get started") is the entire tutorial. A resident standing in front of a broken thing will not read anything longer.<br><br><b>Camera denied falls back to upload.</b> Geolocation, unreliable on some Android builds, falls back to tapping the map.</td>
+<td valign="top"><b>The status page needs no account</b>, because requiring one is how a city loses the reporter. An opaque salted token, bookmarkable, never a report id.<br><br>It is <b>translated into six languages</b> (English, Spanish, French, Vietnamese, Chinese, Korean) batched per request. A 311 system that only answers in English does not serve the residents most likely to be ignored by one.<br><br>And it tells the truth: <b>"Target date passed"</b> when the SLA has blown, rather than showing a soothing "in progress" forever.</td>
 </tr>
 </table>
 
@@ -541,7 +541,7 @@ For staff, legibility over density. The same data answers two different question
   <img alt="The analytics page: peer benchmark, resolution rate, mean time to resolve, SLA compliance and active backlog, over a reports-over-time chart, severity mix and reporter activity" src="docs/images/analytics.png">
 </picture>
 
-<div align="center"><sub>Analytics answers "how are we doing" — and labels its own demo figures as sample data rather than passing them off as measured outcomes.</sub></div>
+<div align="center"><sub>Analytics answers "how are we doing", and labels its own demo figures as sample data rather than passing them off as measured outcomes.</sub></div>
 
 <details>
 <summary><b>And the grid, which is where a public works director actually lives</b></summary>
@@ -555,7 +555,7 @@ For staff, legibility over density. The same data answers two different question
 
 158 work orders, filtered by status along the top, sorted by priority. The column that matters is **SLA**: `24h left` in green, `11h left` in amber, `Overdue 12h` through `Overdue 24d` in red.
 
-That column is the honest one. A dashboard that only showed throughput would let a city feel productive while its oldest obligations aged out of sight — so the grid sorts them to the top and colours them so they cannot be skimmed past.
+That column is the honest one. A dashboard that only showed throughput would let a city feel productive while its oldest obligations aged out of sight, so the grid sorts them to the top and colours them so they cannot be skimmed past.
 
 Status, team, department and crew are all editable inline, and the header says plainly when edits are local rather than saved.
 
@@ -567,12 +567,12 @@ Status, team, department and crew are all editable inline, and the header says p
 
 Every line here can be checked in about a minute, so it is better said first than found later.
 
-- **A hosted demo exists only if a URL is linked at the top of this file.** If there is none there, there is no live deployment — the database, seed data, build and running app are all real, and the production standalone server has been run and smoke-tested, but nothing is hosted. We would rather you found that stated here than discovered it after clicking.
-- **The seeded reports are synthetic.** They are realistic — real street names, a real coordinate distribution over Cumming, real classifications produced by the real pipeline — but no resident of Cumming has filed anything here, and the city has not deployed this. Calling it "in use in Cumming" would be a lie.
-- **The analytics figures are labelled sample data in the product itself.** The analytics page carries a `SAMPLE DATA — illustrative figures for the demo corpus, not measured outcomes` banner, and it is there because peer benchmarking against "comparable cities" has no real peer dataset behind it yet.
-- **The privacy blur is a heuristic, not face detection, on every browser that matters.** `FaceDetector` is absent on iOS Safari, Firefox and unflagged Chrome. The fallback blurs the top and bottom thirds and leaves the middle, so a centre-framed face can reach the public bucket. That is a deliberate trade — blurring the whole frame would hide the defect the photo exists to report — and it is documented at the top of [`src/lib/privacy/blur.ts`](src/lib/privacy/blur.ts) rather than buried.
+- **A hosted demo exists only if a URL is linked at the top of this file.** If there is none there, there is no live deployment. The database, seed data, build and running app are all real, and the production standalone server has been run and smoke-tested, but nothing is hosted. We would rather you found that stated here than discovered it after clicking.
+- **The seeded reports are synthetic.** They are realistic (real street names, a real coordinate distribution over Cumming, real classifications produced by the real pipeline), but no resident of Cumming has filed anything here, and the city has not deployed this. Calling it "in use in Cumming" would be a lie.
+- **The analytics figures are labelled sample data in the product itself.** The analytics page carries a `SAMPLE DATA, illustrative figures for the demo corpus, not measured outcomes` banner, and it is there because peer benchmarking against "comparable cities" has no real peer dataset behind it yet.
+- **The privacy blur is a heuristic, not face detection, on every browser that matters.** `FaceDetector` is absent on iOS Safari, Firefox and unflagged Chrome. The fallback blurs the top and bottom thirds and leaves the middle, so a centre-framed face can reach the public bucket. That is a deliberate trade (blurring the whole frame would hide the defect the photo exists to report), and it is documented at the top of [`src/lib/privacy/blur.ts`](src/lib/privacy/blur.ts) rather than buried.
 - **There is no offline capture.** A resident with no signal cannot file. The client-minted-id and queue machinery that would fix it is not in this repository.
-- **City-extensible categories are built but unexercised in the pilot.** The classifier is offered the city's own `issue_types` on every request and the Open311 catalogue publishes them, but the seeded Cumming city defines **zero** custom types — the feature is proven by the bug class it caused, not by the demo.
+- **City-extensible categories are built but unexercised in the pilot.** The classifier is offered the city's own `issue_types` on every request and the Open311 catalogue publishes them, but the seeded Cumming city defines **zero** custom types. The feature is proven by the bug class it caused, not by the demo.
 - **The `/staff` route tree is scrapped.** Team views and `/teams` are canonical. Some `staff/*` modules are still imported by shared code, so they have not been deleted.
 - **The AI is a classifier, not an oracle.** It reads a photograph into a category, a severity and a duplicate check. Every allocation decision after that is deterministic and auditable. We kept the model out of the dispatch loop on purpose.
 
@@ -583,7 +583,7 @@ Every line here can be checked in about a minute, so it is better said first tha
 <details>
 <summary><b>Why let the model write the work order instead of proposing one?</b></summary>
 <br>
-Because "propose and confirm" reintroduces the exact bottleneck the product exists to remove. The containment that makes this safe is not a human in the loop, it is that the model's output is only ever a <i>category and a severity</i> — every consequence of that answer is computed deterministically from tables you can read. A wrong category produces a wrong-but-explainable job, not an invented one.
+Because "propose and confirm" reintroduces the exact bottleneck the product exists to remove. The containment that makes this safe is not a human in the loop, it is that the model's output is only ever a <i>category and a severity</i>, every consequence of that answer is computed deterministically from tables you can read. A wrong category produces a wrong-but-explainable job, not an invented one.
 </details>
 
 <details>
@@ -595,7 +595,7 @@ Staff override the category, and the override is recorded as feedback. Severity 
 <details>
 <summary><b>Is the Open311 export actually conformant, or just shaped like it?</b></summary>
 <br>
-GET and POST, XML and JSON, with pagination, status filtering, per-jurisdiction service catalogues and GeoReport v2 error envelopes. It is verified live in <a href="#open311-is-the-product-not-an-integration">Proof it works</a> — 153 requests in both formats — not asserted. The catalogue publishes a city's own service codes rather than flattening them to builtins.
+GET and POST, XML and JSON, with pagination, status filtering, per-jurisdiction service catalogues and GeoReport v2 error envelopes. It is verified live in <a href="#open311-is-the-product-not-an-integration">Proof it works</a> (153 requests in both formats) not asserted. The catalogue publishes a city's own service codes rather than flattening them to builtins.
 </details>
 
 <details>
@@ -607,7 +607,7 @@ Deduplication runs on every submitted report once enabled, and has to stay fast 
 <details>
 <summary><b>Doesn't running a vision model on every report get expensive?</b></summary>
 <br>
-On resident reports, no — one Gemini 2.5 Flash-Lite call per submission is fractions of a cent. On <i>video</i> it absolutely would, which is why the video vertical scans frames with a local detector and only spends a model call on a spatial cluster that already passed a confidence threshold: 375 frames became 33 clusters before the model was asked anything.
+On resident reports, no. One Gemini 2.5 Flash-Lite call per submission is fractions of a cent. On <i>video</i> it absolutely would, which is why the video vertical scans frames with a local detector and only spends a model call on a spatial cluster that already passed a confidence threshold: 375 frames became 33 clusters before the model was asked anything.
 </details>
 
 <details>
@@ -646,7 +646,7 @@ Then check `curl localhost:3000/api/health` **before** looking at any page. It s
 
 `db:tokens` is not optional if you want to see the resident side of the loop.
 `reports.public_token` is stamped **lazily**, by the notifier, the first time a
-resident is actually sent a status link — correct for a live city, where a
+resident is actually sent a status link. Correct for a live city, where a
 report nobody was notified about should not have a URL sitting in the table.
 But seeded reports are never notified, so they never get one, and `/r/[token]`
 is the only door to the public status page, the share actions, the rating and

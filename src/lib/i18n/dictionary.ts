@@ -1,5 +1,5 @@
 /* ==================================================================
-   UI string dictionary — typed, no external dep.
+   UI string dictionary, typed, no external dep.
    Covers report-status labels + key CTAs in 4 languages.
    New keys: add to `Dictionary`, fill en, then other locales.
    Missing non-en strings fall back to `en` via `t()` in t.ts.
@@ -41,8 +41,8 @@ const en: Dictionary = {
   cta_share: "Share",
   trending_title: "What your city wants fixed most",
   trending_subtitle:
-    "Open issues ranked by how many neighbors upvoted them. Add your voice — the top of this list is where the pressure is.",
-  trending_empty: "No open reports right now — the whole backlog is clear.",
+    "Open issues ranked by how many neighbors upvoted them. Add your voice. The top of this list is where the pressure is.",
+  trending_empty: "No open reports right now. The whole backlog is clear.",
   lang_select: "Select language",
 };
 
@@ -59,8 +59,8 @@ const es: Dictionary = {
   cta_share: "Compartir",
   trending_title: "Lo que tu ciudad quiere solucionar más",
   trending_subtitle:
-    "Problemas abiertos clasificados por cuántos vecinos los apoyaron. Añade tu voz — lo que está en la cima es donde está la presión.",
-  trending_empty: "No hay reportes abiertos ahora — todo está al día.",
+    "Problemas abiertos clasificados por cuántos vecinos los apoyaron. Añade tu voz, lo que está en la cima es donde está la presión.",
+  trending_empty: "No hay reportes abiertos ahora, todo está al día.",
   lang_select: "Seleccionar idioma",
 };
 
@@ -77,8 +77,8 @@ const fr: Dictionary = {
   cta_share: "Partager",
   trending_title: "Ce que votre ville veut réparer le plus",
   trending_subtitle:
-    "Problèmes ouverts classés par nombre de voisins qui les ont soutenus. Ajoutez votre voix — le sommet de cette liste est là où se trouve la pression.",
-  trending_empty: "Aucun rapport ouvert pour l'instant — le carnet est vide.",
+    "Problèmes ouverts classés par nombre de voisins qui les ont soutenus. Ajoutez votre voix, le sommet de cette liste est là où se trouve la pression.",
+  trending_empty: "Aucun rapport ouvert pour l'instant, le carnet est vide.",
   lang_select: "Choisir la langue",
 };
 
@@ -95,8 +95,8 @@ const zh: Dictionary = {
   cta_share: "分享",
   trending_title: "城市居民最想解决的问题",
   trending_subtitle:
-    "按邻居支持数量排名的未解决问题。添加您的声音——列表顶部是关注最多的地方。",
-  trending_empty: "目前没有未解决的报告——待办事项全部完成。",
+    "按邻居支持数量排名的未解决问题。添加您的声音,, 列表顶部是关注最多的地方。",
+  trending_empty: "目前没有未解决的报告,, 待办事项全部完成。",
   lang_select: "选择语言",
 };
 

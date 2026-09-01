@@ -1,7 +1,7 @@
 // Capture the live civic-light hero map to a static plate the landing ships
 // instead of rendering maplibre-gl + deck.gl (~1.85MB JS) on every visit.
 //
-// Run against a server that still mounts the LIVE map — i.e. with ?tweaks=1,
+// Run against a server that still mounts the LIVE map, i.e. with ?tweaks=1,
 // which is the only path that mounts ZampMapBackdropLazy now (see ZampHero).
 //
 //   node scripts/capture-hero-map.mjs [baseUrl]
@@ -14,14 +14,14 @@
 import { chromium } from "playwright";
 
 const base = process.argv[2] ?? "http://localhost:3100";
-// mapMarkers=0: shoot the bare basemap — the report field is DOM pins now
+// mapMarkers=0: shoot the bare basemap. The report field is DOM pins now
 // (MapPinStory severity scatter), not pixels baked into the plate.
 const url = `${base}/?tweaks=1&mapPreset=civic-light&mapMarkers=0`;
 const out = "public/landing-shots/hero-map.jpg";
 
 const browser = await chromium.launch();
 const page = await browser.newPage({
-  // 16:10 plate at ~2400px — sharp on HiDPI, still a few-hundred-KB JPEG. The
+  // 16:10 plate at ~2400px, sharp on HiDPI, still a few-hundred-KB JPEG. The
   // hero is full-bleed and the plate is object-fit:cover, so exact AR is moot.
   viewport: { width: 1600, height: 1000 },
   deviceScaleFactor: 1.5,
@@ -45,7 +45,7 @@ const idle = await page
 await page.waitForTimeout(idle ? 1200 : 6000);
 
 // The backdrop is inset-0 full-bleed, so the wordmark, glass card, nav and
-// tweaks panel all stack ON TOP of it — an element screenshot would clip to the
+// tweaks panel all stack ON TOP of it. An element screenshot would clip to the
 // map's box but still show everything above it. Isolate the map pixels instead:
 // hide the whole page via `visibility`, re-show ONLY the map container's subtree
 // (visibility inherits), then drop the scrim + attribution so the JPEG is the
@@ -55,7 +55,7 @@ const isolated = await page.evaluate(() => {
   if (!(c instanceof HTMLElement)) return false;
   document.body.style.visibility = "hidden";
   c.style.visibility = "visible";
-  // Scrim is the last child of the container — keep it out of the plate.
+  // Scrim is the last child of the container. Keep it out of the plate.
   if (c.lastElementChild instanceof HTMLElement)
     c.lastElementChild.style.visibility = "hidden";
   document
@@ -65,7 +65,7 @@ const isolated = await page.evaluate(() => {
     });
   // The Next.js dev-tools indicator (the "N · 1 Issue" toast) renders in a
   // <nextjs-portal> mounted on <html>, outside <body>, so the visibility trick
-  // above doesn't reach it. It's dev-only (absent in prod) — drop it so it
+  // above doesn't reach it. It's dev-only (absent in prod), drop it so it
   // isn't baked into the plate. Also nuke any other non-body top-level node.
   document
     .querySelectorAll("nextjs-portal, [data-nextjs-toast], #__next-build-watcher")
@@ -79,7 +79,7 @@ const isolated = await page.evaluate(() => {
   return true;
 });
 if (!isolated) {
-  console.log("CAPTURE_FAIL: no [data-hero-bg=map] — is ?tweaks=1 mounting the live map?");
+  console.log("CAPTURE_FAIL: no [data-hero-bg=map], is ?tweaks=1 mounting the live map?");
   await browser.close();
   process.exit(1);
 }

@@ -28,7 +28,7 @@ export function resolveWindow(
 // Pure filter: applies date window, category set, min severity, status set, and
 // team scope. Empty category/status arrays mean "no constraint". Single source
 // of truth so the map, stat cards, and analytics all narrow the corpus
-// identically. Team resolution honors per-report overrides — pass them in from
+// identically. Team resolution honors per-report overrides, pass them in from
 // useTeamOverrides() in client code; server code can omit to use the empty
 // snapshot.
 export function filterReports(
@@ -58,7 +58,7 @@ export function filterReports(
   });
 }
 
-// The immediately-preceding window of equal length — used to compute KPI deltas
+// The immediately-preceding window of equal length, used to compute KPI deltas
 // (e.g. "resolution rate vs. previous 30 days"). Returns the filtered reports
 // for that prior window. "all" has no prior window, so returns [].
 export function filterPreviousWindow(
@@ -68,7 +68,7 @@ export function filterPreviousWindow(
   overrides: Record<string, TeamId> = getOverridesSnapshot(),
 ): DashboardReport[] {
   const { lower, upper } = resolveWindow(filter, now);
-  if (lower === null) return []; // "all" or unbounded — no comparable prior window
+  if (lower === null) return []; // "all" or unbounded, no comparable prior window
   const windowUpper = upper ?? now;
   const windowLen = windowUpper - lower;
   const prevLower = lower - windowLen;

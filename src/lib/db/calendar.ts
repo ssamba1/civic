@@ -7,7 +7,7 @@ const log = createLogger("db-calendar");
 /** One work order plotted on the staff calendar. */
 export interface CalendarWorkOrder {
   id: string;
-  // reports has no title column (see AGENTS.md schema) — address is the
+  // reports has no title column (see AGENTS.md schema). Address is the
   // closest human-readable field, same convention as lib/db/members.ts and
   // the Open311 accessors. Falls back to a placeholder when the reporter
   // left it blank.
@@ -28,14 +28,14 @@ export interface CalendarWorkOrder {
 // shape is the columns/embeds the query below selects, cast at the boundary.
 //
 // reports/crews are embedded FROM work_orders via work_orders' own FK columns
-// (report_id, assigned_crew_id) — supabase-js's generic types infer these as
+// (report_id, assigned_crew_id), supabase-js's generic types infer these as
 // arrays, but PostgREST always returns a single object/null for a child
 // embedding its parent this way (same double-cast reasoning as
 // lib/ai/crew-assign.ts's work_orders→reports embed).
 //
 // classifications is embedded the other direction (reports embeds its child
 // classifications row) but report_id is UNIQUE on classifications, so
-// PostgREST still collapses it to one row — except it may still come back as
+// PostgREST still collapses it to one row. Except it may still come back as
 // a single-element array depending on relationship detection, so this
 // tolerates both shapes exactly like lib/db/members.ts's embeddedCategory.
 type ClassificationsEmbed =
@@ -61,7 +61,7 @@ interface CalendarWorkOrderRowRaw {
   crews: { name: string } | null;
 }
 
-// Reports in these statuses are dead — never real work, same reasoning as
+// Reports in these statuses are dead. Never real work, same reasoning as
 // crew-assign.ts's DEAD_STATUSES (rejected/merged reports never get their
 // work order completed_at stamped, and closed reports are done-and-archived).
 const DEAD_STATUSES = new Set(["closed", "merged", "rejected"]);
@@ -87,8 +87,8 @@ function embeddedCategory(c: ClassificationsEmbed): string | null {
  * Work orders for one city over the calendar-visible window [fromISO, toISO)
  * (YYYY-MM-DD, end exclusive). `calendarDate` is `dispatched_at ?? created_at`
  * truncated to a date, computed client-side after a widened `created_at`
- * fetch — see CREATED_AT_LOOKBACK_DAYS. Excludes work orders whose report is
- * closed/merged/rejected. Service-role client — call only behind a staff
+ * fetch. See CREATED_AT_LOOKBACK_DAYS. Excludes work orders whose report is
+ * closed/merged/rejected. Service-role client, call only behind a staff
  * access gate. Never throws: any failure (un-migrated DB, query error,
  * unexpected row shape) returns [] so the calendar page still renders.
  */

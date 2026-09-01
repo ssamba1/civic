@@ -60,7 +60,7 @@ beforeEach(() => {
   state.userEmail = "resident@example.com";
 });
 
-describe("notifyReportStatus — transition gating", () => {
+describe("notifyReportStatus, transition gating", () => {
   it.each([
     "open",
     "in_progress",
@@ -81,7 +81,7 @@ describe("notifyReportStatus — transition gating", () => {
   });
 });
 
-describe("notifyReportStatus — message composition", () => {
+describe("notifyReportStatus, message composition", () => {
   it("resolved carries the resolution photo (the lever) and a 'resolved' subject", async () => {
     await notifyReportStatus("r1", "closed");
     const msg = deliverEmail.mock.calls[0][0];
@@ -97,7 +97,7 @@ describe("notifyReportStatus — message composition", () => {
     expect(msg.photoUrl).toBeNull();
   });
 
-  it("passes to:null for an anonymous reporter (no email) — deliver no-ops", async () => {
+  it("passes to:null for an anonymous reporter (no email), deliver no-ops", async () => {
     state.userEmail = null;
     await notifyReportStatus("r1", "closed");
     const msg = deliverEmail.mock.calls[0][0];

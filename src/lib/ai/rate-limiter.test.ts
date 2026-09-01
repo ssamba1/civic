@@ -1,7 +1,7 @@
 // @vitest-environment node
 // Tests for checkAndRecordGeminiCall and getGeminiRateLimitStats.
 //
-// The module uses module-level mutable timestamp arrays — state persists across
+// The module uses module-level mutable timestamp arrays, state persists across
 // imports unless we reset the module cache. We use vi.isolateModules() inside
 // each test to get a fresh module instance, so tests are fully independent.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -21,7 +21,7 @@ async function freshLimiter() {
   return vi.importActual<typeof import("./rate-limiter")>("./rate-limiter");
 }
 
-describe("checkAndRecordGeminiCall — basic allow/deny", () => {
+describe("checkAndRecordGeminiCall, basic allow/deny", () => {
   it("allows the first call", async () => {
     const { checkAndRecordGeminiCall } = await freshLimiter();
     expect(checkAndRecordGeminiCall().allowed).toBe(true);
@@ -35,7 +35,7 @@ describe("checkAndRecordGeminiCall — basic allow/deny", () => {
   });
 });
 
-describe("checkAndRecordGeminiCall — per-minute limit", () => {
+describe("checkAndRecordGeminiCall, per-minute limit", () => {
   it("blocks at rpm limit", async () => {
     process.env.GEMINI_RPM = "3";
     process.env.GEMINI_RPH = "1000";
@@ -78,7 +78,7 @@ describe("checkAndRecordGeminiCall — per-minute limit", () => {
   });
 });
 
-describe("checkAndRecordGeminiCall — per-hour limit", () => {
+describe("checkAndRecordGeminiCall, per-hour limit", () => {
   it("blocks at rph limit", async () => {
     process.env.GEMINI_RPM = "1000";
     process.env.GEMINI_RPH = "2";
@@ -100,7 +100,7 @@ describe("checkAndRecordGeminiCall — per-hour limit", () => {
   });
 });
 
-describe("checkAndRecordGeminiCall — per-day limit", () => {
+describe("checkAndRecordGeminiCall, per-day limit", () => {
   it("blocks at rpd limit", async () => {
     process.env.GEMINI_RPM = "10000";
     process.env.GEMINI_RPH = "10000";

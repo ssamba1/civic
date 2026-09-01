@@ -38,7 +38,7 @@ async function getStaffUser() {
   const db = createServerClient();
 
   if (!user) {
-    // Bypass only when DEV_AUTH_BYPASS=1 AND NODE_ENV=development — never in prod.
+    // Bypass only when DEV_AUTH_BYPASS=1 AND NODE_ENV=development, never in prod.
     if (
       process.env.NODE_ENV === "development" &&
       process.env.DEV_AUTH_BYPASS === "1"
@@ -69,7 +69,7 @@ async function getStaffUser() {
 // City-scope guards. Staff may only act on reports/work orders in their own
 // city. The service-role client bypasses RLS, so these SELECT-then-check guards
 // are the only thing stopping a staffer in city A from mutating city B's data.
-// Fails closed when the staffer has no city_id (null) — no city, no access.
+// Fails closed when the staffer has no city_id (null), no city, no access.
 async function reportInStaffCity(
   db: ReturnType<typeof createServerClient>,
   reportId: string,
@@ -156,7 +156,7 @@ export async function dispatchWorkOrder(
   return { ok: true, data: undefined };
 }
 
-// Map UI exposes reports, not work orders — resolve the work order by
+// Map UI exposes reports, not work orders. Resolve the work order by
 // report_id (may legitimately not exist yet if classify hasn't created one).
 export async function dispatchWorkOrderForReport(
   reportId: string,
@@ -204,7 +204,7 @@ export async function dispatchWorkOrderForReport(
 
 /**
  * Assign (or clear, crewId null) a crew on a report's work order without
- * touching dispatch state — the grid's deliberate-assignment control, distinct
+ * touching dispatch state, the grid's deliberate-assignment control, distinct
  * from the dispatch actions above which flip report status. The crew must
  * belong to the staffer's own city (service role bypasses RLS, so this
  * SELECT-then-check is the guard, same policy as reportInStaffCity).
@@ -230,7 +230,7 @@ export async function assignCrewToReport(
       return { ok: false, error: "crew_not_found" };
   }
 
-  // Require the update to have touched a row — same verify-then-act rationale
+  // Require the update to have touched a row, same verify-then-act rationale
   // as dispatchWorkOrderForReport (0-row .update() reports no error).
   const { data: updated, error } = await supabase
     .from("work_orders")
@@ -245,7 +245,7 @@ export async function assignCrewToReport(
 }
 
 /**
- * Close a work order by its REPORT id — the shape the team task surfaces have
+ * Close a work order by its REPORT id. The shape the team task surfaces have
  * (the corpus row carries no work-order id). Resolves the report's work order
  * (unique per report) and delegates to {@link closeWorkOrder}. The photo, when
  * given, arrives as a downscaled data URL and is re-hosted to Storage.
@@ -290,7 +290,7 @@ async function uploadResolutionPhoto(
   if (b64.length > 1_500_000) return null;
   const path = `${cityId}/resolutions/${workOrderId}.${ext === "jpeg" ? "jpg" : ext}`;
   // Strip EXIF/GPS server-side before the photo lands in the public bucket
-  // (LCP-20) — the client downscale re-encodes via canvas, this is the backstop.
+  // (LCP-20), the client downscale re-encodes via canvas, this is the backstop.
   const { error } = await supabase.storage
     .from("photos-public")
     .upload(path, stripImageMetadata(Buffer.from(b64, "base64")), {
@@ -316,10 +316,10 @@ export async function closeWorkOrder(
   if (!staff) return { ok: false, error: "Unauthorized: staff role required" };
 
   // No-generic-closures (NEXT_100 #5): a resolution reason and an after-photo
-  // are both mandatory — the "no evidence observed" complaint dies here.
+  // are both mandatory, the "no evidence observed" complaint dies here.
   if (!reason.trim()) return { ok: false, error: "closure_reason_required" };
   // Reject single-word / boilerplate closures ("done", "fixed", "resolved",
-  // "no evidence observed", etc.) — residents deserve to know what actually happened.
+  // "no evidence observed", etc.), residents deserve to know what actually happened.
   if (isGenericClosure(reason))
     return { ok: false, error: "closure_reason_too_generic" };
   if (!resolutionPhotoUrl && !resolutionPhotoDataUrl)
@@ -355,7 +355,7 @@ export async function closeWorkOrder(
   if (woMetaErr || !woMeta) return { ok: false, error: "work_order_not_found" };
 
   // PostgREST returns to-one embeds as objects at runtime, but the untyped
-  // client infers arrays — normalize both shapes instead of asserting one.
+  // client infers arrays, normalize both shapes instead of asserting one.
   const rels = woMeta as unknown as {
     reports:
       | { city_id: string; address: string | null }
@@ -449,7 +449,7 @@ export async function closeWorkOrder(
   if (reportError) return { ok: false, error: "status_update_failed" };
 
   // No-generic-closures (#5): turn the staff reason into a warm, plain-language
-  // explanation for the resident. Falls back to the raw reason if AI is down —
+  // explanation for the resident. Falls back to the raw reason if AI is down,
   // never blocks the close.
   const closureNote = await draftClosureExplanation({
     category: category ?? "issue",
@@ -457,7 +457,7 @@ export async function closeWorkOrder(
     address,
   });
 
-  // Append-only timeline row (migration 025) — feeds the resident timeline and
+  // Append-only timeline row (migration 025), feeds the resident timeline and
   // the Open311 service-request-updates projection. Best-effort: the close
   // itself already committed.
   const { error: updateRowErr } = await supabase.from("report_updates").insert({
@@ -602,7 +602,7 @@ export async function overrideClassification(
   // Best-effort and fully guarded: the category override above has already
   // committed, so nothing here may throw and turn a successful override into a
   // 500. (generateWorkOrder is total over ReportCategory today, but wrap it so a
-  // future RULES/enum drift — or a transient DB error on the update — can't
+  // future RULES/enum drift (or a transient DB error on the update) can't
   // resurrect the post-commit divergent state T1.1 was about.)
   if (categoryChanged) {
     try {
@@ -632,7 +632,7 @@ export async function overrideClassification(
         });
       } else if (AI_CREW_ASSIGN && rerouted) {
         // Keep the crew assignment coherent with the new routing. A crew from
-        // the OLD division is stale by construction — clear it (also when the
+        // the OLD division is stale by construction, clear it (also when the
         // new category has no crew type at all, e.g. 'other'); a same-team
         // crew was a deliberate staff pick and is kept. autoAssignCrew only
         // writes into a null slot, so it fills the cleared (or never-set)
@@ -747,7 +747,7 @@ export async function addWorkOrderComment(
 
 /**
  * Fetches work orders created after `afterTimestamp` (ISO string).
- * Used by the staff inbox refresh queue – new reports accumulate here
+ * Used by the staff inbox refresh queue. New reports accumulate here
  * and are only shown when the admin clicks Refresh.
  */
 export async function fetchQueuedWorkOrders(
@@ -917,7 +917,7 @@ export async function deleteIssueType(key: string): Promise<Result<void>> {
 
 /**
  * Reassign one report's work order to another team (the DB leg of the
- * delegation panel — the localStorage overlay stays as the instant-UI layer).
+ * delegation panel. The localStorage overlay stays as the instant-UI layer).
  */
 export async function reassignReportTeam(
   reportId: string,
@@ -947,7 +947,7 @@ export async function reassignReportTeam(
  * Move a category's default routing to another team for the staff member's
  * city (the DB leg of the routing matrix; city_teams is the source of truth
  * new work orders resolve against). Removes the category from every other
- * team row, then adds it to the target — creating the row from the preset
+ * team row, then adds it to the target, creating the row from the preset
  * catalog if the city never enabled that team.
  */
 export async function updateCityRouting(

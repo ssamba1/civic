@@ -3,7 +3,7 @@ import { ContractorDashboard } from "@/components/contractor/contractor-dashboar
 import { listMyWorkOrders } from "./actions";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "My Work Orders – Contractor Portal" };
+export const metadata = { title: "My Work Orders, Contractor Portal" };
 
 async function WorkOrdersLoader() {
   const workOrders = await listMyWorkOrders();

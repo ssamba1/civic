@@ -1,4 +1,4 @@
-// Synthetic cold-start generator (F5) — the universal fallback that fills a
+// Synthetic cold-start generator (F5), the universal fallback that fills a
 // brand-new city so its dashboard isn't empty (works even when the city
 // publishes no open data). Reports scatter inside the real TIGER boundary with a
 // realistic category/severity/age distribution. Deterministic (seeded) so the
@@ -59,7 +59,7 @@ const STREET_NAMES = [
 
 const DAY_MS = 86_400_000;
 
-// mulberry32 — small deterministic PRNG. Seeded stream so rejection sampling
+// mulberry32, small deterministic PRNG. Seeded stream so rejection sampling
 // (variable draws per point) stays reproducible.
 function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
@@ -136,7 +136,7 @@ export interface SyntheticOptions {
   count?: number;
   /** PRNG seed for reproducibility. Default 1. */
   seed?: number;
-  /** "Now" epoch ms — injectable for deterministic tests. Default Date.now(). */
+  /** "Now" epoch ms, injectable for deterministic tests. Default Date.now(). */
   now?: number;
   /** History window. Default 180 days. */
   spanDays?: number;

@@ -7,7 +7,7 @@ export interface SelectProps
   invalid?: boolean;
 }
 
-/** Styled native <select> — keeps full keyboard + mobile-picker behavior. */
+/** Styled native <select>. Keeps full keyboard + mobile-picker behavior. */
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   ({ className, invalid, children, ...props }, ref) => (
     <div className="relative">

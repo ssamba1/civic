@@ -1,4 +1,4 @@
-// Open311 GeoReport v2 import adapter (F5) — for cities actually on SeeClickFix/
+// Open311 GeoReport v2 import adapter (F5), for cities actually on SeeClickFix/
 // CivicPlus/Open311 (sparse in the target band; the inverse of the export-only
 // lib/open311/transform.ts). Pulls service requests → NormalizedReport[]. Pure
 // HTTP; fetch injectable.
@@ -10,7 +10,7 @@ import type { NormalizedReport } from "./types";
 const logger = createLogger("ingest-open311");
 
 export interface Open311Config {
-  /** GeoReport v2 base, e.g. https://city.gov/open311/v2 — we GET /requests.json */
+  /** GeoReport v2 base, e.g. https://city.gov/open311/v2. We GET /requests.json */
   url: string;
   /** service_code / service_name (lowercased) → Civic category. Miss → 'other'. */
   categoryMap: Record<string, ReportCategory>;

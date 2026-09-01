@@ -1,10 +1,10 @@
-// Cold-start writer (F5) — persists NormalizedReport[] into reports +
+// Cold-start writer (F5). Persists NormalizedReport[] into reports +
 // classifications + work_orders, and tracks progress on a provision_jobs row for
 // the wizard StatusBar. Bypasses runClassifyPipeline by design: imports/synthetic
 // have no photo, so we map the source category straight to a classification and
 // generate the work order deterministically (no Gemini vision). See F5_INGEST.md.
 //
-// SERVER-ONLY: service-role client (createServerClient) — bulk insert bypasses RLS
+// SERVER-ONLY: service-role client (createServerClient). Bulk insert bypasses RLS
 // and writes reporter_id = NULL (no real reporter), which migration 015 allows.
 
 import { generateWorkOrder } from "@/lib/ai/work-order-rules";
@@ -63,7 +63,7 @@ async function setJob(
 /**
  * Persist normalized reports for `cityId`. Returns the inserted count. On any
  * insert error the provision_jobs row (if given) is marked 'error' and a Result
- * error is returned — the caller surfaces it in the StatusBar (Retry / partial).
+ * error is returned, the caller surfaces it in the StatusBar (Retry / partial).
  */
 export async function ingestReports(
   cityId: string,

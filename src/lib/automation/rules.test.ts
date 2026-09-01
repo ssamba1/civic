@@ -36,48 +36,48 @@ function makeRule(
 // matchesCondition
 // ---------------------------------------------------------------------------
 describe("matchesCondition", () => {
-  it("eq — matches equal string", () => {
+  it("eq, matches equal string", () => {
     const c: Condition = { field: "category", op: "eq", value: "pothole" };
     expect(matchesCondition(baseReport, c)).toBe(true);
   });
 
-  it("eq — rejects non-matching string", () => {
+  it("eq, rejects non-matching string", () => {
     const c: Condition = { field: "category", op: "eq", value: "graffiti" };
     expect(matchesCondition(baseReport, c)).toBe(false);
   });
 
-  it("eq — matches boolean", () => {
+  it("eq, matches boolean", () => {
     const c: Condition = { field: "is_emergency", op: "eq", value: false };
     expect(matchesCondition(baseReport, c)).toBe(true);
   });
 
-  it("gte — matches when field >= value", () => {
+  it("gte, matches when field >= value", () => {
     const c: Condition = { field: "severity", op: "gte", value: 3 };
     expect(matchesCondition(baseReport, c)).toBe(true);
   });
 
-  it("gte — rejects when field < value", () => {
+  it("gte, rejects when field < value", () => {
     const c: Condition = { field: "severity", op: "gte", value: 4 };
     expect(matchesCondition(baseReport, c)).toBe(false);
   });
 
-  it("lte — matches when field <= value", () => {
+  it("lte, matches when field <= value", () => {
     const c: Condition = { field: "severity", op: "lte", value: 5 };
     expect(matchesCondition(baseReport, c)).toBe(true);
   });
 
-  it("lte — rejects when field > value", () => {
+  it("lte, rejects when field > value", () => {
     const c: Condition = { field: "severity", op: "lte", value: 2 };
     expect(matchesCondition(baseReport, c)).toBe(false);
   });
 
-  it("gte — rejects non-numeric value", () => {
+  it("gte, rejects non-numeric value", () => {
     // op gte with string value should return false safely
     const c: Condition = { field: "severity", op: "gte", value: "high" };
     expect(matchesCondition(baseReport, c)).toBe(false);
   });
 
-  it("in — matches when field value in array", () => {
+  it("in, matches when field value in array", () => {
     const c: Condition = {
       field: "category",
       op: "in",
@@ -86,7 +86,7 @@ describe("matchesCondition", () => {
     expect(matchesCondition(baseReport, c)).toBe(true);
   });
 
-  it("in — rejects when field not in array", () => {
+  it("in, rejects when field not in array", () => {
     const c: Condition = {
       field: "category",
       op: "in",
@@ -95,24 +95,24 @@ describe("matchesCondition", () => {
     expect(matchesCondition(baseReport, c)).toBe(false);
   });
 
-  it("in — rejects non-array value", () => {
+  it("in, rejects non-array value", () => {
     const c: Condition = { field: "category", op: "in", value: "pothole" };
     expect(matchesCondition(baseReport, c)).toBe(false);
   });
 
-  it("contains — matches when tag array contains value", () => {
+  it("contains, matches when tag array contains value", () => {
     const r = { ...baseReport, tags: ["urgent", "reviewed"] };
     const c: Condition = { field: "tag", op: "contains", value: "urgent" };
     expect(matchesCondition(r, c)).toBe(true);
   });
 
-  it("contains — rejects when tag array lacks value", () => {
+  it("contains, rejects when tag array lacks value", () => {
     const r = { ...baseReport, tags: ["reviewed"] };
     const c: Condition = { field: "tag", op: "contains", value: "urgent" };
     expect(matchesCondition(r, c)).toBe(false);
   });
 
-  it("contains — handles missing tags (undefined)", () => {
+  it("contains, handles missing tags (undefined)", () => {
     const r: RuleReport = {
       category: "pothole",
       severity: 3,
@@ -232,7 +232,7 @@ describe("evaluateRules", () => {
     const r3 = makeRule({
       priority: 2,
       conditions: [],
-      actions: [{ type: "add_tag", value: "urgent" }], // duplicate — should not double-add
+      actions: [{ type: "add_tag", value: "urgent" }], // duplicate. Should not double-add
     });
     const result = evaluateRules(baseReport, [r1, r2, r3]);
     expect(result.add_tags).toEqual(["urgent", "reviewed"]);
@@ -266,7 +266,7 @@ describe("evaluateRules", () => {
     expect(result.set_severity).toBe(5); // r2 wins (priority=1 < 5)
   });
 
-  it("AND logic — all conditions must match", () => {
+  it("AND logic, all conditions must match", () => {
     const rule = makeRule({
       conditions: [
         { field: "category", op: "eq", value: "pothole" },
@@ -278,7 +278,7 @@ describe("evaluateRules", () => {
     expect(result.priority).toBeNull(); // severity 3 < 4 → no match
   });
 
-  it("AND logic — matches when all conditions pass", () => {
+  it("AND logic, matches when all conditions pass", () => {
     const rule = makeRule({
       conditions: [
         { field: "category", op: "eq", value: "pothole" },

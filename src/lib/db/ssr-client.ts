@@ -25,7 +25,7 @@ export async function createSSRClient() {
               cookieStore.set(name, value, options);
             });
           } catch {
-            // Called from Server Component — cookie writes ignored (expected)
+            // Called from Server Component. Cookie writes ignored (expected)
           }
         },
       },

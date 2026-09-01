@@ -1,4 +1,4 @@
-// CSV upload adapter (F5) — operator-uploaded 311 export → NormalizedReport[].
+// CSV upload adapter (F5), operator-uploaded 311 export → NormalizedReport[].
 // The manual fallback when a city has no ArcGIS/Open311 source. Pure; no deps.
 // Includes a small RFC-4180-ish parser (quoted fields, escaped quotes, CRLF).
 

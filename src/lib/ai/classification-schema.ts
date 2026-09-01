@@ -29,20 +29,20 @@ export function buildClassificationSchema(categories: readonly string[]) {
     confidence: z.number().min(0).max(1),
     reasoning: z.string().min(1),
     // true only when the photo shows no actual infrastructure damage/hazard at
-    // all — routes the report to manual staff review instead of auto-dispatch.
+    // all. Routes the report to manual staff review instead of auto-dispatch.
     no_issue_detected: z.boolean(),
     // 0-2 other categories that could also plausibly apply. A non-empty list
-    // means the model itself is unsure which team should own the work order —
+    // means the model itself is unsure which team should own the work order,
     // also routed to manual review.
     alternate_categories: z.array(categoryEnum).max(2),
   });
 }
 
 /**
- * Built-in schema — the 12-category default (tests + non-city-scoped callers).
+ * Built-in schema, the 12-category default (tests + non-city-scoped callers).
  * Defined with the literal tuple (not buildClassificationSchema's `string[]`)
  * so `classificationSchema.shape.category` keeps its ReportCategory literal
- * union — consumers like ReportCategorySchema depend on that narrowing.
+ * union, consumers like ReportCategorySchema depend on that narrowing.
  */
 const BUILTIN_CATEGORY_TUPLE = [
   "pothole",
@@ -131,6 +131,6 @@ export function buildGeminiClassificationSchema(
   };
 }
 
-/** Built-in Gemini schema — the 12-category default. */
+/** Built-in Gemini schema, the 12-category default. */
 export const GEMINI_CLASSIFICATION_SCHEMA: ObjectSchema =
   buildGeminiClassificationSchema(CATEGORIES);

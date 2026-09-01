@@ -24,7 +24,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const city = await fetchCity(slug);
   if (!city) return { title: "City not found | Civic" };
-  const title = `Civic | ${city.name}, ${city.state} — Analytics`;
+  const title = `Civic | ${city.name}, ${city.state}. Analytics`;
   return {
     title,
     description: `Operational analytics for ${city.name}, ${city.state}: resolution rate, MTTR, SLA compliance, peak reporting hours, and per-category performance.`,
@@ -53,13 +53,13 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
   return (
     <div className="relative flex flex-col min-h-dvh bg-background">
       <div className="relative flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
-        {/* Compact page header — single slim row. */}
+        {/* Compact page header, single slim row. */}
         <section className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
             Analytics
           </h1>
           <p className="text-[13px] text-faint">
-            Operational signal — what&apos;s shipping, what&apos;s stuck, where
+            Operational signal, what&apos;s shipping, what&apos;s stuck, where
             it&apos;s happening.
           </p>
         </section>
@@ -67,7 +67,7 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
         <SurgeBanner />
         {/* Suspense so the page shell + client analytics flush immediately
             instead of waiting on these RPCs. Fallback is `null` because the
-            card renders nothing when there's no peer data — a placeholder box
+            card renders nothing when there's no peer data. A placeholder box
             would collapse on resolve and shift the page. */}
         <Suspense fallback={null}>
           <PeerBenchmarkCard cityId={city.id} />
@@ -75,7 +75,7 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
 
         <AnalyticsInteractive />
 
-        {/* Server-rendered analytics panels — fetch independently so they
+        {/* Server-rendered analytics panels, fetch independently so they
             degrade gracefully when RPCs/tables are absent, and stream in
             behind Suspense so a slow districts/equity RPC never holds up the
             rest of the page. Both always render a card, so their fallbacks are

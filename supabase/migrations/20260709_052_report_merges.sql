@@ -1,5 +1,5 @@
 -- =============================================================================
--- Civic – Staff duplicate-merge infrastructure
+-- Civic, Staff duplicate-merge infrastructure
 -- Migration: 20260709_052_report_merges.sql
 --
 -- Design:
@@ -8,7 +8,7 @@
 --   into it. From that point the merged report is hidden from public views and
 --   its upvotes are transferred to the canonical report.
 --
---   We do NOT add a new status enum value — 'merged' already exists in the
+--   We do NOT add a new status enum value. 'merged' already exists in the
 --   report_status enum (see 20260527_001_initial_schema.sql line 27). Instead
 --   we add a nullable `merged_into` FK column on `reports` so the canonical
 --   target is always reachable. A non-null merged_into means "this report was
@@ -19,7 +19,7 @@
 --
 -- RLS strategy: mirror the pattern used throughout (is_staff() predicate,
 --   see 20260527_001_initial_schema.sql line 285).
---   Default deny — no policy = no access.
+--   Default deny, no policy = no access.
 -- =============================================================================
 
 BEGIN;
@@ -58,7 +58,7 @@ CREATE INDEX IF NOT EXISTS idx_report_merges_canonical
   ON report_merges (canonical_report_id);
 
 -- ---------------------------------------------------------------------------
--- 3. RLS — staff-only read/write, default deny
+-- 3. RLS. Staff-only read/write, default deny
 -- ---------------------------------------------------------------------------
 ALTER TABLE report_merges ENABLE ROW LEVEL SECURITY;
 

@@ -1,5 +1,5 @@
 -- =============================================================================
--- Civic – DB-backed per-city team routing
+-- Civic, DB-backed per-city team routing
 -- Migration: 20260707_026_team_routing.sql
 --
 -- REVAMP_PLAN 3.9 / onboarding spec §11: work orders gain a persisted team_key
@@ -14,7 +14,7 @@
 BEGIN;
 
 -- ---------------------------------------------------------------------------
--- 1. work_orders.team_key — the owning app-level TeamId (text, matches
+-- 1. work_orders.team_key, the owning app-level TeamId (text, matches
 --    city_teams.team_key / teams.ts ids; NOT the work_order_department enum).
 -- ---------------------------------------------------------------------------
 ALTER TABLE work_orders
@@ -42,7 +42,7 @@ WHERE cl.report_id = wo.report_id
   AND wo.team_key IS NULL;
 
 -- ---------------------------------------------------------------------------
--- 2. dashboard_reports_view — expose team_key so the corpus mappers can
+-- 2. dashboard_reports_view, expose team_key so the corpus mappers can
 --    populate DashboardReport.assigned_team without a second query. Recreates
 --    the migration-024 shape + the join; PII exclusions unchanged.
 -- ---------------------------------------------------------------------------

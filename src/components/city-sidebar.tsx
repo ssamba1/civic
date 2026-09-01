@@ -27,10 +27,10 @@ interface CitySidebarProps {
   slug: string;
   cityName?: string | null;
   cityState?: string | null;
-  /** Server-computed staff status (or demo city) — hides Grid for non-staff so
+  /** Server-computed staff status (or demo city), hides Grid for non-staff so
    *  the rail never links to a page that just bounces them to /login. */
   isStaff: boolean;
-  /** Server-computed VIDEO_PIPELINE flag — the rail never links to a route
+  /** Server-computed VIDEO_PIPELINE flag. The rail never links to a route
    *  that 404s when the pipeline ships dark. */
   videoEnabled?: boolean;
 }
@@ -139,7 +139,7 @@ export function CitySidebar({
       footer={
         <>
           <SidebarWhenExpanded>
-            {/* User|City segment + theme toggle — one row. */}
+            {/* User|City segment + theme toggle, one row. */}
             <div className="flex h-8 w-full items-center gap-2 [&>div:first-child]:h-8 [&>div:first-child]:min-w-0 [&>div:first-child]:flex-1 [&_a]:h-full [&_a]:flex-1">
               <ViewSwitch citySlug={slug} />
               <ThemeToggle className="h-8 w-8 shrink-0" />

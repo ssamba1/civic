@@ -4,7 +4,7 @@ import { SCRIPT_HASHES, SW_REGISTER, THEME_INIT } from "./inline-scripts";
 
 // The drift guard: if either inline script changes (even whitespace), its CSP
 // hash in SCRIPT_HASHES no longer matches and the browser silently blocks the
-// script in prod — a failure tsc/build can't catch. This test turns that into
+// script in prod. A failure tsc/build can't catch. This test turns that into
 // a red suite instead.
 function cspHash(script: string): string {
   return `'sha256-${createHash("sha256").update(script).digest("base64")}'`;

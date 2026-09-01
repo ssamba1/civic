@@ -63,7 +63,7 @@ describe("rankTrending", () => {
   });
 
   it("breaks ties by recency", () => {
-    // Same upvotes, same score — newer wins
+    // Same upvotes, same score. Newer wins
     const older = makeReport("old", 10, 48);
     const newer = makeReport("new", 10, 1);
     // newer decays less → higher score → should come first

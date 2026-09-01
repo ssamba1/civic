@@ -10,18 +10,18 @@
 |----|-----------|----------|---------|-----|
 | A1 | src/lib/ai/gemini.ts:89 | P0 | `JSON.parse(cleaned)` untyped, relying only on post-parse Zod validation | Type as `unknown`, validate immediately before use with schema |
 | A2 | src/lib/ai/reasoning-ai.ts:161 | P0 | `JSON.parse(text)` with untyped result, manual type guard `isReasoningPayload` may miss edge cases | Refactor to use Zod schema instead of manual guard |
-| A3 | src/app/staff/actions.ts:30 | P0 | `STAFF_ROLES as unknown as string[]` — bypasses const tuple type safety | Remove cast; verify Supabase `.in()` accepts readonly tuple |
-| A4 | src/lib/dashboard-queries.ts:139 | P0 | `(data as unknown as ViewRow[])` — Supabase query result cast without runtime validation | Create Zod schema for `ViewRow` and validate result |
-| A5 | src/components/staff/staff-inbox.tsx:92 | P0 | `(result as any).fetchedAt` — erases `Result<T>` union type, accessing unsafe property | Use proper type narrowing: `result.ok ? result.fetchedAt : undefined` |
-| A6 | src/app/api/open311/v2/requests/route.ts:103–109 | P1 | Multiple unsafe casts on Supabase row: `as Record<string, unknown>`, `as Classification \| null` | Destructure safely with runtime validation |
-| A7 | src/lib/resident-data.ts:221 | P1 | `JSON.parse(geo)` untyped — PostGIS geometry parser has no type check | Use existing `normalizeLocation()` helper instead |
-| B1–B16 | Multiple catch blocks | P1 | Untyped catch `(err)` parameter loses error shape and context | Type as `unknown` and extract message safely |
-| C1–C9 | localStorage/JSON.parse sites | P1 | `JSON.parse(raw) as unknown` with post-parse manual validation | Extract shared schema validation helper or use Zod |
-| D1 | src/lib/resident-data.ts:314 | P1 | `(data as unknown as MyReportRow[])` — post-query cast without validation | Add Zod schema and validate before use |
-| E1–E2 | src/components/report/camera-capture.tsx:284, 299 | P2 | `as unknown as MediaTrackConstraints` — bypasses WebAPI type check | Import correct type directly, no unknown bridge |
-| E3 | src/lib/types.ts:71 | P2 | `as unknown[]` for PostGIS coordinates — lacks bounds check | Already safe (pre-guarded); cast is justified |
-| E4–E15 | src/components/staff/staff-inbox.tsx:415–494 | P2 | Unnecessary `as unknown as Type` after null checks — redundant casts | Remove casts; type narrowing already works |
-| E16 | src/components/analytics/hover-tip.tsx:222 | P2 | `e as unknown as React.MouseEvent` — loses event type narrowing | Type directly as `React.MouseEvent<>` |
+| A3 | src/app/staff/actions.ts:30 | P0 | `STAFF_ROLES as unknown as string[]`. Bypasses const tuple type safety | Remove cast; verify Supabase `.in()` accepts readonly tuple |
+| A4 | src/lib/dashboard-queries.ts:139 | P0 | `(data as unknown as ViewRow[])`, Supabase query result cast without runtime validation | Create Zod schema for `ViewRow` and validate result |
+| A5 | src/components/staff/staff-inbox.tsx:92 | P0 | `(result as any).fetchedAt`, erases `Result<T>` union type, accessing unsafe property | Use proper type narrowing: `result.ok ? result.fetchedAt : undefined` |
+| A6 | src/app/api/open311/v2/requests/route.ts:103-109 | P1 | Multiple unsafe casts on Supabase row: `as Record<string, unknown>`, `as Classification \| null` | Destructure safely with runtime validation |
+| A7 | src/lib/resident-data.ts:221 | P1 | `JSON.parse(geo)` untyped. PostGIS geometry parser has no type check | Use existing `normalizeLocation()` helper instead |
+| B1, B16 | Multiple catch blocks | P1 | Untyped catch `(err)` parameter loses error shape and context | Type as `unknown` and extract message safely |
+| C1, C9 | localStorage/JSON.parse sites | P1 | `JSON.parse(raw) as unknown` with post-parse manual validation | Extract shared schema validation helper or use Zod |
+| D1 | src/lib/resident-data.ts:314 | P1 | `(data as unknown as MyReportRow[])`. Post-query cast without validation | Add Zod schema and validate before use |
+| E1, E2 | src/components/report/camera-capture.tsx:284, 299 | P2 | `as unknown as MediaTrackConstraints`, bypasses WebAPI type check | Import correct type directly, no unknown bridge |
+| E3 | src/lib/types.ts:71 | P2 | `as unknown[]` for PostGIS coordinates. Lacks bounds check | Already safe (pre-guarded); cast is justified |
+| E4, E15 | src/components/staff/staff-inbox.tsx:415-494 | P2 | Unnecessary `as unknown as Type` after null checks, redundant casts | Remove casts; type narrowing already works |
+| E16 | src/components/analytics/hover-tip.tsx:222 | P2 | `e as unknown as React.MouseEvent`, loses event type narrowing | Type directly as `React.MouseEvent<>` |
 
 ---
 
@@ -48,7 +48,7 @@ return { ok: true, data: { classification: validation.data as Classification, ra
 
 **Why it matters:** 
 - Gemini response format could change silently. If the model adds/removes fields, `safeParse()` fails with validation error, but the error message doesn't surface what changed.
-- The final `validation.data as Classification` cast bypasses Zod's type narrowing — if validation somehow succeeds with wrong data, the cast hides it.
+- The final `validation.data as Classification` cast bypasses Zod's type narrowing, if validation somehow succeeds with wrong data, the cast hides it.
 - If Gemini returns structurally invalid JSON that passes type checking but fails business logic downstream, debugging becomes harder.
 
 **Fix:**
@@ -89,7 +89,7 @@ return parsed; // <-- TypeScript doesn't narrow here
 ```
 
 **Why it matters:**
-- The `isReasoningPayload()` guard is a manual type predicate (lines 117–134). If the guard has a bug (e.g., forgets to check `costBreakdown` is non-empty), bad data slips through.
+- The `isReasoningPayload()` guard is a manual type predicate (lines 117-134). If the guard has a bug (e.g., forgets to check `costBreakdown` is non-empty), bad data slips through.
 - TypeScript's type narrowing doesn't work with custom predicates without explicit `is` annotation. The throw hides the issue until production.
 - Repeating 8+ lines of validation code is error-prone when changes to `ReasoningPayload` happen.
 
@@ -124,7 +124,7 @@ const STAFF_ROLES = ["staff_dispatcher", "staff_supervisor", "admin"] as const;
 ```
 
 **Why it matters:**
-- `STAFF_ROLES` is a `readonly ["staff_dispatcher", "staff_supervisor", "admin"]` — a typed const array.
+- `STAFF_ROLES` is a `readonly ["staff_dispatcher", "staff_supervisor", "admin"]`: a typed const array.
 - Supabase's `.in()` should accept this readonly array directly. The `as unknown as string[]` cast defeats the const narrowing and converts it to a mutable string array.
 - Future changes to STAFF_ROLES won't be caught by the type system.
 
@@ -215,7 +215,7 @@ const nextCursor = result.fetchedAt ?? result.data.reduce(...);
 ---
 
 #### A6: Open311 API Row Casting Without Validation
-**File:** src/app/api/open311/v2/requests/route.ts:103–109
+**File:** src/app/api/open311/v2/requests/route.ts:103-109
 ```typescript
 const open311Requests = (data ?? []).map((row) => {
   const report = rowToReport(row as ReportRow);
@@ -277,7 +277,7 @@ const open311Requests = (data ?? [])
 
 ### P1 Findings: Catch Clauses with Untyped Errors
 
-#### B1–B16: Untyped Catch Blocks (16 instances)
+#### B1, B16: Untyped Catch Blocks (16 instances)
 **Pattern:** `catch (err)` or `catch (e)` without type annotation.
 
 **Examples:**
@@ -290,7 +290,7 @@ const open311Requests = (data ?? [])
 ```typescript
 catch (err) {
   log.error(`${label} threw`, err);
-  // err is implicitly 'any' — can't safely call .message, .stack, etc.
+  // err is implicitly 'any'. Can't safely call .message, .stack, etc.
 }
 ```
 
@@ -311,7 +311,7 @@ catch (err: unknown) {
 
 ### P1 Findings: JSON.parse with Post-Parse Validation
 
-#### C1–C9: localStorage Parse (9 instances)
+#### C1, C9: localStorage Parse (9 instances)
 **Pattern:** `JSON.parse(raw) as unknown` followed by manual field validation.
 
 **Examples:**
@@ -343,7 +343,7 @@ return out;
 **Why it matters:**
 - The validation is sound and defensive, BUT it repeats across 9 files.
 - Each site implements its own version; if a required field check is missing (e.g., validating `team` is a valid TeamId), bad data silently passes.
-- Hard to maintain — future schema changes require updates in multiple places.
+- Hard to maintain. Future schema changes require updates in multiple places.
 
 **Fix:** Extract shared Zod schemas in `src/lib/types.ts` or `src/lib/schemas.ts`:
 ```typescript
@@ -393,7 +393,7 @@ return (data as unknown as MyReportRow[]).map((r) => {
 
 ### P2 Findings: Low-Risk (Context-Dependent)
 
-#### E1–E2: MediaTrackConstraints Browser API
+#### E1, E2: MediaTrackConstraints Browser API
 **File:** src/components/report/camera-capture.tsx:284, 299
 ```typescript
 await track.applyConstraints({
@@ -428,8 +428,8 @@ const lat = Number(coords[1]);
 
 ---
 
-#### E4–E15: Redundant Staff Inbox Casts
-**File:** src/components/staff/staff-inbox.tsx:415–494
+#### E4, E15: Redundant Staff Inbox Casts
+**File:** src/components/staff/staff-inbox.tsx:415-494
 ```typescript
 if (!wo.report || !wo.classification) return null;
 // ... later
@@ -462,7 +462,7 @@ show(resolve(e as React.MouseEvent<HTMLElement>), e, placement);
 
 ## Backlog: Recommended Actions
 
-### Phase 1 — Critical (P0, ship ASAP)
+### Phase 1: Critical (P0, ship ASAP)
 
 1. **A1: Gemini JSON parse** 
    - Add logging for schema mismatches with context (received data sample)
@@ -483,13 +483,13 @@ show(resolve(e as React.MouseEvent<HTMLElement>), e, placement);
 5. **A5: Staff inbox `as any`** 
    - Remove cast; use type narrowing on `result.ok`
 
-### Phase 2 — High-Priority (P1, within 1 sprint)
+### Phase 2: High-Priority (P1, within 1 sprint)
 
-6. **B1–B16: Catch blocks** 
+6. **B1, B16: Catch blocks** 
    - Add `unknown` type annotation to all 16 catch blocks
    - Use standard error message extraction pattern
 
-7. **C1–C9: localStorage parse** 
+7. **C1, C9: localStorage parse** 
    - Extract shared Zod schemas in `src/lib/schemas.ts` (or extend `src/lib/types.ts`)
    - Replace 9 sites with single schema usage; reduces duplication
 
@@ -499,12 +499,12 @@ show(resolve(e as React.MouseEvent<HTMLElement>), e, placement);
 9. **A6: Open311 row casting** 
    - Add row shape validation; log mismatches
 
-### Phase 3 — Refactoring (P2, backlog)
+### Phase 3: Refactoring (P2, backlog)
 
-10. **E1–E2: MediaTrackConstraints** 
+10. **E1, E2: MediaTrackConstraints** 
     - Import correct type; remove `unknown` bridge
 
-11. **E4–E15: Staff inbox casts** 
+11. **E4, E15: Staff inbox casts** 
     - Remove redundant casts; verify source types are correct
 
 ---
@@ -550,6 +550,6 @@ The codebase has solid fundamentals (Zod schemas in use, post-parse guards mostl
 - **AI output parsing** (Gemini, Reasoning) lacks explicit schema validation
 - **Supabase queries** cast without runtime checks
 - **Error handling** uses implicit `any` on catch parameters
-- **localStorage validation** repeats across 9 files — duplication risk
+- **localStorage validation** repeats across 9 files, duplication risk
 
-Addressing P0 findings (A1–A6) will harden the critical path (AI/API). P1 findings are mostly code quality (catch typing, shared schemas). P2 findings are cosmetic.
+Addressing P0 findings (A1, A6) will harden the critical path (AI/API). P1 findings are mostly code quality (catch typing, shared schemas). P2 findings are cosmetic.

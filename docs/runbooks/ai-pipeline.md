@@ -37,7 +37,7 @@ synchronous path.
   │   7a. SYNC  (default): await runClassifyPipeline(reportId)      │
   │   7b. ASYNC (flag on):  void runClassifyPipeline(reportId)      │
   └──────────────────────────────┬─────────────────────────────────┘
-                                  │  in-process call — NO HTTP round-trip
+                                  │  in-process call, NO HTTP round-trip
   ┌──────────────────────────────▼─────────────────────────────────┐
   │ lib/ai/classify-pipeline.ts  runClassifyPipeline()             │
   │   a. read reports row (service role, RLS-bypassing)            │
@@ -60,7 +60,7 @@ Key facts that are easy to get backwards:
 - **The demo submit flow calls `runClassifyPipeline` directly, in-process.** There
   is no HTTP self-call. `submitReport` imports and invokes the pipeline function.
 - **`/api/ai/classify` is a separate, parallel entry point** for external/internal
-  callers (Open311, background jobs) — it is *not* on the main capture path. It
+  callers (Open311, background jobs). It is *not* on the main capture path. It
   wraps the same `runClassifyPipeline` behind its own auth + rate limit + ownership
   check (see §5). The synchronous demo never needs `INTERNAL_CLASSIFY_SECRET`.
 
@@ -79,7 +79,7 @@ failure both objects are removed.
 
 ---
 
-## 2. The image-parsing fix — why Gemini gets the correct MIME now
+## 2. The image-parsing fix: why Gemini gets the correct MIME now
 
 This is a two-part causal chain. Both halves must hold for Gemini to receive an
 image it can actually decode and orient correctly.
@@ -99,11 +99,11 @@ That upright bitmap feeds both outputs. The `original` returned to the caller is
 2D canvas and calls `canvas.toBlob(..., "image/jpeg", quality)`. Result:
 
 - EXIF orientation is **baked into the pixels** (so a sideways phone photo arrives
-  upright — no orientation tag for a downstream decoder to mis-handle), and
-- the output is **guaranteed `image/jpeg`** — a format Gemini supports. A
+  upright, no orientation tag for a downstream decoder to mis-handle), and
+- the output is **guaranteed `image/jpeg`**, a format Gemini supports. A
   library-picked **HEIC** never reaches the server as HEIC (HEIC also fails to
   decode in `createImageBitmap` on desktop/Android Chrome, which is caught
-  client-side — see §8).
+  client-side. See §8).
 
 Both encodes are downscaled to a long edge of `MAX_OUTPUT_EDGE = 1280` so the two
 base64 blobs fit inside one Server Action request under Next's default ~1 MB body
@@ -116,7 +116,7 @@ limit and the action body is silently rejected.
 In `classify-pipeline.ts` the downloaded bytes are passed through
 `sniffImageMime(bytes)` (`lib/image/sniff-mime.ts`), a pure, dependency-free
 magic-byte detector (JPEG `FF D8 FF`, PNG, GIF, WebP `RIFF…WEBP`, HEIC/HEIF
-`ftyp` brands). The sniffed value — **not** a filename or a stored content-type —
+`ftyp` brands). The sniffed value, **not** a filename or a stored content-type,
 is passed to Gemini as `inlineData.mimeType`:
 
 ```ts
@@ -137,7 +137,7 @@ The sniffed MIME is also persisted on the `classifications` row
 ## 3. Gemini robustness (classification)
 
 `lib/ai/gemini.ts` → `classifyPhoto(imageBase64, mimeType)` returns a
-`Result<{ classification, rawText }>` and **never throws to the caller** — all
+`Result<{ classification, rawText }>` and **never throws to the caller**: all
 errors are returned as `{ ok: false, error }`.
 
 - **Structured output.** The model is created with
@@ -145,8 +145,8 @@ errors are returned as `{ ok: false, error }`.
   `responseSchema = GEMINI_CLASSIFICATION_SCHEMA`
   (`lib/ai/classification-schema.ts`). The schema mirrors the zod
   `classificationSchema`: `category` (enum of 12 categories), `subcategory`,
-  `severity` (INTEGER 1–5), `hazard_radius_m`, `visible_size_estimate`,
-  `is_emergency`, `confidence` (0–1), `reasoning`. The prompt
+  `severity` (INTEGER 1-5), `hazard_radius_m`, `visible_size_estimate`,
+  `is_emergency`, `confidence` (0-1), `reasoning`. The prompt
   (`lib/ai/prompt.ts`) also instructs JSON-only output.
 - **Belt-and-suspenders parsing.** Even with structured output, `stripCodeFences`
   removes any ```` ```json ```` fences before `JSON.parse`. Parse failure →
@@ -199,9 +199,9 @@ classification, with a different error contract:
 - `getReasoning(input, slaHours, categoryLabel, templateFallback)` is the
   orchestrator with **three-tier sourcing**, returning a `source` tag for
   observability:
-  1. `cache` — a previously computed Gemini result for this report id.
-  2. `gemini` — freshly generated, then cached.
-  3. `template` — the deterministic `templateFallback()` used on **any** Gemini
+  1. `cache`: a previously computed Gemini result for this report id.
+  2. `gemini`: freshly generated, then cached.
+  3. `template`: the deterministic `templateFallback()` used on **any** Gemini
      error (the `throw` is caught here).
 
   Only successful Gemini results are cached; template fallbacks are **not** cached,
@@ -212,19 +212,19 @@ classification, with a different error contract:
 Module-level `Map<string, ReasoningPayload>` keyed by report id, used as an
 **LRU** with `CACHE_MAX = 500`. `cacheGet` refreshes recency by delete+re-set
 (moving the entry to newest). `cacheSet` evicts the oldest insertion-order key
-until under the cap. In-memory only — resets on cold start, per-instance.
+until under the cap. In-memory only. Resets on cold start, per-instance.
 
 ### Endpoint: `/api/ai/reasoning`
 
 - Auth: valid user session **or** internal-key header (§5).
 - Rate-limited for non-internal callers, keyed `reasoning:{ip}`.
 - Looks up the report in the **in-memory dashboard corpus** via
-  `getReportCorpus()` (`lib/dashboard-data`) — **not** the live `reports` table.
+  `getReportCorpus()` (`lib/dashboard-data`). **not** the live `reports` table.
   (Classification uses the DB; reasoning does not.)
 - Calls `getReasoning(...)` with `templateReasoningForReport(report)` as the
   fallback. That template is a large deterministic table of cost/scoring sections
-  keyed by severity 1–5. Because the fallback is swallowed inside `getReasoning`,
-  this endpoint **never dead-ends** on a Gemini failure — the only non-200s are the
+  keyed by severity 1-5. Because the fallback is swallowed inside `getReasoning`,
+  this endpoint **never dead-ends** on a Gemini failure. The only non-200s are the
   intentional auth/limit/validation gates.
 
 ---
@@ -240,17 +240,17 @@ until under the cap. In-memory only — resets on cold start, per-instance.
   `x-real-ip`, else `"unknown"`.
 
 Both AI routes (`/api/ai/classify`, `/api/ai/reasoning`) apply the same auth
-**components** — but the check order differs (see the note below):
+**components**: but the check order differs (see the note below):
 
 1. **Internal-key bypass.** Read the `x-internal-key` header and compare it to
    `process.env.INTERNAL_CLASSIFY_SECRET` with `timingSafeEqual` (length-checked
    first to avoid the throw on unequal-length buffers). Internal callers
-   (background jobs, Open311 — **not** the demo server action, which calls
+   (background jobs, Open311, **not** the demo server action, which calls
    `runClassifyPipeline` directly in-process) are **exempt from the rate limit**
-   and from the session/ownership checks — they are trusted and not user-facing.
+   and from the session/ownership checks. They are trusted and not user-facing.
 2. **Rate limit** non-internal callers (`classify:{ip}` / `reasoning:{ip}`) →
    `429` with a `Retry-After` header (seconds) when blocked.
-3. **Session check** — non-internal callers without a Supabase user → `401`.
+3. **Session check**: non-internal callers without a Supabase user → `401`.
 4. **Object-level authorization (classify only).** Because the pipeline runs under
    the RLS-bypassing service role, an authenticated non-internal caller must not be
    able to re-classify an arbitrary report. The route does an RLS-scoped read via
@@ -283,14 +283,14 @@ Default **off**. Enabled only when `NEXT_PUBLIC_ASYNC_CLASSIFY === "1"`.
 ### What changes when on
 
 - **Insert** (`actions.ts`): the `reports` row gains `classify_status: "pending"`
-  (via a conditional spread — see §7). When off, the row is bare.
+  (via a conditional spread, see §7). When off, the row is bare.
 - **Dispatch** (`actions.ts`): instead of awaiting, the pipeline is fired
   fire-and-forget (`void runClassifyPipeline(reportId).catch(...)`) and the action
   returns immediately with a neutral **pending** classification
   (`confidence: 0`, "Classification pending").
 - **Status stamping** (`classify-pipeline.ts`): `markClassifyStatus` writes
   `classify_status` `done`/`failed` as a **separate** update (never merged into the
-  primary `status:"dispatched"` write — so a missing column can only drop the
+  primary `status:"dispatched"` write, so a missing column can only drop the
   status stamp, never the real status transition). Errors are logged, never thrown.
 - **Realtime (resident UI)** (`page.tsx`): on a pending result the page subscribes
   to a Supabase Realtime `INSERT` on `classifications` filtered by
@@ -311,7 +311,7 @@ Additive, idempotent, **not auto-applied**, inert when async is off:
 1. `ALTER TABLE reports ADD COLUMN IF NOT EXISTS classify_status text`
    (`null|pending|done|failed`).
 2. Partial index `idx_reports_classify_status ON reports(classify_status)
-   WHERE classify_status IS NOT NULL` — cheap worker dequeue over in-flight rows.
+   WHERE classify_status IS NOT NULL`, cheap worker dequeue over in-flight rows.
 3. Guarded `ALTER PUBLICATION supabase_realtime ADD TABLE public.classifications`
    so the resident page can subscribe.
 
@@ -321,18 +321,18 @@ Additive, idempotent, **not auto-applied**, inert when async is off:
 
 ---
 
-## 7. The flag-off invariant — three guards
+## 7. The flag-off invariant: three guards
 
 **When `ASYNC_CLASSIFY` is off, behavior must be byte-identical to before async
 existed**, and the un-migrated database (no `classify_status` column) must not be
 touched. Three guards enforce this:
 
-1. **`markClassifyStatus` early-returns** when the flag is off — the synchronous
+1. **`markClassifyStatus` early-returns** when the flag is off. The synchronous
    path never references `classify_status`.
 2. **Conditional spread on insert** (`actions.ts`):
-   `...(ASYNC_CLASSIFY ? { classify_status: "pending" } : {})` — flag off → the
+   `...(ASYNC_CLASSIFY ? { classify_status: "pending" } : {})`: flag off → the
    insert row is bare, identical to the original.
-3. **Migration 007 is not auto-applied** — so the column literally does not exist
+3. **Migration 007 is not auto-applied**: so the column literally does not exist
    until an operator opts in. Any unguarded reference would break the default sync
    path on an un-migrated database, which is why guards 1 and 2 exist.
 
@@ -357,7 +357,7 @@ cast the patch to `Record<string, unknown>`.)
 time), so build-time route collection doesn't require secrets. A missing/invalid
 **validated** var throws "Missing or invalid server environment variables: …".
 `INTERNAL_CLASSIFY_SECRET` and `NEXT_PUBLIC_ASYNC_CLASSIFY` are **not** in the zod
-schema — they are read raw and are not checked at startup (a missing internal
+schema. They are read raw and are not checked at startup (a missing internal
 secret simply means no caller can pass the internal-key bypass).
 
 ---
@@ -388,17 +388,17 @@ aborting more than necessary:
 | Gemini fails (network/rate/timeout) | neutral fallback classification (`model_version:"fallback"`, `raw_response:{fallback:true}`); report still reaches the staff inbox |
 | `classifications` upsert fails   | log + `error_log`, stamp `failed`, return `ok:false`                 |
 | `work_orders` insert fails       | log + `error_log`, stamp `failed`, return `ok:false`                 |
-| `reports.status` update fails    | logged only — not fatal (classification/work order already persisted)|
+| `reports.status` update fails    | logged only. Not fatal (classification/work order already persisted)|
 
 On a Gemini failure the report still gets a `classifications` row and (if not
-emergency) a `work_order`, then `reports.status = "dispatched"` — so a failed
+emergency) a `work_order`, then `reports.status = "dispatched"`, so a failed
 classification still lands the report in the staff manual-triage queue.
 
 ### Client/action-level resilience
 
 - **Image decode/blur fails before submit** (`page.tsx`): most commonly a HEIC the
   browser can't decode. The catch shows a recoverable error and returns to the
-  preview step — it must **not** fall through to the success screen, because no
+  preview step. It must **not** fall through to the success screen, because no
   report was created.
 - **Server Action returns `!ok` or throws** (`page.tsx`): land on the thanks screen
   with `FALLBACK_CLASSIFICATION` (`confidence:0` hides the AI card) rather than
@@ -419,12 +419,12 @@ classification still lands the report in the staff manual-triage queue.
 2. **Client-side timeout** in `page.tsx`: `CLASSIFY_PENDING_TIMEOUT_MS = 20000`. If
    no real classification (Realtime INSERT or the one-shot fetch) lands within the
    deadline, the pending spinner resolves to the neutral terminal state. The report
-   is already persisted and sits in staff manual triage — a graceful terminal state,
+   is already persisted and sits in staff manual triage. A graceful terminal state,
    not a dead-end.
 
 ### Where to look when it fails
 
-- **`error_log` table** — keyed by `correlation_id` and `context`
+- **`error_log` table**: keyed by `correlation_id` and `context`
   (`"classify-pipeline"`, `"submit-report:async-classify"`), with a `message` and a
   `metadata` JSON (`reportId`, `stage`, `storagePath`, etc.).
 - **Structured logger events** (`createLogger("classify-pipeline")`): `pipeline_start`,
@@ -433,7 +433,7 @@ classification still lands the report in the staff manual-triage queue.
 - **Async stuck at `pending`** → check `reports.classify_status`; a `failed` stamp
   plus an `error_log` row points at the backstop. A row stuck at `pending` past
   20 s on the client means the pipeline threw before the backstop could stamp
-  (rare) — the report is still in manual triage.
+  (rare). The report is still in manual triage.
 
 ---
 
@@ -446,8 +446,8 @@ at the call-contract level only (internals intentionally not described):
   recurrenceCount: 0 })` → `{ department, crew_type, priority_score, est_minutes,
   materials }` (`lib/ai/work-order-rules`).
 - `getReportCorpus()`, `CATEGORY_META`, `CATEGORY_SLA_TARGETS`
-  (`lib/dashboard-data`) — the in-memory corpus + metadata the reasoning endpoint
+  (`lib/dashboard-data`), the in-memory corpus + metadata the reasoning endpoint
   reads.
 - `createServerClient()` (service role) / `createSSRClient()` + `getAuthUser()`
-  (cookie-aware) — Supabase clients.
+  (cookie-aware), Supabase clients.
 - `Classification`, `WorkOrder`, `Result<T>` (`lib/types`).

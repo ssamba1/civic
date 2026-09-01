@@ -1,9 +1,9 @@
-// Census TIGERweb client — resolves a city/county name to authoritative US
+// Census TIGERweb client, resolves a city/county name to authoritative US
 // boundary candidates + fetches the boundary polygon. The engine wizard Step 1
 // drives (F4). Verified against the live service 2026-06-14:
 //   - names carry LSAD suffixes (" city" / " County" / "unified government" …)
 //   - cities span layers: Incorporated Places (4), Consolidated Cities (3),
-//     CDPs (5), Counties (State_County/1) — so resolution is multi-layer.
+//     CDPs (5), Counties (State_County/1), so resolution is multi-layer.
 // No DB dependency; pure HTTP. `fetchImpl` is injectable for tests.
 
 import type { Result } from "@/lib/types";
@@ -44,7 +44,7 @@ export interface CityCandidate {
   displayName: string;
   type: CityCandidateType;
   geoid: string;
-  /** TIGER layer this came from — reused to fetch its geometry. */
+  /** TIGER layer this came from, reused to fetch its geometry. */
   layerUrl: string;
   /** 2-letter state abbreviation, echoed from input. */
   state: string;
@@ -154,7 +154,7 @@ async function queryLayer(
 
 /**
  * Find authoritative boundary candidates for `{ name, state }` across all TIGER
- * layers. Returns [] (not an error) when nothing matches — the caller treats an
+ * layers. Returns [] (not an error) when nothing matches. The caller treats an
  * empty list as NO_MATCH and offers the manual-boundary fallback. Errors only
  * when the state is unknown or every layer query fails.
  */

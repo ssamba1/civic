@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 /* ==================================================================
    Public roadmap (NEXT_100 #92).
 
-   "What we're working on" — public transparency that the city is actively
+   "What we're working on", public transparency that the city is actively
    improving service, not a black box. Curated content (edit the arrays below);
    deliberately not auto-generated so staff control the public message.
    ================================================================== */
@@ -28,7 +28,7 @@ const NOW: Item[] = [
   {
     title: "Reach every resident",
     detail:
-      "Report by text message or a QR code on the street — no app or account needed.",
+      "Report by text message or a QR code on the street, no app or account needed.",
   },
   {
     title: "Storm readiness",

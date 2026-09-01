@@ -18,7 +18,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
-   Member activity timeline — the one interactive island on the member
+   Member activity timeline, the one interactive island on the member
    detail page. The server component does the report/event merge, label
    humanization, and relative-time formatting (so timestamps match the
    request render and never hydrate-mismatch); this component only maps
@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils/cn";
 
 // Normalized event-kind → glyph. The server collapses raw event_type values
 // into this small fixed set (see iconKind() in member-detail) so the boundary
-// stays serializable — Lucide components can't cross server→client.
+// stays serializable. Lucide components can't cross server→client.
 const KIND_ICON: Record<string, LucideIcon> = {
   report: FileText,
   status: RefreshCw,
@@ -84,7 +84,7 @@ export function MemberActivityTimeline({
               style={{ animationDelay: `${Math.min(i, 12) * 35}ms` }}
               className="relative flex gap-3 pb-5 last:pb-0 animate-in fade-in slide-in-from-bottom-1 fill-mode-both duration-300 motion-reduce:animate-none"
             >
-              {/* Connector line behind the node — stops at the last visible node. */}
+              {/* Connector line behind the node. Stops at the last visible node. */}
               {!isLast && (
                 <span
                   aria-hidden="true"

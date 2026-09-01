@@ -34,7 +34,7 @@ export default async function RequestsPage({
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-subtle">
           Want a feature, a small quality-of-life fix, or a hand getting your
-          city live on Civic? Tell us here — a real person reads every request.
+          city live on Civic? Tell us here. A real person reads every request.
           Already ready to self-serve?{" "}
           <Link
             href="/onboard"

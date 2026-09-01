@@ -12,7 +12,7 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
-   Hover tip primitive — portal-rendered, follows cursor, deeper
+   Hover tip primitive, portal-rendered, follows cursor, deeper
    contextual stats on hover. Shared across analytics tiles.
    ================================================================== */
 
@@ -92,7 +92,7 @@ export function useHoverTip(): UseHoverTipReturn {
   // Track last pointer type so click handler knows whether to toggle (touch) or no-op (mouse).
   const lastPointerType = useRef<string>("mouse");
   // Mirror visibility into a ref so the touch onClick reads the current value
-  // without closing over state.visible — keeps bindTarget's identity stable.
+  // without closing over state.visible. Keeps bindTarget's identity stable.
   const visibleRef = useRef(false);
   useEffect(() => {
     visibleRef.current = state.visible;
@@ -314,7 +314,7 @@ export function useHoverTip(): UseHoverTipReturn {
 }
 
 /* ==================================================================
-   Tip body helpers — rows, bars, kbd-style chips. Lets each chart
+   Tip body helpers. Rows, bars, kbd-style chips. Lets each chart
    assemble dense deeper-stat tooltips without hand-rolling layout.
    ================================================================== */
 
@@ -411,7 +411,7 @@ export function TipChip({
 }
 
 /* ==================================================================
-   useTiltHover — subtle 3D tilt + scale on tile hover. Cheap, GPU-
+   useTiltHover, subtle 3D tilt + scale on tile hover. Cheap, GPU-
    only (transform). Skip on prefers-reduced-motion.
    ================================================================== */
 

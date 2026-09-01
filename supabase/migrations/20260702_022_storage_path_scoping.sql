@@ -1,9 +1,9 @@
 -- =============================================================================
--- Civic — Storage RLS path scoping (T1.13)
+-- Civic, Storage RLS path scoping (T1.13)
 -- Migration: 20260702_022_storage_path_scoping.sql
 --
 -- Migration 003 granted authenticated INSERT on the photos-public / photos-raw
--- buckets with only WITH CHECK (bucket_id = '...') — no folder constraint. Any
+-- buckets with only WITH CHECK (bucket_id = '...'). No folder constraint. Any
 -- authenticated user could therefore upload into ANY city's folder using their
 -- own JWT. Tighten both policies so the first path segment (the city id in the
 -- `${cityId}/${reportId}.ext` object name) must equal the caller's own city.

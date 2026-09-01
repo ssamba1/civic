@@ -10,9 +10,9 @@ on:
   push:
 
 # Cancel superseded runs ONLY for PR iterations (pushing a new commit to an open
-# PR supersedes the prior run — cheap to drop). NEVER cancel push runs on a
+# PR supersedes the prior run. Cheap to drop). NEVER cancel push runs on a
 # branch: rapid merges to main were cancelling each other's post-merge run, so
-# a merge could land with its authoritative test run cancelled — GitHub then
+# a merge could land with its authoritative test run cancelled. GitHub then
 # shows no failing check and the branch reads "green" even though CI never
 # completed on that commit (this masked real lint failures on main). Per-SHA
 # grouping + no-cancel on branch pushes guarantees every merged commit gets a
@@ -24,8 +24,8 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    # The `secrets` context is NOT available in step-level `if:` expressions —
-    # referencing it there makes the whole workflow fail to compile (0 jobs
+    # The `secrets` context is NOT available in step-level `if:` expressions.
+    # Referencing it there makes the whole workflow fail to compile (0 jobs
     # created, "workflow file issue"). Hoist the gate into a job-level env var,
     # which IS allowed in `if:`.
     env:
@@ -38,7 +38,7 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           # pnpm-workspace.yaml here is v10+-style config-only (allowBuilds,
-          # no `packages` field) — pnpm 9 errors on it ("packages field
+          # no `packages` field), pnpm 9 errors on it ("packages field
           # missing or empty"), which is why this workflow never went green.
           # Local dev runs pnpm 11 via corepack; lockfileVersion 9.0 is
           # compatible.
@@ -84,7 +84,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL || 'https://placeholder.supabase.co' }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY || 'placeholder-anon-key' }}
 
-      # E2E only runs when a real test database is configured — several specs
+      # E2E only runs when a real test database is configured. Several specs
       # hit DB-backed API routes that 500 against placeholder credentials. Same
       # secret gate as the RLS tests above.
       - name: Install Playwright browser
@@ -100,7 +100,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_TEST_SERVICE_ROLE_KEY }}
 
-      # Privacy audit gate (agents.md DoD) — needs the service role to list
+      # Privacy audit gate (agents.md DoD). Needs the service role to list
       # buckets, so it too is gated on the test DB secret.
       - name: Privacy audit
         if: ${{ env.HAS_TEST_DB != '' }}

@@ -3,7 +3,7 @@
  *
  * `bitmapToJpeg` draws an already-decoded `ImageBitmap` onto a canvas at a
  * bounded size and encodes it as JPEG. The caller is responsible for decoding
- * with EXIF orientation applied — `blur.ts` does this via
+ * with EXIF orientation applied. `blur.ts` does this via
  * `createImageBitmap(file, { imageOrientation: "from-image" })` and feeds the
  * upright bitmap here, which bakes orientation into pixels and guarantees a
  * Gemini-supported, correctly-labeled `image/jpeg`.

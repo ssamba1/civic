@@ -27,7 +27,7 @@ export interface AdminScope {
  * webhooks, silence city B's automation rules, revoke city B's API keys and
  * rewrite city B's photo-retention policy. Those actions all run through the
  * service-role client, which bypasses RLS, so the city check has to happen here
- * in application code — the database will not catch it.
+ * in application code. The database will not catch it.
  *
  * Returns null when the caller is not an admin, or is an admin with no city.
  */
@@ -48,7 +48,7 @@ export async function requireAdminScope(): Promise<AdminScope | null> {
     process.env.NODE_ENV === "development" &&
     process.env.DEV_AUTH_BYPASS === "1";
   if (devBypass) {
-    // No acting user in bypass mode — pin to the demo city so the scope is
+    // No acting user in bypass mode, pin to the demo city so the scope is
     // still a real, single tenant rather than "all of them".
     const cityId = (await cityIdForSlug(DEMO_CITY)) ?? (await firstCityId());
     return cityId ? { adminId: "", cityId } : null;

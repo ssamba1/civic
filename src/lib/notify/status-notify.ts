@@ -19,7 +19,7 @@ const logger = createLogger("[notify-composer]");
    evidence, build a per-status message, and hand it to deliverEmail (which
    no-ops gracefully without a key / for anonymous reporters).
 
-   Only the transitions worth a push are handled — resolved (the lever),
+   Only the transitions worth a push are handled, resolved (the lever),
    dispatched (acknowledged), rejected (closed-with-reason). open/in_progress
    are intentionally omitted: a bare "in progress" with no substance is noise
    (see docs/loop-closure-plan.md §4 Phase 1 trigger model).
@@ -41,15 +41,15 @@ const CATEGORY_LABEL: Partial<Record<ReportCategory, string>> = {
 };
 
 const RESOLUTION_NOTES: Record<ReportCategory, string> = {
-  pothole: "Pothole filled and compacted — surface restored and reopened.",
+  pothole: "Pothole filled and compacted, surface restored and reopened.",
   streetlight:
     "Fixture repaired and relit; circuit tested and back in service.",
   downed_sign: "Sign re-set and re-secured to spec.",
-  graffiti: "Surface cleaned and repainted — tag removed.",
+  graffiti: "Surface cleaned and repainted, tag removed.",
   illegal_dump: "Site cleared and debris hauled to the transfer station.",
   water_leak:
     "Leak isolated and repaired; service restored and pressure verified.",
-  sidewalk_damage: "Section repaired and leveled — trip hazard removed.",
+  sidewalk_damage: "Section repaired and leveled, trip hazard removed.",
   tree_down: "Tree cleared and debris chipped; right-of-way reopened.",
   debris: "Debris removed and the area swept clear.",
   drainage: "Drain cleared and flow restored; inlet inspected.",
@@ -73,14 +73,14 @@ interface NotifyRow {
 
 function reportUrl(reportId: string): string | null {
   const base = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-  // Link to the account-less public status page (opaque token) — it works from
+  // Link to the account-less public status page (opaque token). It works from
   // an inbox with no session, unlike the auth-scoped /user/my-reports view.
   return base ? `${base}/r/${publicToken(reportId)}` : null;
 }
 
 /**
  * Compose + deliver the out-of-band notification for a status change. Never
- * throws — delivery failures are logged, not propagated, so a notify miss can
+ * throws. Delivery failures are logged, not propagated, so a notify miss can
  * never roll back the status update that triggered it.
  */
 export async function notifyReportStatus(
@@ -119,7 +119,7 @@ export async function notifyReportStatus(
     const noun = CATEGORY_LABEL[category] || "issue";
 
     // Outbound webhooks (#79) fire from the action layer (report/actions.ts,
-    // staff/actions.ts) via the DB-backed webhook_endpoints dispatcher — not
+    // staff/actions.ts) via the DB-backed webhook_endpoints dispatcher. Not
     // here, to avoid double-delivery for the same status change.
     const occurredAt = new Date().toISOString();
     // CMMS/ERP/GIS connectors (#74/#75/#76/#77/#78): same event, mapped per
@@ -146,7 +146,7 @@ export async function notifyReportStatus(
     const url = reportUrl(reportId);
     // Stamp the report's public token so the emailed /r/[token] link resolves
     // against the LIVE database (the demo corpus resolves in-memory). Lazy,
-    // idempotent, best-effort — a failure must never block the send.
+    // idempotent, best-effort. A failure must never block the send.
     if (url) {
       await db
         .from("reports")
@@ -160,7 +160,7 @@ export async function notifyReportStatus(
     switch (status) {
       case "closed":
         subject = `Your ${noun} report was resolved`;
-        heading = "Resolved — here's what got done";
+        heading = "Resolved. Here's what got done";
         // RESOLUTION_NOTES is exhaustive over the built-in categories only,
         // and a city's own issue types are not in it. Unguarded this rendered
         // "undefined Thanks for helping keep the city running." into a
@@ -201,7 +201,7 @@ export async function notifyReportStatus(
 
     // SMS companion (#1/#2): the same close-the-loop beat, one line + the
     // status link, for reporters who left a phone. Independent of the email
-    // leg — a reporter may have one channel, both, or (anonymous) neither.
+    // leg. A reporter may have one channel, both, or (anonymous) neither.
     // Best-effort: an SMS miss never affects the email result or the status
     // update. deliverSms no-ops without a recipient or Twilio creds.
     if (toPhone) {
@@ -214,7 +214,7 @@ export async function notifyReportStatus(
 
     // Record the outcome on the matching notification row so a delivered email
     // drops out of the drain and a transient failure stays visible for retry
-    // (migration 025 delivered_at/delivery_error). Best-effort — reuses the db
+    // (migration 025 delivered_at/delivery_error). Best-effort, reuses the db
     // handle already open here.
     await stampNotificationOutcome(reportId, status, result, db);
 

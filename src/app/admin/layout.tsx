@@ -21,7 +21,7 @@ export default async function AdminLayout({
 }) {
   const user = await getAuthUser();
   // Client-supplied cookie: honor it only in demo mode, and only for the admin
-  // persona — team/resident personas must not reach tenant provisioning (T0.1).
+  // persona. Team/resident personas must not reach tenant provisioning (T0.1).
   const demoCookieAccount = DEMO_MODE
     ? findVerifiedDemoAccount((await cookies()).get(DEMO_SESSION_COOKIE)?.value)
     : null;

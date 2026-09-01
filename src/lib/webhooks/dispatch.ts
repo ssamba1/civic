@@ -1,12 +1,12 @@
 // Webhook dispatch helpers (NEXT_100 #79)
 // Pure functions: buildWebhookPayload + signPayload.
-// No DB deps — safe to import in both server and test contexts.
+// No DB deps, safe to import in both server and test contexts.
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { ReportStatus } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
-// Stable public event schema (v1). Do NOT change field names — partners depend
+// Stable public event schema (v1). Do NOT change field names, partners depend
 // on this shape. Additive changes only; document removals in a major bump.
 // ---------------------------------------------------------------------------
 
@@ -31,7 +31,7 @@ export interface WebhookReportPayload {
 }
 
 export interface WebhookPayload {
-  /** Schema version — increment only on breaking changes. */
+  /** Schema version, increment only on breaking changes. */
   schema_version: 1;
   event: WebhookEventType;
   timestamp: string; // ISO-8601 UTC

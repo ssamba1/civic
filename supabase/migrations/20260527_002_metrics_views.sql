@@ -1,11 +1,11 @@
 -- =============================================================================
--- Civic – Metrics Views
+-- Civic, Metrics Views
 -- Migration: 20260527_002_metrics_views.sql
 -- North-star metrics from design doc §6
 -- =============================================================================
 
 -- ---------------------------------------------------------------------------
--- 1. time_to_submit (P50) — client-reported submit_duration_ms on reports
+-- 1. time_to_submit (P50), client-reported submit_duration_ms on reports
 -- ---------------------------------------------------------------------------
 CREATE VIEW metric_time_to_submit AS
 SELECT
@@ -14,7 +14,7 @@ FROM reports r
 WHERE r.submit_duration_ms IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
--- 2. time_to_triage (P50) — time from report creation to work order creation
+-- 2. time_to_triage (P50). Time from report creation to work order creation
 --    (triage = AI classification + work order generation)
 -- ---------------------------------------------------------------------------
 CREATE VIEW metric_time_to_triage AS
@@ -26,7 +26,7 @@ FROM reports r
 JOIN work_orders wo ON wo.report_id = r.id;
 
 -- ---------------------------------------------------------------------------
--- 3. time_to_resolution (P50) — time from report creation to work order completion
+-- 3. time_to_resolution (P50). Time from report creation to work order completion
 -- ---------------------------------------------------------------------------
 CREATE VIEW metric_time_to_resolution AS
 SELECT
@@ -38,7 +38,7 @@ JOIN work_orders wo ON wo.report_id = r.id
 WHERE wo.completed_at IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
--- 4. classification_accuracy — % of classifications NOT overridden by staff
+-- 4. classification_accuracy, % of classifications NOT overridden by staff
 --    A classification is "accurate" if the work order still matches the
 --    original AI category (no staff reclassification). When staff override,
 --    they update the classification row. We approximate accuracy by comparing
@@ -61,7 +61,7 @@ FROM verifications v
 JOIN reports r ON r.id = v.report_id;
 
 -- ---------------------------------------------------------------------------
--- 5. reports_by_category — count per classification category
+-- 5. reports_by_category, count per classification category
 -- ---------------------------------------------------------------------------
 CREATE VIEW metric_reports_by_category AS
 SELECT
@@ -72,7 +72,7 @@ GROUP BY cl.category
 ORDER BY report_count DESC;
 
 -- ---------------------------------------------------------------------------
--- 6. reports_by_status — count per report status
+-- 6. reports_by_status, count per report status
 -- ---------------------------------------------------------------------------
 CREATE VIEW metric_reports_by_status AS
 SELECT

@@ -13,7 +13,7 @@ import { runClassifyPipeline } from "./classify-pipeline";
 // DB + Gemini are fully mocked so their serverEnv imports never execute and we
 // never touch the network or a real Supabase. Logger is mocked to kill the
 // Sentry side-effect (the only env/network risk left in the import graph).
-// generateWorkOrder + sniffImageMime run for real — they are pure.
+// generateWorkOrder + sniffImageMime run for real. They are pure.
 // "server-only" throws outside an RSC environment; the pipeline now imports
 // db/crew-types (031 catalog) which carries that guard.
 vi.mock("server-only", () => ({}));
@@ -23,7 +23,7 @@ vi.mock("@/lib/ai/dedup", () => ({ findDuplicate: vi.fn() }));
 // DEDUP_REPORTS forced ON so the dedup branch is exercisable; findDuplicate is
 // mocked and defaults to undefined (no match), so non-dedup tests fall through
 // to normal work-order creation unchanged. AI_CREW_ASSIGN forced ON the same
-// way — autoAssignCrew is mocked below, so the only observable effect is
+// way. AutoAssignCrew is mocked below, so the only observable effect is
 // whether the pipeline invokes it. Other config exports preserved.
 vi.mock("@/lib/ai/config", async (orig) => ({
   ...(await orig<typeof import("@/lib/ai/config")>()),
@@ -221,7 +221,7 @@ describe("runClassifyPipeline", () => {
     // UPLOAD writes. Derived from buildPhotoPaths rather than spelled out,
     // because spelling it out is what broke this: the pipeline hard-coded the
     // pre-multi-photo layout `${city}/${id}.jpg`, uploads had long since moved
-    // to `${city}/${id}/${idx}.jpg`, and THIS ASSERTION ENCODED THE OLD PATH —
+    // to `${city}/${id}/${idx}.jpg`, and THIS ASSERTION ENCODED THE OLD PATH,
     // so the suite went green while every newly filed report lost its
     // classification to a swallowed "Object not found".
     expect(storage.from).toHaveBeenCalledWith("photos-raw");
@@ -279,9 +279,9 @@ describe("runClassifyPipeline", () => {
     expect(classifyPhotoMock).toHaveBeenCalledWith(
       expect.any(String),
       "image/jpeg",
-      // OUTFLANK #7 — per-city correction guidance (empty here: no feedback rows)
+      // OUTFLANK #7, per-city correction guidance (empty here: no feedback rows)
       expect.any(String),
-      // Issue #6 — effective category set (built-ins ∪ city customs). No custom
+      // Issue #6. Effective category set (built-ins ∪ city customs). No custom
       // issue types in this fixture, so it's the 12 built-ins.
       expect.any(Array),
     );
@@ -369,7 +369,7 @@ describe("runClassifyPipeline", () => {
   });
 
   it("emergency -> work order created (review gate bypassed), status dispatched", async () => {
-    // Issue-8 behavior: emergencies no longer short-circuit — they get a work
+    // Issue-8 behavior: emergencies no longer short-circuit. They get a work
     // order like any high-confidence report (so cost actuals can be captured
     // and the +50 priority term is live), and skip the manual-review hold.
     const insertedWorkOrder = {
@@ -501,7 +501,7 @@ describe("runClassifyPipeline", () => {
         rawText: "{}",
       },
     });
-    // Even if a dup existed, dedup is guarded on !is_emergency — an emergency
+    // Even if a dup existed, dedup is guarded on !is_emergency. An emergency
     // must never be merged away from auto-dispatch.
     findDuplicateMock.mockResolvedValue({
       primaryReportId: "earlier-report-1",

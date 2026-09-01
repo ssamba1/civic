@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 
    No US 311 competitor markets privacy as a pillar. This is the public promise:
    what we blur, what we never sell, how long we keep raw photos. Plain language,
-   static — the technical backing is the mandatory client-side blur + the
+   static. The technical backing is the mandatory client-side blur + the
    restricted photos-raw bucket (30-day TTL) documented in agents.md.
    ================================================================== */
 
@@ -22,7 +22,7 @@ const PROMISES: { title: string; body: string }[] = [
   },
   {
     title: "Faces and plates are blurred",
-    body: "Every photo is blurred on your device — faces and license plates — before it ever leaves your phone. The blurred copy is the only one shown publicly.",
+    body: "Every photo is blurred on your device, faces and license plates, before it ever leaves your phone. The blurred copy is the only one shown publicly.",
   },
   {
     title: "Original photos are short-lived and locked down",
@@ -30,7 +30,7 @@ const PROMISES: { title: string; body: string }[] = [
   },
   {
     title: "No personal data in links",
-    body: "Your status link uses an opaque token — no name, address, or account is exposed in the URL.",
+    body: "Your status link uses an opaque token. No name, address, or account is exposed in the URL.",
   },
   {
     title: "You can report without an account",
@@ -56,7 +56,7 @@ export default function PrivacyPromisePage() {
         </h1>
         <p className="mt-3 mb-8 text-sm text-subtle">
           Reporting a problem shouldn&apos;t cost you your privacy. Here&apos;s
-          exactly what we do — and don&apos;t do — with what you share.
+          exactly what we do (and don&apos;t do) with what you share.
         </p>
 
         <ul className="flex flex-col gap-3">

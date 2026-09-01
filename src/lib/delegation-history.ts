@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
-   Delegation history — pure derivation, no React.
+   Delegation history, pure derivation, no React.
 
    Synthesizes a per-report event timeline from the report's intrinsic
    state (created_at, status, category, severity) plus an optional list
@@ -7,7 +7,7 @@
    by the expandable Delegation row.
 
    `OverrideEvent` is defined HERE (not in teams-overrides.ts) so this
-   module has no dependency on the override store — teams-overrides
+   module has no dependency on the override store, teams-overrides
    imports the type back from here.
    ------------------------------------------------------------------ */
 
@@ -37,8 +37,8 @@ export type TimelineEvent =
 /* -------- Functions -------- */
 
 /**
- * Synthetic time-to-resolution. Same formula as filters/derive.ts:24 —
- * kept local on purpose to avoid coupling this module to the analytics
+ * Synthetic time-to-resolution. Same formula as filters/derive.ts:24.
+ * Kept local on purpose to avoid coupling this module to the analytics
  * derive surface.
  */
 export function resolutionHours(report: DashboardReport): number {
@@ -85,7 +85,7 @@ export function buildTimeline(
     return events.sort((a, b) => Date.parse(a.ts) - Date.parse(b.ts));
   }
 
-  // Dispatched chain — fires for any non-open, non-rejected state.
+  // Dispatched chain, fires for any non-open, non-rejected state.
   if (
     report.status === "dispatched" ||
     report.status === "in_progress" ||

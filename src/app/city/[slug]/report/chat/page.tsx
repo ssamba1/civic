@@ -10,11 +10,11 @@
  * sessionStorage key contract:
  *   Key:   "civic:intake-draft"
  *   Value: JSON-serialised IntakeDraft (see src/lib/ai/intake-chat.ts)
- *   TTL:   none — the report page must consume + clear it immediately on mount.
+ *   TTL:   none. The report page must consume + clear it immediately on mount.
  *
  * See INTEGRATION-NOTES-chat.md at the repo root for full wiring details.
  *
- * NOTE: No PII in URLs — the draft travels via sessionStorage, not query params.
+ * NOTE: No PII in URLs, the draft travels via sessionStorage, not query params.
  */
 
 import { useParams, useRouter } from "next/navigation";
@@ -39,7 +39,7 @@ export default function ChatIntakePage() {
       try {
         sessionStorage.setItem(INTAKE_DRAFT_SESSION_KEY, JSON.stringify(draft));
       } catch {
-        // sessionStorage blocked (private browsing edge case) — proceed anyway.
+        // sessionStorage blocked (private browsing edge case). Proceed anyway.
         // The report page will just start with an empty form.
       }
       // Forward to the normal report flow. The slug is used to pre-select the

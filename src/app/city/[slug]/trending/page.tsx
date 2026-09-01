@@ -8,7 +8,7 @@ import {
 } from "@/lib/dashboard-data";
 import { rankTrending } from "@/lib/trending";
 
-/** Deterministic demo upvote count — mirrors baseUpvoteCount from upvotes.ts.
+/** Deterministic demo upvote count, mirrors baseUpvoteCount from upvotes.ts.
  *  Duplicated here to avoid importing the "use client" upvotes module in a
  *  server component. See INTEGRATION-NOTES-lane2.md for live-deploy wiring. */
 function demoUpvoteCount(reportId: string, severity = 3): number {
@@ -20,7 +20,7 @@ function demoUpvoteCount(reportId: string, severity = 3): number {
 }
 
 /* ==================================================================
-   Public trending-issues page (NEXT_100 #86) — no auth required.
+   Public trending-issues page (NEXT_100 #86), no auth required.
 
    Ranking: server-side rankTrending() scores reports by upvotes ×
    recency decay (see src/lib/trending.ts). In demo mode upvotes come
@@ -40,9 +40,9 @@ export async function generateMetadata({
   const city = KNOWN_CITIES[slug];
   const name = city?.name ?? slug;
   return {
-    title: `Civic | ${name} — Trending Issues`,
+    title: `Civic | ${name}, Trending Issues`,
     description: `The open issues ${name} residents are upvoting most right now. No account needed.`,
-    // Public feed — allow indexing
+    // Public feed, allow indexing
     robots: { index: true, follow: true },
   };
 }
@@ -62,7 +62,7 @@ export default async function PublicTrendingPage({ params }: PageProps) {
       const city = await fetchCityFromDb(slug);
       cityOk = city != null;
     } catch {
-      // DB not available — graceful fallback
+      // DB not available, graceful fallback
     }
     if (!cityOk) notFound();
   }
@@ -99,7 +99,7 @@ export default async function PublicTrendingPage({ params }: PageProps) {
             What {name} wants fixed most
           </h1>
           <p className="mt-3 text-sm text-subtle">
-            Open issues ranked by how many neighbors upvoted them — updated in
+            Open issues ranked by how many neighbors upvoted them, updated in
             real time. No account needed to view this list.
           </p>
         </section>

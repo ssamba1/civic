@@ -49,7 +49,7 @@ async function authorize(request: Request): Promise<NextResponse | null> {
   return null;
 }
 
-/** GET — read-only storm advisory for the surge banner. */
+/** GET. Read-only storm advisory for the surge banner. */
 export async function GET(request: Request) {
   const denied = await authorize(request);
   if (denied) return denied;
@@ -63,10 +63,10 @@ export async function GET(request: Request) {
 }
 
 /**
- * POST — auto-reprioritize open backlog for storm-affected categories (#63).
+ * POST, auto-reprioritize open backlog for storm-affected categories (#63).
  *
  * IDEMPOTENT: priority_score is SET to a value computed purely from the report's
- * severity/emergency × the category's surge multiplier — never incremented — so
+ * severity/emergency × the category's surge multiplier (never incremented), so
  * re-running (or a cron firing repeatedly) converges to the same score instead
  * of climbing without bound. No schema change: reuses the existing
  * work_orders.priority_score column.

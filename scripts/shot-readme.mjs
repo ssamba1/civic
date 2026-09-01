@@ -3,12 +3,12 @@
 // Usage: node scripts/shot-readme.mjs [baseUrl]
 //
 // Produces the images the README embeds, from a REAL running app against a
-// seeded database — not mockups. Re-run it after a UI change rather than
+// seeded database. Not mockups. Re-run it after a UI change rather than
 // letting the README drift into showing a product that no longer exists.
 //
 // Requires: a dev server (`pnpm dev`) and a seeded city (`pnpm db:seed`).
-// Staff surfaces need demo mode ON, i.e. NEXT_PUBLIC_DEMO_MODE unset —
-// persona sign-in is gated on it, so a `0` build has no way to log in and
+// Staff surfaces need demo mode ON, i.e. NEXT_PUBLIC_DEMO_MODE unset.
+// Persona sign-in is gated on it, so a `0` build has no way to log in and
 // every staff shot comes back as a logged-out shell.
 import { execFileSync } from "node:child_process";
 import { mkdirSync, rmSync } from "node:fs";
@@ -47,7 +47,7 @@ async function signIn(page, username, password) {
 
 /**
  * Capture one surface. `settle` exists because MapLibre loads tiles async and
- * capturing early yields a blank white frame — which would look like a broken
+ * capturing early yields a blank white frame, which would look like a broken
  * map in the README rather than a screenshot taken too soon.
  */
 async function shot(page, path, name, { settle = 2500, full = false } = {}) {
@@ -169,13 +169,13 @@ for (const theme of ["light", "dark"]) {
   await shot(page, "/report", `report${suffix}`, { settle: 2500 });
 
   // The public status page needs a real token, which is database-specific.
-  // Pass SHOT_STATUS_TOKEN (any value from reports.public_token — run
+  // Pass SHOT_STATUS_TOKEN (any value from reports.public_token, run
   // `pnpm db:tokens` first if the column is still NULL) to include it.
   const statusToken = process.env.SHOT_STATUS_TOKEN;
   if (statusToken) {
     await shot(page, `/r/${statusToken}`, `status${suffix}`, { settle: 2500 });
   } else {
-    console.log("  (skipping status page — set SHOT_STATUS_TOKEN)");
+    console.log("  (skipping status page, set SHOT_STATUS_TOKEN)");
   }
   await ctx.close();
 }

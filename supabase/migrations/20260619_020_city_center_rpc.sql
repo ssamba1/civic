@@ -1,5 +1,5 @@
 -- =============================================================================
--- Civic – city center read path
+-- Civic. City center read path
 -- Migration: 20260619_020_city_center_rpc.sql
 --
 -- cities.center is geography(POINT, 4326), written at onboarding (migration 019
@@ -27,7 +27,7 @@ SET search_path = public
 AS $$
   SELECT
     -- geography -> geometry so ST_X/ST_Y return planar lng/lat (SRID 4326 axis
-    -- order is lng, lat — matches how report coords are projected in 009).
+    -- order is lng, lat. Matches how report coords are projected in 009).
     ST_X(center::geometry) AS lng,
     ST_Y(center::geometry) AS lat
   FROM cities

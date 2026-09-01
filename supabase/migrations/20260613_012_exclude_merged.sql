@@ -1,11 +1,11 @@
 -- =============================================================================
--- Civic – Exclude merged duplicates from public counts
+-- Civic, Exclude merged duplicates from public counts
 -- Migration: 20260613_012_exclude_merged.sql
 --
 -- Completes the dedup feature (migration 011 + DEDUP_REPORTS). A duplicate
 -- report is marked status='merged' and linked to its primary via the merges
 -- table. But the public dashboard view and the city_stats / category_breakdown
--- RPCs only excluded 'rejected' — so merged duplicates still showed on the map
+-- RPCs only excluded 'rejected', so merged duplicates still showed on the map
 -- and inflated the counts, defeating the point of dedup.
 --
 -- This migration extends those three read paths to exclude 'merged' as well.
@@ -20,7 +20,7 @@
 BEGIN;
 
 -- ---------------------------------------------------------------------------
--- 1. dashboard_reports_view — exclude 'merged' (mirrors migration 009 exactly,
+-- 1. dashboard_reports_view, exclude 'merged' (mirrors migration 009 exactly,
 --    only the WHERE clause changes: NOT IN ('rejected') -> ('rejected','merged').
 -- ---------------------------------------------------------------------------
 DROP VIEW IF EXISTS dashboard_reports_view;
@@ -55,7 +55,7 @@ WHERE r.status NOT IN ('rejected', 'merged');
 GRANT SELECT ON dashboard_reports_view TO anon, authenticated;
 
 -- ---------------------------------------------------------------------------
--- 2. city_stats — exclude 'merged' from the city report counts.
+-- 2. city_stats, exclude 'merged' from the city report counts.
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.city_stats(_city_id uuid)
 RETURNS TABLE (
@@ -97,7 +97,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.city_stats(uuid) TO anon, authenticated;
 
 -- ---------------------------------------------------------------------------
--- 3. city_category_breakdown — exclude 'merged' so duplicates don't double-count
+-- 3. city_category_breakdown, exclude 'merged' so duplicates don't double-count
 --    in the per-category totals.
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.city_category_breakdown(_city_id uuid)

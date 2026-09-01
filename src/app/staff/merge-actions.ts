@@ -111,7 +111,7 @@ export async function findDuplicateCandidates(
   }
   if (!target) return { ok: false, error: "Report not found" };
 
-  // City-scope guard — fail closed on null city_id (actions.ts convention).
+  // City-scope guard. Fail closed on null city_id (actions.ts convention).
   if (!staff.city_id || target.city_id !== staff.city_id) {
     return { ok: false, error: "Unauthorized: report not in your city" };
   }
@@ -127,7 +127,7 @@ export async function findDuplicateCandidates(
   );
 
   if (rpcError) {
-    // RPC may not yet be deployed (owner-held DB) — graceful degrade.
+    // RPC may not yet be deployed (owner-held DB), graceful degrade.
     logger.warn("find_staff_duplicate_candidates RPC failed", {
       error: rpcError.message,
     });
@@ -183,7 +183,7 @@ export async function findDuplicateCandidates(
  * 2. Writes a `report_merges` audit row.
  * 3. Sets `reports.merged_into = canonicalId` and `status = 'merged'` on the merged report.
  * 4. Best-effort: moves `report_upvotes` rows to the canonical report (skipped
- *    if the upvotes table doesn't exist or a constraint fires — the merge still succeeds).
+ *    if the upvotes table doesn't exist or a constraint fires, the merge still succeeds).
  */
 export async function mergeReports(
   canonicalId: string,
@@ -216,7 +216,7 @@ export async function mergeReports(
 
   // City-scope guard (service-role bypasses RLS; manual check required).
   // Fail closed on null city_id, and verify BOTH reports belong to the
-  // staffer's city — otherwise a staffer could pull a foreign-city report into
+  // staffer's city. Otherwise a staffer could pull a foreign-city report into
   // one of their own (canMerge also blocks cross-city, this is defense in depth).
   if (
     !staff.city_id ||
@@ -287,7 +287,7 @@ export async function mergeReports(
       _to_report_id: canonicalId,
     });
   } catch {
-    // transfer_upvotes_on_merge RPC may not exist — fallback: direct update,
+    // transfer_upvotes_on_merge RPC may not exist, fallback: direct update,
     // ignoring conflicts (best-effort, non-fatal).
     try {
       await db
@@ -313,7 +313,7 @@ export async function mergeReports(
  * Reverse a prior merge on `mergedId`.
  *
  * Clears `merged_into` and resets status to 'open', and deletes the audit row.
- * Does NOT move upvotes back (impractical — the data no longer tracks origin).
+ * Does NOT move upvotes back (impractical, the data no longer tracks origin).
  */
 export async function unmergeReports(mergedId: string): Promise<Result<void>> {
   const staff = await getStaffUser();
@@ -349,7 +349,7 @@ export async function unmergeReports(mergedId: string): Promise<Result<void>> {
     return { ok: false, error: "db_unavailable" };
   }
 
-  // Delete audit record (best-effort — non-fatal if already gone).
+  // Delete audit record (best-effort, non-fatal if already gone).
   await db.from("report_merges").delete().eq("merged_report_id", mergedId);
 
   logger.info("Report unmerged", { mergedId, by: staff.id });

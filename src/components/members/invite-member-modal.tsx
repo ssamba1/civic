@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 /* ==================================================================
-   Invite member — trigger + dialog. Self-manages its own open state
+   Invite member. Trigger + dialog. Self-manages its own open state
    so the page (a server component) drops it into the header behind a
    canManage gate without wiring any client state of its own.
    ================================================================== */
@@ -70,7 +70,7 @@ function InviteDialog({
   const [crewIds, setCrewIds] = useState<string[]>([]);
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
-  // Email the last invite went to — drives the inline success panel.
+  // Email the last invite went to, drives the inline success panel.
   const [sentTo, setSentTo] = useState<string | null>(null);
 
   const emailId = useId();
@@ -96,7 +96,7 @@ function InviteDialog({
     setSentTo(null);
   }
 
-  // Crew membership is division-scoped — changing the team clears any picks
+  // Crew membership is division-scoped. Changing the team clears any picks
   // that belonged to the previous one.
   function handleTeamChange(next: string | null) {
     setTeamKey(next);

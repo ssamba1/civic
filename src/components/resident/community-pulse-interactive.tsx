@@ -23,18 +23,18 @@ import {
 import { CATEGORY_META } from "@/lib/dashboard-data";
 import type { CityMorale } from "@/lib/resident-data";
 
-// Handler bundle returned by tip.bindTarget — spread onto a hoverable row.
+// Handler bundle returned by tip.bindTarget, spread onto a hoverable row.
 type TipBindings = ReturnType<ReturnType<typeof useHoverTip>["bindTarget"]>;
 
 /* ==================================================================
-   Community Pulse — resident-facing, morale-first read on the city.
+   Community Pulse. Resident-facing, morale-first read on the city.
    Reframes every number as a win (issues fixed, faster fixes, work in
    motion) and reuses the analytics bento vocabulary. Laid out in bands
    of mixed size so it reads editorial, not like an admin stat wall.
    ================================================================== */
 
 // Momentum is a state (good/neutral/caution), so it's one of the few spots
-// hue is warranted — mapped to the same muted success/info/warning tones the
+// hue is warranted, mapped to the same muted success/info/warning tones the
 // rest of the app uses for state.
 const MOMENTUM_META: Record<
   CityMorale["momentum"],
@@ -57,7 +57,7 @@ const MOMENTUM_META: Record<
   },
 };
 
-// Severity ramp: cool for minor, hot for critical — the muted category
+// Severity ramp: cool for minor, hot for critical, the muted category
 // tokens + danger, since this chart's series IS the category.
 const SEVERITY: Record<1 | 2 | 3 | 4 | 5, { label: string; color: string }> = {
   1: { label: "Minor", color: "var(--fg-cyan-burst)" },
@@ -69,15 +69,15 @@ const SEVERITY: Record<1 | 2 | 3 | 4 | 5, { label: string; color: string }> = {
 
 // Plain-language read on each tier, resident-facing (no ops jargon).
 const SEVERITY_DESC: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: "Cosmetic — faded paint, light graffiti. No safety risk.",
-  2: "Small stuff — a single dark streetlight or a hairline crack.",
-  3: "Worth attention — a sidewalk trip hazard or pooling drainage.",
-  4: "Pressing — a big pothole on a busy road or a downed sign.",
-  5: "Urgent — a blocked road or gushing main. Crews move on these first.",
+  1: "Cosmetic, faded paint, light graffiti. No safety risk.",
+  2: "Small stuff, a single dark streetlight or a hairline crack.",
+  3: "Worth attention, a sidewalk trip hazard or pooling drainage.",
+  4: "Pressing, a big pothole on a busy road or a downed sign.",
+  5: "Urgent, a blocked road or gushing main. Crews move on these first.",
 };
 
 function formatFixTime(hours: number): string {
-  if (!hours || hours <= 0) return "—";
+  if (!hours || hours <= 0) return "-";
   const days = Math.floor(hours / 24);
   const rem = Math.round(hours % 24);
   if (days <= 0) return `${rem}h`;
@@ -118,7 +118,7 @@ function ProgressRing({
 }) {
   const r = 38;
   const c = 2 * Math.PI * r;
-  // Arc fills from 0 on mount so the CSS stroke transition always plays —
+  // Arc fills from 0 on mount so the CSS stroke transition always plays,
   // SSR renders the full arc otherwise and the animation never fires. The
   // label keeps the real pct so the number never flashes 0.
   const [fill, setFill] = useState(0);
@@ -248,7 +248,7 @@ function BarRow({
   tipBindings?: TipBindings;
   hoverLabel?: string;
 }) {
-  // Width grows from 0 on mount so the CSS width transition always plays —
+  // Width grows from 0 on mount so the CSS width transition always plays,
   // SSR renders the final width otherwise and the bar never animates in.
   const [w, setW] = useState(0);
   useEffect(() => {
@@ -288,7 +288,7 @@ function BarRow({
     return <li className="flex flex-col gap-1.5">{content}</li>;
   }
 
-  // Whole row is one focusable target — hover, focus, or tap reveals the
+  // Whole row is one focusable target, hover, focus, or tap reveals the
   // deeper read. Mirrors the workload-bars button pattern.
   return (
     <li>
@@ -306,7 +306,7 @@ function BarRow({
 
 /* ------------------------------------------------------------------
    Hover-tip content builders. Each returns the deeper read shown on
-   hover / focus / tap — true share-of-total (not the bar's share-of-max
+   hover / focus / tap, true share-of-total (not the bar's share-of-max
    width), rank within its group, and one plain sentence of context.
    Module-level so the component body just wires data → bindTarget.
    ------------------------------------------------------------------ */
@@ -574,8 +574,8 @@ export function CommunityPulseInteractive({
                 className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-medium"
                 // The momentum hues are tuned as graphic fills (~3.0-3.6:1 on
                 // white), so as 13px label text they miss AA in one theme or
-                // the other. Pull them toward --team-text-mix — black on
-                // light, white on dark — the same fill-vs-text split the team
+                // the other. Pull them toward --team-text-mix, black on
+                // light, white on dark, the same fill-vs-text split the team
                 // and status tokens use. Takes this line to >=5.6:1 in both.
                 style={{
                   color: `color-mix(in srgb, ${m.color}, var(--team-text-mix) var(--team-text-amount))`,

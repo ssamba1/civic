@@ -95,11 +95,11 @@ describe("checkRateLimit", () => {
     expect(checkRateLimit(key, cfg).allowed).toBe(true);
     expect(checkRateLimit(key, cfg).allowed).toBe(false);
 
-    // Still inside the window — stays blocked.
+    // Still inside the window. Stays blocked.
     vi.advanceTimersByTime(cfg.windowMs - 1);
     expect(checkRateLimit(key, cfg).allowed).toBe(false);
 
-    // Cross the reset boundary (now >= resetAt) — fresh window allows again.
+    // Cross the reset boundary (now >= resetAt), fresh window allows again.
     vi.advanceTimersByTime(2);
     const reopened = checkRateLimit(key, cfg);
     expect(reopened.allowed).toBe(true);

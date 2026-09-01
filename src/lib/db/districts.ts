@@ -16,7 +16,7 @@ export interface DistrictRollup {
 }
 
 /**
- * OUTFLANK #16 — per-council-district report rollups (migration 041 RPC,
+ * OUTFLANK #16, per-council-district report rollups (migration 041 RPC,
  * point-in-polygon). Returns [] on error or for a city with no districts
  * seeded, so the turf-report UI degrades to an empty state.
  */

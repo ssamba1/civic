@@ -1,14 +1,14 @@
 -- =============================================================================
--- Civic — July calendar backfill (Cumming, GA)
+-- Civic, July calendar backfill (Cumming, GA)
 --
 -- Problem this fixes: the staff calendar (/city/cumming/calendar) plots
 -- work_orders, not reports. The 120 rows in synthetic_reports.sql insert only
--- reports + classifications — NO work_orders — so they never reach the
+-- reports + classifications (NO work_orders), so they never reach the
 -- calendar. Only the 5 base-seed reports create work orders (4 non-closed),
 -- which is exactly the "4 in July" you saw.
 --
 -- What it does: takes a deterministic slice of the synthetic corpus and, for
--- each report, (a) re-dates created_at into a Jun–Aug 2026 window centered on
+-- each report, (a) re-dates created_at into a Jun, Aug 2026 window centered on
 -- July, (b) forces an ALIVE status (the calendar hides closed/merged/rejected),
 -- and (c) upserts a work_order carrying team_key (drives the chip color),
 -- crew_type + assigned_crew_id (drives the Crew-type / Crew filters), a spread
@@ -49,11 +49,11 @@ DECLARE
 BEGIN
   SELECT id INTO v_city FROM public.cities WHERE slug = 'cumming';
   IF v_city IS NULL THEN
-    RAISE EXCEPTION 'City "cumming" not found — run the base seed first.';
+    RAISE EXCEPTION 'City "cumming" not found. Run the base seed first.';
   END IF;
 
   -- Ordered by id (a value we never mutate) so the selected slice and the
-  -- per-row dates stay identical across re-runs. LIMIT controls density —
+  -- per-row dates stay identical across re-runs. LIMIT controls density.
   -- 72 of 120 leaves the rest as older closed/rejected history for the grid.
   FOR rec IN
     SELECT rep.id AS rid, cl.category AS cat, cl.severity AS sev
@@ -182,7 +182,7 @@ BEGIN
   RAISE NOTICE 'July calendar backfill: processed % Cumming reports.', i;
 END $$;
 
--- Verify — work orders now landing per month for Cumming, using the same
+-- Verify. Work orders now landing per month for Cumming, using the same
 -- alive-status + (dispatched_at ?? created_at) logic as the calendar.
 SELECT to_char(
          date_trunc('month', COALESCE(w.dispatched_at, w.created_at)),

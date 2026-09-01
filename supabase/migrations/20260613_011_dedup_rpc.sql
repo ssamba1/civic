@@ -1,11 +1,11 @@
 -- =============================================================================
--- Civic – Duplicate report detection RPC
+-- Civic, Duplicate report detection RPC
 -- Migration: 20260613_011_dedup_rpc.sql
 --
 -- Populates the previously-unused `merges` table. Detects whether a freshly
 -- classified report is a duplicate of an EARLIER open report of the SAME
 -- category within a geographic radius and time window (PostGIS ST_DWithin on
--- the geography column — the AGENTS.md-sanctioned geo dedup, not haversine in
+-- the geography column, the AGENTS.md-sanctioned geo dedup, not haversine in
 -- app code).
 --
 -- This is geo + category + time dedup, NOT vector-embedding similarity: the
@@ -37,7 +37,7 @@ BEGIN;
 --   - created within the last _window_days days
 -- Ordered closest-first, then earliest-first; one row.
 --
--- similarity_score = GREATEST(0, 1 - distance / radius), rounded to 2dp — a
+-- similarity_score = GREATEST(0, 1 - distance / radius), rounded to 2dp, a
 -- proximity score in [0,1] for the merges.similarity_score column (category
 -- match is already guaranteed by the WHERE clause).
 -- ---------------------------------------------------------------------------

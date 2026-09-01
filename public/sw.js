@@ -1,4 +1,4 @@
-// v3: purge older caches on activate — v1/v2 were installed by dev browsers (dev
+// v3: purge older caches on activate. V1/v2 were installed by dev browsers (dev
 // now unregisters instead of registering, see layout.tsx) and cached non-hashed
 // dev chunks cache-first, freezing those browsers on stale bundles. Bumping the
 // version forces already-frozen browsers to drop the stale cache on SW update.
@@ -35,7 +35,7 @@ self.addEventListener("fetch", (event) => {
 
   // Dev safety: on localhost, Turbopack keeps chunk/CSS URLs stable across edits,
   // so cache-first would replay a frozen bundle and hide every later change. A
-  // leftover SW from a past prod build on :3000 must not do that — always go to
+  // leftover SW from a past prod build on :3000 must not do that. Always go to
   // the network here (fall back to cache only when offline). Production hosts are
   // never localhost, so this never affects the deployed PWA.
   if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
@@ -43,7 +43,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Never cache API / admin routes — may contain authed user data
+  // Never cache API / admin routes. May contain authed user data
   if (
     url.pathname.startsWith("/api/") ||
     url.pathname.startsWith("/admin/")
@@ -72,7 +72,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Field-crew view (#52): network-first, but STORE each successful page load
-  // and serve the cached page when offline — a crew that loses signal sees the
+  // and serve the cached page when offline, a crew that loses signal sees the
   // last-synced queue instead of the generic /offline screen. Scoped to the
   // /city/*/team/*/field route so no other authed page is persisted.
   if (/^\/city\/[^/]+\/team\/[^/]+\/field\/?$/.test(url.pathname)) {

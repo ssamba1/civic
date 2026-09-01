@@ -4,13 +4,13 @@ import { TEAMS, type TeamId } from "@/lib/teams";
 import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
-   Shared member presentation — role badge + team label. Lives apart
+   Shared member presentation. Role badge + team label. Lives apart
    from members-table so both the People table and the By-team view
    render an identical badge without a members-table ↔ team-access-view
    import cycle.
    ================================================================== */
 
-// Grayscale role badges — differentiation is carried by fill weight and outline,
+// Grayscale role badges. Differentiation is carried by fill weight and outline,
 // never hue, so the enterprise register stays monochrome.
 export const ROLE_META: Record<
   MemberRow["role"],
@@ -49,13 +49,13 @@ export function RoleBadge({ role }: { role: MemberRow["role"] }) {
 }
 
 export function teamLabel(key: string | null): string {
-  if (!key) return "—";
+  if (!key) return "-";
   const meta = TEAMS[key as TeamId];
   return meta ? meta.shortLabel : key;
 }
 
 // Member name → per-member analytics page. Shared so the People table and the
-// By-team view link identically. No PII in the path — the id is a uuid.
+// By-team view link identically. No PII in the path. The id is a uuid.
 export function MemberNameLink({
   slug,
   id,

@@ -2,7 +2,7 @@
 // Usage: node scripts/shot-theme.mjs <url> <outPath> <light|dark> [waitMs]
 // Forces the theme BEFORE first paint via addInitScript (sets the same
 // localStorage key the no-flash init script reads), so we capture the real
-// themed render — not the default-dark frame or a post-load flash.
+// themed render, not the default-dark frame or a post-load flash.
 import { chromium } from "playwright";
 
 const url = process.argv[2] ?? "http://localhost:3100/city/cumming";

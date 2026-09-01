@@ -3,7 +3,7 @@ import { expect, test } from "playwright/test";
 /**
  * Help-assistant widget smoke (help-assistant plan Task 12). The widget is
  * flag-gated (NEXT_PUBLIC_HELP_ASSISTANT); when the flag is off the launcher
- * must be absent — that's asserted, not skipped, so both deploy shapes have a
+ * must be absent, that's asserted, not skipped, so both deploy shapes have a
  * passing, meaningful test.
  */
 test("landing renders and the assistant launcher matches the flag", async ({
@@ -37,7 +37,7 @@ test("assistant opens, accepts input, and streams a reply shell", async ({
   await input.fill("How do I report a pothole?");
   await input.press("Enter");
 
-  // The user's message must render immediately (optimistic echo) — the model
+  // The user's message must render immediately (optimistic echo). The model
   // reply itself depends on a live Gemini key and is not asserted here.
   await expect(page.getByText("How do I report a pothole?")).toBeVisible();
 });

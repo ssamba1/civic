@@ -11,7 +11,7 @@ export default function AdminOrgTreePage() {
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-[var(--color-muted)]">
           Describe how your city dispatches repair work and AI proposes a
-          routing tree — teams, sub-teams, crews and external contractors, with
+          routing tree, teams, sub-teams, crews and external contractors, with
           the categories, skills, capacity and per-job cost that drive automatic
           assignment. Review and prune the proposal, then commit it. Reports are
           then load-balanced across the tree by cost, SLA risk and current load.

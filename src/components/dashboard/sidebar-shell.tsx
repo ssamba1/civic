@@ -49,7 +49,7 @@ export function SidebarWhenCollapsed({
   return useSidebarCollapsed() ? children : null;
 }
 
-/** Brand row — Civic dot + wordmark, links home. */
+/** Brand row, Civic dot + wordmark, links home. */
 export function SidebarBrand() {
   return (
     <Link
@@ -98,7 +98,7 @@ export function SidebarNav({
                 title={collapsed ? label : undefined}
                 className={cn(
                   // Efferd register: compact 32px rows, 13px labels, quiet
-                  // elevated pill on the active row — no inverted icon chip.
+                  // elevated pill on the active row, no inverted icon chip.
                   "group relative flex h-8 w-full items-center gap-2.5 rounded-md text-[13px]",
                   "transition-colors duration-150 outline-none",
                   "focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-0",
@@ -180,7 +180,7 @@ export function SidebarNav({
 
 /**
  * Enterprise left-rail shell (desktop md+ only; mobile keeps the fixed top
- * header). Sticky flex column — the dashboard layouts switch to md:flex-row,
+ * header). Sticky flex column, the dashboard layouts switch to md:flex-row,
  * so content width is managed by flexbox instead of per-page padding offsets.
  * Collapses to an icon rail; state persists in localStorage. The server
  * renders expanded and the stored state applies after hydration.
@@ -190,9 +190,9 @@ export function SidebarShell({
   footer,
   children,
 }: {
-  /** Slot under the brand row — city switcher / team identity. Hidden while collapsed. */
+  /** Slot under the brand row, city switcher / team identity. Hidden while collapsed. */
   context?: React.ReactNode;
-  /** Pinned bottom slot — actions, sign-out. */
+  /** Pinned bottom slot, actions, sign-out. */
   footer?: React.ReactNode;
   children: React.ReactNode;
 }) {
@@ -218,7 +218,7 @@ export function SidebarShell({
       <aside
         className={cn(
           // h-dvh resolves BEFORE the html zoom scales it (see --app-zoom in
-          // globals.css) — divide it back out or the rail (and the map layout
+          // globals.css), divide it back out or the rail (and the map layout
           // that keys off it) paints 10% short, leaving a dead band.
           "sticky top-0 z-30 hidden h-[calc(100dvh/var(--app-zoom,1))] shrink-0 flex-col border-r border-hairline bg-background md:flex",
           "transition-[width] duration-200 ease-out motion-reduce:transition-none",

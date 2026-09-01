@@ -18,7 +18,7 @@ import { CREW_TYPE_KEY_PATTERN, DEFAULT_CREW_TYPES } from "@/lib/crew-types";
 import type { CrewTypeRow } from "@/lib/db/crew-types";
 
 /* ==================================================================
-   Crew types panel — the city's catalog of crew labor types. Lives on
+   Crew types panel. The city's catalog of crew labor types. Lives on
    the members page next to the Crews panel it feeds. The description
    is what the work-order AI reads when picking a crew_type for a new
    report, so this panel is effectively "teach the AI our org chart".
@@ -40,7 +40,7 @@ export function CrewTypesPanel({
   slug: string;
   types: CrewTypeRow[];
   canManage: boolean;
-  /** False when the crew_types table isn't readable (pre-031 DB) — the app
+  /** False when the crew_types table isn't readable (pre-031 DB). The app
    *  is running on the built-in defaults and editing would go nowhere. */
   catalogAvailable: boolean;
 }) {
@@ -84,9 +84,9 @@ export function CrewTypesPanel({
       <p className="-mt-2 text-[13px] text-faint">
         The kinds of labor this city fields. When AI work-order generation is
         enabled, the model reads each description to pick a crew type for new
-        work orders — write what the crew physically does.
+        work orders. Write what the crew physically does.
         {!catalogAvailable &&
-          " Showing the built-in defaults — the per-city catalog isn't available on this database yet."}
+          " Showing the built-in defaults. The per-city catalog isn't available on this database yet."}
       </p>
 
       {rows.length === 0 ? (
@@ -96,7 +96,7 @@ export function CrewTypesPanel({
           </p>
           <p className="mt-1.5 text-[13px] text-faint">
             {canManage
-              ? "Create the first one — the AI falls back to the built-in defaults until the catalog has active entries."
+              ? "Create the first one. The AI falls back to the built-in defaults until the catalog has active entries."
               : "An admin can create them from this page."}
           </p>
         </div>
@@ -137,8 +137,7 @@ export function CrewTypesPanel({
                 {row.key}
               </span>
               <p className="text-[12px] leading-relaxed text-faint">
-                {row.description ||
-                  "No description — the AI only sees the key."}
+                {row.description || "No description. The AI only sees the key."}
               </p>
             </div>
           ))}
@@ -191,7 +190,7 @@ function CrewTypeDialog({
     }
     if (!editing && !CREW_TYPE_KEY_PATTERN.test(key)) {
       setError(
-        "Key must be 2–40 characters of lowercase letters, digits, or underscores.",
+        "Key must be 2-40 characters of lowercase letters, digits, or underscores.",
       );
       return;
     }
@@ -264,7 +263,7 @@ function CrewTypeDialog({
                 className={CONTROL_CLASS}
               />
             </label>
-            {/* Key is fixed after creation — crews and work orders reference
+            {/* Key is fixed after creation. Crews and work orders reference
                 it softly; renaming would orphan those references. */}
             {editing ? (
               <div className="flex flex-col gap-1.5">
@@ -306,7 +305,7 @@ function CrewTypeDialog({
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               maxLength={500}
-              placeholder="Asphalt work after dark — pothole patching and resurfacing on arterial roads that can't close during the day."
+              placeholder="Asphalt work after dark, pothole patching and resurfacing on arterial roads that can't close during the day."
               className="w-full rounded-[var(--radius-md)] border border-hairline bg-overlay px-3 py-2 text-[13px] text-foreground placeholder:text-faint outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
             />
           </label>
@@ -323,7 +322,7 @@ function CrewTypeDialog({
                 onChange={(e) => setActive(e.target.checked)}
                 className="h-3.5 w-3.5"
               />
-              Active — offered to the AI and in crew forms
+              Active, offered to the AI and in crew forms
             </label>
           )}
         </div>

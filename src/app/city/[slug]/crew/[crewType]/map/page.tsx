@@ -26,7 +26,7 @@ export default async function CrewPortalMapPage({ params }: PageProps) {
     ];
 
   // Full-bleed map. CorpusMapView's `teamId` prop is the only scoping lever
-  // it exposes and it's typed to TeamId — a crew type isn't one, and crew
+  // it exposes and it's typed to TeamId. A crew type isn't one, and crew
   // types span divisions anyway, so there's no single team to pass. Omitted
   // here means this map is the same soft, unscoped surface as the city map
   // (documented in the plan's architecture note); the label below is purely

@@ -8,23 +8,23 @@
 
 ## Findings by Severity
 
-### P0 (Critical: Broken/Unsafe) — 2 findings
+### P0 (Critical: Broken/Unsafe): 2 findings
 
 1. **Logout route unprotected** [05-error-handling.md]
-   - File: `src/app/api/auth/logout/route.ts:4–8`
+   - File: `src/app/api/auth/logout/route.ts:4-8`
    - Issue: `createSSRClient()` and `signOut()` have no error handling
    - Risk: Logout page shows error instead of completing logout
    - Fix: Wrap in try/catch, redirect on error
 
 2. **Unawaited fetch without error handler** [05-error-handling.md]
-   - File: `src/app/api/open311/v2/requests/route.ts:278–282`
+   - File: `src/app/api/open311/v2/requests/route.ts:278-282`
    - Issue: Classification trigger doesn't await or .catch() the fetch
    - Risk: Classification never runs on network failure; caller sees 201 success
    - Fix: Wrap in `after()` or add `.catch()` handler
 
 ---
 
-### P1 (High: Should Fix) — 7 findings
+### P1 (High: Should Fix): 7 findings
 
 1. **Staff after() callbacks unhandled promises** [05-error-handling.md]
    - Files: `src/app/staff/actions.ts:84, 115, 153, 179` (4 sites)
@@ -39,13 +39,13 @@
    - Fix: Add `Sentry.captureException(err)` at each catch site
 
 3. **Sync classification path doesn't mark failures** [05-error-handling.md]
-   - File: `src/app/report/actions.ts:231–240`
+   - File: `src/app/report/actions.ts:231-240`
    - Issue: Sync path catches but doesn't insert error_log or stamp classify_status:failed
    - Risk: Failed classifications are silent; no operator signal
    - Fix: Mirror async backstop logic; insert error_log and stamp status
 
 4. **Whitespace-only input passes validation** [20-input-validation.md]
-   - File: `src/app/report/actions.ts:14–25`
+   - File: `src/app/report/actions.ts:14-25`
    - Issue: Schema accepts `description: "   "` and empty string tags
    - Risk: Noise data in database; pollutes reports and filters
    - Fix: Add `.trim()` and `.min(1)` to address, description, tags
@@ -64,7 +64,7 @@
 
 ---
 
-### P2 (Nice-to-have) — 12 findings
+### P2 (Nice-to-have): 12 findings
 
 **Concurrency & State** [19-concurrency-and-state.md]
 1. Non-atomic cache in reasoning-ai.ts (concurrent Gemini calls wasted)
@@ -97,7 +97,7 @@
 | **Input Validation** | Report submission, API POST | 3 (1P1, 2P2) | Schema gaps, edge cases |
 | **TOCTOU Races** | Classify route, dispatch actions | 2 (P2) | Low-probability, mostly safe |
 | **Database & Security** | Schema, RLS, app initialization | 3 (1P1, 2P2) | Well-designed, minor hygiene |
-| **Totals** | — | **24 findings** | **2P0, 7P1, 12P2** |
+| **Totals** | - | **24 findings** | **2P0, 7P1, 12P2** |
 
 ---
 
@@ -115,17 +115,17 @@
 ## Recommended Fix Priority
 
 ### Immediate (Session 1)
-1. **Logout route** — P0, 5 min
-2. **Open311 fetch** — P0, 5 min
-3. **Staff after() callbacks** — P1, 10 min
-4. **Add Sentry to API routes** — P1, 15 min
-5. **Sync classify path** — P1, 10 min
+1. **Logout route**: P0, 5 min
+2. **Open311 fetch**: P0, 5 min
+3. **Staff after() callbacks**: P1, 10 min
+4. **Add Sentry to API routes**: P1, 15 min
+5. **Sync classify path**: P1, 10 min
 
 ### This Week
-6. **Client .then() chains** — P1, 10 min
-7. **Whitespace validation** — P1, 10 min
-8. **Service-role JSDoc** — P1, 5 min
-9. **Dev credentials to env** — P2, 5 min
+6. **Client .then() chains**: P1, 10 min
+7. **Whitespace validation**: P1, 10 min
+8. **Service-role JSDoc**: P1, 5 min
+9. **Dev credentials to env**: P2, 5 min
 
 ### Next Sprint (P2 backlog)
 10. Promise memoization in reasoning cache
@@ -147,10 +147,10 @@
 
 ## Audit Reports Generated
 
-- `05-error-handling.md` — 14 findings (errors, promises, Sentry)
-- `19-concurrency-and-state.md` — 2 findings (cache, subscriptions)
-- `20-input-validation.md` — 3 findings (schemas, coordinates)
-- `21-toctou-race-conditions.md` — 2 findings (auth, dispatch)
-- `22-database-and-security.md` — 3 findings (creds, RLS, schema)
-- `00-AUDIT-SUMMARY.md` — This document
+- `05-error-handling.md`: 14 findings (errors, promises, Sentry)
+- `19-concurrency-and-state.md`: 2 findings (cache, subscriptions)
+- `20-input-validation.md`: 3 findings (schemas, coordinates)
+- `21-toctou-race-conditions.md`: 2 findings (auth, dispatch)
+- `22-database-and-security.md`: 3 findings (creds, RLS, schema)
+- `00-AUDIT-SUMMARY.md`: This document
 

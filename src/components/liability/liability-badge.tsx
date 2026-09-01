@@ -7,7 +7,7 @@ import type {
 import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
-   Liability badge — spec §3.4.
+   Liability badge, spec §3.4.
 
    Presentational only (no "use client", no server-only import) so the
    same component mounts inside a server page AND inside the client
@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils/cn";
 
    'unknown' is NOT city cost. A city that has not uploaded its paving
    schedule has no evidence either way, so it gets a muted prompt to
-   supply the data — never a fabricated "the city pays for this".
+   supply the data, never a fabricated "the city pays for this".
    ================================================================== */
 
 export interface LiabilityBadgeProps {
@@ -29,7 +29,7 @@ export interface LiabilityBadgeProps {
   /** Resolved name for `evaluation.liableContractorId`, when known. */
   contractorName?: string | null;
   /** When set, the contractor name renders as a link to this href (the
-   *  Contractors workspace detail page). Name-only link — the rest of the
+   *  Contractors workspace detail page). Name-only link. The rest of the
    *  meta line stays plain text. */
   contractorHref?: string | null;
   /** City's contract/PO number from the matched capital job. */
@@ -42,7 +42,7 @@ export interface LiabilityBadgeProps {
 const VERDICT_LABEL: Record<LiabilityVerdict, string> = {
   contractor_warranty: "Under warranty",
   utility_restoration: "Utility restoration",
-  city_cost: "Out of warranty — city cost",
+  city_cost: "Out of warranty. City cost",
   unknown: "Liability unknown",
 };
 
@@ -96,7 +96,7 @@ export function LiabilityBadge({
       <div className={cn("flex flex-col gap-1", className)}>
         <Badge>No contract data</Badge>
         <span className="text-[11px] text-faint">
-          No contract data — add paving schedule to enable warranty tracking.
+          No contract data. Add paving schedule to enable warranty tracking.
         </span>
       </div>
     );

@@ -1,11 +1,11 @@
 /**
- * Staff duplicate-merge scoring (pure — no I/O, no imports from outside lib).
+ * Staff duplicate-merge scoring (pure, no I/O, no imports from outside lib).
  *
  * Scoring components for a pair of reports (all in [0, 1]):
- *   40% location  — proximity; 0 at ≥ 500 m, 1 at 0 m (linear decay)
- *   30% visual    — phash Hamming distance over 64 bits; 0.5 when hash absent
- *   20% category  — 1 exact match, 0 mismatch, 0.5 when either unknown
- *   10% time      — closer in time = higher; 0 at ≥ 90 days, 1 at same moment
+ *   40% location, proximity; 0 at ≥ 500 m, 1 at 0 m (linear decay)
+ *   30% visual, phash Hamming distance over 64 bits; 0.5 when hash absent
+ *   20% category, 1 exact match, 0 mismatch, 0.5 when either unknown
+ *   10% time, closer in time = higher; 0 at ≥ 90 days, 1 at same moment
  *
  * Co-located tests: merge.test.ts
  */

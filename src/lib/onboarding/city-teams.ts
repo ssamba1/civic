@@ -27,7 +27,7 @@ export interface CityTeamConfig {
  *
  * Never throws. The query error path was already handled, but `createServerClient`
  * itself throws when server env is missing or invalid, and that happened OUTSIDE
- * the guard — so a deployment with an unset service-role key took the whole
+ * the guard, so a deployment with an unset service-role key took the whole
  * routing page down with a 500 instead of degrading to the static presets its
  * callers are written to expect. An empty config is a correct answer here: it
  * means "this city has no custom routing", which is exactly the state a city
@@ -70,8 +70,8 @@ export function resolveCategoryTeam(
 /**
  * Resolve the owning TeamId for a category in one city: the city's onboarded
  * config first, the static preset default otherwise. The write-time resolver
- * for work_orders.team_key (classify pipeline, staff override/reassign) —
- * read surfaces then trust the stored key. Never throws; a config-read failure
+ * for work_orders.team_key (classify pipeline, staff override/reassign).
+ * Read surfaces then trust the stored key. Never throws; a config-read failure
  * degrades to the static default.
  */
 export async function resolveTeamKeyForCategory(
@@ -90,14 +90,14 @@ export async function resolveTeamKeyForCategory(
     }
     // Custom issue type (not a built-in): its owning team lives on the
     // issue_types row (migration 027), not the city_teams category config.
-    // Best-effort — null when unavailable, so we still land on a sane default.
+    // Best-effort, null when unavailable, so we still land on a sane default.
     if (!isBuiltinCategory(category)) {
       const customTeam = await fetchIssueTypeTeam(cityId, category);
       if (customTeam) return customTeam;
     }
   }
   // Built-in default. An unknown custom category with no configured team falls
-  // here too — categoryToTeamDefault returns the general_admin catch-all.
+  // here too. CategoryToTeamDefault returns the general_admin catch-all.
   return categoryToTeamDefault(category as ReportCategory) ?? "general_admin";
 }
 

@@ -1,4 +1,4 @@
--- 041 council districts + rollups (OUTFLANK #16 — council-district turf reports)
+-- 041 council districts + rollups (OUTFLANK #16, council-district turf reports)
 -- Per-district report stats so each council member gets their turf report; sells
 -- to politicians, not just public works. Mirrors the routing_zones polygon
 -- pattern (033) but semantically separate: districts are civic geography, not

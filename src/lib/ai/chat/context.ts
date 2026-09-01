@@ -20,7 +20,7 @@ export interface ChatContext extends ChatScope {
  * role scoped to the demo city, so the assistant answers as the persona
  * instead of falling to anon. DEMO_MODE-gated: the cookie is client-supplied
  * and grants nothing on a live deploy. The Supabase client stays the anon
- * RLS-scoped one — role here only widens which TOOLS the chat may use, and
+ * RLS-scoped one, role here only widens which TOOLS the chat may use, and
  * every read still runs under anon RLS.
  */
 export async function resolveChatContext(): Promise<ChatContext> {

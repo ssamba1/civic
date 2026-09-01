@@ -49,7 +49,7 @@ describe("importFromText (csv)", () => {
     "id,latitude,longitude,category,status,created_at,address,severity",
     '1,34.27,-84.07,pothole,open,2026-01-01T00:00:00Z,"100 Main St",3',
     "2,34.28,-84.08,graffiti,closed,2026-02-01T00:00:00Z,,2",
-    "3,bad,coords,pothole,open,,, ", // skipped — invalid coords
+    "3,bad,coords,pothole,open,,, ", // skipped, invalid coords
   ].join("\n");
 
   it("parses valid CSV rows", () => {
@@ -69,7 +69,7 @@ describe("importFromText (csv)", () => {
   it("skips rows with invalid coordinates", () => {
     const result = importFromText(csvText, "csv");
     if (!result.ok) throw new Error();
-    // Row 3 has "bad" coords — should be excluded
+    // Row 3 has "bad" coords. Should be excluded
     expect(result.data.length).toBe(2);
   });
 });

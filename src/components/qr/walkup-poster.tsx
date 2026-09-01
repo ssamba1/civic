@@ -1,7 +1,7 @@
 "use client";
 
 /* ==================================================================
-   Walk-up QR poster (NEXT_100 #16) — client component.
+   Walk-up QR poster (NEXT_100 #16), client component.
 
    Renders a printable poster: city name, "Report a problem here", and
    a QR code encoding the walk-up report URL for the given location.
@@ -16,7 +16,7 @@ interface WalkupPosterProps {
   cityName: string;
   /** Pre-rendered SVG string from renderWalkupQrSvg(). */
   qrSvg: string;
-  /** Human-readable location label, e.g. "Bus Stop 42 — Main St". */
+  /** Human-readable location label, e.g. "Bus Stop 42, Main St". */
   locationLabel?: string;
   /** Full URL encoded in the QR, shown as small text for accessibility. */
   reportUrl: string;

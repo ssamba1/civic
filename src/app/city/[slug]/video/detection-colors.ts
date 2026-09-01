@@ -3,8 +3,8 @@
    console that colors a detection class (card accent, class dot,
    confidence bar, evidence box + its label).
 
-   A detector class is CATEGORICAL — pothole is not "worse than" a
-   transverse crack, it is a different thing — so it draws from the
+   A detector class is CATEGORICAL. Pothole is not "worse than" a
+   transverse crack, it is a different thing, so it draws from the
    decorative pastel ramp, exactly the inverse of `severity-colors.ts`,
    where an ordinal state is built from the semantic --status-* tokens.
    Keep that split: nothing here may leak into a severity or a status.
@@ -16,14 +16,14 @@
 
    `fill` is the low-alpha/opaque tint (chips, bar tracks, box washes);
    `strong` is the AA-ish saturated variant used for strokes, dots and
-   bar fills. Never use either for body copy — pastels don't clear AA at
+   bar fills. Never use either for body copy. Pastels don't clear AA at
    12px; copy stays on --foreground/--subtle/--faint.
    ================================================================== */
 
 export interface DetectionHue {
-  /** Tint token — fills, washes, chip backgrounds. */
+  /** Tint token, fills, washes, chip backgrounds. */
   fill: string;
-  /** Saturated token — strokes, dots, meter fills, small icon glyphs. */
+  /** Saturated token, strokes, dots, meter fills, small icon glyphs. */
   strong: string;
 }
 
@@ -64,7 +64,7 @@ export function detectionHue(className: string): DetectionHue {
  * Cluster lifecycle → the shared semantic tone vocabulary, so a cluster
  * chip reads the same as every other status chip in the app. `dispatched`
  * is deliberately `info`, matching the report status chip that sits
- * beside it on the same card — the same word must not wear two hues.
+ * beside it on the same card. The same word must not wear two hues.
  */
 export const CLUSTER_TONE: Record<
   string,

@@ -1,6 +1,6 @@
 /** Spatial tolerance for footprint matching. A road centerline is not the pothole. */
 export const MATCH_TOLERANCE_M = 15;
-/** Camera detection clustering radius — GPS error on a moving vehicle. */
+/** Camera detection clustering radius, GPS error on a moving vehicle. */
 export const CLUSTER_RADIUS_M = 8;
 /** Promote a cluster to a report after N passes on >= MIN_DISTINCT_DAYS days. */
 export const PROMOTE_MIN_PASSES = 3;

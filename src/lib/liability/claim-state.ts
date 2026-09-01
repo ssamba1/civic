@@ -3,7 +3,7 @@ import type { Result } from "@/lib/types";
 /* ==================================================================
    Claim state machine (spec §5.2).
 
-   Kept in its own module — NOT in claims-actions.ts — because a
+   Kept in its own module (NOT in claims-actions.ts) because a
    `"use server"` file may only export async functions, and these guards
    are synchronous pure functions that the actions (and their tests) call.
 

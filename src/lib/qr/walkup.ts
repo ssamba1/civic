@@ -7,7 +7,7 @@ import QRCode from "qrcode";
 
    A printed QR on a bus stop, park sign, or failing asset encodes a deep-link
    into the report flow with the location pre-tagged, so a resident scans and
-   files without typing an address or fighting flaky GPS — and without an
+   files without typing an address or fighting flaky GPS, and without an
    account. No competitor turns physical infrastructure into intake points.
    Server-only: `qrcode` is a Node lib, and QR generation is an operator task.
    ================================================================== */
@@ -38,7 +38,7 @@ export function buildWalkupUrl(target: WalkupTarget): string {
 
 /**
  * Render a walk-up QR as a self-contained SVG string (crisp at any print size,
- * no image host needed). Throws only on an invalid payload — callers guard the
+ * no image host needed). Throws only on an invalid payload, callers guard the
  * coordinates first.
  */
 export async function renderWalkupQrSvg(url: string): Promise<string> {

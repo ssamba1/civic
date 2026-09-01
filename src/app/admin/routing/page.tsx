@@ -61,7 +61,7 @@ export default async function AdminRoutingPage({
             Routing flow
           </h1>
           <p className="mt-1 text-sm text-subtle">
-            The live dispatch pipeline per city — AI classification through
+            The live dispatch pipeline per city, AI classification through
             divisions (or the org-unit tree) to the crews that do the work.
             Hover any node to trace its paths.
           </p>
@@ -75,7 +75,7 @@ export default async function AdminRoutingPage({
         </p>
       ) : (
         <>
-          {/* City picker — plain links so the page stays a server component. */}
+          {/* City picker, plain links so the page stays a server component. */}
           <div className="mt-6 flex flex-wrap gap-1.5">
             {list.map((c) => {
               const active = c.id === selected?.id;

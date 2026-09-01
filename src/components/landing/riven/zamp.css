@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────────
-   ZAMP variant — ported VERBATIM from Riven's styles/variants/zamp.css
+   ZAMP variant, ported VERBATIM from Riven's styles/variants/zamp.css
    + variations/v2/zamp/zamp-sections.css, concatenated here.
 
    Only two mechanical changes vs. the Riven source:
@@ -33,7 +33,7 @@
   --wl-navy-rgb: 239 239 239;
   --wl-navy-dark-rgb: 229 229 229;
 
-  /* Deep blue accent — AA on the light page. #0a84ff fails AA for body
+  /* Deep blue accent. AA on the light page. #0a84ff fails AA for body
      text on #EFEFEF, so the accent is deepened to rgb(18 110 190)
      (mirrors Riven's #106E58 deepening of its emerald). */
   --wl-emerald-rgb: 18 110 190;
@@ -65,7 +65,7 @@
 }
 
 /* ──────────────────────────────────────────────────────────
-   HERO — colossal wordmark layout (zamp's signature move).
+   HERO, colossal wordmark layout (zamp's signature move).
    ────────────────────────────────────────────────────────── */
 
 .riven-root.wl-design-zamp #top {
@@ -74,7 +74,7 @@
   align-items: stretch !important;
   text-align: left !important;
   padding: 0 !important;
-  /* ÷ --app-zoom — see riven-landing.css --wl-hero-min-h. */
+  /* ÷ --app-zoom. See riven-landing.css --wl-hero-min-h. */
   min-height: calc(100vh / var(--app-zoom, 1)) !important;
 }
 
@@ -83,21 +83,21 @@
   display: none !important;
 }
 
-/* Full-bleed shader — the ZampShader canvas covers the whole hero. The
+/* Full-bleed shader, the ZampShader canvas covers the whole hero. The
    multiply blend turns the blue field into ink-saturated streaks on the
    light page. */
 .riven-root.wl-design-zamp #top > div[data-hero-bg="shader"] {
   mix-blend-mode: multiply;
   opacity: 0.78;
-  /* Triple the shader plane horizontally so its edges land far off-screen
-     — eliminates the grey vertical bands from edge alpha drop-off. */
+  /* Triple the shader plane horizontally so its edges land far off-screen,
+      eliminates the grey vertical bands from edge alpha drop-off. */
   top: 0 !important;
   bottom: 0 !important;
   left: -100% !important;
   right: -100% !important;
 }
 
-/* Flat blue wash behind the shader — covers the whole hero width with a
+/* Flat blue wash behind the shader, covers the whole hero width with a
    near-uniform tint + a soft radial highlight in the middle. */
 .riven-root.wl-design-zamp #top::before {
   content: "";
@@ -149,7 +149,7 @@
   will-change: transform, opacity;
 }
 
-/* Ink flip — when the active hero map preset uses a DARK basemap, the chooser
+/* Ink flip, when the active hero map preset uses a DARK basemap, the chooser
    sets data-map-ink="light" on the root, flipping the colossal wordmark to
    white so it stays legible. Light presets keep the default black ink. The
    transition makes the swap glide when switching looks. */
@@ -207,11 +207,11 @@
   flex-direction: column;
 }
 
-/* Frosted-glass capsule — black glass treatment (the card sits on the blue
+/* Frosted-glass capsule. Black glass treatment (the card sits on the blue
    shader wash). */
 .riven-root.wl-design-zamp .wl-zamp-glass-card {
   --_card-rgb: 10 12 16;
-  /* Translucent enough that the 28px backdrop blur actually reads — matches
+  /* Translucent enough that the 28px backdrop blur actually reads, matches
      the pin-story moment-cards (rgba(10,12,16,0.55) + white hairline). */
   --_card-alpha: 0.62;
   background: linear-gradient(
@@ -233,7 +233,7 @@
   gap: clamp(16px, 1.6vw, 22px);
 }
 
-/* Card lead line + tagline — white ink on the black glass. */
+/* Card lead line + tagline, white ink on the black glass. */
 .riven-root.wl-design-zamp .wl-zamp-glass-card .wl-zamp-tagline {
   max-width: none;
   color: #ffffff;
@@ -273,7 +273,7 @@
   color: #ffffff;
 }
 
-/* Hero CTA stack — two pill buttons replace Riven's email form. */
+/* Hero CTA stack, two pill buttons replace Riven's email form. */
 .riven-root.wl-design-zamp .wl-zamp-hero-form {
   width: 100%;
   max-width: none;
@@ -291,7 +291,7 @@
   margin: 0;
 }
 
-/* Hero primary CTA — solid black pill. Ghost CTA below it. */
+/* Hero primary CTA, solid black pill. Ghost CTA below it. */
 .riven-root.wl-design-zamp .wl-zamp-hero-cta {
   display: inline-flex;
   align-items: center;
@@ -359,11 +359,11 @@
   }
 }
 
-/* Phones — neater hero card. The full card (tagline + 3 feature bullets + 2
+/* Phones, neater hero card. The full card (tagline + 3 feature bullets + 2
    CTAs + microcopy) is visually heavy on a narrow viewport, so trim it to the
    essentials: tagline + the two CTA buttons + the reassurance line. The bullet
    list is dropped (the same points live in S1/S2 below). The expensive
-   blur(28px) backdrop-filter is also a known mobile jank source — drop it to a
+   blur(28px) backdrop-filter is also a known mobile jank source, drop it to a
    light blur. The two CTAs (the hero's primary conversion path) are kept. */
 @media (max-width: 640px) {
   .riven-root.wl-design-zamp .wl-zamp-glass-card {
@@ -385,13 +385,13 @@
   }
 }
 
-/* Scroll progress bar — hidden on the light zamp page. */
+/* Scroll progress bar, hidden on the light zamp page. */
 .riven-root.wl-design-zamp .v2-scroll-progress {
   display: none !important;
 }
 
 /* ──────────────────────────────────────────────────────────
-   NAV — flip ink + accent for the light bg.
+   NAV, flip ink + accent for the light bg.
    ────────────────────────────────────────────────────────── */
 .riven-root.wl-design-zamp nav a,
 .riven-root.wl-design-zamp nav button {
@@ -401,7 +401,7 @@
   color: rgb(var(--wl-emerald-rgb));
 }
 
-/* Nav pill — solid black on the light page (overrides the dark-page pill). */
+/* Nav pill, solid black on the light page (overrides the dark-page pill). */
 .riven-root.wl-design-zamp .wl-pill-btn {
   background: #000000 !important;
   color: #f5f5f5 !important;
@@ -434,7 +434,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
-   ZAMP SECTIONS (from zamp-sections.css) — five distinct layouts.
+   ZAMP SECTIONS (from zamp-sections.css), five distinct layouts.
    Every rule scoped under `.riven-root.wl-design-zamp`.
    ───────────────────────────────────────────────────────────── */
 
@@ -458,7 +458,7 @@
   color: rgb(var(--wl-emerald-rgb));
 }
 
-/* ── SECTION 1 — Why Civic ─────────────────────────────────── */
+/* ── SECTION 1, Why Civic ─────────────────────────────────── */
 
 .riven-root.wl-design-zamp .wl-zamp-s1 {
   display: flex;
@@ -616,7 +616,7 @@
   }
 }
 
-/* ── SECTION 2 — How it works — 3D constellation scene ──────── */
+/* ── SECTION 2 (How it works) 3D constellation scene ──────── */
 
 .riven-root.wl-design-zamp .wl-zamp-s2 {
   padding-top: clamp(96px, 14vh, 168px);
@@ -803,7 +803,7 @@
    touch transform lives on OTHER elements: the floor shadow (its own
    transform composes with the parent pose) and a sheen pseudo-element
    (opacity + background-position only). NOTE: intentionally NOT gated by
-   prefers-reduced-motion — forced on per product decision; motion is core
+   prefers-reduced-motion. Forced on per product decision; motion is core
    to the S2 hero scene. */
 .riven-root.wl-design-zamp .wl-zamp-s2-scene-slot-shadow {
   animation: wlS2ShadowFlow 11s ease-in-out infinite;
@@ -950,7 +950,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  /* Liquid glass — frosted, cool-tinted toward Civic blue. Body kept opaque
+  /* Liquid glass, frosted, cool-tinted toward Civic blue. Body kept opaque
      enough to stay legible when the card floats over the dark console
      (backdrop-filter is unreliable inside the 3D scene, so opacity carries it). */
   background: linear-gradient(
@@ -990,7 +990,7 @@
 
 .riven-root.wl-design-zamp .wl-zamp-orbit-card-shot {
   width: 100%;
-  /* Natural aspect — per-card ratio set below; image fills with no crop. */
+  /* Natural aspect. Per-card ratio set below; image fills with no crop. */
   aspect-ratio: 1918 / 1024;
   background: rgba(255, 255, 255, 0.3);
   border-bottom: 1px solid rgba(255, 255, 255, 0.5);
@@ -1038,7 +1038,7 @@
   border-radius: 0;
 }
 
-/* 01 — chat */
+/* 01, chat */
 .riven-root.wl-design-zamp .wl-zamp-mock--chat {
   justify-content: flex-end;
 }
@@ -1356,7 +1356,7 @@
   }
 }
 
-/* ── SECTION 3 — 60/30/10 row + ticker ─────────────────────── */
+/* ── SECTION 3-60/30/10 row + ticker ─────────────────────── */
 
 .riven-root.wl-design-zamp .wl-zamp-s3 {
   padding-top: clamp(96px, 14vh, 168px);
@@ -1769,7 +1769,7 @@
   }
 }
 
-/* ── SECTION 4 — FAQ magazine inline-expand list ───────────── */
+/* ── SECTION 4, FAQ magazine inline-expand list ───────────── */
 
 .riven-root.wl-design-zamp .wl-zamp-s4 {
   padding-top: clamp(96px, 14vh, 168px);
@@ -2180,7 +2180,7 @@
   }
 }
 
-/* ── SECTION 5 — Final CTA — wordmark reprise + CTA ───────────── */
+/* ── SECTION 5 (Final CTA) wordmark reprise + CTA ───────────── */
 
 .riven-root.wl-design-zamp .wl-zamp-s5 {
   padding: clamp(96px, 14vh, 168px) clamp(24px, 5vw, 80px)
@@ -2269,7 +2269,7 @@
 }
 
 /* ──────────────────────────────────────────────────────────
-   BOTTOM WASH — blue shader feel under Section5 + footer.
+   BOTTOM WASH. Blue shader feel under Section5 + footer.
    ────────────────────────────────────────────────────────── */
 .riven-root.wl-design-zamp .wl-zamp-bottom-wash {
   position: relative;
@@ -2397,7 +2397,7 @@
   }
 }
 
-/* ── Footer under zamp — light bg, ink wordmark; suppress its CTA
+/* ── Footer under zamp, light bg, ink wordmark; suppress its CTA
    (Section5 already provides the wordmark + CTA reprise). ── */
 .riven-root.wl-design-zamp .v2x-footer__cta {
   display: none !important;

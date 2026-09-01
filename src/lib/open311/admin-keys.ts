@@ -21,7 +21,7 @@ export { API_KEY_SCOPES };
    Operator-side Open311 API key management (issue / list / revoke).
 
    Read-path lookup lives in api-keys.ts; this is the write path used only by the
-   /admin console. Keys are stored SHA-256-hashed — the plaintext exists once, at
+   /admin console. Keys are stored SHA-256-hashed. The plaintext exists once, at
    issuance, and is returned to the operator a single time (mintApiKey). All
    functions run service-role (no client RLS on api_keys, migration 028);
    authorization is enforced at the server-action layer.
@@ -62,7 +62,7 @@ export async function listApiKeys(): Promise<ApiKeyRow[]> {
 
 /**
  * Issue a new key. Generates a cryptographically-random plaintext, stores only
- * its hash, and returns the plaintext ONCE — it can never be recovered after.
+ * its hash, and returns the plaintext ONCE. It can never be recovered after.
  * `userId` is the partner's attribution identity (reports created with this key
  * get that reporter_id); it must reference a real users row (FK, migration 028).
  */
@@ -97,7 +97,7 @@ export async function mintApiKey(input: {
   }
 }
 
-/** Revoke a key (soft — stamps revoked_at so lookups stop matching it). */
+/** Revoke a key (soft, stamps revoked_at so lookups stop matching it). */
 export async function revokeApiKey(id: string): Promise<Result<void>> {
   try {
     const db = createServerClient();

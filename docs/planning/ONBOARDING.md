@@ -1,14 +1,14 @@
-# City Onboarding — Build Plan
+# City Onboarding: Build Plan
 
 > How a new city goes from "name on a list" to a live, populated dashboard.
 > Status: planning. Grounded in current code (read 2026-06-14). Migrations need
-> explicit ask per AGENTS.md rule #10 — nothing here is applied yet.
+> explicit ask per AGENTS.md rule #10. Nothing here is applied yet.
 >
-> **UI/UX design:** see [ONBOARDING_UI.md](ONBOARDING_UI.md) — wizard screens,
+> **UI/UX design:** see [ONBOARDING_UI.md](ONBOARDING_UI.md). Wizard screens,
 > the async-ingest seam, live preview, tenant list, new primitives, a11y spec.
 > **Component specs:** [F1_DATA_LAYER.md](F1_DATA_LAYER.md) · [F4_PROVISION.md](F4_PROVISION.md) · [F5_INGEST.md](F5_INGEST.md).
 > **Migration 015 DRAFTED** (not applied): `supabase/migrations/20260614_015_city_config.sql`
-> — `reports.source` + nullable `reporter_id`, `cities.{center,default_zoom,parent_id,setup_step}`,
+>, `reports.source` + nullable `reporter_id`, `cities.{center,default_zoom,parent_id,setup_step}`,
 > `boundary`→MULTIPOLYGON, F3 config tables, `provision_jobs`, source-param KPI RPCs.
 
 ---
@@ -16,15 +16,15 @@
 ## 0. The reframe: onboarding is two motions, not one signup
 
 The docs are explicit: GTM is **resident-first / pressure-led**, and Civic is
-*"the application, not the toolkit"* — **not** a white-label self-serve SaaS
+*"the application, not the toolkit"*, **not** a white-label self-serve SaaS
 (`docs/planning/context.md`, `design.md` non-goals). So "onboard a city" splits:
 
-| | **Motion A — Launch** | **Motion B — Convert** |
+| | **Motion A, Launch** | **Motion B, Convert** |
 |---|---|---|
 | Who runs it | Civic operates it | White-glove + city staff |
 | City involved? | No | Yes (signed) |
 | Output | Public dashboard at `/city/[slug]` + resident reporting, pre-seeded | Staff inbox, accounts, Open311 two-way sync, branding |
-| Purpose | Scale the funnel; **the dashboard IS the sales demo** | Paid official integration ($0.50–2/capita/yr) |
+| Purpose | Scale the funnel; **the dashboard IS the sales demo** | Paid official integration ($0.50-2/capita/yr) |
 | Goal latency | **Minutes** (self-serve for Civic ops) | Days (guided runbook) |
 
 "Seamless onboarding" = **Motion A in minutes**, which doubles as the pitch:
@@ -36,7 +36,7 @@ either motion. Everything below is about making city #2..#N cheap.
 
 ---
 
-## 1. Current reality — what blocks city #2
+## 1. Current reality: what blocks city #2
 
 Four independent blockers, each code-level not data-level:
 
@@ -54,8 +54,8 @@ already exist (`migrations/...001`). The gap is the **app + config layers**, not
 
 ## 2. Foundations to build (ordered by leverage)
 
-### F1 — Rewire the data layer to Supabase per `city_id` (highest leverage)
-> **Full spec:** [F1_DATA_LAYER.md](F1_DATA_LAYER.md) — per-fetcher targets (RPCs/view
+### F1: Rewire the data layer to Supabase per `city_id` (highest leverage)
+> **Full spec:** [F1_DATA_LAYER.md](F1_DATA_LAYER.md), per-fetcher targets (RPCs/view
 > from migration 009 already exist), the `reports.source` dependency, call-site impact,
 > exit test.
 Replace the synthetic corpus path with real queries. `getReportCorpus(cityId)`,
@@ -64,15 +64,15 @@ read `dashboard_reports_view` + metric views filtered by `city_id`. Keep the
 synthetic generator behind `DEMO_MODE` **only** for the marketing/demo deployment,
 parameterized by city center (not hardcoded Cumming). Source of truth = DB.
 
-### F2 — City registry as data + dynamic routes
+### F2: City registry as data + dynamic routes
 - `listCities()` / `getCity(slug)` from the `cities` table (cache per request).
 - Delete `KNOWN_CITIES` as a gate; derive center/zoom from `cities.boundary`
   bbox (add `center geography(POINT)` + `default_zoom int` columns, or compute).
 - Replace `notFound()`-on-`KNOWN_CITIES` guards with DB existence + `active`.
 - Set `export const dynamicParams = true` and keep `generateStaticParams` as a
-  warm-cache hint (live cities) — new cities render via ISR with no redeploy.
+  warm-cache hint (live cities), new cities render via ISR with no redeploy.
 
-### F3 — Per-city config as data (migration `20260614_015_city_config.sql`)
+### F3: Per-city config as data (migration `20260614_015_city_config.sql`)
 Move B3's hardcoded config into tenant tables, **seeded from the current TS
 defaults** so existing behavior is preserved and a new city inherits a working
 template it can override:
@@ -87,10 +87,10 @@ crew_contacts     (city_id, department, crews text, contact_email)
 - RLS: staff read/write own city only (mirror `reports_*_staff` policies).
 - A `default_city_template` (SQL function or seed) applies all rows for a new city.
 - localStorage stores become an **optimistic cache** over these tables, not the
-  source of truth — so routing/SLA changes persist and are per-city.
+  source of truth, so routing/SLA changes persist and are per-city.
 
-### F4 — Provisioning engine
-> **Full spec:** [F4_PROVISION.md](F4_PROVISION.md) — multi-layer TIGER resolve,
+### F4: Provisioning engine
+> **Full spec:** [F4_PROVISION.md](F4_PROVISION.md), multi-layer TIGER resolve,
 > esri/GeoJSON geometry transform, the `boundary` POLYGON→MULTIPOLYGON gap,
 > idempotency, config-template applier, security.
 
@@ -103,27 +103,27 @@ Idempotent. Steps:
 4. Apply `default_city_template` (F3 tables).
 5. Return ids for the wizard / cold-start step.
 
-### F5 — Cold-start ingestion (kills the empty-dashboard problem)
-> **Full spec:** [F5_INGEST.md](F5_INGEST.md) — NormalizedReport contract, adapters
-> (arcgis/synthetic/csv/open311), the writer (bypasses `runClassifyPipeline` — maps
+### F5: Cold-start ingestion (kills the empty-dashboard problem)
+> **Full spec:** [F5_INGEST.md](F5_INGEST.md), NormalizedReport contract, adapters
+> (arcgis/synthetic/csv/open311), the writer (bypasses `runClassifyPipeline`, maps
 > categories, no vision), `provision_jobs` progress, source-labeling guarantee.
 
 Doc-blessed as the "shadow dashboard" idea (`design.md` roadmap). One normalizer,
 several adapters, all tagged `source` so synthetic/imported data **never corrupts
 real SLA/KPI numbers**:
-- `lib/ingest/open311-import.ts` — pull open service requests from a city's
+- `lib/ingest/open311-import.ts`: pull open service requests from a city's
   existing Open311 endpoint (SeeClickFix/CivicPlus/etc.). Needs the **inverse** of
   `reportToOpen311` (`src/lib/open311/transform.ts` is export-only today).
-- `lib/ingest/arcgis.ts` — **primary real-data channel for the GA beachhead**
+- `lib/ingest/arcgis.ts`: **primary real-data channel for the GA beachhead**
   (spike §10). Query a city's ArcGIS Feature Service 311/work-order layer over
   REST (`/query?where=…&outFields=*&returnGeometry=true`, paginate on
   `exceededTransferLimit`), reproject EPSG:3857→4326.
-- `lib/ingest/socrata.ts` — for big-metro tenants only; **useless for GA targets**
+- `lib/ingest/socrata.ts`: for big-metro tenants only; **useless for GA targets**
   (spike §10: Socrata 311 publishers are large metros, zero GA leads).
-- `lib/ingest/open311-import.ts` — for cities actually on SeeClickFix/CivicPlus
+- `lib/ingest/open311-import.ts`: for cities actually on SeeClickFix/CivicPlus
   (sparse in target band; pilot Cumming/Forsyth confirmed *not* on SeeClickFix).
-- `lib/ingest/csv.ts` — upload fallback.
-- `lib/ingest/synthetic.ts` — **universal fallback** (works for every city incl.
+- `lib/ingest/csv.ts`: upload fallback.
+- `lib/ingest/synthetic.ts`: **universal fallback** (works for every city incl.
   those with no open data, e.g. the pilot): realistic baseline along the city's
   real road network (OSM ways), for demos. `source='synthetic'`.
 - All funnel into `reports` (+ run the existing Gemini classify pipeline or carry
@@ -131,7 +131,7 @@ real SLA/KPI numbers**:
   `lib/ai/dedup`. **Privacy: any incoming photo goes through blur/raw-bucket, never
   straight to `photos-public`** (AGENTS.md rule #2).
 
-### F6 — Staff invites + resident city resolution
+### F6: Staff invites + resident city resolution
 - `invites (id, city_id, email, role, token, expires_at, accepted_at)` + magic-link
   (Supabase Auth) + optional `@city.gov` domain allowlist for self-join. Replaces
   `create-demo-admin.mjs`.
@@ -140,22 +140,22 @@ real SLA/KPI numbers**:
 
 ---
 
-## 3. The seamless flow (Motion A) — what fires at each step
+## 3. The seamless flow (Motion A): what fires at each step
 
 ```
 Civic ops (or lead-gen auto-trigger) enters "City, State"
   └─ provisionCity()                 [F4]  → cities row + config template   (~seconds)
-  └─ cold-start ingest               [F5]  → real/synthetic reports         (~1–5 min)
+  └─ cold-start ingest               [F5]  → real/synthetic reports         (~1-5 min)
   └─ classify pipeline (existing)          → work orders + costs
   └─ dashboard renders from DB       [F1/F2] at /city/[slug]                 (instant)
   └─ ops reviews preview, flips active=true → public + resident reporting    (1 click)
   └─ generate signage kit (QR → report flow) + share link to the lead
 ```
-Result: any prospect city has a live, populated public dashboard in minutes —
+Result: any prospect city has a live, populated public dashboard in minutes,
 the artifact you put in front of the city manager.
 
 ## 4. The conversion runbook (Motion B)
-1. City signs (pressure-led; pricing $0.50–2/capita).
+1. City signs (pressure-led; pricing $0.50-2/capita).
 2. Confirm/edit config in wizard: departments on/off + rename, per-category SLA &
    cost, crew contacts (writes F3 tables, live-previews).
 3. Invite staff (F6) → roles assigned → staff inbox `/staff` populated.
@@ -182,11 +182,11 @@ then **P1 → P2** to make it a product instead of a Cumming fork, then P3/P4/P5
 
 ---
 
-## 6. Tenancy model — DECISION MEMO (county vs city)
+## 6. Tenancy model: DECISION MEMO (county vs city)
 
 **Problem.** `design.md` open Q: Forsyth **County** owns many assets a **city**
 report touches (county road through Cumming, county stormwater). And a report can
-land near a boundary edge — which tenant owns it? This blocks P3, because resident
+land near a boundary edge, which tenant owns it? This blocks P3, because resident
 city-resolution (`ST_Contains`) needs a deterministic containment rule.
 
 **Options considered.**
@@ -202,13 +202,13 @@ city-resolution (`ST_Contains`) needs a deterministic containment rule.
 - Add `cities.parent_id uuid null references cities(id)`.
 - **Containment rule (deterministic):** resolve a report/resident to the
   **smallest-area** `cities` row whose `boundary` contains the point
-  (`ORDER BY AREALAND ASC LIMIT 1` — TIGER gives `AREALAND` directly, spike §10).
+  (`ORDER BY AREALAND ASC LIMIT 1`, TIGER gives `AREALAND` directly, spike §10).
   City beats county because city area < county area. Kills option-A ambiguity
   with no extra data.
 - **Escalation hook (defer the hard part):** when a city report's category maps to
   a county-owned asset, route/escalate to `parent_id`. v1 = a per-category
   `escalates_to_parent bool` flag on `category_routing` (F3) set during Motion-B
-  config — *not* a full asset-ownership GIS layer. Option C can layer on later by
+  config, *not* a full asset-ownership GIS layer. Option C can layer on later by
   intersecting a road-ownership feature service (same ArcGIS REST pattern as F5).
 
 **Why not C now:** authoritative per-asset ownership requires a road-ownership GIS
@@ -232,7 +232,7 @@ smallest-area containment rule is required for P3; the escalation flag is P4-era
   (team-view spec risk). Don't let onboarding paths leak it to prod.
 - **Open311 import privacy**: incoming media through blur/raw-bucket path only.
 - **Boundary quality**: TIGER primary (authoritative), OSM fallback.
-- **Config migration is the long pole** (P2 touches many read sites) — it's the
+- **Config migration is the long pole** (P2 touches many read sites), it's the
   line between "demo" and "multi-tenant product."
 
 ---
@@ -249,30 +249,30 @@ is exactly the P0→go-live step.
 
 ## 9. Open questions to resolve before building
 
-1. ~~County-vs-city tenancy model~~ — **DECIDED** (§6: parent/child + smallest-area
+1. ~~County-vs-city tenancy model~~, **DECIDED** (§6: parent/child + smallest-area
    containment + escalation flag).
-2. Motion-A public launch consent/notice — **DECIDED (default) + FLAGGED (counsel).**
+2. Motion-A public launch consent/notice, **DECIDED (default) + FLAGGED (counsel).**
    Two tiers: (a) **demo/preview is PRIVATE** by default (`active=false`, tokened
-   share link) — a sales artifact, no public exposure, no consent needed; **synthetic
+   share link), a sales artifact, no public exposure, no consent needed; **synthetic
    data never goes public**. (b) **True public launch** (residents reporting at
    `/city/[slug]`, SEO-indexed) requires city opt-in **or** a clearly-labeled
    community/unofficial mode that does not impersonate the city. Publishing a
    city-branded dashboard without consent is a PR/legal risk → **flag for counsel**
    (ties to research "legal landmine register"). Resolves the build default; the
    public-without-consent posture stays a business/legal call.
-3. Per-city SLA/cost defaults — **DECIDED: one national template, per-city override.**
+3. Per-city SLA/cost defaults, **DECIDED: one national template, per-city override.**
    Defaults are starting points the city edits in wizard Step 4 anyway; per-state
    tables add maintenance for little day-1 value. Revisit regional **cost** tables
    (labor/materials vary) only if buyers push back. Cheap, reversible.
-4. Import-scale classification — **DECIDED: map, don't re-classify.** (a) Synthetic
-   is generated *with* known categories — no classification. (b) Imported ArcGIS/
+4. Import-scale classification. **DECIDED: map, don't re-classify.** (a) Synthetic
+   is generated *with* known categories, no classification. (b) Imported ArcGIS/
    Open311/CSV already carry categories + usually **no photos** → deterministic
    **map source category → Civic taxonomy**; skip the vision pipeline (re-running
    vision on text-only records is pointless). (c) Full Gemini vision runs only on
    **new resident reports** post-launch (photo is the input). Cost is trivial either
-   way (batch ≈ $0.0011/report), but mapping makes cold-start **faster** — the 1–5 min
+   way (batch ≈ $0.0011/report), but mapping makes cold-start **faster**. The 1-5 min
    is fetch+insert+work-order-gen, not per-record LLM. Batch the work-order-gen.
-5. ~~Open311 endpoint discovery~~ — **DECIDED: manual + auto-try, no registry v1.**
+5. ~~Open311 endpoint discovery~~, **DECIDED: manual + auto-try, no registry v1.**
    Step 1 lets the operator paste an ArcGIS FeatureServer URL if known; else
    auto-search ArcGIS Hub by city name; else synthetic. Operator confirms/overrides
    in Step 2. A cached per-city source registry is a P4+ optimization.
@@ -287,7 +287,7 @@ Alpharetta, Marietta, Athens-Clarke, Augusta, Columbus, Savannah/Chatham,
 Macon-Bibb + pilot Cumming). Goal: validate or kill the cold-start premise before
 writing ingest code.
 
-### Finding 1 — TIGER boundary fetch WORKS (provisionCity is viable today) ✅
+### Finding 1: TIGER boundary fetch WORKS (provisionCity is viable today) ✅
 - Service: `tigerweb.geo.census.gov/.../Places_CouSub_ConCity_SubMCD/MapServer`,
   **layer 4 = Incorporated Places**.
 - Query gotcha: `NAME='Cumming city'` (Census appends the LSAD suffix " city"),
@@ -299,16 +299,16 @@ writing ingest code.
 - **Implication:** F4 needs no geocoder + no bbox math. TIGER is the single source.
   OSM fallback only for non-US / unincorporated edge cases. Confirms §7 "TIGER primary".
 
-### Finding 2 — Socrata is the WRONG channel for the GA beachhead ❌
+### Finding 2: Socrata is the WRONG channel for the GA beachhead ❌
 - Socrata catalog (`api.us.socrata.com/api/catalog/v1?q=311 service requests`)
   311 publishers are **large metros only**: Chicago, LA, Dallas, NYC, Montgomery
   County MD, Cincinnati, Oakland, Seattle, Miami, KC, Cambridge, Baton Rouge.
-- **Zero GA lead cities.** Apparent GA hits were false positives — `data.calgary.ca`
+- **Zero GA lead cities.** Apparent GA hits were false positives, `data.calgary.ca`
   (matched "ga") and Gainesville **FL**.
 - **Implication:** demote `socrata.ts` to big-metro tenants only. Don't build it
   for the GA GTM.
 
-### Finding 3 — ArcGIS IS the real-data channel (cold-start premise SURVIVES) ✅
+### Finding 3: ArcGIS IS the real-data channel (cold-start premise SURVIVES) ✅
 - ArcGIS Hub (`hub.arcgis.com/api/v3/datasets`) returns real resident-311 +
   work-order layers: `Citizen311ServiceRequest`, `311 Service Request Map`,
   `Pothole List`, `Streets - All Complete Pothole WOs` (fields `Incident_ID`,
@@ -317,19 +317,19 @@ writing ingest code.
   `services.arcgis.com/8Pc9XBTAsYuxx9Ny/.../311_Service_Request/FeatureServer/0`
   → **280,011 records**, point geometry (EPSG:3857 → reproject to 4326),
   standard `where`/`outFields`/pagination (`exceededTransferLimit` → `resultOffset`).
-- **Caveat (honest):** the Hub full-text query is loose — results mixed in San Jose
+- **Caveat (honest):** the Hub full-text query is loose, results mixed in San Jose
   CA and DC GIS, so this proves *the mechanism and that city 311 feature services
   exist and are pullable*, **not** that every GA lead publishes one. Coverage is
   uneven and must be confirmed per city at provision time.
 - **Implication:** `arcgis.ts` is the primary ingest adapter (same REST shape as
-  the TIGER probe — low new-tech risk). Open311 import drops to "where a city is on
+  the TIGER probe, low new-tech risk). Open311 import drops to "where a city is on
   SeeClickFix/CivicPlus" (sparse; pilot is not).
 
-### Finding 4 — county & consolidated boundaries work, but the name format is messy ✅⚠
+### Finding 4: county & consolidated boundaries work, but the name format is messy ✅⚠
 Several gov leads are **counties** (Chatham, Forsyth, Houston, Dougherty) or
 **consolidated city-counties** (Athens-Clarke, Augusta-Richmond, Macon-Bibb,
 Columbus-Muscogee), not plain cities. Verified all are fetchable, but across
-**different layers with different LSAD suffixes** — string-matching one suffix breaks:
+**different layers with different LSAD suffixes**: string-matching one suffix breaks:
 
 | Type | Layer | Example NAME | GEOID |
 |---|---|---|---|
@@ -338,7 +338,7 @@ Columbus-Muscogee), not plain cities. Verified all are fetchable, but across
 | Consolidated (balance) | layer 4 | `Augusta-Richmond County consolidated government (balance)`, `Macon-Bibb County` | 7-digit |
 | County | `State_County/MapServer/1` | `Chatham County` | 5-digit |
 
-- **Implication for F4:** `provisionCity` must do a **multi-layer resolve** —
+- **Implication for F4:** `provisionCity` must do a **multi-layer resolve**,
   query Incorporated Places (4) + Consolidated Cities (3) + Counties (1) [+ CDPs (5)]
   with `UPPER(NAME) LIKE '<input>%' AND STATE=<fips>`, collect candidates across
   layers, and **let the wizard's Boundary step disambiguate** when >1 matches (e.g.
@@ -351,7 +351,7 @@ Columbus-Muscogee), not plain cities. Verified all are fetchable, but across
 1. **Ingest priority reordered** (F5): ArcGIS → CSV → Open311 → Socrata(metro-only),
    with **synthetic as the universal fallback** because the pilot and small cities
    may publish *nothing*. Cold-start is never blocked.
-2. **F4 = multi-layer TIGER resolve** (Finding 4): no geocoder, but query 3–4 layers,
+2. **F4 = multi-layer TIGER resolve** (Finding 4): no geocoder, but query 3-4 layers,
    match by name+state, disambiguate ambiguous hits in the wizard Boundary step.
 3. **§6 unblocked:** TIGER `AREALAND` is the field the smallest-area containment
    rule needs.

@@ -9,8 +9,8 @@ import dynamic from "next/dynamic";
 // gradient placeholder below (which matches the civic-light scrim, so there is
 // no flash), then the real map streams in as a separate async chunk.
 //
-// On mobile the caller (ZampHero) does not mount this at all — the gradient is
-// the final backdrop there — so phones never download the map deps.
+// On mobile the caller (ZampHero) does not mount this at all. The gradient is
+// the final backdrop there, so phones never download the map deps.
 const ZampMapBackdropLazy = dynamic(() => import("./ZampMapBackdrop"), {
   ssr: false,
   loading: () => <ZampMapFallback />,

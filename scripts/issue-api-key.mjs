@@ -2,7 +2,7 @@
 //
 //   node scripts/issue-api-key.mjs --label "Forsyth County GIS" --user <uuid> [--city <uuid>] [--scopes open311:read,open311:write]
 //
-// Prints the PLAINTEXT key exactly once — only its SHA-256 hash is stored.
+// Prints the PLAINTEXT key exactly once. Only its SHA-256 hash is stored.
 // Reads SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY from .env.local.
 // Revoke later with:  node scripts/revoke-api-key.mjs --id <uuid>   (or --label)
 import { randomBytes, createHash } from "node:crypto";
@@ -82,11 +82,11 @@ if (error) {
   process.exit(1);
 }
 
-console.log("API key issued. The plaintext below is shown ONCE — store it now.");
+console.log("API key issued. The plaintext below is shown ONCE, store it now.");
 console.log("");
 console.log(`  id:      ${data.id}`);
 console.log(`  label:   ${data.label}`);
-console.log(`  city:    ${data.city_id ?? "(unpinned — jurisdiction_id rules apply)"}`);
+console.log(`  city:    ${data.city_id ?? "(unpinned, jurisdiction_id rules apply)"}`);
 console.log(`  scopes:  ${(data.scopes ?? []).join(", ")}`);
 console.log(`  created: ${data.created_at}`);
 console.log("");

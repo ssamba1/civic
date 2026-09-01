@@ -52,14 +52,14 @@ describe("isGenericClosure", () => {
     ["Replaced burned-out bulb at intersection of Main and 2nd."],
     ["Graffiti removed with solvent wash, surface repainted gray."],
     ["Tree removed and stump ground down; debris hauled away."],
-    ["Water leak sealed — replaced corroded 2-inch coupling at 123 Elm."],
+    ["Water leak sealed, replaced corroded 2-inch coupling at 123 Elm."],
     // Long enough with 'resolved'/'repaired' prefix to pass length guard
     [
       "Resolved after crew cleared storm debris blocking drain inlet at 5th Ave.",
     ],
     ["Repaired the 4-inch pothole on Main Street using hot-mix asphalt."],
     // Unusual but specific
-    ["No issue found after inspection — resident confirmed location in error."],
+    ["No issue found after inspection, resident confirmed location in error."],
   ])("passes %j", (reason) => {
     expect(isGenericClosure(reason)).toBe(false);
   });

@@ -1,13 +1,13 @@
 /**
  * Compliance report builder.
  *
- * Pure function — no I/O.  The caller fetches the data and passes it in;
+ * Pure function, no I/O.  The caller fetches the data and passes it in;
  * this module only assembles the structured report object so it can be
  * unit-tested independently.
  */
 
 export interface ComplianceData {
-  /** Average blur coverage across all cities (0–100), or null when unavailable. */
+  /** Average blur coverage across all cities (0-100), or null when unavailable. */
   blurCoveragePercent: number | null;
   /** Raw photo TTL configured for the primary city (days). */
   rawPhotoTtlDays: number;

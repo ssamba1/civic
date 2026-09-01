@@ -19,7 +19,7 @@ import type { TeamWorkload } from "@/lib/teams-data";
 import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
-   Team roster — grid of team cards, sorted by open backlog.
+   Team roster, grid of team cards, sorted by open backlog.
    Each card surfaces total assigned, status mix mini-bar, oldest open
    age, MTTR, and a hover tip with team duties + top category.
    Clicking a card scopes the shared filter to that team.
@@ -39,7 +39,7 @@ function TeamRosterInner({
   const tip = useHoverTip();
   const ref = useReveal<HTMLDivElement>();
   const [setupOpen, setSetupOpen] = useState(false);
-  // Current city slug from the /city/[slug] route — feeds the per-card
+  // Current city slug from the /city/[slug] route, feeds the per-card
   // "View team" link that drills into /[team]/[city].
   const { slug } = useParams<{ slug: string }>();
 
@@ -71,7 +71,7 @@ function TeamRosterInner({
 
 function buildTip(w: TeamWorkload) {
   const team = TEAMS[w.teamId];
-  const topCatLabel = w.topCategory ? categoryMeta(w.topCategory).label : "—";
+  const topCatLabel = w.topCategory ? categoryMeta(w.topCategory).label : "-";
   const closureRate =
     w.total > 0 ? Math.round((w.closedCount / w.total) * 100) : 0;
   return {
@@ -95,7 +95,7 @@ function buildTip(w: TeamWorkload) {
         <TipRow label="Top category" value={topCatLabel} muted />
         <TipRow
           label="MTTR"
-          value={w.mttrHours !== null ? `${w.mttrHours}h` : "—"}
+          value={w.mttrHours !== null ? `${w.mttrHours}h` : "-"}
           muted
         />
       </div>
@@ -136,7 +136,7 @@ function TeamCard({
   const oldestLabel =
     workload.oldestOpenAgeDays !== null
       ? formatDays(workload.oldestOpenAgeDays)
-      : "—";
+      : "-";
 
   const { onClick: tipOnClick, ...tipRest } = tipBindings;
   // Two interactive children, never nested: a full-bleed button (scope toggle)
@@ -164,7 +164,7 @@ function TeamCard({
           : undefined
       }
     >
-      {/* Primary action — scope the page to this team (local highlight +
+      {/* Primary action, scope the page to this team (local highlight +
           delegation narrowing). Full-bleed and underneath, so any click that
           isn't the View link toggles scope. Carries the hover-tip handlers. */}
       <button
@@ -179,7 +179,7 @@ function TeamCard({
         {...tipRest}
       />
 
-      {/* Content — non-interactive so clicks fall through to the scope button. */}
+      {/* Content, non-interactive so clicks fall through to the scope button. */}
       <header className="pointer-events-none relative z-0 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <span
@@ -223,7 +223,7 @@ function TeamCard({
         </span>
         <span className="inline-flex items-center gap-1">
           <Timer className="h-3 w-3" strokeWidth={1.75} />
-          MTTR {workload.mttrHours !== null ? `${workload.mttrHours}h` : "—"}
+          MTTR {workload.mttrHours !== null ? `${workload.mttrHours}h` : "-"}
         </span>
       </footer>
 
@@ -261,7 +261,7 @@ function AddTeamCard({ onClick }: { onClick: () => void }) {
         "outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "min-h-[108px]",
       )}
-      aria-label="Add Team — set up a new team"
+      aria-label="Add Team. Set up a new team"
     >
       <span className="flex h-8 w-8 items-center justify-center rounded-full border border-hairline-strong bg-overlay text-subtle transition-colors group-hover:border-hairline-strong group-hover:text-foreground">
         <Plus className="h-4 w-4" strokeWidth={2} />

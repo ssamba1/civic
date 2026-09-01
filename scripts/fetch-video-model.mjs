@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Fetch the ONNX road-damage model the video pipeline's LLM-free detector
-// runs (lib/video/detector.ts). Weights are NOT vendored in the repo — pick a
+// runs (lib/video/detector.ts). Weights are NOT vendored in the repo. Pick a
 // YOLOv8-style 640×640 export trained on RDD2022 (classes D00/D10/D20/D40 →
 // longitudinal_crack, transverse_crack, alligator_crack, pothole) whose
 // license fits your deployment, and pass its URL:

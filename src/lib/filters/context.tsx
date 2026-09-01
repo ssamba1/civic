@@ -34,7 +34,7 @@ interface FilterContextValue {
   previousWindow: DashboardReport[];
   // Server-seeded reference time (stable for the provider's lifetime). Exposed
   // so client consumers computing time-bucketed derives (e.g. team stat cards)
-  // use the SAME `now` as SSR — no Date.now() drift, no hydration mismatch.
+  // use the SAME `now` as SSR, no Date.now() drift, no hydration mismatch.
   now: number;
   // Set on team views: the team filter is pinned to this value (see
   // FilterProviderProps.lockedTeam) and the FilterBar renders a non-interactive
@@ -51,16 +51,16 @@ const FilterContext = createContext<FilterContextValue | null>(null);
 interface FilterProviderProps {
   corpus: DashboardReport[];
   // Server-computed reference time. Passed from the (server) layout alongside
-  // the corpus so window math is identical on SSR and the first client render —
-  // a client-side Date.now() would drift past window boundaries and trip a
+  // the corpus so window math is identical on SSR and the first client render.
+  // A client-side Date.now() would drift past window boundaries and trip a
   // hydration mismatch.
   now: number;
-  // When set (team view), the team filter is seeded to this team and locked —
+  // When set (team view), the team filter is seeded to this team and locked,
   // every setFilter/patch forces it back, so reused surfaces (map, analytics,
   // lists) only ever see this team's reports. Omit for the city/admin view.
   lockedTeam?: TeamId;
   // When set (crew-type portal), the category filter is seeded to this set
-  // and locked — every setFilter/patch forces it back, so reused surfaces
+  // and locked, every setFilter/patch forces it back, so reused surfaces
   // only ever see reports in this crew type's categories. Omit elsewhere.
   lockedCategories?: ReportCategory[];
   children: React.ReactNode;
@@ -78,11 +78,11 @@ export function FilterProvider({
   const searchParams = useSearchParams();
 
   // Presenter-injected demo reports (refresh button) are merged into the corpus
-  // here — a single point that flows to every map/chart/list consuming this
+  // here. A single point that flows to every map/chart/list consuming this
   // provider. Newest first so they surface at the top of recency-sorted views.
   const { demoReports } = useDemoReports();
-  // Task completions resolve into the corpus here — the single chokepoint both
-  // the city and team views flow through — so a done task reads as "closed"
+  // Task completions resolve into the corpus here, the single chokepoint both
+  // the city and team views flow through, so a done task reads as "closed"
   // with its after-photo on every downstream surface (map, charts, lists).
   const { completions } = useTaskCompletion();
   const corpus = useMemo(() => {
@@ -106,7 +106,7 @@ export function FilterProvider({
   // back to the URL so it stays shareable without re-deriving from params. In
   // the team view, the locked team overrides any team in the URL. Same for
   // crew portals and lockedCategories. Reads the raw prop (not the memoized
-  // form below) — this initializer only runs once, on mount.
+  // form below). This initializer only runs once, on mount.
   const [filter, setFilterState] = useState<ReportFilter>(() => {
     const parsed = parseFilterFromParams(
       new URLSearchParams(searchParams.toString()),
@@ -122,11 +122,11 @@ export function FilterProvider({
   const now = nowRef.current;
 
   // Referential stability: unlike lockedTeam (a primitive TeamId, stable by
-  // nature), lockedCategories is an array — callers (crew-portal layouts)
+  // nature), lockedCategories is an array. Callers (crew-portal layouts)
   // can pass a fresh literal on every render. Re-derive on content, not
   // identity, so the callbacks/memo below don't invalidate on every parent
   // render (avoids re-render loops downstream).
-  // biome-ignore lint/correctness/useExhaustiveDependencies: content-based dep (join) is intentional — keeps this stable across re-renders when lockedCategories arrives as a fresh array literal with the same contents
+  // biome-ignore lint/correctness/useExhaustiveDependencies: content-based dep (join) is intentional. Keeps this stable across re-renders when lockedCategories arrives as a fresh array literal with the same contents
   const stableLockedCategories = useMemo(
     () => lockedCategories,
     [lockedCategories?.join(",")],
@@ -173,12 +173,12 @@ export function FilterProvider({
   // categoryToTeam) but the dep keeps memos invalidated on routing changes.
   const { overrides: categoryOverrides } = useCategoryOverrides();
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: categoryOverrides is an intentional cache-busting dep — filterReports reads the module-level routing snapshot (categoryToTeam), not this value, so the dep is required to invalidate the memo when category routing changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: categoryOverrides is an intentional cache-busting dep. FilterReports reads the module-level routing snapshot (categoryToTeam), not this value, so the dep is required to invalidate the memo when category routing changes
   const filtered = useMemo(
     () => filterReports(corpus, filter, now, overrides),
     [corpus, filter, now, overrides, categoryOverrides],
   );
-  // biome-ignore lint/correctness/useExhaustiveDependencies: categoryOverrides is an intentional cache-busting dep — filterPreviousWindow reads the module-level routing snapshot (categoryToTeam), not this value, so the dep is required to invalidate the memo when category routing changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: categoryOverrides is an intentional cache-busting dep. FilterPreviousWindow reads the module-level routing snapshot (categoryToTeam), not this value, so the dep is required to invalidate the memo when category routing changes
   const previousWindow = useMemo(
     () => filterPreviousWindow(corpus, filter, now, overrides),
     [corpus, filter, now, overrides, categoryOverrides],

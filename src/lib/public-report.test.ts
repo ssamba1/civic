@@ -32,7 +32,7 @@ describe("publicToken", () => {
     expect(publicToken("report-1")).toBe(publicToken("report-1"));
   });
 
-  it("is opaque — not the id, fixed length, differs per id", () => {
+  it("is opaque, not the id, fixed length, differs per id", () => {
     const t = publicToken("report-1");
     expect(t).not.toBe("report-1");
     expect(t).toHaveLength(24);

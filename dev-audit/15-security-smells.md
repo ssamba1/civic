@@ -22,53 +22,53 @@
 ## Detailed analysis by category
 
 ### Secrets & Credentials (HIGH)
-- **src/app/login/login-form.tsx:15-16** — Dev email + password hardcoded. `NODE_ENV` check is insufficient on shared CI/build systems where NODE_ENV can be environment-spoofed. Risk: leaked credentials in source control, git history, or GitHub audit logs.
+- **src/app/login/login-form.tsx:15-16**: Dev email + password hardcoded. `NODE_ENV` check is insufficient on shared CI/build systems where NODE_ENV can be environment-spoofed. Risk: leaked credentials in source control, git history, or GitHub audit logs.
   - **Mitigation:** Migrate to `NEXT_PUBLIC_DEMO_MODE` feature flag or database seeding of test accounts. Regenerate admin credentials if this repo is public.
 
 ### Open Redirects (MEDIUM)
-- **src/app/auth/callback/route.ts:29** — `next.startsWith("/")` allows `//evil.com` (protocol-relative redirect). Does not block `../../../` traversal patterns (though Next.js routing limits impact). An attacker can chain with social engineering to steal OAuth tokens.
+- **src/app/auth/callback/route.ts:29**: `next.startsWith("/")` allows `//evil.com` (protocol-relative redirect). Does not block `../../../` traversal patterns (though Next.js routing limits impact). An attacker can chain with social engineering to steal OAuth tokens.
   - **Mitigation:** Use a whitelist of safe destinations or parse `next` as a URL object and reject anything outside the same origin: `new URL(next, url.origin).origin === url.origin`.
 
 ### Unsafe Fetch / SSRF Risk (MEDIUM)
-- **src/app/api/open311/v2/requests/route.ts:278** — Fire-and-forget fetch to `${process.env.NEXT_PUBLIC_SITE_URL}/api/ai/classify`. If `NEXT_PUBLIC_SITE_URL` is attacker-controlled (e.g., injected via GitHub Actions secrets or .env.local on shared CI), classify route is called on attacker's domain. No error handling, so failures are silent.
+- **src/app/api/open311/v2/requests/route.ts:278**: Fire-and-forget fetch to `${process.env.NEXT_PUBLIC_SITE_URL}/api/ai/classify`. If `NEXT_PUBLIC_SITE_URL` is attacker-controlled (e.g., injected via GitHub Actions secrets or .env.local on shared CI), classify route is called on attacker's domain. No error handling, so failures are silent.
   - **Mitigation:** (1) Hardcode the internal URL and validate `NEXT_PUBLIC_SITE_URL` matches `new URL(request.url).origin`, (2) Add error logging + timeout, (3) Consider queueing (Bull/Temporal) instead of direct HTTP.
 
 ### Input Validation (LOW)
-- **src/app/api/ai/classify/route.ts:45-46** — `report_id` checked for `typeof reportId !== "string"` and truthy, but not validated against UUID format. A malformed ID like `report_id="'; DROP TABLE reports;--"` would be safely handled by Supabase parameterized queries, but error responses could leak DB schema.
+- **src/app/api/ai/classify/route.ts:45-46**: `report_id` checked for `typeof reportId !== "string"` and truthy, but not validated against UUID format. A malformed ID like `report_id="'; DROP TABLE reports;--"` would be safely handled by Supabase parameterized queries, but error responses could leak DB schema.
   - **Mitigation:** Add `const uuidRegex = /^[a-f0-9-]{36}$/i; if (!uuidRegex.test(reportId)) return NextResponse.json({error:"Invalid report_id"}, {status:400});` before DB query.
 
-- **src/app/api/open311/v2/requests/route.ts:156-157** — API key extracted from both `body.api_key` and `request.nextUrl.searchParams.get("api_key")`. Query param keys are logged in HTTP access logs and browser history. No clear precedence rule.
+- **src/app/api/open311/v2/requests/route.ts:156-157**: API key extracted from both `body.api_key` and `request.nextUrl.searchParams.get("api_key")`. Query param keys are logged in HTTP access logs and browser history. No clear precedence rule.
   - **Mitigation:** Accept only from body; reject if provided in query param and return 400 with message "api_key must be in request body, not query string". Add audit log entry if query param is detected.
 
 ---
 
 ## Auth & Authorization (Clean)
 
-✅ **src/lib/privacy/signed-url.ts** — Comprehensive role + city check before issuing signed URLs for raw photos. Uses SSR client (cookie-aware) for authorization gate, service-role client only for token generation. No bypass found.
+✅ **src/lib/privacy/signed-url.ts**. Comprehensive role + city check before issuing signed URLs for raw photos. Uses SSR client (cookie-aware) for authorization gate, service-role client only for token generation. No bypass found.
 
-✅ **src/app/api/ai/classify/route.ts:54-75** — Reports are re-gated after the internal-key check: unauthenticated callers must own or staff the report (RLS scoped read via SSR client). The pipeline runs under service-role (correct for RLS bypass context) but read authorization is enforced upstream. No object-level bypass.
+✅ **src/app/api/ai/classify/route.ts:54-75**. Reports are re-gated after the internal-key check: unauthenticated callers must own or staff the report (RLS scoped read via SSR client). The pipeline runs under service-role (correct for RLS bypass context) but read authorization is enforced upstream. No object-level bypass.
 
-✅ **src/app/staff/actions.ts:14-46** — Staff actions use `getStaffUser()` which validates role (staff_dispatcher, staff_supervisor, admin) before any mutation. Dev bypass (`DEV_AUTH_BYPASS=1 + NODE_ENV=development`) is correctly gated and only picks the first dev staff user, not an arbitrary one.
+✅ **src/app/staff/actions.ts:14-46**. Staff actions use `getStaffUser()` which validates role (staff_dispatcher, staff_supervisor, admin) before any mutation. Dev bypass (`DEV_AUTH_BYPASS=1 + NODE_ENV=development`) is correctly gated and only picks the first dev staff user, not an arbitrary one.
 
 ---
 
 ## XSS & Output Encoding (Clean)
 
-✅ **src/components/map/map-popup.tsx** — Inline `esc()` function escapes HTML entities (&, <, >, ", '). Used on all user-controlled fields: address, status label, severity, reported date, cost, SLA. CATEGORY_META is a static constant.
+✅ **src/components/map/map-popup.tsx**, Inline `esc()` function escapes HTML entities (&, <, >, ", '). Used on all user-controlled fields: address, status label, severity, reported date, cost, SLA. CATEGORY_META is a static constant.
 
-✅ **src/lib/open311/xml.ts** — XML serialization uses parameterized `tag()` helper that escapes all values via `esc()` function. No XML injection risk.
+✅ **src/lib/open311/xml.ts**. XML serialization uses parameterized `tag()` helper that escapes all values via `esc()` function. No XML injection risk.
 
-✅ **src/app/api/open311/v2/requests/route.ts:299** — XML response manually escapes report.id using `escXml()` inline helper.
+✅ **src/app/api/open311/v2/requests/route.ts:299**, XML response manually escapes report.id using `escXml()` inline helper.
 
 ---
 
 ## Rate Limiting & DOS (Clean)
 
-✅ **src/app/api/ai/classify/route.ts:25-37** — Rate limiter checked per IP for non-internal callers. Internal key (server actions, Open311) bypasses limit (acceptable: trusted context).
+✅ **src/app/api/ai/classify/route.ts:25-37**, Rate limiter checked per IP for non-internal callers. Internal key (server actions, Open311) bypasses limit (acceptable: trusted context).
 
-✅ **src/app/api/ai/reasoning/route.ts:47-56** — Rate limiter on reasoning endpoint: 60 req/min per IP for anonymous, exempt for authenticated users and internal-key callers.
+✅ **src/app/api/ai/reasoning/route.ts:47-56**, Rate limiter on reasoning endpoint: 60 req/min per IP for anonymous, exempt for authenticated users and internal-key callers.
 
-✅ **src/app/api/open311/v2/requests/route.ts:27-32** — GET /requests rate-limited to 60 req/min per IP (generous for public spec clients).
+✅ **src/app/api/open311/v2/requests/route.ts:27-32**. GET /requests rate-limited to 60 req/min per IP (generous for public spec clients).
 
 ---
 

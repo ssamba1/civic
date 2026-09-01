@@ -18,7 +18,7 @@ function initials(name: string): string {
 }
 
 /**
- * City switcher — search + toggle between municipalities from the dashboard
+ * City switcher, search + toggle between municipalities from the dashboard
  * header. Live cities navigate to their dashboard; expansion targets render
  * disabled with a "Soon" badge so the rollout footprint is visible without
  * linking to empty dashboards.

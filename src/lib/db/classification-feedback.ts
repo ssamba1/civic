@@ -10,7 +10,7 @@ const logger = createLogger("classification-feedback");
 /**
  * Fetch all classification_feedback rows for corpus building (#26).
  * Returns rows ordered by created_at asc so dedupeCorpus keeps the latest.
- * Gracefully degrades to [] on any DB error — the corpus endpoint returns an
+ * Gracefully degrades to [] on any DB error. The corpus endpoint returns an
  * empty JSONL rather than a 500, keeping the route safe to call at any time.
  */
 export async function listFeedbackForCorpus(
@@ -51,10 +51,10 @@ export async function listFeedbackForCorpus(
 }
 
 /**
- * OUTFLANK #7 — fetch a city's most common staff correction pairs from
+ * OUTFLANK #7, fetch a city's most common staff correction pairs from
  * classification_feedback (migration 038 RPC). Feeds the per-city few-shot block
  * appended to the classification prompt. Returns [] on any error so the classify
- * pipeline degrades to the base prompt — the feedback loop is best-effort, never
+ * pipeline degrades to the base prompt. The feedback loop is best-effort, never
  * a blocker on getting a report classified.
  */
 export async function fetchCorrectionExamples(

@@ -20,7 +20,7 @@ function readSaved(key?: string): number {
 interface ResizableSplitProps {
   left: ReactNode;
   right: ReactNode;
-  /** When false, only `left` renders full-width — no divider, no split. */
+  /** When false, only `left` renders full-width, no divider, no split. */
   active: boolean;
   /** localStorage key to remember the divider position across reloads. */
   storageKey?: string;
@@ -103,7 +103,7 @@ export function ResizableSplit({
         {left}
       </div>
 
-      {/* biome-ignore lint/a11y/useSemanticElements: a draggable, focusable window-splitter must be a div — <hr> can't host the handle, tabIndex, or pointer drag. */}
+      {/* biome-ignore lint/a11y/useSemanticElements: a draggable, focusable window-splitter must be a div. <hr> can't host the handle, tabIndex, or pointer drag. */}
       <div
         role="separator"
         aria-orientation="vertical"

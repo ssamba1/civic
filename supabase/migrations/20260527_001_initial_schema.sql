@@ -1,5 +1,5 @@
 -- =============================================================================
--- Civic – Initial Schema
+-- Civic, Initial Schema
 -- Migration: 20260527_001_initial_schema.sql
 -- =============================================================================
 
@@ -488,7 +488,7 @@ CREATE POLICY audit_log_select_admin ON audit_log
   );
 
 -- ---------------------------------------------------------------------------
--- 9. Public dashboard view (strips PII — no reporter_id, no email)
+-- 9. Public dashboard view (strips PII, no reporter_id, no email)
 -- ---------------------------------------------------------------------------
 CREATE VIEW dashboard_reports_view AS
 SELECT

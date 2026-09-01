@@ -3,11 +3,11 @@
 //
 // Does three things, idempotently, against the project in SUPABASE_URL:
 //   1. Applies the two migrations verified UNAPPLIED on 2026-07-09:
-//        - 20260613_014_bump_priority_rpc.sql  (app already calls this RPC —
+//        - 20260613_014_bump_priority_rpc.sql  (app already calls this RPC,
 //          duplicate-report priority bumps silently fail until applied)
 //        - 20260709_039_raw_photo_retention.sql (enables pg_cron + nightly
 //          3am job that PERMANENTLY DELETES photos-raw objects older than
-//          30 days — that is its purpose per agents.md hard rule #2)
+//          30 days, that is its purpose per agents.md hard rule #2)
 //   2. Backfills supabase_migrations.schema_migrations with rows for every
 //      migration that IS applied live but was recorded nowhere (applied via
 //      Management API by past sessions). After this, `supabase db push`
@@ -118,7 +118,7 @@ const [checks] = await query(`select
   (select count(*) from supabase_migrations.schema_migrations) as ledger_rows`);
 console.log("verify:", JSON.stringify(checks));
 if (!checks.rpc_014 || !checks.fn_039 || !Number(checks.cron_job)) {
-  console.error("VERIFICATION FAILED — inspect output above");
+  console.error("VERIFICATION FAILED, inspect output above");
   process.exit(1);
 }
-console.log("done — migration scheme repaired");
+console.log("done, migration scheme repaired");

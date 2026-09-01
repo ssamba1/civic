@@ -19,6 +19,6 @@ export async function POST(request: Request) {
   } catch (err) {
     logger.error("Logout failed", err);
   }
-  // Redirect regardless — logout always succeeds from user perspective
+  // Redirect regardless, logout always succeeds from user perspective
   return NextResponse.redirect(new URL("/", request.url), { status: 303 });
 }

@@ -7,7 +7,7 @@
 
 ## Current Test Inventory
 
-### Unit Tests (5 files — src/lib/)
+### Unit Tests (5 files: src/lib/)
 
 1. **`src/lib/ai/gemini.test.ts`** ✅
    - Tests: classifyPhoto (Gemini API integration)
@@ -48,13 +48,13 @@
 
 No Playwright/Cypress tests. All manual testing.
 
-**Risk:** High — public API contracts (Open311) untested.
+**Risk:** High, public API contracts (Open311) untested.
 
 ---
 
 ## Critical Gaps (Must Add)
 
-### G1 — Open311 API Tests (3–4 hours)
+### G1: Open311 API Tests (3-4 hours)
 
 **Why critical:**
 - Public API contract
@@ -119,11 +119,11 @@ describe("Open311 GET /requests", () => {
 });
 ```
 
-**Effort:** 3–4 hours (setup test DB, mocks, assertions)
+**Effort:** 3-4 hours (setup test DB, mocks, assertions)
 
 ---
 
-### G2 — Auth & RLS Tests (4–6 hours)
+### G2: Auth & RLS Tests (4-6 hours)
 
 **Why critical:**
 - Auth enforcement affects data security
@@ -188,11 +188,11 @@ describe("Open311 auth", () => {
 });
 ```
 
-**Effort:** 4–6 hours (test DB setup, auth mocking, multiple roles)
+**Effort:** 4-6 hours (test DB setup, auth mocking, multiple roles)
 
 ---
 
-### G3 — Race Condition Tests (2 hours)
+### G3: Race Condition Tests (2 hours)
 
 **Why critical:**
 - dispatchWorkOrderForReport TOCTOU race (just fixed)
@@ -228,7 +228,7 @@ describe("Race conditions", () => {
 
 ---
 
-### G4 — Component State Management Tests (3 hours)
+### G4: Component State Management Tests (3 hours)
 
 **Why critical:**
 - Complex state (refs, callbacks, effects)
@@ -344,20 +344,20 @@ npm run ci:test        # CI: run all tests + coverage check
 
 | Component | Current | Target | Effort |
 |-----------|---------|--------|--------|
-| API routes | 0% | 80% | 6–8 hrs |
-| Server actions | 0% | 70% | 4–6 hrs |
-| RLS/Auth | 0% | 90% | 4–6 hrs |
-| Client components | 5% | 40% | 3–4 hrs |
-| Pure functions (lib/) | 90% | 95% | 1–2 hrs |
+| API routes | 0% | 80% | 6-8 hrs |
+| Server actions | 0% | 70% | 4-6 hrs |
+| RLS/Auth | 0% | 90% | 4-6 hrs |
+| Client components | 5% | 40% | 3-4 hrs |
+| Pure functions (lib/) | 90% | 95% | 1-2 hrs |
 
 ### Total Effort
 
-**Critical path (G1–G4):** 12–16 hours  
-**Full coverage (targets above):** 20–30 hours
+**Critical path (G1, G4):** 12-16 hours  
+**Full coverage (targets above):** 20-30 hours
 
 ### Recommendation
 
-**Phase 1 (2–3 days):** G1–G4 (critical gaps)  
+**Phase 1 (2-3 days):** G1, G4 (critical gaps)  
 **Phase 2 (1 week):** Expand to 60% overall coverage
 
 ---
@@ -428,4 +428,4 @@ export const testReport = {
 
 **Current test coverage is insufficient** for production. Critical paths (API, auth, RLS) are untested and should be prioritized.
 
-**Recommendation:** Implement G1–G4 (12–16 hours) before next release. This covers the most high-risk areas and provides a regression suite for bug fixes.
+**Recommendation:** Implement G1, G4 (12-16 hours) before next release. This covers the most high-risk areas and provides a regression suite for bug fixes.

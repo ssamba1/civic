@@ -47,7 +47,7 @@ interface FullscreenMapOrchestratorProps {
   // the cross-team dispatch/override actions ("no other team things"), while
   // keeping the identical fullscreen chrome + filter panel as the city map.
   lockedTeam?: TeamId;
-  // Resident community view: same map + side list, but no gov affordances —
+  // Resident community view: same map + side list, but no gov affordances,
   // hides the team scoping, the per-team chip, and all dispatch/route actions,
   // and shows an optimistic upvote on each list row instead. Default false, so
   // every existing (gov) call site is byte-identical.
@@ -57,18 +57,18 @@ interface FullscreenMapOrchestratorProps {
 // Text color for the incident-feed status label. This panel (dispatch
 // sidebar/sheet) is structurally forced-dark regardless of the app's
 // light/dark theme setting (bg-black/* scrim, text-white siblings), so it
-// intentionally stays off the canonical --status-*-fg tokens — those are
+// intentionally stays off the canonical --status-*-fg tokens. Those are
 // tuned per-theme (dark-on-white in light mode) and would go near-invisible
 // on this always-dark surface. Kept local on purpose.
 //
 // Hue mapping mirrors report-map.tsx's statusColor() (the marker/legend
 // vocabulary): closed=success, dispatched/in_progress=info slate (same tone
-// per lib/status.ts STATUS_TONE — both read as "routed/active", distinct
+// per lib/status.ts STATUS_TONE. Both read as "routed/active", distinct
 // from open), open=warning. The muted FILL tokens themselves
 // (#3d9a63/#c08a1d/#5b6b8c) sit
 // under 4.5:1 as 12px text on this panel's worst case (selected row
 // #3c3c42: 3.13/3.60/2.05), so these are lightness-lifted text variants of
-// the same hues — the dark-panel analog of the .dark --status-*-fg lift:
+// the same hues, the dark-panel analog of the .dark --status-*-fg lift:
 // success #55c081 (4.82:1), warning #d9a83c (5.02:1), slate #9db0d3
 // (5.00:1), all vs #3c3c42; ≥7.5:1 vs the base #1c1c1e panel chrome.
 const STATUS_TEXT_COLOR: Record<string, string> = {
@@ -112,7 +112,7 @@ export function FullscreenMapOrchestrator({
 }: FullscreenMapOrchestratorProps) {
   // Local status overrides keyed by report id (e.g. an in-session dispatch).
   // Overlaid onto the live `initialReports` prop at render time rather than
-  // forking a stale copy of it — so a refreshed corpus (real-time row, a task
+  // forking a stale copy of it, so a refreshed corpus (real-time row, a task
   // marked done → "closed") still flows through while local dispatches persist.
   const [statusOverrides, setStatusOverrides] = useState<
     Record<string, ReportStatus>
@@ -121,10 +121,10 @@ export function FullscreenMapOrchestrator({
   // Subscribe to category-level routing overrides. `categoryToTeam` reads
   // the module-level snapshot, but the memo'd filter below needs a dep
   // that ticks when a dispatcher re-aims a category from the routing
-  // matrix — that's what `categoryOverrides` provides here.
+  // matrix, that's what `categoryOverrides` provides here.
   const { overrides: categoryOverrides } = useCategoryOverrides();
 
-  // Live demo overlay — the presenter-injected report(s). Prepended (newest
+  // Live demo overlay, the presenter-injected report(s). Prepended (newest
   // first) so a freshly injected point lands at the very top of the Dispatch
   // list and renders on the map. This map route is server-rendered and sits
   // outside FilterProvider, so we merge the overlay here rather than relying
@@ -145,7 +145,7 @@ export function FullscreenMapOrchestrator({
   // same surface as the sidebar/chrome. `satellite` is a deliberate override
   // (picked from the map controls), so a theme flip leaves it alone. Init to
   // "dark" to match the SSR default, then the effect reconciles to the real
-  // theme on mount before the lazy map paints — no hydration mismatch.
+  // theme on mount before the lazy map paints, no hydration mismatch.
   const { theme: appTheme } = useTheme();
   const [mapTheme, setMapTheme] = useState<MapTheme>("dark");
   useEffect(() => {
@@ -153,7 +153,7 @@ export function FullscreenMapOrchestrator({
   }, [appTheme]);
 
   // --- Marker color mode (lifted from ReportMap so the Dispatch panel's
-  // "Color by" control and the map's own gear-panel control stay in sync —
+  // "Color by" control and the map's own gear-panel control stay in sync,
   // same lift pattern as mapTheme above). ---
   const [colorMode, setColorMode] = useState<MarkerColorMode>("progress");
 
@@ -163,7 +163,7 @@ export function FullscreenMapOrchestrator({
   const [selectedCategory, setSelectedCategory] =
     useState<ReportCategory | null>(null);
   const [minSeverity, setMinSeverity] = useState<number>(1);
-  // Default to live work only — open / dispatched / in-progress. Completed
+  // Default to live work only. Open / dispatched / in-progress. Completed
   // (closed/resolved) is hidden by default on both the city and team maps so
   // they read as "what's active", not the full resolved archive. Users can
   // re-enable Resolved via the status filter.
@@ -179,7 +179,7 @@ export function FullscreenMapOrchestrator({
   // --- Interaction & Selection States ---
   const [focusedReportId, setFocusedReportId] = useState<string | null>(null);
 
-  // Report id whose auto-dispatch server action is in flight — drives the inline
+  // Report id whose auto-dispatch server action is in flight, drives the inline
   // button spinner + disabled state so the click registers as "working".
   const [dispatchingId, setDispatchingId] = useState<string | null>(null);
 
@@ -204,7 +204,7 @@ export function FullscreenMapOrchestrator({
     reportId: string;
   } | null>(null);
 
-  // Auto-dismiss timer for the route toast — held in a ref so it can be
+  // Auto-dismiss timer for the route toast, held in a ref so it can be
   // cancelled on unmount (no setState on a dead component) and reset when a
   // new dispatch fires before the previous toast has cleared.
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -220,7 +220,7 @@ export function FullscreenMapOrchestrator({
   );
 
   // --- Filter Logic ---
-  // biome-ignore lint/correctness/useExhaustiveDependencies: categoryOverrides isn't referenced literally, but categoryToTeam() reads a snapshot it mutates — keeping it forces recompute when a dispatcher re-aims a category.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: categoryOverrides isn't referenced literally, but categoryToTeam() reads a snapshot it mutates, keeping it forces recompute when a dispatcher re-aims a category.
   const filteredReports = useMemo(() => {
     return allReports.filter((report) => {
       if (
@@ -244,7 +244,7 @@ export function FullscreenMapOrchestrator({
     categoryOverrides,
   ]);
 
-  // Toggle status filter helper — useCallback so it's a stable dep for dispatchPanelContent's useMemo.
+  // Toggle status filter helper, useCallback so it's a stable dep for dispatchPanelContent's useMemo.
   const handleToggleStatus = useCallback((status: ReportStatus) => {
     setActiveStatuses((prev) => {
       if (prev.includes(status)) {
@@ -272,7 +272,7 @@ export function FullscreenMapOrchestrator({
     }, delay);
   }, []);
 
-  // Route/Assign to team action — optimistic update + server write with rollback.
+  // Route/Assign to team action. Optimistic update + server write with rollback.
   const handleRouteToTeam = useCallback(
     async (reportId: string, teamId: TeamId) => {
       // Optimistic: overlay dispatched status immediately for snappy UI.
@@ -288,7 +288,7 @@ export function FullscreenMapOrchestrator({
       });
       dismissToast(3500);
 
-      // The map surface receives reports, not work orders — dispatch via the
+      // The map surface receives reports, not work orders. Dispatch via the
       // report-id variant which resolves the linked work order server-side.
       const result = await dispatchWorkOrderForReport(reportId);
       setDispatchingId((cur) => (cur === reportId ? null : cur));
@@ -394,18 +394,18 @@ export function FullscreenMapOrchestrator({
           </div>
         )}
 
-        {/* Divider — separates the filter section from whatever renders
+        {/* Divider, separates the filter section from whatever renders
             above it (team banner / route toast, or the panel header when
             neither is present). Filters are a flat section now, not a
             nested card, so this hairline is the only separation. */}
         <div className="border-t border-white/10" />
 
-        {/* Quick filters — flat section inside the panel. No inner card
+        {/* Quick filters, flat section inside the panel. No inner card
             bg/border/radius: the outer LiquidGlassCard IS the panel's one
             card, nesting a second elevated surface here reads as a
             vibecoded double-card. */}
         <div className="p-3 flex flex-col gap-3">
-          {/* Team — primary scoping. Hidden in the team view (locked) and the
+          {/* Team, primary scoping. Hidden in the team view (locked) and the
             resident community view (no team concept). */}
           {!lockedTeam && !readOnly && (
             <div className="flex flex-col gap-1.5">
@@ -518,12 +518,12 @@ export function FullscreenMapOrchestrator({
             </div>
           </div>
 
-          {/* Color by — single-select marker color mode. Mirrors Status's
+          {/* Color by, single-select marker color mode. Mirrors Status's
               button classes above (same rounded/px/py/min-h/lg: pattern) but
               grid-cols-3 for the 3 mutually-exclusive modes instead of
               Status's grid-cols-2 multi-toggle. Lifted state (colorMode/
               setColorMode) keeps this in sync with the map's own gear-panel
-              "Marker colors" control — whichever mode is picked here or
+              "Marker colors" control. Whichever mode is picked here or
               there paints the same pins, including when the Dispatch panel
               is team-filtered (color-by-team still applies to whatever's
               visible; no special-casing). */}
@@ -639,7 +639,7 @@ export function FullscreenMapOrchestrator({
                       {report.address}
                     </p>
 
-                    {/* Auto-assigned team chip — gov only; residents don't route. */}
+                    {/* Auto-assigned team chip. Gov only; residents don't route. */}
                     {!readOnly && (
                       <div
                         className="inline-flex self-start items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium"
@@ -667,7 +667,7 @@ export function FullscreenMapOrchestrator({
                       </span>
                     </div>
 
-                    {/* Route action — admin dispatch only; hidden in the team view
+                    {/* Route action. Admin dispatch only; hidden in the team view
                     and the resident community (read-only) view. */}
                     {isSelected && !lockedTeam && !readOnly && (
                       <div
@@ -823,7 +823,7 @@ export function FullscreenMapOrchestrator({
     <div className="h-full w-full flex-1 min-h-0 relative overflow-hidden flex bg-background select-none">
       <style>{`@keyframes fmPanelIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}`}</style>
 
-      {/* Presenter control for the injected-report beat (demo mode only —
+      {/* Presenter control for the injected-report beat (demo mode only,
           renders nothing otherwise). Top-left, clear of the map controls on the
           right and the legend stack below. */}
       <div className="pointer-events-none absolute left-3 top-3 z-30">
@@ -852,7 +852,7 @@ export function FullscreenMapOrchestrator({
         />
       </div>
 
-      {/* Mobile dispatch FAB — bottom-left, above safe area, hidden on desktop.
+      {/* Mobile dispatch FAB, bottom-left, above safe area, hidden on desktop.
           Offset is +3.5rem above the HUD pill (same corner, same base offset) to
           prevent the two elements from stacking on top of each other. */}
       <button
@@ -879,7 +879,7 @@ export function FullscreenMapOrchestrator({
         {dispatchPanelContent}
       </BottomSheet>
 
-      {/* Desktop side panel — Dispatch (hidden on mobile). Frosted dark glass
+      {/* Desktop side panel. Dispatch (hidden on mobile). Frosted dark glass
           (`glassChrome`): one translucent tint + blur + saturation so it reads
           as glass over any basemap while white text stays legible. */}
       <LiquidGlassCard
@@ -905,7 +905,7 @@ export function FullscreenMapOrchestrator({
           </span>
         </div>
 
-        {/* Shared dispatch content — same content as mobile bottom-sheet */}
+        {/* Shared dispatch content, same content as mobile bottom-sheet */}
         <div className="flex-1 overflow-hidden">{dispatchPanelContent}</div>
       </LiquidGlassCard>
     </div>

@@ -45,14 +45,14 @@ export async function GET(request: Request) {
     }
   }
 
-  // No explicit destination was requested (or it failed validation) — route
+  // No explicit destination was requested (or it failed validation). Route
   // staff straight to their city console instead of always landing on "/".
   if (safeNext === "/") {
     const {
       data: { user },
       error: userErr,
     } = await supabase.auth.getUser();
-    // Landing on "/" is a safe fallback, but never a silent one — an error
+    // Landing on "/" is a safe fallback, but never a silent one. An error
     // here means staff quietly stop reaching their console after sign-in.
     if (userErr) log.error("getUser failed post-exchange", userErr);
     if (user) {

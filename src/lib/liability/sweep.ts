@@ -7,7 +7,7 @@ import type { Result } from "@/lib/types";
 /**
  * Warranty expiry sweep (spec §3.4): capital jobs whose warranty lapses inside
  * the horizon, each with the count of still-open defects attributed to it.
- * Converts "we forgot" into a worklist — highest-ROI screen in the spec.
+ * Converts "we forgot" into a worklist, highest-ROI screen in the spec.
  *
  * The row shaping is a pure function so the ordering and day math are testable
  * without a DB; only `fetchExpiringWarranties` touches Postgres.
@@ -32,7 +32,7 @@ export interface ExpiringWarrantyJoinRow {
   ends_on: string;
   capital_job_id: string;
   // PostgREST returns an embedded to-one relation as an object or a
-  // single-element array depending on FK detection — both shapes are accepted.
+  // single-element array depending on FK detection. Both shapes are accepted.
   capital_jobs: ExpiringWarrantyJob | ExpiringWarrantyJob[] | null;
 }
 

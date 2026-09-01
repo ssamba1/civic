@@ -29,9 +29,9 @@ interface WorkloadBarsProps {
 // Mirrors STATUS_COLORS in status-mini-bar.tsx (kept byte-identical).
 // Deliberately diverges from lib/status.ts's STATUS_TONE: chips encode status
 // via TEXT (a11y-tuned per-theme fg tokens), this bar encodes status via FILL
-// AREA — different constraint, so a separate local map. Pastel efferd ramp:
+// AREA, different constraint, so a separate local map. Pastel efferd ramp:
 // open = butter-strong (warning-ish, the one actionable state, pops);
-// dispatched/in_progress share the sky (info) hue — dispatched is a
+// dispatched/in_progress share the sky (info) hue. Dispatched is a
 // color-mix-softened sky, in_progress full sky-strong, so their relative
 // weight ordering holds in both themes without raw hex. Segments overpaint
 // each other (absolute right-0 layers), and the raw --pastel-* soft tokens
@@ -61,7 +61,7 @@ function WorkloadBarsInner({
 
   // Draw the bars left-to-right on mount: scaleX 0 → 1, staggered 40ms per row.
   // transform-only (no layout) and reduced-motion users see them at full width
-  // instantly. Runs once — keyed off row count so a data swap re-plays cleanly.
+  // instantly. Runs once, keyed off row count so a data swap re-plays cleanly.
   const listRef = useRef<HTMLUListElement>(null);
   useGSAP(
     () => {
@@ -233,7 +233,7 @@ function buildTip(w: TeamWorkload) {
   const team = TEAMS[w.teamId];
   const closureRate =
     w.total > 0 ? Math.round((w.closedCount / w.total) * 100) : 0;
-  // Softened toward the surface — quiet identity cue, not a saturated edge.
+  // Softened toward the surface, quiet identity cue, not a saturated edge.
   // Mirrors team-roster's buildTip so both tips read identically.
   const softAccent = `color-mix(in srgb, ${team.color} 60%, var(--surface))`;
   return {
@@ -258,7 +258,7 @@ function buildTip(w: TeamWorkload) {
         />
         <TipRow
           label="MTTR"
-          value={w.mttrHours !== null ? `${w.mttrHours}h` : "—"}
+          value={w.mttrHours !== null ? `${w.mttrHours}h` : "-"}
           muted
         />
       </div>

@@ -86,7 +86,7 @@ export function TeamPicker({
           // AA (≥4.5:1) on --surface in BOTH themes: black on light, white on
           // dark. The old hardcoded `#000 42%` was only right on white and
           // rendered near-invisible dark-on-dark. The icon tint chip (above)
-          // keeps the full brand color — it is a graphic, not text.
+          // keeps the full brand color. It is a graphic, not text.
           style={{
             maxWidth: labelMaxWidth,
             color: `color-mix(in srgb, ${team.color}, var(--team-text-mix) var(--team-text-amount))`,

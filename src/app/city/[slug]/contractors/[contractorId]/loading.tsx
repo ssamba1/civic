@@ -1,4 +1,4 @@
-/* Route-level skeleton — mirrors the contractor detail shell (profile card +
+/* Route-level skeleton, mirrors the contractor detail shell (profile card +
    four stat tiles + two-column cards) so the swap to real content has no
    geometry shift. Placeholders ride the shared `.skeleton` shimmer
    (theme-aware, reduced-motion safe). */

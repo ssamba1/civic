@@ -6,11 +6,11 @@ export const metadata = { title: "Community Map | Civic" };
 
 /**
  * Resident "community near me" surface: the same fullscreen map the city/team
- * views use, but in read-only mode — no dispatch/route affordances, an upvote on
+ * views use, but in read-only mode. No dispatch/route affordances, an upvote on
  * each list row instead. Reuses CorpusMapView (→ FullscreenMapOrchestrator),
  * which reads the shared corpus from FilterProvider.
  *
- * The city is fixed to Cumming (the app default — there is no per-user city_id).
+ * The city is fixed to Cumming (the app default, there is no per-user city_id).
  * The negative margins cancel the /user layout's <main> padding so the map fills
  * the viewport; the BottomTabBar floats over its bottom edge.
  */

@@ -14,7 +14,7 @@ import { lockBodyScroll } from "@/lib/utils/scroll-lock";
    reused by Teams (and any future bento surface) without duplicating
    the motion/reveal/expand-modal machinery.
 
-   Visual contract: flat surface panels — bg-surface fill, hairline
+   Visual contract: flat surface panels, bg-surface fill, hairline
    border, --radius-lg corners. Motion is CSS-driven and gated by
    `prefers-reduced-motion: no-preference`.
    ================================================================== */
@@ -89,8 +89,8 @@ export function useReveal<T extends HTMLElement>(index?: number) {
     // Stagger entrance: each tile waits slot*60ms before its reveal transition
     // fires, so the grid cascades instead of flashing as one flat block. Capped
     // so a long grid never feels laggy. Delay rides transition-delay (not a
-    // timeout) so reduced-motion — which kills the transition via the media
-    // query — is unaffected.
+    // timeout) so reduced-motion, which kills the transition via the media
+    // query. Is unaffected.
     node.style.transitionDelay = `${Math.min(slotRef.current ?? 0, 11) * 60}ms`;
     const id = requestAnimationFrame(() => {
       node.setAttribute("data-shown", "1");
@@ -106,7 +106,7 @@ interface TileProps {
   className?: string;
   children: React.ReactNode;
   onExpand?: () => void;
-  /** Position in the bento grid — drives staggered reveal delay. */
+  /** Position in the bento grid, drives staggered reveal delay. */
   index?: number;
   /** Subtle 3D tilt-on-hover (reduced-motion safe). Off by default; pass true
    *  to opt a surface in. */
@@ -147,7 +147,7 @@ export function Tile({
       {(title || onExpand) && (
         <header className="flex items-center justify-between gap-3 mb-3 sm:mb-4 min-h-[20px]">
           <div className="flex items-baseline gap-2 sm:gap-3 min-w-0">
-            {/* Title never shrinks/truncates (shrink-0) — the meta count is the
+            {/* Title never shrinks/truncates (shrink-0). The meta count is the
                one that yields first when the row is tight. Both used to carry
                `truncate` with default flex-shrink, so they competed and the
                title clipped mid-word before the shorter meta text did. */}
@@ -248,7 +248,7 @@ export function ExpandModal({
   }, [open]);
 
   // Focus trap + restore. Keyed on `render` (not `open`) because the panel only
-  // enters the DOM once `render` is true — an `open`-keyed effect would fire a
+  // enters the DOM once `render` is true. An `open`-keyed effect would fire a
   // commit too early, when panelRef is still null. Captures the previously
   // focused element on enter, moves focus into the dialog, cycles Tab/Shift+Tab
   // within the panel's focusables, and restores focus on unmount.
@@ -455,7 +455,7 @@ export function Toggle({
           className={cn(
             /* bg-surface (not a hardcoded white) so the knob still reads
                against an ink track in dark mode, where --accent flips to
-               near-white — a plain white knob would nearly vanish there. The
+               near-white. A plain white knob would nearly vanish there. The
                shadow gives it definition against the translucent off-track
                too. */
             "block h-3 w-3 rounded-full bg-surface shadow-sm",

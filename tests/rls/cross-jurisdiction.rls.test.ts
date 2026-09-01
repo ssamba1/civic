@@ -20,7 +20,7 @@ function loadEnvLocal() {
       }
     }
   } catch {
-    // No .env.local — rely on the process environment.
+    // No .env.local, rely on the process environment.
   }
 }
 const OPTED_IN = process.env.RUN_RLS_TESTS === "1";

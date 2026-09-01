@@ -8,13 +8,13 @@ import { createSSRClient } from "@/lib/db/ssr-client";
  *
  * Anon/guest/OAuth users have no row (there's no signup trigger), and the
  * report→status→notification DB trigger writes `notifications.user_id` against
- * `public.users` — so until a row exists, status-change notifications can't be
+ * `public.users`, so until a row exists, status-change notifications can't be
  * persisted for that resident. `submitReport` already self-heals on first
  * report; this runs the same heal at sign-in (called by AnonBootstrap) so the
  * row exists BEFORE the first report resolves, not after.
  *
  * Mirrors the upsert in app/report/actions.ts (defaults to the Cumming demo
- * city). Never throws — an unconfigured/unavailable Supabase is a silent no-op
+ * city). Never throws. An unconfigured/unavailable Supabase is a silent no-op
  * so the anon-first surface keeps working in demo mode.
  */
 export async function ensureResidentProfile(): Promise<void> {
@@ -53,6 +53,6 @@ export async function ensureResidentProfile(): Promise<void> {
       { onConflict: "id" },
     );
   } catch {
-    // Unconfigured/unavailable Supabase (demo mode) — silent no-op.
+    // Unconfigured/unavailable Supabase (demo mode), silent no-op.
   }
 }

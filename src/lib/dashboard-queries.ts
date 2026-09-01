@@ -12,8 +12,8 @@ import { TEAMS, type TeamId } from "@/lib/teams";
 import type { City, ReportCategory } from "@/lib/types";
 
 // Error strategy for this module: log via the shared logger (Sentry-backed) and
-// return a safe empty/zeroed value. These run during SSR of the public dashboard
-// — throwing would 500 the whole page, so degrade gracefully instead.
+// return a safe empty/zeroed value. These run during SSR of the public dashboard.
+// Throwing would 500 the whole page, so degrade gracefully instead.
 const log = createLogger("dashboard-queries");
 
 // Supabase failures surface two ways: as `{ error }` objects (PostgREST errors)
@@ -61,8 +61,8 @@ const _centerCache = new Map<string, [number, number]>();
 
 /**
  * Resolve a city's map center as [lng, lat]. Tries the stored geocoded point
- * first (city_center RPC, migration 020); if that's unavailable — the migration
- * isn't applied yet, or the city has no stored center — falls back to a live
+ * first (city_center RPC, migration 020); if that's unavailable. The migration
+ * isn't applied yet, or the city has no stored center. Falls back to a live
  * name/state geocode (memoized per slug above). Returns null only when both
  * fail, leaving the caller to use its own default.
  */
@@ -105,7 +105,7 @@ async function geocodeByName(
 ): Promise<[number, number] | null> {
   // Need at least a city name; a bare/empty query geocodes a country centroid.
   if (!name.trim()) return null;
-  // Build "Name, State" from whatever parts exist — no country lock, so this
+  // Build "Name, State" from whatever parts exist, no country lock, so this
   // resolves cities in any country (e.g. "Ahilyanagar, Maharashtra"), not just US.
   const q = [name, state]
     .map((s) => s.trim())
@@ -253,7 +253,7 @@ function mapViewRow(r: ViewRow): DashboardReport {
     location: { lng: r.lng ?? 0, lat: r.lat ?? 0 },
     photo_public_url: r.photo_public_url,
     created_at: r.created_at,
-    // reporter_id is PII — stripped from the public view; placeholder satisfies the type.
+    // reporter_id is PII, stripped from the public view; placeholder satisfies the type.
     reporter_id: "",
     tags: r.tags ?? [],
     // DB-resolved team routing; readers fall back to categoryToTeam when unset.
@@ -263,7 +263,7 @@ function mapViewRow(r: ViewRow): DashboardReport {
 }
 
 /**
- * Sources to include when previewing a not-yet-live city — synthetic/imported
+ * Sources to include when previewing a not-yet-live city. Synthetic/imported
  * data must show so the dashboard looks alive. Live (active) cities default to
  * resident-only so real KPIs stay clean (mirrors the RPCs' default).
  */
@@ -339,7 +339,7 @@ export async function fetchRecentReports(
 /**
  * Fetch all report lat/lng pairs across all cities, cluster nearby points by
  * a ~25 km grid (0.25° rounding), and return one marker per cluster.
- * Falls back to an empty array — callers should handle gracefully.
+ * Falls back to an empty array. Callers should handle gracefully.
  */
 export async function fetchReportMarkers(): Promise<
   Array<{ id: string; location: [number, number]; label: string }>

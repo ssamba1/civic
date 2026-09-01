@@ -1,5 +1,5 @@
 -- =============================================================================
--- Civic – Reconcile live-DB schema drift
+-- Civic. Reconcile live-DB schema drift
 -- Migration: 20260630_021_reconcile_live_drift.sql
 --
 -- The deployed Supabase project (gisoowyezwhdrozettbg) was provisioned through
@@ -14,9 +14,9 @@
 -- This migration is the additive reconcile: it adds exactly the missing columns
 -- + the error_log table, all idempotent (IF NOT EXISTS), so it is safe to run on
 -- this partially-migrated DB without conflicting with already-applied objects.
--- It deliberately does NOT touch the work_order event trigger (018) — that
+-- It deliberately does NOT touch the work_order event trigger (018), that
 -- depends on report_events (016) whose state on this DB is unverified, and the
--- current trigger already accepts inserts. Re-applying the formal 010–018
+-- current trigger already accepts inserts. Re-applying the formal 010-018
 -- migration files instead would conflict on 019/020's non-idempotent policy.
 -- =============================================================================
 
@@ -37,7 +37,7 @@ CREATE INDEX IF NOT EXISTS work_orders_needs_review_idx
   ON work_orders (needs_manual_review)
   WHERE needs_manual_review = true;
 
--- 005 (error_log) — structured server-side error capture; the classify pipeline
+-- 005 (error_log). Structured server-side error capture; the classify pipeline
 -- writes here on its failure paths. RLS-enabled, default-deny (service role
 -- bypasses for the pipeline's inserts), mirroring the original 005 definition.
 CREATE TABLE IF NOT EXISTS error_log (

@@ -30,7 +30,7 @@ export default async function AdminCitiesPage() {
             Cities
           </h1>
           <p className="mt-1 text-sm text-[var(--color-muted)]">
-            Every tenant — live and in-progress.
+            Every tenant. Live and in-progress.
           </p>
         </div>
         <Button asChild variant="accent">

@@ -21,7 +21,7 @@ interface PageProps {
   searchParams: Promise<{ crew?: string }>;
 }
 
-// DB first (provisioned cities), then the mock fallback (demo deploy) — same
+// DB first (provisioned cities), then the mock fallback (demo deploy), same
 // resolution order as the city overview page (src/app/city/[slug]/page.tsx).
 async function resolveCity(slug: string): Promise<City | null> {
   let city: City | null = null;
@@ -46,7 +46,7 @@ export async function generateMetadata({
 
   const label = portalLabel(crewType);
   return {
-    title: `Civic | ${city.name} — ${label} Crew`,
+    title: `Civic | ${city.name}. ${label} Crew`,
     description: `Reports and work orders routed to the ${label} crew in ${city.name}, ${city.state}.`,
   };
 }
@@ -78,7 +78,7 @@ export default async function CrewPortalOverviewPage({
   }
 
   // Every panel derives client-side from the category-locked corpus (see
-  // TeamsInteractive) — this is only the SSR stat-card snapshot, same as the
+  // TeamsInteractive). This is only the SSR stat-card snapshot, same as the
   // city overview page. safeQuery + the RPC's null-coalesced fields mean a
   // synthetic/demo city id degrades to zeroed stats instead of throwing.
   const stats = await fetchCityStats(

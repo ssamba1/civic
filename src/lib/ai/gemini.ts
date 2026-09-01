@@ -38,18 +38,18 @@ function stripCodeFences(raw: string): string {
  * the raw model text so the caller can persist what the model actually said.
  *
  * Uses structured output (JSON schema) + a per-attempt timeout and retry with
- * exponential backoff. Rate-limited via a global sliding window — if the limit
+ * exponential backoff. Rate-limited via a global sliding window, if the limit
  * is exceeded the call returns ok:false so the classify pipeline can fall back
  * gracefully instead of crashing.
  */
 export async function classifyPhoto(
   imageBase64: string,
   mimeType: string,
-  // OUTFLANK #7 — optional per-city correction guidance (from
+  // OUTFLANK #7, optional per-city correction guidance (from
   // buildCorrectionGuidance) appended to the base prompt. Empty string = base
   // prompt unchanged, so a fresh city classifies exactly as before.
   correctionGuidance = "",
-  // Issue #6 — the effective category set (built-ins ∪ a city's custom issue
+  // Issue #6. The effective category set (built-ins ∪ a city's custom issue
   // types). Defaults to the 12 built-ins, so a call without a city context
   // classifies exactly as before. Drives the prompt menu, the Gemini enum, and
   // the zod validation together so a custom category round-trips end-to-end.
@@ -98,7 +98,7 @@ export async function classifyPhoto(
 
     // Preserve the raw model text exactly; parse a cleaned copy. Guard the
     // empty/blocked-response case explicitly: `.text()` can return "" (or the
-    // SDK throws, caught below) when Gemini yields no candidates — surface a
+    // SDK throws, caught below) when Gemini yields no candidates, surface a
     // clear error so the caller hits its rules fallback instead of a confusing
     // "invalid JSON" downstream.
     const rawText = result.response?.text?.() ?? "";
@@ -129,7 +129,7 @@ export async function classifyPhoto(
       ok: true,
       // category/alternate_categories validate as `string` under the dynamic
       // enum (a custom key isn't in the ReportCategory union). The value is a
-      // real, offered category; cast at this boundary — the union stays the
+      // real, offered category; cast at this boundary. The union stays the
       // compile-time contract for the 12 built-ins (issue #6, staged).
       data: { classification: validation.data as Classification, rawText },
     };

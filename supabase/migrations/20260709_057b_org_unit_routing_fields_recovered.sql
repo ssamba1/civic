@@ -1,10 +1,10 @@
--- 057b org_units routing/contractor columns — ghost-DDL recovery.
+-- 057b org_units routing/contractor columns, ghost-DDL recovery.
 --
 -- Found by the fresh-deploy CI gate (.github/workflows/migrations.yml) on
 -- 2026-08-30: migration 060 selects o.is_contractor, o.contractor_id,
 -- o.capacity, o.cost_per_job and o.sla_hours, and no migration ever created
--- them. They exist on the live project — confirmed by querying each column
--- through PostgREST — so this is the same class of drift that 33ec7d9 was
+-- them. They exist on the live project, confirmed by querying each column
+-- through PostgREST, so this is the same class of drift that 33ec7d9 was
 -- written to clean up: DDL applied by hand or through the Management API and
 -- never committed.
 --
@@ -19,7 +19,7 @@
 --   042  creates org_units
 --   053  creates contractors  (the FK target below)
 --   057  recovered depot / parallelism / shift_windows / emergency_reserve
---   057b THIS FILE — the five columns 057 did not capture
+--   057b THIS FILE. The five columns 057 did not capture
 --   060  routing_unit_load(), which reads all of them
 --
 -- Types are taken from the live function's own signature in 060, which was

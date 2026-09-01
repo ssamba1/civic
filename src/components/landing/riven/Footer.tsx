@@ -3,7 +3,7 @@
 import Link from "next/link";
 import CtaPills from "./CtaPills";
 
-// V2 final-CTA / footer monolith — ported VERBATIM from Riven Footer.jsx.
+// V2 final-CTA / footer monolith, ported VERBATIM from Riven Footer.jsx.
 // Massive "Civic" wordmark spans full width; CTA pills overlay the top edge.
 // Form replaced with the same pill CTA pair. Footer nav points at Civic routes.
 const FOOTER_LINKS = [

@@ -1,29 +1,29 @@
 // @vitest-environment node
 //
-// RLS regression tests — NET-NEW invariants (task T1.15).
+// RLS regression tests, NET-NEW invariants (task T1.15).
 //
 // This file DELIBERATELY does not re-cover anon default-deny or the
 // service-role bypass control: those already live in `tests/rls/rls.test.ts`
 // (opt-in behind RUN_RLS_TESTS=1). Duplicating them is explicitly out of scope.
 // Here we assert the two invariants that were previously untested:
 //
-//   1. Cross-user isolation — an authenticated resident cannot read another
+//   1. Cross-user isolation. An authenticated resident cannot read another
 //      resident's report row via the RLS-enforced anon/authenticated client
 //      (reports_select_own scopes SELECT to reporter_id = auth.uid()).
 //
-//   2. Storage cross-folder INSERT (the T1.13 gap) — an authenticated user in
+//   2. Storage cross-folder INSERT (the T1.13 gap). An authenticated user in
 //      city A must NOT be able to upload an object into city B's folder in the
 //      photos-public / photos-raw buckets.
 //
 //      ⚠️  KNOWN FAILURE AGAINST THE CURRENT SCHEMA. Migration
 //      `20260527_003_storage_rls_and_fixes.sql` grants INSERT with only
-//      `WITH CHECK (bucket_id = '<bucket>')` — it does not constrain the object
+//      `WITH CHECK (bucket_id = '<bucket>')`. It does not constrain the object
 //      path to the uploader's city. So this test is expected to FAIL until a
 //      migration tightens the policy to also check
 //      `(storage.foldername(name))[1] = <caller's city id>`. That red is the
 //      point: it is the regression guard for T1.13, not a bug in the test.
 //
-// GATING — these are opt-in integration tests. They stay in skip mode (the
+// GATING. These are opt-in integration tests. They stay in skip mode (the
 // suite still COLLECTS and passes) unless a live test database is configured:
 //
 //   SUPABASE_TEST_URL            project URL (e.g. http://127.0.0.1:54321 from `supabase start`)
@@ -50,7 +50,7 @@ type Fixture = {
   email: string;
 };
 
-// Service-role client (bypasses RLS) — used only to build fixtures and clean up.
+// Service-role client (bypasses RLS). Used only to build fixtures and clean up.
 function serviceClient(): SupabaseClient {
   return createClient(String(URL), String(SERVICE), {
     auth: { persistSession: false, autoRefreshToken: false },

@@ -39,7 +39,7 @@ export function ApiKeysManager({ keys, cities }: Props) {
   const [label, setLabel] = useState("");
   const [cityId, setCityId] = useState<string>("");
   const [scopes, setScopes] = useState<ApiKeyScope[]>(["open311:write"]);
-  // The one-time plaintext reveal — held in memory only, cleared on dismiss.
+  // The one-time plaintext reveal, held in memory only, cleared on dismiss.
   const [minted, setMinted] = useState<{
     label: string;
     plaintext: string;
@@ -108,7 +108,7 @@ export function ApiKeysManager({ keys, cities }: Props) {
       await navigator.clipboard.writeText(minted.plaintext);
       toast("Copied to clipboard.", "success");
     } catch {
-      toast("Copy failed — select and copy manually.", "error");
+      toast("Copy failed, select and copy manually.", "error");
     }
   }
 
@@ -127,7 +127,7 @@ export function ApiKeysManager({ keys, cities }: Props) {
                 Key issued for “{minted.label}”
               </p>
               <p className="mt-0.5 text-xs text-[var(--color-muted)]">
-                Copy it now — this is the only time it will be shown.
+                Copy it now. This is the only time it will be shown.
               </p>
               <div className="mt-3 flex items-center gap-2">
                 <code className="min-w-0 flex-1 truncate rounded-md border border-hairline bg-surface px-3 py-2 font-mono text-[13px] text-foreground">

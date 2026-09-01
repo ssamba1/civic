@@ -1,6 +1,6 @@
 import { type RefObject, useEffect } from "react";
 
-// Reactive 3D tilt — tracks pointer over the element, rotates a perspective
+// Reactive 3D tilt, tracks pointer over the element, rotates a perspective
 // transform toward the cursor. rAF-throttled, applies styles directly to the
 // DOM node (no React re-renders per frame). Ported VERBATIM from Riven.
 export default function useMouseTilt(

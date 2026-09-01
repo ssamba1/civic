@@ -18,7 +18,7 @@ export function ShareActions() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard blocked (insecure context / permissions) — leave the label
+      // Clipboard blocked (insecure context / permissions). Leave the label
       // as-is rather than claiming a copy that didn't happen.
     }
   }

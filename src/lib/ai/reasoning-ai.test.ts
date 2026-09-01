@@ -11,14 +11,14 @@ const { mockGenerateContent } = vi.hoisted(() => ({
 
 vi.mock("@google/generative-ai", () => ({
   // reasoning-ai.ts does `new GoogleGenerativeAI(...)`, so the mock must be
-  // constructable — a real class is the simplest constructable shape.
+  // constructable. A real class is the simplest constructable shape.
   GoogleGenerativeAI: class {
     getGenerativeModel() {
       return { generateContent: mockGenerateContent };
     }
   },
   // reasoning-ai.ts reads SchemaType at module load to build REASONING_SCHEMA.
-  // ResponseSchema is an `import type` and is erased — don't provide it.
+  // ResponseSchema is an `import type` and is erased. Don't provide it.
   SchemaType: {
     OBJECT: "object",
     STRING: "string",

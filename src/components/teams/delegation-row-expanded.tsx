@@ -29,12 +29,12 @@ import { timeAgo, timeUntil } from "@/lib/utils/time-ago";
 /* ------------------------------------------------------------------
    Reasoning-fetch circuit breaker (module scope, per page load).
 
-   /api/ai/reasoning returns 401 for unauthenticated visitors — the live
+   /api/ai/reasoning returns 401 for unauthenticated visitors. The live
    Gemini path is staff-only. The delegation panel mounts one row per
    report (~30), each of which would otherwise fire a request, producing a
    burst of 401s. Two guards stop that:
-     1. Rows only fetch once visible (expanded) — see the IntersectionObserver
-        below — so a page of collapsed rows fires nothing.
+     1. Rows only fetch once visible (expanded). See the IntersectionObserver
+        below, so a page of collapsed rows fires nothing.
      2. The first 401 trips this flag; every other row then skips the network
         entirely and shows the unavailable state (stop-after-first-401).
    Reset on a full page load (module re-eval), e.g. after signing in.
@@ -97,7 +97,7 @@ function TeamChip({ teamId }: { teamId: TeamId }) {
 }
 
 // Event *kind* is a state/action encoding (created/dispatched/…), not a
-// team/category identity, so it keeps hue — mirrors lib/status.ts's tone
+// team/category identity, so it keeps hue, mirrors lib/status.ts's tone
 // table with the old bright Apple hues swapped for the muted enterprise set.
 const EVENT_DOT_COLOR: Record<TimelineEvent["kind"], string> = {
   created: "var(--color-primary)",
@@ -142,7 +142,7 @@ function renderEventBody(event: TimelineEvent) {
         <span>
           <span className="font-medium text-foreground">Created</span>{" "}
           <span className="text-subtle">
-            — Auto-routed to <TeamChip teamId={event.defaultTeam} />
+            , Auto-routed to <TeamChip teamId={event.defaultTeam} />
           </span>
         </span>
       );
@@ -209,7 +209,7 @@ function DelegationRowExpandedInner({
   const [loading, setLoading] = useState<boolean>(!cached);
   const [error, setError] = useState<boolean>(false);
 
-  // Row root — the IntersectionObserver target. Collapsed rows live inside a
+  // Row root. The IntersectionObserver target. Collapsed rows live inside a
   // height:0 wrapper (the panel's GSAP collapse), so they never intersect and
   // never fetch. Only an expanded (visible) row triggers the reasoning call.
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -339,7 +339,7 @@ function DelegationRowExpandedInner({
       {/* Mobile: photo full-width then reasoning below. sm+: side-by-side */}
       <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-4">
         {report.photo_public_url ? (
-          // biome-ignore lint/performance/noImgElement: dynamic external/user-uploaded photo URL with no known dimensions and no Next loader for arbitrary remote hosts — next/image is impractical
+          // biome-ignore lint/performance/noImgElement: dynamic external/user-uploaded photo URL with no known dimensions and no Next loader for arbitrary remote hosts. Next/image is impractical
           <img
             src={report.photo_public_url}
             alt={report.address}
@@ -379,7 +379,7 @@ function DelegationRowExpandedInner({
 
           <p className="text-[12px] text-subtle">
             Routed to{" "}
-            <span className="text-foreground">{effectiveMeta.label}</span> —{" "}
+            <span className="text-foreground">{effectiveMeta.label}</span>,{" "}
             {dutyFirstSentence}.
           </p>
 

@@ -5,10 +5,10 @@
 //
 // Dependency-free by design: walks the container structure (JPEG segments,
 // WebP RIFF chunks, PNG chunks) and drops metadata blocks. Any buffer that
-// doesn't parse cleanly is returned unchanged — corrupting a photo is worse
+// doesn't parse cleanly is returned unchanged. Corrupting a photo is worse
 // than passing through bytes the client already sanitized.
 
-/** JPEG markers that carry metadata. APP0 (JFIF) and APP2 (ICC) are kept —
+/** JPEG markers that carry metadata. APP0 (JFIF) and APP2 (ICC) are kept,
  * dropping ICC shifts colors and neither carries PII. */
 const JPEG_DROP_MARKERS = new Set([
   0xe1, // APP1: EXIF (incl. GPS) + XMP
@@ -21,7 +21,7 @@ function stripJpeg(buf: Buffer): Buffer {
   const out: Buffer[] = [buf.subarray(0, 2)]; // SOI
   let pos = 2;
   while (pos + 4 <= buf.length) {
-    if (buf[pos] !== 0xff) return buf; // desynced — bail, return original
+    if (buf[pos] !== 0xff) return buf; // desynced. Bail, return original
     const marker = buf[pos + 1];
     // Standalone markers (TEM, RST0-7) have no length field.
     if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
@@ -29,13 +29,13 @@ function stripJpeg(buf: Buffer): Buffer {
       pos += 2;
       continue;
     }
-    // SOS: entropy-coded data follows — copy the remainder verbatim.
+    // SOS: entropy-coded data follows, copy the remainder verbatim.
     if (marker === 0xda) {
       out.push(buf.subarray(pos));
       return Buffer.concat(out);
     }
     if (marker === 0xd9) {
-      // EOI before SOS — malformed but harmless; keep it and stop.
+      // EOI before SOS. Malformed but harmless; keep it and stop.
       out.push(buf.subarray(pos, pos + 2));
       return Buffer.concat(out);
     }
@@ -46,7 +46,7 @@ function stripJpeg(buf: Buffer): Buffer {
     }
     pos += 2 + len;
   }
-  return buf; // never reached SOS — malformed, return original
+  return buf; // never reached SOS. Malformed, return original
 }
 
 /** WebP RIFF chunks that carry metadata. */
@@ -94,7 +94,7 @@ function stripWebp(buf: Buffer): Buffer {
 
 const PNG_SIG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 /** PNG chunks that carry metadata (eXIf incl. GPS; text chunks can hold
- * XMP/IPTC dumps). All are ancillary — decoders ignore their absence. */
+ * XMP/IPTC dumps). All are ancillary, decoders ignore their absence. */
 const PNG_DROP_CHUNKS = new Set(["eXIf", "tEXt", "zTXt", "iTXt", "tIME"]);
 
 function stripPng(buf: Buffer): Buffer {
@@ -118,7 +118,7 @@ function stripPng(buf: Buffer): Buffer {
 /**
  * Strip EXIF/XMP/IPTC/comment metadata from a JPEG, WebP, or PNG buffer.
  * Format is sniffed from magic bytes; unknown or malformed input is returned
- * unchanged (the client-side canvas re-encode is the primary sanitizer —
+ * unchanged (the client-side canvas re-encode is the primary sanitizer,
  * this layer must never turn a valid photo into a broken one).
  */
 export function stripImageMetadata(buf: Buffer): Buffer {

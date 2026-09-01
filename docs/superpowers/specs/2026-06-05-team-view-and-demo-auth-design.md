@@ -1,4 +1,4 @@
-# Team View + Demo Auth — Design Spec
+# Team View + Demo Auth: Design Spec
 
 **Date:** 2026-06-05
 **Status:** Awaiting user approval
@@ -8,8 +8,8 @@
 
 Two coupled features for the Civic hackathon demo:
 
-1. **Team view** — a team-scoped surface at `/[team]/[city]` (e.g. `/streets_roads/cumming`) showing only that team's tasks, a team-filtered map, team analytics, and the ability to **mark a task done with an after-photo** (before/after). Mirrors the existing City view's chrome and reuses its components.
-2. **Demo auth + seeded personas** — a sign-in screen with pre-created demo accounts that route each persona to its view: a resident user, a city/admin, and one account per team.
+1. **Team view**: a team-scoped surface at `/[team]/[city]` (e.g. `/streets_roads/cumming`) showing only that team's tasks, a team-filtered map, team analytics, and the ability to **mark a task done with an after-photo** (before/after). Mirrors the existing City view's chrome and reuses its components.
+2. **Demo auth + seeded personas**: a sign-in screen with pre-created demo accounts that route each persona to its view: a resident user, a city/admin, and one account per team.
 
 Both run on the app's existing **demo data path** (`getReportCorpus()` + localStorage overlays). No new backend tables.
 
@@ -17,7 +17,7 @@ Both run on the app's existing **demo data path** (`getReportCorpus()` + localSt
 
 - Real authentication / authorization. Demo credentials are plaintext in code, gate nothing sensitive, and must never ship to production as-is.
 - New-account registration for the demo personas (login only; seeded accounts).
-- Hard route gating / role-based lockouts (soft routing only — every URL stays open).
+- Hard route gating / role-based lockouts (soft routing only, every URL stays open).
 - Propagating completion into the **server-rendered** Staff inbox (Supabase path). Client surfaces that read the shared corpus do propagate.
 - Multi-city team views. City is fixed to `cumming` (the only `KNOWN_CITIES` entry).
 
@@ -25,12 +25,12 @@ Both run on the app's existing **demo data path** (`getReportCorpus()` + localSt
 
 | # | Decision | Choice |
 |---|----------|--------|
-| 1 | Done propagation | **Propagate everywhere** — completion resolves through the shared client corpus, so City + Team views both reflect it. |
+| 1 | Done propagation | **Propagate everywhere**, completion resolves through the shared client corpus, so City + Team views both reflect it. |
 | 2 | Team URL slug | **Raw team id** (`/streets_roads/cumming`). Ids are already URL-safe; no slug map. |
-| 3 | In-view team switcher | **Locked to URL team** — no switcher; "no other team things". |
+| 3 | In-view team switcher | **Locked to URL team**, no switcher; "no other team things". |
 | 4 | Auth mechanism | **Demo credential map + cookie** session; soft routing. |
-| 5 | Sign-up scope | **Login only** — seeded accounts; no registration. |
-| 6 | Route gating | **Soft** — login routes to persona home; all URLs stay open. |
+| 5 | Sign-up scope | **Login only**. Seeded accounts; no registration. |
+| 6 | Route gating | **Soft**. Login routes to persona home; all URLs stay open. |
 | 7 | Team accounts | `teamtest1..11` → `TEAM_LIST` order (excluding `all`), city `cumming`, password `teamtest`. |
 
 ## Seeded demo accounts
@@ -65,7 +65,7 @@ src/app/[team]/[city]/
 └── analytics/page.tsx  → team-filtered analytics (reuse AnalyticsInteractive)
 ```
 
-**Route-conflict analysis (verified):** `[team]` is the *only* root-level dynamic segment. Static siblings (`city`, `user`, `staff`, `login`, `report`, `auth`, `api`) win their literal first segment; `[team]` matches any other two-segment path. The second-level dynamic names differ by branch (`city/[slug]` vs `[team]/[city]`) and live in separate parents, so there is **no** Next.js "different slug names at the same level" error. Constraint: a team id may not collide with a reserved first segment — none of the 11 snake_case ids do.
+**Route-conflict analysis (verified):** `[team]` is the *only* root-level dynamic segment. Static siblings (`city`, `user`, `staff`, `login`, `report`, `auth`, `api`) win their literal first segment; `[team]` matches any other two-segment path. The second-level dynamic names differ by branch (`city/[slug]` vs `[team]/[city]`) and live in separate parents, so there is **no** Next.js "different slug names at the same level" error. Constraint: a team id may not collide with a reserved first segment. None of the 11 snake_case ids do.
 
 **Validation:** `layout.tsx` resolves params; if `!isValidTeamId(team)` or `!(city in KNOWN_CITIES)` → `notFound()`. Add `generateStaticParams()` for the 11 teams × `cumming` so the routes prerender like the city view.
 
@@ -77,7 +77,7 @@ New `src/lib/demo-auth.ts` (server-safe, no `"use client"`):
 export type DemoRole = "user" | "admin" | "team";
 export interface DemoAccount {
   username: string;
-  password: string;          // DEMO ONLY — plaintext, never real auth
+  password: string;          // DEMO ONLY, plaintext, never real auth
   role: DemoRole;
   teamId?: TeamId;           // present iff role === "team"
   home: string;              // post-login redirect target
@@ -88,7 +88,7 @@ export function authenticateDemo(username: string, password: string): DemoAccoun
 export const DEMO_SESSION_COOKIE = "civic_demo_session";
 ```
 
-- `teamtest{n}` rows are generated from `TEAM_LIST` at module load — single source of truth.
+- `teamtest{n}` rows are generated from `TEAM_LIST` at module load, single source of truth.
 - **Session helpers** (server): `getDemoSession()` reads the cookie via `next/headers` `cookies()`, returns the matched `DemoAccount | null`. Used for the header's persona label + logout, not for gating.
 
 **Server action** `src/app/login/actions.ts`:
@@ -101,12 +101,12 @@ export async function signOutDemo(): Promise<void>  // delete cookie → redirec
 
 **Login screen** (`login-form.tsx`, additive): keep Google/guest/Supabase email. Add a clearly-labeled **"Demo sign-in"** block:
 - username + password inputs bound to `signInDemo`,
-- a **persona quick-pick** row (chips: User · City Admin · Team 1…11) that prefill the fields and submit — fast on-stage switching.
+- a **persona quick-pick** row (chips: User · City Admin · Team 1…11) that prefill the fields and submit. Fast on-stage switching.
 The block is gated behind `process.env.NODE_ENV !== "production"` plus a visible "Demo accounts" label, consistent with the existing `DEV_PREFILL` pattern.
 
 ### Completion overlay store
 
-New `src/lib/task-completion.ts` — exact clone of the `teams-overrides.ts` pattern (module-level snapshot read synchronously by derives + `useSyncExternalStore` for React + quota-safe localStorage):
+New `src/lib/task-completion.ts`, exact clone of the `teams-overrides.ts` pattern (module-level snapshot read synchronously by derives + `useSyncExternalStore` for React + quota-safe localStorage):
 
 ```ts
 const STORAGE_KEY = "civic.task_completion.v1";
@@ -124,7 +124,7 @@ export function useTaskCompletion(): {
 };
 ```
 
-**Photo quota:** an after-photo is downscaled before storage — new `src/lib/utils/downscale-image.ts` (canvas → max ~1280px longest edge, JPEG q≈0.7, target ≲150 KB data URL). If `lib/privacy` already exposes a resize during the report-blur flow, reuse it instead of adding a new util. `writeStorage` swallows `QuotaExceededError` (in-memory snapshot still drives the session), mirroring the existing stores.
+**Photo quota:** an after-photo is downscaled before storage, new `src/lib/utils/downscale-image.ts` (canvas → max ~1280px longest edge, JPEG q≈0.7, target ≲150 KB data URL). If `lib/privacy` already exposes a resize during the report-blur flow, reuse it instead of adding a new util. `writeStorage` swallows `QuotaExceededError` (in-memory snapshot still drives the session), mirroring the existing stores.
 
 ### Done propagation (single source of truth)
 
@@ -164,12 +164,12 @@ The team layout passes `lockedTeam={teamId}`; the city layout omits it (unchange
 ### Components
 
 **Clone (thin):**
-- `team-header.tsx` ← `city-header.tsx` — same fixed chrome/logo/liquid-glass, but shows the team's `label` + `color` + icon (`TEAMS[teamId]`, `TeamIcon`), and a small account/logout affordance reading `getDemoSession()`.
-- `team-nav.tsx` ← `city-nav.tsx` — three tabs: **Tasks** (`/[team]/[city]`) · **Map** (`…/map`) · **Analytics** (`…/analytics`).
+- `team-header.tsx` ← `city-header.tsx`: same fixed chrome/logo/liquid-glass, but shows the team's `label` + `color` + icon (`TEAMS[teamId]`, `TeamIcon`), and a small account/logout affordance reading `getDemoSession()`.
+- `team-nav.tsx` ← `city-nav.tsx`: three tabs: **Tasks** (`/[team]/[city]`) · **Map** (`…/map`) · **Analytics** (`…/analytics`).
 
 **New:**
-- `team-tasks-interactive.tsx` — reads `useFilteredReports()` (already team + completion scoped), renders the task list (reusing `recent-reports` / `work-order-row` visual patterns + `Badge` statuses). Open tasks first; done tasks show a before/after thumbnail. Row click → detail.
-- `team-task-detail.tsx` — `BottomSheet` (mobile) / `Drawer` (desktop), `DashboardReport`-shaped, lifting the visual pattern from the unwired resolution-photo block in `work-order-detail.tsx`. Contents: **Before** = `report.photo_public_url`; **Mark done** button; **After** capture = `<input type="file" accept="image/*" capture="environment">` → downscale → `markDone(report, dataUrl)`. Once done: side-by-side Before/After + closed badge + completed time + a **Reopen** affordance.
+- `team-tasks-interactive.tsx`: reads `useFilteredReports()` (already team + completion scoped), renders the task list (reusing `recent-reports` / `work-order-row` visual patterns + `Badge` statuses). Open tasks first; done tasks show a before/after thumbnail. Row click → detail.
+- `team-task-detail.tsx`: `BottomSheet` (mobile) / `Drawer` (desktop), `DashboardReport`-shaped, lifting the visual pattern from the unwired resolution-photo block in `work-order-detail.tsx`. Contents: **Before** = `report.photo_public_url`; **Mark done** button; **After** capture = `<input type="file" accept="image/*" capture="environment">` → downscale → `markDone(report, dataUrl)`. Once done: side-by-side Before/After + closed badge + completed time + a **Reopen** affordance.
 
 **Reused zero-touch:** `ReportMapLazy` / `FullscreenMapOrchestrator`, `AnalyticsInteractive` + KPI bento, `LiquidGlassCard`, `Badge`, `BottomSheet`, `Drawer`, `Button`, `TeamIcon`.
 
@@ -211,10 +211,10 @@ City view (/city/cumming) shares the same corpus resolution → shows the task c
 
 ## Build order
 
-1. **Demo auth** — `demo-auth.ts`, `login/actions.ts`, `login-form.tsx` demo block + persona picker, logout. Independently demoable (routes to existing views).
-2. **Completion store + FilterProvider wiring** — `task-completion.ts`, `downscale-image.ts`, `DashboardReport` fields, `FilterProvider` corpus-resolution + `lockedTeam`.
-3. **Team route group** — `[team]/[city]/{layout,page,map,analytics}`, `team-header`, `team-nav`.
-4. **Task list + detail** — `team-tasks-interactive`, `team-task-detail` (mark done + before/after + downscale).
+1. **Demo auth**: `demo-auth.ts`, `login/actions.ts`, `login-form.tsx` demo block + persona picker, logout. Independently demoable (routes to existing views).
+2. **Completion store + FilterProvider wiring**: `task-completion.ts`, `downscale-image.ts`, `DashboardReport` fields, `FilterProvider` corpus-resolution + `lockedTeam`.
+3. **Team route group**: `[team]/[city]/{layout,page,map,analytics}`, `team-header`, `team-nav`.
+4. **Task list + detail**: `team-tasks-interactive`, `team-task-detail` (mark done + before/after + downscale).
 
 Each step is independently verifiable (typecheck + the app boots) before the next.
 

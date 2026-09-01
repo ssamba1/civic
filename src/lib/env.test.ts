@@ -15,7 +15,7 @@ const PROD_SECRETS = {
   PUBLIC_TOKEN_SALT: "test-salt",
 };
 
-describe("server env — production rate-limit guard", () => {
+describe("server env, production rate-limit guard", () => {
   const original = { ...process.env };
 
   beforeEach(() => {
@@ -43,7 +43,7 @@ describe("server env — production rate-limit guard", () => {
   });
 
   // Report ids are published through the Open311 API, so a default salt makes
-  // sha256(salt:reportId) — every resident's status URL — computable by anyone.
+  // sha256(salt:reportId) (every resident's status URL) computable by anyone.
   it("rejects production without PUBLIC_TOKEN_SALT", async () => {
     vi.stubEnv("NODE_ENV", "production");
     process.env.RATE_LIMIT_TRUSTED_HEADER = "x-real-ip";

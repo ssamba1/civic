@@ -12,7 +12,7 @@
  * Instead, render each part as an absolutely positioned full-height layer that
  * starts at its cumulative offset and extends to the bar's end, painted in
  * order so each later layer covers the remainder of the previous one. Every
- * visible boundary is a single element's left edge drawn over solid color —
+ * visible boundary is a single element's left edge drawn over solid color,
  * no adjacent-edge rounding (no seams) and box edges rasterize as crisp
  * vertical lines (no gradient dithering).
  *

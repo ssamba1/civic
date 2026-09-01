@@ -10,7 +10,7 @@ import { timeAgo } from "@/lib/utils/time-ago";
 /* ==================================================================
    Field-crew view (NEXT_100 #52).
 
-   A phone-first, low-connectivity list of the team's open work orders — the
+   A phone-first, low-connectivity list of the team's open work orders. The
    thing SeeClickFix explicitly can't do. Reads the team-locked corpus (via the
    parent layout's FilterProvider), so it's the SAME data the console shows.
    The service worker caches this route network-first (see public/sw.js), so a
@@ -60,14 +60,14 @@ export default function FieldViewPage() {
       {!online && (
         <div className="mb-3 flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-warning)]/40 bg-[var(--color-warning)]/[0.08] px-3 py-2 text-[13px] text-[var(--status-warning-fg)]">
           <CloudOff className="h-4 w-4 flex-shrink-0" strokeWidth={2} />
-          Offline — showing the last synced queue. Changes will need a
+          Offline. Showing the last synced queue. Changes will need a
           connection.
         </div>
       )}
 
       {open.length === 0 ? (
         <p className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-6 text-center text-[14px] text-faint">
-          No open jobs — the queue is clear.
+          No open jobs. The queue is clear.
         </p>
       ) : (
         <ol className="flex flex-col gap-2.5">

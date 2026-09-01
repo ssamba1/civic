@@ -3,7 +3,7 @@
 // Inserts (idempotently, keyed on the demo feed name) into the live DB:
 //   - one "Demo footage" upload feed for the city
 //   - one processed clip whose stats are computed from the real detector run
-//     (services/detector/detections.json — the same pass rendered into
+//     (services/detector/detections.json, the same pass rendered into
 //     public/demo/civic-demo-clip.mp4)
 //   - candidate detection clusters derived from that run
 //
@@ -32,7 +32,7 @@ if (!url || !key) {
 
 const slug = process.argv[2] ?? "cumming";
 const FEED_NAME = "Demo footage";
-// Cumming, GA center — clusters are spread a few hundred meters along a pass.
+// Cumming, GA center. Clusters are spread a few hundred meters along a pass.
 const CENTER = { lng: -84.14, lat: 34.21 };
 
 const headers = {
@@ -104,7 +104,7 @@ const existing = await rest(
   `video_feeds?city_id=eq.${city.id}&name=eq.${encodeURIComponent(FEED_NAME)}&select=id`,
 );
 if (existing.length > 0) {
-  console.log(`Demo feed already seeded for ${city.name} — nothing to do.`);
+  console.log(`Demo feed already seeded for ${city.name}, nothing to do.`);
   process.exit(0);
 }
 

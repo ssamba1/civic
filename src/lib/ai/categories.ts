@@ -1,25 +1,25 @@
 /**
- * Classifiable issue categories — the data behind the AI classification enum
+ * Classifiable issue categories, the data behind the AI classification enum
  * and prompt. Isomorphic on purpose (no server-only imports): the classify
  * pipeline builds the effective list per request as BUILTIN ∪ a city's custom
  * issue_types (migration 027), so a category added through the admin UI becomes
  * auto-classifiable with no code deploy (issue #6).
  *
- * The `description` is AI-facing — the model reads it to decide whether a photo
+ * The `description` is AI-facing. The model reads it to decide whether a photo
  * fits the category, exactly like crew_types.description drives crew routing.
  * Keep these descriptions in sync with the CATEGORY section that
  * buildClassificationPrompt renders.
  */
 
 export interface CategoryDef {
-  /** Canonical slug — a built-in key or a `custom_<slug>` id. */
+  /** Canonical slug, a built-in key or a `custom_<slug>` id. */
   key: string;
   /** AI-facing sentence: what this category looks like in a photo. */
   description: string;
 }
 
 /** The 12 built-in categories, mirroring the ReportCategory union. The order is
- *  the historical prompt order — stable so the model's menu never reshuffles. */
+ *  the historical prompt order, stable so the model's menu never reshuffles. */
 export const BUILTIN_CATEGORY_DEFS: readonly CategoryDef[] = [
   {
     key: "pothole",

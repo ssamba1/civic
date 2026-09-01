@@ -14,7 +14,7 @@ import {
 export const metadata: Metadata = {
   title: "Terms of Service",
   description:
-    "The agreement governing your use of Civic — accounts, your reports, acceptable use, and disclaimers.",
+    "The agreement governing your use of Civic. Accounts, your reports, acceptable use, and disclaimers.",
 };
 
 export default function TermsPage() {
@@ -38,7 +38,7 @@ export default function TermsPage() {
           <strong>Do not use Civic to report emergencies.</strong> Civic is not
           monitored around the clock, and reports are not guaranteed to be seen
           or acted on quickly. If there is an immediate threat to life, safety,
-          or property — a fire, a downed power line, a crash, a gas leak — call{" "}
+          or property (a fire, a downed power line, a crash, a gas leak) call{" "}
           <strong>911</strong> or your local emergency number.
         </P>
       </Callout>
@@ -54,7 +54,7 @@ export default function TermsPage() {
         <P>
           Civic lets you photograph and report public infrastructure issues. We
           use automated classification to triage reports and forward them to the
-          responsible city. Civic is a reporting tool — we are not a government
+          responsible city. Civic is a reporting tool. We are not a government
           agency, and we do not repair infrastructure ourselves.
         </P>
       </Section>
@@ -81,7 +81,7 @@ export default function TermsPage() {
             You keep ownership of the photos and content you submit. You grant
             Civic a worldwide, non-exclusive, royalty-free license to host,
             store, process, blur, display, and share that content as needed to
-            operate Civic — including sharing reports with the relevant city and
+            operate Civic, including sharing reports with the relevant city and
             displaying blurred photos publicly within the app.
           </P>
         </Sub>
@@ -96,7 +96,7 @@ export default function TermsPage() {
                 You will photograph the{" "}
                 <strong>infrastructure issue only</strong>, and avoid capturing
                 identifiable people, bystanders, or readable license plates.
-                (Automatic blurring is a safeguard, not a guarantee — see the
+                (Automatic blurring is a safeguard, not a guarantee, see the
                 Privacy Policy.)
               </>,
               <>Your reports are truthful and submitted in good faith.</>,
@@ -157,10 +157,10 @@ export default function TermsPage() {
 
       <Section id="ip" n={8} title="Intellectual property">
         <P>
-          Civic — including its software, design, and branding — is owned by{" "}
-          {ORG} and protected by intellectual-property laws. These Terms
-          don&rsquo;t grant you rights to our trademarks or to copy the app,
-          except to use Civic as intended.
+          Civic (including its software, design, and branding) is owned by {ORG}{" "}
+          and protected by intellectual-property laws. These Terms don&rsquo;t
+          grant you rights to our trademarks or to copy the app, except to use
+          Civic as intended.
         </P>
       </Section>
 

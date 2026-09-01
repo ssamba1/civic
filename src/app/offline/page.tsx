@@ -9,8 +9,8 @@ export default function OfflinePage() {
         You&apos;re offline
       </h1>
       <p className="max-w-sm text-sm text-subtle">
-        Civic needs a connection to load this page. Reconnect and try again —
-        pages you&apos;ve already visited may still work from cache.
+        Civic needs a connection to load this page. Reconnect and try again.
+        Pages you&apos;ve already visited may still work from cache.
       </p>
     </div>
   );

@@ -1,4 +1,4 @@
--- 037 recurring hotspots (OUTFLANK #41 — recurring-problem detection)
+-- 037 recurring hotspots (OUTFLANK #41, recurring-problem detection)
 -- "This drain floods every heavy rain." Groups a city's reports by category and
 -- a ~100m spatial grid cell, surfacing locations where the same problem recurs
 -- across multiple distinct time windows. Pre-empting recurring failures is the
@@ -7,8 +7,8 @@
 -- Grid: ST_SnapToGrid on the geometry cast at 0.001 deg (~111m N-S). Coarse but
 -- cheap and index-free-friendly; DBSCAN was considered but grid-snap is
 -- deterministic and adequate at pilot scale. Representative point = centroid of
--- the cell's reports. "episodes" = distinct ISO weeks the cell was reported in —
--- a cell reported 5 times in one week is one incident, not a recurring pattern;
+-- the cell's reports. "episodes" = distinct ISO weeks the cell was reported in.
+-- A cell reported 5 times in one week is one incident, not a recurring pattern;
 -- recurrence needs >= 2 episodes.
 --
 -- Convention mirrors the analytics RPCs (036): STABLE SECURITY DEFINER,

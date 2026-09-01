@@ -4,8 +4,8 @@ Schema and demo data. Two subdirectories, and they have opposite rules:
 `migrations/` is append-only and spec-critical, `seed/` is disposable.
 
 ```
-migrations/   77 ordered SQL files — never edited once applied
-seed/         demo corpora — safe to rewrite, safe to re-run
+migrations/   77 ordered SQL files, never edited once applied
+seed/         demo corpora. Safe to rewrite, safe to re-run
 ```
 
 > `agents.md` rule 10: nothing under `supabase/migrations/` is modified without
@@ -30,7 +30,7 @@ know what ran before what.**
 There are two `056` files for the same reason, and CI knows: the
 `migrations` workflow reports duplicate sequence numbers as a *warning* rather
 than a failure, because renaming an already-applied migration is the more
-dangerous move — Supabase's tracking table keys on filename, so a rename makes
+dangerous move, Supabase's tracking table keys on filename, so a rename makes
 an applied migration look pending.
 
 The `023b` / `036b` / `036c` / `036d` / `041b` / `057b` suffixes are follow-ups
@@ -55,13 +55,13 @@ rather than renumbering.
 ### The failure mode this directory has actually had
 
 Migrations get applied incrementally against a live project, so a file can be
-broken in a way nobody notices until someone stands up a *new* database — and
+broken in a way nobody notices until someone stands up a *new* database, and
 this repo has shipped DDL that existed live but in no migration file.
 
 That is what `.github/workflows/migrations.yml` is for: it replays all 77 files
 into an empty PostGIS database on every push touching this directory, which is
 what a new city deployment does. It needs no secrets. It does **not** assert the
-result matches the live project — that would need production credentials — so it
+result matches the live project (that would need production credentials), so it
 answers the narrower question, "would a fresh deploy succeed?"
 
 If you change schema, watch that job, not just `test.yml`.
@@ -73,11 +73,11 @@ look like a working city.
 
 | File | What it seeds |
 | --- | --- |
-| `index.ts` | The base seed (`pnpm db:seed`). Cumming, GA with a boundary polygon, three test users, five reports with classifications and work orders. Idempotent — city and users upsert, reports skip on a matching (city, address). Supports `--dry-run`. |
-| `synthetic_reports.sql` | 120 additional Cumming reports generated from `buildCorpus()` in `src/lib/dashboard-data.ts`. Reports and classifications only. Run the base seed first — it resolves the city and a reporter from existing rows. |
+| `index.ts` | The base seed (`pnpm db:seed`). Cumming, GA with a boundary polygon, three test users, five reports with classifications and work orders. Idempotent, city and users upsert, reports skip on a matching (city, address). Supports `--dry-run`. |
+| `synthetic_reports.sql` | 120 additional Cumming reports generated from `buildCorpus()` in `src/lib/dashboard-data.ts`. Reports and classifications only. Run the base seed first, it resolves the city and a reporter from existing rows. |
 | `july_calendar_backfill.sql` | Work orders for a deterministic slice of that corpus. |
 | `demo-crews.mjs` | An eight-crew roster per demo city, round-robin staffed from existing staff users, skipping crews whose division isn't enabled for that city. |
-| `ahilyanagar-demo.mjs` | A second demo city (Ahilyanagar, Maharashtra) — 11 teams, ~22 reports — which is what proves the app is not hardcoded to Cumming. |
+| `ahilyanagar-demo.mjs` | A second demo city (Ahilyanagar, Maharashtra), 11 teams, ~22 reports, which is what proves the app is not hardcoded to Cumming. |
 
 ### Two traps
 
@@ -88,8 +88,8 @@ showing only the handful the base seed created. `july_calendar_backfill.sql` is
 the fix.
 
 **The public status page 404s after seeding.** `reports.public_token` is stamped
-lazily by the notifier, the first time a resident is actually sent a link —
-correct for a live city, wrong for seeded rows that are never notified. Run
+lazily by the notifier, the first time a resident is actually sent a link.
+Correct for a live city, wrong for seeded rows that are never notified. Run
 `pnpm db:tokens` or every `/r/[token]` URL is dead while the rest of the app
 looks complete.
 
@@ -98,6 +98,6 @@ looks complete.
 ### Service-role warning
 
 Every `.mjs` seed here writes through the service-role key and bypasses RLS
-entirely. They are idempotent, but idempotent against the *demo* corpus —
-several also reset known demo passwords. Point them at a real deployment and
+entirely. They are idempotent, but idempotent against the *demo* corpus.
+Several also reset known demo passwords. Point them at a real deployment and
 they will happily seed it.

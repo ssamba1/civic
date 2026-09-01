@@ -1,5 +1,5 @@
 -- =============================================================================
--- Civic – Escalate work-order priority on duplicate
+-- Civic. Escalate work-order priority on duplicate
 -- Migration: 20260613_014_bump_priority_rpc.sql
 --
 -- Connects two pieces that already existed but were never wired together:
@@ -9,7 +9,7 @@
 --     primary, then threw that signal away.
 --
 -- Now, when a duplicate is merged into a primary, the primary's work order
--- priority is bumped atomically — a pothole reported five times outranks one
+-- priority is bumped atomically, a pothole reported five times outranks one
 -- reported once. This is the real demand signal staff want for triage.
 --
 -- Atomic (priority_score = priority_score + delta in one statement) so two

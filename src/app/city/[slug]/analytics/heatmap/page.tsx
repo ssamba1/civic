@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-// Client wrapper does the ssr:false dynamic import — not allowed here (server).
+// Client wrapper does the ssr:false dynamic import, not allowed here (server).
 import { DensityHeatmapLoader as DensityHeatmap } from "@/components/analytics/density-heatmap-loader";
 import {
   bucketByGrid,
@@ -26,7 +26,7 @@ export async function generateMetadata({
   const city = await fetchCity(slug);
   if (!city) return { title: "City not found | Civic" };
   return {
-    title: `Civic | ${city.name}, ${city.state} — Density Heatmap`,
+    title: `Civic | ${city.name}, ${city.state}, Density Heatmap`,
     description: `Geographic density of civic repair reports in ${city.name}, ${city.state}. Weighted by severity and recency.`,
   };
 }
@@ -36,7 +36,7 @@ export default async function HeatmapPage({ params }: PageProps) {
   const city = await fetchCity(slug);
   if (!city) notFound();
 
-  // Fetch the full corpus (gracefully returns [] on DB absence — see safeQuery).
+  // Fetch the full corpus (gracefully returns [] on DB absence, see safeQuery).
   const reports = await fetchCorpus(city.id, ["resident"], 10_000);
 
   const points = toHeatmapPoints(reports);
@@ -83,7 +83,7 @@ export default async function HeatmapPage({ params }: PageProps) {
           )}
         </div>
 
-        {/* Map — full height client component */}
+        {/* Map, full height client component */}
         <div className="h-[60vh] min-h-[400px] w-full">
           <DensityHeatmap points={points} bounds={bounds} />
         </div>

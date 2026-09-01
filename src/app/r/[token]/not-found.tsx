@@ -1,7 +1,7 @@
 import { SearchX } from "lucide-react";
 import Link from "next/link";
 
-// Branded boundary for an invalid/expired public status token — shown instead
+// Branded boundary for an invalid/expired public status token, shown instead
 // of the generic site 404 when getPublicReport() returns null.
 export default function PublicReportNotFound() {
   return (
@@ -25,7 +25,7 @@ export default function PublicReportNotFound() {
         Status link not found
       </h1>
       <p className="mt-2 max-w-sm text-sm text-subtle">
-        This public status link isn&apos;t valid — it may have been mistyped or
+        This public status link isn&apos;t valid. It may have been mistyped or
         the report no longer exists. Check the link and try again.
       </p>
 

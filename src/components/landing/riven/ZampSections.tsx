@@ -1,6 +1,6 @@
 "use client";
 
-// Zamp sections 1–5 — ported VERBATIM from Riven's variations/v2/zamp/Section*.jsx.
+// Zamp sections 1-5, ported VERBATIM from Riven's variations/v2/zamp/Section*.jsx.
 // Only two changes vs. source: green→blue accent (in zamp.css) and Riven→Civic
 // copy (here). Layout, sizes, and animation choreography are unchanged.
 //
@@ -30,7 +30,7 @@ import useMouseTilt from "./useMouseTilt";
 gsap.registerPlugin(useGSAP);
 
 /* ════════════════════════════════════════════════════════════════
-   SECTION 1 — Why Civic
+   SECTION 1, Why Civic
    ════════════════════════════════════════════════════════════════ */
 
 export function ZampSection1() {
@@ -109,7 +109,7 @@ export function ZampSection1() {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   SECTION 2 — How it works — 3D constellation scene
+   SECTION 2 (How it works) 3D constellation scene
    ════════════════════════════════════════════════════════════════ */
 
 const SLOT_POSE: Record<
@@ -253,12 +253,12 @@ function CardHeader({
   );
 }
 
-/* 01 SNAP — live map showing resident reports pinned across Cumming. */
+/* 01 SNAP. Live map showing resident reports pinned across Cumming. */
 function SnapMock() {
   return (
     <ScreenshotMock
       src="/landing-shots/shot-map.webp"
-      alt="Civic map — resident reports pinned across Cumming with dispatch panel"
+      alt="Civic map. Resident reports pinned across Cumming with dispatch panel"
       objectPos="center top"
     />
   );
@@ -289,7 +289,7 @@ function ScreenshotMock({
 const ClassifyMock = () => (
   <ScreenshotMock
     src="/landing-shots/shot-reports.webp"
-    alt="Civic reports panel — AI reasoning, severity classification, and SLA scoring"
+    alt="Civic reports panel, AI reasoning, severity classification, and SLA scoring"
     objectPos="left top"
   />
 );
@@ -303,7 +303,7 @@ const RouteMock = () => (
 const TrackMock = () => (
   <ScreenshotMock
     src="/landing-shots/shot-analytics.webp"
-    alt="Civic city analytics — 831 fixed, reports over time, severity breakdown"
+    alt="Civic city analytics, 831 fixed, reports over time, severity breakdown"
     objectPos="center top"
   />
 );
@@ -324,9 +324,9 @@ const ORBIT_CARDS: OrbitCardData[] = [
     pos: "tl",
     eyebrow: "01 · Snap",
     label: "One photo from the resident PWA",
-    body: "A resident snaps the problem — location, time, and metadata attach automatically.",
+    body: "A resident snaps the problem, location, time, and metadata attach automatically.",
     longBody:
-      "A resident opens the Civic PWA — no app store, no account — points the camera at broken infrastructure, and taps once. Location, timestamp, and device metadata attach automatically. Faces, plates, and door numbers are blurred on-device before the photo ever leaves the phone. No category dropdowns, no phone tree, no form designed in 2003.",
+      "A resident opens the Civic PWA, no app store, no account, points the camera at broken infrastructure, and taps once. Location, timestamp, and device metadata attach automatically. Faces, plates, and door numbers are blurred on-device before the photo ever leaves the phone. No category dropdowns, no phone tree, no form designed in 2003.",
     Mock: SnapMock,
   },
   {
@@ -346,7 +346,7 @@ const ORBIT_CARDS: OrbitCardData[] = [
     label: "A costed work order lands with the right crew",
     body: "A priced Open311 work order is generated and dispatched to the right department.",
     longBody:
-      "Civic drafts an Open311 GeoReport v2 work order with an estimated repair cost, the crew type, and the materials list already filled in, then dispatches it to the right crew with the photo and exact location attached. Existing SeeClickFix, Tyler, Granicus, or in-house backends ingest it natively — zero rework, no rip-and-replace. The crew loads the right materials before they leave the yard because they can see the problem and its price.",
+      "Civic drafts an Open311 GeoReport v2 work order with an estimated repair cost, the crew type, and the materials list already filled in, then dispatches it to the right crew with the photo and exact location attached. Existing SeeClickFix, Tyler, Granicus, or in-house backends ingest it natively, zero rework, no rip-and-replace. The crew loads the right materials before they leave the yard because they can see the problem and its price.",
     Mock: RouteMock,
   },
   {
@@ -356,7 +356,7 @@ const ORBIT_CARDS: OrbitCardData[] = [
     label: "Public dashboard clocks resolution time",
     body: "Every report and its resolution time is public on a live accountability dashboard.",
     longBody:
-      "Every report is public on the city dashboard with a timestamp and status — no account required to watch it. The resident gets a push when the work order is dispatched and a before/after photo when the crew marks it complete. Cities that miss their stated SLA rise to the top of the accountability page, so a 'lost' report cannot stay lost.",
+      "Every report is public on the city dashboard with a timestamp and status. No account required to watch it. The resident gets a push when the work order is dispatched and a before/after photo when the crew marks it complete. Cities that miss their stated SLA rise to the top of the accountability page, so a 'lost' report cannot stay lost.",
     Mock: TrackMock,
   },
 ];
@@ -392,7 +392,7 @@ function OrbitCard({
         delay: profile.enterDelay,
       });
 
-      // Reduced-motion gate intentionally removed — idle motion is forced on
+      // Reduced-motion gate intentionally removed. Idle motion is forced on
       // per product decision (motion is core to the S2 hero scene).
 
       const segments = profile.swayKf.length + 1;
@@ -408,7 +408,7 @@ function OrbitCard({
       tl.to(el, { x: 0, y: 0 });
       swayRef.current = tl;
 
-      // Breathing loop — GSAP yoyo tween on `scale` (replaces the Riven
+      // Breathing loop, GSAP yoyo tween on `scale` (replaces the Riven
       // anime.js loop; animejs is not a Civic dep). Scale composes with the
       // sway timeline's x/y via the shared transform matrix.
       breatheRef.current = gsap.to(el, {
@@ -459,14 +459,14 @@ function OrbitCard({
   }, [expanded, profile.rot]);
 
   return (
-    // biome-ignore lint/a11y/useSemanticElements: ported verbatim from Riven — keyboard handler + tabIndex below make this div fully operable; a real <button> can't host the 3D-transformed card subtree without breaking the scene
+    // biome-ignore lint/a11y/useSemanticElements: ported verbatim from Riven. Keyboard handler + tabIndex below make this div fully operable; a real <button> can't host the 3D-transformed card subtree without breaking the scene
     <div
       ref={ref}
       className={`wl-zamp-orbit-card wl-zamp-orbit-card--${card.pos}`}
       role="button"
       tabIndex={0}
       aria-pressed={expanded}
-      aria-label={`${card.label} — click to ${expanded ? "collapse" : "expand"}`}
+      aria-label={`${card.label}, click to ${expanded ? "collapse" : "expand"}`}
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
       onClick={(e) => {
@@ -508,8 +508,8 @@ function ExpandedCardModal({
         if (e.key === "Escape") onClose();
       }}
     >
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: ported verbatim from Riven — onClick only stops propagation so a click inside the card doesn't bubble to the overlay's dismiss; the overlay (Escape) + close button own real keyboard dismissal */}
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: same — this handler is a propagation guard, not an interactive control */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: ported verbatim from Riven. OnClick only stops propagation so a click inside the card doesn't bubble to the overlay's dismiss; the overlay (Escape) + close button own real keyboard dismissal */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: same. This handler is a propagation guard, not an interactive control */}
       <div
         className="riven-root wl-design-zamp wl-zamp-expand-card"
         onClick={(e) => e.stopPropagation()}
@@ -543,7 +543,7 @@ function EditorMock() {
     <div
       className="wl-zamp-mock wl-zamp-mock--shot"
       role="img"
-      aria-label="Civic teams console — 11 municipal divisions, workload and queue depth"
+      aria-label="Civic teams console, 11 municipal divisions, workload and queue depth"
       style={{
         backgroundImage: "url('/landing-shots/shot-teams.webp')",
         backgroundPosition: "center top",
@@ -557,7 +557,7 @@ const EDITOR_CARD: OrbitCardData = {
   pos: "center",
   eyebrow: "00 · Console",
   label: "The city console",
-  body: "Report queue, work orders, AI routing, and the public dashboard — one console.",
+  body: "Report queue, work orders, AI routing, and the public dashboard, one console.",
   longBody:
     "Civic is one console for the whole 311 loop: an incoming report queue on the left, the active work order in the center, the AI routing + dedupe panel on the right, and the public accountability dashboard one tab over. Staff can override any classification, reassign crews, and watch resolution times in real time. Every report exports as Open311 GeoReport v2, so the systems the city already runs ingest it natively.",
   Mock: EditorMock,
@@ -595,7 +595,7 @@ function EditorCenterpiece({ onExpand }: { onExpand: () => void }) {
       if (shadow)
         gsap.set(shadow, { rotateX: 82, z: -60, scale: 1, opacity: 1 });
 
-      // Reduced-motion gate intentionally removed — idle motion is forced on
+      // Reduced-motion gate intentionally removed. Idle motion is forced on
       // per product decision (motion is core to the S2 hero scene).
 
       floatRef.current = gsap.timeline({
@@ -676,7 +676,7 @@ function EditorCenterpiece({ onExpand }: { onExpand: () => void }) {
   }, []);
 
   return (
-    // biome-ignore lint/a11y/useSemanticElements: ported verbatim from Riven — keyboard handler + tabIndex below make this div fully operable; a real <button> can't host the 3D-transformed editor subtree without breaking the scene
+    // biome-ignore lint/a11y/useSemanticElements: ported verbatim from Riven. Keyboard handler + tabIndex below make this div fully operable; a real <button> can't host the 3D-transformed editor subtree without breaking the scene
     <div
       ref={outerRef}
       className="wl-zamp-s2-scene-editor"
@@ -707,7 +707,7 @@ function EditorCenterpiece({ onExpand }: { onExpand: () => void }) {
           <div
             className="wl-zamp-s2-scene-editor-shot"
             role="img"
-            aria-label="Civic teams console — municipal divisions, queue depth, and MTTR"
+            aria-label="Civic teams console, municipal divisions, queue depth, and MTTR"
             style={{
               backgroundImage: "url('/landing-shots/shot-teams.webp')",
             }}
@@ -757,7 +757,7 @@ function SceneSlot({
         scale: pose.baseScale ?? 1,
       });
 
-      // Reduced-motion gate intentionally removed — idle motion is forced on
+      // Reduced-motion gate intentionally removed. Idle motion is forced on
       // per product decision (motion is core to the S2 hero scene).
 
       floatRef.current = gsap.timeline({
@@ -807,7 +807,7 @@ function SceneSlot({
   }, [expanded, pose]);
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: ported verbatim from Riven — hover handlers only pause the decorative float; the real interactive control is the keyboard-operable OrbitCard child
+    // biome-ignore lint/a11y/noStaticElementInteractions: ported verbatim from Riven, hover handlers only pause the decorative float; the real interactive control is the keyboard-operable OrbitCard child
     <div
       ref={slotRef}
       className={`wl-zamp-s2-scene-slot wl-zamp-s2-scene-slot--${card.key}`}
@@ -854,7 +854,7 @@ export function ZampSection2() {
       </div>
 
       <Reveal as="div" className="wl-zamp-s2-scene" y={36} duration={1.1}>
-        {/* biome-ignore lint/a11y/noStaticElementInteractions: ported verbatim from Riven — backdrop click only collapses an already-expanded card; Escape (handled below) is the real keyboard dismiss */}
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: ported verbatim from Riven, backdrop click only collapses an already-expanded card; Escape (handled below) is the real keyboard dismiss */}
         <div
           className={`wl-zamp-s2-scene-stage${expandedKey ? " has-expanded" : ""}`}
           onClick={() => expandedKey && setExpandedKey(null)}
@@ -890,7 +890,7 @@ export function ZampSection2() {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   SECTION 3 — Wave 1 open — 60/30/10 row + benefit ticker
+   SECTION 3 (Wave 1 open) 60/30/10 row + benefit ticker
    ════════════════════════════════════════════════════════════════ */
 
 const BENEFITS = [
@@ -941,7 +941,7 @@ function LockIcon() {
   );
 }
 
-// Inline TiltCard — Riven's primitive rebuilt on Civic's useMouseTilt hook.
+// Inline TiltCard, Riven's primitive rebuilt on Civic's useMouseTilt hook.
 function TiltCard({
   children,
   className = "",
@@ -1103,7 +1103,7 @@ export function ZampSection3() {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   SECTION 4 — FAQ — magazine inline-expand list
+   SECTION 4 (FAQ) magazine inline-expand list
    ════════════════════════════════════════════════════════════════ */
 
 const FAQS = [
@@ -1153,7 +1153,7 @@ export function ZampSection4() {
           04 / Frequently asked
         </span>
         <span className="wl-zamp-s4-kicker">
-          Seven things <em>worth</em> asking — answered straight.
+          Seven things <em>worth</em> asking, answered straight.
         </span>
       </div>
 
@@ -1255,7 +1255,7 @@ export function ZampSection4() {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   SECTION 5 — Final CTA — wordmark reprise + CTA
+   SECTION 5 (Final CTA) wordmark reprise + CTA
    ════════════════════════════════════════════════════════════════ */
 
 function HeroCtaPair() {

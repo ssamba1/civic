@@ -2,7 +2,7 @@
 --
 -- OWNER-APPLY ONLY, for the same two reasons as 039: it depends on the pg_cron
 -- extension and it schedules a RECURRING DELETE against storage.objects. Apply
--- it deliberately — against a shadow project first — and confirm the window
+-- it deliberately (against a shadow project first), and confirm the window
 -- suits the deployment's records-retention law before running it on prod.
 -- 039 must be applied first; this migration only adds a second job.
 --
@@ -17,7 +17,7 @@
 -- That is defensible for evidence, but only for as long as the evidence is
 -- needed. The bucket is private and every read goes through getFrameUrl, which
 -- requires staff for the city and issues a 10-minute signed URL scoped to the
--- city's own path prefix — so this is a RETENTION gap, not an exposure. What
+-- city's own path prefix, so this is a RETENTION gap, not an exposure. What
 -- was missing is the other half of the rule photos-raw already follows: raw
 -- imagery does not live forever.
 --

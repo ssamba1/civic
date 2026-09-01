@@ -1,4 +1,4 @@
-# F1 — Data-Layer Rewire (synthetic corpus → Supabase per `city_id`)
+# F1: Data-Layer Rewire (synthetic corpus → Supabase per `city_id`)
 
 > The #1-leverage foundation from [ONBOARDING.md](ONBOARDING.md) F1. Today every
 > dashboard fetcher ignores `cityId` and returns an in-memory synthetic corpus
@@ -8,7 +8,7 @@
 
 ---
 
-## 0. TL;DR — smaller than it looks
+## 0. TL;DR: smaller than it looks
 
 **The DB path already exists.** Migration `009` shipped exactly the server-side
 primitives this needs, all granted to `anon`+`authenticated` (public dashboard works
@@ -21,7 +21,7 @@ unauthenticated):
   (PII columns `description` + `reporter_id` **excluded**; `status='rejected'` filtered).
 
 So F1 is mostly **repoint 4 functions** in [dashboard-data.ts](../../src/lib/dashboard-data.ts)
-from `REPORT_CORPUS` to these RPCs/view — keeping the `DashboardReport`/`CityStats`/
+from `REPORT_CORPUS` to these RPCs/view, keeping the `DashboardReport`/`CityStats`/
 `CategoryCount` shapes so the entire client-side filter/analytics machinery
 ([filters/derive.ts](../../src/lib/filters/derive.ts), dashboard widgets) works unchanged.
 
@@ -60,7 +60,7 @@ fetchCity(slug) ── gated by KNOWN_CITIES[slug] (returns null if absent),
 | `fetchCategoryBreakdown(cityId)` | corpus group | `rpc('city_category_breakdown', {_city_id})` | direct shape match |
 | `fetchRecentReports(cityId, limit)` | corpus slice | `dashboard_reports_view` `.eq('city_id').order('created_at',desc).limit()` | map `lng/lat → location{lng,lat}` |
 | `getReportCorpus()` → `getReportCorpus(cityId)` | full synthetic array | `dashboard_reports_view` `.eq('city_id')` → map rows → `DashboardReport[]` | **signature gains `cityId`** (currently arg-less). FilterProvider must pass it. |
-| `fetchCity(slug)` | KNOWN_CITIES gate + boundary=null | DB-first (F2): `cities` by slug incl. `center/zoom/boundary/active` | overlaps **F2** (registry as data) — do together |
+| `fetchCity(slug)` | KNOWN_CITIES gate + boundary=null | DB-first (F2): `cities` by slug incl. `center/zoom/boundary/active` | overlaps **F2** (registry as data). Do together |
 
 **Mapping rule** (view row → `DashboardReport`):
 `location = { lng, lat }`, `photo_public_url`, `category`, `severity`, `status`,
@@ -69,14 +69,14 @@ anonymized placeholder OR add an anonymized hash to the view (see §6). `assigne
 `demo`, `ai_reasoning`, `afterPhoto`, `completed_at` stay client-overlay fields (unchanged).
 
 Everything downstream of `DashboardReport[]` (filter context, category chart, map,
-recent list, analytics bento, morale) is **untouched** — it operates on the shape, not the source.
+recent list, analytics bento, morale) is **untouched**, it operates on the shape, not the source.
 
 ---
 
 ## 3. The `source` column dependency (the one that gates correctness)
 
 Cold-start (ONBOARDING.md F5) writes synthetic + imported rows into `reports`. Without
-a discriminator they pollute real KPIs — violates ONBOARDING.md §7 ("synthetic must
+a discriminator they pollute real KPIs. Violates ONBOARDING.md §7 ("synthetic must
 never mix into real KPIs"). **F1 needs a `source` column** so stats exclude non-resident
 data:
 
@@ -99,7 +99,7 @@ CREATE INDEX idx_reports_city_source ON reports (city_id, source);
 ## 4. DEMO_MODE after the rewire (don't delete the synthetic generator)
 
 Two deploys, one codebase:
-- **Marketing/demo deploy** (`NEXT_PUBLIC_DEMO_MODE=1`): keep `buildCorpus()` — but
+- **Marketing/demo deploy** (`NEXT_PUBLIC_DEMO_MODE=1`): keep `buildCorpus()`: but
   **parameterize center by the requested city**, not hardcoded `KNOWN_CITIES.cumming`
   ([:405](../../src/lib/dashboard-data.ts#L405)), so the demo works for any slug.
 - **Real deploy** (`DEMO_MODE=0`): fetchers read DB. Today this = blank (B1); after
@@ -112,37 +112,37 @@ Two deploys, one codebase:
 
 ## 5. Call-site impact (from the full map)
 
-**Safe — import types/metadata only, no behavior change:** all client widgets
+**Safe, import types/metadata only, no behavior change:** all client widgets
 (`stats-cards`, `recent-reports`, `category-chart`, `dashboard-interactive`,
 `fullscreen-map`, `map-popup`, `filter-bar`, `report-detail`, `delegation-row-expanded`),
 and `CATEGORY_META`/`CATEGORY_SLA_TARGETS`/`MUNICIPALITIES` consumers. They take
 `DashboardReport[]`/types → unaffected.
 
-**Must update — call the rewired fetchers:**
+**Must update, call the rewired fetchers:**
 - `city/[slug]/{page,browse,analytics,map}.tsx`, `city/[slug]/layout.tsx` (getReportCorpus)
 - `[team]/[city]/{layout,page,analytics,map}.tsx`
 - `staff/{map,stats}.tsx`, `user/map`, `api/ai/reasoning/route.ts`
 - **`getReportCorpus()` → `getReportCorpus(cityId)`**: the layouts that seed
   `FilterProvider` must resolve `cityId` (via `fetchCity(slug)`) and pass it. This is
-  the one signature change that ripples — every FilterProvider seed site.
+  the one signature change that ripples, every FilterProvider seed site.
 
-**Must update — test:** [dashboard-queries.test.ts](../../src/lib/dashboard-queries.test.ts)
+**Must update, test:** [dashboard-queries.test.ts](../../src/lib/dashboard-queries.test.ts)
 asserts current corpus behavior; rewrite against a seeded test city (or mock the
 Supabase client). This is the **exit test** for F1.
 
-**Note:** `listCities` doesn't exist yet — F2 adds it (replaces `MUNICIPALITIES` as
+**Note:** `listCities` doesn't exist yet. F2 adds it (replaces `MUNICIPALITIES` as
 the live-city source). `KNOWN_CITIES` is consumed in ~10 sites purely for center/zoom
 + notFound gating → F2 removes it once `cities.center/zoom` exist (§6).
 
 ---
 
-## 6. Schema gaps F1/F2 touch (migration candidates — rule #10)
+## 6. Schema gaps F1/F2 touch (migration candidates: rule #10)
 
 | Gap | Needed by | Add |
 |---|---|---|
 | `reports.source` | F1 KPI separation, F5 cold-start | `text NOT NULL DEFAULT 'resident'` + index (§3) |
 | `cities.center` + `cities.default_zoom` | kill `KNOWN_CITIES`, map center from DB | `center geography(POINT)`, `default_zoom int` (or derive from boundary bbox at provision) |
-| view withholds `reporter_id` | power-reporter analytics | add **anonymized** `reporter_hash` to view (not raw id — keep PII rule), or make those analytics staff-only |
+| view withholds `reporter_id` | power-reporter analytics | add **anonymized** `reporter_hash` to view (not raw id, keep PII rule), or make those analytics staff-only |
 | `cities.parent_id` | §6 tenancy | (already slated for 015) |
 | `cities.setup_step` | wizard resume (UI §11) | (already slated for 015) |
 
@@ -178,14 +178,14 @@ derive.ts filters in-browser). A real city could be 10k+ rows → heavy client p
 
 ## 9. Open decisions
 
-1. **`reporter_id` in public path** — anonymized `reporter_hash` in the view vs make
+1. **`reporter_id` in public path**: anonymized `reporter_hash` in the view vs make
    power-reporter analytics staff-only. Recommend hash (keeps the public "top reporters"
    widget working without PII).
-2. **RPC source-filter shape** — **DECIDED + IMPLEMENTED in migration 015**:
+2. **RPC source-filter shape**: **DECIDED + IMPLEMENTED in migration 015**:
    `city_stats(_city_id, _sources text[] DEFAULT ARRAY['resident'])` (+ same for
    breakdown). Public dashboard uses the default (clean KPIs); the wizard **preview
    passes all sources** so a synthetic-only city still shows a populated dashboard.
-3. **`getReportCorpus` server vs client aggregation** at scale (§7) — keep client for
+3. **`getReportCorpus` server vs client aggregation** at scale (§7). Keep client for
    v1; revisit per-city when a real city crosses ~5k rows.
 4. **center/zoom**: store on `cities` vs derive from boundary bbox each render.
    Recommend store at provision (computed once from TIGER `AREALAND`+bbox).

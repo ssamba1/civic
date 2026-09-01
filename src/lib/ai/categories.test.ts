@@ -19,14 +19,14 @@ describe("mergeCategoryDefs", () => {
   it("appends customs before 'other', deduping built-in collisions", () => {
     const merged = mergeCategoryDefs([
       { key: "custom_abandoned_vehicle", description: "A car left unmoved." },
-      { key: "pothole", description: "collision — should be ignored" },
-      { key: "custom_abandoned_vehicle", description: "dup — ignored" },
+      { key: "pothole", description: "collision. Should be ignored" },
+      { key: "custom_abandoned_vehicle", description: "dup, ignored" },
     ]);
     const keys = merged.map((c) => c.key);
     expect(keys).toContain("custom_abandoned_vehicle");
     // built-in collision keeps the built-in def, not the custom text
     expect(merged.find((c) => c.key === "pothole")?.description).not.toBe(
-      "collision — should be ignored",
+      "collision. Should be ignored",
     );
     // no duplicate custom
     expect(keys.filter((k) => k === "custom_abandoned_vehicle")).toHaveLength(

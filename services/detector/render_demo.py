@@ -1,7 +1,7 @@
 """One-off demo renderer: run the pothole model over sample_video.mp4 and
 write an annotated video.
 
-DEMO ONLY — uses the AGPL ultralytics runtime from the local, gitignored
+DEMO ONLY. Uses the AGPL ultralytics runtime from the local, gitignored
 .venv. Never wire this into the product path; the production sidecar contract
 (contract.md) stays Apache-licensed ONNX. See spec §4.3.
 

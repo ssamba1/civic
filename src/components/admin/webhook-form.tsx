@@ -56,7 +56,7 @@ export function WebhookForm({ onCreated }: Props) {
     return (
       <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
         <p className="mb-2 text-sm font-medium text-amber-900 dark:text-amber-100">
-          Webhook registered. Copy the secret now — it will not be shown again.
+          Webhook registered. Copy the secret now. It will not be shown again.
         </p>
         <code className="block break-all rounded bg-white p-3 text-xs font-mono text-amber-800 dark:bg-zinc-900 dark:text-amber-300">
           {newSecret}

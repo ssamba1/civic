@@ -13,7 +13,7 @@ import { FilterProvider } from "@/lib/filters/context";
 import { isValidTeamId } from "@/lib/teams";
 
 /**
- * Team-scoped subtree of the canonical city console (loop-closure plan D1 —
+ * Team-scoped subtree of the canonical city console (loop-closure plan D1,
  * the old /[team]/[city] tree collapsed into /city/[slug]/team/[teamId]).
  * Inherits the city chrome (CityHeader/CitySidebar) from the parent layout and
  * re-provides the filter context with the team LOCKED, so every reused surface
@@ -29,7 +29,7 @@ export default async function TeamScopeLayout({
   const { slug, teamId } = await params;
   if (!isValidTeamId(teamId) || teamId === "all") notFound();
 
-  // Same corpus resolution as the parent city layout — fetchCity/fetchCorpus
+  // Same corpus resolution as the parent city layout. FetchCity/fetchCorpus
   // are request-cached, so this costs no extra queries.
   let corpus: DashboardReport[];
   if (DEMO_MODE && slug in KNOWN_CITIES) {

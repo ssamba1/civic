@@ -115,7 +115,7 @@ export function TeamTasksInteractive({ teamId }: TeamTasksInteractiveProps) {
         ))}
       </div>
 
-      {/* List (left) + detail pane (right) — split on md+, stacked sheet below */}
+      {/* List (left) + detail pane (right), split on md+, stacked sheet below */}
       <ResizableSplit
         active={isDesktop && selected !== null}
         storageKey="civic:team-tasks:split"
@@ -125,7 +125,7 @@ export function TeamTasksInteractive({ teamId }: TeamTasksInteractiveProps) {
             <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface p-8 text-center">
               <p className="text-sm text-subtle">
                 {tab === "todo"
-                  ? "No open tasks. Nice — the queue is clear."
+                  ? "No open tasks. Nice. The queue is clear."
                   : tab === "done"
                     ? "No completed tasks yet."
                     : "No tasks for this team."}
@@ -136,7 +136,7 @@ export function TeamTasksInteractive({ teamId }: TeamTasksInteractiveProps) {
               key={tab}
               className="fade-up overflow-clip rounded-[var(--radius-lg)] border border-hairline bg-surface"
             >
-              {/* Column header — sticky, quiet, Linear-register */}
+              {/* Column header, sticky, quiet, Linear-register */}
               <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-hairline bg-surface px-3 py-1.5 text-[11px] font-medium text-faint">
                 <span className="w-5 shrink-0" aria-hidden />
                 <span className="min-w-0 flex-1">Task</span>
@@ -296,7 +296,7 @@ function TaskRow({
           {STATUS_LABEL[report.status]}
         </span>
 
-        {/* Thumbnail — compact evidence cell */}
+        {/* Thumbnail, compact evidence cell */}
         <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded-[var(--radius-sm)] border border-hairline bg-overlay">
           {/* biome-ignore lint/performance/noImgElement: tiny lazy thumbnail; next/image is overkill for a 24px list cell. */}
           <img

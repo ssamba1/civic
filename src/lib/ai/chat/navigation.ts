@@ -3,7 +3,7 @@ import type { ChatRole } from "@/lib/ai/chat/scope";
 /**
  * Server-authoritative navigation allow-list for the navigateTo tool. Only
  * these path shapes may be returned to the client for router.push. No query
- * strings are permitted (no PII in URLs — AGENTS.md rule 4).
+ * strings are permitted (no PII in URLs, AGENTS.md rule 4).
  */
 const RESIDENT_ROUTES: RegExp[] = [
   /^\/$/,

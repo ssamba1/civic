@@ -1,8 +1,8 @@
 import { expect, test } from "playwright/test";
 
 /**
- * Open311 GeoReport v2 API smoke (B16). Pure HTTP — no UI, no data mutation, no
- * live partner — so it's stable regardless of seed state or feature flags.
+ * Open311 GeoReport v2 API smoke (B16). Pure HTTP, no UI, no data mutation, no
+ * live partner, so it's stable regardless of seed state or feature flags.
  * Asserts the public GET surface plus the auth guard on POST.
  */
 

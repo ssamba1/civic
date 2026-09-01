@@ -1,7 +1,7 @@
 /**
  * Video damage-mapping pipeline configuration (NEXT_100 #70).
- * Pure constants + env reads, mirroring lib/ai/config.ts. Server-only flags —
- * nothing here is NEXT_PUBLIC_.
+ * Pure constants + env reads, mirroring lib/ai/config.ts. Server-only flags.
+ * Nothing here is NEXT_PUBLIC_.
  */
 
 /**
@@ -12,7 +12,7 @@ export const VIDEO_PIPELINE = process.env.VIDEO_PIPELINE === "1";
 
 /**
  * Absolute path to the ONNX road-damage detection model (YOLOv8-style export,
- * 640×640 input). Weights are NOT vendored in the repo — fetch with
+ * 640×640 input). Weights are NOT vendored in the repo, fetch with
  * scripts/fetch-video-model.mjs. When unset, clip processing fails with an
  * actionable error instead of silently detecting nothing.
  */
@@ -50,7 +50,7 @@ export const VIDEO_NMS_IOU = 0.45;
 
 /**
  * Cluster confidence at/above which stage 2 (the Gemini decision run) fires.
- * Below it the cluster stays a 'candidate' for manual staff review — the
+ * Below it the cluster stays a 'candidate' for manual staff review, the
  * LLM-free stage never spends model budget on weak evidence.
  */
 export const VIDEO_ESCALATE_MIN_CONF = (() => {
@@ -74,14 +74,14 @@ export const VIDEO_MAX_CLIP_SECONDS = 15 * 60;
 /**
  * Days a full extracted frame is kept in the private `video-frames` bucket.
  *
- * Frames are raw street scenes — bystanders and readable plates — and unlike
+ * Frames are raw street scenes (bystanders and readable plates), and unlike
  * the resident path they are stored unblurred so the evidence box matches what
  * the detector saw. Reads are staff-only through getFrameUrl (city-scoped path,
  * 10-minute signed URL), so this is a retention control rather than an access
  * one. 90 days, not the 30 that photos-raw uses, because a frame is the
  * evidence behind a work order and possibly a contractor liability claim.
  *
- * Enforced by the pg_cron job in migration 069 — keep the two in sync.
+ * Enforced by the pg_cron job in migration 069. Keep the two in sync.
  */
 export const VIDEO_FRAME_TTL_DAYS = 90;
 

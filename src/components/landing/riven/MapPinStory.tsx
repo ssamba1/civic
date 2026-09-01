@@ -5,7 +5,7 @@ import { Check, MapPin } from "lucide-react";
 import { useState } from "react";
 
 // Animated report-pin narrative over the hero map plate: pins plop onto their
-// streets ONE AT A TIME (the plate itself is still — see StaticHeroMap), and
+// streets ONE AT A TIME (the plate itself is still, see StaticHeroMap), and
 // every marker carries a hover card with its report info. The four story pins
 // additionally play the product beat: land (report filed), pulse (AI
 // classifying), flip green with a check (crew fixed it). Reduced motion: pins
@@ -30,15 +30,15 @@ const PINS: Pin[] = [
 const T_RING = 0.45; // classify pulse starts once the pin lands
 const T_FIX = 1.6; // flips to fixed
 
-// Field plop sequencing — one pin every PLOP_EVERY, starting at PLOP_START.
+// Field plop sequencing, one pin every PLOP_EVERY, starting at PLOP_START.
 const PLOP_START = 0.35;
 const PLOP_EVERY = 0.13;
 
-// Ambient report field — replaces the status dots that used to be baked into
+// Ambient report field, replaces the status dots that used to be baked into
 // the hero-map.jpg plate (capture now runs with ?mapMarkers=0). Same teardrop
 // silhouette as the story pins, miniaturized, category-toned: amber (roads),
 // violet (lighting), sky (water), rose (safety), teal (drainage), lime
-// (parks), plus orange/red severity flares — the field reads as a live,
+// (parks), plus orange/red severity flares. The field reads as a live,
 // many-department report map rather than single-issue clutter.
 // Positions are hand-seeded to echo the old deck.gl hotspot clusters and to
 // stay clear of the wordmark, glass card, and moment-cards.
@@ -53,7 +53,7 @@ const PIN_TONES = {
   lime: { fill: "#84cc16", glow: "rgba(101, 163, 13, 0.45)" },
 } as const;
 
-// Hover-card copy per category. Qualitative on purpose — statuses mirror the
+// Hover-card copy per category. Qualitative on purpose, statuses mirror the
 // landing's real pipeline claims (AI triage → routed → crew), no invented
 // metrics.
 const TONE_INFO: Record<
@@ -78,7 +78,7 @@ type Report = {
 };
 
 const REPORTS: Report[] = [
-  // main cluster — center of town
+  // main cluster, center of town
   { left: "46%", top: "31%", tone: "amber", size: 14 },
   { left: "51%", top: "35%", tone: "sky", size: 16 },
   { left: "55%", top: "30%", tone: "violet", size: 13 },
@@ -87,14 +87,14 @@ const REPORTS: Report[] = [
   { left: "53%", top: "42%", tone: "orange", size: 14 },
   { left: "44%", top: "44%", tone: "lime", size: 13 },
   { left: "59%", top: "44%", tone: "rose", size: 15 },
-  // lower cluster — south of the highway
+  // lower cluster, south of the highway
   { left: "40%", top: "52%", tone: "violet", size: 16 },
   { left: "46%", top: "56%", tone: "amber", size: 14 },
   { left: "52%", top: "53%", tone: "red", size: 17 },
   { left: "43%", top: "61%", tone: "sky", size: 13 },
   { left: "50%", top: "62%", tone: "orange", size: 14 },
   { left: "56%", top: "58%", tone: "teal", size: 15 },
-  // fringe — sparse singles filling the frame
+  // fringe, sparse singles filling the frame
   { left: "30%", top: "42%", tone: "lime", size: 13 },
   { left: "34%", top: "27%", tone: "violet", size: 14 },
   { left: "66%", top: "50%", tone: "sky", size: 13 },
@@ -105,7 +105,7 @@ const REPORTS: Report[] = [
   { left: "22%", top: "36%", tone: "rose", size: 13 },
 ];
 
-// Shared hover card — white chip above the pin tip. Rendered always, animated
+// Shared hover card, white chip above the pin tip. Rendered always, animated
 // on hover (no AnimatePresence churn); pointer-events off so it never traps
 // the cursor.
 function HoverCard({
@@ -221,7 +221,7 @@ function FieldPin({
         zIndex: hovered ? 30 : undefined,
       }}
     >
-      {/* invisible enlarged hit area — the teardrops are 13-18px, too small a
+      {/* invisible enlarged hit area. The teardrops are 13-18px, too small a
           hover target on their own */}
       <span style={{ position: "absolute", inset: -7 }} />
       <motion.span
@@ -244,9 +244,9 @@ function FieldPin({
   );
 }
 
-// Floating glass moment-cards — each narrates a pipeline stage as the pins
+// Floating glass moment-cards, each narrates a pipeline stage as the pins
 // play out. Copy mirrors the landing's real claims (1.4s triage, Open311
-// routing, public before/after) — nothing invented.
+// routing, public before/after), nothing invented.
 type Moment = {
   left: string;
   top: string;
@@ -493,7 +493,7 @@ export default function MapPinStory() {
         zIndex: 5, // over the map plate, under the wordmark/card (z 10)
         // The layer itself ignores the pointer; individual pins opt back in
         // for their hover cards. The plate is static now, so no camera
-        // transform — pins sit exactly on their hand-tuned coordinates.
+        // transform. Pins sit exactly on their hand-tuned coordinates.
         pointerEvents: "none",
       }}
     >

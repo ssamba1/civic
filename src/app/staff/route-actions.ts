@@ -15,7 +15,7 @@ import { normalizeLocation } from "@/lib/types";
 const logger = createLogger("[route-actions]");
 
 // ---------------------------------------------------------------------------
-// Auth guard — copied verbatim from schedule-actions.ts (same pattern as
+// Auth guard, copied verbatim from schedule-actions.ts (same pattern as
 // actions.ts). Do NOT import from actions.ts to avoid circular deps.
 // ---------------------------------------------------------------------------
 

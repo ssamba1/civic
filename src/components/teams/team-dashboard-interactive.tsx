@@ -13,12 +13,12 @@ import { aggregateByTeam, computeTeamStats } from "@/lib/teams-data";
 import { getReportTeam, useTeamOverrides } from "@/lib/teams-overrides";
 
 /* ==================================================================
-   Team dashboard — the city/admin Teams view, scoped to one team.
+   Team dashboard, the city/admin Teams view, scoped to one team.
 
    Mounted under the team route's lockedTeam FilterProvider, so it reuses
    the city dashboard's sub-components (stats, workload, routing) but every
    panel reads only this team's reports. The multi-team roster grid is
-   dropped — meaningless for a single team, and its data (totals, status
+   dropped, meaningless for a single team, and its data (totals, status
    mix, MTTR) is already carried by the stat cards + workload bar.
 
    Everything derives from `teamReports`, including the stat cards: a
@@ -45,7 +45,7 @@ export function TeamDashboardInteractive({
     [corpus, teamId, overrides],
   );
 
-  // Stat cards derive from the same set as every other panel — never frozen —
+  // Stat cards derive from the same set as every other panel, never frozen,
   // so Total/Open/Resolved/Avg track reassignments and override rehydration.
   const stats = useMemo(
     () => computeTeamStats(teamReports, now),
@@ -53,7 +53,7 @@ export function TeamDashboardInteractive({
   );
 
   // aggregateByTeam keys by division, but teamReports holds only this team so
-  // just its bucket is populated — WorkloadBars reads that one entry below.
+  // just its bucket is populated. WorkloadBars reads that one entry below.
   const workloadMap = useMemo(
     () => aggregateByTeam(teamReports, (r) => getReportTeam(r, overrides)),
     [teamReports, overrides],

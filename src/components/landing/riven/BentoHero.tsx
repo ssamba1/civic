@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 
-// Bento "Playroom" hero — asymmetric tile grid with a pre-rendered clay
+// Bento "Playroom" hero, asymmetric tile grid with a pre-rendered clay
 // neighborhood as the centerpiece. The scene plays the product promise once:
 // pin drops on the pothole (report filed), then the scene crossfades from
 // broken to fixed (crew resolved it). Assets: scripts/gen-clay.mjs →
@@ -81,7 +81,7 @@ export default function BentoHero() {
           shown: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
         }}
       >
-        {/* Copy tile — headline, subtext, CTAs. */}
+        {/* Copy tile, headline, subtext, CTAs. */}
         <motion.div className="wl-bento-tile wl-bento-copy" variants={tile}>
           <h1 className="wl-bento-headline">The 311 that runs on photos</h1>
           <p className="wl-bento-sub">
@@ -104,7 +104,7 @@ export default function BentoHero() {
           </div>
         </motion.div>
 
-        {/* Scene tile — the clay neighborhood heals itself once. */}
+        {/* Scene tile, the clay neighborhood heals itself once. */}
         <motion.div className="wl-bento-tile wl-bento-scene" variants={tile}>
           <div className="wl-bento-scene-stage">
             <Image
@@ -165,7 +165,7 @@ export default function BentoHero() {
           </div>
         </motion.div>
 
-        {/* Proof tiles — the pipeline in three clay icons. */}
+        {/* Proof tiles, the pipeline in three clay icons. */}
         {PROOF_TILES.map((p) => (
           <motion.div
             key={p.stat}

@@ -55,10 +55,10 @@ describe("haversineMeters", () => {
 });
 
 // ---------------------------------------------------------------------------
-// optimizeRoute — empty / single
+// optimizeRoute, empty / single
 // ---------------------------------------------------------------------------
 
-describe("optimizeRoute — edge cases", () => {
+describe("optimizeRoute, edge cases", () => {
   it("returns empty for 0 stops", () => {
     const result = optimizeRoute([]);
     expect(result.orderedStops).toHaveLength(0);
@@ -95,10 +95,10 @@ describe("optimizeRoute — edge cases", () => {
 });
 
 // ---------------------------------------------------------------------------
-// optimizeRoute — ordering
+// optimizeRoute, ordering
 // ---------------------------------------------------------------------------
 
-describe("optimizeRoute — ordering", () => {
+describe("optimizeRoute, ordering", () => {
   it("nearest stop is visited first when starting from origin", () => {
     // near = 0.001° away, far = 0.1° away
     const near = stop("near", 0.001, 0);
@@ -160,7 +160,7 @@ describe("2-opt never worsens total distance", () => {
       stop("B", 0, 0.05),
       stop("C", 0.05, 0.05),
     ];
-    // Run twice with and without start — in both cases 2-opt must not increase distance.
+    // Run twice with and without start. In both cases 2-opt must not increase distance.
     const withStart = totalForRoute(stops, BASE);
     const withoutStart = totalForRoute(stops);
     // These are both valid routes; we just check no negative distance and sane order.

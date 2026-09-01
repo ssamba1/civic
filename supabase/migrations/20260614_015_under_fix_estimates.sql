@@ -1,5 +1,5 @@
 -- =============================================================================
--- Civic – Under-Fix Estimates
+-- Civic. Under-Fix Estimates
 -- Migration: 20260614_015_under_fix_estimates.sql
 --
 -- Adds admin-set, public-facing fix estimate fields to work_orders so staff

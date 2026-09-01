@@ -3,7 +3,7 @@
 Playwright smoke specs. Seven files, run with `pnpm test:e2e`.
 
 These are smoke tests, deliberately. They prove a screen mounts, a route
-answers, and an auth gate holds — the class of breakage that unit tests cannot
+answers, and an auth gate holds, the class of breakage that unit tests cannot
 see because it only appears once the real server, the real bundle and the real
 database are in the same process. Anything that can be asserted without a
 browser belongs in a vitest file next to the code instead.
@@ -24,8 +24,8 @@ E2E_BASE_URL=https://… pnpm test:e2e  # against an already-deployed target
 
 `reuseExistingServer` is on outside CI, which is a convenience with one sharp
 edge worth knowing before it costs you an afternoon: with a hardcoded port, the
-suite silently *attaches* to whatever dev server already holds 3000 — including
-a fork of this checkout — and reports that app's results as this one's. That is
+suite silently *attaches* to whatever dev server already holds 3000, including
+a fork of this checkout, and reports that app's results as this one's. That is
 why the port is environment-driven. If results look impossible, check what is
 actually listening before you debug the test.
 
@@ -54,7 +54,7 @@ deploy shapes are therefore checked rather than one being waved through.
 
 **Data-shaped.** `video-console.spec.ts` skips individual assertions when the
 seeded corpus has no cluster with a signed frame URL. A green run of that file
-against an unseeded database is not evidence the video console works — seed
+against an unseeded database is not evidence the video console works, seed
 first (`pnpm demo:seed`) if that is what you are trying to establish.
 
 ## Adding one

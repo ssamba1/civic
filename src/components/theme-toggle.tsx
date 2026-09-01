@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils/cn";
 /**
  * Light ⇄ dark toggle. Dogfoods the semantic tokens (text-faint, border-hairline,
  * bg-overlay…) so it themes itself. The visible icon is CSS-driven via the `dark:`
- * variant — correct before JS hydrates — while the click handler flips the store
+ * variant (correct before JS hydrates) while the click handler flips the store
  * (src/lib/theme.ts), which toggles the `dark` class on <html> and persists it.
  */
 export function ThemeToggle({ className }: { className?: string }) {

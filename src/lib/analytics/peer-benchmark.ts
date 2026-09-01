@@ -8,7 +8,7 @@ import { createLogger } from "@/lib/logger";
 
    Thin wrapper over the analytics_peer_benchmark RPC (migration 041). Returns
    the city's resolution rate / MTTR, its rank + percentile among active cities
-   with data, and the peer medians — all anonymized aggregates. Null when the
+   with data, and the peer medians, all anonymized aggregates. Null when the
    city has no reports or the RPC isn't present (un-migrated), so the card hides.
    ================================================================== */
 

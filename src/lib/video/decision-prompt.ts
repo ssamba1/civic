@@ -1,8 +1,8 @@
 /**
  * Prompt for the stage-2 decision run. The model sees the best evidence frame
- * plus a compact JSON context block of everything the city already knows —
+ * plus a compact JSON context block of everything the city already knows,
  * nearby report history, SLA targets, the crew catalog, past staff
- * corrections — and must return a cited decision, not a bare classification.
+ * corrections, and must return a cited decision, not a bare classification.
  */
 
 export const DECISION_SYSTEM_PROMPT =
@@ -12,7 +12,7 @@ export const DECISION_SYSTEM_PROMPT =
   `evidence AND the city context you are given (open reports nearby, service ` +
   `level targets, available crews, past classification corrections). You are ` +
   `accountable for this decision: every material claim must cite the context ` +
-  `item it rests on. You are well-calibrated — you neither rubber-stamp weak ` +
+  `item it rests on. You are well-calibrated. You neither rubber-stamp weak ` +
   `detections into work orders nor dismiss genuine hazards.`;
 
 export interface DecisionContext {
@@ -43,28 +43,28 @@ export function buildDecisionPrompt(context: DecisionContext): string {
   return `Review the attached camera frame and the machine detection summary, then decide the city's action.
 
 ## DECISIONS
-- dispatch — real, actionable damage with no existing open report covering it. Creates a work order.
-- merge — the SAME physical issue as one of the NEARBY REPORTS below. Set merge_report_id to that report's exact id and cite it. Never merge into a report of a clearly different issue.
-- monitor — plausibly real but not yet actionable (too minor, evidence too weak to justify a crew). The system keeps accumulating detections at this location.
-- dismiss — false positive: shadow, patch/repair scar, wet pavement, lane marking, debris that is not damage.
+- dispatch, real, actionable damage with no existing open report covering it. Creates a work order.
+- merge, the SAME physical issue as one of the NEARBY REPORTS below. Set merge_report_id to that report's exact id and cite it. Never merge into a report of a clearly different issue.
+- monitor, plausibly real but not yet actionable (too minor, evidence too weak to justify a crew). The system keeps accumulating detections at this location.
+- dismiss, false positive: shadow, patch/repair scar, wet pavement, lane marking, debris that is not damage.
 
 ## RULES
 - The photo is the primary evidence; the detector's class and confidence are hints, not truth.
 - Cite context ids: every nearby-report claim cites source "nearby_report" with the report id; SLA claims cite "sla_target"; crew claims cite "crew_catalog"; the frame itself is "detection_evidence" with the cluster id.
 - If PAST CORRECTIONS show this city's staff repeatedly re-classify the category you would pick, weigh that before choosing.
-- severity uses the city's 1–5 scale (1 cosmetic … 5 life-safety). cost_band is your rough repair-cost expectation.
+- severity uses the city's 1-5 scale (1 cosmetic … 5 life-safety). cost_band is your rough repair-cost expectation.
 - Be conservative with "dispatch" below detector confidence 0.5 unless the photo alone is unambiguous.
 - merge_report_id MUST be null unless decision is "merge".
 
 ## CITY CONTEXT
 ${JSON.stringify(context, null, 2)}
 
-## OUTPUT — valid JSON only, every field required
+## OUTPUT, valid JSON only, every field required
 {
   "decision": "<dispatch|merge|monitor|dismiss>",
   "category": "<report category this damage maps to>",
   "severity": <integer 1-5>,
-  "confidence": <float 0.00-1.00 — your confidence in the DECISION>,
+  "confidence": <float 0.00-1.00, your confidence in the DECISION>,
   "rationale": "<2-4 sentences: what the frame shows, why this decision over the alternatives, and what context tipped it>",
   "merge_report_id": "<exact nearby report id, or null>",
   "cost_band": "<under_500|500_2500|2500_10000|over_10000>",

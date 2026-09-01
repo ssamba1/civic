@@ -11,14 +11,14 @@ import { TEAM_LIST } from "@/lib/teams";
 import type { ReportCategory } from "@/lib/types";
 
 /* ==================================================================
-   Routing flow view — data loader.
+   Routing flow view, data loader.
 
    One read-only snapshot of how a report travels through this city's
    routing pipeline, shaped for the flow-chart renderer:
 
      photo → AI classify → category → division (city_teams or static
-     TEAMS default) → crew (autoAssignCrew), or — when the city has an
-     org_units tree (042) — the weighted unit assignment instead.
+     TEAMS default) → crew (autoAssignCrew), or, when the city has an
+     org_units tree (042), the weighted unit assignment instead.
 
    Everything is best-effort: a missing table / un-migrated DB degrades
    to the static defaults, never throws. This module only READS; the
@@ -55,7 +55,7 @@ export interface FlowUnit {
   id: string;
   parentId: string | null;
   kind: "team" | "subteam" | "crew" | "contractor";
-  /** Stable slug (often a TeamId for roots — the flow view colors by it). */
+  /** Stable slug (often a TeamId for roots, the flow view colors by it). */
   key: string;
   label: string;
   /** Declared categories; null = inherits from nearest ancestor. */
@@ -74,10 +74,10 @@ export interface RoutingFlowData {
   /** Active org_units rows (042 advanced routing); empty on legacy cities. */
   units: FlowUnit[];
   /** True when the org_units tree can actually route (≥1 leaf resolves a
-   *  non-empty category set) — then it is the authoritative flow. */
+   *  non-empty category set). Then it is the authoritative flow. */
   hasOrgTree: boolean;
   /** Units exist but every leaf resolves to zero categories ("accepts
-   *  nothing" per effectiveCategories) — tree is configured yet inert, and
+   *  nothing" per effectiveCategories). Tree is configured yet inert, and
    *  routing falls through to the legacy division → crew pick. */
   orgTreeInert: boolean;
 }
@@ -136,8 +136,8 @@ async function fetchOrgUnits(cityId: string): Promise<FlowUnit[]> {
 
 /**
  * Snapshot the routing pipeline for one city. `cityId` null (a known-cities
- * mock slug with no DB row) renders the static preset routing with no crews —
- * the flow chart still shows the category → division stage honestly.
+ * mock slug with no DB row) renders the static preset routing with no crews.
+ * The flow chart still shows the category → division stage honestly.
  */
 export async function fetchRoutingFlowData(
   cityId: string | null,
@@ -153,7 +153,7 @@ export async function fetchRoutingFlowData(
 
   // Divisions in canonical TEAM_LIST order, each with the categories the live
   // config routes to it. Teams that own zero categories are added later only
-  // if a crew references them — an empty division with no crews is noise.
+  // if a crew references them. An empty division with no crews is noise.
   const teamOrder = TEAM_LIST.filter((t) => t.id !== "all").map((t) => t.id);
   const teamMap = new Map<string, FlowTeam>();
   for (const c of categories) {

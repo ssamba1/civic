@@ -38,7 +38,7 @@ const ACTION_LABELS: Record<BulkAction, string> = {
 
 export interface BulkActionBarProps {
   selectedIds: string[];
-  /** Called after a successful bulk operation — e.g. to clear selection + refresh list */
+  /** Called after a successful bulk operation, e.g. to clear selection + refresh list */
   onDone?: (updated: number, skipped: number) => void;
   /** Optional CSS class for the outer container */
   className?: string;
@@ -105,12 +105,12 @@ export function BulkActionBar({
         const { updated, skipped } = result.data;
         const msg =
           skipped > 0
-            ? `Updated ${updated} report${updated !== 1 ? "s" : ""} (${skipped} skipped — not in your city)`
+            ? `Updated ${updated} report${updated !== 1 ? "s" : ""} (${skipped} skipped, not in your city)`
             : `Updated ${updated} report${updated !== 1 ? "s" : ""}`;
         toast(msg, "success");
         onDone?.(updated, skipped);
       } catch {
-        toast("Unexpected error — please try again", "error");
+        toast("Unexpected error, please try again", "error");
       }
     });
   }
@@ -146,7 +146,7 @@ export function BulkActionBar({
         </select>
       </label>
 
-      {/* Value picker — only shown for actions that need a value */}
+      {/* Value picker, only shown for actions that need a value */}
       {action === "set_status" && (
         <label className="flex items-center gap-2">
           <span className="text-muted-foreground">Status:</span>
@@ -156,7 +156,7 @@ export function BulkActionBar({
             onChange={(e) => setValue(e.target.value)}
             disabled={isPending}
           >
-            <option value="">— pick —</option>
+            <option value="">, pick, </option>
             {STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
@@ -175,7 +175,7 @@ export function BulkActionBar({
             onChange={(e) => setValue(e.target.value)}
             disabled={isPending}
           >
-            <option value="">— pick —</option>
+            <option value="">, pick, </option>
             {PRIORITY_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}

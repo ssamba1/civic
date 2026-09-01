@@ -6,7 +6,7 @@ import type { ReportCategory, ReportStatus } from "@/lib/types";
    Per-team workload aggregation.
 
    Pure derive over filtered reports. Threads a `getTeam(report)` arg so
-   the caller decides whether to respect overrides — keeps this module
+   the caller decides whether to respect overrides. Keeps this module
    independent of localStorage / hooks.
    ================================================================== */
 
@@ -171,7 +171,7 @@ export function computeTeamStats(
 
 /**
  * Sort teams by descending open queue, tiebreak by total assigned.
- * Empty teams sink to the bottom but remain visible — the roster always
+ * Empty teams sink to the bottom but remain visible. The roster always
  * shows all 11 divisions so workload imbalance reads at a glance.
  */
 export function sortTeamsByLoad(

@@ -6,7 +6,7 @@
  * and a span array so callers can diff what changed.
  *
  * Hard rules:
- *  - Pure function — no side effects, no I/O.
+ *  - Pure function, no side effects, no I/O.
  *  - URL guard: any match that starts inside a URL token is skipped to avoid
  *    mangling paths like /api/user/john@example.com.
  *  - Order matters: apply patterns from most-specific to least-specific so
@@ -55,7 +55,7 @@ const PHONE_RE =
   /(?<![/\w@])(\+?1[\s\-.]?)?(\(?\d{3}\)?[\s\-.]?\d{3}[\s\-.]?\d{4})(?!\d)/g;
 
 /**
- * Street addresses: one or more digits followed by a street name (1–4 words)
+ * Street addresses: one or more digits followed by a street name (1-4 words)
  * and a recognised suffix.  Guards:
  *  - Requires the digit token to start at a word boundary (not mid-URL).
  *  - Won't match a lone ordinal like "42nd Street" without a preceding number

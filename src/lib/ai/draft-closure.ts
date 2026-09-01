@@ -10,7 +10,7 @@ import { createLogger } from "@/lib/logger";
 
    When staff close a work order they must attach a short internal reason.
    This turns that terse reason + the report context into a warm, plain-language
-   explanation the resident actually reads in the resolution notice — killing the
+   explanation the resident actually reads in the resolution notice, killing the
    industry-wide "no evidence observed" generic-closure complaint.
 
    Graceful by contract: if the model is unavailable, rate-limited, or slow, we
@@ -20,7 +20,7 @@ import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("[draft-closure]");
 
-/** Bound the drafting call tighter than classification — it's on the close path. */
+/** Bound the drafting call tighter than classification, it's on the close path. */
 const DRAFT_TIMEOUT_MS = Math.min(AI_TIMEOUT_MS, 12000);
 
 export interface ClosureContext {
@@ -36,7 +36,7 @@ function buildPrompt(ctx: ClosureContext): string {
   const where = ctx.address?.trim() ? ` at ${ctx.address.trim()}` : "";
   return [
     "You write the closing message a city sends a resident when their reported",
-    "issue is fixed. Rewrite the crew's internal note into 1–2 warm, plain,",
+    "issue is fixed. Rewrite the crew's internal note into 1-2 warm, plain,",
     "specific sentences a resident understands. No jargon, no bureaucratic",
     "filler, no salutation or sign-off, no markdown. State what was done.",
     "",
@@ -49,7 +49,7 @@ function buildPrompt(ctx: ClosureContext): string {
 
 /**
  * Draft a resident-facing closure explanation. Returns the AI text on success,
- * or the raw staff `reason` on any failure/empty response — never throws.
+ * or the raw staff `reason` on any failure/empty response. Never throws.
  */
 export async function draftClosureExplanation(
   ctx: ClosureContext,

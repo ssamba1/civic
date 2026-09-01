@@ -1,4 +1,4 @@
-// Config template applier (F3) — seeds a new city's per-city config tables from
+// Config template applier (F3), seeds a new city's per-city config tables from
 // the app defaults (teams.ts + SLA/cost), so a provisioned city inherits a
 // working, overridable setup instead of empty config. Idempotent (upsert).
 // SERVER-ONLY; runs as service role inside provisioning.

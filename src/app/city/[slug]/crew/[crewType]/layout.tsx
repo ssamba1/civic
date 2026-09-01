@@ -12,7 +12,7 @@ import { DEMO_MODE } from "@/lib/demo-mode";
 import { FilterProvider } from "@/lib/filters/context";
 
 /**
- * Crew-type-scoped subtree of the canonical city console — mirrors the team
+ * Crew-type-scoped subtree of the canonical city console, mirrors the team
  * subtree (src/app/city/[slug]/team/[teamId]/layout.tsx) exactly, except the
  * lock is a CATEGORY SET, not a team: crew types span divisions (e.g.
  * `cleanup` serves 3 teams), so there's no single team id to pin. Inherits
@@ -31,7 +31,7 @@ export default async function CrewPortalLayout({
   const { slug, crewType } = await params;
   if (!isPortalCrewType(crewType)) notFound();
 
-  // Same corpus resolution as the parent city layout — fetchCity/fetchCorpus
+  // Same corpus resolution as the parent city layout. FetchCity/fetchCorpus
   // are request-cached, so this costs no extra queries.
   let corpus: DashboardReport[];
   if (DEMO_MODE && slug in KNOWN_CITIES) {

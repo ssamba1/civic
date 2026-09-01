@@ -3,7 +3,7 @@
 // Grant regression tests for the SECURITY DEFINER RPCs (migration 068).
 //
 // SECURITY DEFINER functions run as the definer and bypass RLS completely, so
-// for them the EXECUTE grant IS the access control — there is no policy behind
+// for them the EXECUTE grant IS the access control. There is no policy behind
 // it to catch a mistake. Every one of these also takes the city id as a plain
 // argument, so a caller who can execute the function can read ANY tenant's
 // data, not just their own.
@@ -19,7 +19,7 @@
 // (src/lib/documents/retrieve.ts, src/lib/video/pipeline.ts), so denying anon
 // and authenticated costs the product nothing.
 //
-// GATING — opt-in integration tests, same as the rest of tests/rls:
+// GATING, opt-in integration tests, same as the rest of tests/rls:
 //
 //   SUPABASE_TEST_URL            project URL
 //   SUPABASE_TEST_ANON_KEY       anon / publishable key (RLS-enforced)

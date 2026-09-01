@@ -12,21 +12,21 @@ export const metadata: Metadata = {
     "Onboard your municipality: define your city, teams, routing, and staff accounts.",
 };
 
-// Reads the session per request — never statically cache the auth gate.
+// Reads the session per request, never statically cache the auth gate.
 export const dynamic = "force-dynamic";
 
 export default async function OnboardPage() {
   const user = await getAuthUser();
   // getAuthUser() only sees real Supabase auth, so it's blind to the demo
-  // persona cookie — the rest of the app (e.g. requireStaffFor in
+  // persona cookie, the rest of the app (e.g. requireStaffFor in
   // city/[slug]/grid/page.tsx) treats a demo session as equally authenticated.
-  // Mirror that here: any signed-in demo persona (resident, admin, or team —
+  // Mirror that here: any signed-in demo persona (resident, admin, or team,
   // onboarding is open to residents too, who may upgrade to city admin, see
   // actions.ts) reaches the wizard. Demo-cookie acceptance stays gated on
   // DEMO_MODE so a live deployment with the cookie unset never bypasses this.
   const demoSession = DEMO_MODE ? await getDemoSession() : null;
   // An anonymous Supabase user (guest sign-in) has no email and no real
-  // login, so it must not count as "signed in" for this gate — otherwise a
+  // login, so it must not count as "signed in" for this gate. Otherwise a
   // city creator could end up owning a city with no way back into the
   // account. Demo persona handling is untouched (it's a separate cookie).
   const realUser = user && !user.is_anonymous ? user : null;

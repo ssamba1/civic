@@ -1,13 +1,13 @@
 -- =============================================================================
--- Civic – Storage RLS, Audit Trigger Fix, Dashboard View PII Fix
+-- Civic. Storage RLS, Audit Trigger Fix, Dashboard View PII Fix
 -- Migration: 20260527_003_storage_rls_and_fixes.sql
 --
 -- Fixes:
---   C10  — Storage RLS: add policies on storage.objects for photos-raw /
+--   C10. Storage RLS: add policies on storage.objects for photos-raw /
 --          photos-public buckets (previously no policies existed).
---   M5   — Audit trigger: auth.uid() returns null for service-role ops;
+--   M5. Audit trigger: auth.uid() returns null for service-role ops;
 --          fall back to a sentinel UUID so logs remain forensically useful.
---   M10  — dashboard_reports_view: exclude `description` (user-typed free
+--   M10, dashboard_reports_view: exclude `description` (user-typed free
 --          text that may contain reporter PII such as names or addresses).
 -- =============================================================================
 
@@ -81,8 +81,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- DROP + CREATE, not CREATE OR REPLACE: this statement REMOVES `description`
 -- from the view, and Postgres refuses to drop a column through
 -- CREATE OR REPLACE VIEW ("cannot drop columns from view"). The file is
--- transactional, so that error rolled back all of 003 on a fresh database —
--- taking the storage RLS fixes AND this very PII protection with it, while the
+-- transactional, so that error rolled back all of 003 on a fresh database.
+-- Taking the storage RLS fixes AND this very PII protection with it, while the
 -- already-migrated live project stayed fine. Migration 009 uses this same
 -- DROP-then-CREATE shape on the same view.
 DROP VIEW IF EXISTS dashboard_reports_view;

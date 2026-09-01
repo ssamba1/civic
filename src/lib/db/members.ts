@@ -14,7 +14,7 @@ export interface MemberRow {
   role: "resident" | "staff_dispatcher" | "staff_supervisor" | "admin";
   teamKey: string | null;
   isShared: boolean;
-  /** Crews (ids) this member sits on — resolve names via fetchCityCrews. */
+  /** Crews (ids) this member sits on, resolve names via fetchCityCrews. */
   crewIds: string[];
   joinedAt: string;
   lastSignInAt: string | null;
@@ -95,7 +95,7 @@ function embeddedCategory(
 /**
  * Best-effort id → last_sign_in_at map from the Auth admin API. Paginates up to
  * 5 pages of 1000; on any failure returns whatever it collected (callers treat a
- * missing id as null). Never throws — auth listing is supplementary, not the
+ * missing id as null). Never throws. Auth listing is supplementary, not the
  * source of truth for the roster.
  */
 async function fetchLastSignInMap(
@@ -128,7 +128,7 @@ export type CityMembersResult =
  * Mask an email for demo-grade sessions: "jane.doe@city.gov" → "j•••@c•••.gov".
  * Demo credentials are public (baked into the bundle), so a demo session must
  * never see raw member emails; masking keeps the table demoable without
- * leaking PII. Server-side only — the raw address must not reach the client.
+ * leaking PII. Server-side only. The raw address must not reach the client.
  */
 export function maskEmail(email: string | null): string | null {
   if (!email) return null;
@@ -143,10 +143,10 @@ export function maskEmail(email: string | null): string | null {
 
 /**
  * Mask a phone for demo-grade sessions: "+1 470 555 0142" → "•••••42". Same
- * rationale as maskEmail — demo credentials are public, so a demo session must
+ * rationale as maskEmail. Demo credentials are public, so a demo session must
  * never see raw member phone numbers. Keeps the last two digits for recognition
  * ("is this the number I expect?") while hiding the rest behind a fixed mask.
- * Server-side only — the raw number must not reach the client.
+ * Server-side only. The raw number must not reach the client.
  */
 export function maskPhone(phone: string | null): string | null {
   if (!phone) return null;
@@ -157,7 +157,7 @@ export function maskPhone(phone: string | null): string | null {
 
 /**
  * Load every member of `cityId` with per-user activity rollups (report count,
- * last report/event time, last sign-in). Service-role client — call only behind
+ * last report/event time, last sign-in). Service-role client, call only behind
  * the page's staff-access gate. Never throws: a failure on the primary users
  * query returns a tagged error (every real city has at least its admin, so an
  * empty-looking roster must not masquerade as success); secondary rollups
@@ -227,7 +227,7 @@ export async function fetchCityMembers(
     }
 
     // 4. Last sign-in (best-effort, never throws) + crew memberships
-    //    (best-effort — missing user ⇒ no crews).
+    //    (best-effort, missing user ⇒ no crews).
     const lastSignInById = await fetchLastSignInMap(db);
     const crewIdsByUser = await fetchCrewIdsByUser(cityId);
 
@@ -279,8 +279,8 @@ export interface MemberReportItem {
   address: string | null;
   createdAt: string;
 }
-/** One lifecycle event the member is the actor of. `note` is always null —
- *  report_events has no freetext column (metadata is structured jsonb). */
+/** One lifecycle event the member is the actor of. `note` is always null.
+ *  Report_events has no freetext column (metadata is structured jsonb). */
 export interface MemberEventItem {
   id: string;
   reportId: string | null;
@@ -305,10 +305,10 @@ const MEMBER_EVENTS_CAP = 100;
 
 /**
  * Load one member of `cityId` with their report history, lifecycle events, and
- * status rollup. Service-role client — call only behind the page's admin gate.
+ * status rollup. Service-role client, call only behind the page's admin gate.
  * Never throws: a missing/foreign member returns `member_not_found`, a failure
  * on the primary users lookup returns a tagged error, and every rollup (reports,
- * events, last sign-in) degrades to empty/null so the profile still renders —
+ * events, last sign-in) degrades to empty/null so the profile still renders,
  * same policy as fetchCityMembers.
  */
 export async function fetchMemberDetail(
@@ -318,7 +318,7 @@ export async function fetchMemberDetail(
   try {
     const db = createServerClient();
 
-    // 1. The member — id AND city_id both enforced, so a user belonging to
+    // 1. The member, id AND city_id both enforced, so a user belonging to
     //    another city can never be loaded through this city's console.
     const { data: userRow, error: userErr } = await db
       .from("users")
@@ -351,7 +351,7 @@ export async function fetchMemberDetail(
       .order("created_at", { ascending: false });
     if (reportErr) {
       // Degrade like fetchCityMembers: log and leave the rollups empty rather
-      // than failing the whole profile — the member row already loaded.
+      // than failing the whole profile, the member row already loaded.
       log.error("member reports query failed", reportErr, { cityId, userId });
     } else {
       const reportRows = (reportData ?? []) as MemberReportRowRaw[];
@@ -397,7 +397,7 @@ export async function fetchMemberDetail(
       }));
     }
 
-    // 4. Last sign-in — single Auth lookup, best-effort (never throws).
+    // 4. Last sign-in. Single Auth lookup, best-effort (never throws).
     let lastSignInAt: string | null = null;
     try {
       const { data: authData, error: authErr } =
@@ -408,7 +408,7 @@ export async function fetchMemberDetail(
       log.error("getUserById threw", err, { userId });
     }
 
-    // Crew memberships — best-effort map over this city's crews.
+    // Crew memberships, best-effort map over this city's crews.
     const crewIdsByUser = await fetchCrewIdsByUser(cityId);
 
     const member: MemberRow = {

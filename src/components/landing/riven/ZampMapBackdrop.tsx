@@ -9,21 +9,21 @@ import { buildHeatLayer, buildHexLayer, buildMarkerLayers } from "./mapLayers";
 import { BUILDINGS_3D_LAYER, CUMMING, makePoints } from "./mapPresets";
 
 /**
- * Zamp hero background — a live, preset-driven MapLibre map of Cumming, GA that
+ * Zamp hero background. A live, preset-driven MapLibre map of Cumming, GA that
  * fills the hero behind the colossal "Civic" wordmark + glass card.
  *
  *  - It's a BACKDROP: pointer-events-none + interactive={false}, so scroll and
- *    clicks pass through to the page. "Interactivity" is cursor parallax — the
- *    camera leans toward the pointer — not drag/zoom that would trap scroll.
+ *    clicks pass through to the page. "Interactivity" is cursor parallax, the
+ *    camera leans toward the pointer, not drag/zoom that would trap scroll.
  *  - The active preset (see mapPresets.ts) chooses basemap, camera, render mode
  *    (DOM marker pins vs a deck.gl heat/hex overlay), scrim, and motion.
  *  - Motion ALWAYS plays (orbit / 3D spin / pin pulse), regardless of the OS
- *    reduce-motion setting — the primary dev runs reduce-motion ON and the old
+ *    reduce-motion setting. The primary dev runs reduce-motion ON and the old
  *    gating made the hero read as frozen for them. The orbit is sub-perceptual
  *    drift, not a vestibular trigger. (memory: reduced-motion-breaks-function.)
  */
 
-const ORBIT_R = 0.004; // ~0.4km camera circle — gentle breathing, not a slide
+const ORBIT_R = 0.004; // ~0.4km camera circle, gentle breathing, not a slide
 const ORBIT_PERIOD = 95000; // ms per orbit
 const SPIN_PERIOD = 200000; // ms per full bearing rotation (hex 3D view)
 const PARALLAX_LNG = 0.006;
@@ -50,7 +50,7 @@ export default function ZampMapBackdrop() {
   const markerPoints = useMemo(() => points.slice(0, 96), [points]);
 
   const layers = useMemo<DeckGLLayer[]>(() => {
-    // ?mapMarkers=0 — capture-hero-map.mjs shoots a BARE basemap plate. The
+    // ?mapMarkers=0, capture-hero-map.mjs shoots a BARE basemap plate. The
     // report field is no longer baked into the JPEG: the landing renders it as
     // DOM severity pins (MapPinStory) so it can animate and ride the parallax.
     if (
@@ -64,7 +64,7 @@ export default function ZampMapBackdrop() {
   }, [preset.view, preset.ink, points, markerPoints]);
 
   // Capture the opening camera once; preset changes are driven via easeTo below.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: opening frame only — later preset changes ease the camera in the controller effect, not by re-seeding initialViewState.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: opening frame only, later preset changes ease the camera in the controller effect, not by re-seeding initialViewState.
   const initialViewState = useMemo(
     () => ({
       longitude: CUMMING[0],
@@ -76,7 +76,7 @@ export default function ZampMapBackdrop() {
     [],
   );
 
-  // Cursor parallax source — desktop/hover only. Stored in a ref so the camera
+  // Cursor parallax source, desktop/hover only. Stored in a ref so the camera
   // loop reads it without re-subscribing every frame.
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -91,7 +91,7 @@ export default function ZampMapBackdrop() {
     return () => window.removeEventListener("pointermove", onMove);
   }, []);
 
-  // 3D building layer — imperative addLayer/removeLayer so the hyphenated
+  // 3D building layer, imperative addLayer/removeLayer so the hyphenated
   // "source-layer" key reaches MapLibre without react-map-gl prop normalization
   // mangling it. Only valid on Carto vector basemaps (source id "carto").
   useEffect(() => {
@@ -112,7 +112,7 @@ export default function ZampMapBackdrop() {
     };
   }, [preset.buildings3d, mapLoaded]);
 
-  // Camera controller — eases to the preset's base camera, waits for the map to
+  // Camera controller, eases to the preset's base camera, waits for the map to
   // settle (one 'idle' → flips the QA screenshot flag), then runs the ambient
   // orbit / spin / parallax loop. Re-armed on every preset change.
   // biome-ignore lint/correctness/useExhaustiveDependencies: preset.id + mapLoaded are intentional re-arm triggers (preset.id changes when the look changes; mapLoaded gates the first run until the GL map exists), not values read inside.
@@ -121,12 +121,12 @@ export default function ZampMapBackdrop() {
     if (!map) return;
 
     let raf = 0;
-    // Visibility gate — the ambient orbit/spin/parallax loop calls setCenter/
+    // Visibility gate, the ambient orbit/spin/parallax loop calls setCenter/
     // setBearing every frame, which repaints the whole GL canvas. Left running
     // while the hero is scrolled out of view it competes with the rest of the
     // page for the main thread / GPU and reads as scroll jank. Pause the loop
     // whenever the hero leaves the viewport; the IntersectionObserver below
-    // restarts it on re-entry. Keyed off visibility ONLY — NOT reduce-motion;
+    // restarts it on re-entry. Keyed off visibility ONLY. NOT reduce-motion;
     // the forced-on motion is a deliberate product decision (see memory).
     let visible = true;
     const base = preset.camera;
@@ -233,7 +233,7 @@ export default function ZampMapBackdrop() {
         <DeckGLOverlay layers={layers} interleaved={true} />
       </MapGL>
 
-      {/* Scrim — atmosphere + fade that seats the wordmark. Preset-specific so
+      {/* Scrim, atmosphere + fade that seats the wordmark. Preset-specific so
           dark basemaps get a dark fade (white ink) and light ones a light fade
           (black ink). Sits above the canvas, inherits pointer-events-none. */}
       <div className="absolute inset-0" style={{ background: preset.scrim }} />

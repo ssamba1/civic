@@ -1,25 +1,25 @@
 -- =============================================================================
--- Civic – Security hardening from Supabase advisor sweep (2026-07-08)
+-- Civic, Security hardening from Supabase advisor sweep (2026-07-08)
 -- Migration: 20260708_035_security_hardening.sql
 --
 -- Addresses the SAFE, non-behavior-changing advisor findings. Three groups:
 --
---   1. function_search_path_mutable (6 fns) — pin search_path so a caller-set
+--   1. function_search_path_mutable (6 fns), pin search_path so a caller-set
 --      search_path can't shadow objects the SECURITY DEFINER body resolves.
---      ALTER FUNCTION (not CREATE OR REPLACE) — bodies untouched, no re-grant.
+--      ALTER FUNCTION (not CREATE OR REPLACE), bodies untouched, no re-grant.
 --
---   2. security_definer_function executable-by-anon/authenticated — revoke
+--   2. security_definer_function executable-by-anon/authenticated, revoke
 --      EXECUTE from anon + authenticated on TRIGGER-ONLY functions (they run as
 --      the table owner from the trigger regardless of grants, so RPC exposure is
 --      pure attack surface) and on provision_city (invoked only via service_role
 --      in the onboarding action; service_role keeps EXECUTE).
---      NOT revoked: is_staff / current_user_city_id / current_user_role — RLS
+--      NOT revoked: is_staff / current_user_city_id / current_user_role, RLS
 --      policies call these, so authenticated MUST retain EXECUTE or every policy
 --      check errors. Their anon/authenticated exposure is intentional.
 --
---   3. api_keys — RLS was enabled with zero policies (default-deny to all roles).
+--   3. api_keys. RLS was enabled with zero policies (default-deny to all roles).
 --      Add owner-scoped + staff-scoped SELECT. Writes stay service-role-only
---      (scripts/issue-api-key.mjs), which bypasses RLS — no write policy needed.
+--      (scripts/issue-api-key.mjs), which bypasses RLS. No write policy needed.
 --
 -- DELIBERATELY OUT OF SCOPE (need a decision, not a blind flip):
 --   * 7 SECURITY DEFINER views (dashboard_reports_view + 6 metric_*). These are
@@ -27,9 +27,9 @@
 --     read path with PII (reporter_id/description) stripped, reading staff-only
 --     classifications/work_orders. Switching to security_invoker would force anon
 --     RLS on those tables and break the public dashboard. Left as-is.
---   * extension_in_public (postgis) — moving schemas is invasive on managed PG.
---   * auth_leaked_password_protection — dashboard toggle, not SQL.
---   * anon-accessible RLS policies on public read tables (cities/reports/…) —
+--   * extension_in_public (postgis). Moving schemas is invasive on managed PG.
+--   * auth_leaked_password_protection, dashboard toggle, not SQL.
+--   * anon-accessible RLS policies on public read tables (cities/reports/…),
 --     intentional public data.
 --
 -- Applied in filesystem order by scripts/run-migrations.mjs (NOT auto-applied).
@@ -61,7 +61,7 @@ REVOKE EXECUTE ON FUNCTION public._evt_work_order_created()        FROM anon, au
 REVOKE EXECUTE ON FUNCTION public._evt_work_order_milestones()     FROM anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.audit_trigger_fn()               FROM anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.notify_report_status_change()    FROM anon, authenticated;
--- rls_auto_enable() is not created by any migration — it exists only on the
+-- rls_auto_enable() is not created by any migration. It exists only on the
 -- live project, so an unguarded REVOKE aborts this file on a fresh database.
 -- Revoke it where it exists and move on where it does not; hardening a function
 -- that was never created is a no-op, not an error.

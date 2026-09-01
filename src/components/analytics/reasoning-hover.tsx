@@ -17,7 +17,7 @@ import type {
 import { cn } from "@/lib/utils/cn";
 
 /* ==================================================================
-   Reasoning hover card — portal-rendered, anchored to a report row.
+   Reasoning hover card, portal-rendered, anchored to a report row.
 
    Compact summary: one cost line + 3-4 bullet highlights pulled from
    the scoring sections. Opens to the LEFT of the row (the report rail
@@ -140,7 +140,7 @@ export function useReasoningHover(): UseReasoningHoverReturn {
   const cardRef = useRef<HTMLDivElement | null>(null);
   const intentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fetchController = useRef<AbortController | null>(null);
-  // The id we are actively showing — guards against a slow fetch resolving
+  // The id we are actively showing, guards against a slow fetch resolving
   // after the user has moved on to a different row.
   const activeId = useRef<string | null>(null);
 
@@ -168,7 +168,7 @@ export function useReasoningHover(): UseReasoningHoverReturn {
           scoringExplanation: [
             {
               title: "Severity",
-              value: "3 / 5 — property access blocked, no injury risk",
+              value: "3 / 5, property access blocked, no injury risk",
             },
             { title: "Confidence", value: "93%" },
             { title: "Priority score", value: "72 / 100" },
@@ -259,7 +259,7 @@ export function useReasoningHover(): UseReasoningHoverReturn {
     (report) => ({
       onPointerEnter: (e) => {
         lastReportPtrType.current = e.pointerType;
-        // Touch: don't show on hover-enter — wait for explicit tap (onClick)
+        // Touch: don't show on hover-enter, wait for explicit tap (onClick)
         if (e.pointerType === "touch") return;
         if (!pointerHasMoved.current) return;
         const el = e.currentTarget as HTMLElement;
@@ -288,7 +288,7 @@ export function useReasoningHover(): UseReasoningHoverReturn {
         }
       },
       onFocus: (e) => {
-        // Only open on explicit keyboard focus — relatedTarget is null when focus
+        // Only open on explicit keyboard focus. RelatedTarget is null when focus
         // moves from outside the document (page load, programmatic .focus()) which
         // was causing the popover to auto-open on analytics page load.
         if (!e.relatedTarget) return;
@@ -302,7 +302,7 @@ export function useReasoningHover(): UseReasoningHoverReturn {
 
   // Position after the card has measured itself; reposition on resize, and
   // dismiss on scroll so the card never floats away from its row.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `data` is an intentional extra dep — landing async data changes the card's offsetHeight, so place() must re-run to re-center
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `data` is an intentional extra dep, landing async data changes the card's offsetHeight, so place() must re-run to re-center
   useLayoutEffect(() => {
     if (!target || typeof window === "undefined") return;
     const place = () => {

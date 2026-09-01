@@ -8,7 +8,7 @@ const buttonVariants = cva(
   "relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius-md)] text-[13px] font-medium transition-[background-color,border-color,box-shadow,transform] duration-200 outline-offset-2 focus-visible:outline-2 focus-visible:outline-[var(--color-primary)] disabled:pointer-events-none disabled:opacity-50 active:translate-y-px data-[loading=true]:pointer-events-none data-[loading=true]:opacity-70 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4",
   {
     variants: {
-      // Ink solids for emphasis (primary/accent share the ink accent — grayscale
+      // Ink solids for emphasis (primary/accent share the ink accent, grayscale
       // by design), a bordered surface for secondary, a quiet ghost, and a muted
       // destructive. No gradients, glow, or pill radius.
       variant: {
@@ -57,7 +57,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const Comp = asChild ? Slot : "button";
-    // asChild forwards a single child element — can't inject a sibling spinner
+    // asChild forwards a single child element. Can't inject a sibling spinner
     // without breaking Slot's single-child contract, so skip the overlay there.
     const showSpinner = isPending && !asChild;
     return (

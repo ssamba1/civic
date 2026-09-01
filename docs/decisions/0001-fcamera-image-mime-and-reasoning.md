@@ -1,9 +1,9 @@
-# 0001 — fcamera: image MIME correctness, reasoning hybrid, and scalability posture
+# 0001: fcamera: image MIME correctness, reasoning hybrid, and scalability posture
 
 - Status: Accepted
 - Date: 2026-05-29
 - Branch: `perf/dev-speed`
-- Scope: the "fcamera" pipeline — camera capture → privacy blur → upload →
+- Scope: the "fcamera" pipeline. Camera capture → privacy blur → upload →
   Gemini classify → work order (the citizen **Report** flow), plus the
   staff-dashboard **reasoning** API.
 
@@ -33,7 +33,7 @@ not to transcode. (b) No image-processing libraries (`sharp`, `heic-convert`)
 are installed, and the environment's npm install is flaky.
 
 **The reasoning route operates on synthetic data.** `/api/ai/reasoning` reads
-`getReportCorpus()` — a ~1100-row synthetic corpus with **no DB rows backing
+`getReportCorpus()`: a ~1100-row synthetic corpus with **no DB rows backing
 those IDs**. Any persistence keyed on a real `reports`/`classifications` row is
 therefore unavailable to it.
 
@@ -46,7 +46,7 @@ synchronous demo.
 
 ---
 
-## Decision 1 — Fix image MIME via client re-encode + server MIME sniff, not server transcode
+## Decision 1: Fix image MIME via client re-encode + server MIME sniff, not server transcode
 
 ### Decision
 
@@ -77,7 +77,7 @@ payload-size defects unsolved.
 
 - HEIC/PNG/WebP photos now classify correctly; the silent fall-through to
   `other` for non-JPEG uploads is eliminated.
-- Orientation is correct (no sideways photos) and payloads are bounded — both
+- Orientation is correct (no sideways photos) and payloads are bounded, both
   encoded blobs (blurred WebP + original JPEG) fit comfortably under Next's
   default 1 MB Server Action body limit, which previously truncated large phone
   photos into a fake-success "thanks" screen (silent data loss).
@@ -91,12 +91,12 @@ payload-size defects unsolved.
 - Trade-off: client re-encode requires `createImageBitmap` to succeed. On a
   desktop/Android Chrome HEIC pick it can reject; that failure is caught in
   `report/page.tsx` and surfaced as a recoverable "try a JPEG/PNG or retake"
-  error *before* any report is created — it is not allowed to fall through to
+  error *before* any report is created. It is not allowed to fall through to
   the success screen (which would imply a report was saved when none was).
 
 ---
 
-## Decision 2 — Reasoning is a real-AI hybrid with an in-memory cache
+## Decision 2: Reasoning is a real-AI hybrid with an in-memory cache
 
 ### Decision
 
@@ -111,7 +111,7 @@ report's cache entry. The route adds auth (a valid user session **or** the
 internal-secret header) and a rate limit.
 
 We rejected a **DB-backed cache** because the reasoning route runs on the
-synthetic corpus — those report IDs have **no row** in `reports` /
+synthetic corpus. Those report IDs have **no row** in `reports` /
 `classifications` to attach a cached narrative to, and standing up a side table
 purely to memoize synthetic-demo output is unjustified overhead. We rejected
 **templates-only** (loses the "real AI" demo value) and **Gemini-only** (would
@@ -123,20 +123,20 @@ dead-end the panel on any API hiccup, violating the invariant).
   warm-cache repeats for a given report (the hover/detail/delegation components
   re-request the same IDs).
 - The `ReasoningResponse { reasoning, costBreakdown[], scoringExplanation[] }`
-  shape is preserved exactly — three client components
+  shape is preserved exactly, three client components
   (`reasoning-hover`, `report-detail`, `delegation-row-expanded`) consume all
   three fields, so the shape is a contract.
 - Cache lifetime is process-local: it resets on cold start (serverless) and is
-  per-instance under multi-instance scale. Acceptable — it is a latency/cost
+  per-instance under multi-instance scale. Acceptable. It is a latency/cost
   optimization, not a source of truth; a miss simply re-generates.
 - Bounded memory: the cache is capped (LRU eviction of the oldest entry past the
   limit), so it cannot grow without bound across the corpus.
-- Zero new runtime dependencies — the cache is a plain `Map` with manual
+- Zero new runtime dependencies. The cache is a plain `Map` with manual
   recency promotion; Gemini uses the already-present `@google/generative-ai`.
 
 ---
 
-## Decision 3 — Scalability: harden the sync path, add an optional flag-gated async path (default OFF)
+## Decision 3: Scalability: harden the sync path, add an optional flag-gated async path (default OFF)
 
 ### Decision
 
@@ -158,7 +158,7 @@ Protect the demo first, then make scale opt-in:
   subscribe-after-fire race and a client-side timeout backstop so the spinner
   can never hang forever). An additive migration (`…_007_ai_pipeline.sql`) adds
   the nullable `reports.classify_status` column, a partial dequeue index, and the
-  Realtime publication — and is **NOT auto-applied**.
+  Realtime publication, and is **NOT auto-applied**.
 
 We rejected **sync-only** (doesn't address the scale ask) and **always-async**
 (adds Realtime/migration complexity and latency to the happy-path demo, and risks
@@ -171,21 +171,21 @@ async is the compromise: scale when you want it, predictable demo when you don't
   behavior: with the flag OFF, `submitReport` inserts the bare report row (no
   `classify_status` reference), the pipeline's `markClassifyStatus` is a hard
   no-op, and the resident page's Realtime effect is inert. This matters because
-  migration 007 is not auto-applied — any unguarded reference to
+  migration 007 is not auto-applied. Any unguarded reference to
   `classify_status` would break the default path on an un-migrated database.
 - Retry + timeout + rate limit make the sync path resilient to transient Gemini
   errors and abusive callers without affecting trusted internal callers.
 - The async path is opt-in and self-protecting: an unexpected throw in the
   fire-and-forget pipeline is backstopped in `submitReport` (logged to
   `error_log` and `classify_status` stamped `failed`), and the client times out
-  to a terminal manual-review state — so even the async path never dead-ends.
+  to a terminal manual-review state, so even the async path never dead-ends.
 - Operational note: enabling async requires running migration 007
   (`npm run db:migrate`). Until then the column/index/publication do not exist
   and the flag must remain OFF.
 
 ---
 
-## Decision 4 — Zero new runtime dependencies
+## Decision 4: Zero new runtime dependencies
 
 ### Decision
 
@@ -205,7 +205,7 @@ only as a belt-and-suspenders fallback).
 - The hand-rolled primitives are intentionally minimal and single-purpose
   (e.g. the rate limiter is a per-instance fixed-window `Map` that resets on cold
   start). For real distributed limiting or a shared reasoning cache, swap the
-  `Map` for Upstash/Redis behind the same function signature — explicitly out of
+  `Map` for Upstash/Redis behind the same function signature, explicitly out of
   scope for the demo.
 - Test-only dev dependencies (vitest + mocks) are unaffected by this constraint;
   it governs **runtime** deps only.

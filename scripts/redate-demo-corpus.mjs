@@ -5,17 +5,17 @@
 // lib/db/calendar.ts pre-filters the query on work_orders.created_at with a
 // 60-day lookback before bucketing client-side on (dispatched_at ?? created_at).
 // So a row only reaches the grid if BOTH work_orders.created_at and its
-// calendar timestamp live in the visible window — shifting dispatched_at alone
+// calendar timestamp live in the visible window. Shifting dispatched_at alone
 // is a no-op. Prior art: supabase/seed/july_calendar_backfill.sql (same
 // reasoning, targeted July; this supersedes it for the current month).
 //
 // Before this ran the August grid had 13 chips on 4 days plus 26 stacked on
-// Aug 29 — technically non-empty, visually dead. This spreads ~82% of the
+// Aug 29, technically non-empty, visually dead. This spreads ~82% of the
 // alive corpus across August (weekday-weighted, with a reserved bucket for
 // the last few days) and parks the rest in July so prev-month nav isn't blank.
 //
 // IDEMPOTENT: every target timestamp is derived from an FNV-1a hash of the
-// report's UUID plus a fixed ANCHOR constant — never from Date.now() and never
+// report's UUID plus a fixed ANCHOR constant, never from Date.now() and never
 // from the row's current dates. Re-running converges on the identical result
 // instead of drifting the corpus further each time.
 //
@@ -52,7 +52,7 @@ const projectRef = new URL(supabaseUrl).hostname.split(".")[0];
 const slug = process.argv.find((a) => !a.startsWith("--") && a !== process.argv[0] && a !== process.argv[1]) ?? "cumming";
 const dryRun = process.argv.includes("--dry");
 
-/** SQL through the Management API — the repo's route for DDL/DML that
+/** SQL through the Management API. The repo's route for DDL/DML that
  *  PostgREST can't express (see MEMORY: Civic Supabase drift + access). */
 async function sql(query) {
   const r = await fetch(
@@ -81,7 +81,7 @@ const YEAR = 2026;
 const MONTH = 7; // 0-based → August
 const DAYS_IN_MONTH = 31;
 
-// Reports the calendar refuses to render — left completely alone.
+// Reports the calendar refuses to render, left completely alone.
 const DEAD_STATUSES = ["closed", "merged", "rejected"];
 
 /** FNV-1a → uint32. Deterministic across runs and machines, which is the
@@ -96,7 +96,7 @@ function hash(str) {
 }
 
 /** Weekday-weighted day pool for August 2026: weekdays get 3 slots, weekends
- *  1, and the future tail (Aug 30–31) 1 — so chips cluster on working days
+ *  1, and the future tail (Aug 30-31) 1, so chips cluster on working days
  *  the way real dispatch does instead of dusting evenly across the grid. */
 function buildDayPool() {
   const pool = [];
@@ -111,8 +111,8 @@ function buildDayPool() {
 }
 const DAY_POOL = buildDayPool();
 // Same pool clipped to the first 24 days. Rows that carry a completed_at get
-// drawn from here so completion (+1–4 days) always lands at or before ANCHOR —
-// a row can never be "completed" in the future.
+// drawn from here so completion (+1-4 days) always lands at or before ANCHOR.
+// A row can never be "completed" in the future.
 const EARLY_POOL = DAY_POOL.filter((d) => d <= 24);
 // Reserved so the last working week is never thin: "recent" surfaces and the
 // today-cell would otherwise look abandoned.
@@ -156,7 +156,7 @@ function plan(row) {
     day = DAY_POOL[h2 % DAY_POOL.length];
   }
 
-  const hour = 7 + (h3 % 8); // 07:00–14:00, so same-day offsets never roll over
+  const hour = 7 + (h3 % 8); // 07:00-14:00, so same-day offsets never roll over
   const createdMs = Date.UTC(year, month, day, hour, (h3 % 12) * 5);
 
   const dispatchedMs = isOpen ? null : createdMs + (1 + (h % 4)) * 3600_000;

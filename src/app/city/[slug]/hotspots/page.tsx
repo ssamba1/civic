@@ -7,7 +7,7 @@ import type { ReportCategory } from "@/lib/types";
 /* ==================================================================
    Repeat-offender asset registry (NEXT_100 #48).
 
-   Infrastructure that keeps failing — the same location generating report after
+   Infrastructure that keeps failing, the same location generating report after
    report. Groups the corpus by address and surfaces locations with repeat
    reports so staff can fix the root cause instead of the symptom.
    ================================================================== */
@@ -21,7 +21,7 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const c = await corpusForCity(slug);
-  return { title: c ? `Civic | ${c.name} — Repeat Hotspots` : "Civic" };
+  return { title: c ? `Civic | ${c.name}, Repeat Hotspots` : "Civic" };
 }
 
 interface Hotspot {
@@ -82,7 +82,7 @@ export default async function HotspotsPage({ params }: PageProps) {
           Repeat hotspots
         </h1>
         <p className="text-[13px] text-faint">
-          Locations with 2+ reports — recurring failures worth a root-cause fix.
+          Locations with 2+ reports. Recurring failures worth a root-cause fix.
         </p>
       </section>
 

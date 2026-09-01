@@ -9,7 +9,7 @@ const STAFF_ROLES = new Set(["admin", "staff_supervisor", "staff_dispatcher"]);
  * Where a signed-in user should land post-auth: their city console if
  * they're staff of one, otherwise the homepage. Uses the service-role
  * client since this runs right after auth, before any RLS-scoped session
- * context is needed. Never throws — any lookup failure falls back to "/",
+ * context is needed. Never throws. Any lookup failure falls back to "/",
  * but always logs first: a silent fallback here means staff mysteriously
  * never reach their console.
  */

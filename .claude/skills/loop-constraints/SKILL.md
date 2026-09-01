@@ -34,10 +34,10 @@ If no `loop-constraints.md` exists, say so and proceed with default safety rules
 
 ## Interaction with other skills
 
-- `loop-triage` — constraints may override triage priority (e.g. "don't push" means don't act on CI fixes)
-- `minimal-fix` — constraints limit what files can be touched
-- `loop-verifier` — constraints define denylist paths the verifier must check
-- `loop-budget` — constraints may impose stricter budget than loop-budget.md
+- `loop-triage`: constraints may override triage priority (e.g. "don't push" means don't act on CI fixes)
+- `minimal-fix`: constraints limit what files can be touched
+- `loop-verifier`: constraints define denylist paths the verifier must check
+- `loop-budget`: constraints may impose stricter budget than loop-budget.md
 
 ## Default constraints (when no file exists)
 

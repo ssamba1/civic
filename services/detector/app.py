@@ -1,4 +1,4 @@
-"""Civic detector sidecar — scaffold only, no model shipped.
+"""Civic detector sidecar, scaffold only, no model shipped.
 
 Why a sidecar at all: an LLM call per dashcam frame is economically impossible
 (one bus, one route, one day is tens of thousands of frames). This service is
@@ -12,11 +12,11 @@ Endpoints (see contract.md for the wire format):
   GET  /health  -> liveness + whether a model is actually loaded.
 
 Both stubs are deliberately honest:
-  * /detect returning [] means every frame is dropped — no detections, no
+  * /detect returning [] means every frame is dropped, no detections, no
     reports, no unblurred bytes. Safe default.
   * /blur returning 501 makes blurServerSide() fail, and the Next app DROPS the
     crop. There is no unblurred fallback anywhere in the chain, so an
-    unimplemented blur cannot leak a face or a plate — it can only lose data.
+    unimplemented blur cannot leak a face or a plate. It can only lose data.
 
 Run: uvicorn app:app --host 0.0.0.0 --port 8000
 """
@@ -88,7 +88,7 @@ def detect(req: DetectRequest) -> DetectResponse:
 
     TODO(deploy): load an Apache-2.0/BSD, RDD2022-trained ONNX model from
     DETECTOR_MODEL_PATH via onnxruntime, run inference, filter by
-    ``req.min_score``, and crop each surviving bbox. See README.md — AGPL
+    ``req.min_score``, and crop each surviving bbox. See README.md. AGPL
     Ultralytics checkpoints are excluded by license, not by preference.
 
     Until then this returns no detections, which drops every frame. That is the
@@ -109,7 +109,7 @@ async def blur(request: Request) -> Response:
 
     TODO(deploy): load a face/plate detector from BLUR_MODEL_PATH and paint over
     every detected region before returning. NEVER return the input bytes
-    unchanged as a fallback — the caller treats a 2xx as "these bytes are safe
+    unchanged as a fallback. The caller treats a 2xx as "these bytes are safe
     to publish", so an unimplemented model must fail, and it does: 501 makes
     blurServerSide() return {ok: false} and the crop is dropped.
     """

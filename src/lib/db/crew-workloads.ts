@@ -16,7 +16,7 @@ export interface CrewWorkload {
   oldestOpenAgeDays: number | null;
   mttrHours: number | null;
 }
-// Record not Map — RSC prop serialization
+// Record not Map, RSC prop serialization
 export type CrewWorkloadsResult =
   | { ok: true; workloads: Record<string, CrewWorkload> }
   | { ok: false; error: string };
@@ -39,8 +39,8 @@ const EMPTY_STATUS_COUNTS: Record<ReportStatus, number> = {
 
 // PostgREST rows come back untyped from the service client; this is the
 // columns/embed the query below selects, cast at the boundary. reports is
-// embedded FROM work_orders via report_id and — like lib/db/calendar.ts's
-// embed — comes back as a single object/null despite supabase-js inferring an
+// embedded FROM work_orders via report_id and, like lib/db/calendar.ts's
+// embed. Comes back as a single object/null despite supabase-js inferring an
 // array for a child embedding its parent this way.
 interface CrewWorkloadRowRaw {
   assigned_crew_id: string | null;
@@ -70,7 +70,7 @@ function emptyWorkload(crewId: string): CrewWorkload {
  * keyed by assigned_crew_id. Mirrors teams-data.ts's aggregateByTeam.
  *
  * MTTR is a mean of real `(completed_at − report.created_at)` hours over
- * completed rows — unlike aggregateByTeam, which synthesizes from severity
+ * completed rows, unlike aggregateByTeam, which synthesizes from severity
  * because its mock corpus has no completion timestamp. Ages and MTTR are
  * rounded the same way teams-data does (MTTR to whole hours, ages left raw).
  */
@@ -131,7 +131,7 @@ export function aggregateCrewWorkloads(
 
 /**
  * Per-crew workload metrics for one city's assigned work orders. Service-role
- * client — call only behind a staff-access gate, same as fetchCityCrews.
+ * client, call only behind a staff-access gate, same as fetchCityCrews.
  * Never throws: any failure (un-migrated DB, query error) returns a tagged
  * error so the members page still renders its crew panel.
  */

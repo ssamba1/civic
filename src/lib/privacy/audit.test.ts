@@ -66,7 +66,7 @@ beforeEach(() => {
 
 describe("auditAllCities", () => {
   it("passes when no public file size-matches its raw counterpart", async () => {
-    // Cleanville: blurred public (small) vs raw (large) — no match.
+    // Cleanville: blurred public (small) vs raw (large), no match.
     store["photos-public/city-clean"] = [
       { name: "a.jpg", metadata: { size: 100 } },
     ];

@@ -73,7 +73,7 @@ if (dsn) {
 }
 ```
 
-The server config fallback to `NEXT_PUBLIC_SENTRY_DSN` is unusual — typically only a public DSN is used on the client, and a secret server DSN (if needed) on the server. Current setup works but is unconventional.
+The server config fallback to `NEXT_PUBLIC_SENTRY_DSN` is unusual. Typically only a public DSN is used on the client, and a secret server DSN (if needed) on the server. Current setup works but is unconventional.
 
 **Recommendation:**
 - Add `SENTRY_DSN` to `.env.example` with instructions
@@ -99,7 +99,7 @@ export const AI_WORK_ORDER = process.env.AI_WORK_ORDER === "1";
 
 **Missing Pattern:**
 ```typescript
-// NOT FOUND — should be in env.ts
+// NOT FOUND. Should be in env.ts
 const serverEnvSchema = z.object({
   // ...
   AI_WORK_ORDER: z.enum(["0", "1"]).optional().default("0"),
@@ -135,7 +135,7 @@ export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE !== "0";
 **Issue:** Unset ≠ "0" means demo is ON by default, but the comment suggests "unset or '1' = demo". Comments conflict with implementation.
 
 **Recommendation:**
-- Clarify: "Unset or '1' = demo" OR "Unset or absent = demo" — choose one
+- Clarify: "Unset or '1' = demo" OR "Unset or absent = demo". Choose one
 - Consider explicit enum: `"demo" | "testing" | "live"` instead of boolean switch
 - **Status:** P1 - Confusing documentation → deployment errors
 
@@ -276,8 +276,8 @@ console.error(entry); // Always runs
 | `SUPABASE_URL` | ✅ Yes | Server-only | URL | Zod URL schema | Production Supabase instance |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ Yes | Server-only | Secret | Zod string | Never expose to client |
 | `GEMINI_API_KEY` | ✅ Yes | Server-only | Secret | Zod string | Used for photo classification |
-| `SENTRY_DSN` | ⚠️ Optional | Server-only | URL | None (if-set) | **MISSING:** P1 risk — no error monitoring |
-| `INTERNAL_CLASSIFY_SECRET` | ⚠️ Recommended | Server-only | Secret | None — compare manually | Protects internal AI endpoints |
+| `SENTRY_DSN` | ⚠️ Optional | Server-only | URL | None (if-set) | **MISSING:** P1 risk. No error monitoring |
+| `INTERNAL_CLASSIFY_SECRET` | ⚠️ Recommended | Server-only | Secret | None, compare manually | Protects internal AI endpoints |
 | `DEV_AUTH_BYPASS` | ⚠️ Dev-only | Server-only | Boolean | None | Should fail in production |
 | `NEXT_PUBLIC_SUPABASE_URL` | ✅ Yes | Client | URL | Zod URL schema | Public Supabase URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ Yes | Client | Secret | Zod string | Limited RLS permissions |
@@ -341,7 +341,7 @@ console.error(entry); // Always runs
 
 ## 7. Recommendations Summary
 
-### P0 (Critical) — None Found
+### P0 (Critical): None Found
 
 No critical security vulnerabilities in secrets handling or configuration.
 
@@ -356,7 +356,7 @@ No critical security vulnerabilities in secrets handling or configuration.
 | 1.3 | `NEXT_PUBLIC_DEMO_MODE` docs confuse "unset" behavior | `.env.example`, `src/lib/demo-mode.ts` | Clarify: "unset defaults to demo" or refactor to enum |
 
 **Effort:** ~2 hours  
-**Impact:** High — prevents silent config failures in staging/production
+**Impact:** High, prevents silent config failures in staging/production
 
 ---
 
@@ -371,7 +371,7 @@ No critical security vulnerabilities in secrets handling or configuration.
 | 2.5 | `RESEND_API_KEY` has ambiguous "missing" state | `.env.example`, docs | Clarify three states: absent / disabled / present |
 
 **Effort:** ~3 hours  
-**Impact:** Medium — improves operational clarity and email reliability
+**Impact:** Medium, improves operational clarity and email reliability
 
 ---
 
@@ -391,7 +391,7 @@ No critical security vulnerabilities in secrets handling or configuration.
 4. Add `LOG_LEVEL` to server schema with default "info"
 
 ```typescript
-// Updated src/lib/env.ts — serverEnvSchema addition
+// Updated src/lib/env.ts, serverEnvSchema addition
 const serverEnvSchema = z.object({
   // ... existing fields
   SENTRY_DSN: z.string().url().optional(),

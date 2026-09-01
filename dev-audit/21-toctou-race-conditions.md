@@ -6,14 +6,14 @@
 
 | File | Line | Risk | Finding | Fix |
 |------|------|------|---------|-----|
-| `src/app/api/ai/classify/route.ts` | 63–75 | P2 | Authorization check (RLS scope verify) happens before DB write, but another request can delete the report between check and write. Check returns `ownedReport`, but by the time `runClassifyPipeline()` executes, the report might be deleted (204 No Content response from Supabase query, or RLS rejects the nested classifications insert). Result: classify job silently fails or crashes with "report_not_found". | Rely on RLS for all DB ops; remove explicit check if RLS is already scoped. OR wrap pipeline in try/catch and handle "report_not_found" with proper error logging. Current code does the latter, pattern is SAFE but could be clearer. |
-| `src/app/staff/actions.ts` | 66–80, 100–113 | P2 | `dispatchWorkOrder()` and `dispatchWorkOrderForReport()` update work_orders, then update reports. Between the two updates, another staff member could update the same work order, causing race condition: two concurrent dispatches both succeed at work_orders level, but only one updates reports status. Work order has two dispatch records (if audit table exists); report status may be stale. | Use a single atomic update: update work_orders + update reports in one transaction via database trigger, OR read work_orders result back in same query (current code does `.select()` on update for this reason, PATTERN IS CLEAN). |
+| `src/app/api/ai/classify/route.ts` | 63-75 | P2 | Authorization check (RLS scope verify) happens before DB write, but another request can delete the report between check and write. Check returns `ownedReport`, but by the time `runClassifyPipeline()` executes, the report might be deleted (204 No Content response from Supabase query, or RLS rejects the nested classifications insert). Result: classify job silently fails or crashes with "report_not_found". | Rely on RLS for all DB ops; remove explicit check if RLS is already scoped. OR wrap pipeline in try/catch and handle "report_not_found" with proper error logging. Current code does the latter, pattern is SAFE but could be clearer. |
+| `src/app/staff/actions.ts` | 66-80, 100-113 | P2 | `dispatchWorkOrder()` and `dispatchWorkOrderForReport()` update work_orders, then update reports. Between the two updates, another staff member could update the same work order, causing race condition: two concurrent dispatches both succeed at work_orders level, but only one updates reports status. Work order has two dispatch records (if audit table exists); report status may be stale. | Use a single atomic update: update work_orders + update reports in one transaction via database trigger, OR read work_orders result back in same query (current code does `.select()` on update for this reason, PATTERN IS CLEAN). |
 
 ---
 
 ## Details
 
-### P2: Stale authorization check in classify route (src/app/api/ai/classify/route.ts:63–75)
+### P2: Stale authorization check in classify route (src/app/api/ai/classify/route.ts:63-75)
 
 ```typescript
 if (!isInternal) {
@@ -65,7 +65,7 @@ if (!result.ok) {
 
 ---
 
-### P2: Non-atomic dispatch updates (src/app/staff/actions.ts:66–80)
+### P2: Non-atomic dispatch updates (src/app/staff/actions.ts:66-80)
 
 ```typescript
 export async function dispatchWorkOrder(
@@ -118,7 +118,7 @@ export async function dispatchWorkOrder(
 **Why P2 (not P1):**
 - Both updates succeed; data is eventually consistent
 - Report status ends up correct
-- Work order timestamp is slightly off (T2 instead of T1) — not critical
+- Work order timestamp is slightly off (T2 instead of T1), not critical
 - No data loss or corruption
 
 **Current pattern is mostly SAFE** because:

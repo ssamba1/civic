@@ -7,7 +7,7 @@ import {
   clustersForView,
 } from "./clustering";
 
-// Minimal DashboardReport factory — only the fields clustering reads.
+// Minimal DashboardReport factory. Only the fields clustering reads.
 function report(
   id: string,
   lng: number,
@@ -35,7 +35,7 @@ describe("clustering", () => {
     );
     const index = buildClusterIndex(reports);
     const features = clustersForView(index, WORLD, 5);
-    // At world/low zoom they merge — far fewer features than points.
+    // At world/low zoom they merge. Far fewer features than points.
     expect(features.length).toBeLessThan(reports.length);
     const clusters = features.filter((f) => f.kind === "cluster");
     expect(clusters.length).toBeGreaterThanOrEqual(1);

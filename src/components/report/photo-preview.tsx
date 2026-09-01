@@ -25,7 +25,7 @@ interface PhotoPreviewProps {
    * Optional attachment strip, rendered in flow between the photo and the
    * action buttons. It is a prop rather than a sibling overlay because an
    * `absolute bottom-0` strip lands exactly on top of Submit and silently
-   * swallows the tap — see the note above the Bottom controls block.
+   * swallows the tap. See the note above the Bottom controls block.
    */
   thumbnails?: React.ReactNode;
   onSubmit: (
@@ -85,7 +85,7 @@ export default function PhotoPreview({
 
   // Create the object URL inside an effect so React Strict Mode's double-mount
   // doesn't revoke a memoized URL that's still in use. The cleanup revokes only
-  // when photo changes or on unmount — never while the <img> is still rendered.
+  // when photo changes or on unmount, never while the <img> is still rendered.
   useEffect(() => {
     const url = URL.createObjectURL(photo);
     setPreviewUrl(url);
@@ -119,14 +119,14 @@ export default function PhotoPreview({
             src={previewUrl}
             alt="The issue you captured"
             // object-contain (not cover) so the full framed subject is visible
-            // before submit — cover cropped 4:3 photos inside the tall frame,
+            // before submit, cover cropped 4:3 photos inside the tall frame,
             // hiding real content the resident meant to report.
             className="w-full h-full object-contain"
           />
         )}
 
-        {/* Processing overlay — the on-device blur + upload pipeline can take
-            2–5s; this gives clear feedback that work is happening on the photo. */}
+        {/* Processing overlay. The on-device blur + upload pipeline can take
+            2-5s; this gives clear feedback that work is happening on the photo. */}
         {submitting && (
           <div className="report-processing-overlay absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/45 backdrop-blur-[2px]">
             <span className="h-9 w-9 rounded-full border-2 border-white/30 border-t-white animate-spin" />
@@ -154,7 +154,7 @@ export default function PhotoPreview({
           }
         `}</style>
 
-        {/* GPS status badge — offset by safe-area-inset-top so it clears the notch */}
+        {/* GPS status badge, offset by safe-area-inset-top so it clears the notch */}
         <div
           className="absolute left-4 flex items-center gap-2 rounded-full bg-black/60 backdrop-blur-sm px-3 py-1.5"
           style={{
@@ -176,10 +176,10 @@ export default function PhotoPreview({
           be tapped on any viewport. Keep this in flow. */}
       {thumbnails}
 
-      {/* Bottom controls — pb-safe clears home indicator */}
+      {/* Bottom controls, pb-safe clears home indicator */}
       <div className="shrink-0 bg-surface px-4 pt-4 pb-safe">
         <div className="pb-8 space-y-3">
-          {/* Issue type — optional manual pick. Skipping it lets the AI
+          {/* Issue type. Optional manual pick. Skipping it lets the AI
               classify; picking one (incl. custom types) routes by that rule. */}
           <div className="space-y-1.5">
             <label
@@ -188,7 +188,7 @@ export default function PhotoPreview({
             >
               Issue type{" "}
               <span className="text-faint">
-                (optional — AI decides if skipped)
+                (optional, AI decides if skipped)
               </span>
             </label>
             <select
@@ -231,7 +231,7 @@ export default function PhotoPreview({
               </div>
             ) : (
               // AI-routing preview: with no manual pick, show that the classifier
-              // will run and route — not just a bare "Let AI decide" label.
+              // will run and route. Not just a bare "Let AI decide" label.
               <div className="flex items-center gap-1.5 text-xs text-faint">
                 <span className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-hairline px-2 py-1 font-medium text-subtle">
                   <svg
@@ -270,7 +270,7 @@ export default function PhotoPreview({
             })}
           </div>
 
-          {/* Optional description — grid-rows height transition avoids the
+          {/* Optional description. Grid-rows height transition avoids the
               instant layout jump when the textarea expands. */}
           {!showDescription && (
             <button
@@ -301,7 +301,7 @@ export default function PhotoPreview({
             </div>
           </div>
 
-          {/* Location — always editable so a wrong or denied GPS fix can be
+          {/* Location, always editable so a wrong or denied GPS fix can be
               corrected. Pre-filled from the reverse-geocoded fix when available.
               This is the manual-address fallback the project requires. */}
           <div className="space-y-1.5">
@@ -312,10 +312,10 @@ export default function PhotoPreview({
               Location{" "}
               <span className="text-faint">
                 {gpsStatus === "found"
-                  ? "(from GPS — edit if wrong)"
+                  ? "(from GPS, edit if wrong)"
                   : gpsStatus === "acquiring"
                     ? "(getting GPS…)"
-                    : "(GPS unavailable — enter manually)"}
+                    : "(GPS unavailable, enter manually)"}
               </span>
             </label>
             <input
@@ -328,7 +328,7 @@ export default function PhotoPreview({
             />
           </div>
 
-          {/* Privacy notice — reassure before upload that PII is stripped
+          {/* Privacy notice, reassure before upload that PII is stripped
               on-device (faces + plates blurred in lib/privacy/blur.ts). */}
           <div className="flex items-start gap-2 text-xs text-faint">
             <svg
@@ -351,7 +351,7 @@ export default function PhotoPreview({
             </span>
           </div>
 
-          {/* Action buttons — min-h-[56px] ensures thumb-reachable targets */}
+          {/* Action buttons, min-h-[56px] ensures thumb-reachable targets */}
           <div className="flex gap-3">
             <button
               type="button"

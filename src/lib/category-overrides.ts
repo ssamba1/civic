@@ -14,7 +14,7 @@ import { createListenerHub, frozenSnapshot } from "@/lib/utils/reactive-store";
    team owns a given report category. The base mapping lives in
    teams.ts (CATEGORY_TO_TEAM, derived from each team's `categories`
    array). Dispatchers can re-aim a category at a different team from
-   the routing-matrix UI — that change is persisted here and consulted
+   the routing-matrix UI, that change is persisted here and consulted
    by `categoryToTeam` before the base map.
 
    Pattern mirrors teams-overrides.ts exactly: module-level snapshot so
@@ -24,7 +24,7 @@ import { createListenerHub, frozenSnapshot } from "@/lib/utils/reactive-store";
    A parallel `historySnapshot` records every re-route event
    (`{ category, from, to, ts }`) keyed by category, so the routing
    activity feed can render a timestamped audit trail. The `OverrideMap`
-   shape is unchanged — existing consumers keep reading
+   shape is unchanged. Existing consumers keep reading
    `overrides[category]` as a TeamId.
 
    When Supabase tables land, swap the localStorage read/write for an
@@ -76,7 +76,7 @@ let snapshot: OverrideMap = {};
 let historySnapshot: HistoryMap = {};
 let hydrated = false;
 
-// One shared listener hub — a single `emit()` must notify both the
+// One shared listener hub. A single `emit()` must notify both the
 // primary-map and history `useSyncExternalStore` subscriptions below.
 const { subscribe, emit } = createListenerHub();
 
@@ -101,7 +101,7 @@ function writeStorage(map: OverrideMap) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
   } catch {
-    // Quota / private mode — silently drop. In-memory snapshot still works.
+    // Quota / private mode. Silently drop. In-memory snapshot still works.
   }
 }
 
@@ -149,7 +149,7 @@ function writeHistoryStorage(map: HistoryMap) {
   try {
     window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(map));
   } catch {
-    // Quota / private mode — silently drop. In-memory snapshot still works.
+    // Quota / private mode. Silently drop. In-memory snapshot still works.
   }
 }
 

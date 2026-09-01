@@ -16,7 +16,7 @@
 // vendor must not learn where the city's cameras have been looking), and the
 // service-role control proves the denials are RLS rather than a missing table.
 //
-// GATING — opt-in integration tests. The suite still COLLECTS and passes (as
+// GATING, opt-in integration tests. The suite still COLLECTS and passes (as
 // skipped) unless a live test database is configured:
 //
 //   SUPABASE_TEST_URL            project URL (e.g. http://127.0.0.1:54321)

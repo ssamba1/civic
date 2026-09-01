@@ -1,5 +1,5 @@
 /**
- * Structured-output contract for the stage-2 decision run — the "actual LLM"
+ * Structured-output contract for the stage-2 decision run, the "actual LLM"
  * that fires only when the LLM-free detector has already found something.
  * Mirrors the classification-schema pattern: one zod schema for validation,
  * one Gemini responseSchema for structured output, kept field-identical.
@@ -78,7 +78,7 @@ export type Decision = z.infer<typeof decisionSchema>;
 
 /**
  * A "merge" pointing at a report id that was never offered in context is a
- * hallucination — downgrade it to "monitor" rather than touching an arbitrary
+ * hallucination, downgrade it to "monitor" rather than touching an arbitrary
  * report. Also strips a stray merge_report_id from non-merge decisions. Pure.
  */
 export function sanitizeDecision(
@@ -98,7 +98,7 @@ export function sanitizeDecision(
     ...decision,
     decision: "monitor",
     merge_report_id: null,
-    rationale: `${decision.rationale} [system: merge target was not among offered nearby reports — downgraded to monitor]`,
+    rationale: `${decision.rationale} [system: merge target was not among offered nearby reports, downgraded to monitor]`,
   };
 }
 

@@ -20,7 +20,7 @@ const log = createLogger("admin-claims");
    file only assembles queue rows, so a claim state machine has exactly
    one owner.
 
-   Every query degrades to an empty result rather than throwing — the
+   Every query degrades to an empty result rather than throwing. The
    claims migration (063) is written but NOT applied, so on a database
    that predates it the screen must render its empty state instead of
    500-ing. Same posture as the crews lookup in dashboard-grid-data.ts.
@@ -104,7 +104,7 @@ function packetString(packet: unknown, path: string[]): string | null {
 
 /**
  * Every claim in the acting admin city, newest first. The screen filters by
- * state client-side — a municipal queue is tens of rows, not thousands, and a
+ * state client-side. A municipal queue is tens of rows, not thousands, and a
  * local filter keeps a multi-select intact while the operator flips tabs.
  */
 export async function listClaims(): Promise<ClaimQueueRow[]> {

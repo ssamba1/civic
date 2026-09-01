@@ -8,7 +8,7 @@ import type { MemberRow } from "@/lib/db/members";
 import { TEAM_LIST, TEAMS, type TeamId } from "@/lib/teams";
 
 /* ==================================================================
-   By-team access view — answers "who can access the team portals".
+   By-team access view, answers "who can access the team portals".
    Residents are excluded entirely (they have no portal). Each section
    is one team that has members; admins and any un-scoped staff collect
    in a top "All-teams access" group, since an admin reaches every
@@ -19,8 +19,8 @@ const ALL_ACCESS = "__all_access__" as const;
 type GroupKey = TeamId | typeof ALL_ACCESS;
 
 // A member sits under a team only when their teamKey names a real team (not the
-// synthetic "all"). Everyone else non-resident — admins, "all", null, or an
-// unrecognized key — lands in the all-teams-access bucket.
+// synthetic "all"). Everyone else non-resident. Admins, "all", null, or an
+// unrecognized key. Lands in the all-teams-access bucket.
 function groupKeyFor(m: MemberRow): GroupKey {
   const key = m.teamKey;
   if (key && key !== "all" && key in TEAMS) return key as TeamId;
@@ -114,11 +114,11 @@ export function TeamAccessView({
                       name={m.displayName}
                     />
                     <div className="truncate text-[12px] text-faint">
-                      {m.email ?? "—"}
+                      {m.email ?? "-"}
                     </div>
                   </div>
                   <div className="hidden w-36 flex-shrink-0 truncate text-[13px] text-subtle tabular-nums sm:block">
-                    {m.phone ?? "—"}
+                    {m.phone ?? "-"}
                   </div>
                   <div className="flex flex-shrink-0 items-center gap-2">
                     <RoleBadge role={m.role} />

@@ -52,7 +52,7 @@ beforeEach(() => {
   from.mockClear();
 });
 
-describe("maskEmail (PII contract — demo sessions never see raw)", () => {
+describe("maskEmail (PII contract, demo sessions never see raw)", () => {
   it("masks local part and host, keeps first chars + tld", () => {
     expect(maskEmail("jane.doe@city.gov")).toBe("j•••@c•••.gov");
   });

@@ -19,7 +19,7 @@ import "./riven-landing.css";
 import "./zamp.css";
 import "./bento-hero.css";
 
-// Riven ZAMP variant — ported VERBATIM into Civic. The page now renders the
+// Riven ZAMP variant, ported VERBATIM into Civic. The page now renders the
 // zamp composition (Nav → colossal-wordmark hero → S1..S5 → footer monolith),
 // which is what riven-research.vercel.app actually serves. Only two changes vs.
 // the Riven source: green→blue accent (in zamp.css) and Riven→Civic copy.
@@ -31,7 +31,7 @@ export default function RivenLanding({
 }: {
   fontClassName?: string;
 }) {
-  // Zamp composition — mirrors the live riven-research.vercel.app render:
+  // Zamp composition. Mirrors the live riven-research.vercel.app render:
   // Nav → colossal-wordmark hero → S1 → S2 → S3 (perks marquee lives inside
   // S3) → S4 → bottom-wash[S5 + footer monolith].
   return (
@@ -45,7 +45,7 @@ function RivenLandingInner({ fontClassName }: { fontClassName: string }) {
   // ink flips the hero wordmark/nav light over dark basemaps (see zamp.css).
   const { ink, tweaksVisible } = useMapPreset();
   // ?hero=bento → clay bento hero. Default is ZampHero, which now ships the
-  // animated pin story (previously gated behind ?hero=map — the param still
+  // animated pin story (previously gated behind ?hero=map, the param still
   // parses but is a no-op alias for the default).
   // Read after mount so server and first client render stay identical.
   const [heroVariant, setHeroVariant] = useState<"" | "bento" | "map">("");

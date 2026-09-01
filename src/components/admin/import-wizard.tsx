@@ -88,7 +88,7 @@ export function ImportWizard({ cities }: Props) {
     return (
       <div className="rounded-lg border border-green-200 bg-green-50 p-6 dark:border-green-800 dark:bg-green-950">
         <p className="text-base font-medium text-green-800 dark:text-green-200">
-          Import complete — {inserted} report{inserted !== 1 ? "s" : ""}{" "}
+          Import complete, {inserted} report{inserted !== 1 ? "s" : ""}{" "}
           inserted.
         </p>
         <button
@@ -237,7 +237,7 @@ export function ImportWizard({ cities }: Props) {
                     className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                   >
                     <td className="px-3 py-1.5 text-zinc-500">
-                      {r.sourceExternalId ?? "—"}
+                      {r.sourceExternalId ?? "-"}
                     </td>
                     <td className="px-3 py-1.5">{r.category}</td>
                     <td className="px-3 py-1.5">{r.status}</td>
@@ -247,7 +247,7 @@ export function ImportWizard({ cities }: Props) {
                     <td className="px-3 py-1.5">
                       {r.createdAt
                         ? new Date(r.createdAt).toLocaleDateString()
-                        : "—"}
+                        : "-"}
                     </td>
                   </tr>
                 ))}

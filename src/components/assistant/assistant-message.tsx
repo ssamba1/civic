@@ -31,7 +31,7 @@ export function AssistantMessage({ message }: { message: UIMessage }) {
                 // biome-ignore lint/suspicious/noArrayIndexKey: message parts stream append-only with no stable id; positional key is correct here
                 key={`${message.id}-t${i}`}
                 // @tailwindcss/typography isn't installed, so `prose`/`prose-invert` were
-                // no-ops that also fought the bubble's own theme-aware text color — the
+                // no-ops that also fought the bubble's own theme-aware text color, the
                 // bubble wrapper's text-foreground/accent-contrast already styles markdown text.
                 className="[&_p]:my-1"
               >

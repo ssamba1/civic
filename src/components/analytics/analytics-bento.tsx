@@ -54,7 +54,7 @@ import { cn } from "@/lib/utils/cn";
 import { formatHours } from "@/lib/utils/time-ago";
 
 /* ------------------------------------------------------------------
-   Touch-tip helper — builds pointer-enter/leave + onClick handlers
+   Touch-tip helper. Builds pointer-enter/leave + onClick handlers
    that work for both mouse hover and touch tap-to-toggle.
    ------------------------------------------------------------------ */
 function useTouchTipBinder(tip: ReturnType<typeof useHoverTip>) {
@@ -115,7 +115,7 @@ function useTouchTipBinder(tip: ReturnType<typeof useHoverTip>) {
 }
 
 /* ==================================================================
-   1. KPI cards (no expand — quick-glance numbers only)
+   1. KPI cards (no expand, quick-glance numbers only)
    ================================================================== */
 
 interface KpiCardsProps {
@@ -127,7 +127,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
   const tip = useHoverTip();
   const bindTip = useTouchTipBinder(tip);
 
-  // Sensible MTTR target — not in AnalyticsKpis, so we use a civic-ops literal.
+  // Sensible MTTR target, not in AnalyticsKpis, so we use a civic-ops literal.
   const MTTR_TARGET_HOURS = 48;
   const RESOLUTION_IDEAL = 100;
 
@@ -380,7 +380,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
               Sample data
             </span>
             <span className="text-[11px] text-faint">
-              Illustrative figures for the demo corpus — not measured outcomes.
+              Illustrative figures for the demo corpus, not measured outcomes.
             </span>
           </div>
         )}
@@ -398,7 +398,7 @@ function KpiCardsInner({ kpis }: KpiCardsProps) {
               // biome-ignore lint/a11y/useSemanticElements: role="group" is the correct intentional semantic for this KPI card cluster; no native equivalent preserves the layout
               <div
                 key={c.key}
-                // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y — focus reveals the hover tooltip via bindCard
+                // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y, focus reveals the hover tooltip via bindCard
                 tabIndex={0}
                 role="group"
                 aria-label={`${c.label}: ${c.value}`}
@@ -519,8 +519,8 @@ function renderTrendChart(
         })
         .join(" ");
     }
-    // Monotone cubic (Fritsch–Carlson). Passes through every point — so the
-    // hover dots stay exactly on the line — but constrains tangents so the curve
+    // Monotone cubic (Fritsch, Carlson). Passes through every point, so the
+    // hover dots stay exactly on the line, but constrains tangents so the curve
     // never overshoots its data envelope. Plain Catmull-Rom overshoots on spiky
     // daily counts, bulging past peaks and dipping the area fill below the
     // baseline wherever a value hits 0.
@@ -583,7 +583,7 @@ function renderTrendChart(
   );
 
   // Per-instance gradient/pattern IDs so the in-tile and expanded charts
-  // (mounted simultaneously) don't share a global id — duplicate ids make the
+  // (mounted simultaneously) don't share a global id. Duplicate ids make the
   // browser resolve url(#…) to the first match, swapping one chart's fill.
   const gCreated = `g-created-${idPrefix}`;
   const pClosed = `hatch-closed-${idPrefix}`;
@@ -596,12 +596,12 @@ function renderTrendChart(
       aria-label="Reports created vs resolved over time"
     >
       <defs>
-        {/* Created = primary series — sky soft area fade under a sky-strong line. */}
+        {/* Created = primary series, sky soft area fade under a sky-strong line. */}
         <linearGradient id={gCreated} x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor="var(--pastel-sky)" stopOpacity="0.9" />
           <stop offset="100%" stopColor="var(--pastel-sky)" stopOpacity="0" />
         </linearGradient>
-        {/* Resolved = secondary series — mint soft area fade under a
+        {/* Resolved = secondary series, mint soft area fade under a
            mint-strong line, so the two series read apart by hue. */}
         <linearGradient id={pClosed} x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor="var(--pastel-mint)" stopOpacity="0.9" />
@@ -680,7 +680,7 @@ function renderTrendChart(
           </text>
         );
       })}
-      {/* Static markers — peak day pin + daily-avg dashed lines */}
+      {/* Static markers, peak day pin + daily-avg dashed lines */}
       {showCreated &&
         (() => {
           const peakIdx = data.reduce(
@@ -807,7 +807,7 @@ function renderTrendChart(
 // Measures the container's real pixel box (ResizeObserver) so the SVG viewBox
 // can be 1:1 with the rendered size. That removes preserveAspectRatio="none",
 // which scaled X and Y unequally and distorted strokes, dot markers, and axis
-// text — worst on wide layouts and long ranges.
+// text, worst on wide layouts and long ranges.
 function useElementSize(fallback: { w: number; h: number }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const [size, setSize] = useState(fallback);
@@ -1067,7 +1067,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
         <div className="flex h-full flex-col">
           <div className="flex items-center gap-4 mb-2 text-[12px]">
             <span
-              // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y — focus reveals a hover tooltip via tip.bindTarget
+              // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y, focus reveals a hover tooltip via tip.bindTarget
               tabIndex={0}
               className="rounded-md px-1 -mx-1 outline-none focus-visible:bg-overlay hover:bg-overlay transition-colors cursor-default"
               {...tip.bindTarget(() => legendTip("created"))}
@@ -1078,7 +1078,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
               />
             </span>
             <span
-              // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y — focus reveals a hover tooltip via tip.bindTarget
+              // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y, focus reveals a hover tooltip via tip.bindTarget
               tabIndex={0}
               className="rounded-md px-1 -mx-1 outline-none focus-visible:bg-overlay hover:bg-overlay transition-colors cursor-default"
               {...tip.bindTarget(() => legendTip("closed"))}
@@ -1177,7 +1177,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
           <div className="flex flex-col gap-5">
             <Prose>
               Daily count of reports filed (primary) vs. closed (green). The
-              ratio of closed-to-created is the operational throughput — a ratio
+              ratio of closed-to-created is the operational throughput. A ratio
               above 100% means crews are eating into the backlog.
             </Prose>
             <StatGrid>
@@ -1187,7 +1187,7 @@ function ReportsTrendInner({ data }: ReportsTrendProps) {
                 hint={
                   slice.length
                     ? `${slice[0].date.slice(5)} → ${slice[slice.length - 1].date.slice(5)}`
-                    : "—"
+                    : "-"
                 }
               />
               <Stat
@@ -1233,7 +1233,7 @@ function Legend({ color, label }: { color: string; label: string }) {
 }
 
 /* ------------------------------------------------------------------
-   Key points — a compact insight strip that fills the trend tile's
+   Key points, a compact insight strip that fills the trend tile's
    slack vertical space (it spans two grid rows but the chart is a
    fixed 260px, so ~100px sat empty below it). Three auto-derived
    takeaways: net backlog, the peak intake day, and recent filing
@@ -1242,7 +1242,7 @@ function Legend({ color, label }: { color: string; label: string }) {
 
    This is the opinionated surface: which three signals matter, the
    momentum window, and the good/bad tone thresholds are civic-ops
-   judgement calls — tune them here.
+   judgement calls, tune them here.
    ------------------------------------------------------------------ */
 
 type TrendKeyPoint = {
@@ -1285,7 +1285,7 @@ function buildTrendKeyPoints(data: TrendPoint[]): TrendKeyPoint[] {
           : netBacklog < 0
             ? "resolved past intake"
             : "intake matched output",
-      // Growing backlog is the bad direction — mirrors the backlog KPI card.
+      // Growing backlog is the bad direction, mirrors the backlog KPI card.
       tone: netBacklog > 0 ? "bad" : netBacklog < 0 ? "good" : "neutral",
       icon: netBacklog > 0 ? "up" : "down",
     },
@@ -1363,7 +1363,7 @@ interface SeverityDonutProps {
   data: SeveritySlice[];
 }
 
-// Severity ramp — the app-wide semantic one (@/lib/severity-colors), shared
+// Severity ramp, the app-wide semantic one (@/lib/severity-colors), shared
 // with the work-order grid, work-order detail, the field view and the report
 // drawer. The donut deliberately does NOT use the decorative pastel ramp the
 // rest of this dashboard uses for its categorical series: severity encodes
@@ -1373,11 +1373,11 @@ interface SeverityDonutProps {
 const SEVERITY_COLORS = SEVERITY_HUE;
 
 const SEVERITY_DESC: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: "Cosmetic — graffiti, faded paint, no safety risk",
-  2: "Minor — small potholes, isolated streetlight, low traffic impact",
-  3: "Moderate — sidewalk hazard, drainage issue, partial obstruction",
-  4: "Major — downed sign, large pothole on arterial, water leak",
-  5: "Emergency — fallen tree blocking road, gushing main, live wire",
+  1: "Cosmetic, graffiti, faded paint, no safety risk",
+  2: "Minor, small potholes, isolated streetlight, low traffic impact",
+  3: "Moderate, sidewalk hazard, drainage issue, partial obstruction",
+  4: "Major, downed sign, large pothole on arterial, water leak",
+  5: "Emergency. Fallen tree blocking road, gushing main, live wire",
 };
 
 function renderDonut(
@@ -1683,7 +1683,7 @@ function SeverityDonutInner({ data }: SeverityDonutProps) {
               <Stat
                 label="Emergency share"
                 value={`${emergencyShare.toFixed(1)}%`}
-                hint="Sev 5 — paged on-call"
+                hint="Sev 5, paged on-call"
               />
               <Stat
                 label="Critical+"
@@ -2137,7 +2137,7 @@ function ResolutionHistogramInner({ data }: ResolutionHistogramProps) {
 
   // Approx median bucket
   let acc = 0;
-  let medianLabel = data[0]?.label ?? "—";
+  let medianLabel = data[0]?.label ?? "-";
   for (const b of data) {
     acc += b.count;
     if (acc >= total / 2) {
@@ -2167,7 +2167,7 @@ function ResolutionHistogramInner({ data }: ResolutionHistogramProps) {
       return { text: "Same-week resolution", tone: "warn", chip: "Slow" };
     }
     return {
-      text: "Over a week — escalation candidates",
+      text: "Over a week, escalation candidates",
       tone: "bad",
       chip: "Escalate",
     };
@@ -2285,7 +2285,7 @@ function ResolutionHistogramInner({ data }: ResolutionHistogramProps) {
             <Prose>
               Time from report submission to verified closure, bucketed. The
               shape of this distribution is the single best signal of
-              operational health — a left-skewed (fast) curve means crews are
+              operational health. A left-skewed (fast) curve means crews are
               turning around tickets quickly.
             </Prose>
             <StatGrid>
@@ -2597,7 +2597,7 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
     const weekShare = (dayTotal / (totalReports || 1)) * 100;
     const isWeekend = day === 0 || day === 6;
     return {
-      title: `${DAY_LABELS[day]} — daily summary`,
+      title: `${DAY_LABELS[day]}, daily summary`,
       accent: "var(--pastel-mint-strong)",
       body: (
         <div className="flex flex-col gap-1.5">
@@ -2639,7 +2639,7 @@ function PeakHoursHeatmapInner({ data }: PeakHoursHeatmapProps) {
         <div className="flex flex-col gap-1.5">
           <TipRow
             label="Approx range"
-            value={`${lowPct.toFixed(0)}% – ${highPct.toFixed(0)}% of peak`}
+            value={`${lowPct.toFixed(0)}%, ${highPct.toFixed(0)}% of peak`}
           />
           <TipBar pct={intensityFrac * 100} color="var(--pastel-mint-strong)" />
           <p className="text-[11px] text-faint leading-snug mt-1">
@@ -3139,12 +3139,12 @@ function TopNeighborhoodsInner({ data }: TopNeighborhoodsProps) {
             <StatGrid>
               <Stat
                 label="Top area"
-                value={top?.name ?? "—"}
+                value={top?.name ?? "-"}
                 hint={top ? `${top.count} reports` : ""}
               />
               <Stat
                 label="Most stuck"
-                value={mostStuck?.name ?? "—"}
+                value={mostStuck?.name ?? "-"}
                 hint={mostStuck ? `${mostStuck.open} open` : ""}
               />
               <Stat label="Total open" value={totalOpen.toLocaleString()} />
@@ -3464,8 +3464,8 @@ function CategoryResolutionTableInner({ data }: CategoryResolutionTableProps) {
           <div className="flex flex-col gap-5">
             <Prose>
               Each bar shows mean resolution time per category; the vertical
-              mark is the target SLA for that category. Red bars exceed the SLA
-              — these categories are operationally underperforming and should
+              mark is the target SLA for that category. Red bars exceed the SLA.
+              These categories are operationally underperforming and should
               drive crew-assignment changes or vendor reviews.
             </Prose>
             <StatGrid>
@@ -3476,7 +3476,7 @@ function CategoryResolutionTableInner({ data }: CategoryResolutionTableProps) {
               />
               <Stat
                 label="Worst offender"
-                value={worstOffender?.label ?? "—"}
+                value={worstOffender?.label ?? "-"}
                 hint={
                   worstOffender
                     ? `${((worstOffender.avg_hours / worstOffender.target_hours - 1) * 100).toFixed(0)}% over target`
@@ -3544,7 +3544,7 @@ function renderSpark(
 
   const activeIdx = opts?.activeIdx ?? null;
   const interactive = !!opts?.bindHover;
-  // Generous hit radius scaled to chart height — covers gaps between points.
+  // Generous hit radius scaled to chart height. Covers gaps between points.
   const hitR = Math.max(8, Math.min(step * 0.6, h * 0.35));
   // Per-instance gradient id; the tile and expanded sparks mount together, so a
   // shared id would let the browser resolve url(#…) to the wrong gradient.
@@ -3657,7 +3657,7 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
         <TipRow label="Recent avg (3d)" value={recent.toFixed(1)} muted />
         <TipRow label="Early avg (3d)" value={earlier.toFixed(1)} muted />
         <p className="text-[11px] text-faint leading-snug mt-1">
-          Civic-engagement signal — breadth (unique reporters) vs depth (reports
+          Civic-engagement signal, breadth (unique reporters) vs depth (reports
           per reporter).
         </p>
       </div>
@@ -3820,7 +3820,7 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
         <div className="flex items-end justify-between gap-4">
           {/* biome-ignore lint/a11y/useSemanticElements: role="group" is the correct intentional semantic for this big-number summary cluster; no native equivalent preserves the layout */}
           <div
-            // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y — focus reveals a hover tooltip via bindBigNumber
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: intentional keyboard-a11y, focus reveals a hover tooltip via bindBigNumber
             tabIndex={0}
             role="group"
             aria-label={`Unique reporters: ${data.unique_reporters}`}
@@ -3933,7 +3933,7 @@ function ReporterVelocityCardInner({ data }: ReporterVelocityCardProps) {
 export const ReporterVelocityCard = memo(ReporterVelocityCardInner);
 
 /* ==================================================================
-   Recurring hotspots (OUTFLANK #41 — recurring-problem detection)
+   Recurring hotspots (OUTFLANK #41, recurring-problem detection)
    ================================================================== */
 
 interface RecurringHotspotsProps {
@@ -4000,7 +4000,7 @@ function RecurringHotspotsCardInner({ data }: RecurringHotspotsProps) {
 export const RecurringHotspotsCard = memo(RecurringHotspotsCardInner);
 
 /* ==================================================================
-   SLA risk (OUTFLANK #14 — SLA breach alerts, staff)
+   SLA risk (OUTFLANK #14, SLA breach alerts, staff)
    ================================================================== */
 
 interface SlaRiskProps {
@@ -4071,7 +4071,7 @@ function SlaRiskCardInner({ data }: SlaRiskProps) {
           {data.breached > 0 && (
             <p className="text-[12px] text-[var(--color-danger)]">
               {data.breached} report{data.breached === 1 ? "" : "s"} past their
-              SLA window — prioritize these.
+              SLA window, prioritize these.
             </p>
           )}
         </div>

@@ -19,7 +19,7 @@ export type InviteMemberResult =
   | { ok: true; userId: string }
   | { ok: false; error: string };
 
-// Same shape as onboard/actions.ts EMAIL_RE — one local address, one dotted host.
+// Same shape as onboard/actions.ts EMAIL_RE, one local address, one dotted host.
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 const ROLE_VALUES = [
@@ -33,7 +33,7 @@ const roleSchema = z.enum(ROLE_VALUES);
 const displayNameSchema = z.string().trim().min(1).max(120);
 
 // A person's team assignment is a single real team. "all" is the admin *view*
-// pseudo-team, never an assignment, so it is rejected — mirrors the
+// pseudo-team, never an assignment, so it is rejected, mirrors the
 // isValidTeamId(t) && t !== "all" guard used across schemas.ts.
 const teamKeySchema = z
   .string()
@@ -49,7 +49,7 @@ const phoneSchema = z
   .nullable()
   .transform((v) => (v ? v : null));
 
-// Crews the member sits on (ids into this city's crews table — validated
+// Crews the member sits on (ids into this city's crews table, validated
 // against the DB in syncMemberCrews, not here).
 const crewIdsSchema = z.array(z.string().min(1)).max(20).default([]);
 
@@ -76,7 +76,7 @@ const updateSchema = z.object({
 /**
  * Replace `userId`'s crew memberships across ALL of `cityId`'s crews with
  * `crewIds` (which must belong to this city AND to the member's division).
- * is_lead survives for retained crews — leads are managed in the crews panel,
+ * is_lead survives for retained crews. Leads are managed in the crews panel,
  * so a profile edit must not silently demote one. Returns an error code or
  * null on success.
  *
@@ -180,7 +180,7 @@ export interface InviteMemberInput {
 /**
  * Invite a new member to the city owning `input.slug`. Admin-gated. Sends the
  * Supabase invite email, then upserts the profile row; a row failure rolls the
- * auth user back so the email is freed for retry — mirrors onboard/actions.ts.
+ * auth user back so the email is freed for retry, mirrors onboard/actions.ts.
  */
 export async function inviteMember(
   input: InviteMemberInput,
@@ -199,7 +199,7 @@ export async function inviteMember(
     await db.auth.admin.inviteUserByEmail(email);
   if (inviteErr) {
     // Supabase reports an existing account as an "already registered" auth
-    // error — surface it as a machine-readable membership code for the UI.
+    // error, surface it as a machine-readable membership code for the UI.
     if (/already.*regist/i.test(inviteErr.message))
       return { ok: false, error: "email_already_member" };
     log.error("inviteUserByEmail failed", inviteErr, { slug });
@@ -232,7 +232,7 @@ export async function inviteMember(
     return { ok: false, error: "member_row_failed" };
   }
 
-  // The member exists either way — a crew-sync failure surfaces as an error
+  // The member exists either way, a crew-sync failure surfaces as an error
   // the admin can fix from Edit member, not a rollback of the invite.
   const crewErr = await syncMemberCrews(
     db,

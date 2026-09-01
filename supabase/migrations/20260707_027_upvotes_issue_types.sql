@@ -1,12 +1,12 @@
 -- =============================================================================
--- Civic – Durable resident upvotes + per-city custom issue types
+-- Civic, Durable resident upvotes + per-city custom issue types
 -- Migration: 20260707_027_upvotes_issue_types.sql
 --
 -- REVAMP_PLAN 3.3 (demo-to-prod): the last two operational localStorage
 -- stores gain DB backing.
---   1. report_upvotes — one row per (report, user); written by the signed-in
+--   1. report_upvotes, one row per (report, user); written by the signed-in
 --      (incl. anonymous-session) resident directly under RLS.
---   2. issue_types    — dispatcher-defined categories; staff-scoped writes.
+--   2. issue_types. Dispatcher-defined categories; staff-scoped writes.
 --
 -- Applied in filesystem order by scripts/run-migrations.mjs (NOT auto-applied).
 -- Idempotent throughout.
@@ -29,7 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_report_upvotes_report ON report_upvotes (report_i
 ALTER TABLE report_upvotes ENABLE ROW LEVEL SECURITY;
 
 -- Residents manage their OWN upvote rows; nobody reads another user's rows
--- directly (user_id would leak who upvoted what) — aggregate counts go
+-- directly (user_id would leak who upvoted what). Aggregate counts go
 -- through the RPC below.
 DROP POLICY IF EXISTS report_upvotes_select_own ON report_upvotes;
 CREATE POLICY report_upvotes_select_own ON report_upvotes
@@ -63,7 +63,7 @@ GRANT EXECUTE ON FUNCTION public.report_upvote_counts(uuid[])
   TO anon, authenticated;
 
 -- ---------------------------------------------------------------------------
--- 2. issue_types — dispatcher-defined categories (parallel to the compile-time
+-- 2. issue_types, dispatcher-defined categories (parallel to the compile-time
 --    ReportCategory union; display/routing config only).
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS issue_types (

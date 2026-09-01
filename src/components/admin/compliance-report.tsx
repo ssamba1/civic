@@ -1,6 +1,6 @@
 /**
  * Presentational compliance report component.
- * Pure display — no data fetching.  Import ComplianceReport from lib/compliance/report.ts.
+ * Pure display, no data fetching.  Import ComplianceReport from lib/compliance/report.ts.
  */
 import type { ComplianceReport } from "@/lib/compliance/report";
 
@@ -56,7 +56,7 @@ export function ComplianceReportView({ report }: Props) {
             value={
               report.privacy.blurCoveragePercent !== null
                 ? `${report.privacy.blurCoveragePercent.toFixed(1)}%`
-                : "—"
+                : "-"
             }
           />
           <Row
@@ -88,7 +88,7 @@ export function ComplianceReportView({ report }: Props) {
             value={
               report.security.rlsEnabledTablesCount !== null
                 ? report.security.rlsEnabledTablesCount
-                : "—"
+                : "-"
             }
           />
         </div>

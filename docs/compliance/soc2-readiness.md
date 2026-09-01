@@ -3,9 +3,9 @@
 > Gap assessment mapping Civic's existing technical controls to the SOC 2 Trust Services Criteria (TSC). This is the pre-audit artifact: what's in place, what's missing, and the path to a Type II report. Not a certification.
 
 ## Why SOC 2 first
-Table-stakes for municipal procurement above the smallest tier. A Type II report (controls operating effectively over 6–12 months) unlocks most of the mid-market pipeline.
+Table-stakes for municipal procurement above the smallest tier. A Type II report (controls operating effectively over 6-12 months) unlocks most of the mid-market pipeline.
 
-## Control mapping — in place
+## Control mapping: in place
 
 | TSC | Criterion | Civic control | Evidence |
 |-----|-----------|---------------|----------|
@@ -20,13 +20,13 @@ Table-stakes for municipal procurement above the smallest tier. A Type II report
 
 ## Gaps to close before audit
 
-1. **Access review** — no periodic (quarterly) review of who has DB/admin access. *Action:* documented review + evidence log.
-2. **Change management** — commits + PRs exist, but no formal change-approval record tying deploys to reviews. *Action:* enforce PR review + protected `main`; retain records.
-3. **Vendor management** — Supabase, Gemini, Resend, Twilio are subprocessors. *Action:* subprocessor list + DPAs.
-4. **Availability / BCP** — no documented backup/restore + RTO/RPO. *Action:* runbook + tested restore (see `docs/runbooks/`).
-5. **Onboarding/offboarding** — no formal access provisioning checklist. *Action:* HR + access checklist.
-6. **Risk assessment** — no annual documented risk assessment. *Action:* template + first pass.
-7. **Pen test** — none on record. *Action:* schedule third-party test; the branch security-review skill covers interim.
+1. **Access review**: no periodic (quarterly) review of who has DB/admin access. *Action:* documented review + evidence log.
+2. **Change management**: commits + PRs exist, but no formal change-approval record tying deploys to reviews. *Action:* enforce PR review + protected `main`; retain records.
+3. **Vendor management**: Supabase, Gemini, Resend, Twilio are subprocessors. *Action:* subprocessor list + DPAs.
+4. **Availability / BCP**: no documented backup/restore + RTO/RPO. *Action:* runbook + tested restore (see `docs/runbooks/`).
+5. **Onboarding/offboarding**: no formal access provisioning checklist. *Action:* HR + access checklist.
+6. **Risk assessment**: no annual documented risk assessment. *Action:* template + first pass.
+7. **Pen test**: none on record. *Action:* schedule third-party test; the branch security-review skill covers interim.
 
 ## Path
 1. Adopt a compliance platform (Vanta/Drata/Secureframe) to automate evidence.

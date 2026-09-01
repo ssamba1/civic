@@ -5,12 +5,12 @@ import { defineConfig, devices } from "playwright/test";
 /**
  * E2E smoke config (pnpm test:e2e). Boots the dev server unless one is
  * already running on 3000 (reuseExistingServer) so the suite works both
- * locally-iterating and cold in CI. Specs live in e2e/ — vitest owns
+ * locally-iterating and cold in CI. Specs live in e2e/. Vitest owns
  * src/**\/*.test.ts and never picks these up (and vice versa).
  */
 // Port is env-driven because this checkout gets run side by side with forks of
 // it. With 3000 hardcoded AND reuseExistingServer on, the suite silently
-// ATTACHES to whatever dev server already holds that port — i.e. runs these
+// ATTACHES to whatever dev server already holds that port. I.e. runs these
 // specs against the other checkout and reports its results as ours. Set
 // E2E_PORT to keep the two apart.
 const PORT = process.env.E2E_PORT ?? "3000";

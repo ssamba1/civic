@@ -1,12 +1,12 @@
 /**
- * LLM-free road-damage detector — a local YOLOv8-style ONNX model run via
+ * LLM-free road-damage detector. A local YOLOv8-style ONNX model run via
  * onnxruntime-node. This is the cheap continuous stage: it never calls a
  * hosted model API, so scanning hours of video costs CPU only.
  *
  * onnxruntime-node is an optionalDependency (native binary; platforms where
  * install fails still build and run the rest of the app). It is loaded via a
  * non-literal dynamic import so the build never hard-links it, and absence
- * degrades to ok:false with an actionable error — a clip then fails visibly
+ * degrades to ok:false with an actionable error. A clip then fails visibly
  * rather than pretending the road was clean.
  */
 
@@ -30,7 +30,7 @@ export interface Detection {
   bbox: { x: number; y: number; w: number; h: number };
 }
 
-// Minimal structural types for the slice of onnxruntime-node we use — local
+// Minimal structural types for the slice of onnxruntime-node we use. Local
 // on purpose: the module is optional, so its own types may not be installed.
 interface OrtTensor {
   data: Float32Array;
@@ -92,7 +92,7 @@ export function nms(dets: Detection[], iouThreshold: number): Detection[] {
  * Decode a YOLOv8 detection head into normalized detections. Handles both
  * layouts seen in exports: [1, 4+nc, N] (channel-first, the ultralytics
  * default) and [1, N, 4+nc]. Box values are cx,cy,w,h in input-pixel units.
- * Pure — the unit tests exercise this with synthetic tensors.
+ * Pure, the unit tests exercise this with synthetic tensors.
  */
 export function decodeYoloOutput(
   data: Float32Array,
@@ -136,7 +136,7 @@ export function decodeYoloOutput(
     // Clamp BOTH edges and derive the extent from them. Clamping only the
     // top-left and keeping the model's w/h silently translates the box: for a
     // detection at the left border (cx < w/2) the left edge snaps to 0 while
-    // the width stays, so the right edge moves from cx + w/2 out to w — the
+    // the width stays, so the right edge moves from cx + w/2 out to w. The
     // stored evidence box then points at the wrong part of the frame, and the
     // crop handed to the classifier is of the wrong thing.
     const x0 = Math.min(1, Math.max(0, cx - w / 2));

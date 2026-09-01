@@ -1,5 +1,5 @@
 -- =============================================================================
--- Civic – Automation Rules Engine
+-- Civic, Automation Rules Engine
 -- Migration: 20260709_054_automation_rules.sql
 --
 -- Design:
@@ -87,7 +87,7 @@ CREATE TRIGGER automation_rules_updated_at
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- ---------------------------------------------------------------------------
--- 4. RLS — default deny, admin full access, staff read-only
+-- 4. RLS. Default deny, admin full access, staff read-only
 -- ---------------------------------------------------------------------------
 ALTER TABLE automation_rules ENABLE ROW LEVEL SECURITY;
 

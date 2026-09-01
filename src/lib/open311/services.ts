@@ -157,7 +157,7 @@ export function getAllServices(): Open311Service[] {
   return Object.values(SERVICE_DEFINITIONS);
 }
 
-/** Lookup a single service by code — returns undefined if not found */
+/** Lookup a single service by code. Returns undefined if not found */
 export function getService(code: string): Open311Service | undefined {
   return SERVICE_DEFINITIONS[code as ReportCategory];
 }

@@ -11,13 +11,13 @@ import type { CSSProperties } from "react";
  *  (`<html class="dark">`), so a token-following loader would flash a dark
  *  canvas before hydrating to the light landing. There is no `.light` class
  *  (globals ships `:root` light + a `.dark` override only), so we pin the LIGHT
- *  token values inline on the root — the symmetric analog of the forced-dark
- *  loaders' `className="dark"` — making the shared `.skeleton` + semantic
+ *  token values inline on the root, the symmetric analog of the forced-dark
+ *  loaders' `className="dark"`, making the shared `.skeleton` + semantic
  *  utilities resolve their light values here.
  *
  *  The right-hand sign-up card is itself structurally forced-DARK (black glass +
- *  white copy, always), so that subtree gets `className="dark"` to mirror it —
- *  the same pattern as the map dispatch panel. The small nav "Civic" wordmark
+ *  white copy, always), so that subtree gets `className="dark"` to mirror it.
+ *  The same pattern as the map dispatch panel. The small nav "Civic" wordmark
  *  needs no data, so it stays real static text at the real weight. */
 const LIGHT_TOKENS = {
   colorScheme: "light",
@@ -37,7 +37,7 @@ export default function Loading() {
       aria-busy="true"
       aria-label="Loading"
     >
-      {/* Nav silhouette — fixed 3-col grid (wordmark · empty · CTA), mirroring
+      {/* Nav silhouette, fixed 3-col grid (wordmark · empty · CTA), mirroring
           WaitlistNav: max-w 1560, min-h 56, the same clamp inline padding. */}
       <header className="absolute inset-x-0 top-0 z-50">
         <div
@@ -49,7 +49,7 @@ export default function Loading() {
             padding: "10px clamp(1.65rem,5.5vw,6.6rem)",
           }}
         >
-          {/* Real static wordmark — instant, needs no data. */}
+          {/* Real static wordmark. Instant, needs no data. */}
           <span className="justify-self-start text-[20px] font-medium leading-none tracking-[-0.02em] text-foreground">
             Civic
           </span>
@@ -59,11 +59,11 @@ export default function Loading() {
         </div>
       </header>
 
-      {/* Hero — colossal wordmark bottom-left, sign-up card bottom-right. Row on
+      {/* Hero, colossal wordmark bottom-left, sign-up card bottom-right. Row on
           desktop (space-between / items-end), stacked + centered under 900px,
           mirroring `.wl-lp-narrow`. */}
       <section className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-8 overflow-hidden px-6 pb-16 pt-[clamp(96px,14vh,132px)] min-[900px]:flex-row min-[900px]:items-end min-[900px]:justify-between min-[900px]:gap-[clamp(24px,4vw,72px)] min-[900px]:px-[clamp(40px,6vw,96px)] min-[900px]:pb-[clamp(48px,8vh,96px)] min-[900px]:pt-[clamp(120px,12vw,180px)]">
-        {/* Colossal "Civic" wordmark placeholder — mirrors the bottom-anchored
+        {/* Colossal "Civic" wordmark placeholder, mirrors the bottom-anchored
             hero wordmark (font clamp(120px,18vw,320px), width clamp(640,72vw,1280)).
             A shimmer slab reserves its mass; kept as a block (not live text) so the
             per-letter entrance animation doesn't double-render on hydrate. */}
@@ -71,17 +71,17 @@ export default function Loading() {
           <div className="skeleton h-[clamp(84px,13vw,220px)] w-[clamp(320px,50vw,860px)] max-w-full rounded-lg" />
         </div>
 
-        {/* Sign-up card — structurally forced-DARK black glass; `.dark` makes its
+        {/* Sign-up card. Structurally forced-DARK black glass; `.dark` makes its
             skeleton blocks + hairlines resolve dark, mirroring the real card. */}
         <aside className="w-full max-w-[460px] min-[900px]:w-[clamp(340px,32vw,460px)] min-[900px]:max-w-none min-[900px]:flex-none min-[900px]:self-end">
           <div className="dark flex flex-col gap-[clamp(16px,1.6vw,22px)] rounded-[22px] border border-hairline bg-glass p-[clamp(22px,2.2vw,36px)] shadow-[var(--shadow-pop)] backdrop-blur-xl">
-            {/* Tagline — ~2 mono lines. */}
+            {/* Tagline, ~2 mono lines. */}
             <div className="space-y-2">
               <div className="skeleton h-4 w-full rounded" />
               <div className="skeleton h-4 w-4/5 rounded" />
             </div>
 
-            {/* Feature list — 3 bullets (dot + text). Hidden under 640px, as the
+            {/* Feature list, 3 bullets (dot + text). Hidden under 640px, as the
                 real card drops the list on phones. */}
             <div className="hidden flex-col gap-2.5 sm:flex">
               {[0, 1, 2].map((i) => (
@@ -95,7 +95,7 @@ export default function Loading() {
               ))}
             </div>
 
-            {/* Hero form — two stacked CTA pills + a microcopy line. */}
+            {/* Hero form, two stacked CTA pills + a microcopy line. */}
             <div className="flex flex-col gap-2.5">
               <div className="skeleton h-11 w-full rounded-full" />
               <div className="skeleton h-11 w-full rounded-full" />

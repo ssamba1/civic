@@ -4,7 +4,7 @@
  *
  * Runs via next/server after() from the ingest action, same lifecycle pattern
  * as the async classify path. Heavy work (ffmpeg + ONNX) is CPU-bound on the
- * app host — acceptable for phase-1 upload volumes; the planning doc tracks
+ * app host, acceptable for phase-1 upload volumes; the planning doc tracks
  * the move to an external worker for continuous rtsp feeds.
  *
  * Error contract mirrors classify-pipeline: handled failures mark the clip
@@ -86,7 +86,7 @@ async function markClipFailed(
 /**
  * Find-or-create the DB cluster for one in-memory group, keeping stats
  * (frame_count, max_confidence, best_detection_id) rolled up. Cross-clip
- * continuity goes through the PostGIS RPC — hard rule 7.
+ * continuity goes through the PostGIS RPC, hard rule 7.
  */
 async function upsertCluster(
   supabase: SupabaseLike,
@@ -191,7 +191,7 @@ const CLUSTER_CAS_ATTEMPTS = 5;
  * `processing` forever, and the console shows a spinner that never resolves.
  *
  * Until clip processing moves onto a real queue with its own retries, the
- * least-bad behaviour is to make the stall VISIBLE — a failed clip with an
+ * least-bad behaviour is to make the stall VISIBLE. A failed clip with an
  * actionable message is something staff can act on; an eternal spinner is not.
  */
 const STALLED_CLIP_MS = 20 * 60 * 1000;
@@ -281,7 +281,7 @@ export async function processClip(
 
     const track = parseTrack(clip.gps_track);
     // Fixed camera / no track: every detection inherits the clip's start
-    // location (may itself be null — clusters then rely on visual grouping).
+    // location (may itself be null, clusters then rely on visual grouping).
     const fallbackLocation = track.length === 0 ? locationFromClip(clip) : null;
 
     // Detect frame-by-frame. Detector unavailability is a clip-level failure
@@ -412,7 +412,7 @@ export async function processClip(
           });
         }
 
-        // Stage-2 escalation — strictly gated on the LLM-free confidence.
+        // Stage-2 escalation, strictly gated on the LLM-free confidence.
         // decideCluster is best-effort: a failure leaves the cluster at
         // 'candidate' and a later clip (or manual escalation) retries.
         if (group.maxConfidence >= VIDEO_ESCALATE_MIN_CONF) {

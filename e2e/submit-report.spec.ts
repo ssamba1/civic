@@ -4,7 +4,7 @@ import { expect, test } from "playwright/test";
  * Resident report-flow smoke (B13). Headless Chromium has no camera, so the
  * flow can't be driven to a real submission here (that also needs Supabase
  * storage + Gemini). This asserts the flow is REACHABLE and renders its shell
- * without crashing — the stable, data-independent contract. Full submit +
+ * without crashing, the stable, data-independent contract. Full submit +
  * classification is covered by unit/integration tests, not this smoke.
  */
 test("/report loads the capture step without crashing", async ({ page }) => {

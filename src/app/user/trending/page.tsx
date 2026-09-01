@@ -6,7 +6,7 @@ import { getCurrentResident } from "@/lib/resident-data";
 export function generateMetadata(): Metadata {
   const name = KNOWN_CITIES.cumming.name;
   return {
-    title: `Civic | ${name} — Trending Issues`,
+    title: `Civic | ${name}, Trending Issues`,
     description: `The open issues ${name} residents are upvoting most right now.`,
   };
 }
@@ -15,7 +15,7 @@ export default async function TrendingPage() {
   const { citySlug } = await getCurrentResident();
   const name = KNOWN_CITIES[citySlug]?.name ?? KNOWN_CITIES.cumming.name;
 
-  // Only unresolved issues belong in a demand feed — a fixed report has no
+  // Only unresolved issues belong in a demand feed. A fixed report has no
   // pressure left to apply.
   const open = getReportCorpus().filter(
     (r) => r.status !== "closed" && r.status !== "rejected",
@@ -35,8 +35,8 @@ export default async function TrendingPage() {
           What {name} wants fixed most
         </h1>
         <p className="mt-3 text-sm text-subtle">
-          Open issues ranked by how many neighbors upvoted them. Add your voice
-          — the top of this list is where the pressure is.
+          Open issues ranked by how many neighbors upvoted them. Add your voice.
+          The top of this list is where the pressure is.
         </p>
       </section>
 

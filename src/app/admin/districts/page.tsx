@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "District rollups | Civic" };
 
 function fmtHours(h: number): string {
-  if (h <= 0) return "—";
+  if (h <= 0) return "-";
   if (h < 48) return `${Math.round(h)}h`;
   return `${(h / 24).toFixed(1)}d`;
 }
@@ -35,7 +35,7 @@ export default async function AdminDistrictsPage() {
             District rollups
           </h1>
           <p className="mt-1 text-sm text-subtle">
-            Per-council-district report stats — each member&apos;s turf report.
+            Per-council-district report stats, each member&apos;s turf report.
             Reports are matched to a district by point-in-polygon.
           </p>
         </div>
@@ -76,7 +76,7 @@ export default async function AdminDistrictsPage() {
                           {d.name}
                         </td>
                         <td className="px-4 py-3 text-subtle">
-                          {d.repName ?? "—"}
+                          {d.repName ?? "-"}
                         </td>
                         <td className="px-4 py-3 tabular-nums text-subtle">
                           {d.total.toLocaleString()}

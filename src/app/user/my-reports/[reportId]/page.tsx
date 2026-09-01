@@ -46,7 +46,7 @@ export async function generateMetadata({
   const name = KNOWN_CITIES[citySlug]?.name ?? KNOWN_CITIES.cumming.name;
   if (!report) return { title: `Report not found | Civic` };
   return {
-    title: `Civic | ${categoryMeta(report.category).label} report — ${name}`,
+    title: `Civic | ${categoryMeta(report.category).label} report, ${name}`,
     description: `Status and timeline for this ${categoryMeta(report.category).label.toLowerCase()} report.`,
   };
 }
@@ -65,7 +65,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
   // existing single <ReportPhoto> path.
   const extraPhotos = await getReportPhotos(reportId);
 
-  // Comments — gracefully returns [] when migration 055 hasn't been applied.
+  // Comments. Gracefully returns [] when migration 055 hasn't been applied.
   const comments = await listComments(reportId);
   // Build the gallery URL array from the child table when >1 photo, or fall
   // back to the primary report column for single-photo backward-compat.
@@ -104,7 +104,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
         All reports
       </Link>
 
-      {/* Hero — category + status + location */}
+      {/* Hero, category + status + location */}
       <section className="mb-6">
         <div className="flex items-start justify-between gap-3">
           <h1 className="flex min-w-0 items-center gap-2.5 text-[28px] sm:text-[34px] font-semibold tracking-tight text-foreground leading-[1.1]">
@@ -139,7 +139,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
         </a>
       </section>
 
-      {/* Photo(s) — multi-photo gallery when >1 photo (migration 050 applied +
+      {/* Photo(s), multi-photo gallery when >1 photo (migration 050 applied +
           photos exist), before/after when resolved, else single primary photo.
           The resolution photo is the operational-transparency payoff: residents
           see the work that was done. */}
@@ -149,7 +149,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
             <figure className="relative border-b border-hairline sm:border-b-0 sm:border-r">
               <ReportPhoto
                 src={report.photo_public_url}
-                alt={`${meta.label} — reported`}
+                alt={`${meta.label}, reported`}
               />
               <figcaption className="absolute left-2 top-2 rounded-md bg-black/55 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm">
                 Reported
@@ -158,7 +158,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
             <figure className="relative">
               <ReportPhoto
                 src={report.afterPhoto}
-                alt={`${meta.label} — after the fix`}
+                alt={`${meta.label}, after the fix`}
               />
               <figcaption className="absolute left-2 top-2 rounded-md bg-[var(--color-success)]/85 px-2 py-0.5 text-[11px] font-medium text-black backdrop-blur-sm">
                 Fixed
@@ -171,7 +171,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
             <PhotoGallery urls={galleryUrls} altPrefix={meta.label} />
           </div>
         ) : (
-          // Single photo — backward-compatible path.
+          // Single photo, backward-compatible path.
           <ReportPhoto
             src={report.photo_public_url}
             alt={`${meta.label} report at ${report.address}`}
@@ -179,7 +179,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
         )}
       </div>
 
-      {/* Under Fix card — shown when staff has marked the report in_progress
+      {/* Under Fix card, shown when staff has marked the report in_progress
           and provided public-facing cost/timeline context. */}
       {isUnderFix && (
         <section className="mb-7 rounded-[var(--radius-lg)] border border-[color-mix(in_srgb,var(--color-primary)_25%,transparent)] bg-[color-mix(in_srgb,var(--color-primary)_6%,transparent)] p-5">
@@ -242,7 +242,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
         </section>
       )}
 
-      {/* Resolved card — the close-the-loop payoff. Shows WHAT was done and
+      {/* Resolved card. The close-the-loop payoff. Shows WHAT was done and
           when, then asks the resident to confirm the fix (CSAT). Only when
           closed. */}
       {isResolved && (
@@ -278,7 +278,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
         <ReportTimeline steps={steps} />
       </section>
 
-      {/* Public status link — an account-less, shareable view (opaque token, no
+      {/* Public status link, an account-less, shareable view (opaque token, no
           PII). Lets a resident share progress, or check back without signing
           in. Opens the /r/[token] page. */}
       <Link
@@ -289,7 +289,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
         Public status link
       </Link>
 
-      {/* Comment thread — resident+staff Q&A. Gracefully absent when migration
+      {/* Comment thread, resident+staff Q&A. Gracefully absent when migration
           055 hasn't been applied yet (listComments returns []). */}
       <CommentThread reportId={report.id} initialComments={comments} />
     </div>

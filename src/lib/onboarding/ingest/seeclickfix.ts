@@ -1,4 +1,4 @@
-// SeeClickFix import adapter (NEXT_100 #81) — de-risks switching off the #1
+// SeeClickFix import adapter (NEXT_100 #81), de-risks switching off the #1
 // citizen-311 incumbent by pulling a city's existing issue history into Civic.
 // Uses SeeClickFix's native REST API v2 (richer than its Open311 mirror: real
 // status vocabulary, vote counts, full-size media) and normalizes to the
@@ -19,7 +19,7 @@ const logger = createLogger("ingest-seeclickfix");
 export interface SeeClickFixConfig {
   /** API base, defaults to the public host. Override for on-prem/regional. */
   baseUrl?: string;
-  /** City slug on SeeClickFix, e.g. "cumming-georgia" — the `place_url` param. */
+  /** City slug on SeeClickFix, e.g. "cumming-georgia", the `place_url` param. */
   placeUrl: string;
   /** request_type.title (lowercased) → Civic category. Miss → 'other'. */
   categoryMap: Record<string, ReportCategory>;

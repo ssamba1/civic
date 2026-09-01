@@ -1,4 +1,4 @@
-/* Route-level skeleton — mirrors the AnalyticsInteractive layout shape so the
+/* Route-level skeleton, mirrors the AnalyticsInteractive layout shape so the
    transition from this placeholder to the real grid has zero geometry shift.
    Every placeholder rides the shared `.skeleton` shimmer (theme-aware,
    reduced-motion safe via globals.css) and pairs it with an explicit rounded-*
@@ -28,14 +28,14 @@ export default function Loading() {
       aria-label="Loading analytics"
     >
       <div className="relative flex-grow mx-auto w-full max-w-[1800px] px-3 pt-city-content pb-10 sm:px-4 lg:px-6">
-        {/* Compact page header — real static text, no shimmer (matches the
+        {/* Compact page header, real static text, no shimmer (matches the
            real page's slim single-row header weight exactly). */}
         <section className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="text-lg font-semibold tracking-tight text-foreground leading-tight">
             Analytics
           </h1>
           <p className="text-[13px] text-faint">
-            Operational signal — what&apos;s shipping, what&apos;s stuck, where
+            Operational signal, what&apos;s shipping, what&apos;s stuck, where
             it&apos;s happening.
           </p>
         </section>
@@ -44,7 +44,7 @@ export default function Loading() {
           {/* FilterBar placeholder */}
           <Panel className="h-12 rounded-[14px]" />
 
-          {/* KPI row — single card, 4 cells (2-col mobile → 4-col lg) */}
+          {/* KPI row, single card, 4 cells (2-col mobile → 4-col lg) */}
           <div className="rounded-[var(--radius-lg)] border border-hairline bg-surface overflow-hidden shadow-[var(--shadow-card)]">
             <div className="grid grid-cols-2 lg:grid-cols-4">
               {["k1", "k2", "k3", "k4"].map((k, idx) => (

@@ -16,7 +16,7 @@ export interface NormalizedReport {
   status: ReportStatus;
   /** ISO timestamp; preserves source/historical time (not now()). */
   createdAt: string;
-  /** ISO timestamp when the issue was resolved — backfills work_orders.completed_at
+  /** ISO timestamp when the issue was resolved. Backfills work_orders.completed_at
    *  so the resolution-time KPI is real. Set only for closed reports. */
   resolvedAt?: string;
   address?: string;

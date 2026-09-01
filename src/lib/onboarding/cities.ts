@@ -1,6 +1,6 @@
 // Tenant directory reads for the admin console (F2, partial). Service-role so the
 // admin list isn't constrained by per-city RLS. Selects only columns guaranteed
-// by the base schema (migration 001) so this works before migration 015 — newer
+// by the base schema (migration 001) so this works before migration 015. Newer
 // columns (setup_step, parent_id) are read separately once applied.
 
 import { createServerClient } from "@/lib/db/client";

@@ -1,4 +1,4 @@
-# Runbook — resident notification delivery (email)
+# Runbook: resident notification delivery (email)
 
 **Code:** `src/lib/notify/status-notify.ts` (builds the message) +
 `src/lib/notify/deliver.ts` (sends via Resend) · migration 025 adds
@@ -15,9 +15,9 @@ is recorded on the `notifications` row:
 ## Required env
 
 Delivery is dark until these are set in the server env:
-- `RESEND_API_KEY` — Resend API key.
-- `NOTIFY_FROM_EMAIL` — verified From address.
-- `NEXT_PUBLIC_SITE_URL` — base URL for the tokenized status-page links.
+- `RESEND_API_KEY`: Resend API key.
+- `NOTIFY_FROM_EMAIL`: verified From address.
+- `NEXT_PUBLIC_SITE_URL`: base URL for the tokenized status-page links.
 
 With any unset, `deliverEmail()` no-ops/records an error and the app continues
 (the status change itself never fails on a delivery problem).
@@ -35,13 +35,13 @@ limit 50;
 ## Retry / drain
 
 `POST /api/admin/notify-drain` (`src/lib/notify/outbox.ts` → `drainUndelivered`)
-re-sends the email leg for **resolution** notifications that never landed —
+re-sends the email leg for **resolution** notifications that never landed.
 `type = 'resolved' AND delivered_at IS NULL`, past a 60 s grace window (so an
 in-flight synchronous send isn't double-fired). For each it re-runs
 `notifyReportStatus(report_id, 'closed')`, which re-stamps the row on the way out.
 
 Only `resolved` rows are drained: the DB trigger tags every other transition
-`status_change`, which can't be pinned to a single report status — so
+`status_change`, which can't be pinned to a single report status, so
 dispatched/rejected emails are best-effort, inline-only. The resolution email
 (photo + CSAT) is the one worth never losing.
 
@@ -61,7 +61,7 @@ curl -fsS -X POST https://<host>/api/admin/notify-drain \
 ```
 
 `migrated:false` in the response means migration 025 isn't applied (the
-`delivered_at` column is missing) — the drain no-ops rather than erroring.
+`delivered_at` column is missing), the drain no-ops rather than erroring.
 
 ## CSAT
 

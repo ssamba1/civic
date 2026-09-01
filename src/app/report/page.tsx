@@ -57,7 +57,7 @@ type GpsStatus = "acquiring" | "found" | "manual";
 
 type Step =
   | { name: "camera" }
-  // `photos` is the full array; photo is the primary (idx 0) — kept for
+  // `photos` is the full array; photo is the primary (idx 0), kept for
   // backward-compat with PhotoPreview which still shows a single preview.
   | { name: "preview"; photo: File; photos: File[] }
   | { name: "submitting"; photo: File; photos: File[] }
@@ -107,7 +107,7 @@ export default function ReportPage() {
   const [manualIssueType, setManualIssueType] = useState<string | null>(null);
 
   // Conversational intake hand-off (#20). The chat route writes an IntakeDraft
-  // to sessionStorage (never a query string — no PII in URLs) then redirects
+  // to sessionStorage (never a query string, no PII in URLs) then redirects
   // here. Consume + clear on mount, seeding the top-level address / issue-type.
   // Best-effort: corrupt or absent storage is ignored silently. Does NOT touch
   // the photo/submit flow. (Description-into-preview prefill is a follow-up.)
@@ -127,24 +127,24 @@ export default function ReportPage() {
         setAddress((prev) => (prev?.trim() ? prev : hint));
       }
     } catch {
-      // corrupt storage — ignore
+      // corrupt storage, ignore
     }
   }, []);
 
   // Ensure a session exists so submit isn't rejected as unauthenticated.
   // Reuses a persisted session (cookies/localStorage) when present and only
-  // signs up an anonymous guest when there genuinely is none — the shared
+  // signs up an anonymous guest when there genuinely is none, the shared
   // Supabase project's signup rate limit (429) trips fast if every /report load
   // mints a new session. ensureAnonSession dedupes concurrent callers and backs
   // off on 429; surface an honest, specific error on failure so the resident
-  // isn't left to discover it at submit time. Best-effort here — the submit
+  // isn't left to discover it at submit time. Best-effort here. The submit
   // handler re-checks and retries, so a transient failure now isn't terminal.
   useEffect(() => {
     let active = true;
     ensureAnonSession().then((res) => {
       if (active && !res.ok) setError(res.error);
       // Self-heal the resident's public.users row so the status-change
-      // notification trigger has a row to write against — a /report-only
+      // notification trigger has a row to write against, a /report-only
       // reporter never visits /user (where AnonBootstrap does this), so
       // without it a first-time filer gets no resolution email. Idempotent,
       // best-effort, and a silent no-op when Supabase is unconfigured.
@@ -156,7 +156,7 @@ export default function ReportPage() {
   }, []);
 
   // Reverse-geocode the acquired GPS fix into a human-readable address and
-  // pre-fill the editable manual-address field — never clobbering a value the
+  // pre-fill the editable manual-address field. Never clobbering a value the
   // resident has already typed. Keyed on the coordinate so it runs once per fix.
   const reverseGeocodedFor = useRef<string | null>(null);
   useEffect(() => {
@@ -175,7 +175,7 @@ export default function ReportPage() {
   }, [location]);
 
   // QR walk-up prefill (#16): a printed QR encodes ?lat=&lng=(&asset=). When
-  // present, pre-tag the location and skip GPS entirely — the whole point is a
+  // present, pre-tag the location and skip GPS entirely. The whole point is a
   // scan-and-file flow with no typing and no GPS dependency. Runs before the
   // GPS effect (declaration order) and sets the ref that gates it.
   const prefilledFromQr = useRef(false);
@@ -200,7 +200,7 @@ export default function ReportPage() {
 
   // Auto-acquire GPS on mount
   useEffect(() => {
-    // A QR walk-up already pre-tagged the location — don't let GPS override it.
+    // A QR walk-up already pre-tagged the location. Don't let GPS override it.
     if (prefilledFromQr.current) return;
     if (!navigator.geolocation) {
       setGpsStatus("manual");
@@ -284,7 +284,7 @@ export default function ReportPage() {
 
         if (!result.ok) {
           // Stay on preview so the user can retry; surface the server error.
-          // Map the raw "unauthenticated" tag to something actionable — it means
+          // Map the raw "unauthenticated" tag to something actionable. It means
           // the session didn't reach the server (cookie not yet written / rate
           // limited), not that the resident did anything wrong.
           setError(
@@ -317,7 +317,7 @@ export default function ReportPage() {
         const pending = ASYNC_CLASSIFY && classification.confidence === 0;
         setStep({ name: "done", reportId: id, classification, pending });
       } catch (e) {
-        // Network/unexpected error — stay on preview, allow retry.
+        // Network/unexpected error. Stay on preview, allow retry.
         setError(
           e instanceof Error
             ? e.message
@@ -344,7 +344,7 @@ export default function ReportPage() {
       setError(null);
 
       // Process each photo through blurFacesAndPlates. If ANY photo fails to
-      // blur, surface the error and skip that file — never upload an unblurred
+      // blur, surface the error and skip that file, never upload an unblurred
       // image. If the primary (idx 0) fails, abort the whole submission.
       const photosBlurredArr: string[] = [];
       const photosOriginalArr: string[] = [];
@@ -367,14 +367,14 @@ export default function ReportPage() {
           processedFiles.push(photos[i]);
         } catch {
           if (i === 0) {
-            // Primary photo failed — cannot continue.
+            // Primary photo failed. Cannot continue.
             setError(
               "Could not process that image format. Please try a JPEG/PNG or retake the photo.",
             );
             setStep({ name: "preview", photo, photos });
             return;
           }
-          // Non-primary photo failed — warn and skip.
+          // Non-primary photo failed, warn and skip.
           setError(
             `Photo ${i + 1} could not be processed and was skipped. The rest will be submitted.`,
           );
@@ -457,7 +457,7 @@ export default function ReportPage() {
 
   const handleEmergencyOverride = useCallback(() => {
     if (step.name !== "emergency") return;
-    // Already submitted — just proceed to confirmation with the real report ID
+    // Already submitted, just proceed to confirmation with the real report ID
     setStep({
       name: "done",
       reportId: step.reportId,
@@ -475,7 +475,7 @@ export default function ReportPage() {
   //
   // Fully gated: when the flag is OFF this entire effect is inert (the guard
   // returns immediately and `pending` is never set), so the default path is
-  // unchanged. Existing fallback-on-error behavior is untouched — the !result.ok
+  // unchanged. Existing fallback-on-error behavior is untouched. The !result.ok
   // and catch branches never set `pending`, so they never subscribe.
   const isPendingStep = step.name === "done" && step.pending === true;
   const pendingReportId = isPendingStep ? step.reportId : null;
@@ -492,7 +492,7 @@ export default function ReportPage() {
     // fetch lands a real classification within the deadline (the pipeline threw
     // and never persisted a row), stop the pending spinner and settle on the
     // neutral fallback. confidence 0 keeps the AI-details card and the would-404
-    // "Track this report" link hidden — the report is already persisted and sits
+    // "Track this report" link hidden. The report is already persisted and sits
     // in the staff manual-triage queue, so this is a graceful terminal state, not
     // a dead-end. Cleared on a real result or on unmount.
     const timeout = setTimeout(() => {
@@ -581,7 +581,7 @@ export default function ReportPage() {
 
   return (
     <div className="fixed inset-0 h-dvh flex flex-col bg-background">
-      {/* Error toast — clears notch via pt-safe. Slides down on mount so it
+      {/* Error toast, clears notch via pt-safe. Slides down on mount so it
           doesn't hard-pop at the top of the screen mid-submit. */}
       {error && (
         <div className="absolute top-0 left-0 right-0 z-40 pt-safe px-4">
@@ -610,7 +610,7 @@ export default function ReportPage() {
         </div>
       )}
 
-      {/* Back-to-home — top-left, clears notch via pt-safe. Camera step only:
+      {/* Back-to-home, top-left, clears notch via pt-safe. Camera step only:
           preview has its own Retake, and done/emergency have their own nav. */}
       {step.name === "camera" && (
         <div className="absolute top-0 left-0 z-40 pt-safe pl-4">
@@ -637,7 +637,7 @@ export default function ReportPage() {
         </div>
       )}
 
-      {/* Camera-step address fallback — clears notch via pt-safe. Left padding
+      {/* Camera-step address fallback, clears notch via pt-safe. Left padding
           leaves room for the back button. On the preview/review step the address
           field lives inside PhotoPreview (always editable + privacy notice), so
           this overlay is scoped to the camera step to avoid a duplicate input. */}
@@ -695,7 +695,7 @@ export default function ReportPage() {
                       </div>
                     );
                   })}
-                  {/* Add-more button — only shown when < 6 photos */}
+                  {/* Add-more button, only shown when < 6 photos */}
                   {step.photos.length < 6 && (
                     <label
                       aria-label="Add more photos"

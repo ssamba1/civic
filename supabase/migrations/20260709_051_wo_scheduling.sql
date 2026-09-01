@@ -3,7 +3,7 @@
 -- service window. Also retro-fits the FK for assigned_crew_id (the column has
 -- existed since migration 001 as a plain uuid; the crews table landed in 030).
 --
--- RLS: inherits work_orders existing policies unchanged — any UPDATE already
+-- RLS: inherits work_orders existing policies unchanged. Any UPDATE already
 -- requires is_staff() AND the report's city_id matching the actor's city. No
 -- new policies needed; the new columns are simply updatable by the same set of
 -- actors that can already UPDATE work_orders.

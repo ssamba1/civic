@@ -26,20 +26,20 @@
 | File | Tested | Type | Priority | LOC | Rationale |
 |------|--------|------|----------|-----|-----------|
 | **AI Pipeline** | | | | | |
-| ai/classification-schema.ts | ✅ | Schema validation | — | 150 | 15 test cases, boundary testing |
-| ai/classify-pipeline.ts | ✅ | Integration | — | 300 | 5 scenarios, full error paths, mocked DB |
-| ai/gemini.ts | ✅ | API caller | — | 200 | 5 cases, JSON parsing + fence removal |
-| ai/reasoning-ai.ts | ✅ | Cached fetcher | — | 250 | 3 cases, cache hit/miss + fallback |
-| ai/retry.ts | ✅ | Retry logic | — | 100 | 8 cases, backoff + signal handling |
-| ai/work-order-rules.ts | ✅ | Pure logic | — | 150 | 15 cases, 12 categories, priority math |
+| ai/classification-schema.ts | ✅ | Schema validation | - | 150 | 15 test cases, boundary testing |
+| ai/classify-pipeline.ts | ✅ | Integration | - | 300 | 5 scenarios, full error paths, mocked DB |
+| ai/gemini.ts | ✅ | API caller | - | 200 | 5 cases, JSON parsing + fence removal |
+| ai/reasoning-ai.ts | ✅ | Cached fetcher | - | 250 | 3 cases, cache hit/miss + fallback |
+| ai/retry.ts | ✅ | Retry logic | - | 100 | 8 cases, backoff + signal handling |
+| ai/work-order-rules.ts | ✅ | Pure logic | - | 150 | 15 cases, 12 categories, priority math |
 | ai/config.ts | ❌ | Constants | P2 | 30 | Just exports |
 | ai/prompt.ts | ❌ | Template | P2 | 50 | Prompt text, not testable |
-| ai/rate-limit.ts | ✅ | Rate limiter | — | 100 | 8 cases, window + IP extraction |
+| ai/rate-limit.ts | ✅ | Rate limiter | - | 100 | 8 cases, window + IP extraction |
 | ai/rate-limiter.ts | ❌ | Rate limiter | P1 | 100 | Sliding window, 3 critical edges |
 | **Analytics & Filtering** | | | | | |
 | analytics-data.ts | ❌ | Data fetch | P1 | 350 | Fallback chains, KPI generation |
 | dashboard-data.ts | ❌ | Data fetch | P1 | 509 | City cache, 1100-report corpus gen |
-| dashboard-queries.ts | ✅ | Query builder | — | 100 | 1-2 cases, basic happy path only |
+| dashboard-queries.ts | ✅ | Query builder | - | 100 | 1-2 cases, basic happy path only |
 | filters/derive.ts | ❌ | Analytics | **P0** | 300 | 10+ KPIs, trends, heatmap, neighborhoods |
 | filters/filter-reports.ts | ❌ | Core filter | **P0** | 92 | Window resolution, 5-predicate filtering |
 | filters/types.ts | ❌ | Types | P2 | 42 | Interfaces + constants |
@@ -49,7 +49,7 @@
 | db/client.ts | ❌ | Wrapper | P2 | 10 | Thin Supabase wrapper |
 | db/ssr-client.ts | ❌ | Wrapper | P2 | 15 | Thin Supabase wrapper |
 | **Demo & Auth** | | | | | |
-| demo-auth.ts | ✅ | Auth | — | 80 | 5 cases, account structure |
+| demo-auth.ts | ✅ | Auth | - | 80 | 5 cases, account structure |
 | demo-mode.ts | ❌ | Flag | P2 | 23 | Single NEXT_PUBLIC boolean |
 | demo-reports.ts | ❌ | Client store | P2 | 209 | Demo overlay, localStorage |
 | demo-session.ts | ❌ | Session | P2 | 50 | Anon fallback, simple |
@@ -63,7 +63,7 @@
 | logger.ts | ❌ | Logging | P2 | 63 | Wraps console + Sentry, low business risk |
 | **Image Processing** | | | | | |
 | image/normalize.ts | ❌ | Canvas | P1 | 60 | EXIF orientation, downscaling |
-| image/sniff-mime.ts | ✅ | Magic bytes | — | 60 | 20+ cases, 6 formats, truncated input |
+| image/sniff-mime.ts | ✅ | Magic bytes | - | 60 | 20+ cases, 6 formats, truncated input |
 | **Notifications** | | | | | |
 | notify/deliver.ts | ❌ | Email | P1 | 114 | HTML escaping, Resend API, fallback logging |
 | notify/status-notify.ts | ❌ | Server action | P1 | 12 | Async notification delivery |
@@ -75,7 +75,7 @@
 | **Privacy & Uploads** | | | | | |
 | privacy/audit.ts | ❌ | DB audit | P1 | 73 | Storage bucket cross-reference |
 | privacy/blur.ts | ❌ | Canvas | **P1** | 213 | Face Detection fallback, blur, downscale |
-| privacy/face-detector.d.ts | — | Types | — | 20 | Shape Detection API types |
+| privacy/face-detector.d.ts | - | Types | - | 20 | Shape Detection API types |
 | privacy/retention.ts | ❌ | Config | P2 | 71 | 30-day TTL + cron script |
 | privacy/signed-url.ts | ❌ | Security | **P0** | 71 | Role + city verification |
 | privacy/upload.ts | ❌ | Upload | P1 | 115 | MIME validation, dual-bucket, error cleanup |
@@ -83,7 +83,7 @@
 | resident-csat.ts | ❌ | Client store | P2 | 102 | localStorage ratings, useSyncExternalStore |
 | resident-data.ts | ❌ | Aggregation | **P0** | 699 | Timeline synthesis, morale, fallback chains |
 | **State Management (Client)** | | | | | |
-| task-completion.ts | ✅ | Overlay | — | 168 | **SHALLOW: 2 asserts** |
+| task-completion.ts | ✅ | Overlay | - | 168 | **SHALLOW: 2 asserts** |
 | upvotes.ts | ❌ | Client store | P2 | 127 | Deterministic hash, localStorage |
 | **Type Definitions** | | | | | |
 | category-overrides.ts | ❌ | Store | P2 | 80 | Client-side category override snapshot |
@@ -105,7 +105,7 @@
 
 | Directory | Untested | High-Value Files | Priority |
 |-----------|----------|------------------|----------|
-| **ai/** | 4/10 | config.ts, prompt.ts, rate-limiter.ts | Med–High |
+| **ai/** | 4/10 | config.ts, prompt.ts, rate-limiter.ts | Med, High |
 | **db/** | 3/3 | All are SSR/DB clients (minimal logic) | Med |
 | **filters/** | 4/4 | **filter-reports.ts** (pure, complex), derive.ts | **HIGH** |
 | **hooks/** | 1/1 | use-sliding-pill.ts (trivial) | Low |
@@ -162,17 +162,17 @@ it("returns the completion entry (with after-photo) or undefined", () => {
 
 ## Highest-Priority Untested Files (Top 15 to Test First)
 
-### 1. `src/lib/resident-data.ts` — CRITICAL
+### 1. `src/lib/resident-data.ts`: CRITICAL
 **Why:** 699 lines; resident-facing API; owns synthetic stage timing and notification generation that must be deterministic across SSR/CSR.
 
 **Logic density:**
-- `demoReporterId()` (lines 112–128): Corpus scan to find "my reporter" for demo mode
-- `synthStageTimes()` (lines 139–155): Seeded synthetic timestamps for filed→resolved progression
-- `seededFromId()` (lines 95–102): Deterministic RNG seeded by report ID (mirrors dashboard-data)
-- `getMyReports()` (lines 285–343): Supabase query fallback to synthetic corpus, location decoding
-- `getReportTimeline()` (lines 353–417): Status progression logic with terminal-state handling
-- `getCityMorale()` (lines 419–532): 40-line KPI aggregator (8 KPIs, 5 neighborhood lookups)
-- `syntheticNotifications()` (lines 622–698): Maps report progress to notification objects
+- `demoReporterId()` (lines 112-128): Corpus scan to find "my reporter" for demo mode
+- `synthStageTimes()` (lines 139-155): Seeded synthetic timestamps for filed→resolved progression
+- `seededFromId()` (lines 95-102): Deterministic RNG seeded by report ID (mirrors dashboard-data)
+- `getMyReports()` (lines 285-343): Supabase query fallback to synthetic corpus, location decoding
+- `getReportTimeline()` (lines 353-417): Status progression logic with terminal-state handling
+- `getCityMorale()` (lines 419-532): 40-line KPI aggregator (8 KPIs, 5 neighborhood lookups)
+- `syntheticNotifications()` (lines 622-698): Maps report progress to notification objects
 
 **Risks:** Divergence between demo corpus and live query could surface wrong "my reports". Timing seeding must be stable for cross-feature consistency.
 
@@ -180,13 +180,13 @@ it("returns the completion entry (with after-photo) or undefined", () => {
 
 ---
 
-### 2. `src/lib/filters/filter-reports.ts` — HIGH
+### 2. `src/lib/filters/filter-reports.ts`: HIGH
 **Why:** 92 lines; pure filter logic; used by map, stats, and analytics widgets. Single source of truth for narrowing corpus.
 
 **Logic density:**
-- `resolveWindow()` (lines 10–27): Date window parsing (preset→ms bounds)
-- `filterReports()` (lines 35–60): 5-predicate filter (team, categories, statuses, severity, date)
-- `filterPreviousWindow()` (lines 65–91): Mirror-window logic for KPI deltas
+- `resolveWindow()` (lines 10-27): Date window parsing (preset→ms bounds)
+- `filterReports()` (lines 35-60): 5-predicate filter (team, categories, statuses, severity, date)
+- `filterPreviousWindow()` (lines 65-91): Mirror-window logic for KPI deltas
 
 **Risks:** Off-by-one in date bounds (line 19: `+ DAY_MS` for inclusive "to"), team overrides interaction. Pure functions but easy to break with refactors.
 
@@ -194,29 +194,29 @@ it("returns the completion entry (with after-photo) or undefined", () => {
 
 ---
 
-### 3. `src/lib/privacy/blur.ts` — HIGH
+### 3. `src/lib/privacy/blur.ts`: HIGH
 **Why:** 213 lines; critical PII redaction; Face Detection API fallback, canvas filter, blob encoding.
 
 **Logic density:**
-- `detectFaces()` (lines 53–71): Shape Detection API wrapper with null fallback
-- `fallbackRegions()` (lines 77–85): Heuristic top/bottom-third blurring
-- `blurRegions()` (lines 100–123): Canvas clip + filter application with padding
-- `blurFacesAndPlates()` (lines 152–213): Orchestrator: bitmap decode → downscale → blur → encode WebP + JPEG
+- `detectFaces()` (lines 53-71): Shape Detection API wrapper with null fallback
+- `fallbackRegions()` (lines 77-85): Heuristic top/bottom-third blurring
+- `blurRegions()` (lines 100-123): Canvas clip + filter application with padding
+- `blurFacesAndPlates()` (lines 152-213): Orchestrator: bitmap decode → downscale → blur → encode WebP + JPEG
 
-**Risks:** Canvas context null (line 173), blob null (line 136), size math (line 168, 170–171), API unavailability. Downscaling affects blur effectiveness. EXIF orientation must survive the round-trip.
+**Risks:** Canvas context null (line 173), blob null (line 136), size math (line 168, 170-171), API unavailability. Downscaling affects blur effectiveness. EXIF orientation must survive the round-trip.
 
 **Test entry points:** Blob generation, region calc, downscale math (mock canvas).
 
 ---
 
-### 4. `src/lib/open311/transform.ts` — HIGH
+### 4. `src/lib/open311/transform.ts`: HIGH
 **Why:** 112 lines; external API contract mapper; Open311 spec compliance.
 
 **Logic density:**
-- `mapStatus()` (lines 40–51): ReportStatus → {"open"|"closed"} enum
-- `expandStatus()` (lines 56–61): Inverse mapping
-- `serviceName()` (lines 64–69): Category → "Title Case" string
-- `reportToOpen311()` (lines 75–111): Full report → Open311 Request object
+- `mapStatus()` (lines 40-51): ReportStatus → {"open"|"closed"} enum
+- `expandStatus()` (lines 56-61): Inverse mapping
+- `serviceName()` (lines 64-69): Category → "Title Case" string
+- `reportToOpen311()` (lines 75-111): Full report → Open311 Request object
 
 **Risks:** Status mapping missed case (line 46 has no default). serviceName assumes `_` separators. Extended attributes only when classification exists (line 100).
 
@@ -224,30 +224,30 @@ it("returns the completion entry (with after-photo) or undefined", () => {
 
 ---
 
-### 5. `src/lib/delegation-history.ts` — HIGH
+### 5. `src/lib/delegation-history.ts`: HIGH
 **Why:** 175 lines; pure event timeline builder for staff UI; Haversine geospatial calc.
 
 **Logic density:**
-- `buildTimeline()` (lines 64–136): 9-rule state machine (created → rejected | dispatched → in_progress → resolved/merged)
-- `similarNearby()` (lines 144–174): Haversine distance calc with 500m radius default
+- `buildTimeline()` (lines 64-136): 9-rule state machine (created → rejected | dispatched → in_progress → resolved/merged)
+- `similarNearby()` (lines 144-174): Haversine distance calc with 500m radius default
 
-**Risks:** Haversine uses degrees/radians (lines 150–153); merge/rejected terminal states skip in_progress (line 114). Override event interleaving assumes sorted (no sort in buildTimeline).
+**Risks:** Haversine uses degrees/radians (lines 150-153); merge/rejected terminal states skip in_progress (line 114). Override event interleaving assumes sorted (no sort in buildTimeline).
 
 **Test entry points:** Timeline for each status, override ordering, Haversine at pole/equator edge cases.
 
 ---
 
-### 6. `src/lib/filters/derive.ts` — HIGH
+### 6. `src/lib/filters/derive.ts`: HIGH
 **Why:** 300 lines; pure analytics derive functions; 9 independent KPI/trend computations.
 
 **Logic density:**
-- `resolutionRate()` (lines 46–50): Closed/(total) %
-- `mttr()` (lines 52–56): Severity-weighted avg hours
-- `slaCompliance()` (lines 68–75): Category-SLA-scoped
-- `deriveKpis()` (lines 77–99): Orchestrator (6 KPIs + deltas)
-- `deriveTrend()` (lines 109–146): Day-bucketed created/closed counts
-- `deriveResolutionDistribution()` (lines 158–169): Bucketing by hours
-- `deriveTrend()`, `deriveStatusFunnel()`, `deriveSeverityDistribution()`, `deriveHourlyHeatmap()`, `deriveTopNeighborhoods()`, `deriveCategoryResolution()`, `deriveReporterVelocity()` (lines 180–299)
+- `resolutionRate()` (lines 46-50): Closed/(total) %
+- `mttr()` (lines 52-56): Severity-weighted avg hours
+- `slaCompliance()` (lines 68-75): Category-SLA-scoped
+- `deriveKpis()` (lines 77-99): Orchestrator (6 KPIs + deltas)
+- `deriveTrend()` (lines 109-146): Day-bucketed created/closed counts
+- `deriveResolutionDistribution()` (lines 158-169): Bucketing by hours
+- `deriveTrend()`, `deriveStatusFunnel()`, `deriveSeverityDistribution()`, `deriveHourlyHeatmap()`, `deriveTopNeighborhoods()`, `deriveCategoryResolution()`, `deriveReporterVelocity()` (lines 180-299)
 
 **Risks:** Day-key bucketing (line 208), UTC vs local (line 208: `getUTCDay()`), address parsing (line 230: assumes "NUM STREET" format), pctDelta div-by-zero (line 63).
 
@@ -255,32 +255,32 @@ it("returns the completion entry (with after-photo) or undefined", () => {
 
 ---
 
-### 7. `src/lib/task-completion.ts` — MED–HIGH
+### 7. `src/lib/task-completion.ts`: MED, HIGH
 **Why:** 168 lines; client-side localStorage overlay store for task marking; critical for demo workflow.
 
 **Logic density:**
-- `readStorage()` (lines 44–65): Defensive JSON parsing with type narrowing
-- `writeStorage()` (lines 67–75): localStorage with quota guard
-- `hydrateOnce()` (lines 77–82): Singleton hydration
-- `getCompletionsSnapshot()`, `getReportCompletion()`, `resolveReportStatus()` (lines 84–101): Sync accessors
-- `useTaskCompletion()` hook (lines 127–167): useSyncExternalStore + callbacks
+- `readStorage()` (lines 44-65): Defensive JSON parsing with type narrowing
+- `writeStorage()` (lines 67-75): localStorage with quota guard
+- `hydrateOnce()` (lines 77-82): Singleton hydration
+- `getCompletionsSnapshot()`, `getReportCompletion()`, `resolveReportStatus()` (lines 84-101): Sync accessors
+- `useTaskCompletion()` hook (lines 127-167): useSyncExternalStore + callbacks
 
-**Risks:** localStorage quota silently fails (line 72), hydration race (no mutex), parseJSON edge cases. afterPhoto is optional (line 31) and downscaled—size validation missing.
+**Risks:** localStorage quota silently fails (line 72), hydration race (no mutex), parseJSON edge cases. afterPhoto is optional (line 31) and downscaled, size validation missing.
 
 **Test entry points:** readStorage (valid/invalid JSON), writeStorage (quota), completion resolution (merged with corpus).
 
 ---
 
-### 8. `src/lib/dashboard-data.ts` — MED
+### 8. `src/lib/dashboard-data.ts`: MED
 **Why:** 509 lines; massive demo corpus generator and city metadata.
 
 **Logic density:**
-- `buildCorpus()` (lines 384–438): 1100-report generation with power-curve age weighting
-- `pickWeighted()` (lines 313–325): Weighted random selection
-- `statusForAge()` (lines 327–370): Age-dependent status distribution
-- `fetchCity()` (lines 217–253): DB fallback with cache
-- `fetchCityStats()` (lines 459–487): Stats aggregation
-- `fetchCategoryBreakdown()`, `fetchRecentReports()` (lines 489–508)
+- `buildCorpus()` (lines 384-438): 1100-report generation with power-curve age weighting
+- `pickWeighted()` (lines 313-325): Weighted random selection
+- `statusForAge()` (lines 327-370): Age-dependent status distribution
+- `fetchCity()` (lines 217-253): DB fallback with cache
+- `fetchCityStats()` (lines 459-487): Stats aggregation
+- `fetchCategoryBreakdown()`, `fetchRecentReports()` (lines 489-508)
 
 **Risks:** Power-curve recency weighting (line 402: `u^RECENCY`), weighted sampling cumulative precision (line 321), synthetic resolution hours formula (line 483: `12 + severity * 18`). Cache is module-scoped, not invalidated.
 
@@ -288,57 +288,57 @@ it("returns the completion entry (with after-photo) or undefined", () => {
 
 ---
 
-### 9. `src/lib/upvotes.ts` — MED
+### 9. `src/lib/upvotes.ts`: MED
 **Why:** 127 lines; client-side optimistic upvote store; localStorage-backed, pre-backend.
 
 **Logic density:**
-- `readStorage()` (lines 32–43): Array JSON parsing
-- `writeStorage()` (lines 45–52): localStorage with quota guard
-- `baseUpvoteCount()` (lines 83–90): Hash-seeded deterministic count (0–24 + severity*2)
-- `useUpvotes()` hook (lines 101–126): useSyncExternalStore with toggle/count logic
+- `readStorage()` (lines 32-43): Array JSON parsing
+- `writeStorage()` (lines 45-52): localStorage with quota guard
+- `baseUpvoteCount()` (lines 83-90): Hash-seeded deterministic count (0-24 + severity*2)
+- `useUpvotes()` hook (lines 101-126): useSyncExternalStore with toggle/count logic
 
-**Risks:** Hash function (lines 84–86) uses charCodeAt loop; collision not tested. BaseCount biased by severity (severity=5 gives +10 to base, shifting range to 10–34).
+**Risks:** Hash function (lines 84-86) uses charCodeAt loop; collision not tested. BaseCount biased by severity (severity=5 gives +10 to base, shifting range to 10-34).
 
 **Test entry points:** baseUpvoteCount (determinism, range), readStorage (invalid JSON), toggle (add/remove/reopen).
 
 ---
 
-### 10. `src/lib/teams.ts` — MED
+### 10. `src/lib/teams.ts`: MED
 **Why:** 189 lines; team definitions and category→team mapping; static but wired deeply.
 
 **Logic density:**
-- `CATEGORY_TO_TEAM` reverse map (lines 157–165): Loop-built at module load
-- `categoryToTeamDefault()` (lines 170–172): Fallback to general_admin
-- `categoryToTeam()` (lines 178–182): Override-aware resolver
-- `isValidTeamId()` (lines 186–188): Type guard
+- `CATEGORY_TO_TEAM` reverse map (lines 157-165): Loop-built at module load
+- `categoryToTeamDefault()` (lines 170-172): Fallback to general_admin
+- `categoryToTeam()` (lines 178-182): Override-aware resolver
+- `isValidTeamId()` (lines 186-188): Type guard
 
-**Risks:** Team definitions are hardcoded (lines 34–154); category→team must be exhaustive. Override snapshot read is synchronous (line 179), assumes snapshot is consistent.
+**Risks:** Team definitions are hardcoded (lines 34-154); category→team must be exhaustive. Override snapshot read is synchronous (line 179), assumes snapshot is consistent.
 
 **Test entry points:** CATEGORY_TO_TEAM completeness, reverse lookup, override integration.
 
 ---
 
-### 11. `src/lib/open311/services.ts` — MED
+### 11. `src/lib/open311/services.ts`: MED
 **Why:** 83 lines; agency routing lookup for Open311 compliance.
 
 **Test entry points:** Agency lookup, city name matching, fallback routing.
 
 ---
 
-### 12. `src/lib/analytics-data.ts` — MED
+### 12. `src/lib/analytics-data.ts`: MED
 **Why:** 100+ lines; KPI fallback constants and type definitions.
 
-**Risks:** Hardcoded KPI_FALLBACK (lines 81–90) assumed realistic; must match live data ranges.
+**Risks:** Hardcoded KPI_FALLBACK (lines 81-90) assumed realistic; must match live data ranges.
 
 **Test entry points:** Fallback constant validation.
 
 ---
 
-### 13. `src/lib/image/normalize.ts` — MED
+### 13. `src/lib/image/normalize.ts`: MED
 **Why:** 60 lines; EXIF orientation + downscaling for canvas encoding.
 
 **Logic density:**
-- `bitmapToJpeg()` (lines 24–59): Bounded downscale + JPEG encode
+- `bitmapToJpeg()` (lines 24-59): Bounded downscale + JPEG encode
 
 **Risks:** Canvas context null (line 43), blob null (line 54), aspect ratio preservation (line 35).
 
@@ -346,12 +346,12 @@ it("returns the completion entry (with after-photo) or undefined", () => {
 
 ---
 
-### 14. `src/lib/utils/time-ago.ts` — MED
+### 14. `src/lib/utils/time-ago.ts`: MED
 **Why:** 45 lines; pure time formatting; trivial but widely used.
 
 **Logic density:**
-- `timeAgo()` (lines 15–24): Past-relative bucketing (now/mins/hrs/days)
-- `timeUntil()` (lines 34–44): Future-relative (mirrors timeAgo)
+- `timeAgo()` (lines 15-24): Past-relative bucketing (now/mins/hrs/days)
+- `timeUntil()` (lines 34-44): Future-relative (mirrors timeAgo)
 
 **Risks:** Negative diff clamp (line 16), bucket boundaries (60, 1440).
 
@@ -359,7 +359,7 @@ it("returns the completion entry (with after-photo) or undefined", () => {
 
 ---
 
-### 15. **notify/deliver.ts** — P1: Email Sending
+### 15. **notify/deliver.ts**: P1: Email Sending
 
 **What it does:** Sends emails via Resend REST API. Renders HTML with optional photo + CTA button. Handles missing recipient, disabled flag, missing API key with graceful fallbacks.
 
@@ -639,7 +639,7 @@ describe("escapeHtml", () => {
 
 **Report complete. Ready to implement Phase 1.**
 
-## Medium-Priority Files (16–35)
+## Medium-Priority Files (16-35)
 
 | File | Size | Logic | Why Test |
 |------|------|-------|----------|
@@ -669,11 +669,11 @@ describe("escapeHtml", () => {
 
 ## Low-Priority Files (36+)
 
-- `db/browser-client.ts`, `db/client.ts`, `db/ssr-client.ts` — DB clients, minimal logic, high test cost
-- `hooks/use-sliding-pill.ts` — Trivial React hook
-- `image/sniff-mime.ts` — Already has test coverage
-- `logger.ts` — Logging utility, low business risk
-- `open311/xml.ts` — XML parser, small risk surface
+- `db/browser-client.ts`, `db/client.ts`, `db/ssr-client.ts`: DB clients, minimal logic, high test cost
+- `hooks/use-sliding-pill.ts`: Trivial React hook
+- `image/sniff-mime.ts`: Already has test coverage
+- `logger.ts`: Logging utility, low business risk
+- `open311/xml.ts`: XML parser, small risk surface
 - All other config/type files
 
 ---
@@ -710,7 +710,7 @@ describe("escapeHtml", () => {
 3. **Test `open311/transform.ts`:** External contract, easy to validate.
    - 12 unit tests: all mappers, null classification, extended attributes
 
-### Short-term (Week 2–3)
+### Short-term (Week 2-3)
 4. Test `privacy/blur.ts`: Canvas mocking, Face Detection fallback, downscale math
 5. Test `delegation-history.ts`: State machine (9 rules), Haversine at poles
 6. Test `filters/derive.ts`: KPI formulas, day bucketing, edge cases (empty corpus, single report)

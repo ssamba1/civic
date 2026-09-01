@@ -1,4 +1,4 @@
-# 0006 — Open311 API key design (scopes, hashing, rotation)
+# 0006: Open311 API key design (scopes, hashing, rotation)
 
 - Status: **Accepted** (2026-07-08)
 - Scope: how external Open311 partners authenticate to the POST endpoint.
@@ -6,7 +6,7 @@
 ## Context
 
 The Open311 POST route originally accepted a single shared `OPEN311_API_KEY`
-env var — no per-partner attribution, no revocation, no scoping. A real partner
+env var, no per-partner attribution, no revocation, no scoping. A real partner
 integration needs individual keys that can be attributed, scoped, and rotated.
 
 ## Decision
@@ -14,7 +14,7 @@ integration needs individual keys that can be attributed, scoped, and rotated.
 - `api_keys` table (migration 028): `key_hash` (SHA-256 hex, plaintext never
   stored), `label`, `user_id` (attribution), `city_id` (optional pin), `scopes
   text[]`, `revoked_at`. Partial unique index on active keys.
-- RLS default-deny: no client policy — service-role only. `lookupApiKey()`
+- RLS default-deny: no client policy, service-role only. `lookupApiKey()`
   hashes the presented key and looks up the active row.
 - **Scope enforcement**: POST requires the `open311:write` scope; a read-only
   key is rejected 403 (valid key, missing permission). The legacy shared env key
@@ -27,7 +27,7 @@ integration needs individual keys that can be attributed, scoped, and rotated.
 - **JWT / OAuth**: overkill for machine-to-machine Open311; the spec passes a
   flat `api_key` form param. A hashed opaque token matches the spec and threat
   model.
-- **Store plaintext keys**: unacceptable — a DB read would leak every partner's
+- **Store plaintext keys**: unacceptable. A DB read would leak every partner's
   credential.
 
 ## Consequences

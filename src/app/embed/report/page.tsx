@@ -6,7 +6,7 @@ import Link from "next/link";
 
    A drop-in card any city website can iframe: <iframe src=".../embed/report">.
    Minimal, chromeless, and links out to the full report flow in a new top-level
-   window (target=_top) so it escapes the iframe. No auth, no data — pure entry
+   window (target=_top) so it escapes the iframe. No auth, no data. Pure entry
    point, so it's safe to embed anywhere.
    ================================================================== */
 
@@ -32,7 +32,7 @@ export default function EmbedReportWidget() {
           See something broken?
         </h1>
         <p className="mt-1 text-[13px] text-subtle">
-          Snap a photo — AI files the work order and you can track the fix. No
+          Snap a photo. AI files the work order and you can track the fix. No
           account needed.
         </p>
         <Link

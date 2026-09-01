@@ -1,6 +1,6 @@
 # AGENTS.md
 
-> This is the cross-tool agent instruction file (Codex, Cursor, Copilot, Amp, Jules, Factory). Claude Code loads it via `CLAUDE.md` (`@agents.md` import — no symlink on Windows). Product/design context: `docs/planning/` + `docs/decisions/` (ADRs). Read those before substantive work. Keep this file short.
+> This is the cross-tool agent instruction file (Codex, Cursor, Copilot, Amp, Jules, Factory). Claude Code loads it via `CLAUDE.md` (`@agents.md` import, no symlink on Windows). Product/design context: `docs/planning/` + `docs/decisions/` (ADRs). Read those before substantive work. Keep this file short.
 
 ## What this is
 
@@ -10,8 +10,8 @@ Civic. AI-native citizen repair reporting. Residents photograph broken infrastru
 
 - App root is `Civic/-Social-Impact-/` (this dir). Sibling `Civic/civic-deck/` = separate Vite pitch deck, not the app.
 - `dev-audit/` = the audit output this project was hardened against. `docs/planning/SHIPPED.md` is the chronological record of what landed.
-- The `/staff` route UI is scrapped — team views + `/teams` picker are canonical. Several `staff/*` modules are still imported by shared code: check imports before deleting anything under `app/staff/`.
-- Working tree carries large uncommitted changes at times — commit before any destructive delete.
+- The `/staff` route UI is scrapped. Team views + `/teams` picker are canonical. Several `staff/*` modules are still imported by shared code: check imports before deleting anything under `app/staff/`.
+- Working tree carries large uncommitted changes at times, commit before any destructive delete.
 
 ## Commands
 
@@ -23,10 +23,10 @@ pnpm test:e2e                   # playwright e2e
 pnpm typecheck                  # tsc --noEmit
 pnpm lint                       # biome check
 pnpm db:migrate                 # supabase db push
-pnpm db:seed                    # tsx supabase/seed/index.ts — Cumming + test data
+pnpm db:seed                    # tsx supabase/seed/index.ts, Cumming + test data
 pnpm test:rls                   # RLS regression tests (scripts/test-rls.mjs)
 pnpm eval                       # AI classification eval (scripts/eval-classify.ts)
-pnpm health                     # curl localhost:3000/api/health — confirms db + gemini
+pnpm health                     # curl localhost:3000/api/health, confirms db + gemini
 ```
 
 ## Stack
@@ -34,10 +34,10 @@ pnpm health                     # curl localhost:3000/api/health — confirms db
 - Next.js 16 (App Router), TypeScript strict, React Server Components by default
 - Supabase: Postgres 15 + PostGIS, Auth, Storage, Realtime
 - Tailwind CSS v4 + shadcn/ui (Radix primitives)
-- Maps: MapLibre GL (`maplibre-gl` v5 via `react-map-gl` v8) + deck.gl v9 data layers — NOT Mapbox, no Mapbox token
+- Maps: MapLibre GL (`maplibre-gl` v5 via `react-map-gl` v8) + deck.gl v9 data layers, NOT Mapbox, no Mapbox token
 - AI: Vercel AI SDK (`ai` + `@ai-sdk/google`), Gemini 2.5 Flash (vision + classification), embeddings for dedup
 - Sentry via `@sentry/nextjs` (`sentry.*.config.ts`, `instrumentation-client.ts`)
-- Motion: GSAP (framer-motion also installed — GSAP default); tables: AG Grid
+- Motion: GSAP (framer-motion also installed, GSAP default); tables: AG Grid
 - Deploy target unresolved; `pnpm prod` builds Next standalone + copies assets, runs `node .next/standalone/server.js`
 - Biome for lint/format (scoped `src/`), Vitest for unit, Playwright for e2e
 

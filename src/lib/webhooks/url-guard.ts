@@ -41,7 +41,7 @@ export function isBlockedWebhookHost(hostname: string): boolean {
 
 /** True for loopback, RFC-1918, link-local, unspecified and other reserved v4. */
 function isPrivateIPv4([a, b]: readonly number[]): boolean {
-  // 0.0.0.0/8 — includes the "this host" address.
+  // 0.0.0.0/8, includes the "this host" address.
   if (a === 0) return true;
   // Loopback: 127.0.0.0/8
   if (a === 127) return true;
@@ -115,8 +115,8 @@ function parseIPv4MappedIPv6(
  * Parse any spelling `fetch` accepts into a canonical quad, or null when the
  * host is not an IPv4 literal at all.
  *
- * Accepts 1–4 dot-separated parts, each decimal, octal (leading 0) or hex
- * (leading 0x) — the inet_aton grammar browsers and undici implement. With
+ * Accepts 1-4 dot-separated parts, each decimal, octal (leading 0) or hex
+ * (leading 0x), the inet_aton grammar browsers and undici implement. With
  * fewer than 4 parts the final part supplies all remaining low-order bytes,
  * so `127.1` is 127.0.0.1 and `2130706433` is 127.0.0.1.
  */

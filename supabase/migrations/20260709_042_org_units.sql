@@ -1,4 +1,4 @@
--- 042: org_units — recursive org tree (ltree) for advanced routing.
+-- 042: org_units, recursive org tree (ltree) for advanced routing.
 --
 -- Supersedes the flat two-level model (city_teams division → crews) with an
 -- arbitrary-depth tree:
@@ -14,17 +14,17 @@
 -- migration drops them once every reader moves to org_units.
 --
 -- Routing (app layer, src/lib/routing/org-units.ts):
---   1. prune  — candidate LEAF units whose (inherited) categories include the
+--   1. prune, candidate LEAF units whose (inherited) categories include the
 --               report category AND whose skills include the work order's
 --               crew_type;
---   2. score  — cost/SLA-weighted load balance across the candidates, so a
+--   2. score. Cost/SLA-weighted load balance across the candidates, so a
 --               mix of internal crews and external contractors is balanced by
---               fill (open_wos / capacity), cost_per_job and SLA-breach risk —
+--               fill (open_wos / capacity), cost_per_job and SLA-breach risk,
 --               not just fewest-open-WO. Internal spillover to contractors is
 --               the emergent default (contractor cost > 0 loses until internal
 --               crews are full).
 --
--- path is a materialized ltree of sanitized row ids (uuid, dashes stripped —
+-- path is a materialized ltree of sanitized row ids (uuid, dashes stripped,
 -- valid ltree labels, globally unique, stable). Human labels live in `label`;
 -- `path` exists only for fast subtree queries (`path <@ :team_path`).
 
@@ -94,7 +94,7 @@ BEGIN
     END IF;
     -- Guard against cycles: a node cannot sit under its own subtree.
     IF parent_path <@ text2ltree(replace(NEW.id::text, '-', '')) THEN
-      RAISE EXCEPTION 'org_units: cycle — % cannot be a descendant of itself', NEW.id;
+      RAISE EXCEPTION 'org_units: cycle. % cannot be a descendant of itself', NEW.id;
     END IF;
     NEW.path := parent_path || text2ltree(replace(NEW.id::text, '-', ''));
   END IF;
@@ -126,7 +126,7 @@ CREATE TRIGGER org_units_cascade_path_trg
   FOR EACH ROW EXECUTE FUNCTION org_units_cascade_path();
 
 -- ---------------------------------------------------------------------------
--- 3. work_orders.assigned_unit_id — the new assignment target. Kept alongside
+-- 3. work_orders.assigned_unit_id, the new assignment target. Kept alongside
 --    the legacy assigned_crew_id (030) during the transition.
 -- ---------------------------------------------------------------------------
 
@@ -184,7 +184,7 @@ WHERE o.legacy_crew_id = w.assigned_crew_id
   AND w.assigned_unit_id IS NULL;
 
 -- ---------------------------------------------------------------------------
--- 5. RLS — mirror crews (030): org_units expose staff/roster structure and
+-- 5. RLS, mirror crews (030): org_units expose staff/roster structure and
 --    contractor pricing → staff-only read scoped to own city; staff-write as
 --    defense in depth (admin-gated at the action layer, service role bypasses).
 -- ---------------------------------------------------------------------------
