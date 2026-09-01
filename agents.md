@@ -92,7 +92,7 @@ const candidates = await sql`
 - Touching Open311, privacy, or migrations directories
 - Anything that would expose raw photos publicly
 - Anything that would call an AI model from the client
-- Building features not listed in DESIGN.md's MVP scope
+- Building features outside the MVP scope in `docs/planning/`
 
 ## Definition of done (any task)
 
@@ -104,14 +104,19 @@ const candidates = await sql`
 
 ## What lives where
 
-- `docs/CONTEXT.md` - problem, market, GTM, personas, business model
-- `docs/DESIGN.md` - architecture, data model, AI pipeline, alternatives considered
+- `README.md` - what this is, how it works, and the evidence for both
+- `docs/planning/` - product scope, roadmaps, and what shipped (`SHIPPED.md`)
 - `docs/decisions/` - ADRs for any architecture choice that closed off alternatives
-- `docs/runbooks/` - on-call procedures (deploys, incidents, rollbacks)
+- `docs/runbooks/` - on-call procedures (AI pipeline, Open311 conformance, cutover, key rotation)
+- `dev-audit/` - the audit output this project was hardened against
 - `tests/rls/` - row-level security regression tests
 - `tests/golden/` - sample photos + expected classifications
 
-Read the doc before the code. If `docs/DESIGN.md` and this file conflict, the design doc wins. Flag the conflict.
+Read the doc before the code. If `README.md` and this file conflict, flag it — one of them is out of date and guessing which is how both rot.
+
+There is no `docs/DESIGN.md` or `docs/CONTEXT.md`. This file cited both for
+months; neither was ever written. If you are looking for architecture, it is
+`README.md` plus the ADRs.
 
 ## Pitfalls specific to this project
 
