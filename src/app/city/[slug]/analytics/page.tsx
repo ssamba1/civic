@@ -4,7 +4,6 @@ import { Suspense } from "react";
 import { AnalyticsInteractive } from "@/components/analytics/analytics-interactive";
 import { DistrictRollups } from "@/components/analytics/district-rollups";
 import { EquityPanel } from "@/components/analytics/equity-panel";
-import { PeerBenchmarkCard } from "@/components/analytics/peer-benchmark-card";
 import { SurgeBanner } from "@/components/analytics/surge-banner";
 import {
   fetchCity,
@@ -100,14 +99,6 @@ export default async function CityAnalyticsPage({ params }: PageProps) {
         </section>
 
         <SurgeBanner />
-        {/* Suspense so the page shell + client analytics flush immediately
-            instead of waiting on these RPCs. Fallback is `null` because the
-            card renders nothing when there's no peer data — a placeholder box
-            would collapse on resolve and shift the page. */}
-        <Suspense fallback={null}>
-          <PeerBenchmarkCard cityId={city.id} />
-        </Suspense>
-
         <AnalyticsInteractive />
 
         {/* Server-rendered analytics panels — fetch independently so they
