@@ -20,26 +20,32 @@ script, so if an image is wrong, fix the script.
 map, so the landing page ships an image instead of ~1.85 MB of maplibre-gl and
 deck.gl on every visit.
 
-## Known defect: the PWA icons are missing
+## The PWA icons — was a defect, now fixed
 
-`manifest.json` declares:
+`manifest.json` declares two icons:
 
 ```json
-{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-{ "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+{ "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
 ```
 
-**`public/icons/` does not exist**, and no `icon-*.png` exists anywhere under
-`public/`. Both references 404.
+`public/icons/` did not exist, so both 404'd and every Add to Home Screen fell
+back to a browser-generated glyph — on a product whose entire resident flow is
+a phone. It failed quietly, which is why it survived: nothing in CI fetches
+manifest icon URLs, and a Lighthouse PWA audit is not one of the documented
+gates.
 
-The manifest is otherwise valid, so the app still installs — Add to Home Screen
-just falls back to a browser-generated icon rather than the wordmark. It fails
-quietly, which is why it has survived: nothing in CI fetches manifest icon URLs,
-and a Lighthouse PWA audit is not part of the documented gates.
+Both now exist and serve `200 image/png`. They are **generated**, by
+`scripts/make-app-icons.mjs`, rather than drawn by hand — a map pin with the
+filled dot from the "● Civic" wordmark in its head, on the manifest's own
+`theme_color` ground. Generating them keeps the mark from drifting away from
+the app, and makes the next size a platform asks for a one-line change instead
+of an image-editor session.
 
-Fixing it means adding a 192 px and a 512 px PNG at those paths, or correcting
-the manifest to point at assets that exist. Not done here because this pass is
-documentation; recorded so it stops being invisible.
+Both are drawn inside the maskable safe area — nothing outside the middle 80% —
+so a launcher cropping to a circle or a squircle never clips the pin. The
+manifest entries say `any maskable` accordingly, which is what stops Android
+shrinking the icon into a white box.
 
 ## Hand-maintained files
 
