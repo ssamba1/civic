@@ -20,7 +20,7 @@ export default function UserMapPage() {
   const city = KNOWN_CITIES.cumming;
 
   return (
-    <div className="flex flex-1 flex-col min-h-0 -mt-4 md:-mt-20 -mb-[calc(5.5rem+env(safe-area-inset-bottom))] md:mb-0">
+    <div className="flex flex-1 flex-col min-h-0 -mt-4 md:-mt-6 -mb-[calc(5.5rem+env(safe-area-inset-bottom))] md:mb-0">
       <FilterProvider corpus={corpus} now={now}>
         <CorpusMapView
           center={city.center}
