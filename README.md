@@ -463,11 +463,11 @@ It is deliberately a **trigger, not a classifier**. A tiny quantized model on th
 
 <table>
 <tr>
-<td width="50%" valign="top"><img alt="Turntable render of the enclosure, generated from the four STL files: an upright box body with a rounded top, civic embossed across the lower front below the lens aperture, and the mount arm angled back off its hinge" src="hardware/universal-camera/images/shell-render-front.png"></td>
+<td width="50%" valign="top"><img alt="Turntable animation of the enclosure, generated from the four STL files: an upright box body with a rounded top rotating through a full turn, civic embossed across the lower front below the lens aperture, and the mount arm angled back off its hinge" src="hardware/universal-camera/media/shell-turntable.gif"></td>
 <td width="50%" valign="top"><img alt="The same enclosure printed and assembled on a desk: white body with civic embossed across the lower front, the ESP32-CAM's OV2640 lens in the cut-out above it, foam padding across the open top, and a blue windshield-mount arm folded back on its side pivot knob" src="hardware/universal-camera/images/device-civic.jpg"></td>
 </tr>
 <tr>
-<td valign="top"><b>The geometry.</b> Rendered straight from the four STLs in <code>hardware/universal-camera/print/</code>, not a mock-up. The <code>civic</code> emboss is in the mesh.</td>
+<td valign="top"><b>The geometry.</b> Rendered straight from the four STLs in <code>hardware/universal-camera/print/</code>, not a mock-up. The <code>civic</code> emboss is in the mesh. Higher-resolution <a href="hardware/universal-camera/media/shell-turntable.mp4">mp4</a>.</td>
 <td valign="top"><b>The object.</b> The same part printed, with the ESP32-CAM seated behind the front cut-out and the mount arm on its pivot.</td>
 </tr>
 </table>
